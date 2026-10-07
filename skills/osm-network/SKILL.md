@@ -19,8 +19,8 @@ description: Build a drivable, terrain-aware road graph from OpenStreetMap (file
 
 ## Use
 ```
-python scripts/osm_network.py --osm grid_molde.osm --summary
-python scripts/osm_network.py --osm grid_molde.osm --route 7.1592,62.7375 7.1826,62.7483 --weight energy_kwh
+python scripts/osm_network.py --osm data/synthetic/grid_molde.osm --summary
+python scripts/osm_network.py --osm data/synthetic/grid_molde.osm --route 7.1592,62.7375 7.1826,62.7483 --weight energy_kwh
 python scripts/osm_network.py --place "Kristiansund, Norway" --dem dem.tif --out ksu.graphml
 ```
 In Python: `G = build(osm=..., dem=...)`, `route(G, nearest(G, lon, lat), ..., weight)`.

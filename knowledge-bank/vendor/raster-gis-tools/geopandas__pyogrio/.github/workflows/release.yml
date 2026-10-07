@@ -1,0 +1,382 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main # just build the sdist & wheel, skip release
+    tags:
+      - "v*"
+  pull_request: # also build on PRs touching files that affect building sdist / wheels
+    paths:
+      - ".github/workflows/release.yml"
+      - "ci/**"
+      - "MANIFEST.in"
+      - "pyproject.toml"
+      - "setup.py"
+  workflow_dispatch:
+
+# cancel running jobs on new commit to PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  GDAL_VERSION: "3.12.4"
+  VCPKG_GDAL_COMMIT: 89dac9685f8d0ebd0a07d8b93ed51215c3a2fb2c
+
+jobs:
+  build-sdist:
+    name: Build pyogrio sdist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Build a source tarball
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build setuptools
+          python -m build --sdist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pyogrio-sdist
+          path: ./dist/*.tar.gz
+          retention-days: 5
+          compression-level: 0
+
+  test-sdist:
+    name: Test sdist
+    needs: [build-sdist]
+    runs-on: ubuntu-latest
+    container:
+      image: "ghcr.io/osgeo/gdal:ubuntu-small-3.12.4"
+
+    steps:
+      - name: Install packages
+        run: |
+          apt-get update && apt-get install -y build-essential python3-dev
+
+      - name: Create virtual environment
+        # install uv and use it to create a virtual environment, then add it to
+        # environment variables so that it is automatically activated and can be
+        # used for tests below
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          . $HOME/.local/bin/env
+          uv venv .venv
+          echo "VIRTUAL_ENV=.venv" >> $GITHUB_ENV
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+
+      - name: Download sdist from artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: pyogrio-sdist
+          path: wheelhouse
+
+      - name: Build from sdist and install test dependencies
+        shell: bash
+        run: |
+          uv pip install --no-cache wheelhouse/*.tar.gz
+          uv pip install pytest pandas pyproj shapely>=2
+          uv pip install --no-deps geopandas
+          uv pip list
+
+      - name: Run tests
+        shell: bash
+        # virtual environment is automatically activated
+        run: |
+          uv run python -c "import pyogrio; print(f'GDAL version: {pyogrio.__gdal_version__}\nGEOS version: {pyogrio.__gdal_geos_version__}')"
+          uv run python -m pytest --pyargs pyogrio.tests -v
+
+  build-wheels-linux:
+    name: Build wheels on Linux
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # use manylinux2014 for older glibc platforms until discontinued
+          - wheel_name: "pyogrio-wheel-linux-manylinux2014_x86_64"
+            container: "ci/manylinux2014_x86_64-vcpkg-gdal.Dockerfile"
+            os: ubuntu-latest
+            arch: x86_64
+
+          # use manylinux_2_28 for any platforms with glibc>=2.28
+          - wheel_name: "pyogrio-wheel-linux-manylinux_2_28_x86_64"
+            container: "ci/manylinux_2_28_x86_64-vcpkg-gdal.Dockerfile"
+            os: ubuntu-latest
+            arch: x86_64
+
+          - wheel_name: "pyogrio-wheel-linux-manylinux_2_28_aarch64"
+            container: "ci/manylinux_2_28_aarch64-vcpkg-gdal.Dockerfile"
+            os: ubuntu-24.04-arm
+            arch: aarch64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          buildkitd-flags: --debug
+
+      - name: Build Docker image with vcpkg and gdal
+        # using build-push-action (without push) to make use of cache arguments
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.container }}
+          tags: manylinux-${{ matrix.arch }}-vcpkg-gdal:latest
+          build-args: |
+            VCPKG_GDAL_COMMIT=${{ env.VCPKG_GDAL_COMMIT }}
+          push: false
+          load: true
+          cache-from: type=gha,scope=${{ matrix.container }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.container }}
+        env:
+          BUILDKIT_PROGRESS: plain
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v4.2.1
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.wheel_name }}
+          path: ./wheelhouse/*.whl
+          compression-level: 0
+
+  build-wheels-mac-win:
+    name: Build wheels on ${{ matrix.os }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: "macos-15-intel"
+            triplet: "x64-osx-dynamic-release"
+            arch: x86_64
+            vcpkg_cache: "/Users/runner/.cache/vcpkg/archives"
+            vcpkg_logs: "/usr/local/share/vcpkg/buildtrees/**/*.log"
+
+          - os: "macos-15"
+            triplet: "arm64-osx-dynamic-release"
+            arch: arm64
+            vcpkg_cache: "/Users/runner/.cache/vcpkg/archives"
+            vcpkg_logs: "/usr/local/share/vcpkg/buildtrees/**/*.log"
+
+          - os: "windows-2022"
+            triplet: "x64-windows-dynamic-release"
+            arch: AMD64
+            # windows requires windows-specific paths
+            vcpkg_cache: "c:\\vcpkg\\installed"
+            vcpkg_logs: "c:\\vcpkg\\buildtrees\\**\\*.log"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Cache vcpkg
+        uses: actions/cache@v6
+        id: vcpkgcache
+        with:
+          path: |
+            ${{ matrix.vcpkg_cache }}
+          # bump the last digit to avoid using previous build cache
+          key: ${{ matrix.os }}-${{ matrix.arch }}-vcpkg-gdal${{ env.GDAL_VERSION }}-cache1
+
+      # MacOS build requires aclocal, which is part of automake, but appears
+      # to be missing in default image. In addition, building libspatialite also
+      # requires full autotools
+      - name: Install autotools prerequisites
+        if: runner.os == 'macOS'
+        run: |
+          brew install autoconf autoconf-archive automake libtool
+          echo $(which aclocal)
+
+      - name: Checkout specific version of vcpkg
+        shell: bash
+        run: |
+          cd $VCPKG_INSTALLATION_ROOT
+          # on mac the clone is not clean, otherwise git pull fails
+          git reset --hard
+          # pull specific commit with desired GDAL version
+          git pull
+          git checkout ${{ env.VCPKG_GDAL_COMMIT }}
+          # TMP the installed runner on the image is newer and complains about
+          # the no-longer-supported schema of of vcpkg-tools.json in the checkout 
+          if [ "$RUNNER_OS" = "Windows" ]; then
+              ./bootstrap-vcpkg.bat -disableMetrics
+          else
+              ./bootstrap-vcpkg.sh -disableMetrics
+          fi
+
+      - name: Install GDAL
+        env:
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+        shell: bash
+        run: |
+          vcpkg install --overlay-triplets=./ci/custom-triplets --feature-flags="versions,manifests" --x-manifest-root=./ci --x-install-root=$VCPKG_INSTALLATION_ROOT/installed
+          vcpkg list
+
+      - name: Upload vcpkg build logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: pyogrio-vcpkg-logs-${{ matrix.triplet }}
+          path: ${{ matrix.vcpkg_logs }}
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v4.2.1
+        env:
+          # CIBW needs to know triplet for the correct install path
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+          CIBW_ARCHS: ${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pyogrio-wheel-${{ matrix.triplet }}
+          path: ./wheelhouse/*.whl
+          compression-level: 0
+
+  test-wheels:
+    name: Test wheels on ${{ matrix.os }} (Python ${{ matrix.python-version }})
+    needs: [build-wheels-linux, build-wheels-mac-win]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          [
+            "ubuntu-latest",
+            "ubuntu-22.04",
+            "ubuntu-24.04-arm",
+            "windows-latest",
+            "macos-15-intel",
+            "macos-latest",
+          ]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.14t"]
+        include:
+          - os: "ubuntu-latest"
+            artifact: pyogrio-wheel-linux-manylinux2014_x86_64
+          - os: "ubuntu-latest"
+            artifact: pyogrio-wheel-linux-manylinux_2_28_x86_64
+          - os: "ubuntu-22.04"
+            artifact: pyogrio-wheel-linux-manylinux_2_28_x86_64
+          - os: "ubuntu-24.04-arm"
+            artifact: pyogrio-wheel-linux-manylinux_2_28_aarch64
+          - os: "windows-latest"
+            artifact: pyogrio-wheel-x64-windows-dynamic-release
+          - os: "macos-15-intel"
+            artifact: pyogrio-wheel-x64-osx-dynamic-release
+          - os: "macos-latest"
+            artifact: pyogrio-wheel-arm64-osx-dynamic-release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: ci/requirements-wheel-test.txt
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Create virtual environment (Linux / MacOS)
+        # use uv to create a virtual environment, then add it to environment
+        # variables so that it is automatically activated and can be used for
+        # tests below
+        if: ${{ runner.os != 'Windows' }}
+        run: |
+          uv venv .venv
+          echo "VIRTUAL_ENV=.venv" >> $GITHUB_ENV
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+
+      - name: Create virtual environment (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          uv venv .venv
+          "VIRTUAL_ENV=.venv" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "$PWD/.venv/Scripts" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Download wheels from artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ matrix.artifact }}
+          path: wheelhouse
+
+      - name: Install dependencies and pyogrio wheel
+        shell: bash
+        run: |
+          uv pip install -r ci/requirements-wheel-test.txt
+          uv pip install --no-cache --pre --no-index --find-links wheelhouse pyogrio
+          # TMP avoid installing nightly pandas given pandas <-> geopandas compatibility issues
+          # if [ ${{ matrix.python-version }} == "3.14t" ]; then
+          #   uv pip install --pre --upgrade --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple pandas
+          # fi
+          if [ ${{ matrix.python-version }} != "3.14t" ]; then
+              uv pip install --no-deps geopandas
+          fi
+          uv pip list
+
+      - name: Run tests
+        shell: bash
+        # virtual environment is automatically activated
+        run: |
+          uv run python -c "import pyogrio; print(f'GDAL version: {pyogrio.__gdal_version__}\nGEOS version: {pyogrio.__gdal_geos_version__}')"
+          uv run python -m pytest --pyargs pyogrio.tests -v
+
+  publish:
+    name: Publish pyogrio to GitHub / PyPI
+    needs: [test-sdist, test-wheels]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pyogrio
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing to PyPI
+      contents: write # this permission is required for the Github release action
+
+    # release on every tag
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: pyogrio-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: Version ${{ github.ref_name }}
+          tag_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+          files: dist/*.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}

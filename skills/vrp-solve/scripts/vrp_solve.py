@@ -11,7 +11,7 @@ Input JSON (see ../examples/deliveries.json):
    "vehicles": {"count": 2, "capacity": 10},
    "objective": "travel_time" | "length" | "energy_kwh"}
 CLI:
-  python vrp_solve.py --osm grid_molde.osm --problem deliveries.json [--solver pyvrp|ortools|both]
+  python vrp_solve.py --osm data/synthetic/grid_molde.osm --problem deliveries.json [--solver pyvrp|ortools|both]
 """
 import argparse
 import json

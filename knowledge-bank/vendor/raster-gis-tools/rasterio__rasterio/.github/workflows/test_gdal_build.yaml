@@ -1,0 +1,92 @@
+on:
+  workflow_call:
+    inputs:
+      gdal_ref:
+        required: true
+        type: string
+      rasterio_ref:
+        required: true
+        type: string
+
+jobs:
+  test_rasterio:
+    name: Test rasterio ${{ inputs.rasterio_ref }} in PROJ container with GDAL ${{ inputs.gdal_ref }}
+    runs-on: ubuntu-latest
+    container: ghcr.io/osgeo/proj:9.7.1
+    env:
+      GDAL_DIR: ${{ github.workspace }}/gdal_install
+      GDAL_DATA: ${{ github.workspace }}/gdal_install/share/gdal
+      LD_LIBRARY_PATH: "${{ github.workspace }}/gdal_install/lib/:${LD_LIBRARY_PATH}"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.rasterio_ref }}
+      - name: Update
+        run: |
+          apt-get update
+          apt-get -y install software-properties-common
+          add-apt-repository -y ppa:deadsnakes/ppa
+          apt-get update
+
+      - name: Set up Python
+        run: |
+          apt-get install -y --no-install-recommends \
+            python3.12-dev \
+            g++
+
+      - name: Install the latest version of uv and set the python version
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: '3.12'
+          activate-environment: 'true'
+
+      - name: Install GDAL
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -qq \
+            libcurl4-openssl-dev \
+            libtiff-dev \
+            libgeos-dev \
+            libjpeg-dev \
+            libnetcdf-dev \
+            libhdf4-alt-dev \
+            libhdf5-serial-dev \
+            libssl-dev \
+            libsqlite3-dev \
+            libexpat-dev \
+            libxerces-c-dev \
+            libpng-dev \
+            libopenjp2-7-dev \
+            libzstd-dev \
+            libwebp-dev \
+            cmake \
+            curl \
+            git
+          bash ci/gdal-compile.sh git "${{ inputs.gdal_ref }}"
+
+      - name: Install dependencies
+        run: |
+          export PATH="${GDAL_DIR}/bin/:${PATH}"
+          uv pip install -r requirements-dev.txt
+          uv pip install --no-deps --force-reinstall -e . --group tests
+
+      - name: Test
+        shell: bash
+        run: |
+          export PATH="${GDAL_DIR}/bin/:${PATH}"
+          python -m pytest -v -m "not wheel" -rxXs --cov rasterio --cov-report term-missing
+
+      - if: success()
+        run: echo "Success"
+
+      - if: failure()
+        shell: bash
+        run: |
+          echo '{"run_id":"${{ github.run_id }}", "gdal_ref":"${{ inputs.gdal_ref }}"}' > failure-${{ inputs.gdal_ref }}.json
+          ls -l failure-*.json
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failures
+          path: failure-*.json

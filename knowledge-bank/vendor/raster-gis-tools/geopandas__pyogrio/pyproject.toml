@@ -1,0 +1,223 @@
+[build-system]
+requires = [
+    # keep in sync with a subset of [dependency-groups.build]
+    "setuptools>=77",
+    "Cython>=3.1",
+    "versioneer[toml]>=0.28,<0.30",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyogrio"
+dynamic = ["version"]
+authors = [
+    { name = "Brendan C. Ward", email = "bcward@astutespruce.com" },
+    { name = "pyogrio contributors" },
+]
+maintainers = [{ name = "pyogrio contributors" }]
+license = "MIT"
+license-files = [ "LICENSE" ]
+description = "Vectorized spatial vector file format I/O using GDAL/OGR"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Programming Language :: Python :: Free Threading :: 2 - Beta",
+]
+requires-python = ">=3.10"
+dependencies = ["certifi", "numpy", "packaging"]
+
+[project.optional-dependencies]
+geopandas = ["geopandas"]
+
+[dependency-groups]
+build = [
+    # keep in sync with a superset of [build-system.requires]
+    "setuptools>=77",
+    "Cython>=3.1",
+    "versioneer[toml]>=0.28,<0.30",
+]
+benchmarks = ["pytest-benchmark"]
+tests = ["pytest", "pytest-cov"]
+dev = [
+    "pre-commit",
+    "geopandas",
+    {include-group = "build"},
+    {include-group = "tests"},
+]
+
+[project.urls]
+Home = "https://pyogrio.readthedocs.io/"
+Repository = "https://github.com/geopandas/pyogrio"
+
+[tool.cibuildwheel]
+skip = ["*musllinux*"]
+archs = ["auto64"]
+manylinux-x86_64-image = "manylinux-x86_64-vcpkg-gdal:latest"
+manylinux-aarch64-image = "manylinux-aarch64-vcpkg-gdal:latest"
+build-verbosity = 3
+
+[tool.cibuildwheel.environment]
+VCPKG_INSTALL = "$VCPKG_INSTALLATION_ROOT/installed/$VCPKG_DEFAULT_TRIPLET"
+GDAL_INCLUDE_PATH = "$VCPKG_INSTALL/include"
+GDAL_LIBRARY_PATH = "$VCPKG_INSTALL/lib"
+# GDAL_VERSION is set in release.yml
+PYOGRIO_PACKAGE_DATA = 1
+PYOGRIO_LIMITED_API = 1
+GDAL_DATA = "$VCPKG_INSTALL/share/gdal"
+PROJ_DATA = "$VCPKG_INSTALL/share/proj"
+MACOSX_DEPLOYMENT_TARGET = "12.0"
+
+[tool.cibuildwheel.linux]
+environment-pass = ["GDAL_VERSION"]
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = [
+    "DYLD_LIBRARY_PATH=$GDAL_LIBRARY_PATH delocate-listdeps {wheel}",
+    "DYLD_LIBRARY_PATH=$GDAL_LIBRARY_PATH delocate-wheel --require-archs {delocate_archs} -w {dest_dir} {wheel}",
+]
+
+[tool.cibuildwheel.windows]
+before-build = "pip install delvewheel"
+repair-wheel-command = "delvewheel repair --add-path C:/vcpkg/installed/x64-windows-dynamic-release/bin -w {dest_dir} {wheel}"
+
+[tool.cython-lint]
+ignore = ["E265", "E222"]
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "pyogrio/_version.py"
+versionfile_build = "pyogrio/_version.py"
+parentdir_prefix = "pyogrio-"
+tag_prefix = "v"
+
+[tool.ruff]
+line-length = 88
+extend-exclude = [
+    "doc/*",
+    "benchmarks/*",
+    "pyogrio/_version.py",
+    "conf.py",
+    "setup.py",
+]
+
+[tool.ruff.lint]
+select = [
+    # pyflakes
+    "F",
+    # pycodestyle
+    "E",
+    "W",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-debugger
+    "T10",
+    # flake8-simplify
+    # "SIM",
+    # pylint
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW",
+    # misc lints
+    "PIE",
+    # implicit string concatenation
+    "ISC",
+    # type-checking imports
+    "TCH",
+    # comprehensions
+    "C4",
+    # Ruff-specific rules
+    "RUF",
+    # isort
+    "I",
+    # pydocstyle
+    "D",
+]
+
+ignore = [
+    ### Intentionally disabled
+    # module level import not at top of file
+    "E402",
+    # do not assign a lambda expression, use a def
+    "E731",
+    # mutable-argument-default
+    "B006",
+    # unused-loop-control-variable
+    "B007",
+    # get-attr-with-constant
+    "B009",
+    # Only works with python >=3.10
+    "B905",
+    # dict literals
+    "C408",
+    # Too many arguments to function call
+    "PLR0913",
+    # Too many returns
+    "PLR0911",
+    # Too many branches
+    "PLR0912",
+    # Too many statements
+    "PLR0915",
+    # Magic number
+    "PLR2004",
+    # Lambda may be unnecessary; consider inlining inner function
+    "PLW0108",
+    # Redefined loop name
+    "PLW2901",
+    # Global statements are discouraged
+    "PLW0603",
+    # Import should be at the top-level of a file
+    "PLC0415",
+    # compare-to-empty-string
+    "PLC1901",
+
+    ### Additional checks that don't pass yet
+    # Useless statement
+    "B018",
+    # Within an except clause, raise exceptions with ...
+    "B904",
+    # Consider `elif` instead of `else` then `if` to remove indentation level
+    "PLR5501",
+    # collection-literal-concatenation
+    "RUF005",
+    # Mutable class attributes should be annotated with `typing.ClassVar`,
+    "RUF012",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# ignore pydocstyle errors in tests
+"**/tests/*" = ["D"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+extra-standard-library = ["packaging"]
+
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "geo",
+    "first-party",
+    "local-folder",
+    "testing",
+]
+
+[tool.ruff.lint.isort.sections]
+"geo" = ["shapely", "pyproj"]
+"testing" = [
+    "pytest",
+    "pandas.testing",
+    "numpy.testing",
+    "geopandas.tests",
+    "geopandas.testing",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

@@ -1,0 +1,70 @@
+name: Docker GDAL Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+# cancel running jobs on new commit to PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  TestLinux:
+    name: GDAL ${{ matrix.container }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - "ghcr.io/osgeo/gdal:ubuntu-small-latest" # >= python 3.14.4
+          - "ghcr.io/osgeo/gdal:ubuntu-small-3.13.0" # python 3.14.4
+          - "ghcr.io/osgeo/gdal:ubuntu-small-3.12.4" # python 3.12.3
+          - "ghcr.io/osgeo/gdal:ubuntu-small-3.11.5" # python 3.12.3
+          - "ghcr.io/osgeo/gdal:ubuntu-small-3.10.3" # python 3.12.3
+          - "ghcr.io/osgeo/gdal:ubuntu-small-3.9.3" # python 3.12.3
+          - "ghcr.io/osgeo/gdal:ubuntu-small-3.8.5" # python 3.10.12
+          - "ghcr.io/osgeo/gdal:ubuntu-small-3.7.3" # python 3.10.12
+          - "ghcr.io/osgeo/gdal:ubuntu-small-3.6.4" # python 3.10.6
+
+    container:
+      image: ${{ matrix.container }}
+
+    steps:
+      - name: Install packages
+        run: |
+          apt-get update && apt-get install -y build-essential git python3-dev
+
+      # - name: Install Python
+      #   # the GDAL 3.4 and 3.5 images do have Python 3.8 installed, so have to
+      #   # install a more recent Python version manually
+      #   if: matrix.container == 'osgeo/gdal:ubuntu-small-3.5.3' || matrix.container == 'osgeo/gdal:ubuntu-small-3.4.3'
+      #   run: |
+      #     apt-get update && apt-get install -y software-properties-common
+      #     add-apt-repository -y ppa:deadsnakes/ppa
+      #     apt-get update && apt-get install -y python3.9-dev
+
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Create virtual environment
+        # use uv to create a virtual environment, then add it to environment
+        # variables so that it is automatically activated and can be used for
+        # tests below
+        run: |
+          uv venv .venv
+          echo "VIRTUAL_ENV=.venv" >> $GITHUB_ENV
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install Python Dependencies
+        run: |
+          uv pip install -e . --group dev pyarrow
+          
+      - name: Test with pytest
+        run: |
+          pytest --color=yes -r fEsX --cov=pyogrio --cov-report term-missing pyogrio/tests

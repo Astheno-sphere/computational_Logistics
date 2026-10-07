@@ -1,0 +1,148 @@
+"""Created on May 22, 2015
+
+.. codeauthor:: jhkwakkel <j.h.kwakkel (at) tudelft (dot) nl>
+"""
+
+import unittest
+
+import numpy as np
+import pandas as pd
+
+from ema_workbench.analysis import cart
+from ema_workbench.analysis.scenario_discovery_util import RuleInductionType
+from test import utilities
+
+
+def flu_classify(data):
+    # get the output for deceased population
+    result = data["deceased_population_region_1"]
+
+    # make an empty array of length equal to number of cases
+    classes = np.zeros(result.shape[0])
+
+    # if deceased population is higher then 1.000.000 people, classify as 1
+    classes[result[:, -1] > 1000000] = 1
+
+    return classes
+
+
+def scarcity_classify(outcomes):
+    outcome = outcomes["relative_market_price"]
+    change = np.abs(outcome[:, 1::] - outcome[:, 0:-1])
+
+    neg_change = np.min(change, axis=1)
+    pos_change = np.max(change, axis=1)
+
+    logical = (neg_change > -0.6) & (pos_change > 0.6)
+
+    classes = np.zeros(outcome.shape[0])
+    classes[logical] = 1
+
+    return classes
+
+
+class CartTestCase(unittest.TestCase):
+
+    def test_boxes(self):
+        np.random.seed(42)
+        x = pd.DataFrame(np.random.rand(1000, 2), columns=["a", "b"])
+        y = (x.a > 0.5) & (x.b < 0.5)
+        alg = cart.CART(x, y, mode=RuleInductionType.BINARY)
+        alg.build_tree()
+
+        boxes = alg.boxes
+
+        self.assertEqual(len(boxes), 3)
+
+    def test_stats(self):
+        x = pd.DataFrame([(0, 1, 2), (2, 5, 6), (3, 2, 1)], columns=["a", "b", "c"])
+
+        box = pd.DataFrame([(0, 1, 1), (3, 5, 3)], columns=["a", "b", "c"])
+
+        y = np.array([0, 1, 1])
+        alg = cart.CART(x, y, mode=RuleInductionType.BINARY)
+        alg._boxes = [box]
+        alg.clf = "something"
+        stats = alg.stats[0]
+
+        self.assertEqual(stats["coverage"], 0.5)
+        self.assertEqual(stats["density"], 0.5)
+        self.assertEqual(stats["res dim"], 1)
+        self.assertEqual(stats["mass"], 2 / 3)
+
+        y = np.array([0, 1, 2])
+        alg = cart.CART(x, y, mode=RuleInductionType.REGRESSION)
+        alg._boxes = [box]
+        alg.clf = "something"
+        stats = alg.stats[0]
+
+        self.assertEqual(stats["mean"], 1)
+        self.assertEqual(stats["res dim"], 1)
+        self.assertEqual(stats["mass"], 2 / 3)
+
+        y = np.array([0, 1, 2])
+        alg = cart.CART(x, y, mode=RuleInductionType.CLASSIFICATION)
+        alg._boxes = [box]
+        alg.clf = "something"
+        stats = alg.stats[0]
+
+        self.assertEqual(stats["gini"], 0.5)
+        self.assertEqual(stats["box_composition"], [1, 0, 1])
+        self.assertEqual(stats["res dim"], 1)
+        self.assertEqual(stats["mass"], 2 / 3)
+
+        self.assertEqual(stats, alg.stats[0])
+
+    def test_stats_to_dataframe(self):
+        x, outcomes = utilities.load_flu_data()
+
+        y = flu_classify(outcomes)
+        alg = cart.CART(x, y, mode=RuleInductionType.BINARY)
+        alg.build_tree()
+        stats = alg.stats_to_dataframe()
+
+        y = outcomes["deceased_population_region_1"][:, -1]
+        alg = cart.CART(x, y, mode=RuleInductionType.REGRESSION)
+        alg.build_tree()
+        stats = alg.stats_to_dataframe()
+
+        y = np.random.randint(1, 5, y.shape[0])
+        alg = cart.CART(x, y, mode=RuleInductionType.CLASSIFICATION)
+        alg.build_tree()
+        stats = alg.stats_to_dataframe()
+        print(stats)
+
+    def test_build_tree(self):
+        x, outcomes = utilities.load_flu_data()
+
+        y = flu_classify(outcomes)
+        alg = cart.CART(x, y, mass_min=0.05)
+        alg.build_tree()
+        self.assertTrue(isinstance(alg.clf, cart.tree.DecisionTreeClassifier))
+
+        y = outcomes["deceased_population_region_1"][:, -1]
+        alg = cart.CART(x, y, mode=RuleInductionType.REGRESSION, mass_min=0.05)
+        alg.build_tree()
+        self.assertTrue(isinstance(alg.clf, cart.tree.DecisionTreeRegressor))
+
+
+#     def test_show_tree(self):
+#         results = utilities.load_flu_data()
+#
+#         alg = cart.setup_cart(results, flu_classify,
+#                               mass_min=0.05)
+#         alg.build_tree()
+#
+#         fig = alg.show_tree(mplfig=True)
+#         bytestream = alg.show_tree(mplfig=False)
+#
+#         self.assertTrue(isinstance(fig, mpl.figure.Figure))
+#         self.assertTrue(isinstance(bytestream, bytes))
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+#     suite = unittest.TestSuite()
+#     suite.addTest(PrimTestCase("test_write_boxes_to_stdout"))
+#     unittest.TextTestRunner().run(suite)

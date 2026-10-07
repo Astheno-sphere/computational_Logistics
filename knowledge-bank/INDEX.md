@@ -74,15 +74,19 @@ Road-network routing engines and clients, from OSRM to OpenTripPlanner.
 - **pgRouting__pgrouting** [GPL, vendored, copyleft]: pgRouting (expected GPL: pointer only). `vendor/routing-engines/pgRouting__pgrouting`
 - **valhalla__valhalla** [MIT, vendored]: Valhalla routing engine. `vendor/routing-engines/valhalla__valhalla`
 
-## urban-mobility (11 vendored, 2 link-only)
+## urban-mobility (14 vendored, 3 link-only)
 Transit, accessibility, trajectories, mobility models and hex grids.
 
 - **ActivitySim__activitysim** [BSD-3-Clause, vendored]: Activity-based travel model. `vendor/urban-mobility/ActivitySim__activitysim`
 - **MobilityDB__MobilityDB** [UNKNOWN, LINK-ONLY]: Spatiotemporal database. https://github.com/MobilityDB/MobilityDB.git
+- **SpaceGroupUCL__depthmapX** [NONE, LINK-ONLY]: depthmapX: space syntax analysis. https://github.com/SpaceGroupUCL/depthmapX.git
 - **UDST__pandana** [AGPL, vendored, copyleft]: Network accessibility analysis. `vendor/urban-mobility/UDST__pandana`
 - **UDST__urbansim** [BSD-3-Clause, vendored]: Urban simulation. `vendor/urban-mobility/UDST__urbansim`
+- **benchmark-urbanism__cityseer-api** [AGPL, vendored, copyleft]: cityseer: network-based urban analytics. `vendor/urban-mobility/benchmark-urbanism__cityseer-api`
 - **conveyal__r5** [MIT, vendored]: Multimodal routing / accessibility. `vendor/urban-mobility/conveyal__r5`
 - **eclipse-sumo__sumo** [GPL, vendored, copyleft]: Traffic simulation (expected EPL: pointer only). `vendor/urban-mobility/eclipse-sumo__sumo`
+- **eqasim-org__eqasim-java** [GPL, vendored, copyleft]: eqasim: MATSim scenarios with discrete choice mode models (DCM + ABM). `vendor/urban-mobility/eqasim-org__eqasim-java`
+- **gama-platform__gama** [GPL, vendored, copyleft]: GAMA: agent-based modelling platform with GIS. `vendor/urban-mobility/gama-platform__gama`
 - **matsim-org__matsim-libs** [NONE, LINK-ONLY]: Agent-based transport sim (expected GPL: pointer only). https://github.com/matsim-org/matsim-libs.git
 - **movingpandas__movingpandas** [BSD-3-Clause, vendored]: Trajectory analysis. `vendor/urban-mobility/movingpandas__movingpandas`
 - **mrcagney__gtfs_kit** [MIT, vendored]: GTFS analysis. `vendor/urban-mobility/mrcagney__gtfs_kit`
@@ -316,9 +320,10 @@ Grasshopper data-tree code and references: tree conversion helpers, GhPython, Mc
 - **mcneel__developer-rhino3d-com** [NONE, LINK-ONLY]: McNeel developer docs incl. 'The Why and How of Data Trees' and 'Grasshopper data trees and Python'. https://github.com/mcneel/developer-rhino3d-com.git
 - **mcneel__ghpython** [NONE, LINK-ONLY]: GhPython component; home of ghpythonlib treehelpers (Piacentino). https://github.com/mcneel/ghpython.git
 
-## gis-data-connectors (3 vendored, 0 link-only)
+## gis-data-connectors (4 vendored, 0 link-only)
 GIS in Rhino/Grasshopper and national/open map data clients (Heron, QGIS, Kartverket).
 
+- **LtGlahn__nvdbapi-V3** [MIT, vendored]: Python client for NVDB, the Norwegian road database (Statens vegvesen). `vendor/gis-data-connectors/LtGlahn__nvdbapi-V3`
 - **blueherongis__Heron** [MIT, vendored]: Grasshopper GIS import: shapefiles, rasters/DEM, OSM, REST services, Earth Anchor Point. `vendor/gis-data-connectors/blueherongis__Heron`
 - **kartverket__norgeskart** [MIT, vendored]: Kartverket's Norgeskart web map client (Norwegian mapping authority). `vendor/gis-data-connectors/kartverket__norgeskart`
 - **qgis__QGIS** [GPL, vendored, copyleft]: QGIS; processing framework and Python API (PyQGIS). `vendor/gis-data-connectors/qgis__QGIS`
@@ -343,3 +348,29 @@ Grasshopper/Rhino connectivity: JSON, web, Revit, environmental simulation back 
 - **ladybug-tools__honeybee-radiance** [AGPL, vendored, copyleft]: Honeybee daylight modelling (Radiance). `vendor/gh-connectivity/ladybug-tools__honeybee-radiance`
 - **mcneel__rhino.inside-revit** [MIT, vendored]: Rhino and Grasshopper running inside Revit. `vendor/gh-connectivity/mcneel__rhino.inside-revit`
 - **pyrevitlabs__pyRevit** [GPL, vendored, copyleft]: pyRevit: Python automation for Revit. `vendor/gh-connectivity/pyrevitlabs__pyRevit`
+
+## choice-modelling (3 vendored, 0 link-only)
+Discrete choice estimation: MNL, nested, mixed logit.
+
+- **arteagac__xlogit** [GPL, vendored, copyleft]: xlogit: fast mixed logit with GPU support. `vendor/choice-modelling/arteagac__xlogit`
+- **michelbierlaire__biogeme** [MIT, vendored]: Biogeme: estimation of discrete choice models (Bierlaire). `vendor/choice-modelling/michelbierlaire__biogeme`
+- **timothyb0912__pylogit** [BSD-3-Clause, vendored]: pylogit: conditional logit family. `vendor/choice-modelling/timothyb0912__pylogit`
+
+## dmdu (4 vendored, 0 link-only)
+Decision making under deep uncertainty: exploratory modelling, scenario discovery, robust optimisation, sensitivity analysis.
+
+- **Project-Platypus__Platypus** [GPL, vendored, copyleft]: Platypus: multi-objective evolutionary algorithms. `vendor/dmdu/Project-Platypus__Platypus`
+- **Project-Platypus__Rhodium** [GPL, vendored, copyleft]: Rhodium: robust decision making. `vendor/dmdu/Project-Platypus__Rhodium`
+- **SALib__SALib** [MIT, vendored]: SALib: global sensitivity analysis (Sobol, Morris, FAST). `vendor/dmdu/SALib__SALib`
+- **quaquel__EMAworkbench** [BSD-3-Clause, vendored]: EMA Workbench: exploratory modelling and analysis, PRIM, robust optimisation. `vendor/dmdu/quaquel__EMAworkbench`
+
+## raster-gis-tools (7 vendored, 0 link-only)
+Raster, vector and point-cloud tools; map data export and conversion.
+
+- **OSGeo__gdal** [Apache-2.0, vendored]: GDAL/OGR: raster and vector translation. `vendor/raster-gis-tools/OSGeo__gdal`
+- **PDAL__PDAL** [BSD-3-Clause, vendored]: PDAL: point cloud processing (LiDAR). `vendor/raster-gis-tools/PDAL__PDAL`
+- **cogeotiff__rio-cogeo** [BSD-3-Clause, vendored]: Cloud-optimised GeoTIFF creation. `vendor/raster-gis-tools/cogeotiff__rio-cogeo`
+- **geopandas__pyogrio** [MIT, vendored]: pyogrio: fast vector I/O. `vendor/raster-gis-tools/geopandas__pyogrio`
+- **jblindsay__whitebox-tools** [MIT, vendored]: WhiteboxTools: terrain and hydrology analysis. `vendor/raster-gis-tools/jblindsay__whitebox-tools`
+- **osmcode__osmium-tool** [GPL, vendored, copyleft]: osmium-tool: OSM extract, filter, convert. `vendor/raster-gis-tools/osmcode__osmium-tool`
+- **rasterio__rasterio** [BSD-3-Clause, vendored]: rasterio: raster I/O on GDAL. `vendor/raster-gis-tools/rasterio__rasterio`

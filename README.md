@@ -1,229 +1,152 @@
 # Asthenosphere
 
-**An open computational logistics lab for any city: terrain-aware routing, optimisation and delivery
-planning, connected to Rhino and Grasshopper through AI agents.**
+**An open framework and toolkit for computational transport and logistics planning: skills, agents,
+models and protocols assembled into one tested system, from travel behaviour to scenario analysis to
+design and visual storytelling.**
 
-**Author:** [Your Name] · Research portfolio for doctoral application · First test case: Molde and Kristiansund, Norway
+**Author:** Arshad Akhtar Abbasia · Research portfolio · Test region: Molde and Kristiansund, Norway
 
 > The asthenosphere is the slowly flowing layer beneath the Earth's rigid crust. Cities have one too:
-> the flows of goods, vans and people moving beneath their visible form. This lab models that layer.
+> the flows of people, vehicles and goods beneath their visible form. This framework models that layer
+> and makes it visible.
 
 ---
 
-## Abstract
+## What this is
 
-Urban logistics models usually treat a city as flat and its streets as interchangeable. In Norwegian
-coastal towns neither holds: steep terrain, one-way centres and fjord crossings change which route is
-fastest, which is cheapest in energy, and how many vehicles a delivery round needs. With electric vans,
-the gap between the *fastest* and the *least-energy* route becomes a planning variable, not a rounding
-error.
+Asthenosphere assembles the pieces a transport and logistics planner needs into one coherent toolkit:
 
-This repository develops an open, reproducible pipeline that (1) builds a terrain-aware road network
-from OpenStreetMap and elevation data, (2) prices every street segment in time and in vehicle energy,
-including regeneration downhill, (3) solves delivery routing with capacities and time windows on those
-costs, cross-checked by two independent solvers, and (4) brings the results into Rhino/Grasshopper, the
-design environment where architects and urban designers work, through Claude Code skills and agents.
+- **Skills**: tested, documented modules for discrete choice estimation, agent-based simulation,
+  scenario analysis under deep uncertainty, road networks, vehicle routing, optimisation and
+  Grasshopper data trees.
+- **Agents and protocols**: the skills are a Claude Code plugin, an MCP server any agent host can use,
+  and Grasshopper components through Hops, all over one shared core.
+- **Design and storytelling**: connections to Rhino, Grasshopper and GIS, following the parametric and
+  environmental toolkit used in computational design practice, so results become drawings, maps and
+  narratives.
+- **Knowledge bank**: about 250 license-checked open-source references (code, books, MCP servers)
+  catalogued so new skills are built on real, current APIs.
 
-A first result on synthetic terrain shows why it matters: on a 60 m hill, the least-energy route uses
-**48% less energy** than the fastest route for **25% more driving time** over the same distance.
+It works for any city or region: networks are built from OpenStreetMap by place name or file, in the
+local projected coordinate system. Molde and Kristiansund are the test case.
 
-## Vision
+## Architecture
 
-A city-agnostic system in five layers, built one tested skill at a time:
+<p align="center"><img src="docs/figures/architecture.svg" alt="Modelling framework in five layers: evidence, behaviour, simulation, decision under deep uncertainty, interfaces" width="900"></p>
 
-| Layer | What it holds | Today |
+## Toolchain and protocols
+
+<p align="center"><img src="docs/figures/toolchain.svg" alt="Toolchain: agents and harnesses, shared core, design, GIS and storytelling, with the protocols between them" width="900"></p>
+
+| Protocol | Between | Status |
 |---|---|---|
-| **Data** | open maps and terrain for any place: OpenStreetMap, Overture, Copernicus DEM, national sources such as Kartverket | OSM (offline and by place name), DEM rasters |
-| **Models** | road graphs with time and energy costs; routing, VRP, LP/MIP (AMPL-style, solver-agnostic) | `osm-network`, `vrp-solve`, `opt-model` |
-| **Design** | Rhino and Grasshopper: GIS import, layering, massing, data trees | `gh-datatree`, probe, debugger agent |
-| **Agents** | Claude Code skills and agents, MCP servers, open harnesses and models | plugin with router; Rhino/GH MCP in the bank |
-| **Knowledge** | curated, license-checked open-source code, books and references | `knowledge-bank/` with catalog |
+| Claude Code plugin (`.claude-plugin/`, `skills/`, `agents/`) | Claude Code ↔ skills | built |
+| MCP over stdio (`servers/mcp_server.py`, `.mcp.json`) | any MCP host ↔ core | built, tested as a subprocess |
+| Hops, HTTP/JSON (`servers/hops_app.py`) | Grasshopper ↔ core; routes as Rhino points, plans as data trees | built, tested with Grasshopper's payloads |
+| Rhino MCP | agents ↔ live Rhino model (open servers in the bank) | used by the data-tree debugger |
+| Files: GraphML, GeoJSON, GeoTIFF, CSV, LP/MPS/NL | core ↔ GIS, solvers, other tools | GraphML and solver formats built; GIS export planned |
+| CI (GitHub Actions) | every push ↔ test suite | built |
 
-Molde is the first test case, not the limit: every skill takes a file or a place name and works in the
-local projected coordinate system. The plan for growing each layer is in
-[`docs/CHECKLIST.md`](docs/CHECKLIST.md).
+## Toolkit
 
-## Research questions
+| Layer | Skill / component | What it gives you | Status |
+|---|---|---|---|
+| Behaviour | [`dcm-estimate`](skills/dcm-estimate/SKILL.md) | Multinomial logit with Biogeme, cross-checked by an independent estimator; value of time; parameter uncertainty | tested |
+| Simulation | [`abm-transport`](skills/abm-transport/SKILL.md) | Agents to 2050: EV adoption with peer effects, mode choice from estimated utilities, congestion feedback, policy levers | tested |
+| Decision | [`dmdu-explore`](skills/dmdu-explore/SKILL.md) | EMA Workbench ensembles, robustness, PRIM scenario discovery, backcasting to milestones | tested |
+| Networks | [`osm-network`](skills/osm-network/SKILL.md) | Road graph for any place, terrain grades, travel time, EV energy, least-energy routing | tested |
+| Operations | [`vrp-solve`](skills/vrp-solve/SKILL.md) · [`opt-model`](skills/opt-model/SKILL.md) | Vehicle routing (PyVRP, OR-Tools); AMPL-style LP/MIP with Gurobi, CPLEX or HiGHS | tested |
+| Design | [`gh-datatree`](skills/gh-datatree/SKILL.md) · [agent](agents/gh-datatree-debugger.md) | Grasshopper data-tree model, live probe, diagnoser and debugging agent | model tested; live Rhino run pending |
+| Routing | [`cl-foundations`](skills/cl-foundations/SKILL.md) | Router: sends each request to the right skill; shared conventions | built |
+| Interfaces | [`servers/`](servers/) | MCP server and Hops app over a shared core | tested |
+| Knowledge | [`knowledge-bank/`](knowledge-bank/README.md) | Vendored open-source code and books with licenses, searchable catalog, sync and harvest tools | curated |
 
-1. **Terrain and energy.** How much do grade-aware energy costs change route choice, fleet size and
-   delivery schedules in hilly coastal towns, compared with time- or distance-based planning?
-2. **Method.** Can least-energy routing with regeneration (negative edge costs) be combined with
-   state-of-the-art VRP solvers without losing correctness, and how sensitive are plans to vehicle and
-   terrain assumptions?
-3. **Design practice.** Can AI agents working inside Rhino/Grasshopper make network analysis usable by
-   designers, in particular by automating the data-tree handling where most parametric definitions fail?
+## Design and storytelling toolkit
 
-## What is in this repository
+Computational design practice tells its stories through Rhino, Grasshopper and their plugins. The open
+AEC skill collections by [Abhinav Bhardwaj](https://github.com/Abhinavbwj) rely on the tools below
+(counted from mentions across his skill files in the knowledge bank). Asthenosphere connects its
+results to the same tools so that a robust policy pathway becomes a map, a model and a narrative.
 
-| Part | What it does | Status |
-|---|---|---|
-| [`skills/osm-network`](skills/osm-network/SKILL.md) | OSM to drivable graph (one-way rules, UTM), DEM grades, travel time, EV energy with regeneration, least-energy routing (Bellman-Ford) | Built, tested |
-| [`skills/vrp-solve`](skills/vrp-solve/SKILL.md) | Delivery routing with capacity, time windows, service times on road-network costs; PyVRP and OR-Tools cross-check; solver-independent validation | Built, tested |
-| [`skills/gh-datatree`](skills/gh-datatree/SKILL.md) | Tested model of Grasshopper data-tree semantics, live probe for Rhino 8, diagnoser that names the bug and the smallest fix | Model and diagnoser tested; Rhino probe not yet run in Rhino |
-| [`skills/opt-model`](skills/opt-model/SKILL.md) | AMPL-style LP/MIP in Pyomo: transportation, facility location, min-cost flow, exact CVRP; Gurobi, CPLEX or HiGHS; export to .lp/.mps/.nl/.gms | Built, tested; all solvers must agree |
-| [`servers/mcp_server.py`](servers/mcp_server.py) | The skills as MCP tools (network, route, VRP, optimisation, tree diagnosis) for Claude Code, Claude Desktop, Hermes Agent or any MCP client; loaded automatically by the plugin's `.mcp.json` | Built, tested over stdio |
-| [`servers/hops_app.py`](servers/hops_app.py) | The skills as Grasshopper Hops components: routes as Rhino points, VRP plans as a data tree with one branch per vehicle | Built, tested with Grasshopper's Hops payloads |
-| [`agents/gh-datatree-debugger`](agents/gh-datatree-debugger.md) | Claude Code agent: probe, diagnose, fix, re-probe | Built |
-| [`skills/cl-foundations`](skills/cl-foundations/SKILL.md) | Router and shared conventions (units, CRS, assumptions to report) | Built |
-| [`knowledge-bank/`](knowledge-bank/README.md) | Curated, license-checked collection of third-party open-source skills, solvers, routing engines and MCP servers, assembled into a searchable catalog | Built (third-party work, credited) |
-| Rhino baking, isochrones, fleet scenarios, real Molde DEM | See roadmap | Planned |
+| Tool | Used for | Mentions in his skills | In our bank |
+|---|---|---|---|
+| Ladybug, Honeybee | climate, sun, daylight and energy analysis; environmental graphics | 29, 21 | yes (AGPL, isolated) |
+| Dynamo | Revit automation | 31 | not yet |
+| Karamba3D | structural analysis in Grasshopper | 22 | no (commercial) |
+| Kangaroo | physics-based form finding | 20 | no (ships with Rhino) |
+| Galapagos, Wallacei, Octopus, Opossum | single- and multi-objective optimisation in Grasshopper | 17, 9, 10, 11 | no (Galapagos is built in; others are free plugins) |
+| Speckle | data exchange between design tools | 16 | yes |
+| Rhino.Inside | Rhino and Grasshopper inside Revit and other hosts | 12 | yes (Revit) |
+| Blender | rendering and animation for storytelling | 11 | Blender MCP server, yes |
+| QGIS, Heron, Elk | GIS and OpenStreetMap into Rhino at true coordinates | 9, 8, 6 | QGIS and Heron yes |
+| IfcOpenShell | BIM/IFC data | 9 | yes |
+| Hops, Rhino Compute | Python and remote solvers as Grasshopper components | 8 | yes, and our Hops app uses it |
+| COMPAS | computational design framework in Python | 7 | yes |
+| Mapbox, kepler.gl, deck.gl | interactive maps for presentation | 7, 4 | yes |
+| depthmapX | space syntax | 4 | link only (no license file) |
 
-## Method
+## Sample outputs
 
-```mermaid
-flowchart LR
-  OSM[OpenStreetMap] --> G[Drivable graph<br/>one-way, UTM 32N]
-  DEM[Elevation model] --> T[Grades per edge]
-  G --> T --> C[Costs per edge<br/>time, energy with regen]
-  C --> R[Routing<br/>Dijkstra / Bellman-Ford]
-  C --> M[Stop-to-stop matrices]
-  M --> V1[PyVRP]
-  M --> V2[OR-Tools]
-  V1 --> E[Independent validation<br/>capacity, windows, coverage]
-  V2 --> E
-  E --> GH[Grasshopper data trees<br/>one branch per vehicle]
-  GH --> RH[Rhino model]
-```
+From the demonstration study (`python examples/transplan_study.py`; synthetic data, illustrative
+parameters). These show what the toolkit produces, not findings about Molde.
 
-**Energy model.** Per edge, traction force = rolling resistance + grade + aerodynamic drag at constant
-speed. Positive work is divided by drivetrain efficiency; negative work is recovered at a regeneration
-efficiency below 1. Because downhill edges are negative, least-energy paths are found with Bellman-Ford;
-regeneration below 100% rules out negative cycles, and the code fails loudly if bad data creates one.
+<p align="center">
+<img src="docs/figures/co2_pathways.png" alt="Sample: CO2 pathways under no policy and a robust policy package" width="430">
+<img src="docs/figures/robustness_tradeoff.png" alt="Sample: robustness of policy packages against consumer surplus" width="430">
+</p>
+<p align="center"><img src="docs/figures/scenario_discovery.png" alt="Sample: PRIM scenario discovery" width="430"></p>
 
-**Optimisation.** Models are written once, AMPL-style (sets, parameters, variables, constraints), and
-solved by whichever solver is available: Gurobi or CPLEX (free size-limited editions, full academic
-licenses) or HiGHS (open source). Every model is solved by every available solver in the tests, which
-must agree. An exact CVRP formulation certifies the heuristic VRP plans on small instances.
+In the sample, no policy meets an 80% cut in commute CO₂ by 2050 in 7% of 60 futures; the most robust
+package (pricing, public transport, cycling, EV support) meets it in 68%, and backcasting implies
+milestones of about 58% of 2025 emissions by 2030, 36% by 2035 and 26% by 2040.
 
-**Routing.** Stops are snapped to the network; all stop-to-stop costs come from shortest paths on the
-chosen objective. PyVRP (hybrid genetic search) and OR-Tools (guided local search) solve the same
-instance; every plan is then re-evaluated from the true cost matrices by code independent of both solvers.
-
-**Data trees.** Grasshopper pairs component inputs by branch order, repeats the last branch of shorter
-inputs and hides graft/flatten/simplify flags behind small icons, which makes structure errors the most
-common failure in parametric definitions. `gh-datatree` models these rules in plain Python (testable
-without Rhino), reads live trees from a running definition, and reports the cause and the smallest fix.
-
-## Connectivity
-
-```mermaid
-flowchart LR
-  subgraph Clients
-    CC[Claude Code / Desktop]
-    HA[Hermes Agent / other MCP hosts]
-    GH[Grasshopper + Hops]
-  end
-  CC -- MCP stdio --> MCP[servers/mcp_server.py]
-  HA -- MCP --> MCP
-  GH -- HTTP Hops --> HOPS[servers/hops_app.py]
-  MCP --> CORE[servers/core.py]
-  HOPS --> CORE
-  CORE --> SK[skills: osm-network, vrp-solve, opt-model, gh-datatree]
-```
-
-Both servers call the same core, so a tool call in Claude and a component in Grasshopper return the same
-answer. The MCP server targets the MCP Python SDK v2 (`MCPServer`); the Hops app targets McNeel's
-`ghhops-server` 1.5. Run `python servers/hops_app.py`, then point a Hops component at
-`http://localhost:5000/cl/vrp`.
-
-## First results (synthetic, reproducible)
-
-Synthetic 7 x 7 street grid at Molde harbour (49 nodes, 150 directed edges, one one-way street, one
-footway excluded) with a 60 m Gaussian hill. 3.5 t electric van; default urban speeds. Not real
-terrain: this checks the method, it is not a finding about Molde.
-
-| Route objective | Length | Time | Energy | Climb |
-|---|---|---|---|---|
-| Fastest | 2,393 m | 229 s | 0.659 kWh | 59.8 m |
-| Least energy | 2,392 m | 287 s | **0.342 kWh** | 6.0 m |
-
-The fastest route takes the higher-speed street over the hill; the least-energy route goes around it.
-
-Delivery round, 8 clients with time windows, 3 vans of capacity 8: PyVRP and OR-Tools find the same plan,
-1,120 s total driving, all windows met, no capacity violations.
-
-Reproduce: `python examples/showcase.py`.
-
-## Validation
-
-`python -m pytest tests` runs 55 tests, including:
-- energy per edge against a hand calculation; uphill cost exceeds downhill recovery;
-- least-energy routes against an independent Bellman-Ford over reachable targets on a 120 m hill;
-- VRP: both solvers feasible and agreeing; a 5-stop case equal to brute-force enumeration of all routes;
-  time-window violations reported, never hidden;
-- optimisation: transportation and facility location against hand and brute-force optima, min-cost
-  flow against NetworkX, exact CVRP against brute force, and the exact model certifying the PyVRP plan
-  on the Molde grid; Gurobi, CPLEX and HiGHS agreeing on every model;
-- data trees: flatten, graft, simplify, trim, shift, flip, path-mapper masks, the matching rules of
-  Issa (2024) section 3_3, pairing by branch order,
-  graft-against-flat-list cross products; the diagnoser on a recorded faulty definition;
-- MCP server through the SDK's in-memory client and as a stdio subprocess; Hops components with the JSON
-  payloads Grasshopper sends, including a VRP plan returned as one tree branch per vehicle;
-- skill and agent files well-formed, router targets existing.
-
-## Reproduce
+## Quick start
 
 ```bash
 pip install -r requirements.txt
-python -m pytest tests
-python examples/showcase.py
-python skills/vrp-solve/scripts/vrp_solve.py --osm grid_molde.osm \
-       --problem skills/vrp-solve/examples/deliveries.json --solver both
+python -m pytest tests                      # 74 tests, also run in CI
+claude --plugin-dir .                       # use the skills and agents in Claude Code
+python servers/hops_app.py                  # then point a Grasshopper Hops component at localhost:5000/cl/vrp
+python examples/transplan_study.py          # behaviour -> agents -> futures -> figures
+python examples/routing_study.py            # terrain-aware routing and vehicle routing
 ```
-With Claude Code, load the repository as a plugin: `claude --plugin-dir .` The router skill
-`cl-foundations` dispatches to the others.
+
+## Research direction
+
+The framework is built for scenario-based transport planning under deep uncertainty: estimated
+behaviour driving agent-based models, explored across futures, with backcasting from 2050 targets.
+Research questions and a dissertation outline: [`docs/research-proposal-outline.md`](docs/research-proposal-outline.md).
+What we absorb next and from where: [`docs/CHECKLIST.md`](docs/CHECKLIST.md).
+How claims are sourced: [`docs/CLAIMS.md`](docs/CLAIMS.md).
 
 ## Limitations
 
-- Results so far are on synthetic terrain. Real DEMs drape bridges and tunnels over the ground and need
-  checking edge by edge.
-- Vehicle parameters and default speeds are assumptions; they must be calibrated with operator data.
-- Energy is constant-speed traction: no acceleration, stops, payload changes or cabin heating, so real
-  consumption is higher, especially in winter.
-- Energy objectives in the VRP use a constant shift per leg to keep costs non-negative, which slightly
-  favours fewer vehicles; reported energy is always unshifted.
-- The Rhino-side probe follows the Grasshopper SDK but has not yet been run in a live Rhino session.
-
-## Roadmap
-
-Full checklist with sources and priorities: [`docs/CHECKLIST.md`](docs/CHECKLIST.md).
-
-1. Real case: Molde and Kristiansund networks with the Norwegian national elevation model.
-2. Ferry and bridge edges, and winter speed and energy profiles.
-3. Fleet scenarios: diesel vs electric, depot location, charging, sensitivity analysis.
-4. Accessibility and isochrones for services across the two towns.
-5. Rhino/Grasshopper integration through Rhino MCP and Heron: GIS import at true coordinates, baking
-   routes, layering and massing, live probing of data trees.
-6. Multi-objective planning (time vs energy vs fleet size) with Pareto fronts.
+- Demonstration data are synthetic; real data (national travel survey, SSB, NVDB, Entur, Kartverket)
+  are the next step.
+- The Rhino-side probe and Hops components follow McNeel's SDK and are tested with recorded payloads,
+  but have not yet run in a live Rhino session.
+- GIS export, environmental analysis and Grasshopper optimisation links are planned, not built.
 
 ## Repository map
 
 ```
-skills/            Claude Code skills (each: SKILL.md, scripts/, examples/ or reference/)
+skills/            Claude Code skills (SKILL.md + scripts/ each)
 agents/            Claude Code agents
-tests/             pytest suite
-examples/          showcase script reproducing the results above
-grid_molde.osm     synthetic test network
 servers/           MCP server and Grasshopper Hops app over a shared core
-docs/              checklist of what we absorb next, and the claims and sources policy
-knowledge-bank/    third-party open-source collection, catalog and tooling (see its README)
+examples/          end-to-end studies
+data/synthetic/    synthetic test network and generator
+docs/              architecture and toolchain figures, sample results, proposal outline, checklist, claims policy
+tests/             pytest suite (run in CI)
 tools/             knowledge-bank tooling: sync, harvest, assemble
+knowledge-bank/    third-party open-source references and books, with licenses
 ```
 
 ## Credits
 
-- Open-source engines: [OSMnx](https://github.com/gboeing/osmnx) (Boeing), [PyVRP](https://github.com/PyVRP/PyVRP)
-  (Wouda, Lan, Kool), [Google OR-Tools](https://github.com/google/or-tools), [NetworkX](https://networkx.org).
-- Optimisation: [Pyomo](https://github.com/Pyomo/pyomo), [HiGHS](https://github.com/ERGO-Code/HiGHS);
-  Gurobi and IBM CPLEX through their free editions.
-- Data-tree rules checked against Rajaa Issa, *Essential Algorithms and Data Structures for
-  Computational Design in Grasshopper*, 2nd ed., Robert McNeel & Associates, 2024 (CC BY-SA 3.0 US);
-  the book and *The Essential Mathematics for Computational Design* are in `knowledge-bank/books/`.
-- The skill-plugin structure (foundation router, specialist skills, calculators) follows the open AEC
-  skill collections by [Abhinav Bhardwaj](https://github.com/Abhinavbwj) (MIT).
-- Everything under `knowledge-bank/vendor/` is third-party work kept under its own license; see
-  [`knowledge-bank/ATTRIBUTION.md`](knowledge-bank/ATTRIBUTION.md).
-- Connectivity: [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk),
-  [ghhops-server](https://github.com/mcneel/compute.rhino3d) and [rhino3dm](https://github.com/mcneel/rhino3dm) (McNeel).
-- Sources policy: [`docs/CLAIMS.md`](docs/CLAIMS.md).
+- Biogeme (Bierlaire), EMA Workbench (Kwakkel), OSMnx (Boeing), NetworkX, PyVRP, Google OR-Tools, Pyomo,
+  HiGHS; Gurobi and IBM CPLEX free editions; MCP Python SDK; McNeel's ghhops-server and rhino3dm.
+- Grasshopper data-tree rules checked against Rajaa Issa, *Essential Algorithms and Data Structures for
+  Computational Design in Grasshopper*, 2nd ed., McNeel 2024 (CC BY-SA 3.0 US).
+- Skill-plugin structure and the design toolkit above after Abhinav Bhardwaj's open AEC skill collections (MIT).
+- Third-party code under `knowledge-bank/vendor/` keeps its own licenses: [`ATTRIBUTION.md`](knowledge-bank/ATTRIBUTION.md).
 - Built with [Claude Code](https://claude.com/claude-code) as a coding assistant.

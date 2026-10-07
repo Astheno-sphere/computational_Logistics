@@ -9,6 +9,9 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/abhinav/Abhinavbwj__Urban-Design-Skills-Claude`: https://github.com/Abhinavbwj/Urban-Design-Skills-Claude.git, MIT, commit 666327b
 - `vendor/abhinav/Abhinavbwj__aec-knowledge-graph`: https://github.com/Abhinavbwj/aec-knowledge-graph.git, MIT, commit 00e796f
 - `vendor/agent-harnesses/NousResearch__hermes-agent`: https://github.com/NousResearch/hermes-agent.git, MIT, commit 0e37a43
+- `vendor/choice-modelling/arteagac__xlogit`: https://github.com/arteagac/xlogit.git, GPL, commit c3d6d44
+- `vendor/choice-modelling/michelbierlaire__biogeme`: https://github.com/michelbierlaire/biogeme.git, MIT, commit 3dd3d36
+- `vendor/choice-modelling/timothyb0912__pylogit`: https://github.com/timothyb0912/pylogit.git, BSD-3-Clause, commit cffc9c5
 - `vendor/claude-code-guides/FlorianBruniaux__claude-code-ultimate-guide`: https://github.com/FlorianBruniaux/claude-code-ultimate-guide.git, CC-BY-SA-4.0, commit f1b8cbe
 - `vendor/claude-skill-registries/GetBindu__awesome-claude-code-and-skills`: https://github.com/GetBindu/awesome-claude-code-and-skills.git, Apache-2.0, commit 5302371
 - `vendor/claude-skill-registries/JasonColapietro__suede-creator-skills`: https://github.com/JasonColapietro/suede-creator-skills.git, MIT, commit a9bf55e
@@ -29,6 +32,10 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/computational-design/ladybug-tools__lbt-grasshopper`: https://github.com/ladybug-tools/lbt-grasshopper.git, AGPL, commit fe51025
 - `vendor/computational-design/speckleworks__SpeckleCore`: https://github.com/speckleworks/SpeckleCore.git, MIT, commit d29e36a
 - `vendor/computational-design/visgl__deck.gl`: https://github.com/visgl/deck.gl.git, MIT, commit b04c8f2
+- `vendor/dmdu/Project-Platypus__Platypus`: https://github.com/Project-Platypus/Platypus.git, GPL, commit c1baaa2
+- `vendor/dmdu/Project-Platypus__Rhodium`: https://github.com/Project-Platypus/Rhodium.git, GPL, commit 1c09159
+- `vendor/dmdu/SALib__SALib`: https://github.com/SALib/SALib.git, MIT, commit c8b2be5
+- `vendor/dmdu/quaquel__EMAworkbench`: https://github.com/quaquel/EMAworkbench.git, BSD-3-Clause, commit 3798b37
 - `vendor/frontier-model-tooling/anthropics__anthropic-quickstarts`: https://github.com/anthropics/anthropic-quickstarts.git, MIT, commit c474585
 - `vendor/frontier-model-tooling/anthropics__anthropic-sdk-python`: https://github.com/anthropics/anthropic-sdk-python.git, MIT, commit 18f2554
 - `vendor/frontier-model-tooling/anthropics__claude-agent-sdk-python`: https://github.com/anthropics/claude-agent-sdk-python.git, MIT, commit 23bb015
@@ -58,6 +65,7 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/gh-connectivity/ladybug-tools__honeybee-radiance`: https://github.com/ladybug-tools/honeybee-radiance.git, AGPL, commit 59e9729
 - `vendor/gh-connectivity/mcneel__rhino.inside-revit`: https://github.com/mcneel/rhino.inside-revit.git, MIT, commit 0c8355b
 - `vendor/gh-connectivity/pyrevitlabs__pyRevit`: https://github.com/pyrevitlabs/pyRevit.git, GPL, commit 20b194a
+- `vendor/gis-data-connectors/LtGlahn__nvdbapi-V3`: https://github.com/LtGlahn/nvdbapi-V3.git, MIT, commit 92e9a8c
 - `vendor/gis-data-connectors/blueherongis__Heron`: https://github.com/blueherongis/Heron.git, MIT, commit 2abb8c8
 - `vendor/gis-data-connectors/kartverket__norgeskart`: https://github.com/kartverket/norgeskart.git, MIT, commit 536a961
 - `vendor/gis-data-connectors/qgis__QGIS`: https://github.com/qgis/QGIS.git, GPL, commit 6c00806
@@ -169,6 +177,13 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/python-core-libs/anyoptimization__pymoo`: https://github.com/anyoptimization/pymoo.git, Apache-2.0, commit 23110c1
 - `vendor/python-core-libs/pandas-dev__pandas`: https://github.com/pandas-dev/pandas.git, BSD-3-Clause, commit 63651d6
 - `vendor/python-core-libs/shapely__shapely`: https://github.com/shapely/shapely.git, BSD-3-Clause, commit 0e92040
+- `vendor/raster-gis-tools/OSGeo__gdal`: https://github.com/OSGeo/gdal.git, Apache-2.0, commit f786af4
+- `vendor/raster-gis-tools/PDAL__PDAL`: https://github.com/PDAL/PDAL.git, BSD-3-Clause, commit 0fffb22
+- `vendor/raster-gis-tools/cogeotiff__rio-cogeo`: https://github.com/cogeotiff/rio-cogeo.git, BSD-3-Clause, commit 0b7d872
+- `vendor/raster-gis-tools/geopandas__pyogrio`: https://github.com/geopandas/pyogrio.git, MIT, commit 0d71fa6
+- `vendor/raster-gis-tools/jblindsay__whitebox-tools`: https://github.com/jblindsay/whitebox-tools.git, MIT, commit 3d7c73c
+- `vendor/raster-gis-tools/osmcode__osmium-tool`: https://github.com/osmcode/osmium-tool.git, GPL, commit f8ba3b3
+- `vendor/raster-gis-tools/rasterio__rasterio`: https://github.com/rasterio/rasterio.git, BSD-3-Clause, commit 3f68565
 - `vendor/rhino-grasshopper-mcp/alfredatnycu__grasshopper-mcp`: https://github.com/alfredatnycu/grasshopper-mcp.git, MIT, commit 1e5360e
 - `vendor/rhino-grasshopper-mcp/jingcheng-chen__rhinomcp`: https://github.com/jingcheng-chen/rhinomcp.git, MIT, commit 70b63a2
 - `vendor/rhino-grasshopper-mcp/mcneel__compute.rhino3d`: https://github.com/mcneel/compute.rhino3d.git, MIT, commit 80e9057
@@ -196,8 +211,11 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/urban-mobility/ActivitySim__activitysim`: https://github.com/ActivitySim/activitysim.git, BSD-3-Clause, commit e44be4d
 - `vendor/urban-mobility/UDST__pandana`: https://github.com/UDST/pandana.git, AGPL, commit e070217
 - `vendor/urban-mobility/UDST__urbansim`: https://github.com/UDST/urbansim.git, BSD-3-Clause, commit 1a9a68e
+- `vendor/urban-mobility/benchmark-urbanism__cityseer-api`: https://github.com/benchmark-urbanism/cityseer-api.git, AGPL, commit 0e321c1
 - `vendor/urban-mobility/conveyal__r5`: https://github.com/conveyal/r5.git, MIT, commit 6f35542
 - `vendor/urban-mobility/eclipse-sumo__sumo`: https://github.com/eclipse-sumo/sumo.git, GPL, commit 6623f76
+- `vendor/urban-mobility/eqasim-org__eqasim-java`: https://github.com/eqasim-org/eqasim-java.git, GPL, commit 88eab79
+- `vendor/urban-mobility/gama-platform__gama`: https://github.com/gama-platform/gama.git, GPL, commit da47394
 - `vendor/urban-mobility/movingpandas__movingpandas`: https://github.com/movingpandas/movingpandas.git, BSD-3-Clause, commit b321da5
 - `vendor/urban-mobility/mrcagney__gtfs_kit`: https://github.com/mrcagney/gtfs_kit.git, MIT, commit 107450b
 - `vendor/urban-mobility/overturemaps__overturemaps-py`: https://github.com/overturemaps/overturemaps-py.git, MIT, commit 53c163c
@@ -208,11 +226,14 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes you make to that material under the same license. Do not merge it into differently licensed code.
 
 ## Copyleft sources (verbatim, isolated; see `_KB_COPYLEFT.txt` in each)
+- `vendor/choice-modelling/arteagac__xlogit`: GPL
 - `vendor/claude-code-guides/FlorianBruniaux__claude-code-ultimate-guide`: CC-BY-SA-4.0
 - `vendor/computational-design/IfcOpenShell__IfcOpenShell`: MIXED:GPL+LGPL
 - `vendor/computational-design/ladybug-tools__honeybee-core`: AGPL
 - `vendor/computational-design/ladybug-tools__ladybug`: AGPL
 - `vendor/computational-design/ladybug-tools__lbt-grasshopper`: AGPL
+- `vendor/dmdu/Project-Platypus__Platypus`: GPL
+- `vendor/dmdu/Project-Platypus__Rhodium`: GPL
 - `vendor/gh-connectivity/ladybug-tools__honeybee-energy`: AGPL
 - `vendor/gh-connectivity/ladybug-tools__honeybee-radiance`: AGPL
 - `vendor/gh-connectivity/pyrevitlabs__pyRevit`: GPL
@@ -221,8 +242,12 @@ Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes yo
 - `vendor/harvested-location-services/GeiserX__pumperly-mcp`: GPL
 - `vendor/harvested-location-services/Knight60__ArcGIS-Pro-MCP`: AGPL
 - `vendor/harvested-location-services/mapsmith-ai__MapSmith`: AGPL
+- `vendor/raster-gis-tools/osmcode__osmium-tool`: GPL
 - `vendor/routing-engines/GIScience__openrouteservice`: MIXED:GPL+LGPL
 - `vendor/routing-engines/opentripplanner__OpenTripPlanner`: LGPL
 - `vendor/routing-engines/pgRouting__pgrouting`: GPL
 - `vendor/urban-mobility/UDST__pandana`: AGPL
+- `vendor/urban-mobility/benchmark-urbanism__cityseer-api`: AGPL
 - `vendor/urban-mobility/eclipse-sumo__sumo`: GPL
+- `vendor/urban-mobility/eqasim-org__eqasim-java`: GPL
+- `vendor/urban-mobility/gama-platform__gama`: GPL

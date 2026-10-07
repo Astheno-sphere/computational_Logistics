@@ -1,0 +1,118 @@
+[general]
+name=Cityseer
+qgisMinimumVersion=4.0
+qgisMaximumVersion=4.99
+description=Urban network analysis: centrality, demand flows, accessibility, mixed uses, and statistics
+version=5.7.2
+author=Benchmark Urbanism
+email=gareth.simons@ucl.ac.uk
+
+about=Cityseer provides Processing algorithms for urban network analysis: network centrality
+    (closeness and betweenness), demand-weighted flow betweenness from weighted origins and
+    destinations, land-use accessibility, mixed-use diversity, and localised statistics. Metrics
+    are computed on a dual graph representation where each road segment is a node connected
+    to its neighbours. All distances are network distances walked along the streets, not
+    straight-line distances, with support for multiple distance thresholds, shortest and
+    simplest (angular) paths, boundary polygons, and optional adaptive sampling.
+    Requires the cityseer Python library: pip install cityseer
+
+changelog=5.7.2
+    - No change to plugin behaviour: packaging fix so the library publishes to PyPI (sdist license file)
+
+    5.7.1
+    - No change to plugin behaviour: ty type-check compatibility fix in the library (no functional change)
+
+    5.7.0
+    - No change to plugin behaviour: the library's build_od_matrix helper now assigns zone centroids via the shared data-layer assignment (library API only)
+
+    5.6.1
+    - Demand Betweenness: new advanced Participation parameter (stay-home outside option) making trip generation accessibility-elastic; 1 = everyone travels (unchanged behaviour), walking mode shares suggest 0.15-0.3
+    - Demand Betweenness: origins and destinations are assigned via the shared data-layer workflow (nearest street, offsets included in routed distances) instead of a nearest-node snap
+    - All algorithms: representation-aware assignment on the dual graph (single nearest street with direction-of-approach offsets), so accessibility, mixed-use, and statistics distances shift slightly
+
+    5.5.0
+    - No change to plugin behaviour: the plugin pins the established cleaning parameters, so networks, caches, and outputs are identical to 5.4
+    - The cityseer library gains construction-time cleaning parameters and universal segment-length weighting (library API only)
+
+    5.4.1
+    - Python 3.14 support; the OS Open Roads reader moves from Fiona to pyogrio
+    - rasterio bumped to >=1.4.4 (support for older Intel Macs dropped)
+
+    5.3.1
+    - Accessibility and Mixed Uses skip features with a missing land-use category instead of erroring
+    - QGIS 4 compatibility: set qgisMaximumVersion and remove the deprecated supportsQt6 flag
+
+    5.3.0
+    - New Demand Betweenness (OD Flow) algorithm: spatial-interaction flow allocation from weighted origins to weighted destinations, routed along shortest paths
+    - New Mixed Uses algorithm: Hill diversity (q=0,1,2), Shannon entropy, and Gini-Simpson within distance thresholds
+    - Statistics accepts multiple numerical fields in one run and only computes the selected statistics
+    - Advanced distance-decay expressions for Accessibility, Statistics, and Mixed Uses
+    - Advanced time thresholds (minutes with walking speed) as an alternative to metre distances on all algorithms
+    - Adaptive per-node sampling (polled reach pilot, Hoeffding probabilities, work test) replacing the deterministic distance-based schedule; off by default with an advanced epsilon control
+    - Hillier metric labelled "improved closeness"; default metric for simplest-path closeness
+    - Compatibility with the QGIS 4.2 processing GUI (AlgorithmWidget replaces AlgorithmDialog)
+
+    4.25.0
+    - New CityNetwork class-based API wrapping network construction, centrality, and layers
+    - Fast dual graph builder bypassing NetworkX for direct LineString-to-NetworkStructure construction
+    - Incremental diff-based network updates preserving unchanged node indices
+    - Feature status tracking (active, deleted, invalid_geometry, duplicate, short_self_loop)
+    - Save/load with parquet persistence and full state roundtrip
+    - Boundary polygon support for automatic live node assignment
+    - Construction from GeoDataFrame, WKTs, NetworkX, or OSM
+
+    4.24.1
+    - Fixes sampling behaviour for live vs dead nodes
+
+    4.24.0
+    - Endpoint-aware angular centrality using doubled state-space on dual graphs
+    - Brandes multi-predecessor backpropagation for angular betweenness
+    - Dynamic slope penalty using Tobler's hiking function for z-aware networks
+    - Cycles metric redefined as non-tree edges (circuit rank) in the local reachable subgraph
+    - Add simplest-path tolerance using the same relative-percentage semantics as shortest path
+
+    4.23.9
+    - Fix betweenness threshold to use agg_seconds consistently with closeness
+    - Use prepared boundary geometry for faster containment checks
+
+    4.23.8
+    - Extract sampling module for lightweight imports in QGIS
+
+    4.23.7
+    - Set QGIS minimum version to 4.0
+
+    4.23.6
+    - Linting fixes
+
+    4.23.5
+    - Add Accessibility and Statistics algorithms
+    - Independent metric selection per centrality category
+
+    4.23.4
+    - Expose Hillier metric for angular closeness
+
+    4.23.3
+    - Update plugin homepage URL
+
+    4.23.2
+    - Fix betweenness tolerance: always update shortest distance on improvement
+    - Default tolerance to 0 (exact shortest paths)
+
+    4.23.1
+    - Fix betweenness tolerance: accurate distance tracking prevents route drift
+    - Fix betweenness overflow with tolerance-based path counting
+    - Switch metric output to f64 precision
+    - Add geometry validation and network cleanup on ingestion
+    - Default tolerance to 0 (exact shortest paths)
+
+tracker=https://github.com/benchmark-urbanism/cityseer-api/issues
+repository=https://github.com/benchmark-urbanism/cityseer-api
+homepage=https://cityseer.benchmarkurbanism.com/plugin
+
+hasProcessingProvider=yes
+tags=network centrality,urban analysis,closeness,betweenness,accessibility,statistics,street network,graph
+category=Analysis
+icon=icon.png
+experimental=True
+deprecated=False
+license=AGPL-3.0

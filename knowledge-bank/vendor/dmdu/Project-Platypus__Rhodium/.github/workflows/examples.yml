@@ -1,0 +1,85 @@
+name: Examples
+
+on: 
+  workflow_dispatch:
+    inputs:
+      python-version:
+        type: string
+        description: Version of Python (e.g., 3.12)
+        required: false
+  schedule: # Run once a week to detect any regressions
+    - cron: '0 0 * * 1'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: [
+          "Basic/example.py",
+          "Basic/example_decorators.py",
+          "Basic/example_parallelization.py",
+          "Basic/sensitivity_analysis.py",
+          "Basic/dps_example.py",
+          "Eijgenraam/eijgenraam.py",
+          "Eijgenraam/eijgenraam_mordm.py",
+          "Languages/Python/lakeModelInPython.py",
+          "Languages/R/lakeModelInR.py",
+          #"Languages/Excel/lakeModelInExcel.py"  # requires Windows
+          "Languages/C/lakeModelInC.py"]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get Python version
+        run: |
+          PYTHON_VERSION="${{ inputs.python-version }}"
+
+          if [ -z "$PYTHON_VERSION" ]; then
+            PYTHON_VERSION=$(cat pyproject.toml | grep "requires-python" | grep -Eo "[0-9]+\.[0-9]+")
+          fi
+
+          echo "PYTHON_VERSION=${PYTHON_VERSION}" >> $GITHUB_ENV
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y graphviz r-base
+          pip install .[examples]
+
+      - name: Run example
+        run: |
+          EXAMPLE="examples/${{ matrix.example }}"
+          EXAMPLE_DIR=$(dirname "${EXAMPLE}")
+          EXAMPLE_FILE=$(basename "${EXAMPLE}")
+
+          pushd "${EXAMPLE_DIR}"
+
+          if [ -f "Makefile" ]; then
+            make
+          fi
+
+          IMAGES_DIR=$(realpath images/)
+
+          export RHODIUM_NO_PROMPT=true
+          export RHODIUM_FIGURE_OUTPUT="${IMAGES_DIR}"
+          export LD_LIBRARY_PATH="$(pwd):${LD_LIBRARY_PATH}"
+
+          python "${EXAMPLE_FILE}"
+
+          echo "IMAGES_DIR=${IMAGES_DIR}" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=${EXAMPLE_FILE}" >> $GITHUB_ENV
+
+      - name: Upload figures
+        uses: actions/upload-artifact@v7
+        with:
+          name: "${{ env.ARTIFACT_NAME }}"
+          path: "${{ env.IMAGES_DIR }}"
+          if-no-files-found: ignore

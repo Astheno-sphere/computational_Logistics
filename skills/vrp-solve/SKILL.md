@@ -18,7 +18,7 @@ Times are seconds from the start of the shift. `objective` is `travel_time`, `le
 
 ## Run
 ```
-python scripts/vrp_solve.py --osm grid_molde.osm --problem examples/deliveries.json --solver both
+python scripts/vrp_solve.py --osm data/synthetic/grid_molde.osm --problem examples/deliveries.json --solver both
 python scripts/vrp_solve.py --osm molde.osm --dem dem.tif --problem day1.json --paths   # node paths for rhino baking
 ```
 

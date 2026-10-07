@@ -6,9 +6,9 @@ Pipeline: OSM (file or place name) -> drivable edges only -> project to UTM -> e
 Every edge ends up with: length [m], grade [-], speed_kph, travel_time [s], energy_kwh.
 
 CLI:
-  python osm_network.py --osm grid_molde.osm --summary
+  python osm_network.py --osm data/synthetic/grid_molde.osm --summary
   python osm_network.py --place "Molde, Norway" --dem dem.tif --out molde.graphml --summary
-  python osm_network.py --osm grid_molde.osm --route 7.1592,62.7375 7.1826,62.7483 --weight energy_kwh
+  python osm_network.py --osm data/synthetic/grid_molde.osm --route 7.1592,62.7375 7.1826,62.7483 --weight energy_kwh
 """
 import argparse
 import json
