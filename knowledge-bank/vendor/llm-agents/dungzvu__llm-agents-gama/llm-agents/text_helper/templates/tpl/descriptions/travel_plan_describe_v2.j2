@@ -1,0 +1,12 @@
+Expected starting in {{ plan.start_in | humanize_duration }}.
+Total walking: Time: {{ plan.walking_time | duration_to_bucket_text }}; Distance: {{ plan.walking_distance | humanize_distance }}.
+Legs:
+{%- for leg in plan.legs %}{%- if not leg.is_transfer %}
+- Transit; {{ leg.transit_route | get_transit_route_type }} '{{ leg.transit_route | format_route_id }}'; From '{{ leg.start_location.stop }}'; To '{{ leg.end_location.stop }}'; Estimated duration: {{ ((leg.end_time | to_timestamp) - (leg.start_time | to_timestamp)) | duration_to_bucket_text }}.
+    {%- else %}
+- Walk; 
+    {%- if leg.start_location.stop %}From '{{ leg.start_location.stop }}';{%- endif %}
+    {%- if leg.end_location.stop %} To '{{ leg.end_location.stop }}'; 
+    {%- else %}To '{{ plan.purpose }}';{%- endif %}Estimated duration: {{ ((leg.end_time | to_timestamp) - (leg.start_time | to_timestamp)) | duration_to_bucket_text }}.
+{%- endif %}
+{%- endfor %}

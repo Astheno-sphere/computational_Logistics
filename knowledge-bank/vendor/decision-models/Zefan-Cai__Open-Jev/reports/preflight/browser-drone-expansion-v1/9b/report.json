@@ -1,0 +1,1172 @@
+{
+  "created_at_utc": "2026-09-20T04:01:59.883458+00:00",
+  "complete": true,
+  "model": "Qwen/Qwen3.5-9B",
+  "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "hostname": "kwade5342000001",
+  "script_sha256": "3bb6eb7ab72a90743f64b1fa225bccadad76ffd2c6c4da071deeb534a7f6db8c",
+  "repo": "/mnt/localssd/open-jev/repo",
+  "repo_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+  "implementation_sha256": {
+    "jev/model.py": "b8f135ef2da1f1205ba715b02f3dcf3c25962a2bec7e92a335198f59b6083c83",
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "jev/train.py": "0bf2c139abede1279c1d595bff7b2553aadea7c8bd8663f03d091e10f5eecee2",
+    "scripts/preflight.py": "91bf2b7af29b14edcfd5cb4d79f5188abca98d19e6a0bf016e17c0aafab62bdc",
+    "scripts/launch_expansion.py": "6102b96fa357b0c37ba05c43f39fa709aa24f8eaa4d394085211ecd8a0355af2"
+  },
+  "dataset": "/data/zefan/open-jev/data/browser-drone-expansion-v1",
+  "dataset_manifest_sha256": "ba001b88787ce21576017897a0cbdedd5917ceb29ad3522b0e1fb7b4836d49df",
+  "dataset_split_sha256": {
+    "train": "91a3e3c715abd735509a5a23453161475aff85626f2c47563a8fab4e7dc79239",
+    "calibration": "8a366dbb71dbe57b98a25da3071fc858beb7e8567adf4abf952c3d98f79bb94c",
+    "validation": "bb49a3ca608dbeb543c56a20ee2f32e75f65be835fcb40ec40014af7351c6c7d",
+    "test": "662d5e79da70eba77ad740eb37576b8157e53e5c1d8cd9344c60ec56d3969637",
+    "ood": "364992ae82a2d8b6f3f4ed68a0efa06d9a6b9ae469d81113d4165f762eec0a94"
+  },
+  "runtime": {
+    "python": "3.11.15 (main, Mar 11 2026, 17:20:07) [GCC 14.3.0]",
+    "transformers": "5.10.2",
+    "tokenizers": "0.22.2"
+  },
+  "tokenizer": {
+    "class": "Qwen2Tokenizer",
+    "is_fast": true,
+    "assets_sha256": {
+      "config.json": "d0883072e01861ed0b2d47be3c16c36a8e81c224c7ffaa310c6558fb3f932b05",
+      "tokenizer.json": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42",
+      "tokenizer_config.json": "316230d6a809701f4db5ea8f8fc862bc3a6f3229c937c174e674ff3ca0a64ac8",
+      "chat_template.jinja": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+    },
+    "special_tokens_added_by_tokenizer": 0,
+    "model_type": "qwen3_5",
+    "model_max_positions": 262144
+  },
+  "encoding": {
+    "chat_template_tokenize": false,
+    "add_generation_prompt": true,
+    "enable_thinking": false,
+    "tokenizer_add_special_tokens": "default True, same as DecisionModel",
+    "truncation": false,
+    "padding": "Unpadded lengths; checked against actual padded encoding on two rows per source/split"
+  },
+  "existing_preflight_comparison": {
+    "sampled_rows": 144,
+    "sampling": "first two rows per source/split",
+    "mismatches": []
+  },
+  "required_max_length": 4096,
+  "passes_required_limit": true,
+  "overall": {
+    "rows": 163050,
+    "candidate_sequences": 544089,
+    "input_tokens": 304127095,
+    "min_tokens": 76,
+    "max_tokens": 1756,
+    "mean_tokens": 558.9657114920537,
+    "percentiles_nearest_rank": {
+      "50": 246,
+      "90": 1193,
+      "95": 1343,
+      "99": 1490
+    },
+    "padded_tokens_if_each_row_encoded_separately": 305279135,
+    "max_candidate_sequences_per_row": 16,
+    "longest_candidate": {
+      "id": "browser-control-v1:parent:76dfec94cd14bf434388f3a4:ambiguous_observed_target:operation",
+      "source": "browser-control-v1",
+      "kind": "choice",
+      "split": "ood",
+      "tokens": 1756,
+      "candidate_index": 6
+    },
+    "largest_padded_row": {
+      "id": "browser-control-v1:parent:76dfec94cd14bf434388f3a4:ambiguous_observed_target:operation",
+      "source": "browser-control-v1",
+      "kind": "choice",
+      "split": "ood",
+      "candidate_sequences": 8,
+      "max_length": 1756,
+      "padded_tokens": 14048
+    },
+    "over_limits": {
+      "1536": {
+        "rows": 449,
+        "candidate_sequences": 1833
+      },
+      "4096": {
+        "rows": 0,
+        "candidate_sequences": 0
+      },
+      "8192": {
+        "rows": 0,
+        "candidate_sequences": 0
+      },
+      "16384": {
+        "rows": 0,
+        "candidate_sequences": 0
+      }
+    }
+  },
+  "by_split": {
+    "train": {
+      "rows": 110324,
+      "candidate_sequences": 365257,
+      "input_tokens": 188212841,
+      "min_tokens": 76,
+      "max_tokens": 1445,
+      "mean_tokens": 515.2887993933039,
+      "percentiles_nearest_rank": {
+        "50": 220,
+        "90": 1119,
+        "95": 1183,
+        "99": 1255
+      },
+      "padded_tokens_if_each_row_encoded_separately": 188965399,
+      "max_candidate_sequences_per_row": 16,
+      "longest_candidate": {
+        "id": "browser-control-v1:parent:4f592e00e29c94bc4b65297e:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "train",
+        "tokens": 1445,
+        "candidate_index": 6
+      },
+      "largest_padded_row": {
+        "id": "browser-control-v1:parent:4f592e00e29c94bc4b65297e:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "train",
+        "candidate_sequences": 8,
+        "max_length": 1445,
+        "padded_tokens": 11560
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "calibration": {
+      "rows": 6883,
+      "candidate_sequences": 20625,
+      "input_tokens": 12365943,
+      "min_tokens": 76,
+      "max_tokens": 1432,
+      "mean_tokens": 599.5608727272727,
+      "percentiles_nearest_rank": {
+        "50": 437,
+        "90": 1124,
+        "95": 1193,
+        "99": 1267
+      },
+      "padded_tokens_if_each_row_encoded_separately": 12407108,
+      "max_candidate_sequences_per_row": 16,
+      "longest_candidate": {
+        "id": "browser-control-v1:parent:747b226385e6c090cbe3872d:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "calibration",
+        "tokens": 1432,
+        "candidate_index": 6
+      },
+      "largest_padded_row": {
+        "id": "browser-control-v1:parent:747b226385e6c090cbe3872d:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "calibration",
+        "candidate_sequences": 8,
+        "max_length": 1432,
+        "padded_tokens": 11456
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "validation": {
+      "rows": 5562,
+      "candidate_sequences": 16670,
+      "input_tokens": 9813052,
+      "min_tokens": 77,
+      "max_tokens": 1432,
+      "mean_tokens": 588.6653869226154,
+      "percentiles_nearest_rank": {
+        "50": 410,
+        "90": 1132,
+        "95": 1195,
+        "99": 1266
+      },
+      "padded_tokens_if_each_row_encoded_separately": 9844257,
+      "max_candidate_sequences_per_row": 16,
+      "longest_candidate": {
+        "id": "browser-control-v1:parent:fb89f7beb3bf1538bad39815:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "validation",
+        "tokens": 1432,
+        "candidate_index": 6
+      },
+      "largest_padded_row": {
+        "id": "browser-control-v1:parent:fb89f7beb3bf1538bad39815:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "validation",
+        "candidate_sequences": 8,
+        "max_length": 1432,
+        "padded_tokens": 11456
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "test": {
+      "rows": 14902,
+      "candidate_sequences": 50181,
+      "input_tokens": 27906286,
+      "min_tokens": 76,
+      "max_tokens": 1441,
+      "mean_tokens": 556.112592415456,
+      "percentiles_nearest_rank": {
+        "50": 250,
+        "90": 1126,
+        "95": 1197,
+        "99": 1267
+      },
+      "padded_tokens_if_each_row_encoded_separately": 28017747,
+      "max_candidate_sequences_per_row": 16,
+      "longest_candidate": {
+        "id": "browser-control-v1:parent:93472f745e002b978f520c72:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "test",
+        "tokens": 1441,
+        "candidate_index": 6
+      },
+      "largest_padded_row": {
+        "id": "browser-control-v1:parent:93472f745e002b978f520c72:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "test",
+        "candidate_sequences": 8,
+        "max_length": 1441,
+        "padded_tokens": 11528
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "ood": {
+      "rows": 25379,
+      "candidate_sequences": 91356,
+      "input_tokens": 65828973,
+      "min_tokens": 76,
+      "max_tokens": 1756,
+      "mean_tokens": 720.5763496650467,
+      "percentiles_nearest_rank": {
+        "50": 378,
+        "90": 1413,
+        "95": 1500,
+        "99": 1567
+      },
+      "padded_tokens_if_each_row_encoded_separately": 66044624,
+      "max_candidate_sequences_per_row": 16,
+      "longest_candidate": {
+        "id": "browser-control-v1:parent:76dfec94cd14bf434388f3a4:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "ood",
+        "tokens": 1756,
+        "candidate_index": 6
+      },
+      "largest_padded_row": {
+        "id": "browser-control-v1:parent:76dfec94cd14bf434388f3a4:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "ood",
+        "candidate_sequences": 8,
+        "max_length": 1756,
+        "padded_tokens": 14048
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 449,
+          "candidate_sequences": 1833
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    }
+  },
+  "by_source": {
+    "browser-control-v1": {
+      "rows": 21980,
+      "candidate_sequences": 129308,
+      "input_tokens": 145787240,
+      "min_tokens": 747,
+      "max_tokens": 1756,
+      "mean_tokens": 1127.4417669440406,
+      "percentiles_nearest_rank": {
+        "50": 1107,
+        "90": 1378,
+        "95": 1475,
+        "99": 1548
+      },
+      "padded_tokens_if_each_row_encoded_separately": 146434324,
+      "max_candidate_sequences_per_row": 8,
+      "longest_candidate": {
+        "id": "browser-control-v1:parent:76dfec94cd14bf434388f3a4:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "ood",
+        "tokens": 1756,
+        "candidate_index": 6
+      },
+      "largest_padded_row": {
+        "id": "browser-control-v1:parent:76dfec94cd14bf434388f3a4:ambiguous_observed_target:operation",
+        "source": "browser-control-v1",
+        "kind": "choice",
+        "split": "ood",
+        "candidate_sequences": 8,
+        "max_length": 1756,
+        "padded_tokens": 14048
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 449,
+          "candidate_sequences": 1833
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "customer-control-v1": {
+      "rows": 6000,
+      "candidate_sequences": 15000,
+      "input_tokens": 3022570,
+      "min_tokens": 139,
+      "max_tokens": 303,
+      "mean_tokens": 201.50466666666668,
+      "percentiles_nearest_rank": {
+        "50": 201,
+        "90": 234,
+        "95": 243,
+        "99": 262
+      },
+      "padded_tokens_if_each_row_encoded_separately": 3052570,
+      "max_candidate_sequences_per_row": 4,
+      "longest_candidate": {
+        "id": "customer-control-v1:42:810:category",
+        "source": "customer-control-v1",
+        "kind": "choice",
+        "split": "ood",
+        "tokens": 303,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "customer-control-v1:42:810:category",
+        "source": "customer-control-v1",
+        "kind": "choice",
+        "split": "ood",
+        "candidate_sequences": 4,
+        "max_length": 303,
+        "padded_tokens": 1212
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "drone-control-v1": {
+      "rows": 25249,
+      "candidate_sequences": 76743,
+      "input_tokens": 87796057,
+      "min_tokens": 1030,
+      "max_tokens": 1429,
+      "mean_tokens": 1144.0269079916084,
+      "percentiles_nearest_rank": {
+        "50": 1099,
+        "90": 1349,
+        "95": 1371,
+        "99": 1397
+      },
+      "padded_tokens_if_each_row_encoded_separately": 87889466,
+      "max_candidate_sequences_per_row": 6,
+      "longest_candidate": {
+        "id": "drone-control-v1:parent:dad75994e672901fb0f83d32:observed_failed_scans:maneuver",
+        "source": "drone-control-v1",
+        "kind": "choice",
+        "split": "ood",
+        "tokens": 1429,
+        "candidate_index": 3
+      },
+      "largest_padded_row": {
+        "id": "drone-control-v1:parent:f444d0d2b436b20e3cde48c4:climb_clearance_limit:maneuver",
+        "source": "drone-control-v1",
+        "kind": "choice",
+        "split": "ood",
+        "candidate_sequences": 6,
+        "max_length": 1424,
+        "padded_tokens": 8544
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "painting-geometry-v1": {
+      "rows": 34560,
+      "candidate_sequences": 159840,
+      "input_tokens": 25830736,
+      "min_tokens": 143,
+      "max_tokens": 185,
+      "mean_tokens": 161.6037037037037,
+      "percentiles_nearest_rank": {
+        "50": 161,
+        "90": 171,
+        "95": 176,
+        "99": 183
+      },
+      "padded_tokens_if_each_row_encoded_separately": 26098576,
+      "max_candidate_sequences_per_row": 16,
+      "longest_candidate": {
+        "id": "painting-geometry-v1:1e21dba4980795f978a1b498:rgb:x10_y10_red",
+        "source": "painting-geometry-v1",
+        "kind": "noul",
+        "split": "ood",
+        "tokens": 185,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "painting-geometry-v1:1e21dba4980795f978a1b498:palette:x10_y10",
+        "source": "painting-geometry-v1",
+        "kind": "choice",
+        "split": "ood",
+        "candidate_sequences": 16,
+        "max_length": 174,
+        "padded_tokens": 2784
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "reasoning-control-v1": {
+      "rows": 7500,
+      "candidate_sequences": 22969,
+      "input_tokens": 5680708,
+      "min_tokens": 117,
+      "max_tokens": 553,
+      "mean_tokens": 247.32064957116114,
+      "percentiles_nearest_rank": {
+        "50": 219,
+        "90": 392,
+        "95": 425,
+        "99": 453
+      },
+      "padded_tokens_if_each_row_encoded_separately": 5694056,
+      "max_candidate_sequences_per_row": 8,
+      "longest_candidate": {
+        "id": "reasoning-control-v1:76109:2290:verification",
+        "source": "reasoning-control-v1",
+        "kind": "noul",
+        "split": "ood",
+        "tokens": 553,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "reasoning-control-v1:76109:960:ordinal",
+        "source": "reasoning-control-v1",
+        "kind": "score",
+        "split": "ood",
+        "candidate_sequences": 8,
+        "max_length": 535,
+        "padded_tokens": 4280
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "snake-v1": {
+      "rows": 18884,
+      "candidate_sequences": 28326,
+      "input_tokens": 4804683,
+      "min_tokens": 120,
+      "max_tokens": 247,
+      "mean_tokens": 169.62094895149332,
+      "percentiles_nearest_rank": {
+        "50": 169,
+        "90": 210,
+        "95": 217,
+        "99": 229
+      },
+      "padded_tokens_if_each_row_encoded_separately": 4804683,
+      "max_candidate_sequences_per_row": 3,
+      "longest_candidate": {
+        "id": "snake-v1:34793dcd79b08b8d73a00230:action",
+        "source": "snake-v1",
+        "kind": "choice",
+        "split": "train",
+        "tokens": 247,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "snake-v1:34793dcd79b08b8d73a00230:action",
+        "source": "snake-v1",
+        "kind": "choice",
+        "split": "train",
+        "candidate_sequences": 3,
+        "max_length": 247,
+        "padded_tokens": 741
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "tic_tac_toe-v1": {
+      "rows": 4298,
+      "candidate_sequences": 15945,
+      "input_tokens": 1958646,
+      "min_tokens": 118,
+      "max_tokens": 126,
+      "mean_tokens": 122.83762935089369,
+      "percentiles_nearest_rank": {
+        "50": 123,
+        "90": 124,
+        "95": 124,
+        "99": 125
+      },
+      "padded_tokens_if_each_row_encoded_separately": 1958646,
+      "max_candidate_sequences_per_row": 9,
+      "longest_candidate": {
+        "id": "tic_tac_toe-v1:..XXXOOO.:.XO.XOXO.",
+        "source": "tic_tac_toe-v1",
+        "kind": "choice",
+        "split": "train",
+        "tokens": 126,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "tic_tac_toe-v1:.........:.........",
+        "source": "tic_tac_toe-v1",
+        "kind": "choice",
+        "split": "train",
+        "candidate_sequences": 9,
+        "max_length": 118,
+        "padded_tokens": 1062
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "tile_platformer-v1": {
+      "rows": 1697,
+      "candidate_sequences": 11879,
+      "input_tokens": 5200718,
+      "min_tokens": 434,
+      "max_tokens": 443,
+      "mean_tokens": 437.80772792322585,
+      "percentiles_nearest_rank": {
+        "50": 438,
+        "90": 440,
+        "95": 440,
+        "99": 442
+      },
+      "padded_tokens_if_each_row_encoded_separately": 5217688,
+      "max_candidate_sequences_per_row": 7,
+      "longest_candidate": {
+        "id": "tile_platformer-v1:a13195ac3228a1ec4b8c7e4f:be4af338ea3513298c15146c",
+        "source": "tile_platformer-v1",
+        "kind": "choice",
+        "split": "train",
+        "tokens": 443,
+        "candidate_index": 4
+      },
+      "largest_padded_row": {
+        "id": "tile_platformer-v1:a13195ac3228a1ec4b8c7e4f:be4af338ea3513298c15146c",
+        "source": "tile_platformer-v1",
+        "kind": "choice",
+        "split": "train",
+        "candidate_sequences": 7,
+        "max_length": 443,
+        "padded_tokens": 3101
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "trex_runner-v1": {
+      "rows": 36,
+      "candidate_sequences": 144,
+      "input_tokens": 36372,
+      "min_tokens": 246,
+      "max_tokens": 265,
+      "mean_tokens": 252.58333333333334,
+      "percentiles_nearest_rank": {
+        "50": 250,
+        "90": 264,
+        "95": 264,
+        "99": 265
+      },
+      "padded_tokens_if_each_row_encoded_separately": 36408,
+      "max_candidate_sequences_per_row": 4,
+      "longest_candidate": {
+        "id": "trex_runner-v1:d7ac206ff1999cb14b808f27:940a4a6c8b7c14b466373f04",
+        "source": "trex_runner-v1",
+        "kind": "choice",
+        "split": "train",
+        "tokens": 265,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "trex_runner-v1:d7ac206ff1999cb14b808f27:940a4a6c8b7c14b466373f04",
+        "source": "trex_runner-v1",
+        "kind": "choice",
+        "split": "train",
+        "candidate_sequences": 4,
+        "max_length": 265,
+        "padded_tokens": 1060
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "vizdoom-basic-v1": {
+      "rows": 9093,
+      "candidate_sequences": 27279,
+      "input_tokens": 6366784,
+      "min_tokens": 206,
+      "max_tokens": 251,
+      "mean_tokens": 233.39506580153233,
+      "percentiles_nearest_rank": {
+        "50": 239,
+        "90": 249,
+        "95": 250,
+        "99": 250
+      },
+      "padded_tokens_if_each_row_encoded_separately": 6384970,
+      "max_candidate_sequences_per_row": 5,
+      "longest_candidate": {
+        "id": "vizdoom-basic-v1:190919:ood:59:3:score",
+        "source": "vizdoom-basic-v1",
+        "kind": "score",
+        "split": "ood",
+        "tokens": 251,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "vizdoom-basic-v1:190919:ood:59:3:score",
+        "source": "vizdoom-basic-v1",
+        "kind": "score",
+        "split": "ood",
+        "candidate_sequences": 5,
+        "max_length": 251,
+        "padded_tokens": 1255
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "wikispeedia-v1": {
+      "rows": 2253,
+      "candidate_sequences": 25156,
+      "input_tokens": 2040038,
+      "min_tokens": 76,
+      "max_tokens": 99,
+      "mean_tokens": 81.09548417872476,
+      "percentiles_nearest_rank": {
+        "50": 81,
+        "90": 85,
+        "95": 86,
+        "99": 89
+      },
+      "padded_tokens_if_each_row_encoded_separately": 2105205,
+      "max_candidate_sequences_per_row": 12,
+      "longest_candidate": {
+        "id": "wikispeedia-v1:pair:e565061a23c1d875209742d0",
+        "source": "wikispeedia-v1",
+        "kind": "choice",
+        "split": "train",
+        "tokens": 99,
+        "candidate_index": 8
+      },
+      "largest_padded_row": {
+        "id": "wikispeedia-v1:pair:e565061a23c1d875209742d0",
+        "source": "wikispeedia-v1",
+        "kind": "choice",
+        "split": "train",
+        "candidate_sequences": 12,
+        "max_length": 99,
+        "padded_tokens": 1188
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "workflow-controls-v1/agent_trace_observability": {
+      "rows": 5250,
+      "candidate_sequences": 5250,
+      "input_tokens": 1981191,
+      "min_tokens": 325,
+      "max_tokens": 423,
+      "mean_tokens": 377.3697142857143,
+      "percentiles_nearest_rank": {
+        "50": 382,
+        "90": 408,
+        "95": 411,
+        "99": 416
+      },
+      "padded_tokens_if_each_row_encoded_separately": 1981191,
+      "max_candidate_sequences_per_row": 1,
+      "longest_candidate": {
+        "id": "workflow-controls-v1:agent_trace_observability:42:200:v2:AUTO-CLOSE",
+        "source": "workflow-controls-v1/agent_trace_observability",
+        "kind": "noul",
+        "split": "ood",
+        "tokens": 423,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "workflow-controls-v1:agent_trace_observability:42:200:v2:AUTO-CLOSE",
+        "source": "workflow-controls-v1/agent_trace_observability",
+        "kind": "noul",
+        "split": "ood",
+        "candidate_sequences": 1,
+        "max_length": 423,
+        "padded_tokens": 423
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "workflow-controls-v1/customer_service": {
+      "rows": 6000,
+      "candidate_sequences": 6000,
+      "input_tokens": 3387134,
+      "min_tokens": 439,
+      "max_tokens": 742,
+      "mean_tokens": 564.5223333333333,
+      "percentiles_nearest_rank": {
+        "50": 541,
+        "90": 664,
+        "95": 679,
+        "99": 707
+      },
+      "padded_tokens_if_each_row_encoded_separately": 3387134,
+      "max_candidate_sequences_per_row": 1,
+      "longest_candidate": {
+        "id": "workflow-controls-v1:customer_service:42:100:v2:REFUND",
+        "source": "workflow-controls-v1/customer_service",
+        "kind": "noul",
+        "split": "ood",
+        "tokens": 742,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "workflow-controls-v1:customer_service:42:100:v2:REFUND",
+        "source": "workflow-controls-v1/customer_service",
+        "kind": "noul",
+        "split": "ood",
+        "candidate_sequences": 1,
+        "max_length": 742,
+        "padded_tokens": 742
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "workflow-controls-v1/invoice_processing": {
+      "rows": 7500,
+      "candidate_sequences": 7500,
+      "input_tokens": 4150310,
+      "min_tokens": 397,
+      "max_tokens": 703,
+      "mean_tokens": 553.3746666666667,
+      "percentiles_nearest_rank": {
+        "50": 561,
+        "90": 637,
+        "95": 648,
+        "99": 668
+      },
+      "padded_tokens_if_each_row_encoded_separately": 4150310,
+      "max_candidate_sequences_per_row": 1,
+      "longest_candidate": {
+        "id": "workflow-controls-v1:invoice_processing:42:10:v2:PAY",
+        "source": "workflow-controls-v1/invoice_processing",
+        "kind": "noul",
+        "split": "ood",
+        "tokens": 703,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "workflow-controls-v1:invoice_processing:42:10:v2:PAY",
+        "source": "workflow-controls-v1/invoice_processing",
+        "kind": "noul",
+        "split": "ood",
+        "candidate_sequences": 1,
+        "max_length": 703,
+        "padded_tokens": 703
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    },
+    "workflow-controls-v1/security_incidents": {
+      "rows": 12750,
+      "candidate_sequences": 12750,
+      "input_tokens": 6083908,
+      "min_tokens": 321,
+      "max_tokens": 561,
+      "mean_tokens": 477.1692549019608,
+      "percentiles_nearest_rank": {
+        "50": 508,
+        "90": 539,
+        "95": 543,
+        "99": 550
+      },
+      "padded_tokens_if_each_row_encoded_separately": 6083908,
+      "max_candidate_sequences_per_row": 1,
+      "longest_candidate": {
+        "id": "workflow-controls-v1:security_incidents:42:170:v0:DISABLE ACCOUNT",
+        "source": "workflow-controls-v1/security_incidents",
+        "kind": "noul",
+        "split": "ood",
+        "tokens": 561,
+        "candidate_index": 0
+      },
+      "largest_padded_row": {
+        "id": "workflow-controls-v1:security_incidents:42:170:v0:DISABLE ACCOUNT",
+        "source": "workflow-controls-v1/security_incidents",
+        "kind": "noul",
+        "split": "ood",
+        "candidate_sequences": 1,
+        "max_length": 561,
+        "padded_tokens": 561
+      },
+      "over_limits": {
+        "1536": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "4096": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "8192": {
+          "rows": 0,
+          "candidate_sequences": 0
+        },
+        "16384": {
+          "rows": 0,
+          "candidate_sequences": 0
+        }
+      }
+    }
+  },
+  "row_lengths_file": "row-lengths.jsonl.gz",
+  "row_lengths_sha256": "f1d48a59f9c6ba25318fb2b30b2d50fab9b15c7bd708a80d3bc9d636ca7bc2e8",
+  "cpu_only": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "offline": true,
+    "cuda_initialized": false,
+    "denied_weight_opens": []
+  },
+  "observed_training_pids_before": {
+    "409482": {
+      "exists": true,
+      "start_ticks": "933935728"
+    },
+    "409485": {
+      "exists": true,
+      "start_ticks": "933935728"
+    },
+    "409498": {
+      "exists": true,
+      "start_ticks": "933935729"
+    }
+  },
+  "observed_training_pids_after": {
+    "409482": {
+      "exists": true,
+      "start_ticks": "933935728"
+    },
+    "409485": {
+      "exists": true,
+      "start_ticks": "933935728"
+    },
+    "409498": {
+      "exists": true,
+      "start_ticks": "933935729"
+    }
+  },
+  "elapsed_seconds": 434.3585184197873,
+  "limits": "Token lengths only; no weights, forward/backward pass, GPU memory fit, throughput or task accuracy measured."
+}

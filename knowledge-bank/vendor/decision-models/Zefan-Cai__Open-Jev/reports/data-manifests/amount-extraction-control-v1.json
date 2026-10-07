@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "amount-extraction-control-v1",
+    "groups": 200,
+    "ood_groups": 40,
+    "seed": 42,
+    "license": "CC0-1.0",
+    "split_policy": "all_document_and_role_counterfactuals_in_original_family; hash_id_splits; reserved_ledger_layout_and_role_wording_ood",
+    "candidate_extractor": {
+      "name": "jev.case_amount_extraction.amount_candidates",
+      "pattern": "(?<![\\w.,])(?:(?:USD|EUR|GBP|CAD|\\$|€|£|¤)[ \\t]?[+-]?[0-9]+(?:[.,][0-9]+)*|[+-]?[0-9]+(?:[.,][0-9]+)*[ \\t]?(?:USD|EUR|GBP|CAD|\\$|€|£|¤))(?![\\w.,])",
+      "reads_query_or_gold": false,
+      "known_limits": "Narrow-NBSP grouping and outer parentheses can yield partial candidates; exact recall is measured without replacement."
+    },
+    "source_files_sha256": {
+      "case_amount_extraction.py": "d87466f66b0c07d1c6df6e65579db3e0494317c57578695fffa52536307100fd",
+      "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+    }
+  },
+  "summary": {
+    "records": 49600,
+    "groups": 200,
+    "unique_inputs": 49600,
+    "splits": {
+      "calibration": 2232,
+      "ood": 9920,
+      "test": 3472,
+      "train": 32984,
+      "validation": 992
+    },
+    "kinds": {
+      "choice": 17800,
+      "noul": 31800
+    },
+    "families": {
+      "evidence": 49600
+    },
+    "sources": {
+      "amount-extraction-control-v1": 49600
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "68a34ca1371b60dc9b49c7d26882893758c16bc1dbb85a636cf0643ed7f5047d",
+    "calibration.jsonl": "4db65ea37fc9569f3666d87762aec37c6786dfa7e7caee9dc70ef6e1420d6e6b",
+    "validation.jsonl": "b9bc54dd4c39eb1ab40313bf0ce1339c48b579077000b5de1c0a9ffaba802e76",
+    "test.jsonl": "f8500ef9dbd65280b2c58edcfc579dd175ddde52bc2b19b6b97c5cd84bff8bd8",
+    "ood.jsonl": "11f3348654087a561fc3ec934144712e38decf6cfb43c21efb5b96099e0f3e93",
+    "families.jsonl": "b5c255040c98ae9b680dd16c8ea78a48e29059b45ec54773b7925b111b9be788",
+    "cases.jsonl": "cdd75692ee62722ca90080bc47e381da41aaaad9bc3f2e420201094713aa56b7"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "family_count": 200,
+  "document_count": 3200,
+  "typed_record_count": 49600,
+  "candidate_count": 14800,
+  "head_counts": {
+    "selection/span": 3000,
+    "selection/target_present": 3200,
+    "attributes/currency": 14800,
+    "attributes/direction_known": 14800,
+    "attributes/is_credit": 13800
+  },
+  "selection_reference_counts": {
+    "recalled": 2000,
+    "target_absent": 600,
+    "candidate_miss": 400,
+    "ambiguous_target": 200
+  },
+  "candidate_recall": {
+    "denominator": "documents with exactly one populated requested-role field",
+    "recalled": 2000,
+    "missed": 400,
+    "eligible": 2400,
+    "fraction": "2000/2400",
+    "rate": 0.8333333333333334,
+    "ambiguous_documents_excluded": 200,
+    "absent_documents_excluded": 600
+  },
+  "attribute_reference_counts": {
+    "currency": {
+      "USD": 4489,
+      "review": 600,
+      "EUR": 5289,
+      "GBP": 4422
+    },
+    "direction_known": {
+      "true": 13800,
+      "false": 1000
+    },
+    "normalized_status": {
+      "ready": 13600,
+      "review": 1200
+    }
+  },
+  "omitted_supervision_counts": {
+    "undefined_direction": 1000,
+    "forced_single_candidate": 200
+  },
+  "observed_order_diversity": {
+    "field_order_count": 303,
+    "recalled_target_candidate_ids": {
+      "span_2": 380,
+      "span_1": 426,
+      "span_0": 419,
+      "span_4": 380,
+      "span_3": 395
+    },
+    "ordering_rule": "Shuffle complete field lines once using family and opaque document nonce; no query, gold target or label-based permutation selection."
+  },
+  "counts": {
+    "train": 32984,
+    "calibration": 2232,
+    "validation": 992,
+    "test": 3472,
+    "ood": 9920
+  },
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false,
+  "conditional_attributes_note": "All actual candidates receive B requests, including distractors/partials; only defined is_credit heads receive targets. These are conditional reference tasks, not end-to-end model results."
+}

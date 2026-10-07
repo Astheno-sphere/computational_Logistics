@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "weights_license": "Apache-2.0",
+  "code_license": "MIT",
+  "model": "Qwen/Qwen3.5-2B",
+  "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+  "training": {
+    "steps": 20204,
+    "accumulation": 4,
+    "max_length": 4096,
+    "lora_rank": 8,
+    "lr": 5e-05,
+    "head_lr": 0.0001,
+    "brier_weight": 0.1,
+    "seed": 20260919,
+    "sampling": "shuffled",
+    "records_consumed": 80816,
+    "selected_train_rows": 80816,
+    "one_full_pass": true,
+    "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+    "run_identity_sha256": "5b50d48f6114dc7461c4fb3bc260d6b5aecee0e1c859bec928b70a2b23beed32",
+    "distribution": null,
+    "initialization": "fresh_pinned_upstream",
+    "resumed_within_run": false
+  },
+  "data": {
+    "name": "release-v2",
+    "source_composition": [
+      "release-v1",
+      "reasoning-control-v1"
+    ],
+    "manifest_sha256": "56105dc9fc89ef74919f5beb60bb6ae8c6e17bb95699dab59205f67d8b338d97",
+    "sha256": {
+      "train": "80a9ec19da9c4065b72f7a9e5ff8d67e62c1d1dd2572dfd296e46bfe2ea5a182",
+      "calibration": "dd21b26912a6b26a09c3b00ae66a7985ee760e737b94ada4fcc6320406d4db63",
+      "validation": "1dc97079d4fc034a1ba16315f801b0a4715b30c2a3874ae05aeb60dd1e40e8bb",
+      "test": "fa8d62775b96c1514f238c2d8a8f8b66515dada67d490978376545296593e29b",
+      "ood": "9152bff7f3d9c83cce3f1423cc6e0e6b33286b3092b3f544cb18dcc37b35a7ee"
+    },
+    "rows_by_split": {
+      "train": 80816,
+      "calibration": 4761,
+      "validation": 3792,
+      "test": 10532,
+      "ood": 15920
+    },
+    "selected_rows": {
+      "train": 80816,
+      "calibration": 512,
+      "test": 512,
+      "ood": 512
+    },
+    "selected_ids_sha256": {
+      "train": "aecbb02fa7ecec02ff734bb1201926b9e74ae579c54a0a322997fcdf05495129",
+      "calibration": "6ff7db59c1ae2485179b80316b3cb4f0161df77704692dcab48871a295ab94f1",
+      "test": "456ef6576e2fe88c53a0e3f44188b7ccfaeca55d4c0c980f97f5890f9b9a0f14",
+      "ood": "cb078268330bf3e9a38d29dc8fb973d283bfe159342b13804dadec3187618dc6"
+    }
+  },
+  "calibration": {
+    "temperature": 1.518796342858676,
+    "split": "calibration",
+    "n": 512,
+    "ids_sha256": "6ff7db59c1ae2485179b80316b3cb4f0161df77704692dcab48871a295ab94f1"
+  },
+  "baseline_temperature": 1.5195101659228476,
+  "metric_verification": {
+    "implementation_sha256": "cb460c78b877a24708a0a8f8ca6b51f9602491f6ea24cd14e9a828c03d92f78b",
+    "core_and_grouped_sections_recomputed": 8,
+    "calibration_only_temperatures_refitted": 2
+  },
+  "reload": {
+    "recorded_max_error": 0.0,
+    "recomputed_saved_logit_max_error": 0.0,
+    "performed_by_packager": false,
+    "scope": "Compares saved reload and trained-test logits. No tensor deserialization or GPU inference; no production-time weight digest was recorded by training."
+  },
+  "source_evidence": {
+    "run.json": {
+      "sha256": "8ee935b52c0ee1796a25d8d8b0fcfc8aa41eddee815c454016c956f204b1416a",
+      "bytes": 89005
+    },
+    "summary.json": {
+      "sha256": "ea61d4b1cc28c57a826c57986323abe4bbf715ff28985d7a6fa89fec2119c8bf",
+      "bytes": 2072502
+    },
+    "training.jsonl": {
+      "sha256": "9fcca9c94d5fbaea4da3c52b2f2a376b89bad396bbe13e5689b42021a271160f",
+      "bytes": 3214783
+    },
+    "calibration.jsonl": {
+      "sha256": "164f39bccb98cac1369ebfe6314d224312efe572258f81a1104c03fc44b0de1e",
+      "bytes": 268324
+    },
+    "trained_test.jsonl": {
+      "sha256": "db5fd7e0b88d1c3921fd82526d3a8be2d5c8b51638bb2f892209618628ecdec4",
+      "bytes": 267673
+    },
+    "trained_ood.jsonl": {
+      "sha256": "6501f8de021a84e1921284d219e4ebf1d69fd7405ae32095b7322233a4874e2b",
+      "bytes": 262326
+    },
+    "reload_check.jsonl": {
+      "sha256": "e08175e9b23a2e1dd9659385ef517e340ff08eeba54f5fc90aa41e39090f2d0e",
+      "bytes": 417
+    },
+    "baseline_test.jsonl": {
+      "sha256": "02942bce52383789b493a153156e453929d9e14050bf332b3de3fbedcb4f42bf",
+      "bytes": 265919
+    },
+    "baseline_ood.jsonl": {
+      "sha256": "9d027f990f42a8b92dd4d274de0f8629823cc4df753deba5dd617b30ad7665a2",
+      "bytes": 260547
+    },
+    "baseline_calibration.jsonl": {
+      "sha256": "08c59bf069e5ab5faa7b460bd02e84e4ca3a43ed66f3c2bbabdc26aef50802a7",
+      "bytes": 266477
+    }
+  },
+  "excluded_evaluations": "No separate full-data, JF100, browser/drone pilot, simulator or closed-loop evaluation is imported."
+}

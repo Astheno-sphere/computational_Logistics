@@ -1,0 +1,913 @@
+{
+  "benchmark": "no_training_vs_autoregressive_probability_mapping",
+  "output_contract": "probabilities",
+  "status": "complete",
+  "model": "Qwen/Qwen3.5-9B",
+  "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "cached_snapshot": "/mnt/localssd/open-jev/hf-cache/models--Qwen--Qwen3.5-9B/snapshots/c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "device": "cuda:0",
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "dtype": "bf16 backbone; float32 decision readout",
+  "attention": "sdpa",
+  "runtime": {
+    "torch": "2.8.0",
+    "transformers": "5.10.2",
+    "accelerate": "1.13.0",
+    "huggingface-hub": "1.19.0"
+  },
+  "python": "3.11.15",
+  "cuda": "12.8",
+  "repo_commit": "f703b86025eb945d4313b23653188799634e54fc",
+  "source_sha256": {
+    "scripts/benchmark_generation.py": "356629c6ca2a53b21fe88c908d902b0fa9f4a79041f01a9940527568cc1d07e9",
+    "jev/model.py": "b8f135ef2da1f1205ba715b02f3dcf3c25962a2bec7e92a335198f59b6083c83",
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "jev/serving.py": "e181c7dfaa7d0e2af0e79b77ad82a2264ff80fefe147587b0bae25d0aaa6b958",
+    "jev/metrics.py": "cb460c78b877a24708a0a8f8ca6b51f9602491f6ea24cd14e9a828c03d92f78b"
+  },
+  "request_file_sha256": "bd9faa9985df3c158f8b273bbb1ac3f67e184ff0589d8da09896db4a934d058e",
+  "request_payload_sha256": "9c73ee46db3a83d599be64a6f07609914e35302f9c10eda07a4ade7f79e4a11d",
+  "request": {
+    "state": {
+      "adapter": "drone",
+      "observation": {
+        "observation_id": "sim-frame-30",
+        "target": {
+          "visible": true,
+          "seconds_unseen": 0
+        },
+        "obstacles": [
+          {
+            "ahead_m": 2,
+            "left_gap_open": false,
+            "right_gap_open": true
+          }
+        ],
+        "flight": {
+          "altitude_m": 1.5,
+          "climb_clearance_verified": false
+        }
+      }
+    },
+    "questions": {
+      "maneuver": {
+        "type": "choice",
+        "instructions": "Choose one permitted tactical maneuver using the measured scene. The simulator retains its collision reflex and flight controller.",
+        "criteria": {
+          "gap_right": "Use the observed safe gap on the right",
+          "brake": "Slow down or stop forward travel",
+          "hold_course": "Continue along the current clear course"
+        }
+      },
+      "risk": {
+        "type": "score",
+        "instructions": "How immediate is the collision risk in this measured scene?",
+        "criteria": [
+          "Clear open course",
+          "Tight clearance or approaching obstacle",
+          "Imminent collision"
+        ]
+      },
+      "target_truly_lost": {
+        "type": "noul",
+        "instructions": "Do the observations support loss of the tracked target rather than a brief occlusion?"
+      }
+    }
+  },
+  "configuration": {
+    "repeats": 3,
+    "batch_size": 32,
+    "output_contract": "probabilities",
+    "max_input_tokens": 4096,
+    "max_new_tokens": 2048,
+    "do_sample": false,
+    "enable_thinking": false,
+    "temperature_decision": 1,
+    "lora_rank": 0,
+    "validation_tolerance": 1e-06,
+    "derived_fields": "shared_jev.api.format_response",
+    "warmups_per_path": 1,
+    "load_order": [
+      "decision",
+      "generation"
+    ],
+    "network": "offline_cached_files_only"
+  },
+  "scope": "Generation emits only complete normalized probability maps; shared format_response software derives final Choice, Noul, Score, confidence, and legend. This is a separate contract from full_typed, not repaired earlier output. Same original state/questions and full final typed probability answers. Local Python end-to-end, including formatting/tokenization, GPU inference, output processing and validation; model load and warmup excluded. Paths use different prompts and execution mechanisms. No task-accuracy, Jev-parity, calibration, or Harsha KV-broadcast claim.",
+  "decision": {
+    "method": "independent_candidate_yes_minus_no",
+    "warmup_excluded": {
+      "repeat": "warmup",
+      "input_tokens": 971,
+      "output_tokens": 0,
+      "candidate_sequences": 7,
+      "serialized_response_bytes": 817,
+      "status": "valid",
+      "response": {
+        "answers": {
+          "maneuver": {
+            "type": "choice",
+            "choice": "gap_right",
+            "probabilities": {
+              "gap_right": 0.7141384468353412,
+              "brake": 0.26324310357173825,
+              "hold_course": 0.022618449592920607
+            },
+            "confidence": 0.5712076702530117
+          },
+          "risk": {
+            "type": "score",
+            "score": 1.5391356418526319,
+            "probabilities": {
+              "0": 0.004662616524203825,
+              "1": 0.45153912509896077,
+              "2": 0.5437982583768355
+            },
+            "confidence": 0.30870346277894734,
+            "legend": {
+              "0": "Clear open course",
+              "1": "Tight clearance or approaching obstacle",
+              "2": "Imminent collision"
+            }
+          },
+          "target_truly_lost": {
+            "type": "noul",
+            "noul": 0.24572440252642527
+          }
+        },
+        "model": "Qwen/Qwen3.5-9B",
+        "usage": {
+          "input_tokens": 971,
+          "output_tokens": 0
+        },
+        "metadata": {
+          "method": "pretrained_yes_minus_no_no_training",
+          "temperature": 1,
+          "candidate_sequences": 7,
+          "inference_seconds": 0.722950404509902
+        }
+      },
+      "elapsed_seconds": 0.7234156671911478,
+      "peak_allocated_bytes": 16071147008,
+      "peak_reserved_bytes": 18836619264
+    },
+    "trials": [
+      {
+        "repeat": 0,
+        "input_tokens": 971,
+        "output_tokens": 0,
+        "candidate_sequences": 7,
+        "serialized_response_bytes": 819,
+        "status": "valid",
+        "response": {
+          "answers": {
+            "maneuver": {
+              "type": "choice",
+              "choice": "gap_right",
+              "probabilities": {
+                "gap_right": 0.7141384468353412,
+                "brake": 0.26324310357173825,
+                "hold_course": 0.022618449592920607
+              },
+              "confidence": 0.5712076702530117
+            },
+            "risk": {
+              "type": "score",
+              "score": 1.5391356418526319,
+              "probabilities": {
+                "0": 0.004662616524203825,
+                "1": 0.45153912509896077,
+                "2": 0.5437982583768355
+              },
+              "confidence": 0.30870346277894734,
+              "legend": {
+                "0": "Clear open course",
+                "1": "Tight clearance or approaching obstacle",
+                "2": "Imminent collision"
+              }
+            },
+            "target_truly_lost": {
+              "type": "noul",
+              "noul": 0.24572440252642527
+            }
+          },
+          "model": "Qwen/Qwen3.5-9B",
+          "usage": {
+            "input_tokens": 971,
+            "output_tokens": 0
+          },
+          "metadata": {
+            "method": "pretrained_yes_minus_no_no_training",
+            "temperature": 1,
+            "candidate_sequences": 7,
+            "inference_seconds": 0.05057653598487377
+          }
+        },
+        "elapsed_seconds": 0.05087069608271122,
+        "peak_allocated_bytes": 16071147008,
+        "peak_reserved_bytes": 18836619264
+      },
+      {
+        "repeat": 1,
+        "input_tokens": 971,
+        "output_tokens": 0,
+        "candidate_sequences": 7,
+        "serialized_response_bytes": 820,
+        "status": "valid",
+        "response": {
+          "answers": {
+            "maneuver": {
+              "type": "choice",
+              "choice": "gap_right",
+              "probabilities": {
+                "gap_right": 0.7141384468353412,
+                "brake": 0.26324310357173825,
+                "hold_course": 0.022618449592920607
+              },
+              "confidence": 0.5712076702530117
+            },
+            "risk": {
+              "type": "score",
+              "score": 1.5391356418526319,
+              "probabilities": {
+                "0": 0.004662616524203825,
+                "1": 0.45153912509896077,
+                "2": 0.5437982583768355
+              },
+              "confidence": 0.30870346277894734,
+              "legend": {
+                "0": "Clear open course",
+                "1": "Tight clearance or approaching obstacle",
+                "2": "Imminent collision"
+              }
+            },
+            "target_truly_lost": {
+              "type": "noul",
+              "noul": 0.24572440252642527
+            }
+          },
+          "model": "Qwen/Qwen3.5-9B",
+          "usage": {
+            "input_tokens": 971,
+            "output_tokens": 0
+          },
+          "metadata": {
+            "method": "pretrained_yes_minus_no_no_training",
+            "temperature": 1,
+            "candidate_sequences": 7,
+            "inference_seconds": 0.049066195264458656
+          }
+        },
+        "elapsed_seconds": 0.04934276454150677,
+        "peak_allocated_bytes": 16071147008,
+        "peak_reserved_bytes": 18836619264
+      },
+      {
+        "repeat": 2,
+        "input_tokens": 971,
+        "output_tokens": 0,
+        "candidate_sequences": 7,
+        "serialized_response_bytes": 820,
+        "status": "valid",
+        "response": {
+          "answers": {
+            "maneuver": {
+              "type": "choice",
+              "choice": "gap_right",
+              "probabilities": {
+                "gap_right": 0.7141384468353412,
+                "brake": 0.26324310357173825,
+                "hold_course": 0.022618449592920607
+              },
+              "confidence": 0.5712076702530117
+            },
+            "risk": {
+              "type": "score",
+              "score": 1.5391356418526319,
+              "probabilities": {
+                "0": 0.004662616524203825,
+                "1": 0.45153912509896077,
+                "2": 0.5437982583768355
+              },
+              "confidence": 0.30870346277894734,
+              "legend": {
+                "0": "Clear open course",
+                "1": "Tight clearance or approaching obstacle",
+                "2": "Imminent collision"
+              }
+            },
+            "target_truly_lost": {
+              "type": "noul",
+              "noul": 0.24572440252642527
+            }
+          },
+          "model": "Qwen/Qwen3.5-9B",
+          "usage": {
+            "input_tokens": 971,
+            "output_tokens": 0
+          },
+          "metadata": {
+            "method": "pretrained_yes_minus_no_no_training",
+            "temperature": 1,
+            "candidate_sequences": 7,
+            "inference_seconds": 0.051340315490961075
+          }
+        },
+        "elapsed_seconds": 0.05163308046758175,
+        "peak_allocated_bytes": 16071147008,
+        "peak_reserved_bytes": 18836619264
+      }
+    ],
+    "summary": {
+      "attempts": 3,
+      "valid": 3,
+      "failures": {
+        "parse": 0,
+        "coverage": 0,
+        "schema": 0,
+        "runtime": 0
+      },
+      "median_seconds_all_attempts": 0.05087069608271122,
+      "median_seconds_valid": 0.05087069608271122
+    }
+  },
+  "generation": {
+    "method": "autoregressive_probability_mapping_json",
+    "warmup_excluded": {
+      "repeat": "warmup",
+      "input_tokens": 497,
+      "output_tokens": 92,
+      "hit_output_limit": false,
+      "raw_generation": "{\"probabilities\": {\"maneuver\": {\"gap_right\": 0.85, \"brake\": 0.1, \"hold_course\": 0.05}, \"risk\": {\"0\": 0.1, \"1\": 0.6, \"2\": 0.3}, \"target_truly_lost\": {\"false\": 0.95, \"true\": 0.05}}}<|im_end|>\n<|endoftext|>",
+      "parsed_text_candidate": "{\"probabilities\": {\"maneuver\": {\"gap_right\": 0.85, \"brake\": 0.1, \"hold_course\": 0.05}, \"risk\": {\"0\": 0.1, \"1\": 0.6, \"2\": 0.3}, \"target_truly_lost\": {\"false\": 0.95, \"true\": 0.05}}}\n",
+      "generated_token_ids": [
+        4754,
+        19293,
+        8196,
+        763,
+        5046,
+        1461,
+        19515,
+        415,
+        763,
+        5046,
+        40039,
+        10226,
+        763,
+        220,
+        15,
+        13,
+        23,
+        20,
+        11,
+        328,
+        1277,
+        706,
+        763,
+        220,
+        15,
+        13,
+        16,
+        11,
+        328,
+        6084,
+        30685,
+        763,
+        220,
+        15,
+        13,
+        15,
+        20,
+        2069,
+        328,
+        78151,
+        763,
+        5046,
+        15,
+        763,
+        220,
+        15,
+        13,
+        16,
+        11,
+        328,
+        16,
+        763,
+        220,
+        15,
+        13,
+        21,
+        11,
+        328,
+        17,
+        763,
+        220,
+        15,
+        13,
+        18,
+        2069,
+        328,
+        5480,
+        3430,
+        3770,
+        85608,
+        763,
+        5046,
+        3721,
+        763,
+        220,
+        15,
+        13,
+        24,
+        20,
+        11,
+        328,
+        1802,
+        763,
+        220,
+        15,
+        13,
+        15,
+        20,
+        72964,
+        248046,
+        198,
+        248044
+      ],
+      "serialized_response_bytes": 465,
+      "status": "valid",
+      "response": {
+        "answers": {
+          "maneuver": {
+            "type": "choice",
+            "choice": "gap_right",
+            "probabilities": {
+              "gap_right": 0.85,
+              "brake": 0.1,
+              "hold_course": 0.05
+            },
+            "confidence": 0.7749999999999998
+          },
+          "risk": {
+            "type": "score",
+            "score": 1.2,
+            "probabilities": {
+              "0": 0.1,
+              "1": 0.6,
+              "2": 0.3
+            },
+            "confidence": 0.3999999999999999,
+            "legend": {
+              "0": "Clear open course",
+              "1": "Tight clearance or approaching obstacle",
+              "2": "Imminent collision"
+            }
+          },
+          "target_truly_lost": {
+            "type": "noul",
+            "noul": 0.05
+          }
+        }
+      },
+      "elapsed_seconds": 2.936586679890752,
+      "peak_allocated_bytes": 18968794112,
+      "peak_reserved_bytes": 18996002816
+    },
+    "generation_prompt": "Evaluate the supplied state against EVERY supplied question independently. Return only one JSON object with a probabilities mapping, without Markdown, explanations, or thinking text. Use exactly the question IDs and all candidate IDs shown in the template. Each question maps directly to its complete candidate-to-probability mapping. Every probability must be a finite JSON number in [0,1], not a string or boolean. Each distribution must sum to 1 within 0.000001; do not return unnormalized scores. Noul requires both false and true probabilities, with true meaning yes. Do not emit type, choice, score, confidence, legend, or any other derived fields. Software computes the final typed answers from these probabilities. Replace all template placeholders with valid numbers.\n\nOriginal state and questions:\n{\"state\": {\"adapter\": \"drone\", \"observation\": {\"observation_id\": \"sim-frame-30\", \"target\": {\"visible\": true, \"seconds_unseen\": 0}, \"obstacles\": [{\"ahead_m\": 2, \"left_gap_open\": false, \"right_gap_open\": true}], \"flight\": {\"altitude_m\": 1.5, \"climb_clearance_verified\": false}}}, \"questions\": {\"maneuver\": {\"type\": \"choice\", \"instructions\": \"Choose one permitted tactical maneuver using the measured scene. The simulator retains its collision reflex and flight controller.\", \"criteria\": {\"gap_right\": \"Use the observed safe gap on the right\", \"brake\": \"Slow down or stop forward travel\", \"hold_course\": \"Continue along the current clear course\"}}, \"risk\": {\"type\": \"score\", \"instructions\": \"How immediate is the collision risk in this measured scene?\", \"criteria\": [\"Clear open course\", \"Tight clearance or approaching obstacle\", \"Imminent collision\"]}, \"target_truly_lost\": {\"type\": \"noul\", \"instructions\": \"Do the observations support loss of the tracked target rather than a brief occlusion?\"}}}\n\nRequired response shape:\n{\"probabilities\": {\"maneuver\": {\"gap_right\": \"<probability>\", \"brake\": \"<probability>\", \"hold_course\": \"<probability>\"}, \"risk\": {\"0\": \"<probability>\", \"1\": \"<probability>\", \"2\": \"<probability>\"}, \"target_truly_lost\": {\"false\": \"<probability>\", \"true\": \"<probability>\"}}}",
+    "trials": [
+      {
+        "repeat": 0,
+        "input_tokens": 497,
+        "output_tokens": 92,
+        "hit_output_limit": false,
+        "raw_generation": "{\"probabilities\": {\"maneuver\": {\"gap_right\": 0.85, \"brake\": 0.1, \"hold_course\": 0.05}, \"risk\": {\"0\": 0.1, \"1\": 0.6, \"2\": 0.3}, \"target_truly_lost\": {\"false\": 0.95, \"true\": 0.05}}}<|im_end|>\n<|endoftext|>",
+        "parsed_text_candidate": "{\"probabilities\": {\"maneuver\": {\"gap_right\": 0.85, \"brake\": 0.1, \"hold_course\": 0.05}, \"risk\": {\"0\": 0.1, \"1\": 0.6, \"2\": 0.3}, \"target_truly_lost\": {\"false\": 0.95, \"true\": 0.05}}}\n",
+        "generated_token_ids": [
+          4754,
+          19293,
+          8196,
+          763,
+          5046,
+          1461,
+          19515,
+          415,
+          763,
+          5046,
+          40039,
+          10226,
+          763,
+          220,
+          15,
+          13,
+          23,
+          20,
+          11,
+          328,
+          1277,
+          706,
+          763,
+          220,
+          15,
+          13,
+          16,
+          11,
+          328,
+          6084,
+          30685,
+          763,
+          220,
+          15,
+          13,
+          15,
+          20,
+          2069,
+          328,
+          78151,
+          763,
+          5046,
+          15,
+          763,
+          220,
+          15,
+          13,
+          16,
+          11,
+          328,
+          16,
+          763,
+          220,
+          15,
+          13,
+          21,
+          11,
+          328,
+          17,
+          763,
+          220,
+          15,
+          13,
+          18,
+          2069,
+          328,
+          5480,
+          3430,
+          3770,
+          85608,
+          763,
+          5046,
+          3721,
+          763,
+          220,
+          15,
+          13,
+          24,
+          20,
+          11,
+          328,
+          1802,
+          763,
+          220,
+          15,
+          13,
+          15,
+          20,
+          72964,
+          248046,
+          198,
+          248044
+        ],
+        "serialized_response_bytes": 465,
+        "status": "valid",
+        "response": {
+          "answers": {
+            "maneuver": {
+              "type": "choice",
+              "choice": "gap_right",
+              "probabilities": {
+                "gap_right": 0.85,
+                "brake": 0.1,
+                "hold_course": 0.05
+              },
+              "confidence": 0.7749999999999998
+            },
+            "risk": {
+              "type": "score",
+              "score": 1.2,
+              "probabilities": {
+                "0": 0.1,
+                "1": 0.6,
+                "2": 0.3
+              },
+              "confidence": 0.3999999999999999,
+              "legend": {
+                "0": "Clear open course",
+                "1": "Tight clearance or approaching obstacle",
+                "2": "Imminent collision"
+              }
+            },
+            "target_truly_lost": {
+              "type": "noul",
+              "noul": 0.05
+            }
+          }
+        },
+        "elapsed_seconds": 2.8445650450885296,
+        "peak_allocated_bytes": 18968794112,
+        "peak_reserved_bytes": 18996002816
+      },
+      {
+        "repeat": 1,
+        "input_tokens": 497,
+        "output_tokens": 92,
+        "hit_output_limit": false,
+        "raw_generation": "{\"probabilities\": {\"maneuver\": {\"gap_right\": 0.85, \"brake\": 0.1, \"hold_course\": 0.05}, \"risk\": {\"0\": 0.1, \"1\": 0.6, \"2\": 0.3}, \"target_truly_lost\": {\"false\": 0.95, \"true\": 0.05}}}<|im_end|>\n<|endoftext|>",
+        "parsed_text_candidate": "{\"probabilities\": {\"maneuver\": {\"gap_right\": 0.85, \"brake\": 0.1, \"hold_course\": 0.05}, \"risk\": {\"0\": 0.1, \"1\": 0.6, \"2\": 0.3}, \"target_truly_lost\": {\"false\": 0.95, \"true\": 0.05}}}\n",
+        "generated_token_ids": [
+          4754,
+          19293,
+          8196,
+          763,
+          5046,
+          1461,
+          19515,
+          415,
+          763,
+          5046,
+          40039,
+          10226,
+          763,
+          220,
+          15,
+          13,
+          23,
+          20,
+          11,
+          328,
+          1277,
+          706,
+          763,
+          220,
+          15,
+          13,
+          16,
+          11,
+          328,
+          6084,
+          30685,
+          763,
+          220,
+          15,
+          13,
+          15,
+          20,
+          2069,
+          328,
+          78151,
+          763,
+          5046,
+          15,
+          763,
+          220,
+          15,
+          13,
+          16,
+          11,
+          328,
+          16,
+          763,
+          220,
+          15,
+          13,
+          21,
+          11,
+          328,
+          17,
+          763,
+          220,
+          15,
+          13,
+          18,
+          2069,
+          328,
+          5480,
+          3430,
+          3770,
+          85608,
+          763,
+          5046,
+          3721,
+          763,
+          220,
+          15,
+          13,
+          24,
+          20,
+          11,
+          328,
+          1802,
+          763,
+          220,
+          15,
+          13,
+          15,
+          20,
+          72964,
+          248046,
+          198,
+          248044
+        ],
+        "serialized_response_bytes": 465,
+        "status": "valid",
+        "response": {
+          "answers": {
+            "maneuver": {
+              "type": "choice",
+              "choice": "gap_right",
+              "probabilities": {
+                "gap_right": 0.85,
+                "brake": 0.1,
+                "hold_course": 0.05
+              },
+              "confidence": 0.7749999999999998
+            },
+            "risk": {
+              "type": "score",
+              "score": 1.2,
+              "probabilities": {
+                "0": 0.1,
+                "1": 0.6,
+                "2": 0.3
+              },
+              "confidence": 0.3999999999999999,
+              "legend": {
+                "0": "Clear open course",
+                "1": "Tight clearance or approaching obstacle",
+                "2": "Imminent collision"
+              }
+            },
+            "target_truly_lost": {
+              "type": "noul",
+              "noul": 0.05
+            }
+          }
+        },
+        "elapsed_seconds": 2.785922486335039,
+        "peak_allocated_bytes": 18968794112,
+        "peak_reserved_bytes": 18996002816
+      },
+      {
+        "repeat": 2,
+        "input_tokens": 497,
+        "output_tokens": 92,
+        "hit_output_limit": false,
+        "raw_generation": "{\"probabilities\": {\"maneuver\": {\"gap_right\": 0.85, \"brake\": 0.1, \"hold_course\": 0.05}, \"risk\": {\"0\": 0.1, \"1\": 0.6, \"2\": 0.3}, \"target_truly_lost\": {\"false\": 0.95, \"true\": 0.05}}}<|im_end|>\n<|endoftext|>",
+        "parsed_text_candidate": "{\"probabilities\": {\"maneuver\": {\"gap_right\": 0.85, \"brake\": 0.1, \"hold_course\": 0.05}, \"risk\": {\"0\": 0.1, \"1\": 0.6, \"2\": 0.3}, \"target_truly_lost\": {\"false\": 0.95, \"true\": 0.05}}}\n",
+        "generated_token_ids": [
+          4754,
+          19293,
+          8196,
+          763,
+          5046,
+          1461,
+          19515,
+          415,
+          763,
+          5046,
+          40039,
+          10226,
+          763,
+          220,
+          15,
+          13,
+          23,
+          20,
+          11,
+          328,
+          1277,
+          706,
+          763,
+          220,
+          15,
+          13,
+          16,
+          11,
+          328,
+          6084,
+          30685,
+          763,
+          220,
+          15,
+          13,
+          15,
+          20,
+          2069,
+          328,
+          78151,
+          763,
+          5046,
+          15,
+          763,
+          220,
+          15,
+          13,
+          16,
+          11,
+          328,
+          16,
+          763,
+          220,
+          15,
+          13,
+          21,
+          11,
+          328,
+          17,
+          763,
+          220,
+          15,
+          13,
+          18,
+          2069,
+          328,
+          5480,
+          3430,
+          3770,
+          85608,
+          763,
+          5046,
+          3721,
+          763,
+          220,
+          15,
+          13,
+          24,
+          20,
+          11,
+          328,
+          1802,
+          763,
+          220,
+          15,
+          13,
+          15,
+          20,
+          72964,
+          248046,
+          198,
+          248044
+        ],
+        "serialized_response_bytes": 465,
+        "status": "valid",
+        "response": {
+          "answers": {
+            "maneuver": {
+              "type": "choice",
+              "choice": "gap_right",
+              "probabilities": {
+                "gap_right": 0.85,
+                "brake": 0.1,
+                "hold_course": 0.05
+              },
+              "confidence": 0.7749999999999998
+            },
+            "risk": {
+              "type": "score",
+              "score": 1.2,
+              "probabilities": {
+                "0": 0.1,
+                "1": 0.6,
+                "2": 0.3
+              },
+              "confidence": 0.3999999999999999,
+              "legend": {
+                "0": "Clear open course",
+                "1": "Tight clearance or approaching obstacle",
+                "2": "Imminent collision"
+              }
+            },
+            "target_truly_lost": {
+              "type": "noul",
+              "noul": 0.05
+            }
+          }
+        },
+        "elapsed_seconds": 2.8078882806003094,
+        "peak_allocated_bytes": 18968794112,
+        "peak_reserved_bytes": 18996002816
+      }
+    ],
+    "summary": {
+      "attempts": 3,
+      "valid": 3,
+      "failures": {
+        "parse": 0,
+        "coverage": 0,
+        "schema": 0,
+        "runtime": 0
+      },
+      "median_seconds_all_attempts": 2.8078882806003094,
+      "median_seconds_valid": 2.8078882806003094
+    }
+  },
+  "generation_over_decision_latency_ratio": 55.19657674891913
+}

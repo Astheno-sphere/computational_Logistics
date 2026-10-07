@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "entity-alignment-control-v1",
+    "groups": 200,
+    "ood_groups": 40,
+    "seed": 42,
+    "license": "CC0-1.0",
+    "runtime_builder": "jev.case_entity_alignment.entity_alignment_fields",
+    "split_policy": "all_pairs_and_shared_entities_in_original_family_group; hash_id_splits; reserved_alias_and_policy_wording_ood",
+    "source_files_sha256": {
+      "case_entity_alignment.py": "61911203a4e09c7b865d0494e8cd73853907796e7023400ee14357696862382b",
+      "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+    }
+  },
+  "summary": {
+    "records": 11200,
+    "groups": 200,
+    "unique_inputs": 11200,
+    "splits": {
+      "calibration": 728,
+      "ood": 2240,
+      "test": 1008,
+      "train": 6944,
+      "validation": 280
+    },
+    "kinds": {
+      "noul": 8400,
+      "score": 2800
+    },
+    "families": {
+      "evidence": 11200
+    },
+    "sources": {
+      "entity-alignment-control-v1": 11200
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "ff4f67f3425ce6568388c44524f04fce438c580d5eb3f4bb0a8f5508f11e4234",
+    "calibration.jsonl": "dd6abd73a852a6067bca90bb9f378b0eae8acb5cfcaf8df71473c8f64494c01f",
+    "validation.jsonl": "e0a3d143d6dc4a0e983124746bb02537ab200a322aba84a176daea499c75e2b6",
+    "test.jsonl": "ae101aa7d0692106f71634ccebf39b7062cb37181025af9b9b8955b0a82a0048",
+    "ood.jsonl": "8c4172dc683c41caf7355291b1bd9e27aa558b7073037bde9a87dd3a5cc56359",
+    "families.jsonl": "d58f269464e68969b2d7147f20d4b195047b7420a7387820eeea106e1a4f2845",
+    "cases.jsonl": "7d126a8c198c704058d08df6839dbfdb9723a56ea9e7842e02a2ee1f519b732e"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "counts": {
+    "train": 6944,
+    "calibration": 728,
+    "validation": 280,
+    "test": 1008,
+    "ood": 2240
+  },
+  "sha256": {
+    "train": "ff4f67f3425ce6568388c44524f04fce438c580d5eb3f4bb0a8f5508f11e4234",
+    "calibration": "dd6abd73a852a6067bca90bb9f378b0eae8acb5cfcaf8df71473c8f64494c01f",
+    "validation": "e0a3d143d6dc4a0e983124746bb02537ab200a322aba84a176daea499c75e2b6",
+    "test": "ae101aa7d0692106f71634ccebf39b7062cb37181025af9b9b8955b0a82a0048",
+    "ood": "8c4172dc683c41caf7355291b1bd9e27aa558b7073037bde9a87dd3a5cc56359"
+  },
+  "family_count": 200,
+  "case_count": 2800,
+  "typed_record_count": 11200,
+  "head_counts": {
+    "match": 2800,
+    "name_agrees": 2800,
+    "manufacturer_agrees": 2800,
+    "capacity_agrees": 2800
+  },
+  "route_counts": {
+    "2": 800,
+    "0": 800,
+    "1": 1200
+  },
+  "field_evidence_counts": {
+    "name": {
+      "agreement": 1800,
+      "conflict": 200,
+      "unknown": 800
+    },
+    "manufacturer": {
+      "agreement": 2200,
+      "conflict": 200,
+      "unknown": 400
+    },
+    "capacity": {
+      "agreement": 2000,
+      "conflict": 400,
+      "unknown": 400
+    }
+  },
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false,
+  "intended_scope": "Original catalog linking policy with name/manufacturer/capacity evidence; not universal identity resolution or graph merging."
+}

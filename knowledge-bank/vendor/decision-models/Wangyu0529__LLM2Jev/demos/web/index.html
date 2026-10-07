@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLM2Jev Web Demo</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <img src="/assets/llm2jev-banner.jpeg" alt="LLM2Jev" class="brand-image">
+    <div class="topbar-title">
+      <strong>Web Demo</strong>
+      <span id="connection-status" class="status" data-tone="pending">正在连接</span>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="composer" aria-labelledby="request-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">REQUEST</p>
+          <h1 id="request-title">构建判断请求</h1>
+        </div>
+        <button id="reset-button" class="button secondary" type="button">重置</button>
+      </div>
+
+      <div class="request-fields">
+        <label class="field model-field">
+          <span>模型</span>
+          <input id="model" list="model-options" value="local-model" autocomplete="off">
+          <datalist id="model-options"></datalist>
+        </label>
+        <label class="field state-field">
+          <span>State</span>
+          <textarea id="state" rows="5">客户反馈上周购买的包裹原定三天前送达，但物流信息从周一开始就没有更新，至今仍未收到。客户已经联系过一次客服，也向邻居和物业确认过无人代收。包裹中有本周末活动需要使用的物品，希望尽快查明物流状态；如果已经丢失，请立即补发或退款，并告知预计处理时间。</textarea>
+        </label>
+      </div>
+
+      <div class="questions-header">
+        <div>
+          <p class="eyebrow">QUESTIONS</p>
+          <h2>问题</h2>
+        </div>
+        <div class="add-question" role="group" aria-label="添加问题">
+          <button type="button" data-add-type="choice">+ Choice</button>
+          <button type="button" data-add-type="score">+ Score</button>
+          <button type="button" data-add-type="noul">+ Noul</button>
+        </div>
+      </div>
+      <div id="questions" class="questions"></div>
+
+      <div class="submit-row">
+        <span id="validation-message" class="validation" role="alert"></span>
+        <button id="submit-button" class="button primary" type="button">
+          <span class="button-label">运行判断</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="results" aria-labelledby="results-title">
+      <div class="section-heading result-heading">
+        <div>
+          <p class="eyebrow">RESPONSE</p>
+          <h2 id="results-title">结果</h2>
+        </div>
+        <span id="latency" class="latency"></span>
+      </div>
+      <div id="result-empty" class="empty-state">
+        <div class="empty-mark" aria-hidden="true">01</div>
+        <p>等待判断结果</p>
+      </div>
+      <div id="answer-list" class="answer-list" hidden></div>
+      <details id="raw-panel" class="raw-panel" hidden>
+        <summary>原始 JSON</summary>
+        <pre id="raw-json"></pre>
+      </details>
+    </section>
+  </main>
+
+  <template id="question-template">
+    <article class="question-card">
+      <div class="question-topline">
+        <span class="question-number"></span>
+        <span class="type-badge"></span>
+        <button class="icon-button remove-question" type="button" title="删除问题" aria-label="删除问题">×</button>
+      </div>
+      <div class="question-grid">
+        <label class="field id-field">
+          <span>问题 ID</span>
+          <input class="question-id" autocomplete="off">
+        </label>
+        <label class="field instruction-field">
+          <span>Instructions</span>
+          <input class="question-instructions" autocomplete="off">
+        </label>
+      </div>
+      <div class="criteria-block"></div>
+    </article>
+  </template>
+</body>
+</html>

@@ -1,0 +1,211 @@
+/*******************************************************************************************************
+ *
+ * MonitorDisplayer.java, in gama.ui.shared, is part of the source code of the GAMA modeling and simulation platform
+ * (v.2025-03).
+ *
+ * (c) 2007-2026 UMI 209 UMMISCO IRD/SU & Partners (IRIT, MIAT, ESPACE-DEV, CTU)
+ *
+ * Visit https://github.com/gama-platform/gama for license information and contacts.
+ *
+ ********************************************************************************************************/
+package gama.ui.shared.parameters;
+
+import static gama.api.GAMA.getRuntimeScope;
+import static gama.api.GAMA.reportError;
+import static gama.api.gaml.types.Types.NO_TYPE;
+import static gama.api.types.list.GamaListFactory.wrap;
+import static gama.gaml.operators.System.enterValue;
+import static gama.gaml.operators.System.userInputDialog;
+import static gama.ui.shared.menus.GamaMenu.action;
+import static gama.ui.shared.menus.GamaMenu.separate;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Menu;
+
+import gama.api.exceptions.GamaRuntimeException;
+import gama.api.gaml.expressions.IExpression;
+import gama.api.gaml.types.IType;
+import gama.api.gaml.types.Types;
+import gama.api.kernel.agent.IAgent;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.color.IColor;
+import gama.api.types.misc.IValue;
+import gama.core.experiment.parameters.InputParameter;
+import gama.core.outputs.MonitorOutput;
+import gama.core.outputs.ValuedDisplayOutputFactory;
+import gama.ui.shared.controls.FlatButton;
+import gama.ui.shared.resources.GamaColors;
+import gama.ui.shared.resources.IGamaColors;
+import gama.ui.shared.utils.WorkbenchHelper;
+import gama.ui.shared.views.toolbar.Selector;
+
+/**
+ * The Class TextDisplayer.
+ */
+public class MonitorDisplayer extends AbstractStatementEditor<MonitorOutput> {
+
+	/** The closer. */
+	private Runnable closer;
+
+	/**
+	 * Instantiates a new command editor.
+	 *
+	 * @param scope
+	 *            the scope
+	 * @param command
+	 *            the command
+	 * @param l
+	 *            the l
+	 */
+	public MonitorDisplayer(final IScope scope, final MonitorOutput command) {
+		super(scope, command, null);
+	}
+
+	@Override
+	Composite createValueComposite() {
+		composite = new Composite(parent, SWT.NONE);
+		final var data = new GridData(SWT.FILL, SWT.FILL, true, true);
+		data.heightHint = 30;
+		data.minimumHeight = 24;
+		data.horizontalSpan = 2;
+		composite.setLayoutData(data);
+		GridLayout l = new GridLayout(1, false);
+		composite.setLayout(l);
+		return composite;
+	}
+
+	@Override
+	public void createControls(final EditorsGroup p) {
+		super.createControls(p);
+		if (getStatement().shouldBeInitialized()) {
+			getStatement().shouldNotBeInitialized();
+			applyEdit();
+		}
+	}
+
+	@SuppressWarnings ("unchecked")
+	@Override
+	protected FlatButton createCustomParameterControl(final Composite composite) throws GamaRuntimeException {
+		composite.setBackground(null);
+		textBox = FlatButton
+				.menu(composite, GamaColors.get(getStatement().getColor(getScope())), getStatement().getTitle())
+				.withHeight(20);
+		textBox.setSelectionListener((Selector) e -> {
+			final Menu m = new Menu(textBox);
+			action(m, "Edit...", ex -> { applyEdit(); });
+			// item.setEnabled(false); // for the moment
+			action(m, getStatement().isPaused() ? "Resume" : "Pause", ex -> {
+				getStatement().setPaused(!getStatement().isPaused());
+				updateWithValueOfParameter(false, false);
+			});
+			action(m, "Close", ex -> {
+				closer.run();
+				parent.requestLayout();
+			});
+			separate(m);
+			action(m, "Copy value", ex -> {
+				final Object v = getStatement().getLastValue();
+				WorkbenchHelper
+						.copy(v == null ? "nil" : v instanceof IValue i ? i.serializeToGaml(true) : v.toString());
+			});
+			final IExpression exp = getStatement().getValue();
+			final IType<?> type = exp == null ? Types.NO_TYPE : exp.getGamlType();
+			if (type.isNumber() || type.isContainer() && type.getContentType().isNumber()) {
+				action(m, "Save as CSV", ex -> { applySave(); });
+			} else if (type.isAgentType()) {
+				action(m, "Inspect agent", ex -> {
+					getStatement().getScope().getGui().setSelectedAgent((IAgent) getStatement().getLastValue());
+				});
+			} else if (type.isContainer() && type.getContentType().isAgentType()) {
+				action(m, "Browse agents", ex -> {
+					ValuedDisplayOutputFactory.browse((Collection<? extends IAgent>) getStatement().getLastValue());
+				});
+			}
+			m.setVisible(true);
+		});
+		// composite.requestLayout();
+		return textBox;
+
+	}
+
+	@Override
+	EditorLabel createEditorLabel() {
+		return null;
+	}
+
+	@Override
+	public void updateWithValueOfParameter(final boolean synchronously, final boolean retrieveVarValue) {
+		try {
+			Runnable run = () -> {
+				internalModification = true;
+				if (parent != null && !parent.isDisposed() && !textBox.isDisposed()) {
+					textBox.setText(getStatement().getTitle());
+					composite.update();
+				}
+				internalModification = false;
+			};
+			if (synchronously) {
+				WorkbenchHelper.run(run);
+			} else {
+				WorkbenchHelper.asyncRun(run);
+			}
+
+		} catch (final GamaRuntimeException e) {
+			e.addContext("Unable to obtain the value of " + name);
+			reportError(getRuntimeScope(), e, false);
+			return;
+		}
+	}
+
+	@Override
+	protected void applySave() {
+		getStatement().saveHistory();
+	}
+
+	@Override
+	protected void applyEdit() {
+		IColor color = getStatement().getColor(getScope());
+		if (color == null) { color = IGamaColors.NEUTRAL.gamaColor(); }
+		Map<String, Object> init = userInputDialog(getScope(), "Edit monitor",
+				wrap(NO_TYPE,
+						List.of(enterValue(getScope(), "Title", getStatement().getName()),
+								enterValue(getScope(), "Color", Types.COLOR, color),
+								new InputParameter("Expression", getStatement().getValue()) {
+									@Override
+									public boolean isExpression() { return true; }
+								})));
+		getStatement().setName((String) init.get("Title"));
+		getStatement().setColor((IColor) init.get("Color"));
+		textBox.setColor(GamaColors.get(getStatement().getColor(getScope())));
+		getStatement().setNewExpression((IExpression) init.get("Expression"));
+		updateWithValueOfParameter(false, false);
+	}
+
+	@Override
+	protected GridData getEditorControlGridData() {
+		final var d = new GridData(SWT.FILL, SWT.FILL, true, true);
+		d.heightHint = 30;
+		d.minimumHeight = 24;
+		return d;
+	}
+
+	/**
+	 * Sets the closer.
+	 *
+	 * @param object
+	 *            the new closer
+	 */
+	public void setCloser(final Runnable object) { closer = object; }
+	//
+	// @Override
+	// Color getEditorControlBackground() { return
+	// GamaColors.get(getStatement().getColor(getScope())).color(); }
+
+}

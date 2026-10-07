@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asthenosphere Research Atlas</title>
+<meta name="description" content="Framework, toolkit and thesis plan for modelling low-emission transport futures under deep uncertainty: discrete choice, agent-based models, LLM and decision-model agents, backcasting.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column with a sticky section index; diagrams as wide figures. */
+:root {
+  --bg: #f5f7f8; --surface: #ffffff; --ink: #14212b; --muted: #546572; --line: #d6dee3;
+  --fjord: #0f6a73; --fjord-soft: #e1f0f1; --signal: #b4531b;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1418; --surface: #131d23; --ink: #e4ecef; --muted: #93a6b1; --line: #24343d;
+  --fjord: #52b7bf; --fjord-soft: #12292d; --signal: #e08a54; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0d1418; --surface: #131d23; --ink: #e4ecef; --muted: #93a6b1; --line: #24343d;
+  --fjord: #52b7bf; --fjord-soft: #12292d; --signal: #e08a54; color-scheme: dark; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.6 var(--body); }
+a { color: var(--fjord); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+img { max-width: 100%; display: block; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; }
+header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+header.top .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: baseline; justify-content: space-between; padding-block: 14px; }
+.brand { font: 750 18px/1 var(--display); font-stretch: 85%; letter-spacing: .02em; text-transform: uppercase; }
+nav.index { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 500 13px/1.4 var(--mono); }
+nav.index a { color: var(--muted); text-decoration: none; }
+nav.index a:hover { color: var(--fjord); }
+.hero { padding-block: 56px 36px; display: grid; gap: 18px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--signal); }
+h1 { font: 800 clamp(34px, 5.4vw, 60px)/1.02 var(--display); font-stretch: 78%; margin: 0; max-width: 22ch; text-wrap: balance; }
+.lede { font-size: 19px; color: var(--muted); max-width: 62ch; margin: 0; }
+.meta { font: 400 13px/1.5 var(--mono); color: var(--muted); }
+section { padding-block: 40px; border-top: 1px solid var(--line); }
+h2 { font: 750 28px/1.15 var(--display); font-stretch: 85%; margin: 0 0 6px; text-wrap: balance; }
+h2 small { display: block; font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+p.note { color: var(--muted); max-width: 68ch; margin: 0 0 22px; }
+figure { margin: 0 0 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+figure .shot { overflow-x: auto; background: #f4f6f8; }
+figure .shot img { min-width: 640px; width: 100%; }
+figcaption { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: space-between; padding: 14px 18px; border-top: 1px solid var(--line); }
+figcaption strong { font: 700 16px/1.3 var(--display); }
+figcaption span { color: var(--muted); font-size: 14px; flex: 1 1 320px; min-width: 0; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font: 500 13px/1 var(--mono); padding: 9px 12px; border: 1px solid var(--fjord); border-radius: 4px; text-decoration: none; color: var(--fjord); }
+.btn.primary { background: var(--fjord); color: var(--surface); }
+.funnel { display: grid; gap: 6px; margin: 0 0 24px; }
+.level { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+.level summary { display: grid; grid-template-columns: 4.5em 1fr auto; gap: 16px; align-items: baseline; padding: 12px 16px; cursor: pointer; list-style: none; }
+.level summary::-webkit-details-marker { display: none; }
+.level summary::after { content: "+"; font: 500 16px/1 var(--mono); color: var(--fjord); }
+.level[open] summary::after { content: "\2212"; }
+.level summary:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; }
+.level b { font: 500 13px/1.4 var(--mono); color: var(--fjord); }
+.level summary div { min-width: 0; font-weight: 600; }
+.level summary em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 14px; display: block; }
+.level ul { margin: 0; padding: 0 16px 14px calc(4.5em + 32px); display: grid; gap: 8px; font-size: 14px; }
+.level li { min-width: 0; } .level li span { color: var(--muted); display: block; }
+.level:nth-child(2) { margin-inline: 2%; } .level:nth-child(3) { margin-inline: 4%; }
+.level:nth-child(4) { margin-inline: 6%; } .level:nth-child(5) { margin-inline: 8%; }
+.level.thesis { margin-inline: 10%; background: var(--fjord-soft); border-color: var(--fjord); }
+.funnel-tools { display: flex; gap: 8px; margin: 0 0 10px; }
+.funnel-tools button { font: 500 12px/1 var(--mono); padding: 7px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; min-width: 0; display: grid; gap: 6px; align-content: start; }
+.card h3 { margin: 0; font: 700 16px/1.3 var(--display); }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.card code, td code { font: 400 13px/1.4 var(--mono); }
+.table { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 12px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+.pill { font: 500 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--fjord); } .pill.todo { color: var(--signal); }
+.samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.samples figure { margin: 0; } .samples img { background: #fff; }
+footer { padding-block: 32px 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+@media (max-width: 560px) { .level summary { grid-template-columns: 1fr auto; gap: 2px 12px; } .level summary b { grid-column: 1 / -1; } .level ul { padding-left: 16px; } .level, .level.thesis { margin-inline: 0 !important; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand">Asthenosphere</div>
+  <nav class="index" aria-label="Sections">
+    <a href="#system">System</a><a href="#agents">Agents</a><a href="#theory">Theory</a>
+    <a href="#toolkit">Toolkit</a><a href="#outputs">Outputs</a><a href="#map">Repository map</a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Research atlas · Molde and Kristiansund test region · horizon 2050</div>
+    <h1>Modelling low-emission transport futures under deep uncertainty</h1>
+    <p class="lede">A framework, toolkit and thesis plan that couples estimated travel behaviour with agent-based simulation, explores thousands of futures, and backcasts the decisions that keep a 2050 target reachable.</p>
+    <div class="meta">Arshad Akhtar Abbasia · MIT license · <a href="https://github.com/Astheno-sphere/computational_Logistics">source on GitHub</a></div>
+  </div>
+
+  <section id="system">
+    <h2><small>01 · Whole system</small>ABM system and thesis flow</h2>
+    <p class="note">Five layers across the four articles. Every component is tagged in repo, in bank or proposed. Open the interactive version to pan, zoom, trace the main path and focus on one component.</p>
+    <figure>
+      <div class="shot"><img src="diagrams/abm-thesis-system.png" alt="Five lanes (evidence, behaviour, simulation, decision under deep uncertainty, story and interfaces) across articles A1 to A4, with tools named in each box" loading="lazy"></div>
+      <figcaption><strong>Evidence to decisions</strong><span>Surveys feed choice models that drive agents; network ABMs train surrogates; ensembles lead to scenario discovery and backcasting.</span>
+        <div class="links"><a class="btn primary" href="diagrams/workflow-abm-thesis-system-20261007-0450/abm-thesis-system.html">Open interactive</a><a class="btn" href="https://github.com/Astheno-sphere/computational_Logistics/blob/main/docs/diagrams/workflow-abm-thesis-system-20261007-0450/candidate.json">Source JSON</a></div></figcaption>
+    </figure>
+  </section>
+
+  <section id="agents">
+    <h2><small>02 · Agents</small>Hybrid agent tiers</h2>
+    <p class="note">Estimated logit models drive most agents. Decision models answer choices the survey never asked, as probabilities comparable with logit. LLM agents probe adaptation over years. A shared benchmark tests the upper tiers against the first.</p>
+    <figure>
+      <div class="shot"><img src="diagrams/agent-tiers.png" alt="Three tiers of agents (estimated choice, decision models, LLM agents) feeding a benchmark harness and the agent-based model" loading="lazy"></div>
+      <figcaption><strong>Logit, decision models, LLM agents</strong><span>Repositories: llm2jev, AnyJev, Open-Jev, AgentSociety, Concordia, OASIS, GATSim, LLM agents in GAMA, Mesa-LLM.</span>
+        <div class="links"><a class="btn primary" href="diagrams/workflow-agent-tiers-20261007/agent-tiers.html">Open interactive</a><a class="btn" href="https://github.com/Astheno-sphere/computational_Logistics/blob/main/docs/REFERENCES.md">References</a></div></figcaption>
+    </figure>
+  </section>
+
+  <section id="theory">
+    <h2><small>03 · Theory</small>Theory funnel</h2>
+    <p class="note">Broad paradigms narrow to the theories each article tests. Open a level to see its sources and what each gives the thesis.</p>
+    <div class="funnel-tools"><button type="button" id="fopen">Expand all</button><button type="button" id="fclose">Collapse all</button></div>
+    <div class="funnel" id="funnel">
+      <details class="level"><summary><b>L1</b><div>Paradigm: sustainable mobility and backcasting<em>Why plan to 2050 targets instead of forecasts</em></div></summary><ul><li>Robinson (1982), Energy backcasting, Energy Policy<span>Start from a desirable future and work back to the policies that reach it</span></li><li>Banister (2008), The sustainable mobility paradigm, Transport Policy<span>Manage demand and accessibility, not only speed</span></li><li>Hickman and Banister (2014), Transport, Climate Change and the City<span>Transport backcasting studies; template for A4</span></li></ul></details>
+      <details class="level"><summary><b>L2</b><div>Deep uncertainty: robustness, discovery, pathways<em>How to decide without one predicted future</em></div></summary><ul><li>Lempert, Popper and Bankes (2003), Shaping the Next One Hundred Years, RAND<span>Robust decision making across many futures</span></li><li>Bryant and Lempert (2010), Thinking inside the box, TFSC<span>Scenario discovery: the futures in which a policy fails</span></li><li>Haasnoot et al. (2013), Dynamic adaptive policy pathways, GEC<span>Signposts and triggers; extends backcasting over time</span></li><li>Kwakkel (2017), The Exploratory Modeling Workbench, EMS<span>The software behind dmdu-explore</span></li></ul></details>
+      <details class="level"><summary><b>L3</b><div>Behaviour: random utility, crowding, new mobility<em>What travellers value and how it shifts</em></div></summary><ul><li>McFadden (1974); Ben-Akiva and Lerman (1985); Train (2009)<span>Logit and mixed logit; estimation for A1</span></li><li>Tirachini, Hensher and Rose (2013); Tirachini et al. (2017), TR Part A<span>Crowding costs and estimated crowding multipliers</span></li><li>Tirachini (2020), Ride-hailing review, Transportation<span>Substitution from public transport; a new-mobility uncertainty</span></li><li>Tirachini and Antoniou (2020); Fielbaum, Tirachini and Alonso-Mora (2024)<span>Automated and on-demand public transport as policy levers</span></li></ul></details>
+      <details class="level"><summary><b>L4</b><div>Simulation: agent-based transport models<em>How micro-choices become system outcomes</em></div></summary><ul><li>Horni, Nagel and Axhausen (2016), MATSim book<span>The reference large-scale transport ABM (A2)</span></li><li>Grimm et al. (2020), ODD protocol, JASSS<span>How the ABM is documented</span></li><li>ML emulation of ABMs (arXiv 2005.02077); surrogates and XAI (arXiv 2510.16742)<span>Emulators that make large ensembles affordable (A3)</span></li></ul></details>
+      <details class="level"><summary><b>L5</b><div>Frontier: LLM agents and decision models<em>What is new and still unproven</em></div></summary><ul><li>Park et al. (2023), Generative agents, UIST<span>Memory, reflection and planning</span></li><li>AgentSociety (arXiv 2502.08691)<span>LLM agents at city scale</span></li><li>LLM2Jev (arXiv 2610.02076)<span>Decision models that return choice probabilities (tier 2)</span></li></ul></details>
+      <details class="level thesis"><summary><b>Thesis</b><div>Four articles<em>Where the funnel lands</em></div></summary><ul><li>A1 Behaviour<span>L3 and L5: time, cost, crowding, technology; LLM choice as benchmark</span></li><li>A2 DCM + ABM<span>L3 and L4: estimated choices driving agents; validation</span></li><li>A3 Exploration<span>L2 and L4: robustness and scenario discovery with emulators</span></li><li>A4 Backcasting<span>L1 and L2: milestones and adaptive pathways with agencies</span></li></ul></details>
+    </div>
+    <figure>
+      <div class="shot"><img src="diagrams/theory-funnel.png" alt="Theory funnel: columns L1 to L5 and thesis, one row per article, arrows showing which theories feed each article" loading="lazy"></div>
+      <figcaption><strong>Which theory feeds which article</strong><span>Full entries in THEORY.md and references.bib.</span>
+        <div class="links"><a class="btn primary" href="diagrams/workflow-theory-funnel-20261007/theory-funnel.html">Open interactive</a><a class="btn" href="https://github.com/Astheno-sphere/computational_Logistics/blob/main/docs/THEORY.md">THEORY.md</a><a class="btn" href="references.bib">references.bib</a></div></figcaption>
+    </figure>
+  </section>
+
+  <section id="toolkit">
+    <h2><small>04 · Toolkit</small>Skills and status</h2>
+    <p class="note">Tested modules exposed as Claude Code skills, an MCP server and Grasshopper Hops components.</p>
+    <div class="table"><table>
+      <thead><tr><th>Layer</th><th>Skill</th><th>What it does</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Behaviour</td><td><code>dcm-estimate</code></td><td>Multinomial logit with Biogeme, cross-checked by an independent estimator</td><td><span class="pill ok">tested</span></td></tr>
+        <tr><td>Simulation</td><td><code>abm-transport</code></td><td>Agents to 2050: EV adoption, mode choice, congestion feedback, policy levers</td><td><span class="pill ok">tested</span></td></tr>
+        <tr><td>Decision</td><td><code>dmdu-explore</code></td><td>EMA Workbench ensembles, robustness, PRIM, backcasting</td><td><span class="pill ok">tested</span></td></tr>
+        <tr><td>Networks</td><td><code>osm-network</code></td><td>Road graph, terrain grades, EV energy, least-energy routing</td><td><span class="pill ok">tested</span></td></tr>
+        <tr><td>Operations</td><td><code>vrp-solve</code>, <code>opt-model</code></td><td>Vehicle routing; LP/MIP with Gurobi, CPLEX or HiGHS</td><td><span class="pill ok">tested</span></td></tr>
+        <tr><td>Design</td><td><code>gh-datatree</code></td><td>Grasshopper data-tree model and debugging agent</td><td><span class="pill todo">live Rhino run pending</span></td></tr>
+        <tr><td>Agents</td><td>benchmark harness</td><td>Same choice situations asked to logit, decision models and LLM agents</td><td><span class="pill todo">proposed</span></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="outputs">
+    <h2><small>05 · Outputs</small>Sample results</h2>
+    <p class="note">From the demonstration study on synthetic data with illustrative parameters. They show what the toolkit produces, not findings about Molde.</p>
+    <div class="samples">
+      <figure><img src="figures/co2_pathways.png" alt="CO2 pathways under no policy and a robust policy package" loading="lazy"><figcaption><span>CO2 pathways to 2050</span></figcaption></figure>
+      <figure><img src="figures/robustness_tradeoff.png" alt="Robustness of policy packages against consumer surplus" loading="lazy"><figcaption><span>Robustness against consumer surplus</span></figcaption></figure>
+      <figure><img src="figures/scenario_discovery.png" alt="PRIM scenario discovery" loading="lazy"><figcaption><span>Scenario discovery (PRIM)</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section id="map">
+    <h2><small>06 · Navigate the repository</small>Where everything lives</h2>
+    <div class="grid">
+      <div class="card"><h3><a href="https://github.com/Astheno-sphere/computational_Logistics/blob/main/docs/FRAMEWORK.md">Framework</a></h3><p>Landscape of approaches, the five-layer loop, hybrid agents, research flow, PhD alignment, what is missing.</p></div>
+      <div class="card"><h3><a href="https://github.com/Astheno-sphere/computational_Logistics/blob/main/docs/research-proposal-outline.md">Proposal outline</a></h3><p>Research questions, four articles, data, methods, work plan.</p></div>
+      <div class="card"><h3><a href="https://github.com/Astheno-sphere/computational_Logistics/tree/main/skills">Skills</a></h3><p>Each skill has a <code>SKILL.md</code> and tested scripts.</p></div>
+      <div class="card"><h3><a href="https://github.com/Astheno-sphere/computational_Logistics/tree/main/servers">Servers</a></h3><p>MCP server and Grasshopper Hops app over one shared core.</p></div>
+      <div class="card"><h3><a href="https://github.com/Astheno-sphere/computational_Logistics/blob/main/knowledge-bank/README.md">Knowledge bank</a></h3><p>About 300 license-checked open-source sources, cloned with credit or linked.</p></div>
+      <div class="card"><h3><a href="https://github.com/Astheno-sphere/computational_Logistics/blob/main/docs/diagrams/README.md">Improve a diagram</a></h3><p>Edit the JSON, re-run Archify's checks, commit. Anyone can propose a change.</p></div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap">MIT © 2026 Arshad Akhtar Abbasia. Third-party material keeps its own license. Diagrams made with <a href="https://github.com/tt-a1i/archify">Archify</a>.</div></footer>
+<script>
+for (const [id, open] of [["fopen", true], ["fclose", false]])
+  document.getElementById(id).addEventListener("click", () =>
+    document.querySelectorAll("#funnel details").forEach(d => { d.open = open; }));
+</script>
+</body>
+</html>

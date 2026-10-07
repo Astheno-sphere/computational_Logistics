@@ -1,0 +1,1667 @@
+{
+  "status": "passed",
+  "checks": 7737,
+  "errors": [],
+  "source_sha256": "608b0c0623f920c68001c07af2c87234ef1fe95a96102f6a25d5ff0cecc61537",
+  "source_manifest_sha256": "ed2443c14eb5d63a827a0bca569f5369537e59334481bccb4cf6651521325c0d",
+  "selection_sha256": "d6845a2e259967d99fd886f381a4150a3812aa79b0c1c855826fdcfff0030707",
+  "service_identity": {
+    "model": "Qwen/Qwen3.5-9B",
+    "method": "lora_decision_head",
+    "checkpoint_sha256": "7aa5f62fa39b83aee07915e7e351da5c4c38b4ce5f751cf22c7d45edf7dfc0ef",
+    "base_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+    "temperature": 1.4205161837096647,
+    "code_commit": "5b11fe38401831a24c886d28040d55f9a6f03b41",
+    "max_length": 16384
+  },
+  "metrics": {
+    "overall": {
+      "operation": {
+        "correct": 72,
+        "total": 120,
+        "accuracy": 0.6
+      },
+      "active_conditional": {
+        "correct": 93,
+        "total": 98,
+        "accuracy": 0.9489795918367347
+      },
+      "forced_active_conditional": {
+        "correct": 16,
+        "total": 16,
+        "accuracy": 1.0
+      },
+      "proposal_exact": {
+        "correct": 69,
+        "total": 120,
+        "accuracy": 0.575
+      }
+    },
+    "test": {
+      "operation": {
+        "correct": 36,
+        "total": 60,
+        "accuracy": 0.6
+      },
+      "active_conditional": {
+        "correct": 51,
+        "total": 56,
+        "accuracy": 0.9107142857142857
+      },
+      "forced_active_conditional": {
+        "correct": 9,
+        "total": 9,
+        "accuracy": 1.0
+      },
+      "proposal_exact": {
+        "correct": 33,
+        "total": 60,
+        "accuracy": 0.55
+      }
+    },
+    "ood": {
+      "operation": {
+        "correct": 36,
+        "total": 60,
+        "accuracy": 0.6
+      },
+      "active_conditional": {
+        "correct": 42,
+        "total": 42,
+        "accuracy": 1.0
+      },
+      "forced_active_conditional": {
+        "correct": 7,
+        "total": 7,
+        "accuracy": 1.0
+      },
+      "proposal_exact": {
+        "correct": 36,
+        "total": 60,
+        "accuracy": 0.6
+      }
+    }
+  },
+  "teacher_operations": {
+    "overall": {
+      "BLOCKED": 35,
+      "TYPE_TEXT": 15,
+      "SELECT": 35,
+      "DONE": 16,
+      "CLICK": 14,
+      "WAIT": 5
+    },
+    "test": {
+      "BLOCKED": 17,
+      "SELECT": 25,
+      "DONE": 8,
+      "TYPE_TEXT": 6,
+      "CLICK": 3,
+      "WAIT": 1
+    },
+    "ood": {
+      "TYPE_TEXT": 9,
+      "DONE": 8,
+      "BLOCKED": 18,
+      "CLICK": 11,
+      "WAIT": 4,
+      "SELECT": 10
+    }
+  },
+  "predicted_operations": {
+    "overall": {
+      "BLOCKED": 24,
+      "TYPE_TEXT": 14,
+      "SELECT": 49,
+      "CLICK": 26,
+      "WAIT": 4,
+      "DONE": 1,
+      "SCROLL_DOWN": 2
+    },
+    "test": {
+      "BLOCKED": 10,
+      "SELECT": 34,
+      "CLICK": 8,
+      "TYPE_TEXT": 7,
+      "SCROLL_DOWN": 1
+    },
+    "ood": {
+      "TYPE_TEXT": 7,
+      "SELECT": 15,
+      "BLOCKED": 14,
+      "CLICK": 18,
+      "WAIT": 4,
+      "DONE": 1,
+      "SCROLL_DOWN": 1
+    }
+  },
+  "operation_confusion": {
+    "BLOCKED": {
+      "BLOCKED": 13,
+      "SELECT": 10,
+      "CLICK": 7,
+      "TYPE_TEXT": 3,
+      "SCROLL_DOWN": 2
+    },
+    "TYPE_TEXT": {
+      "TYPE_TEXT": 8,
+      "BLOCKED": 7
+    },
+    "SELECT": {
+      "SELECT": 33,
+      "BLOCKED": 2
+    },
+    "DONE": {
+      "SELECT": 6,
+      "TYPE_TEXT": 3,
+      "BLOCKED": 1,
+      "CLICK": 5,
+      "DONE": 1
+    },
+    "CLICK": {
+      "CLICK": 13,
+      "BLOCKED": 1
+    },
+    "WAIT": {
+      "WAIT": 4,
+      "CLICK": 1
+    }
+  },
+  "constant_operation_baselines": {
+    "overall": {
+      "BLOCKED": {
+        "operation_correct": 35,
+        "proposal_exact_correct": 35,
+        "total": 120
+      },
+      "DONE": {
+        "operation_correct": 16,
+        "proposal_exact_correct": 16,
+        "total": 120
+      },
+      "WAIT": {
+        "operation_correct": 5,
+        "proposal_exact_correct": 5,
+        "total": 120
+      }
+    },
+    "test": {
+      "BLOCKED": {
+        "operation_correct": 17,
+        "proposal_exact_correct": 17,
+        "total": 60
+      },
+      "DONE": {
+        "operation_correct": 8,
+        "proposal_exact_correct": 8,
+        "total": 60
+      },
+      "WAIT": {
+        "operation_correct": 1,
+        "proposal_exact_correct": 1,
+        "total": 60
+      }
+    },
+    "ood": {
+      "BLOCKED": {
+        "operation_correct": 18,
+        "proposal_exact_correct": 18,
+        "total": 60
+      },
+      "DONE": {
+        "operation_correct": 8,
+        "proposal_exact_correct": 8,
+        "total": 60
+      },
+      "WAIT": {
+        "operation_correct": 4,
+        "proposal_exact_correct": 4,
+        "total": 60
+      }
+    }
+  },
+  "per_case": [
+    {
+      "case_id": "browser-control-v1:parent:6d9fcaf58a788fdbe53f28ec:operation_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:c8a9bcc719776530daab7e30:observed",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:dce8ce152ef32d297dec20cf:goal_value_counterfactual_1",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 0,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:49a4374b2bacf0fc94656a77:goal_value_counterfactual_0",
+      "split": "ood",
+      "reference_operation": "DONE",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:dd5838089fbfe5cd65802423:goal_value_counterfactual_0",
+      "split": "test",
+      "reference_operation": "DONE",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:f4e5aa4464427c0b0187c2b5:goal_value_counterfactual_0",
+      "split": "ood",
+      "reference_operation": "DONE",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:47d73591809a8de958e87b6b:requested_value_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:3141ae104f7f8e6011c4408f:completed",
+      "split": "ood",
+      "reference_operation": "DONE",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:00657804d7cf853a1e9351bd:ambiguous_observed_target",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:216595737ab7a9492b739779:target_action_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:4ccf969d987373364d31f422:ambiguous_observed_target",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:e8b7765009c78348f67b61d2:single_candidate_value",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:2b9f97f46c9a886614ce5b7b:id_and_order_permutation",
+      "split": "test",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:65282d7221218a9d364ba4fc:operation_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:ee6aae0de6b23cae7b7a70d3:ready",
+      "split": "test",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:06c27f26ed190a9c2e979c71:id_and_order_permutation",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:764448ed04be9d7445945f1f:single_candidate_target",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:b81a27ab60ac1f6a45ba681a:requested_section_busy",
+      "split": "ood",
+      "reference_operation": "WAIT",
+      "predicted_operation": "WAIT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:cbaa13a27c524d4dbf79239a:id_and_order_permutation",
+      "split": "test",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:9835665065c5810839d85f88:goal_counterfactual",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:9692e74ab749b236eb4f9742:single_candidate_value",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a940c7aa716e92ff44f44b44:completed",
+      "split": "ood",
+      "reference_operation": "DONE",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:31da70459b86654e01281514:single_candidate_value",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:af0e17d5a2403ad257fd7931:operation_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:b1bcef5b5a25bbd9a1d3b18d:goal_counterfactual",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:13bccde9437334b8c8ace5e5:requested_section_busy",
+      "split": "ood",
+      "reference_operation": "WAIT",
+      "predicted_operation": "WAIT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:388cc26fb8064a0a8e4e0448:goal_value_counterfactual_0",
+      "split": "test",
+      "reference_operation": "DONE",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:d66a3d652c8eefdf9afe70a6:observed",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:8d0e1b9c6ba7783a5eb45c4e:goal_counterfactual",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:33df909e86108f4adadb2d22:goal_value_counterfactual_0",
+      "split": "ood",
+      "reference_operation": "DONE",
+      "predicted_operation": "DONE",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:33c4cca37cc65013dddeffe4:goal_value_counterfactual_0",
+      "split": "test",
+      "reference_operation": "DONE",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:745616dcbfdb03b5bfbb4604:ambiguous_observed_target",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:072f0e88288540252a258541:target_action_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:8f1f5740d3477c27b7c59d93:goal_value_counterfactual_1",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:d25008f32e56acb8ea63df3f:id_and_order_permutation",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 0,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:31136efc48bc7f8eea47e240:operation_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SCROLL_DOWN",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a212009f33ea2ce9dbd28707:untrusted_page_instructions",
+      "split": "test",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a114e2fb1b611bfe1e6bccaa:id_and_order_permutation",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:c19a81a9f0cd960b45f6458b:requested_section_busy",
+      "split": "test",
+      "reference_operation": "WAIT",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:76e2a2da0d606c6876372c30:requested_value_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:6d9fcaf58a788fdbe53f28ec:single_candidate_target",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:c8a9bcc719776530daab7e30:goal_counterfactual",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:dce8ce152ef32d297dec20cf:single_candidate_target",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:49a4374b2bacf0fc94656a77:single_candidate_target",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:dd5838089fbfe5cd65802423:single_candidate_value",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:f4e5aa4464427c0b0187c2b5:goal_value_counterfactual_1",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:47d73591809a8de958e87b6b:single_candidate_target",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:3141ae104f7f8e6011c4408f:goal_counterfactual",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:00657804d7cf853a1e9351bd:completed",
+      "split": "test",
+      "reference_operation": "DONE",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:216595737ab7a9492b739779:ambiguous_observed_target",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:4ccf969d987373364d31f422:untrusted_page_instructions",
+      "split": "test",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:e8b7765009c78348f67b61d2:observed",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:2b9f97f46c9a886614ce5b7b:requested_value_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:65282d7221218a9d364ba4fc:ambiguous_observed_target",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:ee6aae0de6b23cae7b7a70d3:operation_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:06c27f26ed190a9c2e979c71:untrusted_page_instructions",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:764448ed04be9d7445945f1f:target_action_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:b81a27ab60ac1f6a45ba681a:goal_counterfactual",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:cbaa13a27c524d4dbf79239a:goal_value_counterfactual_0",
+      "split": "test",
+      "reference_operation": "DONE",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:9835665065c5810839d85f88:ambiguous_observed_target",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:9692e74ab749b236eb4f9742:untrusted_page_instructions",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a940c7aa716e92ff44f44b44:untrusted_page_instructions",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:31da70459b86654e01281514:goal_counterfactual",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:af0e17d5a2403ad257fd7931:goal_counterfactual",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:b1bcef5b5a25bbd9a1d3b18d:requested_value_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:13bccde9437334b8c8ace5e5:observed",
+      "split": "ood",
+      "reference_operation": "DONE",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:388cc26fb8064a0a8e4e0448:goal_counterfactual",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:d66a3d652c8eefdf9afe70a6:requested_value_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:8d0e1b9c6ba7783a5eb45c4e:observed",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:33df909e86108f4adadb2d22:id_and_order_permutation",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:33c4cca37cc65013dddeffe4:operation_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:745616dcbfdb03b5bfbb4604:operation_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:072f0e88288540252a258541:goal_counterfactual",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:8f1f5740d3477c27b7c59d93:requested_section_busy",
+      "split": "ood",
+      "reference_operation": "WAIT",
+      "predicted_operation": "WAIT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:d25008f32e56acb8ea63df3f:goal_value_counterfactual_1",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:31136efc48bc7f8eea47e240:goal_counterfactual",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a212009f33ea2ce9dbd28707:completed",
+      "split": "test",
+      "reference_operation": "DONE",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a114e2fb1b611bfe1e6bccaa:operation_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:c19a81a9f0cd960b45f6458b:completed",
+      "split": "test",
+      "reference_operation": "DONE",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:76e2a2da0d606c6876372c30:goal_value_counterfactual_1",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:6d9fcaf58a788fdbe53f28ec:goal_counterfactual",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:c8a9bcc719776530daab7e30:operation_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:dce8ce152ef32d297dec20cf:goal_value_counterfactual_0",
+      "split": "test",
+      "reference_operation": "DONE",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:49a4374b2bacf0fc94656a77:ambiguous_observed_target",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:dd5838089fbfe5cd65802423:operation_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:f4e5aa4464427c0b0187c2b5:id_and_order_permutation",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:47d73591809a8de958e87b6b:ready",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:3141ae104f7f8e6011c4408f:goal_value_counterfactual_1",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:00657804d7cf853a1e9351bd:untrusted_page_instructions",
+      "split": "test",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:216595737ab7a9492b739779:single_candidate_value",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:4ccf969d987373364d31f422:id_and_order_permutation",
+      "split": "test",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:e8b7765009c78348f67b61d2:requested_section_busy",
+      "split": "ood",
+      "reference_operation": "WAIT",
+      "predicted_operation": "WAIT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:2b9f97f46c9a886614ce5b7b:observed",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "TYPE_TEXT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:65282d7221218a9d364ba4fc:goal_counterfactual",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:ee6aae0de6b23cae7b7a70d3:id_and_order_permutation",
+      "split": "test",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:06c27f26ed190a9c2e979c71:ambiguous_observed_target",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:764448ed04be9d7445945f1f:goal_value_counterfactual_1",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:b81a27ab60ac1f6a45ba681a:observed",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:cbaa13a27c524d4dbf79239a:observed",
+      "split": "test",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:9835665065c5810839d85f88:single_candidate_target",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:9692e74ab749b236eb4f9742:goal_value_counterfactual_1",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a940c7aa716e92ff44f44b44:target_action_unavailable",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:31da70459b86654e01281514:observed",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:af0e17d5a2403ad257fd7931:observed",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:b1bcef5b5a25bbd9a1d3b18d:single_candidate_value",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:13bccde9437334b8c8ace5e5:ambiguous_observed_target",
+      "split": "ood",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:388cc26fb8064a0a8e4e0448:single_candidate_target",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:d66a3d652c8eefdf9afe70a6:single_candidate_value",
+      "split": "ood",
+      "reference_operation": "TYPE_TEXT",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:8d0e1b9c6ba7783a5eb45c4e:ambiguous_observed_target",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:33df909e86108f4adadb2d22:single_candidate_target",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:33c4cca37cc65013dddeffe4:target_action_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:745616dcbfdb03b5bfbb4604:completed",
+      "split": "ood",
+      "reference_operation": "DONE",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:072f0e88288540252a258541:untrusted_page_instructions",
+      "split": "test",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 0,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:8f1f5740d3477c27b7c59d93:observed",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 2,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:d25008f32e56acb8ea63df3f:requested_value_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:31136efc48bc7f8eea47e240:observed",
+      "split": "ood",
+      "reference_operation": "CLICK",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a212009f33ea2ce9dbd28707:operation_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "BLOCKED",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:a114e2fb1b611bfe1e6bccaa:completed",
+      "split": "ood",
+      "reference_operation": "DONE",
+      "predicted_operation": "CLICK",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:c19a81a9f0cd960b45f6458b:operation_unavailable",
+      "split": "test",
+      "reference_operation": "BLOCKED",
+      "predicted_operation": "SCROLL_DOWN",
+      "correct": {
+        "operation": 0,
+        "proposal_exact": 0,
+        "active_conditional": 0,
+        "forced_active_conditional": 0
+      }
+    },
+    {
+      "case_id": "browser-control-v1:parent:76e2a2da0d606c6876372c30:single_candidate_value",
+      "split": "ood",
+      "reference_operation": "SELECT",
+      "predicted_operation": "SELECT",
+      "correct": {
+        "operation": 1,
+        "proposal_exact": 1,
+        "active_conditional": 1,
+        "forced_active_conditional": 1
+      }
+    }
+  ],
+  "suite_snapshot": "suite-manifest-snapshot-20260920T030558Z.json",
+  "scope": "Independent offline scoring against saved synthetic references; no independent relabeling, browser execution, GPU inference, or whole-suite completion claim. Constant-operation baselines describe agreement, not goal progress. Forced single-candidate accuracy is not a learned choice result."
+}

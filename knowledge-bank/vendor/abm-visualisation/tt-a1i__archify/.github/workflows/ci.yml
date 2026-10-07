@@ -1,0 +1,406 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+# Cancel obsolete PR runs, but never interrupt main verification/deployment.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      scope: ${{ steps.classify.outputs.scope }}
+      website: ${{ steps.classify.outputs.website }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      - name: Classify changed paths
+        id: classify
+        run: node scripts/ci-scope.mjs
+        env:
+          CI_EVENT_NAME: ${{ github.event_name }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      - name: Check README content for documentation-only changes
+        if: steps.classify.outputs.scope == 'docs'
+        run: node --test archify/test/readme-showcase.test.mjs
+
+  test:
+    needs: scope
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22, 24]
+    steps:
+      # Keep every required matrix check present; fail closed if classification/checks fail.
+      - name: Require successful scope checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        if: needs.scope.outputs.scope == 'full'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        if: needs.scope.outputs.scope == 'full'
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: archify/package-lock.json
+      - name: Install renderer dependencies
+        if: needs.scope.outputs.scope == 'full'
+        run: npm ci
+        working-directory: archify
+      - name: Golden-file + schema tests
+        if: needs.scope.outputs.scope == 'full'
+        run: npm test
+        working-directory: archify
+      - name: Verify community Hermes adapter
+        if: needs.scope.outputs.scope == 'full' && matrix.node-version == 22
+        run: node --test integrations/hermes-agent/test/plugin-contract.test.mjs
+
+  webm-artifact:
+    needs: scope
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      # Keep every required matrix check present; fail closed if classification/checks fail.
+      - name: Require successful scope checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        if: needs.scope.outputs.scope == 'full'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        if: needs.scope.outputs.scope == 'full'
+        with:
+          node-version: 22
+      - name: Provision a known Chrome runtime
+        if: needs.scope.outputs.scope == 'full'
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - name: Install the WebM decoder
+        if: needs.scope.outputs.scope == 'full'
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
+      - name: Decode a real motion export and reject static frames
+        if: needs.scope.outputs.scope == 'full'
+        run: npm run test:webm
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+      - name: Install browser test dependencies
+        if: needs.scope.outputs.scope == 'full'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: archify
+      - name: Run shared browser regression gate
+        if: needs.scope.outputs.scope == 'full'
+        run: npm run test:browser
+        working-directory: archify
+        env:
+          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+
+  zip-freshness:
+    needs: scope
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      # Keep every required matrix check present; fail closed if classification/checks fail.
+      - name: Require successful scope checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        if: needs.scope.outputs.scope == 'full'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        if: needs.scope.outputs.scope == 'full'
+        with:
+          node-version: 22
+      - name: Rebuild archify.zip and compare exact bytes
+        if: needs.scope.outputs.scope == 'full'
+        run: |
+          scripts/build-zip.sh /tmp/fresh.zip
+          if ! cmp -s /tmp/fresh.zip archify.zip; then
+            echo '::error::archify.zip is stale — run scripts/build-zip.sh and commit the result'
+            exit 1
+          fi
+
+  published-update-manifest:
+    needs: scope
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      # Keep every required matrix check present; fail closed if classification/checks fail.
+      - name: Require successful scope checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        if: needs.scope.outputs.scope == 'full'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        if: needs.scope.outputs.scope == 'full'
+        with:
+          node-version: 22
+      - name: Public notifier manifest must reference an existing stable Release
+        if: needs.scope.outputs.scope == 'full'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          manifest_version="$(node --input-type=module -e 'import fs from "node:fs"; import { validateStableUpdateManifest } from "./archify/scripts/update-contract.mjs"; process.stdout.write(validateStableUpdateManifest(JSON.parse(fs.readFileSync("./docs/skill-updates/archify/stable.json", "utf8"))).version);')"
+          latest_stable_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq 'select(.draft == false and .prerelease == false) | .tag_name')"
+          if [[ "$latest_stable_tag" != "v${manifest_version}" ]]; then
+            echo "::error::stable.json v${manifest_version} must match the latest published stable Release ${latest_stable_tag:-'(missing)'}"
+            exit 1
+          fi
+          release_asset_id="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${manifest_version}" --jq 'select(.draft == false and .prerelease == false) | .assets[] | select(.name == "archify.zip") | .id')"
+          if [[ -z "$release_asset_id" ]]; then
+            echo "::error::v${manifest_version} must have a published stable GitHub Release with an archify.zip asset before stable.json is merged"
+            exit 1
+          fi
+          published_archive="$RUNNER_TEMP/archify-v${manifest_version}.zip"
+          gh api "repos/${GITHUB_REPOSITORY}/releases/assets/${release_asset_id}" \
+            -H 'Accept: application/octet-stream' > "$published_archive"
+          git fetch --force --no-tags --depth=1 origin \
+            "refs/tags/v${manifest_version}:refs/tags/v${manifest_version}"
+          tagged_archive="$RUNNER_TEMP/archify-tag-v${manifest_version}.zip"
+          git show "v${manifest_version}:archify.zip" > "$tagged_archive"
+          if ! cmp -s "$published_archive" "$tagged_archive"; then
+            echo "::error::the published archify.zip asset must byte-match archify.zip committed at v${manifest_version}"
+            exit 1
+          fi
+          node scripts/check-stable-update-manifest.mjs \
+            --archive "$published_archive" \
+            --tag "v${manifest_version}" \
+            --source-ref "v${manifest_version}"
+          if git cat-file -e "v${manifest_version}:scripts/stage-clean-skill.mjs" 2>/dev/null \
+            && git cat-file -e "v${manifest_version}:scripts/write-deterministic-zip.mjs" 2>/dev/null; then
+            tag_checkout="$RUNNER_TEMP/archify-tag-v${manifest_version}"
+            rebuilt_archive="$RUNNER_TEMP/archify-rebuilt-v${manifest_version}.zip"
+            git worktree add --detach "$tag_checkout" "v${manifest_version}"
+            "$tag_checkout/scripts/build-zip.sh" "$rebuilt_archive"
+            if ! cmp -s "$rebuilt_archive" "$tagged_archive"; then
+              echo "::error::archify.zip committed at v${manifest_version} is not the deterministic build of that tag"
+              exit 1
+            fi
+          elif [[ "$manifest_version" == "2.15.0" ]]; then
+            echo "::notice::v2.15.0 predates the deterministic builder; its published asset is bound to the exact tagged archive blob"
+          else
+            echo "::error::v${manifest_version} is missing the deterministic archive builder"
+            exit 1
+          fi
+
+  package-smoke:
+    needs: scope
+    if: always() && !cancelled()
+    name: package smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      # Keep every required matrix check present; fail closed if classification/checks fail.
+      - name: Require successful scope checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        if: needs.scope.outputs.scope == 'full'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        if: needs.scope.outputs.scope == 'full'
+        with:
+          node-version: 22
+      - name: Extract packaged skill
+        if: needs.scope.outputs.scope == 'full' && (runner.os != 'Windows')
+        run: |
+          set -euo pipefail
+          package_root="$RUNNER_TEMP/archify-package"
+          rm -rf "$package_root"
+          mkdir -p "$package_root"
+          unzip -q archify.zip -d "$package_root"
+      - name: Extract packaged skill
+        if: needs.scope.outputs.scope == 'full' && (runner.os == 'Windows')
+        shell: pwsh
+        run: |
+          $packageRoot = Join-Path $env:RUNNER_TEMP 'archify-package'
+          if (Test-Path $packageRoot) { Remove-Item -Recurse -Force $packageRoot }
+          Expand-Archive -Path archify.zip -DestinationPath $packageRoot
+      - name: Validate packaged skill without installing dependencies
+        if: needs.scope.outputs.scope == 'full'
+        run: node scripts/package-smoke.mjs
+      - name: Install delivery-lock test dependencies
+        if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
+        run: npm ci --ignore-scripts
+        working-directory: archify
+      - name: Verify delivery-lock ownership with real subprocesses
+        if: needs.scope.outputs.scope == 'full' && runner.os != 'Linux'
+        run: >-
+          node --test
+          --test-name-pattern="cli: portable delivery lock:"
+          test/cli.test.mjs
+        working-directory: archify
+      - name: Verify macOS opener stays behind delivery-lock release
+        if: needs.scope.outputs.scope == 'full' && runner.os == 'macOS'
+        run: >-
+          node --test
+          --test-name-pattern="cli: lock release failure does not invoke the requested opener"
+          test/cli.test.mjs
+        working-directory: archify
+
+  website:
+    needs: scope
+    if: needs.scope.outputs.website == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Install website dependencies
+        run: npm ci
+        working-directory: website
+      - name: Typecheck and build website
+        run: npm run check && npm run build && npm test
+        working-directory: website
+      - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
+        id: website-chrome
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - name: Verify built website navigation and language continuity
+        run: npm run test:browser
+        working-directory: website
+        env:
+          ARCHIFY_SITE_ROOT: ${{ github.workspace }}/website/dist
+          ARCHIFY_SITE_INTEGRATION: '1'
+          ARCHIFY_CHROME: ${{ steps.website-chrome.outputs.chrome-path }}
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
+      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: website-dist
+          path: website/dist
+          include-hidden-files: true
+
+  windows-test-portability:
+    needs: scope
+    if: always() && !cancelled()
+    name: Windows test portability (Node ${{ matrix.node-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    runs-on: windows-latest
+    steps:
+      # Keep every required matrix check present; fail closed if classification/checks fail.
+      - name: Require successful scope checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CI_SCOPE: ${{ needs.scope.outputs.scope }}
+        shell: bash
+        run: |
+          test "$SCOPE_RESULT" = success
+          case "$CI_SCOPE" in docs|full) ;; *) exit 1 ;; esac
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        if: needs.scope.outputs.scope == 'full'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        if: needs.scope.outputs.scope == 'full'
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install test dependencies
+        if: needs.scope.outputs.scope == 'full'
+        run: npm ci --ignore-scripts
+        working-directory: archify
+      - name: Provision controlled Windows path fixtures
+        if: needs.scope.outputs.scope == 'full'
+        shell: pwsh
+        run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
+      - name: Verify maintained Windows path contracts
+        if: needs.scope.outputs.scope == 'full'
+        run: node scripts/run-windows-path-tests.mjs
+        env:
+          ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
+          ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
+      - name: Clean up controlled Windows path fixtures
+        if: ${{ always() && needs.scope.outputs.scope == 'full' }}
+        shell: pwsh
+        run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}' -Cleanup
+
+  deploy-pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, webm-artifact, zip-freshness, published-update-manifest, package-smoke, windows-test-portability, website]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: Reject an obsolete deployment run
+        id: deployment-head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current_main="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          if [[ "$current_main" == "$GITHUB_SHA" ]]; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'current=false' >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping obsolete Pages deployment for ${GITHUB_SHA}; main is ${current_main}"
+          fi
+      - name: Configure GitHub Pages
+        if: steps.deployment-head.outputs.current == 'true'
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Download verified website build
+        if: steps.deployment-head.outputs.current == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: website-dist
+          path: website/dist
+      - name: Upload verified website
+        if: steps.deployment-head.outputs.current == 'true'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: website/dist
+      - name: Deploy verified website
+        if: steps.deployment-head.outputs.current == 'true'
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

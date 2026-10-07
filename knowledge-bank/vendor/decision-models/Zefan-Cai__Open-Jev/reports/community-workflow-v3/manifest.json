@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "version": "community-workflow-v3",
+    "seed": 20260921,
+    "groups_per_family": 18,
+    "license": "CC0-1.0",
+    "split_policy": "ten_authored_rule_cards_per_task; six_train_one_calibration_one_validation_one_test_one_ood; all_scenarios_and_variants_grouped",
+    "generator_sha256": "e7e4bc911787ff37d3a8c8553f26e6168a4c1cc77fd787de6f17876d467fb4c2",
+    "external_examples_imported": false,
+    "benchmark_inputs_read": false,
+    "paid_calls": 0,
+    "limitations": [
+      "Original English synthetic prose controls, not real user logs or independently collected human labels.",
+      "Twenty authored rule cards share a finite reporting grammar; held-out cards do not prove unrestricted language transfer.",
+      "Related task views/counterfactuals are correlated and must not be counted as independent documents.",
+      "The visible oracle validates the authored grammar, not arbitrary prose semantics.",
+      "No training, API evaluation or measured improvement is performed by this builder."
+    ]
+  },
+  "summary": {
+    "records": 8280,
+    "groups": 360,
+    "unique_inputs": 8280,
+    "splits": {
+      "calibration": 828,
+      "ood": 828,
+      "test": 828,
+      "train": 4968,
+      "validation": 828
+    },
+    "kinds": {
+      "choice": 2520,
+      "noul": 5760
+    },
+    "families": {
+      "evidence": 5400,
+      "policy": 2880
+    },
+    "sources": {
+      "community-workflow-v3/approval": 2880,
+      "community-workflow-v3/cms": 5400
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "0e9c7b325aaf4f6a83e0b9b9d43594b2f22dd1b9e15ffbf6ddfe83a1f876a706",
+    "calibration.jsonl": "63a4ce4ff8338601679ff60a41e3617a802d0bf9e81b96356cc8b51439e04a39",
+    "validation.jsonl": "6031a9e2971a24c6362e1b32204e7f616ce0d66bd9feba6ab763499f4e96af11",
+    "test.jsonl": "3b71d96c0ce6bd2e8d2fa7ec4f0522c8f4a8594d09a6e1305d4d43ac81f98bbf",
+    "ood.jsonl": "37fb3984e99000f8c9f71d0e3c67cff5cb61f3754564961329fcfb411a5dd843"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "scenario_family_count": 20,
+  "source_scenario_count": 360,
+  "unique_contexts": 2520,
+  "outcomes": {
+    "approval/Permit this operation now": 360,
+    "approval/Deny this operation": 720,
+    "approval/Review before acting": 360,
+    "cms/Apply the justified tags": 220,
+    "cms/Request editorial review": 840,
+    "cms/Leave the article untagged": 20
+  },
+  "semantic_scenarios_by_domain": {
+    "approval": 180,
+    "cms": 180
+  },
+  "semantic_contexts_by_domain": {
+    "approval": 1440,
+    "cms": 1080
+  },
+  "cms_authoritative_truth_states": 390,
+  "semantic_normalization": "Tag/rule definitions and affirmative/negative evidence channels, ignoring prose wrapper and paragraph order; approval also retains distinct quantity pairs. Unknown and conflicting evidence remain distinct contexts even when both require review.",
+  "domain_counts": {
+    "approval": 2880,
+    "cms": 5400
+  },
+  "noul_outcomes": {
+    "approval/yes": 360,
+    "approval/no": 1080,
+    "cms/yes": 1500,
+    "cms/no": 2820
+  },
+  "context_words": {
+    "min": 162,
+    "max": 217,
+    "median": 180
+  },
+  "checks": {
+    "all_targets_visible_input_only": true,
+    "all_states_prose_only": true,
+    "rule_family_and_scenario_disjoint": true,
+    "visible_input_disjoint": true,
+    "no_duplicate_contexts_across_scenario_groups": true,
+    "no_cosmetic_duplicate_scenarios": true,
+    "normalized_semantic_splits_disjoint": true,
+    "counterfactuals_change_decisions": true
+  }
+}

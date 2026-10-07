@@ -1,0 +1,98 @@
+{
+  "state": {
+    "left": {
+      "identifier": {
+        "namespace": "example-catalog",
+        "value": "VES-17"
+      },
+      "name": "Lumen Flask",
+      "manufacturer": "Alder Instruments",
+      "capacity": {
+        "value": "0.75",
+        "unit": "L"
+      }
+    },
+    "right": {
+      "identifier": {
+        "namespace": "example-catalog",
+        "value": "VES-17"
+      },
+      "name": "LF-750",
+      "manufacturer": "Alder Instr.",
+      "capacity": {
+        "value": "750",
+        "unit": "mL"
+      }
+    },
+    "policy": {
+      "version": "visible-catalog-alignment-v1",
+      "wording": "catalog",
+      "scope": "This is the complete decision policy for these supplied catalog records, not a universal identity guarantee.",
+      "identifier_rule": "Identifiers are {namespace,value}. Both must be nonempty strings. Trim outer whitespace but preserve case and internal text. Equal namespaces permit comparison: equal values agree, different values conflict. Missing components or different namespaces give unknown identifier evidence.",
+      "text_rule": "For name and manufacturer, collapse whitespace and casefold. Each canonical table key and its listed aliases identify that canonical value. Two recognized equal canonicals agree; two recognized different canonicals conflict. Missing or unlisted text gives unknown evidence, even if two unlisted strings happen to match. No other spelling or punctuation equivalence is assumed.",
+      "capacity_rule": "Capacity is {value,unit}. value must be a positive ordinary ASCII decimal string (no sign, exponent or fraction); unit must match the visible table exactly. Multiply the exact rational decimal value by unit_to_mL. Equal known mL values agree; unequal known values conflict. Missing, invalid or unlisted-unit capacity gives unknown evidence. capacity_evidence contains only these exact converted values; no model judgment or rounding is involved.",
+      "noul_rule": "Each field Noul asks whether visible evidence establishes agreement. Yes only for agreement; no for conflict OR unknown. No is not a probability of physical inequality.",
+      "rules_in_order": [
+        "If both identifiers have the same nonempty namespace and different nonempty values, choose different (Score 0).",
+        "Otherwise, if any field has a known conflict, choose review (Score 1) when the identifiers agree; choose different (Score 0) when they do not establish agreement.",
+        "Otherwise, choose same (Score 2) if the identifiers agree or all three fields establish agreement.",
+        "Otherwise choose review (Score 1). Missing or unknown fields alone are not conflicts; agreeing identifiers therefore permit same despite missing fields."
+      ],
+      "aliases": {
+        "name": {
+          "Lumen Flask": [
+            "LF-750"
+          ]
+        },
+        "manufacturer": {
+          "Alder Instruments": [
+            "Alder Instr."
+          ]
+        }
+      },
+      "unit_to_mL": {
+        "mL": "1",
+        "L": "1000",
+        "cL": "10"
+      },
+      "score_routes": {
+        "0": "different",
+        "1": "review",
+        "2": "same"
+      }
+    },
+    "capacity_evidence": {
+      "left": {
+        "unit": "mL",
+        "exact_value": "750"
+      },
+      "right": {
+        "unit": "mL",
+        "exact_value": "750"
+      }
+    }
+  },
+  "questions": {
+    "match": {
+      "type": "score",
+      "instructions": "Apply the complete supplied catalog policy in order to select different, review or same. Do not infer hidden identities.",
+      "criteria": [
+        "Different entities; leave unlinked",
+        "Ambiguous evidence; curator review",
+        "Same entity; merge candidate"
+      ]
+    },
+    "name_agrees": {
+      "type": "noul",
+      "instructions": "Does the visible evidence establish agreement of name under the supplied policy? Answer yes only for established agreement; conflict or unknown evidence means no."
+    },
+    "manufacturer_agrees": {
+      "type": "noul",
+      "instructions": "Does the visible evidence establish agreement of manufacturer under the supplied policy? Answer yes only for established agreement; conflict or unknown evidence means no."
+    },
+    "capacity_agrees": {
+      "type": "noul",
+      "instructions": "Does the visible evidence establish agreement of capacity under the supplied policy? Answer yes only for established agreement; conflict or unknown evidence means no."
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "status": "passed_complete_full24_audit",
+  "publishable": true,
+  "model": "Open-Jev-27B-v1.1",
+  "checkpoint": {
+    "model": "Qwen/Qwen3.8-27B",
+    "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+    "temperature": 2.5343690298472983,
+    "lora_rank": 8,
+    "base_weights_included": false
+  },
+  "coverage": {
+    "total": 127787,
+    "successful": 127787,
+    "failed": 0,
+    "missing": 0,
+    "duplicates": 0,
+    "imported": 4491,
+    "new": 123296,
+    "completed_groups": 6,
+    "owned_processes_remaining": 0
+  },
+  "panels": {
+    "old_test": {
+      "count": 10532,
+      "hard_count": 10046,
+      "soft_count": 486,
+      "hard_correct": 9876,
+      "accuracy": 0.9830778419271352,
+      "expected_accuracy": 0.954681027079432,
+      "nll": 0.13386432263131773,
+      "brier": 0.03458594885426232,
+      "expected_brier": 0.06263691316614574,
+      "multiclass_ece": 0.029161848979411622,
+      "ece_bins": 15
+    },
+    "expanded_test": {
+      "count": 43301,
+      "hard_count": 42789,
+      "soft_count": 512,
+      "hard_correct": 41357,
+      "accuracy": 0.966533454859894,
+      "expected_accuracy": 0.9595090315974361,
+      "nll": 0.12983825446990038,
+      "brier": 0.05746167254927552,
+      "expected_brier": 0.06460776054107147,
+      "multiclass_ece": 0.037463708716989785,
+      "ece_bins": 15
+    },
+    "old_ood": {
+      "count": 15920,
+      "hard_count": 15446,
+      "soft_count": 474,
+      "hard_correct": 14825,
+      "accuracy": 0.9597954162890069,
+      "expected_accuracy": 0.9430203212128463,
+      "nll": 0.15887220783486702,
+      "brier": 0.06296576556098005,
+      "expected_brier": 0.08029650520798853,
+      "multiclass_ece": 0.024102283529718986,
+      "ece_bins": 15
+    },
+    "expanded_ood": {
+      "count": 84486,
+      "hard_count": 83924,
+      "soft_count": 562,
+      "hard_correct": 80934,
+      "accuracy": 0.9643725275249034,
+      "expected_accuracy": 0.9606666609107841,
+      "nll": 0.13434172410803066,
+      "brier": 0.060333553335607484,
+      "expected_brier": 0.06415555195289763,
+      "multiclass_ece": 0.01820277638023621,
+      "ece_bins": 15
+    }
+  },
+  "protocol": {
+    "max_length": 4096,
+    "truncation": false,
+    "cache": false,
+    "row_batch_size": 1,
+    "temperature_fitted_on_evaluation": false,
+    "base_dtype": "BF16",
+    "head_dtype": "FP32",
+    "hard_accuracy": "Exact one-hot targets only; all rows contribute to probability metrics.",
+    "subset": "Old Test/OOD are content-identical subsets of expanded Test/OOD; panels overlap."
+  },
+  "audit": {
+    "independent_audit_sha256": "650642bac1c7440f7cdbaf044068b8870ef7a514510dfd8a6cb01756a9304795",
+    "campaign_manifest_sha256": "491a4ee96d1ef6509ead733daffdf2318f3bb43d9d5bf38715f2cd0be8a0a9d4",
+    "capture_receipt_sha256": "bc90ec6386a1f2ec184ebc277df63c1016a3d0e32ac2a0661b3bd9371614d4a8",
+    "auditor_sha256": "c573ff8620e706197008170dc464e4e7a3de6da37fd93df58cc20ae020e8c393",
+    "arithmetic_sha256": "2eefd11d5010bbe705641f397eec0912992984ca3047631e8a8578eae5d34801",
+    "code_commit": "9eebd42de6137735fc5fd85b499aa1ffa256426d",
+    "merged_summary_sha256": "d657388b1142e226f81e3f3bc5b641a338d249f2ed936683bfdd3327b15bd20f",
+    "maximum_probability_error": 8.881784197001252e-16,
+    "maximum_metric_error": 0.0,
+    "metric_relative_absolute_tolerance": 3e-11,
+    "probability_absolute_tolerance": 1e-12,
+    "pairwise_probe_maximum_logit_error": 0.0,
+    "checks": [
+      "All raw IDs, order, assignment and unchanged bytes",
+      "Complete stable remote-before/after/local capture hashes",
+      "Original 4491 plus disjoint 123296 new predictions",
+      "All six successful controller exits and owned GPU cleanup",
+      "Frozen code, data and checkpoint identities and passing probes",
+      "Finite logits and saved-temperature softmax",
+      "Exact hard numerators and hard/soft denominators; full and per-source/type/question metrics"
+    ]
+  },
+  "data_scope": {
+    "original_mixture_rows": 328672,
+    "original_train_rows": 148639,
+    "public_projection_rows": 326619,
+    "public_train_rows": 147139,
+    "excluded_wiki_rows": 2053,
+    "note": "This internal evaluation uses the original complete mixture. The redistributable HF projection is not the complete training/evaluation corpus."
+  },
+  "limitations": [
+    "Shared multi-GPU timings do not establish single-GPU or HTTP/API latency or speedup.",
+    "New 2B training stopped; new 9B training not started. Released 2B/9B remain separate checkpoints.",
+    "JevBench is a separate public 231-task evaluation, not the complete 534-task benchmark.",
+    "Private raw/capture evidence is retained with hashes. The public aggregate and verifier code alone cannot reconstruct restricted source records."
+  ]
+}

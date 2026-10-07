@@ -1,0 +1,304 @@
+/*******************************************************************************************************
+ *
+ * SLDs.java, in gama.ui.viewers, is part of the source code of the GAMA modeling and simulation platform (v.2025-03).
+ *
+ * (c) 2007-2025 UMI 209 UMMISCO IRD/SU & Partners (IRIT, MIAT, ESPACE-DEV, CTU)
+ *
+ * Visit https://github.com/gama-platform/gama for license information and contacts.
+ *
+ ********************************************************************************************************/
+package gama.ui.viewers.gis.geotools.styling;
+
+import java.awt.Color;
+import java.util.Set;
+
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SemanticType;
+import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.filter.Filters;
+import org.geotools.styling.SLD;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPoint;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+
+/**
+ * Utility class for working with Geotools SLD objects.
+ * <p>
+ * This class assumes a subset of the SLD specification:
+ * <ul>
+ * <li>Single Rule - matching Filter.INCLUDE
+ * <li>Symbolizer lookup by name
+ * </ul>
+ * </p>
+ * <p>
+ * When you start to branch out to SLD information that contains multiple rules you will need to modify this class.
+ * </p>
+ *
+ * @author Jody Garnett, Refractions Research.
+ * @since 0.7.0
+ *
+ *
+ *
+ * @source $URL$
+ */
+public class SLDs extends SLD {
+
+	/** The ff. */
+	private static FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
+
+	/** The Constant ALIGN_LEFT. */
+	public static final double ALIGN_LEFT = 1.0;
+
+	/** The Constant ALIGN_CENTER. */
+	public static final double ALIGN_CENTER = 0.5;
+
+	/** The Constant ALIGN_RIGHT. */
+	public static final double ALIGN_RIGHT = 0.0;
+
+	/** The Constant ALIGN_BOTTOM. */
+	public static final double ALIGN_BOTTOM = 1.0;
+
+	/** The Constant ALIGN_MIDDLE. */
+	public static final double ALIGN_MIDDLE = 0.5;
+
+	/** The Constant ALIGN_TOP. */
+	public static final double ALIGN_TOP = 0.0;
+
+	/**
+	 * Size.
+	 *
+	 * @param graphic
+	 *            the graphic
+	 * @return the int
+	 */
+	public static int size(final Graphic graphic) {
+		if (graphic == null) return NOTFOUND;
+		return Filters.asInt(graphic.getSize());
+	}
+
+	/**
+	 * Poly fill.
+	 *
+	 * @param symbolizer
+	 *            the symbolizer
+	 * @return the color
+	 */
+	public static Color polyFill(final PolygonSymbolizer symbolizer) {
+		if (symbolizer == null) return null;
+
+		final Fill fill = symbolizer.getFill();
+
+		if (fill == null) return null;
+
+		final Expression color = fill.getColor();
+		return color(color);
+	}
+
+	/**
+	 * Color.
+	 *
+	 * @param expr
+	 *            the expr
+	 * @return the color
+	 */
+	public static Color color(final Expression expr) {
+		if (expr == null) return null;
+		try {
+			return expr.evaluate(null, Color.class);
+		} catch (final Throwable t) {
+			class ColorVisitor implements ExpressionVisitor {
+				Color found;
+
+				@Override
+				public Object visit(final Literal expr, final Object data) {
+					if (found != null) return null;
+					try {
+						final Color color = expr.evaluate(expr, Color.class);
+						if (color != null) { found = color; }
+					} catch (final Throwable t) {
+						// not a color
+					}
+					return data;
+				}
+
+				@Override
+				public Object visit(final NilExpression arg0, final Object data) {
+					return data;
+				}
+
+				@Override
+				public Object visit(final Add arg0, final Object data) {
+					return data;
+				}
+
+				@Override
+				public Object visit(final Divide arg0, final Object data) {
+					return null;
+				}
+
+				@Override
+				public Object visit(final Function function, final Object data) {
+					for (final Expression param : function.getParameters()) { param.accept(this, data); }
+					return data;
+				}
+
+				@Override
+				public Object visit(final Multiply arg0, final Object data) {
+					return data;
+				}
+
+				@Override
+				public Object visit(final PropertyName arg0, final Object data) {
+					return data;
+				}
+
+				@Override
+				public Object visit(final Subtract arg0, final Object data) {
+					return data;
+				}
+			}
+			final ColorVisitor search = new ColorVisitor();
+			expr.accept(search, null);
+
+			return search.found;
+		}
+	}
+
+	/**
+	 * Extracts the fill color with a given opacity from the PointSymbolizer.
+	 *
+	 * @param symbolizer
+	 *            the point symbolizer from which to get the color.
+	 * @return the Color with transparency if available. Returns null if no color is available.
+	 */
+	public static Color pointFillWithAlpha(final PointSymbolizer symbolizer) {
+		if (symbolizer == null) return null;
+
+		final Graphic graphic = symbolizer.getGraphic();
+		if (graphic == null) return null;
+
+		for (final GraphicalSymbol gs : graphic.graphicalSymbols()) {
+			if (gs instanceof Mark mark) {
+				final Fill fill = mark.getFill();
+				if (fill == null) { continue; }
+				Color colour = color(fill.getColor());
+				if (colour == null) return null;
+				Expression opacity = fill.getOpacity();
+				if (opacity == null) { opacity = ff.literal(1.0); }
+				final float alpha = (float) Filters.asDouble(opacity);
+				colour = new Color(colour.getRed() / 255f, colour.getGreen() / 255f, colour.getBlue() / 255f, alpha);
+				return colour;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Checks if is semantic type match.
+	 *
+	 * @param fts
+	 *            the fts
+	 * @param regex
+	 *            the regex
+	 * @return true, if is semantic type match
+	 */
+	public static boolean isSemanticTypeMatch(final FeatureTypeStyle fts, final String regex) {
+		final Set<SemanticType> identifiers = fts.semanticTypeIdentifiers();
+		for (final SemanticType semanticType : identifiers) { if (semanticType.matches(regex)) return true; }
+		return false;
+	}
+
+	/**
+	 * Returns the min scale of the default rule, or 0 if none is set
+	 */
+	public static double minScale(final FeatureTypeStyle fts) {
+		if (fts == null || fts.rules().size() == 0) return 0.0;
+
+		final Rule r = fts.rules().get(0);
+		return r.getMinScaleDenominator();
+	}
+
+	/**
+	 * Returns the max scale of the default rule, or Double#NaN if none is set
+	 */
+	public static double maxScale(final FeatureTypeStyle fts) {
+		if (fts == null || fts.rules().size() == 0) return Double.NaN;
+
+		final Rule r = fts.rules().get(0);
+		return r.getMaxScaleDenominator();
+	}
+
+	/**
+	 * The type name that can be used in an SLD in the featuretypestyle that matches all feature types.
+	 */
+	public static final String GENERIC_FEATURE_TYPENAME = "Feature";
+
+	/**
+	 * Checks if is polygon.
+	 *
+	 * @param featureType
+	 *            the feature type
+	 * @return true, if is polygon
+	 */
+	public static final boolean isPolygon(final SimpleFeatureType featureType) {
+		if (featureType == null) return false;
+		final GeometryDescriptor geometryType = featureType.getGeometryDescriptor();
+		if (geometryType == null) return false;
+		final Class<?> type = geometryType.getType().getBinding();
+		return Polygon.class.isAssignableFrom(type) || MultiPolygon.class.isAssignableFrom(type);
+	}
+
+	/**
+	 * Checks if is line.
+	 *
+	 * @param featureType
+	 *            the feature type
+	 * @return true, if is line
+	 */
+	public static final boolean isLine(final SimpleFeatureType featureType) {
+		if (featureType == null) return false;
+		final GeometryDescriptor geometryType = featureType.getGeometryDescriptor();
+		if (geometryType == null) return false;
+		final Class<?> type = geometryType.getType().getBinding();
+		return LineString.class.isAssignableFrom(type) || MultiLineString.class.isAssignableFrom(type);
+	}
+
+	/**
+	 * Checks if is point.
+	 *
+	 * @param featureType
+	 *            the feature type
+	 * @return true, if is point
+	 */
+	public static final boolean isPoint(final SimpleFeatureType featureType) {
+		if (featureType == null) return false;
+		final GeometryDescriptor geometryType = featureType.getGeometryDescriptor();
+		if (geometryType == null) return false;
+		final Class<?> type = geometryType.getType().getBinding();
+		return Point.class.isAssignableFrom(type) || MultiPoint.class.isAssignableFrom(type);
+	}
+}

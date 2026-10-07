@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "Read-only peer review of opt-in contact/amount service lifecycle integration and execution prerequisites. No provider/GPU execution performed by this review.",
+  "baseline_commit": "e0a3d055fd8ed4b463da5e685cbb1d5b4b7eb5da",
+  "default_measurements": [
+    "demo_requests",
+    "workflows",
+    "frontier_100",
+    "games"
+  ],
+  "unchanged_lifecycle_functions_ast": [
+    "enforce_resource_policy",
+    "checkpoint_identity",
+    "stop_child",
+    "wait_ready",
+    "probe_identity",
+    "run_measurement"
+  ],
+  "checks": [
+    "Contact and amount are explicit opt-in measurements; default suites do not load these datasets or require phonenumbers.",
+    "Selected dependency and frozen corpus/source validations run before output creation, GPU lease, GPU inspection or subprocess creation.",
+    "Pinned phonenumbers9.0.14 is required only for contact; amount-only remains independent of that optional package.",
+    "Both selected commands cover all test/OOD documents without a limit and execute contact before amount.",
+    "Commands pass verified model, method, base revision, checkpoint SHA256 and saved calibration temperature.",
+    "Server identity is checked before measurement and between stages; a healthy identity-valid server permits amount to run after a nonzero contact result.",
+    "Measurement failure/log records are preserved, own child processes are stopped, and selected physical GPU cleanup is checked before the next model.",
+    "Existing contact/amount evaluators construct B from the actual A choice, never a gold-selected candidate; unchanged evaluator code retains stage errors and full extraction denominators.",
+    "Documentation requires completion/audit/release of the active core stages, separate pinned checkout, frozen corpora/producer files, isolated phone dependency, fresh output paths and serial GPU3 execution with max_length16384/batch_size1.",
+    "Documentation states that the commands do not themselves wait for the core supervisor or audit gate, and do not represent a completed model evaluation."
+  ],
+  "validation_evidence": {
+    "path": "reports/runtime-checks/contact-amount-service-followup-cpu.json",
+    "cpu_tests_passed": 76,
+    "cpu_tests_skipped": 0,
+    "phone_version": "9.0.14",
+    "contact_documents": 1924,
+    "email_documents": 784,
+    "phone_documents": 1140,
+    "amount_documents": 864
+  },
+  "limitations": [
+    "CPU tests/preflight are implementation and data checks, not model-quality evidence.",
+    "This review did not provision a checkout, alter the active supervisor, acquire a GPU or run an HTTP service.",
+    "Future deployment must satisfy the documented scheduling and audit prerequisites and record its pinned commit/checkpoint identities."
+  ],
+  "files_sha256": {
+    "scripts/run_service_suite.py": "f234faeda325409ae727895a07beba0006b78f38c6a3e3cfc5501f51ab54f348",
+    "tests/test_service_suite.py": "a77082633febe12dd4254e0ee294b48594b4a7d5db8100472063033d2aa1cc4d",
+    "docs/contact-amount-service-followup.md": "11637a9c864ec6b8cfc42eeaa75ecee0a060be9fe71cd2e793f75824f199914a",
+    "scripts/evaluate_contact_service.py": "562dac913d4cebf2732aef9d055dd8dea126c2ec2987573321f1554caf06153a",
+    "scripts/evaluate_amount_service.py": "7ebb3a4028ddc5436b4c49e3ea799eb36ed5537518fdae283166866ec0c4d17a",
+    "scripts/evaluate_drone_service.py": "84b408c3131a6b922141e02d67a2c9301d9e0784796e61ee3201fae1fc24f602",
+    "jev/case_phone_extraction.py": "4b9cb3b196733603a8f0e57d797c9fc5affe9c39a45cf30c015a6ad454ccfa6d",
+    "reports/runtime-checks/contact-amount-service-followup-cpu.json": "c0c4f4e62f8f5ab1c86a2ba62f3f3e239c1ef0f5e860032b1bb85dcd5f415920"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "executed_at_utc": "2026-09-20T21:48:14.157350+00:00",
+  "steps": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "jev.silent_failure_data",
+        "--output-dir",
+        "data/silent-failure-control-v1",
+        "--groups",
+        "400",
+        "--ood-groups",
+        "80",
+        "--seed",
+        "42"
+      ],
+      "started_at_utc": "2026-09-20T21:48:12.243535+00:00",
+      "finished_at_utc": "2026-09-20T21:48:13.056104+00:00",
+      "exit_code": 0,
+      "stdout_sha256": "a7d326a480c0132dd608d0d7119a948bc16e36667e0ff7049e111f33c5445fac",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "jev.data",
+        "validate",
+        "data/silent-failure-control-v1"
+      ],
+      "started_at_utc": "2026-09-20T21:48:13.056227+00:00",
+      "finished_at_utc": "2026-09-20T21:48:13.445836+00:00",
+      "exit_code": 0,
+      "stdout_sha256": "7438350abde62b9a437d264306bf656d9a636d804149c14c10cead155c6d2b6a",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "reports/silent-failure-control-v1/verify.py",
+        "--data",
+        "data/silent-failure-control-v1",
+        "--output",
+        "reports/silent-failure-control-v1/independent-audit.json",
+        "--audit-rows",
+        "data/silent-failure-control-v1/body-derived-audit.jsonl"
+      ],
+      "started_at_utc": "2026-09-20T21:48:13.446339+00:00",
+      "finished_at_utc": "2026-09-20T21:48:14.156347+00:00",
+      "exit_code": 0,
+      "stdout_sha256": "97656fb416bec304eb77e585ae4c58e858153c55f8d5c494c3166a377a1c3631",
+      "stderr": ""
+    }
+  ],
+  "dataset_directory": "data/silent-failure-control-v1",
+  "tracked_manifest": "reports/silent-failure-control-v1/manifest.json",
+  "manifest_sha256": "a7d326a480c0132dd608d0d7119a948bc16e36667e0ff7049e111f33c5445fac",
+  "body_audit_file": "data/silent-failure-control-v1/body-derived-audit.jsonl",
+  "body_audit_sha256": "e21987ce9606a855b382a8fa1f1c95319878e939ed1fcb9f1174c26417683808",
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false
+}

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Support routing · Open-Jev</title>
+  <style>
+    :root{color-scheme:light;--ink:#132d34;--muted:#587078;--line:#d2dfe0;--accent:#117763;--paper:#f4f7f5}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+    main{max-width:1160px;margin:auto;padding:44px 24px}h1{font-size:38px;letter-spacing:-1.4px;line-height:1.1;margin:12px 0}h2{font-size:18px;margin:0 0 16px}
+    p{max-width:760px;color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+    .panel{background:white;border:1px solid var(--line);border-radius:12px;padding:24px;margin:22px 0}
+    .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center}button,.file{border:1px solid var(--line);border-radius:6px;padding:10px 15px;background:white;color:var(--ink);cursor:pointer;font:inherit}
+    button.primary{background:var(--accent);border-color:var(--accent);color:white}button:disabled{opacity:.5;cursor:wait}.file input{display:none}
+    input,textarea,select{font:inherit;border:1px solid var(--line);border-radius:6px;padding:9px;background:white;color:var(--ink)}textarea{width:100%;min-height:85px;margin:12px 0}
+    .fine{font-size:12px;color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px}.stat strong{font-size:27px;display:block}
+    .notice{background:#eaf3ef;border-radius:6px;padding:12px}.notice.error{background:#fff0e7;color:#974318}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{text-align:left;padding:14px 10px;vertical-align:top;border-bottom:1px solid var(--line)}th{font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.6px}
+    .ticket{max-width:360px}.badge{display:inline-block;font-size:12px;padding:3px 8px;border-radius:12px;background:#edf2f1}.badge.review{background:#fff0d7;color:#765414}.badge.accepted{background:#dff2e8;color:#226341}details{font-size:12px;max-width:260px}summary{cursor:pointer;color:var(--accent)}pre{white-space:pre-wrap;word-break:break-all}select{max-width:220px}
+    footer{margin-top:34px;color:var(--muted);font-size:12px}a{color:var(--accent)}.table-wrap{overflow:auto}@media(max-width:650px){main{padding:28px 14px}.panel{padding:16px}.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:31px}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Open-Jev · Local decisions</div>
+  <h1>Review each proposed support decision.</h1>
+  <p>Import support tickets, let your local model propose a banking intent, review uncertain decisions, and export the final queue. Your text stays with the server you opened this page from.</p>
+  <section class="panel">
+    <h2>1. Bring a request or a CSV</h2>
+    <div class="controls"><button id="sample">Load 12 natural examples</button><label class="file">Import CSV<input id="csv" type="file" accept=".csv,text/csv"></label><label class="file">Import calibrated policy<input id="lock" type="file" accept=".json,application/json"></label></div>
+    <p class="fine">CSV columns: <code>id,text</code>. The examples are original human-written BANKING77 training utterances. They are not synthetic customers.</p>
+    <textarea id="text" aria-label="Customer request" placeholder="For example: My card still hasn't arrived. How can I track it?"></textarea>
+    <div class="controls"><button id="add">Add request</button><button class="primary" id="run">Route with the local model</button><span id="policy" class="fine">No calibrated policy loaded: all decisions wait for review.</span></div>
+  </section>
+  <section class="panel">
+    <h2>2. Review the decisions</h2>
+    <div id="message" class="notice" role="status">Load examples or add your first request.</div>
+    <div class="stats"><div class="stat"><strong id="total">0</strong><span class="fine">Requests</span></div><div class="stat"><strong id="automatic">0</strong><span class="fine">Accepted by policy</span></div><div class="stat"><strong id="review">0</strong><span class="fine">Need review</span></div><div class="stat"><strong id="elapsed">—</strong><span class="fine">Model wall time</span></div></div>
+    <p class="fine" id="model">No model has been called.</p>
+    <div class="table-wrap"><table><thead><tr><th>Request</th><th>Proposed intent</th><th>Probability / policy</th><th>Human decision</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </section>
+  <section class="panel">
+    <h2>3. Export the queue</h2>
+    <div class="controls"><input id="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><button id="export-review">Export review queue</button><button id="export-final">Export final CSV</button></div>
+    <p class="fine">A human decision needs a reviewer name. Unreviewed, uncertain rows remain unresolved in the final CSV. No email, payment or account action is performed.</p>
+  </section>
+  <footer>Natural examples: Casanueva et al. (2020), PolyAI BANKING77, <a href="https://github.com/PolyAI-LDN/task-specific-datasets/tree/57ec275d8078af65b7731c2a98be812d844a6d6b/banking_data">CC BY 4.0</a>. Evaluation uses a separately frozen official-test sample; this interactive queue is a workflow demonstration.</footer>
+</main>
+<script>
+let catalog, policy=null, tickets=[], runtime=0, modelIdentity=null;
+const $=id=>document.getElementById(id);
+function notify(text,error=false){$('message').textContent=text;$('message').className='notice'+(error?' error':'');}
+function tokenCounts(text){const result={};for(const token of text.toLowerCase().match(/[a-z0-9]+/g)||[])result[token]=(result[token]||0)+1;return result;}
+function candidates(text){const query=tokenCounts(text),n=Object.keys(catalog.labels).length;return Object.entries(catalog.counts).map(([label,terms])=>{let score=0;for(const [token,q] of Object.entries(query)){const tf=terms[token]||0,df=catalog.document_frequency[token]||0;score+=q*Math.log(1+(n-df+.5)/(df+.5))*tf*2.2/(tf+1.2*(.25+.75*catalog.lengths[label]/catalog.average_length));}return {label,score};}).sort((a,b)=>b.score-a.score||(a.label<b.label?-1:a.label>b.label?1:0)).slice(0,policy?.candidates||8).map(x=>x.label);}
+function parseCSV(text){const records=[];let row=[],field='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}else if(c===','&&!quoted){row.push(field);field='';}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(field);if(row.some(x=>x.trim()))records.push(row);row=[];field='';}else field+=c;}if(quoted)throw Error('Unclosed CSV quote');row.push(field);if(row.some(x=>x.trim()))records.push(row);if(!records.length)return [];const header=records.shift();if(!header.includes('text'))throw Error('CSV requires a text column');return records.map((r,i)=>({id:r[header.indexOf('id')]||String(i+1),text:r[header.indexOf('text')]}));}
+function addTickets(rows){const ids=new Set(tickets.map(x=>x.id));for(const row of rows){if(!row.text?.trim())throw Error('Every request needs nonempty text');if(ids.has(row.id))throw Error('Duplicate request id: '+row.id);ids.add(row.id);}tickets.push(...rows.map(x=>({...x,status:'pending',human:''})));render();notify(tickets.length+' requests ready.');}
+function render(){const body=$('rows');body.replaceChildren();for(const ticket of tickets){const tr=document.createElement('tr');const td=document.createElement('td');td.className='ticket';td.textContent=ticket.text;tr.append(td);const proposal=document.createElement('td');proposal.textContent=ticket.prediction&&ticket.prediction!=='__review__'?catalog.labels[ticket.prediction]||ticket.prediction:'Human review';if(ticket.probabilities){const details=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');summary.textContent='All candidate probabilities';pre.textContent=Object.entries(ticket.probabilities).sort((a,b)=>b[1]-a[1]).map(([k,p])=>`${k}: ${(100*p).toFixed(1)}%`).join('\n');details.append(summary,pre);proposal.append(details);}tr.append(proposal);const probability=document.createElement('td');probability.textContent=ticket.top_probability==null?'—':(100*ticket.top_probability).toFixed(1)+'% ';const badge=document.createElement('span');badge.className='badge '+ticket.status;badge.textContent=ticket.status;probability.append(badge);tr.append(probability);const human=document.createElement('td'),select=document.createElement('select');select.setAttribute('aria-label','Human decision for '+ticket.id);const blank=document.createElement('option');blank.value='';blank.textContent='Unreviewed';select.append(blank);const noRoute=document.createElement('option');noRoute.value='__review__';noRoute.textContent='No matching banking intent';select.append(noRoute);for(const [key,label] of Object.entries(catalog.labels)){const option=document.createElement('option');option.value=key;option.textContent=label;select.append(option);}select.value=ticket.human||'';select.onchange=()=>{ticket.human=select.value;};human.append(select);tr.append(human);body.append(tr);}$('total').textContent=tickets.length;$('automatic').textContent=tickets.filter(x=>x.status==='accepted').length;$('review').textContent=tickets.filter(x=>x.status==='review'||x.status==='error').length;$('elapsed').textContent=runtime?(runtime/1000).toFixed(1)+' s':'—';}
+function identityOf(response){return {model:response.model,...Object.fromEntries(['checkpoint_sha256','base_revision','temperature','method','code_commit','max_length'].map(k=>[k,response.metadata?.[k]??null]))};}
+async function run(){
+  if(!tickets.length)return notify('Add a request first.',true);
+  $('run').disabled=true;let stopped=false,failures=0;
+  try{
+    for(const ticket of tickets.filter(x=>x.status==='pending')){
+      notify('Routing request '+ticket.id+'…');
+      const labels=candidates(ticket.text),criteria=Object.fromEntries(labels.map(x=>[x,catalog.labels[x]]));
+      criteria.__review__='Human review: no matching intent is available or the request is insufficiently specific.';
+      const started=performance.now();
+      try{
+        const request={model:'open-jev',state:{customer_request:ticket.text},questions:{route:{type:'choice',instructions:'Which banking support intent matches this customer\'s request? Select review if none of the available intents matches. Classify only; do not perform the request.',criteria}}};
+        const raw=await fetch('/v1/systemone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
+        if(!raw.ok)throw Error('Model request returned HTTP '+raw.status);
+        const response=await raw.json(),answer=response.answers?.route,probs=answer?.probabilities;
+        if(!probs||Object.keys(probs).sort().join('\n')!==Object.keys(criteria).sort().join('\n')||Object.values(probs).some(p=>typeof p!=='number'||!Number.isFinite(p)||p<0||p>1)||Math.abs(Object.values(probs).reduce((a,b)=>a+b,0)-1)>1e-5)throw Error('Invalid model probability vector');
+        const prediction=Object.keys(probs).reduce((a,b)=>probs[b]>probs[a]?b:a);
+        if(answer.choice!==prediction)throw Error('Model choice differs from probability argmax');
+        const identity=identityOf(response);
+        if(!identity.model)throw Error('Model did not identify itself');
+        if(modelIdentity&&JSON.stringify(identity)!==JSON.stringify(modelIdentity))throw Error('Model changed during this queue');
+        if(policy?.identity&&JSON.stringify(identity)!==JSON.stringify(policy.identity))throw Error('The calibrated policy belongs to a different model');
+        modelIdentity=identity;ticket.prediction=prediction;ticket.probabilities=probs;ticket.top_probability=probs[prediction];ticket.model=identity.model;
+        ticket.status=policy&&prediction!=='__review__'&&ticket.top_probability>=policy.threshold?'accepted':'review';
+        $('model').textContent='Measured model: '+identity.model+' · checkpoint '+(identity.checkpoint_sha256||'not reported');
+      }catch(error){
+        ticket.status='error';ticket.error=error.message;failures++;
+        stopped=/changed during|different model|identify itself|Invalid model|differs from probability/.test(error.message);
+        notify(error.message,true);
+      }
+      ticket.wall_ms=performance.now()-started;runtime+=ticket.wall_ms;render();
+      if(stopped)break;
+    }
+    notify(stopped?'Routing stopped because the model or probability contract changed. Remaining requests stay pending.':failures?failures+' requests failed. Review the queue before exporting.':'Routing complete. Review uncertain requests and export your queue.',stopped||failures>0);
+  }finally{$('run').disabled=false;}
+}
+function exportCSV(final){const reviewer=$('reviewer').value.trim();if(tickets.some(x=>x.human)&&!reviewer)return notify('Add the reviewer name before exporting a human decision.',true);const fields=final?['id','text','final_label','decision_source','reviewer','model','top_probability']:['id','text','proposed_label','top_probability','status','reviewed_label','reviewer','model'];const rows=tickets.map(t=>{const finalLabel=t.human||(t.status==='accepted'?t.prediction:'');return {id:t.id,text:t.text,proposed_label:t.prediction||'',top_probability:t.top_probability??'',status:t.status,reviewed_label:t.human||'',reviewer:t.human?reviewer:'',model:t.model||'',final_label:finalLabel,decision_source:t.human?'human':finalLabel?'model':'unresolved'};});const quote=x=>'"'+String(x??'').replaceAll('"','""')+'"';const csv=[fields,...rows.map(r=>fields.map(f=>r[f]))].map(r=>r.map(quote).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=final?'support-final.csv':'support-review-queue.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$('sample').onclick=async()=>{try{const response=await fetch('sample.csv');if(!response.ok)throw Error('Prepare the natural example files first.');addTickets(parseCSV(await response.text()));}catch(error){notify(error.message,true);}};
+$('csv').onchange=async event=>{try{addTickets(parseCSV(await event.target.files[0].text()));}catch(error){notify(error.message,true);}event.target.value='';};
+$('lock').onchange=async event=>{try{const value=JSON.parse(await event.target.files[0].text());if(value.confidence_measure!=='top_label_probability'||!Number.isFinite(value.threshold)||value.threshold<0||value.threshold>1.000001||!value.identity?.model)throw Error('Use a measured decisions.lock.json file.');if(tickets.some(x=>x.status!=='pending'))throw Error('Load the calibrated policy before routing this queue.');policy=value;$('policy').textContent='Calibrated policy: '+value.identity.model+', top probability ≥ '+value.threshold.toFixed(3)+'.';}catch(error){notify(error.message,true);}event.target.value='';};
+$('add').onclick=()=>{try{addTickets([{id:'custom-'+Date.now(),text:$('text').value}]);$('text').value='';}catch(error){notify(error.message,true);}};$('run').onclick=run;$('export-review').onclick=()=>exportCSV(false);$('export-final').onclick=()=>exportCSV(true);
+fetch('index.json').then(r=>{if(!r.ok)throw Error('Run the support-routing prepare command to build the label index.');return r.json();}).then(value=>{catalog=value;render();}).catch(error=>{notify(error.message,true);$('run').disabled=true;});
+</script>
+</body>
+</html>

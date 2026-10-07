@@ -18,12 +18,11 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 KB = ROOT / "knowledge-bank"
-MAX_FILE = 1 * 1024 * 1024           # skip single files larger than this
-SKIP_EXT = {".gif", ".mov", ".mp4", ".avi", ".mkv", ".zip", ".gz", ".tgz", ".7z", ".tar", ".3dm",
-            ".dll", ".exe", ".so", ".dylib", ".pyd", ".whl", ".jar", ".bin", ".pbf", ".parquet", ".h5",
-            ".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".psd", ".ico", ".mp3", ".wav",
-            ".pt", ".pth", ".pkl", ".npy", ".npz", ".ckpt", ".safetensors", ".onnx", ".gguf", ".woff", ".woff2", ".ttf", ".pyc", ".pyo", ".class"}
-MAX_REPO = 80 * 1024 * 1024          # refuse to vendor more than this per source
+# Keep everything except what GitHub itself refuses: files over its 100 MB hard limit, and (below)
+# files with token-shaped strings, which push protection blocks. Compiled caches are regenerable noise.
+MAX_FILE = 99 * 1024 * 1024
+SKIP_EXT = {".pyc", ".pyo", ".class"}
+MAX_REPO = 1500 * 1024 * 1024        # per source; beyond this, use include: paths (push size)
 PERMISSIVE = {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC",
               "Unlicense", "CC0-1.0", "BSL-1.0", "Zlib", "CC-BY-4.0"}
 OPEN_COPYLEFT = {"GPL", "LGPL", "AGPL", "MPL", "EPL", "LLGPL", "CC-BY-SA-4.0"}  # open source: copy verbatim, keep isolated
@@ -151,11 +150,19 @@ def copy_tree(src, dst, include, exclude=()):
                 if size > MAX_FILE:
                     skipped.append("%s (%.1f MB > cap)" % (rel, size / 1e6))
                     continue
-                if has_secret(s):
-                    skipped.append("%s (token-shaped string)" % rel)
-                    continue
                 d = dst / rel
                 d.parent.mkdir(parents=True, exist_ok=True)
+                if has_secret(s):
+                    # keep the file, replace only the token (push protection blocks the raw string)
+                    text = SECRET_RE.sub("REDACTED_TOKEN", s.read_text(errors="ignore"))
+                    d.write_text("Asthenosphere knowledge bank: token-shaped strings replaced with REDACTED_TOKEN.\n"
+                                 if d.suffix.lower() in (".txt", ".md") else "", errors="ignore")
+                    with open(d, "a", errors="ignore") as fh:
+                        fh.write(text)
+                    skipped.append("%s (token redacted, file kept)" % rel)
+                    n += 1
+                    bytes_ += size
+                    continue
                 shutil.copy2(s, d)
                 n += 1
                 bytes_ += size

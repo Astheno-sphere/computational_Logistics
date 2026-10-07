@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "predeclared_before_model_evaluation",
+  "created_at_utc": "2026-10-02T19:01:52.346385+00:00",
+  "dataset_manifest_sha256": "615a79fff7bb8ba9b3774efacab81f051d8ff16b92abeb6003ab6472d03d278c",
+  "base_checkpoint": "released Open-Jev-2B package, SHA256 3076462e6356412082e79af909227b39b2863b90def79155ca0821aa506b7ded",
+  "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+  "settings": {
+    "steps": 64,
+    "accumulation": 4,
+    "train_rows": 128,
+    "calibration_rows": 32,
+    "eval_rows_per_split": 32,
+    "lr": 2e-05,
+    "head_lr": 5e-05,
+    "brier_weight": 0.1,
+    "seed": 20261002,
+    "max_length": 4096
+  },
+  "selection": "Complete frozen v5 groups; calibration only for saved temperature; fixed final step with no test/OOD selection",
+  "regression_controls": "The same frozen 128 Test + 128 OOD v4 groups selected by the earlier continued-2B pilot; recompute both checkpoints in this runtime",
+  "ablation": "Save baseline and trained logits; report both weight states at both original and calibration-fitted temperatures. Separate decision accuracy from probability and Noul threshold behavior.",
+  "metrics": [
+    "candidate argmax accuracy",
+    "Noul accuracy/coverage/accepted error at 0.2/0.8",
+    "probability Brier/NLL",
+    "boundary/offset-family results",
+    "paired regression decisions"
+  ],
+  "stop_policy": "One fixed run only. Preserve failures/negative results. No schedule, checkpoint or threshold retuning from test/OOD.",
+  "scope": "Controlled original synthetic pilot. No public/sealed benchmark content, official JevBench improvement or deployment-ready model claim."
+}

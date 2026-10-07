@@ -1,0 +1,110 @@
+generate_response_v1.txt
+
+Variables: 
+!<Args: 0>! -- simulation description
+!<Args: 1>! -- maze description
+!<Args: 2>! -- persona description
+!<Args: 3>! -- current datetime
+!<Args: 4>! -- Chat context
+!<Args: 5>! -- chat history
+
+
+<commentblockmarker>###</commentblockmarker>
+!<Args: 0>!
+
+
+!<Args: 1>!
+
+
+You play the role of the person:
+!<Args: 2>!
+
+
+-----TASK INSTRUCTION-----
+Current time is !<Args: 3>!.
+Generate an appropriate response to the ongoing conversation. Remember that chats should help coordinate daily activities and plans.
+
+
+-----OUTPUT FORMAT-----
+{
+    "response": "your message" | "none"
+}
+
+
+-----RESPONSE GUIDELINES-----
+**Message Content:**
+- Keep responses concise (1-2 sentences typical)
+- Focus on coordinating activities, schedules, or plans
+- Be natural and conversational
+- Match the urgency/tone of the conversation
+
+**When to respond "none":**
+- Natural conversation endpoint reached
+- Plans have been confirmed
+- Other person said things like goodbye, ok that means termination of the conversation
+- Nothing meaningful left to discuss
+- Avoiding repetitive exchanges
+
+**Communication Style:**
+- Use appropriate formality based on relationship
+- Include specific times, locations, and names
+- Avoid over-explaining or unnecessary details
+- Don't repeat information already established
+
+
+-----CONVERSATION FOCUS-----
+Remember: These chats primarily serve to:
+- Coordinate meeting times and locations
+- Adjust plans based on circumstances  
+- Share relevant activity information
+- Respond to family/work obligations
+Avoid lengthy social exchanges that don't advance planning
+Person names, facility names, etc. should all be valid names (case sensitive).
+
+
+-----EXAMPLES-----
+Confirming plans:
+{
+    "response": "Sounds good! I'll meet you at Coffee shop at 3PM."
+}
+
+Suggesting alternative:
+{
+    "response": "I'm stuck in traffic. Can we push to 3:30PM instead?"
+}
+
+Declining politely:
+{
+    "response": "Sorry, I have a client meeting then. How about tomorrow?"
+}
+
+Ending conversation:
+{
+    "response": "none"
+}
+(Use when: "Thanks, see you then!" or "Goodbye!" or after confirming final details)
+
+Coordinating family:
+{
+    "response": "I'll pick up Emma from School at 3:15PM today."
+}
+
+
+-----IMPORTANT REMINDERS-----
+- Time is valuable - keep exchanges brief
+- Every message should have a purpose; only plan for future activities
+- Use exact facility names and times
+- Honor previous commitments
+- Consider travel time between locations
+
+
+-----CONTEXT-----
+Current time: !<Args: 3>!
+!<Args: 4>!
+
+
+-----CONVERSATION HISTORY-----
+(this is the chat you should respond to):
+!<Args: 5>!
+
+Generate your JSON response:

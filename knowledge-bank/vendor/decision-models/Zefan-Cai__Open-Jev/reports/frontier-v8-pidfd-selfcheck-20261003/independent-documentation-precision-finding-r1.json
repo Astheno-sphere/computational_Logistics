@@ -1,0 +1,22 @@
+{
+  "final_documentation_sha256": "a2cb53826ba5e372ba3e425442e3eadf9d7802e2f4be14a5ea049cec8b4dc540",
+  "finding": "Initial wording inferred architecture without a pin and overstated preconsumption/async-interruption guarantees. Python cannot guarantee receipt completion or tracked fd handoff after BaseException/host loss.",
+  "initial_observed_wording": [
+    "The declared platform is Linux x86_64 with the required scalar widths.",
+    "Every returned descriptor >= 0, including descriptor 0, receives exactly one close attempt in finally.",
+    "A failed or interrupted attempt is consumed and cannot be retried or resumed."
+  ],
+  "kind": "documentation_precision",
+  "observed_corrections": [
+    "Linux four-byte int/unsigned int; pointer width descriptive and no architecture inferred",
+    "Once marker written: consumed; precondition/request/bootstrap rejection precedes consumption",
+    "Tracked-return fd cleanup only; async C-call/return handoff outside Python guarantee",
+    "BaseException/host loss may leave marker without complete receipt/stdout"
+  ],
+  "production_source_change_requested": false,
+  "remaining_actionable_findings": [],
+  "requested_change": "Declare measured Linux C widths without architecture inference; qualify consumption after marker write and exactly-once cleanup after descriptor return assignment.",
+  "reviewer": "/root/bridge_evidence_review",
+  "schema_version": 1,
+  "status": "observed_and_corrected_before_source_freeze"
+}

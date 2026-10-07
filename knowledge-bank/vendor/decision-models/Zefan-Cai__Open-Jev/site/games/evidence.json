@@ -1,0 +1,2265 @@
+{
+  "schema_version": 1,
+  "title": "Open-Jev Game Arcade",
+  "scope": "16 independent saved Test/OOD decisions from the audited Open-Jev-27B-v1.1 evaluation. Interactive presentation of recorded outputs; no live model inference or new rollout.",
+  "license": "CC0-1.0",
+  "model": {
+    "name": "Open-Jev-27B-v1.1",
+    "repo_id": "ZefanCai/Open-Jev-27B-v1.1",
+    "revision": "28cf73067d5b337860bbef3c85b8b82ba8730956",
+    "base_model": "Qwen/Qwen3.8-27B",
+    "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+    "temperature": 2.5343690298472983,
+    "code_commit": "9eebd42de6137735fc5fd85b499aa1ffa256426d"
+  },
+  "audit": {
+    "status": "passed_complete_full24_audit",
+    "publishable": true,
+    "independent_audit_sha256": "650642bac1c7440f7cdbaf044068b8870ef7a514510dfd8a6cb01756a9304795",
+    "campaign_manifest_sha256": "491a4ee96d1ef6509ead733daffdf2318f3bb43d9d5bf38715f2cd0be8a0a9d4",
+    "capture_receipt_sha256": "bc90ec6386a1f2ec184ebc277df63c1016a3d0e32ac2a0661b3bd9371614d4a8"
+  },
+  "datasets": {
+    "test": {
+      "repo_id": "ZefanCai/Open-Jev-v1.1",
+      "revision": "10ad6888333fa97f8c948192797bad3de3040802",
+      "file": "raw/community-hard-mix-v2-redistributable/test.jsonl.gz",
+      "file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+      "url": "https://huggingface.co/datasets/ZefanCai/Open-Jev-v1.1/blob/10ad6888333fa97f8c948192797bad3de3040802/raw/community-hard-mix-v2-redistributable/test.jsonl.gz"
+    },
+    "ood": {
+      "repo_id": "ZefanCai/Open-Jev-v1.1",
+      "revision": "10ad6888333fa97f8c948192797bad3de3040802",
+      "file": "raw/community-hard-mix-v2-redistributable/ood.jsonl.gz",
+      "file_sha256": "0b960c7f9d88bb64f1d282dddc2b45f1b5ae2d35920dfe515422d3dfe4319fef",
+      "url": "https://huggingface.co/datasets/ZefanCai/Open-Jev-v1.1/blob/10ad6888333fa97f8c948192797bad3de3040802/raw/community-hard-mix-v2-redistributable/ood.jsonl.gz"
+    }
+  },
+  "selection_policy": "Four illustrative cases per family selected for visibly different decisions. Includes preserved model/teacher disagreements in Snake, tic-tac-toe and the platformer. All four available T-Rex Test records are shown. This selection is not representative and does not estimate game accuracy or win rate.",
+  "limitations": [
+    "Recorded probabilities belong to the displayed original state, question and option order only.",
+    "Cases are independent snapshots; moving to the next case does not execute the previous model action.",
+    "Probabilities are over offered decisions, not chances of winning.",
+    "Game notes are authored explanations from the visible rules, not model-generated reasoning.",
+    "Only synthetic CC0 source records are included; no third-party game assets are used."
+  ],
+  "games": [
+    {
+      "id": "snake",
+      "title": "Snake",
+      "description": "Read the grid. Pick the next turn.",
+      "limitations": [
+        "Original local grid simulator; no official browser-game physics.",
+        "Teacher targets use a visible-state BFS/flood-fill heuristic, not an optimal policy.",
+        "Test uses 6×6 boards and OOD uses 8×8 boards. Nearby states from one trajectory may cross Test/Train splits."
+      ],
+      "cases": [
+        {
+          "id": "snake-1",
+          "title": "One bite away",
+          "note": "The food is one square left of the head. The saved model chooses left.",
+          "record": {
+            "group_id": "snake-v1:2232308eeca6b250025a01d6",
+            "id": "snake-v1:2232308eeca6b250025a01d6:action",
+            "kind": "choice",
+            "metadata": {
+              "case_name": "snake",
+              "family": "policy",
+              "provenance": {
+                "generator_version": "snake-v1",
+                "group_index": "snake-v1:2232308eeca6b250025a01d6",
+                "license": "CC0-1.0",
+                "seed": 42,
+                "split_policy": "identical_board_grouped; tic_tac_toe_rotations_and_reflections_grouped; snake_ood_grid_size",
+                "type": "synthetic",
+                "variant": "action"
+              },
+              "target_basis": "Choice: visible-state BFS/flood-fill heuristic, not optimal. Noul: exact one-step collision rule.",
+              "template_id": "snake-v1-id"
+            },
+            "options": [
+              "up",
+              "down",
+              "left"
+            ],
+            "question": "Choose a direction to keep the snake alive and collect food. The tail vacates on a move unless food is eaten; reversing direction is forbidden.",
+            "source": "snake-v1",
+            "split": "test",
+            "state": {
+              "coordinates": "x increases right; y increases down; walls are outside the board",
+              "direction": "left",
+              "food": [
+                1,
+                5
+              ],
+              "game": "snake",
+              "height": 6,
+              "snake_head_first": [
+                [
+                  2,
+                  5
+                ],
+                [
+                  3,
+                  5
+                ],
+                [
+                  4,
+                  5
+                ],
+                [
+                  4,
+                  4
+                ],
+                [
+                  4,
+                  3
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  4,
+                  1
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "width": 6
+            },
+            "target": [
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "prediction": {
+            "id": "snake-v1:2232308eeca6b250025a01d6:action",
+            "group_id": "snake-v1:2232308eeca6b250025a01d6",
+            "split": "test",
+            "source": "snake-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "b28ca3f4cbd612f3ece1bc792c7d599f1ef3531c38da1af97abb34e355641959",
+            "row_sha256": "3b220dda1a7bd8967c98f4c25dc515e5f0145d38e29f984e61cad99b7a4a40c3",
+            "logits": [
+              -6.76350212097168,
+              -8.959485054016113,
+              1.8427430391311646
+            ],
+            "probabilities": [
+              0.03199042544757039,
+              0.013449682856578623,
+              0.9545598916958509
+            ],
+            "target": [
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "selected_index": 2,
+          "selected_action": "left",
+          "target_actions": [
+            "left"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 18200,
+            "public_raw_line_sha256": "fabdcb3ab60980aaf0701975f3c1426c52e03acaff1e014d156a5661aaee1d01",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "3b220dda1a7bd8967c98f4c25dc515e5f0145d38e29f984e61cad99b7a4a40c3",
+            "original_prediction_line_number": 579,
+            "original_prediction_line_sha256": "c454843d05e9c611347c5a9f0f2d2599e6d2f8a244853333e6f1191225f3c3a6",
+            "original_prediction_file_sha256": "343cb8b8ccc60ed87453322131752832dfde6f6cbff6f9d3a3ce45453941e9ed",
+            "source_identity_canonical_sha256": "b28ca3f4cbd612f3ece1bc792c7d599f1ef3531c38da1af97abb34e355641959"
+          }
+        },
+        {
+          "id": "snake-2",
+          "title": "The tail moves too",
+          "note": "At the top-left corner, down enters the tail square. The rules let the tail vacate when food is not eaten.",
+          "record": {
+            "group_id": "snake-v1:9930ff3d86da448b0c2fd68b",
+            "id": "snake-v1:9930ff3d86da448b0c2fd68b:action",
+            "kind": "choice",
+            "metadata": {
+              "case_name": "snake",
+              "family": "policy",
+              "provenance": {
+                "generator_version": "snake-v1",
+                "group_index": "snake-v1:9930ff3d86da448b0c2fd68b",
+                "license": "CC0-1.0",
+                "seed": 42,
+                "split_policy": "identical_board_grouped; tic_tac_toe_rotations_and_reflections_grouped; snake_ood_grid_size",
+                "type": "synthetic",
+                "variant": "action"
+              },
+              "target_basis": "Choice: visible-state BFS/flood-fill heuristic, not optimal. Noul: exact one-step collision rule.",
+              "template_id": "snake-v1-id"
+            },
+            "options": [
+              "up",
+              "down",
+              "left"
+            ],
+            "question": "Choose a direction to keep the snake alive and collect food. The tail vacates on a move unless food is eaten; reversing direction is forbidden.",
+            "source": "snake-v1",
+            "split": "test",
+            "state": {
+              "coordinates": "x increases right; y increases down; walls are outside the board",
+              "direction": "left",
+              "food": [
+                5,
+                3
+              ],
+              "game": "snake",
+              "height": 6,
+              "snake_head_first": [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ]
+              ],
+              "width": 6
+            },
+            "target": [
+              0.0,
+              1.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "snake-v1:9930ff3d86da448b0c2fd68b:action",
+            "group_id": "snake-v1:9930ff3d86da448b0c2fd68b",
+            "split": "test",
+            "source": "snake-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6",
+            "row_sha256": "6aee7ecc5ecd24ad44fded38c139015905efde4435051ff5b5aecfa6b1232b5e",
+            "logits": [
+              -7.898962497711182,
+              -0.0725126713514328,
+              -7.618334770202637
+            ],
+            "probabilities": [
+              0.04157483098363096,
+              0.9119822600691129,
+              0.046442908947256195
+            ],
+            "target": [
+              0.0,
+              1.0,
+              0.0
+            ]
+          },
+          "selected_index": 1,
+          "selected_action": "down",
+          "target_actions": [
+            "down"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19372,
+            "public_raw_line_sha256": "26df0357b38c950fff0b4fd4887e797df7fb07c4c2d5c21e4b69cf5ec263346a",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "6aee7ecc5ecd24ad44fded38c139015905efde4435051ff5b5aecfa6b1232b5e",
+            "original_prediction_line_number": 628,
+            "original_prediction_line_sha256": "a745f1d8f5c47691d0aede90a7466367f53bb3dada349a15bb691bc251800247",
+            "original_prediction_file_sha256": "a331c150998db2a6961d9946d6d9f1ede9ec3a9b1fddaed2e2f8ec8ba24588f2",
+            "source_identity_canonical_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6"
+          }
+        },
+        {
+          "id": "snake-3",
+          "title": "A bigger board",
+          "note": "An 8×8 OOD position with food above and left of the head. This is an independent saved decision, not the next frame of the previous case.",
+          "record": {
+            "group_id": "snake-v1:387034bf44684f2125901475",
+            "id": "snake-v1:387034bf44684f2125901475:action",
+            "kind": "choice",
+            "metadata": {
+              "case_name": "snake",
+              "family": "policy",
+              "provenance": {
+                "generator_version": "snake-v1",
+                "group_index": "snake-v1:387034bf44684f2125901475",
+                "license": "CC0-1.0",
+                "seed": 42,
+                "split_policy": "identical_board_grouped; tic_tac_toe_rotations_and_reflections_grouped; snake_ood_grid_size",
+                "type": "synthetic",
+                "variant": "action"
+              },
+              "target_basis": "Choice: visible-state BFS/flood-fill heuristic, not optimal. Noul: exact one-step collision rule.",
+              "template_id": "snake-v1-ood"
+            },
+            "options": [
+              "up",
+              "right",
+              "down"
+            ],
+            "question": "Choose a direction to keep the snake alive and collect food. The tail vacates on a move unless food is eaten; reversing direction is forbidden.",
+            "source": "snake-v1",
+            "split": "ood",
+            "state": {
+              "coordinates": "x increases right; y increases down; walls are outside the board",
+              "direction": "right",
+              "food": [
+                3,
+                2
+              ],
+              "game": "snake",
+              "height": 8,
+              "snake_head_first": [
+                [
+                  4,
+                  4
+                ],
+                [
+                  3,
+                  4
+                ]
+              ],
+              "width": 8
+            },
+            "target": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "snake-v1:387034bf44684f2125901475:action",
+            "group_id": "snake-v1:387034bf44684f2125901475",
+            "split": "ood",
+            "source": "snake-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "b575698e0f1006713ca736b96d1d8eb43a54d052e266c0f363b027b288f54498",
+            "eval_identity_sha256": "9c0a140b107108a66da6fa900cf7f3d0f32e9ea4dda6b3216c4579461631b6c2",
+            "row_sha256": "886d28b24e687f5c315f83939a45d13d080eae61843cdfd48591c08398e05118",
+            "logits": [
+              0.1360284835100174,
+              -4.729701519012451,
+              -6.338743686676025
+            ],
+            "probabilities": [
+              0.8167727700736473,
+              0.11975679051793832,
+              0.06347043940841432
+            ],
+            "target": [
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 0,
+          "selected_action": "up",
+          "target_actions": [
+            "up"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "ood",
+            "public_line_number": 21235,
+            "public_raw_line_sha256": "9644e5e1479b692e15cbf0e0ec525854dc187e9b362964bc2e1518c318b84fc3",
+            "public_file_sha256": "0b960c7f9d88bb64f1d282dddc2b45f1b5ae2d35920dfe515422d3dfe4319fef",
+            "record_canonical_sha256": "886d28b24e687f5c315f83939a45d13d080eae61843cdfd48591c08398e05118",
+            "original_prediction_line_number": 2511,
+            "original_prediction_line_sha256": "3cc982cc62735a3fc9b1762b2c2c305c2790ca29dac23365fd5f6f869809724a",
+            "original_prediction_file_sha256": "e9edac1a64c83a0cf77d7f2aa9735e4b9162b84764b9cf5ac44a0eca9d1cb3df",
+            "source_identity_canonical_sha256": "9c0a140b107108a66da6fa900cf7f3d0f32e9ea4dda6b3216c4579461631b6c2"
+          }
+        },
+        {
+          "id": "snake-4",
+          "title": "A different route",
+          "note": "The saved model turns right; the supplied heuristic target is left. Both avoid immediate collision here. The disagreement is preserved.",
+          "record": {
+            "group_id": "snake-v1:934ea7b2e7baf881098c1bf4",
+            "id": "snake-v1:934ea7b2e7baf881098c1bf4:action",
+            "kind": "choice",
+            "metadata": {
+              "case_name": "snake",
+              "family": "policy",
+              "provenance": {
+                "generator_version": "snake-v1",
+                "group_index": "snake-v1:934ea7b2e7baf881098c1bf4",
+                "license": "CC0-1.0",
+                "seed": 42,
+                "split_policy": "identical_board_grouped; tic_tac_toe_rotations_and_reflections_grouped; snake_ood_grid_size",
+                "type": "synthetic",
+                "variant": "action"
+              },
+              "target_basis": "Choice: visible-state BFS/flood-fill heuristic, not optimal. Noul: exact one-step collision rule.",
+              "template_id": "snake-v1-ood"
+            },
+            "options": [
+              "up",
+              "right",
+              "left"
+            ],
+            "question": "Choose a direction to keep the snake alive and collect food. The tail vacates on a move unless food is eaten; reversing direction is forbidden.",
+            "source": "snake-v1",
+            "split": "ood",
+            "state": {
+              "coordinates": "x increases right; y increases down; walls are outside the board",
+              "direction": "up",
+              "food": [
+                4,
+                4
+              ],
+              "game": "snake",
+              "height": 8,
+              "snake_head_first": [
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  3,
+                  3
+                ],
+                [
+                  4,
+                  3
+                ],
+                [
+                  5,
+                  3
+                ],
+                [
+                  5,
+                  4
+                ],
+                [
+                  5,
+                  5
+                ],
+                [
+                  5,
+                  6
+                ],
+                [
+                  6,
+                  6
+                ],
+                [
+                  6,
+                  5
+                ]
+              ],
+              "width": 8
+            },
+            "target": [
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "prediction": {
+            "id": "snake-v1:934ea7b2e7baf881098c1bf4:action",
+            "group_id": "snake-v1:934ea7b2e7baf881098c1bf4",
+            "split": "ood",
+            "source": "snake-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "b575698e0f1006713ca736b96d1d8eb43a54d052e266c0f363b027b288f54498",
+            "eval_identity_sha256": "a1d44d356b5a5fd24608735bb22ceb84901e92b6fd4b2e1abf4cb58190db3ff2",
+            "row_sha256": "e4e6b57d164746b8745bceff60f2d696d7bb383839e99fc32e0d4cdd346e126f",
+            "logits": [
+              -7.873548984527588,
+              -0.12140659987926483,
+              -4.832212924957275
+            ],
+            "probabilities": [
+              0.03902844235099423,
+              0.8313877992344989,
+              0.1295837584145067
+            ],
+            "target": [
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "selected_index": 1,
+          "selected_action": "right",
+          "target_actions": [
+            "left"
+          ],
+          "matches_target": false,
+          "source_provenance": {
+            "public_split": "ood",
+            "public_line_number": 22163,
+            "public_raw_line_sha256": "1a8a2a23adfc554a4d1763f4ad688fd3459da9e9844832a02b639aceedb8192d",
+            "public_file_sha256": "0b960c7f9d88bb64f1d282dddc2b45f1b5ae2d35920dfe515422d3dfe4319fef",
+            "record_canonical_sha256": "e4e6b57d164746b8745bceff60f2d696d7bb383839e99fc32e0d4cdd346e126f",
+            "original_prediction_line_number": 2550,
+            "original_prediction_line_sha256": "2ffb9e765bf4015c678d8539599e79928acd6ec156039f52d7a83e8bc1717b99",
+            "original_prediction_file_sha256": "cedb7ec421b590e681a057cb4bf0ffcfd08ec000ef4e93ab0f7beb02d3e979cc",
+            "source_identity_canonical_sha256": "a1d44d356b5a5fd24608735bb22ceb84901e92b6fd4b2e1abf4cb58190db3ff2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "tic_tac_toe",
+      "title": "Tic-tac-toe",
+      "description": "Find the win. Spot the block. Catch the miss.",
+      "limitations": [
+        "Independent board decisions, not model self-play or a win-rate measurement.",
+        "Targets are exact minimax; equally good actions share target mass. Model probabilities are not win probabilities.",
+        "Rotations and reflections share a data group; there is no tic-tac-toe OOD claim."
+      ],
+      "cases": [
+        {
+          "id": "tic_tac_toe-1",
+          "title": "Complete the row",
+          "note": "X to move. Square 3 completes the middle row; the saved model selects it.",
+          "record": {
+            "group_id": "tic_tac_toe-v1:..O.XXXOO",
+            "id": "tic_tac_toe-v1:..O.XXXOO:..O.XXXOO",
+            "kind": "choice",
+            "metadata": {
+              "case_name": "tic_tac_toe",
+              "family": "policy",
+              "provenance": {
+                "generator_version": "tic_tac_toe-v1",
+                "group_index": "tic_tac_toe-v1:..O.XXXOO",
+                "license": "CC0-1.0",
+                "seed": 42,
+                "split_policy": "identical_board_grouped; tic_tac_toe_rotations_and_reflections_grouped; snake_ood_grid_size",
+                "type": "synthetic",
+                "variant": "..O.XXXOO"
+              },
+              "target_basis": "exact minimax; ties are uniform optimal actions, not win probabilities",
+              "template_id": "tic_tac_toe-v1-id"
+            },
+            "options": [
+              "0",
+              "1",
+              "3"
+            ],
+            "question": "Choose a legal square to maximize the current player's result against optimal opposition: win, then draw, then loss.",
+            "source": "tic_tac_toe-v1",
+            "split": "test",
+            "state": {
+              "board": [
+                "..O",
+                ".XX",
+                "XOO"
+              ],
+              "current_player": "X",
+              "game": "tic_tac_toe",
+              "rules": "X starts; alternate placing a mark; three in a row wins. Squares 0..8 are row-major; . is empty."
+            },
+            "target": [
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "prediction": {
+            "id": "tic_tac_toe-v1:..O.XXXOO:..O.XXXOO",
+            "group_id": "tic_tac_toe-v1:..O.XXXOO",
+            "split": "test",
+            "source": "tic_tac_toe-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "9c0a140b107108a66da6fa900cf7f3d0f32e9ea4dda6b3216c4579461631b6c2",
+            "row_sha256": "73cae144292cacc17bd2e940e123b8c907fff4760e243925244427cd39b3d530",
+            "logits": [
+              -1.6171714067459106,
+              -1.694602608680725,
+              -0.7193977236747742
+            ],
+            "probabilities": [
+              0.2945502855862107,
+              0.2856871354623901,
+              0.4197625789513991
+            ],
+            "target": [
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          "selected_index": 2,
+          "selected_action": "3",
+          "target_actions": [
+            "3"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 17749,
+            "public_raw_line_sha256": "4af34cf1cd5707042d2c8787c3287d0b494d1f40d6ed087e6169494012807edb",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "73cae144292cacc17bd2e940e123b8c907fff4760e243925244427cd39b3d530",
+            "original_prediction_line_number": 560,
+            "original_prediction_line_sha256": "84ed36cce80e7956657b4e6f2c72636a91ae77479b73a7b6960b345b73072334",
+            "original_prediction_file_sha256": "2f4a5c2cd3f94f5783d975020cedcc32113e76e65c4c778b305282e8d7c31331",
+            "source_identity_canonical_sha256": "9c0a140b107108a66da6fa900cf7f3d0f32e9ea4dda6b3216c4579461631b6c2"
+          }
+        },
+        {
+          "id": "tic_tac_toe-2",
+          "title": "Block the column",
+          "note": "O to move. X threatens square 2 in the right column; the saved model blocks there.",
+          "record": {
+            "group_id": "tic_tac_toe-v1:...O.XXOX",
+            "id": "tic_tac_toe-v1:...O.XXOX:...O.XXOX",
+            "kind": "choice",
+            "metadata": {
+              "case_name": "tic_tac_toe",
+              "family": "policy",
+              "provenance": {
+                "generator_version": "tic_tac_toe-v1",
+                "group_index": "tic_tac_toe-v1:...O.XXOX",
+                "license": "CC0-1.0",
+                "seed": 42,
+                "split_policy": "identical_board_grouped; tic_tac_toe_rotations_and_reflections_grouped; snake_ood_grid_size",
+                "type": "synthetic",
+                "variant": "...O.XXOX"
+              },
+              "target_basis": "exact minimax; ties are uniform optimal actions, not win probabilities",
+              "template_id": "tic_tac_toe-v1-id"
+            },
+            "options": [
+              "0",
+              "1",
+              "2",
+              "4"
+            ],
+            "question": "Choose a legal square to maximize the current player's result against optimal opposition: win, then draw, then loss.",
+            "source": "tic_tac_toe-v1",
+            "split": "test",
+            "state": {
+              "board": [
+                "...",
+                "O.X",
+                "XOX"
+              ],
+              "current_player": "O",
+              "game": "tic_tac_toe",
+              "rules": "X starts; alternate placing a mark; three in a row wins. Squares 0..8 are row-major; . is empty."
+            },
+            "target": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "tic_tac_toe-v1:...O.XXOX:...O.XXOX",
+            "group_id": "tic_tac_toe-v1:...O.XXOX",
+            "split": "test",
+            "source": "tic_tac_toe-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6",
+            "row_sha256": "1bdab26011e16d851c54eee348cd7dfd0eb4c5eca8797991df732d04b9588c86",
+            "logits": [
+              -1.7696492671966553,
+              -2.175959348678589,
+              -1.5584676265716553,
+              -2.054201126098633
+            ],
+            "probabilities": [
+              0.2609218712798257,
+              0.22227181026783321,
+              0.2835952728836843,
+              0.23321104556865682
+            ],
+            "target": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ]
+          },
+          "selected_index": 2,
+          "selected_action": "2",
+          "target_actions": [
+            "2"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 17734,
+            "public_raw_line_sha256": "05ed2ab44e314d7fcb820b1cd9e50fc2d2771cc60f93ba04e559840dd0fea45a",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "1bdab26011e16d851c54eee348cd7dfd0eb4c5eca8797991df732d04b9588c86",
+            "original_prediction_line_number": 560,
+            "original_prediction_line_sha256": "7e61841fa99da5a96b61957b67b434f578fc68e5e8accea4680f3cf2c8e3635f",
+            "original_prediction_file_sha256": "2b301a01606d62c736741a85f77ee4b1a6871d3b2a49fb1ec6f7d39209d27237",
+            "source_identity_canonical_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6"
+          }
+        },
+        {
+          "id": "tic_tac_toe-3",
+          "title": "Several good moves",
+          "note": "X to move. The minimax target gives equal mass to squares 2, 4 and 5. The saved model selects the center, square 4.",
+          "record": {
+            "group_id": "tic_tac_toe-v1:.......OX",
+            "id": "tic_tac_toe-v1:.......OX:.......OX",
+            "kind": "choice",
+            "metadata": {
+              "case_name": "tic_tac_toe",
+              "family": "policy",
+              "provenance": {
+                "generator_version": "tic_tac_toe-v1",
+                "group_index": "tic_tac_toe-v1:.......OX",
+                "license": "CC0-1.0",
+                "seed": 42,
+                "split_policy": "identical_board_grouped; tic_tac_toe_rotations_and_reflections_grouped; snake_ood_grid_size",
+                "type": "synthetic",
+                "variant": ".......OX"
+              },
+              "target_basis": "exact minimax; ties are uniform optimal actions, not win probabilities",
+              "template_id": "tic_tac_toe-v1-id"
+            },
+            "options": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ],
+            "question": "Choose a legal square to maximize the current player's result against optimal opposition: win, then draw, then loss.",
+            "source": "tic_tac_toe-v1",
+            "split": "test",
+            "state": {
+              "board": [
+                "...",
+                "...",
+                ".OX"
+              ],
+              "current_player": "X",
+              "game": "tic_tac_toe",
+              "rules": "X starts; alternate placing a mark; three in a row wins. Squares 0..8 are row-major; . is empty."
+            },
+            "target": [
+              0.0,
+              0.0,
+              0.3333333333333333,
+              0.0,
+              0.3333333333333333,
+              0.3333333333333333,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "tic_tac_toe-v1:.......OX:.......OX",
+            "group_id": "tic_tac_toe-v1:.......OX",
+            "split": "test",
+            "source": "tic_tac_toe-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "7ebcf50f843bef0cb6fe05797bfbefee9e5e19ef39962587cc631442ba384c14",
+            "row_sha256": "c31d8055d82666cb735169691c77780b8bccde9a6355347d90e02bdf3bbe8505",
+            "logits": [
+              -2.1070072650909424,
+              -2.38041090965271,
+              -1.875864028930664,
+              -2.5942111015319824,
+              -1.7361242771148682,
+              -2.5664889812469482,
+              -2.1474826335906982
+            ],
+            "probabilities": [
+              0.1471828268381297,
+              0.13213143493241536,
+              0.16123759115092187,
+              0.12144200486548289,
+              0.17037755480171646,
+              0.12277768646405869,
+              0.1448509009472752
+            ],
+            "target": [
+              0.0,
+              0.0,
+              0.3333333333333333,
+              0.0,
+              0.3333333333333333,
+              0.3333333333333333,
+              0.0
+            ]
+          },
+          "selected_index": 4,
+          "selected_action": "4",
+          "target_actions": [
+            "2",
+            "4",
+            "5"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 17724,
+            "public_raw_line_sha256": "524036778e3453e3ea7604fa7d83d1d120251e94ec9139c220f9e9e86b527fd7",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "c31d8055d82666cb735169691c77780b8bccde9a6355347d90e02bdf3bbe8505",
+            "original_prediction_line_number": 559,
+            "original_prediction_line_sha256": "059d952fd6b8f44bb237876a2a1844089145c0a5c241f47b6a93a5c1de3e77a7",
+            "original_prediction_file_sha256": "036a960d42647bffa7ff15b162c51cae736401cdb7831415954cdd5b295e3b84",
+            "source_identity_canonical_sha256": "7ebcf50f843bef0cb6fe05797bfbefee9e5e19ef39962587cc631442ba384c14"
+          }
+        },
+        {
+          "id": "tic_tac_toe-4",
+          "title": "A missed win",
+          "note": "O could win immediately at square 1. The saved model instead selects square 2. This non-optimal prediction is shown unchanged.",
+          "record": {
+            "group_id": "tic_tac_toe-v1:....OXXOX",
+            "id": "tic_tac_toe-v1:....OXXOX:....OXXOX",
+            "kind": "choice",
+            "metadata": {
+              "case_name": "tic_tac_toe",
+              "family": "policy",
+              "provenance": {
+                "generator_version": "tic_tac_toe-v1",
+                "group_index": "tic_tac_toe-v1:....OXXOX",
+                "license": "CC0-1.0",
+                "seed": 42,
+                "split_policy": "identical_board_grouped; tic_tac_toe_rotations_and_reflections_grouped; snake_ood_grid_size",
+                "type": "synthetic",
+                "variant": "....OXXOX"
+              },
+              "target_basis": "exact minimax; ties are uniform optimal actions, not win probabilities",
+              "template_id": "tic_tac_toe-v1-id"
+            },
+            "options": [
+              "0",
+              "1",
+              "2",
+              "3"
+            ],
+            "question": "Choose a legal square to maximize the current player's result against optimal opposition: win, then draw, then loss.",
+            "source": "tic_tac_toe-v1",
+            "split": "test",
+            "state": {
+              "board": [
+                "...",
+                ".OX",
+                "XOX"
+              ],
+              "current_player": "O",
+              "game": "tic_tac_toe",
+              "rules": "X starts; alternate placing a mark; three in a row wins. Squares 0..8 are row-major; . is empty."
+            },
+            "target": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "tic_tac_toe-v1:....OXXOX:....OXXOX",
+            "group_id": "tic_tac_toe-v1:....OXXOX",
+            "split": "test",
+            "source": "tic_tac_toe-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "a1d44d356b5a5fd24608735bb22ceb84901e92b6fd4b2e1abf4cb58190db3ff2",
+            "row_sha256": "a1f5a38c28707e9060fcd7dfb78ab217c7b895075303530eaee49f5a5e606d64",
+            "logits": [
+              -1.8711583614349365,
+              -2.126030683517456,
+              -1.5851658582687378,
+              -2.728029489517212
+            ],
+            "probabilities": [
+              0.26760092173457584,
+              0.2419982250069446,
+              0.2995682932750627,
+              0.19083255998341686
+            ],
+            "target": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 2,
+          "selected_action": "2",
+          "target_actions": [
+            "1"
+          ],
+          "matches_target": false,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 17729,
+            "public_raw_line_sha256": "8a588a54f04b37b192abcd3dc3cb7b8312756e8c7199909b1bda162746cbf37a",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "a1f5a38c28707e9060fcd7dfb78ab217c7b895075303530eaee49f5a5e606d64",
+            "original_prediction_line_number": 559,
+            "original_prediction_line_sha256": "3f8e74bbb692ce0fe83b059a8d73e0105f34fb777dcc11e82dd0da7e10e73a08",
+            "original_prediction_file_sha256": "dfade51fa213b22af3cd71db1692eb3428cf6383e1d46f1a9f9ed0550358c929",
+            "source_identity_canonical_sha256": "a1d44d356b5a5fd24608735bb22ceb84901e92b6fd4b2e1abf4cb58190db3ff2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "trex_runner",
+      "title": "T-Rex runner",
+      "description": "Short jump, full jump, or duck?",
+      "limitations": [
+        "Original local box-physics runner, not Chrome T-Rex.",
+        "One saved decision per visible obstacle. Launch timing is handled by the local controller.",
+        "These are all four local runner Test records; they are too few for a broad gameplay-performance claim."
+      ],
+      "cases": [
+        {
+          "id": "trex_runner-1",
+          "title": "Single cactus",
+          "note": "A single small cactus at speed 10. The saved model chooses a short jump.",
+          "record": {
+            "group_id": "trex_runner-v1:41a55bc1ce4dd405a9592b41",
+            "id": "trex_runner-v1:41a55bc1ce4dd405a9592b41:50c0724eb53ca15f5e7e8029",
+            "kind": "choice",
+            "metadata": {
+              "behavior_policy": "trex_one_obstacle_physics_oracle_baseline",
+              "case_name": "trex_runner",
+              "episode_step": 1,
+              "family": "policy",
+              "provenance": {
+                "episode_index": 0,
+                "episode_seed": 42,
+                "generator_version": "trex_runner-v1",
+                "group_index": "trex_runner-v1:41a55bc1ce4dd405a9592b41",
+                "label_scope": "current_visible_observation_only",
+                "license": "CC0-1.0",
+                "observed_request_sha256": "50c0724eb53ca15f5e7e8029d369c0420add6262b0fd9292d4b84de3946443ef",
+                "seed": 42,
+                "split_policy": "identical_visible_observation_grouped_hash_v1; no_ood",
+                "type": "synthetic",
+                "variant": "50c0724eb53ca15f5e7e8029"
+              },
+              "runtime_config": {
+                "name": "trex_runner",
+                "obstacles": 12,
+                "physics": "open-jev-box-runner-v1"
+              },
+              "target_basis": "One-obstacle box-physics simulation with declared maneuver preference using current visible geometry; no future obstacle or RNG access; not Chrome physics.",
+              "teacher": "trex_one_obstacle_physics_oracle_baseline",
+              "template_id": "trex_runner-v1-id"
+            },
+            "options": [
+              "jump_short",
+              "jump_full",
+              "duck",
+              "keep_running"
+            ],
+            "question": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "source": "trex_runner-v1",
+            "split": "test",
+            "state": {
+              "current_speed": 10,
+              "dinosaur_motion_when_observed": "running",
+              "objective": "Pass every obstacle without a collision.",
+              "runner_geometry": {
+                "duck_height": 0.8,
+                "obstacle_start_x": 12,
+                "player_width": 1,
+                "standing_height": 2
+              },
+              "speed_mode": "normal",
+              "target_obstacle": {
+                "bottom": 0,
+                "flight_path": "ground_hazard",
+                "group_size": "single",
+                "height": 1.0,
+                "kind": "small_cactus",
+                "width": 0.8
+              },
+              "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+            },
+            "target": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "trex_runner-v1:41a55bc1ce4dd405a9592b41:50c0724eb53ca15f5e7e8029",
+            "group_id": "trex_runner-v1:41a55bc1ce4dd405a9592b41",
+            "split": "test",
+            "source": "trex_runner-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6",
+            "row_sha256": "16e3d9380fef1dde0744fa6b1d82a33c3fc6b8163af31064f08865674f64605e",
+            "logits": [
+              4.182901859283447,
+              -7.132462501525879,
+              -9.809083938598633,
+              -11.283344268798828
+            ],
+            "probabilities": [
+              0.9825627613462752,
+              0.01130673250573156,
+              0.0039324751094060705,
+              0.002198031038587376
+            ],
+            "target": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 0,
+          "selected_action": "jump_short",
+          "target_actions": [
+            "jump_short"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19588,
+            "public_raw_line_sha256": "5cf6532eff0218b1c4746a52ca8edc088e0c174a610c4611afd2ee64084e1e98",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "16e3d9380fef1dde0744fa6b1d82a33c3fc6b8163af31064f08865674f64605e",
+            "original_prediction_line_number": 637,
+            "original_prediction_line_sha256": "1b68cb7c15481313992b7908f58d64e1c0ea097d2b9d3fa693cbe9737f0e0702",
+            "original_prediction_file_sha256": "a331c150998db2a6961d9946d6d9f1ede9ec3a9b1fddaed2e2f8ec8ba24588f2",
+            "source_identity_canonical_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6"
+          }
+        },
+        {
+          "id": "trex_runner-2",
+          "title": "Double cactus",
+          "note": "A double-width small cactus at speed 12. The saved model chooses a full jump.",
+          "record": {
+            "group_id": "trex_runner-v1:ad8321dcce9fb837b59c4fab",
+            "id": "trex_runner-v1:ad8321dcce9fb837b59c4fab:fb0f0fed6de2a42329534319",
+            "kind": "choice",
+            "metadata": {
+              "behavior_policy": "trex_one_obstacle_physics_oracle_baseline",
+              "case_name": "trex_runner",
+              "episode_step": 7,
+              "family": "policy",
+              "provenance": {
+                "episode_index": 0,
+                "episode_seed": 42,
+                "generator_version": "trex_runner-v1",
+                "group_index": "trex_runner-v1:ad8321dcce9fb837b59c4fab",
+                "label_scope": "current_visible_observation_only",
+                "license": "CC0-1.0",
+                "observed_request_sha256": "fb0f0fed6de2a42329534319fc9bc77ff50c668a06367f5eef64542566f870ef",
+                "seed": 42,
+                "split_policy": "identical_visible_observation_grouped_hash_v1; no_ood",
+                "type": "synthetic",
+                "variant": "fb0f0fed6de2a42329534319"
+              },
+              "runtime_config": {
+                "name": "trex_runner",
+                "obstacles": 12,
+                "physics": "open-jev-box-runner-v1"
+              },
+              "target_basis": "One-obstacle box-physics simulation with declared maneuver preference using current visible geometry; no future obstacle or RNG access; not Chrome physics.",
+              "teacher": "trex_one_obstacle_physics_oracle_baseline",
+              "template_id": "trex_runner-v1-id"
+            },
+            "options": [
+              "jump_short",
+              "jump_full",
+              "duck",
+              "keep_running"
+            ],
+            "question": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "source": "trex_runner-v1",
+            "split": "test",
+            "state": {
+              "current_speed": 12,
+              "dinosaur_motion_when_observed": "running",
+              "objective": "Pass every obstacle without a collision.",
+              "runner_geometry": {
+                "duck_height": 0.8,
+                "obstacle_start_x": 12,
+                "player_width": 1,
+                "standing_height": 2
+              },
+              "speed_mode": "normal",
+              "target_obstacle": {
+                "bottom": 0,
+                "flight_path": "ground_hazard",
+                "group_size": "double",
+                "height": 1.0,
+                "kind": "small_cactus",
+                "width": 1.6
+              },
+              "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+            },
+            "target": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "trex_runner-v1:ad8321dcce9fb837b59c4fab:fb0f0fed6de2a42329534319",
+            "group_id": "trex_runner-v1:ad8321dcce9fb837b59c4fab",
+            "split": "test",
+            "source": "trex_runner-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "a1d44d356b5a5fd24608735bb22ceb84901e92b6fd4b2e1abf4cb58190db3ff2",
+            "row_sha256": "345bd74a5bfd1ffb623491d91285c4dec139c01fe3d9740a860bfec7157bbbe3",
+            "logits": [
+              -4.911093235015869,
+              -0.6332002282142639,
+              -10.27662467956543,
+              -11.740756034851074
+            ],
+            "probabilities": [
+              0.1515995322455848,
+              0.8199097578891689,
+              0.018249450700878515,
+              0.010241259164367581
+            ],
+            "target": [
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 1,
+          "selected_action": "jump_full",
+          "target_actions": [
+            "jump_full"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19589,
+            "public_raw_line_sha256": "237bfe9a8f614d97e75dedb99241a47c31ea8be9ba05fe2471647e06af9da123",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "345bd74a5bfd1ffb623491d91285c4dec139c01fe3d9740a860bfec7157bbbe3",
+            "original_prediction_line_number": 637,
+            "original_prediction_line_sha256": "5010f76243b22a7cfeb725a80363e9eba34d08bc9c665a3e2a021855456b033b",
+            "original_prediction_file_sha256": "0e67ffd1c0ef64e93a4edab7a704dceca8b9dc5fae8618dcf7b6f266791c6e19",
+            "source_identity_canonical_sha256": "a1d44d356b5a5fd24608735bb22ceb84901e92b6fd4b2e1abf4cb58190db3ff2"
+          }
+        },
+        {
+          "id": "trex_runner-3",
+          "title": "Duck under",
+          "note": "The flying obstacle starts at height 1.1: below a standing runner’s height 2 and above duck height 0.8. The saved model chooses duck.",
+          "record": {
+            "group_id": "trex_runner-v1:9d0a92c041e0101c7ef112e6",
+            "id": "trex_runner-v1:9d0a92c041e0101c7ef112e6:9d81d6999de692efac12a02d",
+            "kind": "choice",
+            "metadata": {
+              "behavior_policy": "trex_one_obstacle_physics_oracle_baseline",
+              "case_name": "trex_runner",
+              "episode_step": 6,
+              "family": "policy",
+              "provenance": {
+                "episode_index": 2,
+                "episode_seed": 44,
+                "generator_version": "trex_runner-v1",
+                "group_index": "trex_runner-v1:9d0a92c041e0101c7ef112e6",
+                "label_scope": "current_visible_observation_only",
+                "license": "CC0-1.0",
+                "observed_request_sha256": "9d81d6999de692efac12a02d2febb3f5907476be7e719452f0008cd070bca721",
+                "seed": 42,
+                "split_policy": "identical_visible_observation_grouped_hash_v1; no_ood",
+                "type": "synthetic",
+                "variant": "9d81d6999de692efac12a02d"
+              },
+              "runtime_config": {
+                "name": "trex_runner",
+                "obstacles": 12,
+                "physics": "open-jev-box-runner-v1"
+              },
+              "target_basis": "One-obstacle box-physics simulation with declared maneuver preference using current visible geometry; no future obstacle or RNG access; not Chrome physics.",
+              "teacher": "trex_one_obstacle_physics_oracle_baseline",
+              "template_id": "trex_runner-v1-id"
+            },
+            "options": [
+              "jump_short",
+              "jump_full",
+              "duck",
+              "keep_running"
+            ],
+            "question": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "source": "trex_runner-v1",
+            "split": "test",
+            "state": {
+              "current_speed": 12,
+              "dinosaur_motion_when_observed": "running",
+              "objective": "Pass every obstacle without a collision.",
+              "runner_geometry": {
+                "duck_height": 0.8,
+                "obstacle_start_x": 12,
+                "player_width": 1,
+                "standing_height": 2
+              },
+              "speed_mode": "normal",
+              "target_obstacle": {
+                "bottom": 1.1,
+                "flight_path": "blocks_running_only",
+                "group_size": "single",
+                "height": 1.0,
+                "kind": "pterodactyl",
+                "width": 1.1
+              },
+              "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+            },
+            "target": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "trex_runner-v1:9d0a92c041e0101c7ef112e6:9d81d6999de692efac12a02d",
+            "group_id": "trex_runner-v1:9d0a92c041e0101c7ef112e6",
+            "split": "test",
+            "source": "trex_runner-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "7ebcf50f843bef0cb6fe05797bfbefee9e5e19ef39962587cc631442ba384c14",
+            "row_sha256": "0022293db33c930be9766937ab883c8cb3121ba85fd9fcb8110581ed3c938860",
+            "logits": [
+              -10.33987045288086,
+              -7.030245780944824,
+              3.207732915878296,
+              -8.054754257202148
+            ],
+            "probabilities": [
+              0.004611941604807307,
+              0.017022667625952725,
+              0.9670031019687502,
+              0.011362288800489737
+            ],
+            "target": [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ]
+          },
+          "selected_index": 2,
+          "selected_action": "duck",
+          "target_actions": [
+            "duck"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19590,
+            "public_raw_line_sha256": "0ebe4faf52ef0cdb4ab358ca8724f22c5e759c70561412a966e5484e3e9aa0ae",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "0022293db33c930be9766937ab883c8cb3121ba85fd9fcb8110581ed3c938860",
+            "original_prediction_line_number": 637,
+            "original_prediction_line_sha256": "b613ff401656928e4733d26dfd07ce839f48eae182ef887a6eae899fdd0b7d09",
+            "original_prediction_file_sha256": "b865b99cf935fdad3125d3f84aced667cd735b95ae81b7234707eea1491da55a",
+            "source_identity_canonical_sha256": "7ebcf50f843bef0cb6fe05797bfbefee9e5e19ef39962587cc631442ba384c14"
+          }
+        },
+        {
+          "id": "trex_runner-4",
+          "title": "A faster approach",
+          "note": "A single small cactus at speed 12. The saved model still chooses a short jump; the controller handles timing.",
+          "record": {
+            "group_id": "trex_runner-v1:c8cacd5e1c60fcc4d00ab054",
+            "id": "trex_runner-v1:c8cacd5e1c60fcc4d00ab054:c5ad1272bf9285c97b76fb3d",
+            "kind": "choice",
+            "metadata": {
+              "behavior_policy": "trex_one_obstacle_physics_oracle_baseline",
+              "case_name": "trex_runner",
+              "episode_step": 2,
+              "family": "policy",
+              "provenance": {
+                "episode_index": 6,
+                "episode_seed": 48,
+                "generator_version": "trex_runner-v1",
+                "group_index": "trex_runner-v1:c8cacd5e1c60fcc4d00ab054",
+                "label_scope": "current_visible_observation_only",
+                "license": "CC0-1.0",
+                "observed_request_sha256": "c5ad1272bf9285c97b76fb3da169667a092492669f7fa58e499a54c82090eb83",
+                "seed": 42,
+                "split_policy": "identical_visible_observation_grouped_hash_v1; no_ood",
+                "type": "synthetic",
+                "variant": "c5ad1272bf9285c97b76fb3d"
+              },
+              "runtime_config": {
+                "name": "trex_runner",
+                "obstacles": 12,
+                "physics": "open-jev-box-runner-v1"
+              },
+              "target_basis": "One-obstacle box-physics simulation with declared maneuver preference using current visible geometry; no future obstacle or RNG access; not Chrome physics.",
+              "teacher": "trex_one_obstacle_physics_oracle_baseline",
+              "template_id": "trex_runner-v1-id"
+            },
+            "options": [
+              "jump_short",
+              "jump_full",
+              "duck",
+              "keep_running"
+            ],
+            "question": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "source": "trex_runner-v1",
+            "split": "test",
+            "state": {
+              "current_speed": 12,
+              "dinosaur_motion_when_observed": "running",
+              "objective": "Pass every obstacle without a collision.",
+              "runner_geometry": {
+                "duck_height": 0.8,
+                "obstacle_start_x": 12,
+                "player_width": 1,
+                "standing_height": 2
+              },
+              "speed_mode": "normal",
+              "target_obstacle": {
+                "bottom": 0,
+                "flight_path": "ground_hazard",
+                "group_size": "single",
+                "height": 1.0,
+                "kind": "small_cactus",
+                "width": 0.8
+              },
+              "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+            },
+            "target": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "trex_runner-v1:c8cacd5e1c60fcc4d00ab054:c5ad1272bf9285c97b76fb3d",
+            "group_id": "trex_runner-v1:c8cacd5e1c60fcc4d00ab054",
+            "split": "test",
+            "source": "trex_runner-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "9c0a140b107108a66da6fa900cf7f3d0f32e9ea4dda6b3216c4579461631b6c2",
+            "row_sha256": "24ccef99a64f2d7bb996ff9cbbe62c92b36cdcedf8b92f5e076ccec3f3782835",
+            "logits": [
+              3.981938123703003,
+              -7.332038402557373,
+              -9.799209594726562,
+              -11.655664443969727
+            ],
+            "probabilities": [
+              0.9823627202861559,
+              0.011310622619488132,
+              0.004272747065697048,
+              0.00205391002865906
+            ],
+            "target": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 0,
+          "selected_action": "jump_short",
+          "target_actions": [
+            "jump_short"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19591,
+            "public_raw_line_sha256": "192b594cf61feb0b9d490abaf5541218a4b2d260f435a4a41ec3ca74fb03e425",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "24ccef99a64f2d7bb996ff9cbbe62c92b36cdcedf8b92f5e076ccec3f3782835",
+            "original_prediction_line_number": 637,
+            "original_prediction_line_sha256": "ea3c9367f7489819387733eebd208c7930cdfc6dcd87e593ead7d13581ce0a36",
+            "original_prediction_file_sha256": "549c58fd741b9167e703b7c87712126886f6be562eeb3ae3e5c57567108c2dcd",
+            "source_identity_canonical_sha256": "9c0a140b107108a66da6fa900cf7f3d0f32e9ea4dda6b3216c4579461631b6c2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "tile_platformer",
+      "title": "Tile platformer",
+      "description": "Read the gap. Time the jump.",
+      "limitations": [
+        "Original discrete tile simulator, not NES gameplay; no emulator, enemies, momentum or game assets.",
+        "The full terrain and four-tick jump arc are visible to the model.",
+        "Targets come from a shortest-path BFS teacher. These independent snapshots are not a model-controlled completed level."
+      ],
+      "cases": [
+        {
+          "id": "tile_platformer-1",
+          "title": "At the gap",
+          "note": "The grounded player is at x=7; the gap starts at x=8. The saved model chooses a running jump.",
+          "record": {
+            "group_id": "tile_platformer-v1:984ae29afd20293f996bc58d",
+            "id": "tile_platformer-v1:984ae29afd20293f996bc58d:604e73e42fb0bc2b5b935c65",
+            "kind": "choice",
+            "metadata": {
+              "behavior_policy": "random_baseline",
+              "case_name": "tile_platformer",
+              "episode_step": 4,
+              "family": "policy",
+              "provenance": {
+                "episode_index": 5,
+                "episode_seed": 47,
+                "generator_version": "tile_platformer-v1",
+                "group_index": "tile_platformer-v1:984ae29afd20293f996bc58d",
+                "label_scope": "current_visible_observation_only",
+                "license": "CC0-1.0",
+                "observed_request_sha256": "604e73e42fb0bc2b5b935c658753ea3d18e40df97d1664f227b99818ff9d569e",
+                "seed": 42,
+                "split_policy": "full_visible_terrain_layout_grouped_hash_v1; no_ood",
+                "type": "synthetic",
+                "variant": "604e73e42fb0bc2b5b935c65"
+              },
+              "runtime_config": {
+                "length": 48,
+                "name": "tile_platformer",
+                "physics": "open-jev-tile-platformer-v1"
+              },
+              "target_basis": "Deterministic BFS first action on a shortest successful path in the disclosed local tile physics and full visible terrain; not NES gameplay.",
+              "teacher": "tile_platformer_bfs_baseline",
+              "template_id": "tile_platformer-v1-id"
+            },
+            "options": [
+              "noop",
+              "right",
+              "right_jump",
+              "right_run",
+              "right_run_jump",
+              "jump",
+              "left"
+            ],
+            "question": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "source": "tile_platformer-v1",
+            "split": "test",
+            "state": {
+              "episode": {
+                "dead": false,
+                "stage_clear": false
+              },
+              "hazard": {
+                "jump_must_start_this_decision": true
+              },
+              "objective": "Reach the flag without falling into a gap.",
+              "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible.",
+              "player": {
+                "grounded": true,
+                "jump_phase": "grounded",
+                "x": 7,
+                "y": 0
+              },
+              "reaction_timing": {
+                "action_horizon_ticks": 1,
+                "inference_delay_ticks": 0
+              },
+              "terrain": {
+                "columns": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "flag_x": 46,
+                "gap_distance_tiles": 1,
+                "null_means": "gap",
+                "observation_reliability": "exact_local_engine",
+                "obstacle_distance_tiles": 6
+              },
+              "trajectory": {
+                "crossing_known_gap": false,
+                "jump_tick": -1,
+                "launch_height": 0
+              }
+            },
+            "target": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "tile_platformer-v1:984ae29afd20293f996bc58d:604e73e42fb0bc2b5b935c65",
+            "group_id": "tile_platformer-v1:984ae29afd20293f996bc58d",
+            "split": "test",
+            "source": "tile_platformer-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "7ebcf50f843bef0cb6fe05797bfbefee9e5e19ef39962587cc631442ba384c14",
+            "row_sha256": "6d96f0655a63320863eaa858c09d51698881a09a9c438adecb92fdeeeace74dd",
+            "logits": [
+              -11.726983070373535,
+              -10.83273983001709,
+              -9.148039817810059,
+              -6.766973972320557,
+              1.9374874830245972,
+              -8.799117088317871,
+              -13.04929256439209
+            ],
+            "probabilities": [
+              0.0042443823550993645,
+              0.0060402343398618516,
+              0.011742141487777588,
+              0.03004494785615142,
+              0.9319340062999465,
+              0.013475329615652095,
+              0.002518958045511139
+            ],
+            "target": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 4,
+          "selected_action": "right_run_jump",
+          "target_actions": [
+            "right_run_jump"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19596,
+            "public_raw_line_sha256": "f5c7559f81a01fc568789edb0ab568a3a33c0dd1553c90d2fc0161b49b9e0696",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "6d96f0655a63320863eaa858c09d51698881a09a9c438adecb92fdeeeace74dd",
+            "original_prediction_line_number": 637,
+            "original_prediction_line_sha256": "52b1c9798d77166503e4a76370064dda8d94262140cf7414107d7da04feeee26",
+            "original_prediction_file_sha256": "036a960d42647bffa7ff15b162c51cae736401cdb7831415954cdd5b295e3b84",
+            "source_identity_canonical_sha256": "7ebcf50f843bef0cb6fe05797bfbefee9e5e19ef39962587cc631442ba384c14"
+          }
+        },
+        {
+          "id": "tile_platformer-2",
+          "title": "Run before the column",
+          "note": "At x=10, the next solid column is at x=13. The saved model chooses a two-tile run to x=12.",
+          "record": {
+            "group_id": "tile_platformer-v1:a59cb34cb85a12253407de3f",
+            "id": "tile_platformer-v1:a59cb34cb85a12253407de3f:0e4780cfff646b525f151560",
+            "kind": "choice",
+            "metadata": {
+              "behavior_policy": "tile_platformer_bfs_baseline",
+              "case_name": "tile_platformer",
+              "episode_step": 4,
+              "family": "policy",
+              "provenance": {
+                "episode_index": 16,
+                "episode_seed": 58,
+                "generator_version": "tile_platformer-v1",
+                "group_index": "tile_platformer-v1:a59cb34cb85a12253407de3f",
+                "label_scope": "current_visible_observation_only",
+                "license": "CC0-1.0",
+                "observed_request_sha256": "0e4780cfff646b525f1515608299675b97f777c65def7cd275f1125a440cdc25",
+                "seed": 42,
+                "split_policy": "full_visible_terrain_layout_grouped_hash_v1; no_ood",
+                "type": "synthetic",
+                "variant": "0e4780cfff646b525f151560"
+              },
+              "runtime_config": {
+                "length": 48,
+                "name": "tile_platformer",
+                "physics": "open-jev-tile-platformer-v1"
+              },
+              "target_basis": "Deterministic BFS first action on a shortest successful path in the disclosed local tile physics and full visible terrain; not NES gameplay.",
+              "teacher": "tile_platformer_bfs_baseline",
+              "template_id": "tile_platformer-v1-id"
+            },
+            "options": [
+              "noop",
+              "right",
+              "right_jump",
+              "right_run",
+              "right_run_jump",
+              "jump",
+              "left"
+            ],
+            "question": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "source": "tile_platformer-v1",
+            "split": "test",
+            "state": {
+              "episode": {
+                "dead": false,
+                "stage_clear": false
+              },
+              "hazard": {
+                "jump_must_start_this_decision": true
+              },
+              "objective": "Reach the flag without falling into a gap.",
+              "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible.",
+              "player": {
+                "grounded": true,
+                "jump_phase": "grounded",
+                "x": 10,
+                "y": 0
+              },
+              "reaction_timing": {
+                "action_horizon_ticks": 1,
+                "inference_delay_ticks": 0
+              },
+              "terrain": {
+                "columns": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "flag_x": 46,
+                "gap_distance_tiles": 8,
+                "null_means": "gap",
+                "observation_reliability": "exact_local_engine",
+                "obstacle_distance_tiles": 3
+              },
+              "trajectory": {
+                "crossing_known_gap": false,
+                "jump_tick": -1,
+                "launch_height": 0
+              }
+            },
+            "target": [
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "tile_platformer-v1:a59cb34cb85a12253407de3f:0e4780cfff646b525f151560",
+            "group_id": "tile_platformer-v1:a59cb34cb85a12253407de3f",
+            "split": "test",
+            "source": "tile_platformer-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "a1d44d356b5a5fd24608735bb22ceb84901e92b6fd4b2e1abf4cb58190db3ff2",
+            "row_sha256": "71cd4ca6d6461b15f83f25d954b83b7f5ab5dd7b7e775f66b55e9e166dfed0b4",
+            "logits": [
+              -11.981724739074707,
+              -10.301058769226074,
+              -10.903515815734863,
+              -0.767409086227417,
+              -7.670654296875,
+              -10.551880836486816,
+              -13.501334190368652
+            ],
+            "probabilities": [
+              0.01044257195443452,
+              0.02026794495207283,
+              0.015979805422224026,
+              0.8719965227211524,
+              0.05722173490756192,
+              0.01835812621167523,
+              0.00573329383087904
+            ],
+            "target": [
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 3,
+          "selected_action": "right_run",
+          "target_actions": [
+            "right_run"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19601,
+            "public_raw_line_sha256": "485dbafc8a490f3b04a637c6170549dccdf1b3ce43e2ae40c97e1a2f88f0bc8d",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "71cd4ca6d6461b15f83f25d954b83b7f5ab5dd7b7e775f66b55e9e166dfed0b4",
+            "original_prediction_line_number": 637,
+            "original_prediction_line_sha256": "65fa579e192359deb427944d2f958c93c3a9212e924e73317e2f8b8a00accdbe",
+            "original_prediction_file_sha256": "dfade51fa213b22af3cd71db1692eb3428cf6383e1d46f1a9f9ed0550358c929",
+            "source_identity_canonical_sha256": "a1d44d356b5a5fd24608735bb22ceb84901e92b6fd4b2e1abf4cb58190db3ff2"
+          }
+        },
+        {
+          "id": "tile_platformer-3",
+          "title": "The flag ahead",
+          "note": "The airborne player is at x=44, y=3 with the flag at x=46. The saved model chooses right_run_jump; an airborne jump request cannot restart the arc.",
+          "record": {
+            "group_id": "tile_platformer-v1:a59cb34cb85a12253407de3f",
+            "id": "tile_platformer-v1:a59cb34cb85a12253407de3f:462aa3bb07eeff921b767553",
+            "kind": "choice",
+            "metadata": {
+              "behavior_policy": "tile_platformer_bfs_baseline",
+              "case_name": "tile_platformer",
+              "episode_step": 21,
+              "family": "policy",
+              "provenance": {
+                "episode_index": 16,
+                "episode_seed": 58,
+                "generator_version": "tile_platformer-v1",
+                "group_index": "tile_platformer-v1:a59cb34cb85a12253407de3f",
+                "label_scope": "current_visible_observation_only",
+                "license": "CC0-1.0",
+                "observed_request_sha256": "462aa3bb07eeff921b7675538a714be3103f2fc1f1669c190a9f2037819371b6",
+                "seed": 42,
+                "split_policy": "full_visible_terrain_layout_grouped_hash_v1; no_ood",
+                "type": "synthetic",
+                "variant": "462aa3bb07eeff921b767553"
+              },
+              "runtime_config": {
+                "length": 48,
+                "name": "tile_platformer",
+                "physics": "open-jev-tile-platformer-v1"
+              },
+              "target_basis": "Deterministic BFS first action on a shortest successful path in the disclosed local tile physics and full visible terrain; not NES gameplay.",
+              "teacher": "tile_platformer_bfs_baseline",
+              "template_id": "tile_platformer-v1-id"
+            },
+            "options": [
+              "noop",
+              "right",
+              "right_jump",
+              "right_run",
+              "right_run_jump",
+              "jump",
+              "left"
+            ],
+            "question": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "source": "tile_platformer-v1",
+            "split": "test",
+            "state": {
+              "episode": {
+                "dead": false,
+                "stage_clear": false
+              },
+              "hazard": {
+                "jump_must_start_this_decision": false
+              },
+              "objective": "Reach the flag without falling into a gap.",
+              "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible.",
+              "player": {
+                "grounded": false,
+                "jump_phase": "rising",
+                "x": 44,
+                "y": 3
+              },
+              "reaction_timing": {
+                "action_horizon_ticks": 1,
+                "inference_delay_ticks": 0
+              },
+              "terrain": {
+                "columns": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  0,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "flag_x": 46,
+                "gap_distance_tiles": null,
+                "null_means": "gap",
+                "observation_reliability": "exact_local_engine",
+                "obstacle_distance_tiles": null
+              },
+              "trajectory": {
+                "crossing_known_gap": false,
+                "jump_tick": 1,
+                "launch_height": 0
+              }
+            },
+            "target": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "tile_platformer-v1:a59cb34cb85a12253407de3f:462aa3bb07eeff921b767553",
+            "group_id": "tile_platformer-v1:a59cb34cb85a12253407de3f",
+            "split": "test",
+            "source": "tile_platformer-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6",
+            "row_sha256": "5343d2a576a788b731990fe283edc842b8c7dd5400c89575a346d9ea2213810c",
+            "logits": [
+              -8.6632719039917,
+              -10.023843765258789,
+              -7.407820224761963,
+              -9.849013328552246,
+              0.895659327507019,
+              -7.975304126739502,
+              -11.276948928833008
+            ],
+            "probabilities": [
+              0.02041849425396322,
+              0.011936401846610264,
+              0.033508916962020525,
+              0.01278888611730454,
+              0.8872807212602767,
+              0.026786454233815992,
+              0.007280125326008693
+            ],
+            "target": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 4,
+          "selected_action": "right_run_jump",
+          "target_actions": [
+            "right_run_jump"
+          ],
+          "matches_target": true,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19618,
+            "public_raw_line_sha256": "c20404a961b5319d923b12bfaf472750a266d21ed35d36e25b221c8ecddf7328",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "5343d2a576a788b731990fe283edc842b8c7dd5400c89575a346d9ea2213810c",
+            "original_prediction_line_number": 638,
+            "original_prediction_line_sha256": "5848cdd63842d6d8dea9f89fa84c016bb7337ce20cbc4ccbbee6206067e09bac",
+            "original_prediction_file_sha256": "9f0c84c93da947d10fcfb816c97aee1a6db7012357ca1a1061342b9f1f06b799",
+            "source_identity_canonical_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6"
+          }
+        },
+        {
+          "id": "tile_platformer-4",
+          "title": "Airborne disagreement",
+          "note": "The player is falling at x=6, y=2, two tiles before a gap. The model chooses right_run_jump while the shortest-path teacher chooses right_jump. Neither airborne jump request restarts the arc. This disagreement is preserved.",
+          "record": {
+            "group_id": "tile_platformer-v1:2f3351ec9a89e19e77109c84",
+            "id": "tile_platformer-v1:2f3351ec9a89e19e77109c84:7fc4644ca12c21c8b48b46f1",
+            "kind": "choice",
+            "metadata": {
+              "behavior_policy": "random_baseline",
+              "case_name": "tile_platformer",
+              "episode_step": 12,
+              "family": "policy",
+              "provenance": {
+                "episode_index": 61,
+                "episode_seed": 103,
+                "generator_version": "tile_platformer-v1",
+                "group_index": "tile_platformer-v1:2f3351ec9a89e19e77109c84",
+                "label_scope": "current_visible_observation_only",
+                "license": "CC0-1.0",
+                "observed_request_sha256": "7fc4644ca12c21c8b48b46f1e402c01262fbb088ff99d2b9cb2733b56f7369a3",
+                "seed": 42,
+                "split_policy": "full_visible_terrain_layout_grouped_hash_v1; no_ood",
+                "type": "synthetic",
+                "variant": "7fc4644ca12c21c8b48b46f1"
+              },
+              "runtime_config": {
+                "length": 48,
+                "name": "tile_platformer",
+                "physics": "open-jev-tile-platformer-v1"
+              },
+              "target_basis": "Deterministic BFS first action on a shortest successful path in the disclosed local tile physics and full visible terrain; not NES gameplay.",
+              "teacher": "tile_platformer_bfs_baseline",
+              "template_id": "tile_platformer-v1-id"
+            },
+            "options": [
+              "noop",
+              "right",
+              "right_jump",
+              "right_run",
+              "right_run_jump",
+              "jump",
+              "left"
+            ],
+            "question": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "source": "tile_platformer-v1",
+            "split": "test",
+            "state": {
+              "episode": {
+                "dead": false,
+                "stage_clear": false
+              },
+              "hazard": {
+                "jump_must_start_this_decision": false
+              },
+              "objective": "Reach the flag without falling into a gap.",
+              "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible.",
+              "player": {
+                "grounded": false,
+                "jump_phase": "falling",
+                "x": 6,
+                "y": 2
+              },
+              "reaction_timing": {
+                "action_horizon_ticks": 1,
+                "inference_delay_ticks": 0
+              },
+              "terrain": {
+                "columns": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  null,
+                  null,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "flag_x": 46,
+                "gap_distance_tiles": 2,
+                "null_means": "gap",
+                "observation_reliability": "exact_local_engine",
+                "obstacle_distance_tiles": null
+              },
+              "trajectory": {
+                "crossing_known_gap": false,
+                "jump_tick": 2,
+                "launch_height": 0
+              }
+            },
+            "target": [
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "prediction": {
+            "id": "tile_platformer-v1:2f3351ec9a89e19e77109c84:7fc4644ca12c21c8b48b46f1",
+            "group_id": "tile_platformer-v1:2f3351ec9a89e19e77109c84",
+            "split": "test",
+            "source": "tile_platformer-v1",
+            "kind": "choice",
+            "question_id": "choice",
+            "status": "ok",
+            "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+            "data_split_sha256": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+            "eval_identity_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6",
+            "row_sha256": "a17fdaa431e3dc11606ffa9a43aede03ba78dba1f047cce8fd1dc470bf6f6c9d",
+            "logits": [
+              -8.711935997009277,
+              -9.15515422821045,
+              -5.7621636390686035,
+              -10.255363464355469,
+              0.14398939907550812,
+              -5.627674579620361,
+              -10.266847610473633
+            ],
+            "probabilities": [
+              0.02356682447356858,
+              0.019785649703329813,
+              0.07547096163983008,
+              0.012817882565936117,
+              0.7760146711573102,
+              0.07958407897537667,
+              0.012759931484648594
+            ],
+            "target": [
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "selected_index": 4,
+          "selected_action": "right_run_jump",
+          "target_actions": [
+            "right_jump"
+          ],
+          "matches_target": false,
+          "source_provenance": {
+            "public_split": "test",
+            "public_line_number": 19702,
+            "public_raw_line_sha256": "d23cbf660cc9bf210e771f21428a72e1fb279d85a8481efbd2cb9c177266528a",
+            "public_file_sha256": "fabadcae4ab1f2c1c000dff969aecd59ec68cc8ed6d18603f43ffe0ec693eec9",
+            "record_canonical_sha256": "a17fdaa431e3dc11606ffa9a43aede03ba78dba1f047cce8fd1dc470bf6f6c9d",
+            "original_prediction_line_number": 642,
+            "original_prediction_line_sha256": "e9ac247dd3794dd5c6496b02cb5b41d81e563c82198e7aa05536716efd8ad54b",
+            "original_prediction_file_sha256": "2b301a01606d62c736741a85f77ee4b1a6871d3b2a49fb1ec6f7d39209d27237",
+            "source_identity_canonical_sha256": "21ff3617419301675383d05c8785736f33ba30e1aa54e1c0a18d1400ea20aad6"
+          }
+        }
+      ]
+    }
+  ]
+}

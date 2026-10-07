@@ -1,0 +1,308 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Asthenosphere: theory funnel",
+    "output": "docs/diagrams/workflow-theory-funnel-20261007/theory-funnel.html",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "a1",
+      "label": "A1 Behaviour"
+    },
+    {
+      "id": "a2",
+      "label": "A2 DCM + ABM"
+    },
+    {
+      "id": "a3",
+      "label": "A3 Exploration"
+    },
+    {
+      "id": "a4",
+      "label": "A4 Backcasting"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "label": "L1 Paradigm",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p2",
+      "label": "L2 Deep uncertainty",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p3",
+      "label": "L3 Behaviour",
+      "fromCol": 2,
+      "toCol": 2
+    },
+    {
+      "id": "p4",
+      "label": "L4 Simulation",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "p5",
+      "label": "L5 Frontier",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p6",
+      "label": "Thesis",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [],
+  "mainPath": [
+    "tir",
+    "abmth",
+    "gen",
+    "A2"
+  ],
+  "nodes": [
+    {
+      "id": "sus",
+      "lane": "a3",
+      "col": 0,
+      "type": "external",
+      "label": "Sustainable mobility",
+      "sublabel": "Banister 2008",
+      "tag": "theory",
+      "width": 140
+    },
+    {
+      "id": "back",
+      "lane": "a4",
+      "col": 0,
+      "type": "external",
+      "label": "Backcasting",
+      "sublabel": "Robinson; Hickman",
+      "tag": "theory",
+      "width": 140
+    },
+    {
+      "id": "rdm",
+      "lane": "a3",
+      "col": 1,
+      "type": "external",
+      "label": "Robust decisions",
+      "sublabel": "Lempert; Kwakkel",
+      "tag": "theory",
+      "width": 140
+    },
+    {
+      "id": "dapp",
+      "lane": "a4",
+      "col": 1,
+      "type": "external",
+      "label": "Adaptive pathways",
+      "sublabel": "Haasnoot et al.",
+      "tag": "theory",
+      "width": 140
+    },
+    {
+      "id": "rum",
+      "lane": "a1",
+      "col": 2,
+      "type": "external",
+      "label": "Random utility",
+      "sublabel": "McFadden, Train",
+      "tag": "theory",
+      "width": 140
+    },
+    {
+      "id": "tir",
+      "lane": "a2",
+      "col": 2,
+      "type": "external",
+      "label": "Crowding, new modes",
+      "sublabel": "Tirachini et al.",
+      "tag": "theory",
+      "width": 140
+    },
+    {
+      "id": "abmth",
+      "lane": "a2",
+      "col": 3,
+      "type": "external",
+      "label": "Transport ABM",
+      "sublabel": "MATSim, ODD",
+      "tag": "theory",
+      "width": 140
+    },
+    {
+      "id": "emu",
+      "lane": "a3",
+      "col": 3,
+      "type": "external",
+      "label": "Emulators",
+      "sublabel": "ML emulation, XAI",
+      "tag": "theory",
+      "width": 140
+    },
+    {
+      "id": "llmc",
+      "lane": "a1",
+      "col": 4,
+      "type": "cloud",
+      "label": "LLM choice, Jev",
+      "sublabel": "prompt learning",
+      "tag": "frontier",
+      "width": 140
+    },
+    {
+      "id": "gen",
+      "lane": "a2",
+      "col": 4,
+      "type": "cloud",
+      "label": "Generative agents",
+      "sublabel": "Park; AgentSociety",
+      "tag": "frontier",
+      "width": 140
+    },
+    {
+      "id": "A1",
+      "lane": "a1",
+      "col": 5,
+      "type": "backend",
+      "label": "A1 Behaviour",
+      "sublabel": "time, cost, crowding",
+      "tag": "article",
+      "width": 140
+    },
+    {
+      "id": "A2",
+      "lane": "a2",
+      "col": 5,
+      "type": "backend",
+      "label": "A2 DCM + ABM",
+      "sublabel": "coupling, validation",
+      "tag": "article",
+      "width": 140
+    },
+    {
+      "id": "A3",
+      "lane": "a3",
+      "col": 5,
+      "type": "backend",
+      "label": "A3 Exploration",
+      "sublabel": "robustness, discovery",
+      "tag": "article",
+      "width": 140
+    },
+    {
+      "id": "A4",
+      "lane": "a4",
+      "col": 5,
+      "type": "backend",
+      "label": "A4 Backcasting",
+      "sublabel": "milestones, pathways",
+      "tag": "article",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "id": "rum-llmc",
+      "from": "rum",
+      "to": "llmc",
+      "label": "benchmark"
+    },
+    {
+      "id": "llmc-A1",
+      "from": "llmc",
+      "to": "A1",
+      "label": "hybrid choice"
+    },
+    {
+      "id": "tir-abmth",
+      "from": "tir",
+      "to": "abmth",
+      "label": "attributes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "abmth-gen",
+      "from": "abmth",
+      "to": "gen",
+      "label": "stress test",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gen-A2",
+      "from": "gen",
+      "to": "A2",
+      "label": "hybrid agents",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sus-rdm",
+      "from": "sus",
+      "to": "rdm",
+      "label": "targets"
+    },
+    {
+      "id": "rdm-emu",
+      "from": "rdm",
+      "to": "emu",
+      "label": "ensembles"
+    },
+    {
+      "id": "emu-A3",
+      "from": "emu",
+      "to": "A3",
+      "label": "affordable runs"
+    },
+    {
+      "id": "back-dapp",
+      "from": "back",
+      "to": "dapp",
+      "label": "milestones"
+    },
+    {
+      "id": "dapp-A4",
+      "from": "dapp",
+      "to": "A4",
+      "label": "pathways"
+    },
+    {
+      "id": "rdm-dapp",
+      "from": "rdm",
+      "to": "dapp",
+      "label": "vulnerabilities",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "How to read it",
+      "items": [
+        "Columns run from broad paradigms (L1) to the frontier (L5) and end in the thesis",
+        "Each row is one article; arrows show which theories feed it",
+        "Full references in docs/THEORY.md and docs/references.bib"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Tirachini's place in the funnel",
+      "items": [
+        "Crowding valuation shapes stated-choice attributes (A1) and agent utilities (A2)",
+        "Ride-hailing, automated transit and COVID shocks become deep uncertainties (A3)",
+        "On-demand pooling integrated with fixed lines is a policy lever for pathways (A4)"
+      ]
+    }
+  ]
+}

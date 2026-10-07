@@ -1,0 +1,103 @@
+// (C) Uri Wilensky. https://github.com/NetLogo/NetLogo
+
+package org.nlogo.window
+
+import java.awt.{ Font, Point }
+import java.awt.event.ActionEvent
+import javax.swing.{ AbstractAction, BoxLayout }
+
+import org.nlogo.core.{ I18N, Output => CoreOutput, Widget => CoreWidget }
+import org.nlogo.editor.EditorConfiguration
+import org.nlogo.swing.{ MenuItem, PopupMenu, ZoomableBorder }
+import org.nlogo.theme.InterfaceColors
+
+class OutputWidget extends SingleErrorWidget with CommandCenterInterface
+  with Events.ExportWorldEvent.Handler with Editable {
+
+  displayName(I18N.gui.get("tabs.run.widgets.output"))
+
+  val outputArea = new OutputArea {
+    setBaseFont(EditorConfiguration.getCodeFont)
+  }
+
+  setLayout(new BoxLayout(this, BoxLayout.X_AXIS))
+  setBorder(new ZoomableBorder(8, 8, 8, 8))
+
+  add(outputArea)
+
+  override def editPanel: EditPanel = new OutputEditPanel(this)
+
+  override def getEditable: Option[Editable] = Some(this)
+
+  def fontSize: Int =
+    outputArea.getBaseFont.getSize
+
+  def setFontSize(newSize: Int): Unit = {
+    outputArea.fontSize(newSize)
+  }
+
+  override def classDisplayName = I18N.gui.get("tabs.run.widgets.output")
+  override def exportable = true
+  override def getDefaultExportName = "output.txt"
+  def valueText: String = outputArea.text.getText
+  override def hasContextMenu = true
+  override def copyable = false
+
+  // satisfy CommandCenterInterface, which we must implement in order
+  // to be used in NetLogoComponent - ST 9/13/04
+  override def repaintPrompt(): Unit = {}
+  override def fitPrompt(): Unit = {}
+  override def cycleAgentType(forward: Boolean): Unit = {}
+
+  override def populateContextMenu(menu: PopupMenu, p: Point): Unit = {
+    // at least on Macs, Command-C to copy may not work, so this
+    // is needed - ST 4/21/05
+    menu.add(new MenuItem(new AbstractAction(I18N.gui.get("tabs.run.widget.copyselectedtext")) {
+      def actionPerformed(e: ActionEvent): Unit = {
+        outputArea.text.copy
+      }
+    }))
+
+    menu.add(new MenuItem(new AbstractAction(I18N.gui.get("tabs.run.widget.clear")) {
+      def actionPerformed(e: ActionEvent): Unit = {
+        outputArea.clear()
+      }
+    }))
+  }
+
+  override def setCodeFont(font: Font): Unit = {
+    outputArea.setBaseFont(font.deriveFont(fontSize.toFloat))
+  }
+
+  override def syncTheme(): Unit = {
+    setBackgroundColor(InterfaceColors.outputBackground())
+
+    outputArea.syncTheme()
+  }
+
+  // these are copied from the TrailDrawer, as is this code for breaking up
+  // possible very long text into multiple cells and rows for Excel
+  // CLB 7/15/05
+  def handle(e:org.nlogo.window.Events.ExportWorldEvent): Unit ={
+    import org.nlogo.api.Dump
+    e.writer.println(Dump.csv.encode("OUTPUT"))
+    Dump.csv.stringToCSV(e.writer, outputArea.getTextForExport)
+  }
+
+  override def load(model: CoreWidget): Unit = {
+    model match {
+      case output: CoreOutput =>
+        setSize(output.width, output.height)
+        setFontSize(output.fontSize)
+
+      case _ =>
+    }
+  }
+
+  override def model: CoreWidget = {
+    val b = unzoomedBounds
+    CoreOutput(
+      x = b.x, y = b.y, width = b.width, height = b.height,
+      fontSize = fontSize)
+  }
+}

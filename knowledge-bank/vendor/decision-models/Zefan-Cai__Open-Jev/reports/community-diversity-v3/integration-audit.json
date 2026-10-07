@@ -1,0 +1,397 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "created_at_utc": "2026-09-21T07:12:33.917407+00:00",
+  "scope": "Independent frozen-mixture and focus-panel integration audit; no benchmark questions/gold, model inference or quality results.",
+  "audit_script_sha256": "d53a7e9d5325edda8036a747ae2ad40c31334bbd1def82f2baf908ea8ac38588",
+  "independence": "No imports from generators, mixer or paired evaluator. Direct streaming source/mixture/panel comparison and independently reconstructed group-balanced selections.",
+  "mixture_manifest_sha256": "0c4abb45b9703a18d6e406013ea1f7d2c1f3d355b951d9f98d1875297d0dda05",
+  "mixture_split_sha256": {
+    "train": "67cf497cedae0867f60350856ff0e9ed026296852f5066035ae9eac13bb43f70",
+    "calibration": "7f2d4820e55f5f2150e66ddd9721cfd6111ce4ddcf4f1c46b5c0a91370c47bdc",
+    "validation": "582900426ee23644a90e72c25bd36bdc7a7094a127e43f3a9ca6ca347099fc5b",
+    "test": "61d53821037d8d5a8e6dc84c1416450b10999931a77d34a277c187f6e39d4845",
+    "ood": "c36d34eb0330d940890e6cfd97f09f7f8151c346252bcad7a7118a701cd75624"
+  },
+  "source_bindings": {
+    "community-routing-v3": {
+      "manifest_sha256": "9ec1fdb644fa949e3cc879c335133f18bda3d741eb93183e5154b3616058a57e",
+      "files_sha256": {
+        "train": "d9b16649ace8ba78e6ab16fb45be51eac5e9285a409afdb355c644078687a50b",
+        "calibration": "33f7bfcb34b030263421e2d5ba53b37e0933c2780dc3c86fd4f2b28d7ab4d1d8",
+        "validation": "9f8aac9345d4add638ca960536d86f18deb7cb59032427b08ba73baec6fb072c",
+        "test": "b4fe7d77edb940f2f0087559736f44ae1d62824f46beb82bd71832d1b90c3edb",
+        "ood": "95bec3bd456d9316bdd0405f05cae408f63d30f15761fa0c63f67737fc98e43a"
+      },
+      "category": "new"
+    },
+    "sql-semantics-v3": {
+      "manifest_sha256": "26aa4e0aab6d30c3bb7f77eda0e36e56c8aaaaa8f04ab9aae5a3ff39022b1f8f",
+      "files_sha256": {
+        "train": "ec763cfc84c6f80f428fc2a5eed9bd365c8b48a30beb71fa47712d45802cdd4d",
+        "calibration": "3746c535a0d9f8eb95fe1ab337b378bcfc3d691fe36fdb998aaf3c1d7b6827c9",
+        "validation": "12fdb95692d0f64ea29d4abe5d62010a5050b908bb6389ff8601530af63d728d",
+        "test": "d0d72d7513c284d430322e255c12bab8e4a1abd0bfbbc38c6c35954761183fe1",
+        "ood": "12d896af7f855cfc4295ca63767f10dada3ca64bba96d805fb5b0f52eda3d61c"
+      },
+      "category": "new"
+    },
+    "community-workflow-v3": {
+      "manifest_sha256": "3fc6c0539c1a32325c9d0e0311c308019d4e2afab88d68f12f738ac636572af4",
+      "files_sha256": {
+        "train": "0e9c7b325aaf4f6a83e0b9b9d43594b2f22dd1b9e15ffbf6ddfe83a1f876a706",
+        "calibration": "63a4ce4ff8338601679ff60a41e3617a802d0bf9e81b96356cc8b51439e04a39",
+        "validation": "6031a9e2971a24c6362e1b32204e7f616ce0d66bd9feba6ab763499f4e96af11",
+        "test": "3b71d96c0ce6bd2e8d2fa7ec4f0522c8f4a8594d09a6e1305d4d43ac81f98bbf",
+        "ood": "37fb3984e99000f8c9f71d0e3c67cff5cb61f3754564961329fcfb411a5dd843"
+      },
+      "category": "new"
+    },
+    "community-hard-mix-v2": {
+      "manifest_sha256": "7b26f948d2ae11f20d7a18be437d1ada616fc479e1596ae94be7596787fe4e54",
+      "files_sha256": {
+        "train": "959dac64adc1717d92e9bb80371d4b940b2b5994f9e36e469b3eaed85883fdff",
+        "calibration": "6a02712bc6dce4c99cae3acfa54cf049553d12e4b795cfa4c170bd7de5732981",
+        "validation": "743ec57c076fee300bfe3e3eb364a8fb629addfd185724c0b66d58633bcd9372",
+        "test": "2cd250906060a570e0c596f7bb6ee7fb299fbf314e011a8c72ecb78d70248295",
+        "ood": "b575698e0f1006713ca736b96d1d8eb43a54d052e266c0f363b027b288f54498"
+      },
+      "category": "replay"
+    }
+  },
+  "mixture_rows": 331249,
+  "mixture_groups": 72210,
+  "mixture_split_counts": {
+    "train": 96849,
+    "calibration": 37284,
+    "validation": 36135,
+    "test": 70378,
+    "ood": 90603
+  },
+  "training": {
+    "new_rows": 74921,
+    "replay_rows": 21928,
+    "total_rows": 96849,
+    "replay_source_count": 74,
+    "replay_cap_per_source": 300,
+    "replay_available_rows": 148639,
+    "replay_rows_excluded_by_cap": 126711,
+    "replay_selected_by_source": {
+      "amount-extraction-control-v1": 300,
+      "browser-control-v1": 300,
+      "citation-control-v1": 300,
+      "community-diversity-v2/browser_tools/date_range_form": 300,
+      "community-diversity-v2/browser_tools/pagination": 300,
+      "community-diversity-v2/browser_tools/stale_dom": 300,
+      "community-diversity-v2/browser_tools/tool_scope": 300,
+      "community-diversity-v2/browser_tools/typing_fallback": 300,
+      "community-diversity-v2/browser_tools/upload_constraint": 300,
+      "community-diversity-v2/contracts/assignment_consent": 300,
+      "community-diversity-v2/contracts/audit_right": 300,
+      "community-diversity-v2/contracts/automatic_renewal": 300,
+      "community-diversity-v2/contracts/confidentiality_survival": 300,
+      "community-diversity-v2/contracts/liability_cap": 300,
+      "community-diversity-v2/contracts/noncompete_scope": 300,
+      "community-diversity-v2/games/escort_sync": 300,
+      "community-diversity-v2/games/health_pickup": 300,
+      "community-diversity-v2/games/projectile_dodge": 300,
+      "community-diversity-v2/games/reload_cover": 300,
+      "community-diversity-v2/games/safe_path": 300,
+      "community-diversity-v2/games/weapon_selection": 300,
+      "community-diversity-v2/ir/connecting_route": 300,
+      "community-diversity-v2/ir/hardware_manual": 300,
+      "community-diversity-v2/ir/inventory_answer": 300,
+      "community-diversity-v2/ir/regional_returns": 300,
+      "community-diversity-v2/ir/release_migration": 300,
+      "community-diversity-v2/ir/study_population": 300,
+      "community-diversity-v2/rag/citation_coverage": 300,
+      "community-diversity-v2/rag/contradiction_resolution": 300,
+      "community-diversity-v2/rag/negative_evidence": 300,
+      "community-diversity-v2/rag/numerical_claim": 300,
+      "community-diversity-v2/rag/temporal_fact": 300,
+      "community-diversity-v2/rag/two_hop_ownership": 300,
+      "community-diversity-v2/rubric_judge/abstention_quality": 300,
+      "community-diversity-v2/rubric_judge/comparison_fairness": 300,
+      "community-diversity-v2/rubric_judge/faithful_summary": 300,
+      "community-diversity-v2/rubric_judge/format_and_content": 300,
+      "community-diversity-v2/rubric_judge/negation_preservation": 300,
+      "community-diversity-v2/rubric_judge/unit_conversion": 300,
+      "community-diversity-v2/shell_history/archive_extract": 300,
+      "community-diversity-v2/shell_history/dependency_install": 300,
+      "community-diversity-v2/shell_history/exact_repo_test": 300,
+      "community-diversity-v2/shell_history/git_history_query": 300,
+      "community-diversity-v2/shell_history/quoted_filename": 300,
+      "community-diversity-v2/shell_history/search_scope": 300,
+      "community-diversity-v2/support/account_recovery": 300,
+      "community-diversity-v2/support/delayed_parcel": 300,
+      "community-diversity-v2/support/duplicate_charge": 300,
+      "community-diversity-v2/support/refund_window": 300,
+      "community-diversity-v2/support/subscription_cancellation": 300,
+      "community-diversity-v2/support/warranty_repair": 300,
+      "context-retention-control-v1": 300,
+      "customer-control-v1": 300,
+      "drone-control-v1": 300,
+      "email-selection-control-v1": 300,
+      "entity-alignment-control-v1": 300,
+      "ir-control-v1": 300,
+      "mailroom-control-v1": 300,
+      "painting-geometry-v1": 300,
+      "phone-extraction-control-v1": 300,
+      "reasoning-control-v1": 300,
+      "silent-failure-control-v1": 300,
+      "snake-v1": 300,
+      "sponsor-segment-control-v1": 300,
+      "tic_tac_toe-v1": 300,
+      "tile_platformer-v1": 300,
+      "trex_runner-v1": 28,
+      "vizdoom-basic-v1": 300,
+      "wanli-decisions-v1": 300,
+      "wikispeedia-v1": 300,
+      "workflow-controls-v1/agent_trace_observability": 300,
+      "workflow-controls-v1/customer_service": 300,
+      "workflow-controls-v1/invoice_processing": 300,
+      "workflow-controls-v1/security_incidents": 300
+    },
+    "new_training_rows_by_dataset": {
+      "community-routing-v3": 63809,
+      "sql-semantics-v3": 6144,
+      "community-workflow-v3": 4968
+    },
+    "full_pass_steps_four_ranks": 24213,
+    "full_pass_consumed_rows": 96852,
+    "wrapped_tail_rows": 3
+  },
+  "candidate_bounds": {
+    "new_sources_max_options": 8,
+    "all_legacy_source_max_options": 16,
+    "selected_legacy_replay_train_max_options": 16,
+    "max_eight_requirement_applies_to_new_sources": true
+  },
+  "focus_panel": {
+    "manifest_sha256": "3cd051b48f324cf1d24c6981bed31269a503f12e2e7c0bd203a3391a586c2e8a",
+    "panel_sha256": "9d4787847da32a60ac4e28cfabe85bf59471122b50db133f5f5dd4a0cb5a8621",
+    "rows": 1280,
+    "sources": [
+      "banking77-routing-v3",
+      "clinc150-routing-v3",
+      "community-workflow-v3/approval",
+      "community-workflow-v3/cms",
+      "sql-semantics-v3"
+    ],
+    "source_count": 5,
+    "counts": [
+      {
+        "source": "banking77-routing-v3",
+        "split": "ood",
+        "rows": 128,
+        "unique_groups": 128
+      },
+      {
+        "source": "banking77-routing-v3",
+        "split": "test",
+        "rows": 128,
+        "unique_groups": 128
+      },
+      {
+        "source": "clinc150-routing-v3",
+        "split": "ood",
+        "rows": 128,
+        "unique_groups": 128
+      },
+      {
+        "source": "clinc150-routing-v3",
+        "split": "test",
+        "rows": 128,
+        "unique_groups": 128
+      },
+      {
+        "source": "community-workflow-v3/approval",
+        "split": "ood",
+        "rows": 128,
+        "unique_groups": 18
+      },
+      {
+        "source": "community-workflow-v3/approval",
+        "split": "test",
+        "rows": 128,
+        "unique_groups": 18
+      },
+      {
+        "source": "community-workflow-v3/cms",
+        "split": "ood",
+        "rows": 128,
+        "unique_groups": 18
+      },
+      {
+        "source": "community-workflow-v3/cms",
+        "split": "test",
+        "rows": 128,
+        "unique_groups": 18
+      },
+      {
+        "source": "sql-semantics-v3",
+        "split": "ood",
+        "rows": 128,
+        "unique_groups": 128
+      },
+      {
+        "source": "sql-semantics-v3",
+        "split": "test",
+        "rows": 128,
+        "unique_groups": 128
+      }
+    ],
+    "unique_groups": 840,
+    "correlated_views_beyond_first_per_group": 440,
+    "kind_counts": [
+      {
+        "source": "banking77-routing-v3",
+        "split": "ood",
+        "kind": "choice",
+        "rows": 75
+      },
+      {
+        "source": "banking77-routing-v3",
+        "split": "ood",
+        "kind": "noul",
+        "rows": 53
+      },
+      {
+        "source": "banking77-routing-v3",
+        "split": "test",
+        "kind": "choice",
+        "rows": 84
+      },
+      {
+        "source": "banking77-routing-v3",
+        "split": "test",
+        "kind": "noul",
+        "rows": 44
+      },
+      {
+        "source": "clinc150-routing-v3",
+        "split": "ood",
+        "kind": "choice",
+        "rows": 85
+      },
+      {
+        "source": "clinc150-routing-v3",
+        "split": "ood",
+        "kind": "noul",
+        "rows": 43
+      },
+      {
+        "source": "clinc150-routing-v3",
+        "split": "test",
+        "kind": "choice",
+        "rows": 86
+      },
+      {
+        "source": "clinc150-routing-v3",
+        "split": "test",
+        "kind": "noul",
+        "rows": 42
+      },
+      {
+        "source": "community-workflow-v3/approval",
+        "split": "ood",
+        "kind": "choice",
+        "rows": 66
+      },
+      {
+        "source": "community-workflow-v3/approval",
+        "split": "ood",
+        "kind": "noul",
+        "rows": 62
+      },
+      {
+        "source": "community-workflow-v3/approval",
+        "split": "test",
+        "kind": "choice",
+        "rows": 69
+      },
+      {
+        "source": "community-workflow-v3/approval",
+        "split": "test",
+        "kind": "noul",
+        "rows": 59
+      },
+      {
+        "source": "community-workflow-v3/cms",
+        "split": "ood",
+        "kind": "choice",
+        "rows": 34
+      },
+      {
+        "source": "community-workflow-v3/cms",
+        "split": "ood",
+        "kind": "noul",
+        "rows": 94
+      },
+      {
+        "source": "community-workflow-v3/cms",
+        "split": "test",
+        "kind": "choice",
+        "rows": 24
+      },
+      {
+        "source": "community-workflow-v3/cms",
+        "split": "test",
+        "kind": "noul",
+        "rows": 104
+      },
+      {
+        "source": "sql-semantics-v3",
+        "split": "ood",
+        "kind": "choice",
+        "rows": 128
+      },
+      {
+        "source": "sql-semantics-v3",
+        "split": "test",
+        "kind": "choice",
+        "rows": 128
+      }
+    ],
+    "forbidden_overlap_checks": [
+      "all new and old-v2 train/calibration/validation IDs",
+      "all new and old-v2 train/calibration/validation group IDs",
+      "canonical visible inputs ignoring candidate order"
+    ],
+    "overlapping_forbidden_rows": 0
+  },
+  "workflow_independent_oracle": {
+    "status": "completed_audit_file_and_exact_source_hashes_verified",
+    "audit_sha256": "e60e5a3b0a784cae0a6b0344cec44a408653ae22fa993fa509df9fd51afadb83",
+    "note": "Checks audit binding/completion only; this integration script is not a second prose-label oracle."
+  },
+  "checks": {
+    "source_manifests_match_all_mixture_input_bindings": true,
+    "source_split_hashes_match_all_five_files": true,
+    "all_new_source_rows_retained_unchanged": true,
+    "all_old_nontraining_rows_retained_in_original_splits": true,
+    "old_training_replay_exact_hash_group_round_robin_selection": true,
+    "global_300_per_old_training_source_cap": true,
+    "training_96849_equals_all_new_74921_plus_replay_21928": true,
+    "no_duplicate_source_or_mixture_ids": true,
+    "global_group_splits_disjoint": true,
+    "new_source_candidates_at_most_eight": true,
+    "panel_exact_1280_from_five_new_sources_test_and_ood": true,
+    "panel_128_per_source_split": true,
+    "panel_selection_replayed_without_targets_or_predictions": true,
+    "panel_rows_unchanged_from_bound_sources": true,
+    "panel_disjoint_from_all_source_train_calibration_validation": true,
+    "panel_source_bindings_match_mixture_sources": true,
+    "all_input_hashes_stable_before_and_after_audit": true
+  },
+  "gpu_queries": 0,
+  "gpu_jobs": 0,
+  "provider_requests": 0,
+  "benchmark_gold_reads": 0,
+  "limitations": [
+    "Panel rows include correlated views; 1280 rows are not 1280 independent scenarios.",
+    "Integration integrity does not establish quality improvement.",
+    "Legacy replay can retain candidate catalogs larger than eight.",
+    "Natural routing remains two datasets; five panel source IDs are not five natural datasets."
+  ]
+}

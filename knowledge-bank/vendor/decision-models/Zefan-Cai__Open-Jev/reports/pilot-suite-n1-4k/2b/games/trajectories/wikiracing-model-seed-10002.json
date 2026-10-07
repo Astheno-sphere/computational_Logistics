@@ -1,0 +1,150 @@
+{
+  "game": {
+    "name": "wikiracing",
+    "source": "Computer",
+    "target": "Physics",
+    "graph_sha256": "ece669f2bcd77cdc8ac60af80a0acdd0f5d1503df4d3fcbbaa42e652453c7c87",
+    "max_candidates": 12
+  },
+  "seed": 10002,
+  "policy": "model_http",
+  "is_model": true,
+  "max_steps": 40,
+  "steps": [
+    {
+      "request": {
+        "state": {
+          "current_page": "Computer",
+          "target_page": "Physics",
+          "navigation": "Select one of the offered outgoing article links."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose an offered outgoing link to reach the target article in as few steps as possible.",
+            "criteria": {
+              "Mathematics": null,
+              "Music": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "Mathematics",
+        "probabilities": {
+          "Mathematics": 0.5861744880009073,
+          "Music": 0.4138255119990927
+        },
+        "confidence": 0.17234897600181465
+      },
+      "action": "Mathematics",
+      "reward": 0.0,
+      "next_state": {
+        "current_page": "Mathematics",
+        "target_page": "Physics",
+        "navigation": "Select one of the offered outgoing article links."
+      },
+      "terminal": false,
+      "latency_ms": 36.335427314043045,
+      "environment_latency_ms": 0.04609301686286926,
+      "backend": {
+        "model": "Qwen/Qwen3.5-2B",
+        "method": "lora_decision_head",
+        "temperature": 1.7360720317205194,
+        "checkpoint_sha256": "1d3c0e4e37bf04731edee447363ddc02d084a9c1f10ab829ac4d424f7d7c413b",
+        "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 2,
+        "inference_seconds": 0.035054827108979225
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "current_page": "Mathematics",
+          "target_page": "Physics",
+          "navigation": "Select one of the offered outgoing article links."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose an offered outgoing link to reach the target article in as few steps as possible.",
+            "criteria": {
+              "Physics": null,
+              "Computer": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "Physics",
+        "probabilities": {
+          "Physics": 0.9330561478491619,
+          "Computer": 0.06694385215083805
+        },
+        "confidence": 0.8661122956983238
+      },
+      "action": "Physics",
+      "reward": 1.0,
+      "next_state": {
+        "current_page": "Physics",
+        "target_page": "Physics",
+        "navigation": "Select one of the offered outgoing article links."
+      },
+      "terminal": true,
+      "latency_ms": 41.16043448448181,
+      "environment_latency_ms": 0.04624016582965851,
+      "backend": {
+        "model": "Qwen/Qwen3.5-2B",
+        "method": "lora_decision_head",
+        "temperature": 1.7360720317205194,
+        "checkpoint_sha256": "1d3c0e4e37bf04731edee447363ddc02d084a9c1f10ab829ac4d424f7d7c413b",
+        "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 2,
+        "inference_seconds": 0.03969413973391056
+      }
+    }
+  ],
+  "initial_state": {
+    "current_page": "Computer",
+    "target_page": "Physics",
+    "navigation": "Select one of the offered outgoing article links."
+  },
+  "metrics": {
+    "steps": 2,
+    "stop_reason": "terminal",
+    "total_reward": 1.0,
+    "mean_decision_latency_ms": 38.74793089926243,
+    "success": true,
+    "path": [
+      "Computer",
+      "Mathematics",
+      "Physics"
+    ]
+  },
+  "evaluation_policy": "model",
+  "evaluation_game": "wikiracing",
+  "evaluation_seed": 10002,
+  "valid": true,
+  "service_identity": {
+    "model": "Qwen/Qwen3.5-2B",
+    "method": "lora_decision_head",
+    "temperature": 1.7360720317205194,
+    "checkpoint_sha256": "1d3c0e4e37bf04731edee447363ddc02d084a9c1f10ab829ac4d424f7d7c413b",
+    "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+    "code_commit": "99e881108c6cacadafd364088505e84975ca43fc"
+  },
+  "http_responses": [
+    {
+      "request_sha256": "28f8eec71ec5c5b96a4c2ebbef2a325657e2746969f4210689f04ceb0cf3fcd1",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"Mathematics\", \"probabilities\": {\"Mathematics\": 0.5861744880009073, \"Music\": 0.4138255119990927}, \"confidence\": 0.17234897600181465}}, \"model\": \"Qwen/Qwen3.5-2B\", \"usage\": {\"input_tokens\": 160, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.7360720317205194, \"candidate_sequences\": 2, \"inference_seconds\": 0.035054827108979225, \"checkpoint_sha256\": \"1d3c0e4e37bf04731edee447363ddc02d084a9c1f10ab829ac4d424f7d7c413b\", \"base_revision\": \"15852e8c16360a2fea060d615a32b45270f8a8fc\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "edc964b4e1974103c4134f80c3ce21cde98b87f92b62f661b27f3ffbad21d5b8",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"Physics\", \"probabilities\": {\"Physics\": 0.9330561478491619, \"Computer\": 0.06694385215083805}, \"confidence\": 0.8661122956983238}}, \"model\": \"Qwen/Qwen3.5-2B\", \"usage\": {\"input_tokens\": 162, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.7360720317205194, \"candidate_sequences\": 2, \"inference_seconds\": 0.03969413973391056, \"checkpoint_sha256\": \"1d3c0e4e37bf04731edee447363ddc02d084a9c1f10ab829ac4d424f7d7c413b\", \"base_revision\": \"15852e8c16360a2fea060d615a32b45270f8a8fc\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    }
+  ]
+}

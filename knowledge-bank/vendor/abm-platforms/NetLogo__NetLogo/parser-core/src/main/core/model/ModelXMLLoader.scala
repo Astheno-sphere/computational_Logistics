@@ -1,0 +1,147 @@
+// (C) Uri Wilensky. https://github.com/NetLogo/NetLogo
+
+package org.nlogo.core.model
+
+import org.nlogo.core.{ DummyView, ExternalResource, LiteralParser, Model, ModelSettings, Section, WorldDimensions,
+                        VersionUtils, WorldDimensions3D, XMLElement }
+
+import scala.util.{ Failure, Try }
+
+// This class exists to provide basic loading to/from XML that Tortoise can consume, while sharing the same code with
+// desktop.  -Jeremy B June 2025
+
+object ModelXMLLoader {
+
+  def emptyModel(version: String, is3D: Boolean, defaultInfo: String): Model = {
+    val dims = {
+      if (is3D) {
+        new WorldDimensions3D(-16, 16, -16, 16, -16, 16, 13.0)
+      } else {
+        WorldDimensions(-16, 16, -16, 16, 13.0)
+      }
+    }
+
+    val widgets =
+      List(Model.defaultView.copy(dimensions = dims))
+
+    Model(None, Model.defaultCode, widgets, defaultInfo, version, Model.defaultTurtleShapes, Model.defaultLinkShapes)
+  }
+
+  def loadBasics(root: XMLElement, defaultInfo: String, parser: LiteralParser): (Try[Model], Seq[XMLElement]) = {
+    root.name match {
+      case "model" =>
+
+        import Model.{ defaultCode, defaultTurtleShapes, defaultLinkShapes }
+
+        val version = root("version")
+
+        val stripNewlines = VersionUtils.numericValue(version) >= VersionUtils.numericValue("NetLogo 7.1.0-internal0")
+
+        val title: Option[String] = root.get("title")
+
+        val snapToGrid = root("snapToGrid", "false").toBoolean
+
+        val settings = new Section("org.nlogo.modelsection.modelsettings", ModelSettings(snapToGrid))
+
+        val model = Model(title, defaultCode, List(DummyView), defaultInfo, version, defaultTurtleShapes,
+                          defaultLinkShapes, List(settings), Seq())
+
+        root.children.foldLeft((Try(model), Seq[XMLElement]())) {
+
+          case ((model, sections), XMLElement("widgets", _, _, children, _)) =>
+            (model.map(_.copy(widgets = children.map(WidgetXMLLoader.readWidget(_, parser)).flatten)), sections)
+
+          case ((model, sections), XMLElement("info", _, text, _, _)) =>
+            if (stripNewlines) {
+              (model.map(_.copy(info = text.stripPrefix("\n").stripSuffix("\n"))), sections)
+            } else {
+              (model.map(_.copy(info = text)), sections)
+            }
+
+          case ((model, sections), XMLElement("code", _, text, _, _)) =>
+            if (stripNewlines) {
+              (model.map(_.copy(code = text.stripPrefix("\n").stripSuffix("\n"))), sections)
+            } else {
+              (model.map(_.copy(code = text)), sections)
+            }
+
+          case ((model, sections), el @ XMLElement("turtleShapes", _, _, _, _)) =>
+            (model.map(_.copy(turtleShapes = el.getChildren("shape").map(ShapeXMLLoader.readShape))), sections)
+
+          case ((model, sections), el @ XMLElement("linkShapes", _, _, _, _)) =>
+            (model.map(_.copy(linkShapes = el.getChildren("shape").map(ShapeXMLLoader.readLinkShape))), sections)
+
+          case ((model, sections), el @ XMLElement("resources", _, _, _, _)) =>
+            (model.map(_.copy(
+              resources = el.getChildren("resource").map(
+                resource => ExternalResource(resource("name"), resource("extension"), resource.text)
+              )
+            )), sections)
+
+          // ignore other sections for compatibility with other versions in the future (Isaac B 2/12/25)
+          // but still keep track of them in case the user wanted them in there (Isaac B 7/6/25)
+          case ((model, sections), element) =>
+            (model, sections :+ element)
+
+        } match {
+          case (model, sections) =>
+            (model.map(m => m.copy(widgets = m.widgets.filter(_ != DummyView))), sections)
+        }
+
+      case x =>
+        (Failure(new Exception(s"Expect 'model' element, but got: ${x}")), Seq())
+
+    }
+  }
+
+  def writeBasics(writer: NLogoXMLWriter, model: Model, writeExtras: (w: NLogoXMLWriter, m: Model) => Unit): Unit = {
+    writer.startDocument()
+    writer.startElement("model")
+    writer.attribute("version", model.version)
+
+    model.title.foreach(writer.attribute("title", _))
+
+    model.optionalSections.find(_.key == "org.nlogo.modelsection.modelsettings").foreach(section =>
+      writer.attribute("snapToGrid", section.get.get.asInstanceOf[ModelSettings].snapToGrid.toString)
+    )
+
+    writer.startElement("code")
+    writer.escapedText(s"\n${model.code}\n", true)
+    writer.endElement("code")
+
+    writer.startElement("widgets")
+    model.widgets.foreach(widget => writer.element(WidgetXMLLoader.writeWidget(widget)))
+    writer.endElement("widgets")
+
+    writer.startElement("info")
+    writer.escapedText(s"\n${model.info}\n", true)
+    writer.endElement("info")
+
+    writer.element(XMLElement("turtleShapes", Map(), "", model.turtleShapes.map(ShapeXMLLoader.writeShape).toList))
+    writer.element(XMLElement("linkShapes", Map(), "", model.linkShapes.map(ShapeXMLLoader.writeLinkShape).toList))
+
+    writeExtras(writer, model)
+
+    if (model.resources.nonEmpty) {
+      writer.startElement("resources")
+
+      for (resource <- model.resources) {
+
+        writer.startElement("resource")
+
+        writer.attribute("name", resource.name)
+        writer.attribute("extension", resource.extension)
+        writer.escapedText(resource.data)
+
+        writer.endElement("resource")
+
+      }
+
+      writer.endElement("resources")
+    }
+
+    writer.endElement("model")
+    writer.endDocument()
+    writer.close()
+  }
+}

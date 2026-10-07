@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "context-retention-control-v1",
+    "groups": 400,
+    "ood_groups": 80,
+    "seed": 942,
+    "license": "CC0-1.0",
+    "split_policy": "whole_task_graph_with_goal_and_recoverability_counterfactuals; reserved_diamond_structure_ood",
+    "source_contract_commit": "e3f262a7f4d42bd8dd32ced30d26176f7cb545b0",
+    "source_files_sha256": {
+      "context_retention_data.py": "b3a9e163fbc3c78343be99cf3465e6433933df05b4e0ec209d2da22331e14678",
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+    }
+  },
+  "summary": {
+    "records": 9834,
+    "groups": 400,
+    "unique_inputs": 9834,
+    "splits": {
+      "calibration": 456,
+      "ood": 2160,
+      "test": 522,
+      "train": 6138,
+      "validation": 558
+    },
+    "kinds": {
+      "noul": 9834
+    },
+    "families": {
+      "policy": 9834
+    },
+    "sources": {
+      "context-retention-control-v1": 9834
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "d6c4cdc5572da328675b9e3c5eb8af8ef186a9a3fbd5c3bdeaec4a7be21bca06",
+    "calibration.jsonl": "b157cd03922bd89056ca3678223c1f64bd152d81d5ba4c14b1ec0088f4f4d2ca",
+    "validation.jsonl": "20063011a0fbdc07582ce8da7e7f40502995d03460e73d7ac902a23bb32bc7cf",
+    "test.jsonl": "a5e3adc7dbb90209ef4ffd657bcb004424ab71807bdf076ae234626cb769b3ee",
+    "ood.jsonl": "558db34ab2be4c12fffa611a47612506977245e2d4c598caa561c374c7f68b97",
+    "cases.jsonl": "2538637e04050f464e600224d756fa818e4afc345e7f2b757462d1562f62b1da"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "counts": {
+    "train": 6138,
+    "calibration": 456,
+    "validation": 558,
+    "test": 522,
+    "ood": 2160
+  },
+  "sha256": {
+    "train": "d6c4cdc5572da328675b9e3c5eb8af8ef186a9a3fbd5c3bdeaec4a7be21bca06",
+    "calibration": "b157cd03922bd89056ca3678223c1f64bd152d81d5ba4c14b1ec0088f4f4d2ca",
+    "validation": "20063011a0fbdc07582ce8da7e7f40502995d03460e73d7ac902a23bb32bc7cf",
+    "test": "a5e3adc7dbb90209ef4ffd657bcb004424ab71807bdf076ae234626cb769b3ee",
+    "ood": "558db34ab2be4c12fffa611a47612506977245e2d4c598caa561c374c7f68b97"
+  },
+  "case_count": 1200,
+  "label_counts": {
+    "yes": 3881,
+    "no": 5953
+  },
+  "action_counts": {
+    "drop_result": 2035,
+    "drop_call": 1959,
+    "keep": 923
+  },
+  "software_gate_counts": {
+    "pinned": 2400,
+    "unpaired": 1200
+  },
+  "intended_scope": "Original fixed-policy retention on small task graphs; OOD reserves diamond dependencies and wording. Not arbitrary real-session compaction.",
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false
+}

@@ -1,0 +1,903 @@
+{
+  "schema_version": 1,
+  "status": "primary_source_research_only_no_new_model_results",
+  "checked_at_utc": "2026-09-21 05:20:25 UTC",
+  "scope": {
+    "files_written": [
+      "reports/community-research-20260921/model-benchmark-options.json"
+    ],
+    "model_inference_requests": 0,
+    "gpu_jobs_started": 0,
+    "paid_api_calls": 0,
+    "social_posts": 0,
+    "benchmark_downloads_or_training": false,
+    "scheduling": "Research proposal only. Existing GPU jobs and follow-ups are stopped/paused in durable state; this report does not authorize or launch resumption.",
+    "source_method": "Anonymous public model-card/API metadata, pinned benchmark repository READMEs/evaluation code, official OpenAI model documentation, and existing local reports. Upstream benchmark claims are attributed, not independently reproduced here.",
+    "openai_docs_skill": "openai-docs skill (local path omitted from public release)"
+  },
+  "main_recommendation": {
+    "smallest_new_model_set": [
+      {
+        "model_id": "Qwen/Qwen3.5-2B",
+        "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "mode": "Upstream post-trained model without Open-Jev LoRA/head; generate the same bounded typed decisions with thinking explicitly disabled."
+      },
+      {
+        "model_id": "Qwen/Qwen3.5-9B",
+        "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+        "mode": "Same generative control and pinned upstream revision as the 9B Open-Jev backbone."
+      },
+      {
+        "model_id": "Qwen/Qwen3-Reranker-0.6B",
+        "revision": "e61197ed45024b0ed8a2d74b80b4d909f1255473",
+        "mode": "IR-only dedicated relevance baseline on the exact saved BM25 candidate pools."
+      }
+    ],
+    "rationale": "Two same-backbone generative controls isolate the value of Open-Jev adaptation and decision decoding. One small dedicated reranker makes the IR efficiency/quality comparison informative. Reuse audited Jev/Luna/Astra results on unchanged frozen suites; do not repeat completed paid API bundles.",
+    "primary_decision_matrix": [
+      "ZefanCai/Open-Jev-2B",
+      "ZefanCai/Open-Jev-9B",
+      "jev-1.13.0",
+      "gpt-5.6-luna (reasoning none)",
+      "gpt-6-astra (reasoning low)",
+      "Qwen/Qwen3.5-2B (non-thinking generative)",
+      "Qwen/Qwen3.5-9B (non-thinking generative)"
+    ],
+    "primary_ir_matrix": [
+      "Saved BM25",
+      "ZefanCai/Open-Jev-2B",
+      "ZefanCai/Open-Jev-9B",
+      "jev-1.13.0 (strict; scalar supplement separate)",
+      "gpt-5.6-luna (reasoning none)",
+      "gpt-6-astra (reasoning low)",
+      "Qwen/Qwen3-Reranker-0.6B"
+    ],
+    "benchmark_priority": [
+      "Complete existing frozen local suites and TREC before claiming full coverage",
+      "CUAD-derived legal clause presence with an explicitly new metric",
+      "Banking77 and CLINC150 customer intent/OOS",
+      "MiniWoB++ fixed local tasks with complete episodes",
+      "BEIR SciFact/NFCorpus after TREC"
+    ],
+    "terminology": "The Qwen repositories contain pre-trained and post-trained upstream models. Call the control 'without Open-Jev adaptation', not 'untrained'. A random initialized decision head is not a useful pretrained zero-shot baseline.",
+    "not_recommended_for_first_matrix": [
+      "Additional paid OpenAI models solely to enlarge the table",
+      "27B while final training/package/evaluation remain incomplete",
+      "Random untrained heads",
+      "A new classifier trained on test/held-out benchmark labels"
+    ]
+  },
+  "existing_inventory": [
+    {
+      "model_id": "ZefanCai/Open-Jev-2B",
+      "artifact_revision": "0c7aa498b1627be8da4acf34c863ff0ee0a92785",
+      "base_model": "Qwen/Qwen3.5-2B",
+      "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+      "artifact_kind": "LoRA/decision-head adapter package; upstream base weights required",
+      "evidence_status": "Released and audited. 26,452 historical held-out predictions and selected fixed quality/latency evidence exist; fresh 808-request suite, TREC and full registry inference remain pending.",
+      "source_refs": [
+        "hf-api:ZefanCai/Open-Jev-2B",
+        "local:provider-comparison",
+        "local:model-provenance"
+      ]
+    },
+    {
+      "model_id": "ZefanCai/Open-Jev-9B",
+      "artifact_revision": "47e966881e489511c0c7f5633a9e1960a676a551",
+      "base_model": "Qwen/Qwen3.5-9B",
+      "base_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "artifact_kind": "LoRA/decision-head adapter package",
+      "evidence_status": "Released and audited. 26,452 historical held-out predictions exist; do not imply new 9B latency or completed full registry/TREC results.",
+      "source_refs": [
+        "hf-api:ZefanCai/Open-Jev-9B",
+        "local:provider-comparison"
+      ]
+    },
+    {
+      "model_id": "jev-1.13.0",
+      "evidence_status": "Five frozen quality suites, repeated API latency workloads and TREC already completed. Strict probability failures remain failures; TREC actual-scalar supplement remains separate.",
+      "source_refs": [
+        "local:provider-comparison"
+      ]
+    },
+    {
+      "model_id": "gpt-5.6-luna",
+      "reasoning_effort": "none",
+      "evidence_status": "Five frozen quality suites, repeated latency workloads and TREC completed. Official model page confirms none is supported.",
+      "source_refs": [
+        "openai:luna",
+        "local:provider-comparison"
+      ]
+    },
+    {
+      "model_id": "gpt-6-astra",
+      "reasoning_effort": "low",
+      "evidence_status": "Five frozen quality suites, repeated latency workloads and TREC completed. Official model page lists low/medium/high/xhigh/max; do not relabel this as no-reasoning.",
+      "source_refs": [
+        "openai:astra",
+        "local:provider-comparison"
+      ]
+    },
+    {
+      "model_id": "Qwen/Qwen3.8-27B + Open-Jev adaptation",
+      "evidence_status": "Final trained/calibrated/audited public model is unavailable; exclude from completed-results tables.",
+      "source_refs": [
+        "local:progress"
+      ]
+    }
+  ],
+  "additional_baseline_options": [
+    {
+      "model_id": "Qwen/Qwen3.5-2B",
+      "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+      "priority": "first",
+      "applicability": [
+        "Choice",
+        "Noul",
+        "categorical Score",
+        "same-scaffold game/browser decisions"
+      ],
+      "availability": "Public ungated model card/metadata verified; current base revision matches local pinned backbone. No weights downloaded or inference run.",
+      "proposed_setting": "Text-only prompts containing identical state/questions and candidate order; explicitly non-thinking; greedy deterministic decoding as a preregistered low-latency operating point; strict finite JSON output schema, no retries or repair. Greedy is an experiment setting, not the model card's recommended sampling recipe.",
+      "source_refs": [
+        "hf-card:Qwen/Qwen3.5-2B",
+        "extra:qwen2b_explicit_mode"
+      ]
+    },
+    {
+      "model_id": "Qwen/Qwen3.5-9B",
+      "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "priority": "first",
+      "applicability": [
+        "Choice",
+        "Noul",
+        "categorical Score",
+        "same-scaffold game/browser decisions"
+      ],
+      "availability": "Public ungated model card/metadata verified; pinned base revision matches Open-Jev.",
+      "proposed_setting": "Explicit chat_template_kwargs.enable_thinking=false; same decoding/schema policy as the 2B control. The card separately recommends stochastic non-thinking settings; any such sensitivity run must be labelled separately.",
+      "source_refs": [
+        "hf-card:Qwen/Qwen3.5-9B",
+        "extra:qwen9b_modes"
+      ]
+    },
+    {
+      "model_id": "Qwen/Qwen3-Reranker-0.6B",
+      "revision": "e61197ed45024b0ed8a2d74b80b4d909f1255473",
+      "priority": "first_ir",
+      "applicability": [
+        "IR reranking"
+      ],
+      "availability": "Public ungated Apache-2.0 model card verified; 0.6B and 32K context documented. Runtime compatibility not tested here.",
+      "proposed_setting": "Use the official query/document instruction format and actual yes-versus-no logit probability. Score each query-passage pair once, sort stable ties by saved BM25 order, and evaluate the full same 100 candidates/qrels. This is a pairwise scorer, not the existing nine-window listwise protocol; compare end-to-end reranking quality/time with that method difference stated.",
+      "source_refs": [
+        "hf-card:Qwen/Qwen3-Reranker-0.6B",
+        "extra:qwen_reranker_scoring"
+      ]
+    },
+    {
+      "model_id": "Qwen/Qwen3-Reranker-4B",
+      "revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+      "priority": "later_ir_capacity_curve",
+      "applicability": [
+        "IR reranking"
+      ],
+      "availability": "Public ungated Apache-2.0 card verified; 4B and 32K context documented.",
+      "proposed_setting": "Add only after the 0.6B baseline establishes the path; same candidates and pairwise scoring protocol.",
+      "source_refs": [
+        "hf-card:Qwen/Qwen3-Reranker-4B"
+      ]
+    },
+    {
+      "model_id": "BAAI/bge-reranker-v2-m3",
+      "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+      "priority": "optional_ir_second_family",
+      "applicability": [
+        "IR reranking"
+      ],
+      "availability": "Public ungated Apache-2.0 card verified. Card describes query/passage relevance scores and optional sigmoid mapping.",
+      "proposed_setting": "Use official pair-scoring implementation on identical candidate pools. Retain native scores; do not interpret sigmoid output as a calibrated Jev Noul or ordinal Score.",
+      "source_refs": [
+        "hf-card:BAAI/bge-reranker-v2-m3"
+      ]
+    },
+    {
+      "model_id": "MoritzLaurer/deberta-v3-base-zeroshot-v2.0",
+      "revision": "8e7e5af5983a0ddb1a5b45a38b129ab69e2258e8",
+      "priority": "optional_not_unseen_task_banking_baseline",
+      "applicability": [
+        "Short-text intent classification",
+        "Evidence NLI"
+      ],
+      "availability": "Public ungated MIT model card verified; card states CPU/GPU zero-shot NLI classification. Referenced training inventory includes Banking77, so unseen-task zero-shot Banking77 claims would be misleading.",
+      "proposed_setting": "Use only with explicit supervised-data provenance and benchmark-overlap audit. Do not force long contracts, ordinal Score or complete gameplay through an entailment classifier.",
+      "source_refs": [
+        "hf-card:MoritzLaurer/deberta-v3-base-zeroshot-v2.0",
+        "extra:nli_training_inventory"
+      ]
+    },
+    {
+      "model_id": "Frozen Qwen encoder + trained decision head, LoRA disabled",
+      "priority": "later_ablation_requires_training",
+      "applicability": [
+        "Adaptation attribution"
+      ],
+      "availability": "An experiment design, not an existing measured model/artifact.",
+      "proposed_setting": "Train only on the same authorized training rows and calibration split, with identical head/objective and no held-out labels. Compare to full LoRA+head; record trainable parameters/training compute. No such job was launched."
+    }
+  ],
+  "existing_prepared_benchmarks": [
+    {
+      "name": "Five original frozen provider suites",
+      "status": "external_results_complete_local_fresh_inference_pending",
+      "scale": "808 requests / 1,841 labelled decisions / 1,826 hard targets per model",
+      "local_path": "docs/openjev-provider-quality-followup.md",
+      "caution": "Historical common 76-case comparison stays separate; do not substitute it for the full suites."
+    },
+    {
+      "name": "TREC DL19/DL20",
+      "status": "Jev/Luna/Astra audited; Open-Jev collector, qrels and tokenizer proof prepared; Open-Jev inference pending",
+      "scale": "43 + 54 queries, BM25 top100, up to873 adaptive listwise requests/model",
+      "local_path": "docs/openjev-trec-followup.md",
+      "caution": "Full qrels and direct-grade gains as frozen. Pairwise reranker comparison uses same pools/qrels but a different inference algorithm; no throughput equivalence implied."
+    },
+    {
+      "name": "Original and cumulative full typed-decision registry",
+      "status": "Preparation/identity audit and private request/gold sharding implemented; full inference pending",
+      "scale": "v1 73,333 rows /23 source IDs; cumulative v2 107,922 rows /25 sources = original73,333 +34,589 new rows",
+      "local_path": "reports/runtime-checks/full-registry-inventory.json",
+      "caution": "Do not add107,922 to73,333. Retain all 419 additional repeated-input rows in v2, soft targets, frozen labels and all rows; separate reuse of26,452 historical predictions from fresh service results."
+    },
+    {
+      "name": "Original workflow/game/browser/drone/contact/amount tasks",
+      "status": "Cases and CPU-validated service adapters prepared; current final-model follow-ups remain pending",
+      "local_path": "state/auto_research/progress.json",
+      "caution": "Snapshot decision accuracy and software-fixture success are not completed real-world tasks. Existing successful pilot videos are not new final-model rollouts."
+    }
+  ],
+  "benchmark_options": [
+    {
+      "benchmark": "CUAD-derived clause presence",
+      "priority": "high_new_legal_gap",
+      "status": "proposed_not_prepared_or_evaluated",
+      "source_refs": [
+        "cuad:website",
+        "cuad:dataset",
+        "cuad:evaluate.py"
+      ],
+      "verified_facts": "Official source:510 commercial contracts,13,000+ expert labels,41 clause types; dataset CC BY4.0.",
+      "task_adaptation": "Start with one document/window plus41 Noul questions using the official category definitions. Derive presence gold offline from nonempty annotated answer spans. Keep contract-level splits; all pages/windows from a contract remain in one split. Page-level evaluation requires reproducible page boundaries and span-to-page alignment, not arbitrary relabeling of document gold.",
+      "metrics": [
+        "Micro and macro precision/recall/F1 over all41 labels",
+        "Per-clause recall/support",
+        "AUPRC where genuine comparable confidence is available",
+        "Invalid outputs and missing documents counted explicitly"
+      ],
+      "official_metric_boundary": "The official CUAD evaluator matches predicted answer spans/text using Jaccard/substr rules and derives precision/recall curves. A41-label page/document-presence F1 is a different task and must never be labelled official CUAD extraction performance.",
+      "next_step": "Prepare a separate attributed evaluation-only derivative with source contract IDs, span/page mappings and deterministic policy. Use official holdout splits; thresholds/rubric choices fixed without test answers.",
+      "thread_claim_context": {
+        "url": "https://x.com/matu79go/status/2101878714917429488",
+        "attribution": "Root independently fetched this X post; this subtask did not reproduce its experiment.",
+        "reported_claim": "20 pages ×41 clause types =820 decisions; claimed F1 comparable to Claude Haiku4.5 and8.3s.",
+        "unresolved": [
+          "Exact20-page subset",
+          "Page boundaries and label derivation",
+          "Which F1 definition/averaging",
+          "Hardware/concurrency and latency boundary",
+          "Claude prompt/settings and retries"
+        ],
+        "interpretation": "Motivates a legal-domain evaluation; not evidence that Open-Jev matches those scores or speed."
+      }
+    },
+    {
+      "benchmark": "Banking77",
+      "priority": "high_customer_intent",
+      "status": "primary_source_verified_adapter_not_prepared",
+      "source_refs": [
+        "repo:PolyAI-LDN/task-specific-datasets"
+      ],
+      "verified_facts": "10,003 training examples,3,080 test examples,77 intents; repository dataset licence CC BY4.0.",
+      "task_adaptation": "One Choice among77 explicitly described intent labels per utterance. Preserve full label space and fixed candidate order/rotations; no easy negative downsampling presented as77-way performance.",
+      "metrics": [
+        "Full-test accuracy",
+        "Macro-F1",
+        "Confusion by intent",
+        "Latency vs77 candidates"
+      ],
+      "caveats": [
+        "Keep original test untouched; tune descriptions only on train/dev.",
+        "Do not call the MoritzLaurer non-c classifier unseen-task zero-shot because its referenced training inventory includes Banking77.",
+        "This is intent classification, not multi-turn customer-service resolution."
+      ]
+    },
+    {
+      "benchmark": "CLINC150 full/OOS",
+      "priority": "high_customer_oos",
+      "status": "primary_source_verified_adapter_not_prepared",
+      "source_refs": [
+        "repo:clinc/oos-eval"
+      ],
+      "verified_facts": "150 in-scope intents; each has100 train,20 validation,30 test samples. Full data also has1,000 OOS test samples; all queries are single-intent.",
+      "task_adaptation": "Use a full150/151-way intent Choice plus a separately defined in-scope Noul; calibrate any rejection threshold on validation only. Do not use oracle intent/OOS status to choose which head is scored.",
+      "metrics": [
+        "Intent accuracy/macro-F1",
+        "OOS precision/recall/F1",
+        "AUROC/AUPRC and FPR at declared recall if probabilities available",
+        "Joint correct intent-or-OOS accuracy"
+      ],
+      "caveats": [
+        "Repository licence metadata was NOASSERTION; inspect actual data licence before redistribution.",
+        "OOS and in-scope metrics need original denominators."
+      ]
+    },
+    {
+      "benchmark": "BoolQ",
+      "priority": "secondary_noul",
+      "status": "primary_source_verified_adapter_not_prepared",
+      "source_refs": [
+        "repo:google-research-datasets/boolean-questions"
+      ],
+      "verified_facts": "Question/passage/boolean-answer task;9,427 labelled train and3,270 labelled dev;3,245 test examples have hidden labels in repository documentation. CC BY-SA3.0 dataset.",
+      "task_adaptation": "Pass the original passage as state and original yes/no question as a Noul. Use labelled dev explicitly as dev evaluation, not a claimed official hidden-test score.",
+      "metrics": [
+        "Accuracy including errors",
+        "Brier/NLL only for genuine finite comparable probabilities",
+        "Label-conditioned accuracy"
+      ],
+      "caveats": [
+        "Preserve attribution/share-alike obligations for redistributed derivatives.",
+        "Binary evidence understanding alone does not establish abstention or reliable factuality."
+      ]
+    },
+    {
+      "benchmark": "Jev Frontier100 upstream v0.2 budget study",
+      "priority": "first_reuse_existing_frozen_version_then_separate_version",
+      "status": "existing_original_snapshot_prepared_new_upstream_revision_observed",
+      "source_refs": [
+        "repo:softpudding/jev-frontier-100",
+        "extra:jf100_budget"
+      ],
+      "verified_facts": "Current upstream README reports100 questions×3 trials per condition, local Qwen3.5 sizes0.8B/2B/4B at thinking off/512/2048;3,000 retained responses across conditions, with no majority/best-of selection.",
+      "task_adaptation": "Keep our original frozen300 rotations and scores unchanged. Any v0.2 reproduction is a fresh named protocol using pinned data, trial seeds and exact reasoning budgets.",
+      "metrics": [
+        "Per-condition categorical accuracy",
+        "Per-domain accuracy",
+        "Template-level paired bootstrap intervals",
+        "End-to-end latency and actual reasoning/output tokens"
+      ],
+      "caveats": [
+        "Upstream author claims have not been independently recomputed in this subtask.",
+        "Do not compare our original rotation score directly to a new stochastic budget setting as if identical."
+      ]
+    },
+    {
+      "benchmark": "BEIR SciFact and NFCorpus",
+      "priority": "next_ir_after_trec",
+      "status": "primary_source_verified_not_downloaded_or_prepared",
+      "source_refs": [
+        "repo:beir-cellar/beir",
+        "extra:beir_splits"
+      ],
+      "verified_facts": "BEIR documents heterogeneous IR tasks and nDCG/MAP/Recall/Precision evaluation; SciFact test has300 queries and NFCorpus323.",
+      "task_adaptation": "Freeze BM25 top100 once with a disclosed retriever; run all systems on the identical candidates. Keep complete official qrels for ideal DCG and measure recall@100 separately from reranker quality.",
+      "metrics": [
+        "Official nDCG@10 using a recorded gain/evaluator policy",
+        "MRR/MAP where appropriate",
+        "Recall@100",
+        "Per-query end-to-end reranking latency"
+      ],
+      "caveats": [
+        "Each constituent dataset has its own redistribution terms; repository Apache licence does not relicense the corpus.",
+        "Do not merge BEIR and existing TREC numbers under an unstated metric definition."
+      ]
+    },
+    {
+      "benchmark": "MiniWoB++ via BrowserGym or native Gymnasium",
+      "priority": "first_new_closed_loop_browser",
+      "status": "primary_source_and_task_files_verified_no_environment_started",
+      "source_refs": [
+        "repo:Farama-Foundation/miniwob-plusplus",
+        "repo:ServiceNow/BrowserGym",
+        "extra:miniwob_tasks"
+      ],
+      "verified_facts": "More than100 web interaction environments. Verified task HTMLs:click-test-2,click-button,click-checkboxes,enter-text,choose-date.",
+      "task_adaptation": "Use a fixed DOM/accessibility observation and the same legal action/candidate generator for every model. Enumerate visible actionable elements and input values justified by task instructions; no benchmark oracle/cheat or gold element IDs.",
+      "metrics": [
+        "Full episode success",
+        "Invalid-action rate",
+        "Steps to completion",
+        "Episode wall time and per-decision latency",
+        "Success by seed/task"
+      ],
+      "next_step": "A named5-task subset with fixed unseen seeds can be a development benchmark; only full declared suite coverage may be called full MiniWoB++.",
+      "caveats": [
+        "DOM candidate selection is a restricted-action variant, not unrestricted browser-agent equivalence.",
+        "Continuous full episode recordings and failure-inclusive scientific logs are required."
+      ]
+    },
+    {
+      "benchmark": "WebArena",
+      "priority": "later_broad_browser",
+      "status": "primary_source_verified_not_provisioned",
+      "source_refs": [
+        "repo:web-arena-x/webarena",
+        "repo:ServiceNow/BrowserGym"
+      ],
+      "verified_facts": "Canonical README describes812 examples, accessibility-tree/text observations, end-to-end evaluators, and self-hosted website setup/reset. Demo sites are not evaluation targets.",
+      "task_adaptation": "Shared observation/action/argument scaffold; report candidate-generator provenance and coverage. Pin sites/configs, task IDs, reset process and stop conditions.",
+      "metrics": [
+        "Official task success",
+        "Task-type breakdown",
+        "Episode action count and wall time"
+      ],
+      "caveats": [
+        "Requires a separate disposable website deployment.",
+        "Typed decision selection alone does not supply arbitrary text arguments, navigation planning or missing actions."
+      ]
+    },
+    {
+      "benchmark": "WorkArena",
+      "priority": "later_enterprise_workflow",
+      "status": "primary_source_verified_access_requirements_unprovisioned",
+      "source_refs": [
+        "repo:ServiceNow/WorkArena",
+        "extra:workarena_setup"
+      ],
+      "verified_facts": "Browser-based ServiceNow knowledge work; L1 README lists33 tasks/19,912 instances. Setup requires ServiceNow instance access and authenticated Hugging Face access.",
+      "task_adaptation": "Use environment step actions and official validators. Do not run the README's oracle/cheat demonstration as an agent evaluation.",
+      "metrics": [
+        "Official task success",
+        "Atomic vscompositional task breakdown",
+        "Tool/action errors and latency"
+      ],
+      "caveats": [
+        "Access and environment setup have not been established here.",
+        "Benchmark/software/data access terms require separate checking before distribution."
+      ]
+    },
+    {
+      "benchmark": "ViZDoom",
+      "priority": "first_game_completion_after_existing_game_adapters",
+      "status": "primary_source_verified_existing_project_adapter_final_model_results_pending",
+      "source_refs": [
+        "repo:Farama-Foundation/ViZDoom",
+        "local:progress"
+      ],
+      "task_adaptation": "Pin scenario config/WAD, engine version,seeds,episode/time limit, action repeat and identical legal action sets. If all models receive extracted symbolic state, call it a symbolic-state variant; do not compare against published pixels-only results as identical.",
+      "metrics": [
+        "Full episode goal success",
+        "Return/kills/survival under scenario-specific definitions",
+        "Invalid-action rate",
+        "Decision latency and episode real-time factor"
+      ],
+      "caveats": [
+        "A successful selected demo is not the evaluation success rate.",
+        "Different frame skip, privileged state or reward shaping invalidates direct comparison.",
+        "Game asset rights are separate from engine code licences."
+      ]
+    },
+    {
+      "benchmark": "NetHack Learning Environment",
+      "priority": "defer_high_integration_cost",
+      "status": "primary_source_verified_archived_repo_no_adapter",
+      "source_refs": [
+        "repo:facebookresearch/nle"
+      ],
+      "verified_facts": "NLE provides a standard RL interface and defined tasks; README links a language observation/action wrapper. The checked original repository is archived.",
+      "task_adaptation": "If pursued, start with explicitly bounded tasks and a pinned observation/action wrapper, not a claim of full NetHack completion.",
+      "metrics": [
+        "Task success/return",
+        "Survival/steps for declared task",
+        "Action validity and latency"
+      ],
+      "caveats": [
+        "Additional dependency and maintenance work is needed.",
+        "Textual observation/action conversion changes the protocol and must be disclosed."
+      ]
+    }
+  ],
+  "fairness_and_reporting_rules": [
+    "Use identical frozen state/question/candidate content and ordered candidate keys, while recording unavoidable provider-specific outer prompt/schema formats. Gold and hidden environment state stay out of inference.",
+    "Do not use the test set to choose prompts, class descriptions, thresholds, candidate pruning or reasoning budgets. Keep all contract pages and related synthetic families within one split; report correlated rotations separately.",
+    "For a common decision-quality table, compare selected labels only. Choice selects the valid returned key, Noul uses a fixed threshold with an explicit tie rule, and categorical Score uses the selected/most probable level. Expected ordinal score and IR ranking are separate metrics.",
+    "No synthetic probability vectors for generative label-only models. Brier, ECE, NLL or soft-target calibration comparisons require genuine comparable probability output and a preregistered calibration policy.",
+    "Score actual integer/expected outputs without silent renormalization. Preserve Jev strict failures and any predeclared supplementary scalar analysis separately.",
+    "For CUAD, distinguish41-label presence F1 from official answer-span extraction evaluation. Never turn an upstream20-page anecdote into a full CUAD benchmark claim.",
+    "Report invalid/truncated/schema/transport responses as failures with the full planned denominator; unattempted cases remain pending. Preserve raw attempts, identities and all failures; no hidden retry, oracle repair, best-of selection or success-only evaluation.",
+    "Quality/latency operating points must state Qwen thinking flag and decoding; Luna none and Astra low are distinct settings. A later512/2048-token Qwen reasoning curve is separate from the fast non-thinking baseline.",
+    "Use same-GPU local comparisons for method efficiency: physical card, dtype, batch/concurrency, max context, attention implementation, transport, cache mode, load/warmup policy and exact package revision must be recorded. Measure complete validated answers, not only time to first token.",
+    "Existing2B H100 loopback versus Jev/OpenAI remote HTTPS latency is a deployment-path comparison with undisclosed remote hardware. Preserve the long-context32-candidate case where2B is slower. No energy, throughput or hardware-normalized speedup claim without new measurements.",
+    "Prefix caching remains off in the main Open-Jev path because probability parity failed9/11 workloads;440 selected decisions matching does not establish full probability parity. Any optimized path needs a separate parity-verified efficiency report.",
+    "For repeated latency, keep the existing measured20 plus3 warmup protocol per workload/path, concurrency1 and no retries when extending that table; log server-cache hits, tokens and full response wall time. Run-to-run comparisons must identify dates and possible provider drift.",
+    "IR methods share exact BM25 candidates and complete qrels; disclose pairwise versus adaptive listwise computation. A reranker score is not automatically a calibrated generic Noul or multi-level Score.",
+    "For games/browser, all models use identical environment versions,seeds,observations,legal actions and budgets. Measure continuous full episodes with real terminal success, and report candidate-generator limitations. Do not pass oracle-selected candidates or use scripted reference actions as model outputs.",
+    "Public demos may be reviewed successes with clear labels; scientific aggregates and logs must include failures. Do not summarize the small frozen suites, a pilot subset or an adapter-only preparation as all domains/cases completed."
+  ],
+  "deferred_not_verified_here": [
+    {
+      "name": "BFCL",
+      "reason": "No primary benchmark/task-specific adapter verification completed in this bounded task; not included in the recommended matrix. Tool-name choice alone would not equal full function-call/argument evaluation."
+    },
+    {
+      "name": "Additional current OpenAI variants",
+      "reason": "No new paid provider is needed for the smallest useful matrix. Existing measured Luna/Astra settings are preserved."
+    }
+  ],
+  "verified_source_snapshots": [
+    {
+      "id": "hf-card:Qwen/Qwen3.5-2B",
+      "url": "https://huggingface.co/Qwen/Qwen3.5-2B/raw/15852e8c16360a2fea060d615a32b45270f8a8fc/README.md",
+      "api_url": "https://huggingface.co/api/models/Qwen/Qwen3.5-2B",
+      "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+      "sha256": "c0e83a849c776e6fa843d011f023132d942a0f0140d903205bf1c363adad2275",
+      "bytes": 62814,
+      "public": true,
+      "gated": false,
+      "license_metadata": "apache-2.0",
+      "verification": "Model card and public metadata fetched; no weights or runtime test."
+    },
+    {
+      "id": "hf-card:Qwen/Qwen3.5-9B",
+      "url": "https://huggingface.co/Qwen/Qwen3.5-9B/raw/c202236235762e1c871ad0ccb60c8ee5ba337b9a/README.md",
+      "api_url": "https://huggingface.co/api/models/Qwen/Qwen3.5-9B",
+      "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "sha256": "c5f5a8c2dddab69cfbf05279235aa5fddb137939a06539c4c7637aa900fef6d0",
+      "bytes": 77643,
+      "public": true,
+      "gated": false,
+      "license_metadata": "apache-2.0",
+      "verification": "Model card and public metadata fetched; no weights or runtime test."
+    },
+    {
+      "id": "hf-card:Qwen/Qwen3-Reranker-0.6B",
+      "url": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B/raw/e61197ed45024b0ed8a2d74b80b4d909f1255473/README.md",
+      "api_url": "https://huggingface.co/api/models/Qwen/Qwen3-Reranker-0.6B",
+      "revision": "e61197ed45024b0ed8a2d74b80b4d909f1255473",
+      "sha256": "5bba8c734f6dd3ae48317b4139317e45a7fce48fc55e15670b23a0dd15492ab6",
+      "bytes": 14742,
+      "public": true,
+      "gated": false,
+      "license_metadata": "apache-2.0",
+      "verification": "Model card and public metadata fetched; no weights or runtime test."
+    },
+    {
+      "id": "hf-card:Qwen/Qwen3-Reranker-4B",
+      "url": "https://huggingface.co/Qwen/Qwen3-Reranker-4B/raw/22e683669bc0f0bd69640a1354a6d0aebcfeede5/README.md",
+      "api_url": "https://huggingface.co/api/models/Qwen/Qwen3-Reranker-4B",
+      "revision": "22e683669bc0f0bd69640a1354a6d0aebcfeede5",
+      "sha256": "b7cf82b30d5e38cd1a02ca7cfd60c26c0e3664cb31b2c4b661550a93c9281bee",
+      "bytes": 14707,
+      "public": true,
+      "gated": false,
+      "license_metadata": "apache-2.0",
+      "verification": "Model card and public metadata fetched; no weights or runtime test."
+    },
+    {
+      "id": "hf-card:BAAI/bge-reranker-v2-m3",
+      "url": "https://huggingface.co/BAAI/bge-reranker-v2-m3/raw/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/README.md",
+      "api_url": "https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3",
+      "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+      "sha256": "c887aa6dd2598f908bf0582ca7068cc816585c7a1b6a07df305b631ede0cb174",
+      "bytes": 17229,
+      "public": true,
+      "gated": false,
+      "license_metadata": "apache-2.0",
+      "verification": "Model card and public metadata fetched; no weights or runtime test."
+    },
+    {
+      "id": "hf-card:MoritzLaurer/deberta-v3-base-zeroshot-v2.0",
+      "url": "https://huggingface.co/MoritzLaurer/deberta-v3-base-zeroshot-v2.0/raw/8e7e5af5983a0ddb1a5b45a38b129ab69e2258e8/README.md",
+      "api_url": "https://huggingface.co/api/models/MoritzLaurer/deberta-v3-base-zeroshot-v2.0",
+      "revision": "8e7e5af5983a0ddb1a5b45a38b129ab69e2258e8",
+      "sha256": "bd974d885c91d90f96183e86803e80b080ad365cb65307f2ebd9169d2646f08f",
+      "bytes": 21116,
+      "public": true,
+      "gated": false,
+      "license_metadata": "mit",
+      "verification": "Model card and public metadata fetched; no weights or runtime test."
+    },
+    {
+      "id": "repo:beir-cellar/beir",
+      "url": "https://github.com/beir-cellar/beir",
+      "readme_url": "https://raw.githubusercontent.com/beir-cellar/beir/ef83d29307061c65d04b035b4f4e7c18bd8374af/README.md",
+      "revision": "ef83d29307061c65d04b035b4f4e7c18bd8374af",
+      "sha256": "d030c5374d29194e6c23ded13314dc6964b253c137cbcf606765a4222f4bc4e1",
+      "bytes": 27120,
+      "repository_license_metadata": "Apache-2.0",
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:web-arena-x/webarena",
+      "url": "https://github.com/web-arena-x/webarena",
+      "readme_url": "https://raw.githubusercontent.com/web-arena-x/webarena/dce04686a56253aefba7b18a4fa0937cf1dc987b/README.md",
+      "revision": "dce04686a56253aefba7b18a4fa0937cf1dc987b",
+      "sha256": "081c826497f9b7da4952771ee128c2215ec3532379db0fe9f7fcbd899d9c9287",
+      "bytes": 9717,
+      "repository_license_metadata": "Apache-2.0",
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:ServiceNow/BrowserGym",
+      "url": "https://github.com/ServiceNow/BrowserGym",
+      "readme_url": "https://raw.githubusercontent.com/ServiceNow/BrowserGym/9e779f087de9a65668b6974d11f9ce9816026e96/README.md",
+      "revision": "9e779f087de9a65668b6974d11f9ce9816026e96",
+      "sha256": "6cc98bf0deef42422a9d02ff69154cb198ed003c365bc707c8777de2fb62e0ee",
+      "bytes": 12118,
+      "repository_license_metadata": "NOASSERTION",
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:Farama-Foundation/miniwob-plusplus",
+      "url": "https://github.com/Farama-Foundation/miniwob-plusplus",
+      "readme_url": "https://raw.githubusercontent.com/Farama-Foundation/miniwob-plusplus/33c3b4ddef8c6eb67c57a29663d844b1eda7e614/README.md",
+      "revision": "33c3b4ddef8c6eb67c57a29663d844b1eda7e614",
+      "sha256": "90499776fa1b23e08ac85190ad3be709caa9172ff4f2a0a106b0fa350568e86f",
+      "bytes": 5647,
+      "repository_license_metadata": "MIT",
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:Farama-Foundation/ViZDoom",
+      "url": "https://github.com/Farama-Foundation/ViZDoom",
+      "readme_url": "https://raw.githubusercontent.com/Farama-Foundation/ViZDoom/f771231811cd3be417f97230d009e0aa9d983ed6/README.md",
+      "revision": "f771231811cd3be417f97230d009e0aa9d983ed6",
+      "sha256": "67493e597ec645b6a914f0157cbae0fa0ae724f5eb541d36e8702576bc491a13",
+      "bytes": 9970,
+      "repository_license_metadata": null,
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:facebookresearch/nle",
+      "url": "https://github.com/facebookresearch/nle",
+      "readme_url": "https://raw.githubusercontent.com/facebookresearch/nle/862a439a84f52abca94d1f744d57061da12c5831/README.md",
+      "revision": "862a439a84f52abca94d1f744d57061da12c5831",
+      "sha256": "dda81cd65b297d9d926d59ea96cdc1ef2ec3635df32f79bf60dfaf8408083a93",
+      "bytes": 11148,
+      "repository_license_metadata": "NOASSERTION",
+      "archived": true,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:softpudding/jev-frontier-100",
+      "url": "https://github.com/softpudding/jev-frontier-100",
+      "readme_url": "https://raw.githubusercontent.com/softpudding/jev-frontier-100/9abacec47394f3b393f81fbe3cdd524f028bc088/README.md",
+      "revision": "9abacec47394f3b393f81fbe3cdd524f028bc088",
+      "sha256": "0e34090a63f6f5ca9d445b10476c8b3b59ec0568e9c045aac91a43635381001a",
+      "bytes": 6442,
+      "repository_license_metadata": "MIT",
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:ServiceNow/WorkArena",
+      "url": "https://github.com/ServiceNow/WorkArena",
+      "readme_url": "https://raw.githubusercontent.com/ServiceNow/WorkArena/a772230a94cf1caf4166b8ead3983f3b3786455b/README.md",
+      "revision": "a772230a94cf1caf4166b8ead3983f3b3786455b",
+      "sha256": "834a48f0346036a0fc591a36f9eb6f513b44a2777a66afa0917f28fc63f29334",
+      "bytes": 9290,
+      "repository_license_metadata": "NOASSERTION",
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:clinc/oos-eval",
+      "url": "https://github.com/clinc/oos-eval",
+      "readme_url": "https://raw.githubusercontent.com/clinc/oos-eval/828f8093932c8fe6ca7936c3d2e52903b1c523de/README.md",
+      "revision": "828f8093932c8fe6ca7936c3d2e52903b1c523de",
+      "sha256": "8a8df26c4de3d25b6c4cff385ca23602c30e4e56828b015206cbc202f6db363a",
+      "bytes": 2668,
+      "repository_license_metadata": "NOASSERTION",
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:PolyAI-LDN/task-specific-datasets",
+      "url": "https://github.com/PolyAI-LDN/task-specific-datasets",
+      "readme_url": "https://raw.githubusercontent.com/PolyAI-LDN/task-specific-datasets/57ec275d8078af65b7731c2a98be812d844a6d6b/README.md",
+      "revision": "57ec275d8078af65b7731c2a98be812d844a6d6b",
+      "sha256": "7b9ce9069931cc2de89dce8c7ffb53d07806cf413601ccf133b9af5227b3a373",
+      "bytes": 4735,
+      "repository_license_metadata": "CC-BY-4.0",
+      "archived": false,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "repo:google-research-datasets/boolean-questions",
+      "url": "https://github.com/google-research-datasets/boolean-questions",
+      "readme_url": "https://raw.githubusercontent.com/google-research-datasets/boolean-questions/90af34107399cc7a446b373dc4ee35b8001da7c2/README.md",
+      "revision": "90af34107399cc7a446b373dc4ee35b8001da7c2",
+      "sha256": "0afe70d7cdbb644637592212f0cb15339389910bf00f35764ec3c545257aa663",
+      "bytes": 2675,
+      "repository_license_metadata": null,
+      "archived": true,
+      "verification": "Pinned primary README fetched; repository licence metadata does not establish all dataset/asset rights."
+    },
+    {
+      "id": "extra:qwen2b_modes",
+      "url": "https://huggingface.co/Qwen/Qwen3.5-2B/raw/15852e8c16360a2fea060d615a32b45270f8a8fc/README.md",
+      "sha256": "c0e83a849c776e6fa843d011f023132d942a0f0140d903205bf1c363adad2275",
+      "bytes": 62814,
+      "evidence": []
+    },
+    {
+      "id": "extra:qwen9b_modes",
+      "url": "https://huggingface.co/Qwen/Qwen3.5-9B/raw/c202236235762e1c871ad0ccb60c8ee5ba337b9a/README.md",
+      "sha256": "c5f5a8c2dddab69cfbf05279235aa5fddb137939a06539c4c7637aa900fef6d0",
+      "bytes": 77643,
+      "evidence": []
+    },
+    {
+      "id": "extra:qwen_reranker_scoring",
+      "url": "https://huggingface.co/Qwen/Qwen3-Reranker-0.6B/raw/e61197ed45024b0ed8a2d74b80b4d909f1255473/README.md",
+      "sha256": "5bba8c734f6dd3ae48317b4139317e45a7fce48fc55e15670b23a0dd15492ab6",
+      "bytes": 14742,
+      "evidence": [
+        {
+          "line": 75,
+          "text": "pairs = [(query, doc) for doc in documents] scores = model.predict(pairs) print(scores)"
+        },
+        {
+          "line": 86,
+          "text": "```python scores = model.predict([(query, doc) for doc in documents], activation_fn=torch.nn.Sigmoid()) ```"
+        },
+        {
+          "line": 130,
+          "text": "def compute_logits(inputs, **kwargs):     batch_scores = model(**inputs).logits[:, -1, :]     true_vector = batch_scores[:, token_true_id]"
+        }
+      ]
+    },
+    {
+      "id": "extra:jf100_budget",
+      "url": "https://raw.githubusercontent.com/softpudding/jev-frontier-100/9abacec47394f3b393f81fbe3cdd524f028bc088/README.md",
+      "sha256": "0e34090a63f6f5ca9d445b10476c8b3b59ec0568e9c045aac91a43635381001a",
+      "bytes": 6442,
+      "evidence": [
+        {
+          "line": 3,
+          "text": " **Jev scores 77.0%; Qwen3.5 2B with a 2,048-token thinking budget scores 82.0%; Qwen3.5 4B with the same budget scores 96.7%.** This small benchmark makes Jev's"
+        },
+        {
+          "line": 13,
+          "text": " | Thinking budget | Qwen3.5 0.8B | Qwen3.5 2B | Qwen3.5 4B | |---|---:|---:|---:|"
+        },
+        {
+          "line": 14,
+          "text": "| Thinking budget | Qwen3.5 0.8B | Qwen3.5 2B | Qwen3.5 4B | |---|---:|---:|---:| | Off | 38.0% | 48.0% | 56.0% |"
+        }
+      ]
+    },
+    {
+      "id": "extra:nli_training_inventory",
+      "url": "https://raw.githubusercontent.com/MoritzLaurer/zeroshot-classifier/7f82e4ab88d7aa82a4776f161b368cc9fa778001/v1_human_data/datasets_overview.csv",
+      "sha256": "c670fdb0ef579df4e449f78429dbc7f47a646f2dbc33459f588ea8530e2105b5",
+      "bytes": 14572,
+      "evidence": [
+        {
+          "line": 1,
+          "text": "dataset_name,used_in_v1.0,used_in_v1.1,future_use,license,license_details,commercial_compatible,dataset_link,task_category,Author,publication,year,paper_link,domain,description,comments,face_validity,quality_other,relevance_0_shot,language google_well_formed_query,TRUE,TRUE,,cc-by-sa-4.0,,yes,https://huggingface.co/datasets/google_wellformed_query,other,Google,EMNLP,2018,https://aclanthology.org/D18-1091.pdf,,,\"label is float (average of 5 raters), need to binarize\",seems good,5 annotators,medium,en"
+        },
+        {
+          "line": 6,
+          "text": "social_bias_frames,TRUE,TRUE,,cc-by-4.0,,yes,https://huggingface.co/datasets/social_bias_frames,\"toxicity, offensive\",Academic,ACL,2020,https://www.aclweb.org/anthology/2020.acl-main.486,,,,seems fine,multiple annotators; good uni,high,en newsmtsc,FALSE,FALSE,later,MIT,,yes,https://huggingface.co/datasets/fhamborg/news_sentiment_newsmtsc,\"sentiment, aspect-based\",Academic,EACL,2021,https://aclanthology.org/2021.eacl-main.142.pdf,,,seems easy to convert to NLI,some issues,5 annotators,high,en lexglue,FALSE,FALSE,later,cc-by-4.0,,yes,https://huggingface.co/datasets/lex_glue,topic classification,Academic,ACL,2022,https://aclanthology.org/2022.ac"
+        },
+        {
+          "line": 24,
+          "text": "massive,TRUE,TRUE,,cc-by-4.0,,yes,https://huggingface.co/datasets/AmazonScience/massive,intent detection,Amazon,ACL,2023,https://aclanthology.org/2023.acl-long.235.pdf; English data from https://aclanthology.org/2020.emnlp-main.588.pdf,spoken utterances,,,seems rigorous,3 annotators; not sure how many for en data,high,en banking77,TRUE,TRUE,,cc-by-4.0,,yes,https://huggingface.co/datasets/PolyAI/banking77,intent detection,PolyAI,ConvAI,2020,https://aclanthology.org/2020.nlp4convai-1.5/,\"customer messages, banking\",77 customer intent classes,,\"seems OK, is a bit noisy, but usefully diverse.\",n annotators unclear,high,en emotion6_twitter,TRUE,TR"
+        }
+      ]
+    },
+    {
+      "id": "extra:beir_splits",
+      "url": "https://raw.githubusercontent.com/beir-cellar/beir/ef83d29307061c65d04b035b4f4e7c18bd8374af/README.md",
+      "sha256": "d030c5374d29194e6c23ded13314dc6964b253c137cbcf606765a4222f4bc4e1",
+      "bytes": 27120,
+      "evidence": []
+    },
+    {
+      "id": "hf-api:ZefanCai/Open-Jev-2B",
+      "url": "https://huggingface.co/api/models/ZefanCai/Open-Jev-2B",
+      "sha256": "652e636fe453dc8cd147a530193cdb7ff00b5d1685c1b4fe6de0e5494084a830",
+      "bytes": 1547,
+      "artifact_revision": "0c7aa498b1627be8da4acf34c863ff0ee0a92785",
+      "public": true,
+      "gated": false
+    },
+    {
+      "id": "hf-api:ZefanCai/Open-Jev-9B",
+      "url": "https://huggingface.co/api/models/ZefanCai/Open-Jev-9B",
+      "sha256": "a1b586879a359c9398cc44df6e9c4d6167694da47d27eedf19a5351fbb06bf27",
+      "bytes": 1547,
+      "artifact_revision": "47e966881e489511c0c7f5633a9e1960a676a551",
+      "public": true,
+      "gated": false
+    },
+    {
+      "id": "extra:miniwob_tasks",
+      "url": "https://api.github.com/repos/Farama-Foundation/miniwob-plusplus/git/trees/33c3b4ddef8c6eb67c57a29663d844b1eda7e614?recursive=1",
+      "sha256": "dbb9be74a7e13b6f92913e8450cfaa1f72e36f4f027b1c06f87164e8a9dc4cc3",
+      "bytes": 144656,
+      "public": false,
+      "verified_paths": [
+        "miniwob/html/miniwob/choose-date.html",
+        "miniwob/html/miniwob/click-button.html",
+        "miniwob/html/miniwob/click-checkboxes.html",
+        "miniwob/html/miniwob/click-test-2.html",
+        "miniwob/html/miniwob/enter-text.html"
+      ]
+    },
+    {
+      "id": "extra:workarena_setup",
+      "url": "https://raw.githubusercontent.com/ServiceNow/WorkArena/a772230a94cf1caf4166b8ead3983f3b3786455b/README.md",
+      "sha256": "834a48f0346036a0fc591a36f9eb6f513b44a2777a66afa0917f28fc63f29334",
+      "bytes": 9290,
+      "public": false
+    },
+    {
+      "id": "extra:qwen2b_explicit_mode",
+      "url": "https://huggingface.co/Qwen/Qwen3.5-2B/raw/15852e8c16360a2fea060d615a32b45270f8a8fc/README.md",
+      "sha256": "c0e83a849c776e6fa843d011f023132d942a0f0140d903205bf1c363adad2275",
+      "bytes": 62814,
+      "public": false
+    },
+    {
+      "id": "openai:luna",
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "sha256": "1c4827d3020cb8784fa587a29230a2b68b940a0cdaf7b6b9c19033ec2df2db58",
+      "bytes": 429894,
+      "verified_fact": "reasoning.effort supports none,low,medium(default),high,xhigh,max. Documentation availability is not proof of any account's live API entitlement."
+    },
+    {
+      "id": "openai:astra",
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+      "sha256": "cebbaec26918b01a5ce9f0d67aa4f503c7430b61ae0f4ddbb85b826d5d56c745",
+      "bytes": 430363,
+      "verified_fact": "reasoning.effort supports low,medium,high,xhigh,max. Preserve the measured low setting."
+    },
+    {
+      "id": "cuad:website",
+      "url": "https://www.atticusprojectai.org/cuad",
+      "sha256": "2b2f95a3aa9feb2a89468c0f5995c9969e30273fe65b7eea0b995127a72ed6c9",
+      "bytes": 47845,
+      "verified_fact": "510 contracts,13,000+ labels,41 clause types,CC BY4.0."
+    },
+    {
+      "id": "cuad:dataset",
+      "url": "https://huggingface.co/api/datasets/theatticusproject/cuad",
+      "sha256": "25939e06d2c431ff830b9d8c4b63b2ff8dcf38b3d3ac91a4996cdcea9eac7978",
+      "bytes": 101986,
+      "revision": "a3c393f5d103fd0c516374e4fdff676c8176dcb1",
+      "public": true,
+      "gated": false,
+      "license_metadata": "cc-by-4.0"
+    },
+    {
+      "id": "cuad:evaluate.py",
+      "url": "https://raw.githubusercontent.com/The-Atticus-Project/cuad/67faa0e6023b04fcaae6cc09497ab00e5d63a2a2/evaluate.py",
+      "sha256": "5c56ac9fc82fe56ef77616a1dffba0707e4366ba916f7ab5d3e4434013d0a624",
+      "bytes": 7132
+    },
+    {
+      "id": "cuad:readme.md",
+      "url": "https://raw.githubusercontent.com/The-Atticus-Project/cuad/67faa0e6023b04fcaae6cc09497ab00e5d63a2a2/readme.md",
+      "sha256": "81108440df6af9612acffb2271f27cf231eceda806d3729e998578b50a00a854",
+      "bytes": 2140
+    },
+    {
+      "id": "local:provider-comparison",
+      "path": "docs/provider-comparison.md"
+    },
+    {
+      "id": "local:model-provenance",
+      "path": "docs/model-provenance.md"
+    },
+    {
+      "id": "local:progress",
+      "path": "state/auto_research/progress.json"
+    }
+  ]
+}

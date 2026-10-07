@@ -1,0 +1,60 @@
+{
+  "cause": "The guard precheck and owner pre/post checks are distinct monotonic reads. Crossing the bound after guard precheck raises generic EpisodeOwnershipError, which is misclassified as ownership_lost; prelaunch expiry reaches the generic outer watchdog_error handler.",
+  "deterministic_reproduction": {
+    "command": "python3 -m unittest tests.test_frontier_v8_resource_episode.ResourceEpisodeUnitTests.test_owner_deadline_race_preserves_causal_failure_classification -v",
+    "failures_before_fix": [
+      {
+        "actual": "ownership_lost",
+        "boundary": "owner_first_check",
+        "expected": "work_deadline"
+      },
+      {
+        "actual": "ownership_lost",
+        "boundary": "owner_final_check",
+        "expected": "work_deadline"
+      },
+      {
+        "actual": "watchdog_error",
+        "boundary": "prelaunch_final_check",
+        "expected": "work_deadline"
+      }
+    ],
+    "negative_controls_passed": [
+      "reversed_clock remains ownership_lost",
+      "nonfinite_clock remains ownership_lost",
+      "protected identity loss after clock reaches deadline remains ownership_lost"
+    ],
+    "observed_expiry_error": "live owner work deadline has expired or its clock reversed",
+    "scope": "actual owner/deadline/raw fixture/held file lease logic; process and independent-restoration observations are explicit CPU mocks",
+    "subcases": 6,
+    "tests": 1
+  },
+  "original_ci": {
+    "assertion": "ownership_lost != work_deadline",
+    "failed_test": "test_timeout_kills_only_new_tree_and_releases_after_independent_audit",
+    "failures": 1,
+    "job_id": 111210963554,
+    "limits": "Original raw log does not contain the ownership_error string or distinguish first/final owner check; exact prior interleaving cannot be recovered from this log.",
+    "python": "3.14",
+    "raw_log_path": "/Users/ethan/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-resource-episode-20261003/report-B-PR-failure-raw-r1/python-3.14.raw.log",
+    "raw_log_sha256": "03dc90760177b9001b43b12fcb362ef59f1f5836ee4d21ac59fac3deab444683",
+    "seconds": 149.77,
+    "skipped": 90,
+    "tests": 1328
+  },
+  "planned_repair": "A typed deadline-expiry subclass, caught specifically by work loop and outer prelaunch boundary. Keep reversed/nonfinite clocks and real identity/source failures generic; never override them by inspecting a later current time.",
+  "schema_version": 1,
+  "source_before_repair": {
+    "head": "6ab29413ee8a749d8f2f8483004aa030ad08ca50",
+    "path": "scripts/frontier_v8_resource_episode.py",
+    "sha256": "d64ef529012836a9a0da3b7e3eeb68a414e9b546e803ca8c274ca9830df4056e"
+  },
+  "status": "confirmed_CPU_deadline_classification_race_before_repair",
+  "unchanged_requirements": [
+    "work<=4500/recovery<=1500",
+    "original Linux timeout_seconds=0.15",
+    "only new verified tree cleanup",
+    "original fixture STOP/CONT restoration and independent audit",
+    "no CI retry or modification of frozen science18/native7/plan/freeze"
+  ]
+}

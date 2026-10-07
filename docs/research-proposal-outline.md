@@ -21,7 +21,7 @@ for exploratory scenario analysis and backcasting*.
 - Strategic models (DCM-based) represent choices well at a point in time but are rarely run across
   thousands of futures; ABMs capture dynamics and interaction (diffusion, congestion feedback) but often
   rest on weakly estimated behaviour.
-- Gap to argue (support with literature you have read): few frameworks combine *estimated* behaviour,
+- Gap to argue (support with literature you have read; the theory funnel in `docs/THEORY.md` maps it): few frameworks combine *estimated* behaviour,
   agent dynamics and exploratory modelling in one reproducible loop that also supports backcasting.
 
 ## 3. Aim and research questions
@@ -74,6 +74,7 @@ analysis. Practical: decision support that identifies robust policy packages and
 a single forecast.
 
 ## 9. Evidence of readiness (what to point the committee to)
-- Working, tested prototypes of each step (`python -m pytest tests`, 70+ tests).
+- Working, tested prototypes of each step (`python -m pytest tests`, 74 tests).
+- System, agent-tier and theory-funnel diagrams on the research atlas (`docs/index.html`).
 - `examples/transplan_study.py`: estimation → ABM → 1,500-run ensemble → robustness, PRIM, backcasting.
 - Clear statement of limits: synthetic data, illustrative parameters, compact ABM.

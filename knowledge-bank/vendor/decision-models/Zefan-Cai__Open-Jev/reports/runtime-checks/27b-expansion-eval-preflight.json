@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "checked_at": "2026-09-20T06:10:52.397461+00:00",
+  "scope": {
+    "execution": "local CPU only",
+    "gpu_access": false,
+    "remote_access": false,
+    "model_loaded": false,
+    "model_inference_rows": 0,
+    "actual_completed_27b_checkpoint_validated": false,
+    "jf100_records_accessed": false,
+    "purpose": "Independent real-data hashes, full partition/ID/content coverage, reconstruction order, and static backward compatibility. This does not authorize a GPU launch or establish model/game/browser/flight performance."
+  },
+  "python_version": "3.14.5",
+  "git_head_at_audit": "ac09e991346391bca029742a605f4a1a1fe4b3e4",
+  "implementation_sha256": {
+    "scripts/evaluate_checkpoints_parallel.py": "6a271eae0d1382aa2619b2ec547866db3c16b34cbaa6d43a7a15824410ecf493",
+    "tests/test_parallel_data_eval.py": "be7e4fddc6451a61cf7de74b6b841aa191d30ca0043debc46789b721398032b3",
+    "scripts/run_four_gpu_handoff.py": "8294e8e0f1556ac6b590dfd3d8989db36fd20ea5ddf40e09e07a2a932ab316b0",
+    "jev/train_distributed.py": "b1f77bbfa39d1e4c0ec93645415bf44c284e23cc67952513d248bf707ac5507a",
+    "state/auto_research/resource_policy.json": "668041118db8b2530e2367e09da72fbe32eea191582d9d4f9e809c0a58b98722",
+    "configs/n1-four-gpu-handoff.json": "e9cdeba834cabde2c7d8a92edd1d823c1bfd2aeed621bf6a7260bb93adacb114"
+  },
+  "runtime_implementation_sha256": {
+    "scripts/evaluate_checkpoints_parallel.py": "6a271eae0d1382aa2619b2ec547866db3c16b34cbaa6d43a7a15824410ecf493",
+    "jev/model.py": "b8f135ef2da1f1205ba715b02f3dcf3c25962a2bec7e92a335198f59b6083c83",
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "jev/data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e",
+    "jev/metrics.py": "cb460c78b877a24708a0a8f8ca6b51f9602491f6ea24cd14e9a828c03d92f78b",
+    "jev/serving.py": "e181c7dfaa7d0e2af0e79b77ad82a2264ff80fefe147587b0bae25d0aaa6b958"
+  },
+  "checkpoint_gate_review": {
+    "method": "Static review of frozen evaluator; no completed checkpoint evaluated",
+    "blocking_findings": [],
+    "observed_requirements": [
+      "Pinned Qwen3.8-27B model/revision and expansion profile",
+      "Frozen manifest and all five split file hashes",
+      "Complete 27,581 steps and 110,324 consumed rows",
+      "Four-rank NCCL/CUDA distribution and full finite training log",
+      "Fresh pinned upstream or strict same-run DDP resume metadata",
+      "Fixed seed 20260920 and independently reconstructed 512 calibration IDs",
+      "Saved positive finite calibration temperature with matching run/summary IDs and raw calibration predictions",
+      "Current checkpoint bytes plus run/summary/training/calibration digests bound into each worker plan",
+      "Workers recheck data/checkpoint/code/assignment identity, then merger checks every raw row and uses the saved temperature"
+    ]
+  },
+  "profile": {
+    "name": "browser-drone-expansion-v1",
+    "dataset": "data/browser-drone-expansion-v1",
+    "model": "Qwen/Qwen3.8-27B",
+    "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "manifest_sha256": "ba001b88787ce21576017897a0cbdedd5917ceb29ad3522b0e1fb7b4836d49df",
+    "files": {
+      "train": {
+        "sha256": "91a3e3c715abd735509a5a23453161475aff85626f2c47563a8fab4e7dc79239",
+        "bytes": 269739915,
+        "rows": 110324
+      },
+      "calibration": {
+        "sha256": "8a366dbb71dbe57b98a25da3071fc858beb7e8567adf4abf952c3d98f79bb94c",
+        "bytes": 18316667,
+        "rows": 6883
+      },
+      "validation": {
+        "sha256": "bb49a3ca608dbeb543c56a20ee2f32e75f65be835fcb40ec40014af7351c6c7d",
+        "bytes": 14425397,
+        "rows": 5562
+      },
+      "test": {
+        "sha256": "662d5e79da70eba77ad740eb37576b8157e53e5c1d8cd9344c60ec56d3969637",
+        "bytes": 37591989,
+        "rows": 14902
+      },
+      "ood": {
+        "sha256": "364992ae82a2d8b6f3f4ed68a0efa06d9a6b9ae469d81113d4165f762eec0a94",
+        "bytes": 72275806,
+        "rows": 25379
+      }
+    },
+    "partition": "Concatenate test then OOD in frozen file order; global index modulo four",
+    "total_heldout_rows": 40281
+  },
+  "rank_assignments": [
+    {
+      "partition": "concatenated_test_ood",
+      "rank": 0,
+      "total_rows": 10071,
+      "counts": {
+        "test": 3726,
+        "ood": 6345
+      },
+      "ordered_rows_sha256": "9ea129333fa0316144fe0c174b47eb229965867f5863ea2f292e3a7043127b0f"
+    },
+    {
+      "partition": "concatenated_test_ood",
+      "rank": 1,
+      "total_rows": 10070,
+      "counts": {
+        "test": 3726,
+        "ood": 6344
+      },
+      "ordered_rows_sha256": "e69b169bad16b60c6a27ea4a18b4ee482e0431a22a0df0c1eeadc5bcfe13de7c"
+    },
+    {
+      "partition": "concatenated_test_ood",
+      "rank": 2,
+      "total_rows": 10070,
+      "counts": {
+        "test": 3725,
+        "ood": 6345
+      },
+      "ordered_rows_sha256": "bbd1d5eb1d05a4610e30fb3cd334424678c70db4825fda07c0330420696d47a5"
+    },
+    {
+      "partition": "concatenated_test_ood",
+      "rank": 3,
+      "total_rows": 10070,
+      "counts": {
+        "test": 3725,
+        "ood": 6345
+      },
+      "ordered_rows_sha256": "a5ce0c8826142a4ea6095017f3ed1100158d766fb7966febec8ea0f1fe0123fa"
+    }
+  ],
+  "coverage": {
+    "expected_rows": 40281,
+    "assigned_rows": 40281,
+    "unique_ids": 40281,
+    "unique_split_indices": 40281,
+    "missing_rows": 0,
+    "extra_rows": 0,
+    "duplicate_ids": 0,
+    "duplicate_split_indices": 0,
+    "calibration_overlap": 0,
+    "file_order_reconstruction": {
+      "test": {
+        "rows": 14902,
+        "ordered_ids_sha256": "2cbd5ab49aa6ab64b8e460f87d2b966ba4d94e06484e8fe5eb3c34c00e472f55",
+        "ordered_rows_sha256": "0eb2f04a1d7d67a3c0ec294ff4cbe44099c4c34d9e978bd12b747866267a79df"
+      },
+      "ood": {
+        "rows": 25379,
+        "ordered_ids_sha256": "d1e7072ae65d9013bb42f6a9a43000fff7190e7e3c1d90ffe9528ecf4f0a44cb",
+        "ordered_rows_sha256": "49d6ae533a2f66a22291e273bf162a589986f6120b9db527ae8c6c7c75c68e16"
+      }
+    }
+  },
+  "calibration_selection": {
+    "available_rows": 6883,
+    "selected_rows": 512,
+    "seed": 20260920,
+    "method": "Trainer-compatible seeded shuffle, then insertion-ordered source/kind bucket round robin",
+    "ids_sha256_json_default": "a1903776bafb4af05654c91ceaf3dc19a1135f82384186e7216001c76190ddad"
+  },
+  "compatibility_review": {
+    "blocking_findings": [],
+    "legacy_profile": "release-v2",
+    "legacy_models": [
+      "2b",
+      "9b"
+    ],
+    "legacy_supervisor_command": [
+      "/mnt/localssd/open-jev/runtime/venv/bin/python",
+      "-m",
+      "scripts.evaluate_checkpoints_parallel",
+      "--data",
+      "/mnt/localssd/open-jev/repo/data/release-v2",
+      "--checkpoint-root",
+      "/data/zefan/open-jev/runs/release-v2-fullpass-n1-v1",
+      "--output-root",
+      "/data/zefan/open-jev/evals/fullpass-2b-9b-four-gpu-data-v1"
+    ],
+    "lifecycle_functions_ast_unchanged_from_git_head": [
+      "enforce_host_policy",
+      "require_free_gpus",
+      "gpu_lease",
+      "stop_owned_children",
+      "wait_free_gpus",
+      "handle_signal"
+    ],
+    "worker_start_new_session": false,
+    "lease_names": [
+      "open-jev-n1-gpu-0-3.lock",
+      "open-jev-eval-gpu-0.lock",
+      "open-jev-eval-gpu-1.lock",
+      "open-jev-eval-gpu-2.lock",
+      "open-jev-eval-gpu-3.lock"
+    ],
+    "unit_test_ownership": "Workflow integration owns existing/expansion/supervisor unit-test verification; no unit-test suite rerun by this audit."
+  },
+  "checks_passed": 57,
+  "checks": [
+    "Frozen implementation bytes before audit: scripts/evaluate_checkpoints_parallel.py",
+    "Frozen implementation bytes before audit: tests/test_parallel_data_eval.py",
+    "Frozen manifest SHA256",
+    "Exact five split hashes recorded in manifest",
+    "Exact five split counts recorded in manifest",
+    "Independent supervisor plan binds identical five expansion hashes",
+    "Actual file SHA256: train",
+    "Actual file nonempty record count: train",
+    "Actual file SHA256: calibration",
+    "Actual file nonempty record count: calibration",
+    "Actual file SHA256: validation",
+    "Actual file nonempty record count: validation",
+    "Actual file SHA256: test",
+    "Actual file nonempty record count: test",
+    "Actual file SHA256: ood",
+    "Actual file nonempty record count: ood",
+    "40,281 unique held-out IDs",
+    "6,883 unique calibration IDs",
+    "No calibration/held-out ID overlap",
+    "Fixed seed source/kind-balanced calibration selection SHA256",
+    "512 selected calibration IDs are unique",
+    "Production loader agrees with independently parsed calibration IDs",
+    "Production loader held-out denominator",
+    "Production profile model selection is only 27B",
+    "Legacy default model selection remains 2B/9B",
+    "Production upstream model/revision is fixed",
+    "Production frozen profile SHA256 binding",
+    "Production fixed full-pass profile",
+    "Production calibration seed and selected IDs match independent reconstruction",
+    "Production expansion partition is concatenated_test_ood",
+    "Loader ordered ID SHA256: test",
+    "Loader ordered ID SHA256: ood",
+    "Rank exact global-order assignment: 0",
+    "Rank metadata and ordered row-content hash: 0",
+    "Rank exact global-order assignment: 1",
+    "Rank metadata and ordered row-content hash: 1",
+    "Rank exact global-order assignment: 2",
+    "Rank metadata and ordered row-content hash: 2",
+    "Rank exact global-order assignment: 3",
+    "Rank metadata and ordered row-content hash: 3",
+    "Requested four-rank counts",
+    "No duplicate assigned coordinates",
+    "No duplicate assigned IDs",
+    "No omitted or extra rows",
+    "Full merged file-order reconstruction: test",
+    "Full merged file-order reconstruction: ood",
+    "Unchanged lifecycle function AST: enforce_host_policy",
+    "Unchanged lifecycle function AST: require_free_gpus",
+    "Unchanged lifecycle function AST: gpu_lease",
+    "Unchanged lifecycle function AST: stop_owned_children",
+    "Unchanged lifecycle function AST: wait_free_gpus",
+    "Unchanged lifecycle function AST: handle_signal",
+    "Workers remain in supervisor child process group",
+    "Legacy supervisor invocation has no expansion flags",
+    "Frozen implementation bytes after audit: scripts/evaluate_checkpoints_parallel.py",
+    "Frozen implementation bytes after audit: tests/test_parallel_data_eval.py",
+    "Runtime implementation unchanged throughout audit"
+  ],
+  "limitations": [
+    "No 27B final checkpoint or historical training/calibration predictions were validated by this audit.",
+    "The evaluator must still validate completed DDP/checkpoint/calibration provenance, acquire its shared lease, and verify physical GPU availability at launch.",
+    "Merged order was reconstructed from every real assigned record on CPU; no prediction files or model metrics were generated.",
+    "Synthetic held-out data coverage is not evidence of real browser, game, or flight competence."
+  ]
+}

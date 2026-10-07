@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "status": "reviewed_and_integrated",
+  "created_at": "2026-09-23T08:38:52.592946+00:00",
+  "source_code_commit": "869a84d2c670ce1a55f12e87c25a992152243571",
+  "integration_history_commit": "55b148d1755aecde3b97dc199a02773d0d2fa660",
+  "pull_requests": [
+    {
+      "number": 1,
+      "url": "https://github.com/Zefan-Cai/Open-Jev/pull/1",
+      "head": "51cb273d682378500b7a2f11a6c7b3e07b05c409"
+    },
+    {
+      "number": 2,
+      "url": "https://github.com/Zefan-Cai/Open-Jev/pull/2",
+      "head": "22ab534c426dbe65ee841bc1e1340bec541ff7b8"
+    }
+  ],
+  "contributors": [
+    "DataCraftsmanAU",
+    "Turkidev"
+  ],
+  "contributor_history_preserved": true,
+  "maintainer_comments": [
+    {
+      "pr": 1,
+      "url": "https://github.com/Zefan-Cai/Open-Jev/pull/1#issuecomment-5791647581",
+      "body": "Thanks again for contributing Docker deployment support! It makes Open-Jev easier for people to try, and further contributions are very welcome. I'm resolving the README conflict while preserving the current release documentation, and checking the checkpoint verification path before merging.",
+      "already_existed": false
+    },
+    {
+      "pr": 2,
+      "url": "https://github.com/Zefan-Cai/Open-Jev/pull/2#issuecomment-5791647913",
+      "body": "Thanks so much for the contribution! The 16 GB loading path and opt-in cached scoring are useful additions, and you're very welcome to keep contributing. I'm testing the changes and fixing two integration issues around Hugging Face model IDs and the offload guard before bringing this into main. I'll keep your contribution and credit intact.",
+      "already_existed": false
+    }
+  ],
+  "verification": {
+    "test_command": "python -m unittest tests.test_prefix_cache tests.test_serving tests.test_jevbench_openjev tests.test_prefix_cache_ragged tests.test_consumer_gpu_loading tests.test_docker_deployment",
+    "test_count": 48,
+    "test_failures": 0,
+    "test_skips": 0,
+    "test_runtime_seconds": 9.416,
+    "runtime": {
+      "torch": "2.14.0",
+      "transformers": "5.10.2",
+      "peft": "0.19.1"
+    },
+    "live_gpu_tests": false,
+    "docker_build_performed": false,
+    "original_contributor_measurements_reaudited": false
+  },
+  "integration_fixes": [
+    "Preserve current README and add the Docker deployment section.",
+    "Require a nonempty checkpoint manifest in Docker checkpoint fetching.",
+    "Resolve pinned safetensors from Hub IDs and local snapshots.",
+    "Restrict intentional CPU offload exceptions and reject unloaded meta adapters.",
+    "Reuse the CPU embedding across requests; preserve BF16 head initialization arithmetic."
+  ],
+  "measurement_scope": "Consumer GPU measurements remain contributor-reported and were not reaudited on hardware. No new audited v1.1 benchmark or latency claim.",
+  "changed_files": [
+    {
+      "path": ".dockerignore",
+      "sha256": "1048e1e8163b4c7cad0ce427ccb624e9a3d23e50df5ad5b75b78bda349c2f3e1",
+      "bytes": 315
+    },
+    {
+      "path": "Dockerfile",
+      "sha256": "18af4cb3187888b44ed14bf2cb2bca5387f72279943a37fb7133b844787fa120",
+      "bytes": 5051
+    },
+    {
+      "path": "README.md",
+      "sha256": "411ca8864d62d422295367af83b72cea1474dac9d12ecebeda812130ce95fdeb",
+      "bytes": 25246
+    },
+    {
+      "path": "docker-compose.yml",
+      "sha256": "1f1c23b98b227005faa518e68938cfbe0ae884f1a9db736895a92eab5a6095a6",
+      "bytes": 2792
+    },
+    {
+      "path": "docker/README.md",
+      "sha256": "ef7533ece17ad05b0af7b2d7052d794656f3470ec92db86d0fd5fc4e333a6569",
+      "bytes": 6722
+    },
+    {
+      "path": "docker/entrypoint.sh",
+      "sha256": "e7c9d0d72ad9bf18d5c632ae57a16eeeaaf3b857ae7919cc343baa4ba4e16513",
+      "bytes": 1956
+    },
+    {
+      "path": "docker/fetch_models.py",
+      "sha256": "0ddd64cfc415b5bca84de40f4e7c9b795d63089edbb8f7aeaa1e99c9d509dd04",
+      "bytes": 4622
+    },
+    {
+      "path": "docs/consumer-gpu.md",
+      "sha256": "3797bbfc806a8d87aa236fff71574dad6195a0071cc47e2fe1a89752aa30591d",
+      "bytes": 12910
+    },
+    {
+      "path": "jev/model.py",
+      "sha256": "32358106d4d7cc4a71ccbf90dcc3d20664691d3707790faff76889813716d06e",
+      "bytes": 16037
+    },
+    {
+      "path": "jev/prefix_cache.py",
+      "sha256": "0d81aad6e1d4c3228d9aa7bb09d01f94953656ced34ac4537743e5e1b9b39443",
+      "bytes": 16058
+    },
+    {
+      "path": "scripts/jevbench_openjev.py",
+      "sha256": "0cee32ab86236cd92e67a7a45ee85f4c108426a88a69d18bbf8ba1e605c3c9a9",
+      "bytes": 22860
+    },
+    {
+      "path": "tests/test_consumer_gpu_loading.py",
+      "sha256": "c82f351e7bd4abfa27becb1285c5fb8d16eb1a58e2207553c6cc28cce772a7a2",
+      "bytes": 7559
+    },
+    {
+      "path": "tests/test_docker_deployment.py",
+      "sha256": "b89ac84490c452a02ff38fb9158131369e605f869a017193914ed4cb1315bd7b",
+      "bytes": 5486
+    },
+    {
+      "path": "tests/test_prefix_cache_ragged.py",
+      "sha256": "b21962f8083008960c64f7a5f0324fca0beaae0aa53c3af01a243a6463980819",
+      "bytes": 3807
+    }
+  ]
+}

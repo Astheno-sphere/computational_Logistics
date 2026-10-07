@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "status": "passed_build_schema_and_example_checks",
+  "checked_at_utc": "2026-09-20T16:17:11.964575+00:00",
+  "python_version": "3.12.14",
+  "generation_command": "PYTHONDONTWRITEBYTECODE=1 python3.12 -m jev.case_email_selection --output-dir data/email-selection-control-v1 --groups 200 --ood-groups 40 --seed 42",
+  "manifest_sha256": "4c18cc791425003c5c8f052ce27ed034dfb54c79ddac24de13f7290ab3b3316c",
+  "source_files_sha256": {
+    "case_email_selection.py": "dbcd4beaf0167fb4e4e3115289a63643c21a14221381400e4151c71b6557a544",
+    "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+    "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+  },
+  "tracked_manifest_identical": true,
+  "data_files_match_manifest": true,
+  "family_count": 200,
+  "document_count": 2800,
+  "typed_record_count": 5400,
+  "candidate_count": 17400,
+  "head_counts": {
+    "span": 2600,
+    "target_present": 2800
+  },
+  "candidate_recall": {
+    "denominator": "documents with exactly one populated current requested-role field",
+    "recalled": 1000,
+    "missed": 600,
+    "eligible": 1600,
+    "fraction": "1000/1600",
+    "rate": 0.625,
+    "absent_documents_excluded": 800,
+    "ambiguous_documents_excluded": 400
+  },
+  "selection_reference_counts": {
+    "recalled": 1000,
+    "target_absent": 800,
+    "ambiguous_target": 400,
+    "candidate_miss": 600
+  },
+  "candidate_copy_reference_counts": {
+    "copied": 17000,
+    "review": 400
+  },
+  "omitted_supervision_counts": {
+    "forced_single_candidate": 200
+  },
+  "observed_order_diversity": {
+    "field_status_order_count": 2291,
+    "recalled_target_candidate_ids": {
+      "span_6": 143,
+      "span_5": 155,
+      "span_2": 145,
+      "span_4": 139,
+      "span_0": 145,
+      "span_3": 131,
+      "span_1": 142
+    },
+    "ordering_rule": "Shuffle complete field lines using family and opaque document nonce, without query, gold or label-based permutation selection."
+  },
+  "standard_validator": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3.12 -m jev.data validate data/email-selection-control-v1",
+    "exit_code": 0,
+    "summary": {
+      "records": 5400,
+      "groups": 200,
+      "unique_inputs": 5400,
+      "splits": {
+        "calibration": 81,
+        "ood": 1080,
+        "test": 432,
+        "train": 3618,
+        "validation": 189
+      },
+      "kinds": {
+        "choice": 2600,
+        "noul": 2800
+      },
+      "families": {
+        "evidence": 5400
+      },
+      "sources": {
+        "email-selection-control-v1": 5400
+      }
+    },
+    "stdout": "{\n  \"records\": 5400,\n  \"groups\": 200,\n  \"unique_inputs\": 5400,\n  \"splits\": {\n    \"calibration\": 81,\n    \"ood\": 1080,\n    \"test\": 432,\n    \"train\": 3618,\n    \"validation\": 189\n  },\n  \"kinds\": {\n    \"choice\": 2600,\n    \"noul\": 2800\n  },\n  \"families\": {\n    \"evidence\": 5400\n  },\n  \"sources\": {\n    \"email-selection-control-v1\": 5400\n  }\n}\n",
+    "stderr": ""
+  },
+  "generator_help_exit_code": 0,
+  "example": {
+    "path": "examples/email-selection.json",
+    "sha256": "6d7ecf60cb7c15928b7f43805e9e4f3364fb6c46ab5ac69beb6ef994f49d310d",
+    "request_only": true,
+    "heads": [
+      "span",
+      "target_present"
+    ],
+    "types": [
+      "choice",
+      "noul"
+    ],
+    "documentation_example_matches": true,
+    "documentation_code_sha256": "1aefc5d46a553f71e43165342c01e6e80bde08a70ce33f7fa5e8d4aadf731bd1",
+    "discovery": "Actual loopback GET /examples.json; no inference requested"
+  },
+  "preflight_note": "An initial in-memory rendering used email=<value>, which the shared permissive local-part regex included in its match. Before any complete corpus was written, the visible controlled grammar was corrected to email: <value>. The shared regex was not changed.",
+  "scope": {
+    "training_performed": false,
+    "model_inference_performed": false,
+    "remote_or_gpu_operations": false,
+    "external_or_personal_data_read": false,
+    "existing_corpora_or_shared_sources_modified": false,
+    "mixed_into_training": false
+  },
+  "limitations": [
+    "Controlled explicit current/superseded fields, not an arbitrary email thread parser.",
+    "Candidate recall is measured separately; all 600 unique-target misses are retained.",
+    "Copied only means an actual full original field was copied; it does not validate current-role selection.",
+    "No local-part lowercasing, Unicode normalization, RFC/EAI validity, mailbox existence or deliverability claim."
+  ]
+}

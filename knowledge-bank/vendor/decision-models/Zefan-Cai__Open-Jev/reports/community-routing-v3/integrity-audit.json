@@ -1,0 +1,155 @@
+{
+  "status": "passed",
+  "created_at_utc": "2026-09-21T07:00:53.360197+00:00",
+  "audit_method": "Separate audit script parses pinned raw CSV/JSON directly, imports no converter functions, and inspects every generated decision row.",
+  "audit_script_sha256": "364a60bed984e9fc969626d78a56431ebaad292c7beee95d144d742ad97ea4d9",
+  "converter_sha256": "75dfd7d1742cea78cbb28e1788b8544e526f47727b5c1796c59c5a25c3674bd4",
+  "test_file_sha256": "46547b7c484e61d2ac6012c5e663558e9e259871d6814b5b8e053c9403a1557e",
+  "data_file_sha256": {
+    "train.jsonl": "d9b16649ace8ba78e6ab16fb45be51eac5e9285a409afdb355c644078687a50b",
+    "calibration.jsonl": "33f7bfcb34b030263421e2d5ba53b37e0933c2780dc3c86fd4f2b28d7ab4d1d8",
+    "validation.jsonl": "9f8aac9345d4add638ca960536d86f18deb7cb59032427b08ba73baec6fb072c",
+    "test.jsonl": "b4fe7d77edb940f2f0087559736f44ae1d62824f46beb82bd71832d1b90c3edb",
+    "ood.jsonl": "95bec3bd456d9316bdd0405f05cae408f63d30f15761fa0c63f67737fc98e43a"
+  },
+  "raw_source_rows": 36783,
+  "retained_catalog_utterances": 36640,
+  "retained_global_utterance_groups": 36632,
+  "decision_rows": 108720,
+  "split_counts": {
+    "train": 63809,
+    "calibration": 8156,
+    "validation": 8289,
+    "test": 24713,
+    "ood": 3753
+  },
+  "kind_counts": {
+    "choice": 72080,
+    "noul": 36640
+  },
+  "choice_size_counts": {
+    "2": 24029,
+    "4": 24037,
+    "8": 24014
+  },
+  "removed_source_rows": {
+    "duplicate_utterance_within_catalog": 61,
+    "official_heldout_group_reserved_from_train": 68,
+    "conflicting_labels_within_catalog": 8,
+    "official_test_group_reserved_from_validation": 6
+  },
+  "retained_utterances_by_source_split": {
+    "banking77/train": 8484,
+    "clinc150/train": 12813,
+    "banking77/calibration": 455,
+    "clinc150/calibration": 2279,
+    "banking77/validation": 502,
+    "clinc150/validation": 2283,
+    "banking77/test": 3075,
+    "clinc150/test": 5496,
+    "banking77/ood": 501,
+    "clinc150/ood": 752
+  },
+  "position_histogram_max_spread": {
+    "choice_targets": 1,
+    "choice_abstain_positions": 1
+  },
+  "noul_positive_negative": {
+    "banking77/train": {
+      "yes": 4242,
+      "no": 4242
+    },
+    "clinc150/train": {
+      "no": 6407,
+      "yes": 6406
+    },
+    "banking77/calibration": {
+      "no": 228,
+      "yes": 227
+    },
+    "clinc150/calibration": {
+      "yes": 1139,
+      "no": 1140
+    },
+    "banking77/validation": {
+      "no": 251,
+      "yes": 251
+    },
+    "clinc150/validation": {
+      "yes": 1141,
+      "no": 1142
+    },
+    "banking77/test": {
+      "no": 1538,
+      "yes": 1537
+    },
+    "clinc150/test": {
+      "yes": 2748,
+      "no": 2748
+    },
+    "banking77/ood": {
+      "no": 251,
+      "yes": 250
+    },
+    "clinc150/ood": {
+      "yes": 376,
+      "no": 376
+    }
+  },
+  "full_catalog_evaluation_only": {
+    "banking77": {
+      "candidate_count": 77,
+      "original_test_rows": 3080,
+      "eligible_test_rows": 3075,
+      "excluded_test_rows": 5,
+      "requests_sent": 0
+    },
+    "clinc150": {
+      "candidate_count": 151,
+      "original_test_rows": 5500,
+      "eligible_test_rows": 5496,
+      "excluded_test_rows": 4,
+      "requests_sent": 0
+    }
+  },
+  "checks": {
+    "all_source_hashes_match_pins": true,
+    "every_utterance_matches_exact_raw_source_text": true,
+    "every_human_label_matches_raw_source": true,
+    "every_choice_target_matches_catalog_contract": true,
+    "every_noul_target_matches_proposed_handler": true,
+    "all_choice_views_have_2_4_or_8_total_options": true,
+    "one_noul_and_at_most_two_choice_views_per_catalog_utterance": true,
+    "global_normalized_groups_disjoint_across_splits": true,
+    "official_val_and_test_reserved_before_filtering": true,
+    "within_catalog_conflicts_and_duplicates_excluded": true,
+    "all_expected_eligible_groups_represented": true,
+    "choice_target_and_abstain_positions_balanced": true,
+    "noul_labels_balanced": true,
+    "all_record_ids_unique": true,
+    "all_model_inputs_unique": true,
+    "full_catalog_protocol_uses_official_test_ids_only": true,
+    "full_catalog_never_inserted_into_training": true,
+    "all_manifest_file_hashes_match": true
+  },
+  "cpu_tests": {
+    "passed": 7,
+    "skipped": 0,
+    "failed": 0,
+    "exit_code": 0
+  },
+  "peer_review": {
+    "reviewer": "/root/remaining_eval_readiness",
+    "scope": "Read-only code and tests; not a second raw-source rights audit",
+    "result": "No actionable target/split bug found; independently reran seven CPU tests."
+  },
+  "preparation_only": true,
+  "provider_requests": 0,
+  "gpu_jobs": 0,
+  "limits": [
+    "Human source labels and readable intent descriptions can be imperfect.",
+    "Gold-informed small candidate sets differ from original full-catalog classification.",
+    "OOD is held-out source-training utterances, not new-domain or new-intent OOD.",
+    "No quality improvement is established without a separately authorized evaluation."
+  ]
+}

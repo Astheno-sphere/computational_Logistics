@@ -1,0 +1,52 @@
+name: ActivitySim Branch Docs
+# This workflow is provided as a service for forks to build branch-specific documentation.
+
+on:
+  - push
+  - workflow_dispatch
+
+jobs:
+  docbuild:
+    if: "github.event_name == 'workflow_dispatch' || (contains(github.event.head_commit.message, '[makedocs]') && (github.repository_owner != 'ActivitySim') && (github.ref_name != 'develop'))"
+    # develop branch docs are built at the end of the core test workflow, regardless of repository owner or commit message flags
+    name: ubuntu-latest py3.10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # get all tags, lets setuptools_scm do its thing
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.7.12"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install activitysim
+        run: |
+          uv sync --locked --dev
+
+      - name: Build the docs
+        run: |
+          cd docs
+          make clean
+          make html
+
+      - name: Push to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Token is created automatically by Github Actions, no other config needed
+          publish_dir: ./docs/_build/html
+          destination_dir: ${{ github.ref_name }}

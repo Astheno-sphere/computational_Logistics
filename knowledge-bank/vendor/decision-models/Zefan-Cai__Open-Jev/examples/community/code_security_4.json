@@ -1,0 +1,37 @@
+{
+  "state": {
+    "adapter": "code_security_local_example",
+    "language": "python",
+    "source": "name = request.args['name']\nquery = \"SELECT id FROM customers WHERE name='\" + name + \"'\"\ncursor.execute(query)",
+    "context": "This is an unauthenticated request handler; no credentials are embedded in this snippet."
+  },
+  "questions": {
+    "untrusted_sql_concatenation": {
+      "type": "noul",
+      "instructions": "Does untrusted request text become executable SQL without parameter binding?"
+    },
+    "embedded_secret": {
+      "type": "noul",
+      "instructions": "Does the supplied snippet embed a credential value?"
+    },
+    "severity": {
+      "type": "score",
+      "instructions": "Rate the demonstrated security concern.",
+      "criteria": [
+        "No demonstrated issue",
+        "Limited or uncertain impact",
+        "Externally reachable injection or secret exposure"
+      ]
+    },
+    "disposition": {
+      "type": "choice",
+      "instructions": "Choose the next review disposition; do not execute the code.",
+      "criteria": {
+        "accept": "No issue demonstrated",
+        "review": "Need additional context",
+        "fix": "A demonstrated issue requires a code fix",
+        "incident": "Observed exploitation requires incident handling"
+      }
+    }
+  }
+}

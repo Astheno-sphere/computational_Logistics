@@ -1,0 +1,122 @@
+{
+  "status": "complete",
+  "gpu": 3,
+  "pid": 2357503,
+  "resource_policy": {
+    "path": "/mnt/localssd/open-jev/eval-repo/state/auto_research/resource_policy.json",
+    "sha256": "d058d4985f6caddff2dad3e67efff435fd4ffec0d778c57875910fd04b87b978",
+    "expected_hostname": "kwade5342000001",
+    "allowed_gpu_indices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "training_gpu_indices": [
+      0,
+      1,
+      2
+    ],
+    "serial_evaluation_gpu_index": 3
+  },
+  "commit": "fb9d51731f1d2e720bfc44dd58ee4edf0adfc875",
+  "runs": [
+    {
+      "tag": "9b",
+      "command": [
+        "/mnt/localssd/open-jev/runtime/venv/bin/python",
+        "-u",
+        "scripts/benchmark_generation.py",
+        "--model",
+        "Qwen/Qwen3.5-9B",
+        "--revision",
+        "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+        "--request",
+        "examples/community/drone.json",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "32",
+        "--repeats",
+        "3",
+        "--max-input-tokens",
+        "4096",
+        "--max-new-tokens",
+        "2048",
+        "--output",
+        "/data/zefan/open-jev/evals/generation-9b-27b-n1-v1/9b.json"
+      ],
+      "preflight": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      },
+      "started_at": "2026-09-20T01:52:49.295373+00:00",
+      "foreign_process_samples": [],
+      "pid": 2357604,
+      "exit_code": 0,
+      "ended_at": "2026-09-20T01:53:30.637371+00:00",
+      "postflight": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      }
+    },
+    {
+      "tag": "27b",
+      "command": [
+        "/mnt/localssd/open-jev/runtime/venv/bin/python",
+        "-u",
+        "scripts/benchmark_generation.py",
+        "--model",
+        "Qwen/Qwen3.8-27B",
+        "--revision",
+        "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "--request",
+        "examples/community/drone.json",
+        "--device",
+        "cuda:0",
+        "--batch-size",
+        "32",
+        "--repeats",
+        "3",
+        "--max-input-tokens",
+        "4096",
+        "--max-new-tokens",
+        "2048",
+        "--output",
+        "/data/zefan/open-jev/evals/generation-9b-27b-n1-v1/27b.json"
+      ],
+      "preflight": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      },
+      "started_at": "2026-09-20T01:53:31.174036+00:00",
+      "foreign_process_samples": [],
+      "pid": 2384364,
+      "exit_code": 0,
+      "ended_at": "2026-09-20T01:55:17.091869+00:00",
+      "postflight": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      }
+    }
+  ],
+  "exclusivity_check": "nvidia-smi preflight, every2seconds, afterchildexit; cooperative lock; no guarantee between samples",
+  "updated_at": "2026-09-20T01:55:17.353744+00:00",
+  "current_model": "27b"
+}

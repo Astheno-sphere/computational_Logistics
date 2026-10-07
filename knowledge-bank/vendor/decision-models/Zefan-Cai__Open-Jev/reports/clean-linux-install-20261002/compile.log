@@ -1,0 +1,61 @@
+W1002 18:42:09.226000 1791112 torch/utils/cpp_extension.py:118] No CUDA runtime is found, using CUDA_HOME='/usr/local/cuda-12.8'
+[1/3] c++ -MMD -MF main.o.d -DTORCH_EXTENSION_NAME=openjev_clean_linux_sm90 -DTORCH_API_INCLUDE_EXTENSION_H -DPYBIND11_COMPILER_TYPE=\"_gcc\" -DPYBIND11_STDLIB=\"_libstdcpp\" -DPYBIND11_BUILD_ABI=\"_cxxabi1018\" -isystem <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include -isystem <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda-12.8/include -isystem <private-path-sha256:db563fa59935af54>/include/python3.11 -fPIC -std=c++17 -c <private-path-sha256:7d75c75f4d26c92f>/extensions/openjev_clean_linux_sm90/main.cpp -o main.o 
+[2/3] /usr/local/cuda-12.8/bin/nvcc --generate-dependencies-with-compile --dependency-output cuda.cuda.o.d -DTORCH_EXTENSION_NAME=openjev_clean_linux_sm90 -DTORCH_API_INCLUDE_EXTENSION_H -DPYBIND11_COMPILER_TYPE=\"_gcc\" -DPYBIND11_STDLIB=\"_libstdcpp\" -DPYBIND11_BUILD_ABI=\"_cxxabi1018\" -isystem <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include -isystem <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda-12.8/include -isystem <private-path-sha256:db563fa59935af54>/include/python3.11 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr -gencode=arch=compute_90,code=sm_90 --compiler-options '-fPIC' -O3 --expt-relaxed-constexpr -lineinfo -std=c++17 -c <private-path-sha256:7d75c75f4d26c92f>/extensions/openjev_clean_linux_sm90/cuda.cu -o cuda.cuda.o 
+<private-path-sha256:7d75c75f4d26c92f>/extensions/openjev_clean_linux_sm90/cuda.cu:13: warning: "CHECK" redefined
+   13 | #define CHECK(x) TORCH_CHECK((x).is_cuda() && (x).is_contiguous(), #x " must be contiguous CUDA")
+      | 
+In file included from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/c10/util/Logging.h:29,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/ivalue_inl.h:27,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/ivalue.h:1589,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/List_inl.h:4,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/List.h:491,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/IListRef_inl.h:3,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/IListRef.h:631,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/DeviceGuard.h:3,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/ATen.h:9,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from <private-path-sha256:7d75c75f4d26c92f>/extensions/openjev_clean_linux_sm90/cuda.cu:1:
+<private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:121: note: this is the location of the previous definition
+  121 | #define CHECK(condition) FATAL_IF(condition) << "Check failed: " #condition " "
+      | 
+<private-path-sha256:7d75c75f4d26c92f>/extensions/openjev_clean_linux_sm90/cuda.cu:13: warning: "CHECK" redefined
+   13 | #define CHECK(x) TORCH_CHECK((x).is_cuda() && (x).is_contiguous(), #x " must be contiguous CUDA")
+      | 
+In file included from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/c10/util/Logging.h:29,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/ivalue_inl.h:27,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/ivalue.h:1589,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/List_inl.h:4,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/List.h:491,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/IListRef_inl.h:3,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/core/IListRef.h:631,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/DeviceGuard.h:3,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/ATen/ATen.h:9,
+                 from <private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from <private-path-sha256:7d75c75f4d26c92f>/extensions/openjev_clean_linux_sm90/cuda.cu:1:
+<private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/include/c10/util/logging_is_not_google_glog.h:121: note: this is the location of the previous definition
+  121 | #define CHECK(condition) FATAL_IF(condition) << "Check failed: " #condition " "
+      | 
+<private-path-sha256:7d75c75f4d26c92f>/extensions/openjev_clean_linux_sm90/cuda.cu(594): warning #177-D: variable "n" was declared but never referenced
+      const long n = base + t;
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+[3/3] c++ main.o cuda.cuda.o -shared -L<private-path-sha256:7d75c75f4d26c92f>/venv/lib/python3.11/site-packages/torch/lib -lc10 -lc10_cuda -ltorch_cpu -ltorch_cuda -ltorch -ltorch_python -L/usr/local/cuda-12.8/lib64 -lcudart -o openjev_clean_linux_sm90.so
+{
+  "status": "compiled_and_loaded_without_gpu_execution",
+  "sm_target": "90",
+  "max_jobs": 2,
+  "cuda_visible_devices": "",
+  "torch": "2.8.0+cu128",
+  "extension_sha256": "04246ef92c8f56d0229303423742ee91ba55be299c15a064f2e992523c73a638",
+  "extension_file": "extensions/openjev_clean_linux_sm90/openjev_clean_linux_sm90.so",
+  "source_files_sha256": {
+    "ext.py": "96edc7dfd507750f5c2c6adbcb5a0ec75f849f74dac726eb8a98c9c470a1bb04",
+    "kernels.cu": "f8b69cda5b96d50f6f5cff37650a80d907cb8ae64bdee2057011feb8bee5954f"
+  },
+  "seconds": 60.17501866072416,
+  "cuda_initialized": false,
+  "kernel_execution_verified": false,
+  "full_model_parity_verified": false
+}

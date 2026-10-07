@@ -1,0 +1,742 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-09-20T23:28:09.956585+00:00",
+  "status": "input_readiness_checked_protocol_plan_no_model_results",
+  "purpose": "First complete 97-query TREC-DL19/DL20 comparison of Jev and the existing two OpenAI provider settings. Source data and normalized provider input are frozen separately; this report is text-free provenance and an execution/scoring plan.",
+  "summary_zh": [
+    "使用全部DL19 43＋DL20 54个judged query，每query按原BM25顺序保留100个候选，共9,700个passage occurrences。",
+    "首轮选择general-ir-v1的listwise_score，20篇窗口、步长10、从尾向头单遍排序：无请求失败时每个query9次、每provider873次，3个provider共2,619次。选择依据是共同可执行性和有界上下文/调用数，不是已证实的最佳质量。",
+    "遵循作者源码cl100k_base query32/pass128的token前缀解码，用tiktoken0.11.0；1,260个passage occurrences被截断，10个新增U+FFFD，5个重编码为129token。保留原样，不作二次截断。",
+    "已逐query/doc核实冻结input文本、IDs、BM25候选顺序；每个provider初始候选相同，后续窗口随其自身排序变化，不能宣称所有HTTP请求payload相同。",
+    "primary严格校验不变：mass-only异常窗口继续收集actual-scalar supplemental排序，但该query的primary nDCG计0；所有其他响应错误终止该query。不同分析分开汇报，不重归一化概率。",
+    "所有token/费用数字是离线cl100k代理或明确假设的规划值，不是实测模型usage、账单、排序质量或延迟。"
+  ],
+  "inputs": {
+    "provider_input_path": "runs/external/ir-holdout/provider-listwise-score-v1/input.json",
+    "provider_input_sha256": "cc7bc949dbc269dacb61bdb61fc8982db14bc4df3698f9d32f5f1c8b6795eb83",
+    "provider_input_query_rows_canonical_sha256": "d197642c56b2788dcbe4a1a7e82582b895bb67fc23dea2fca53fb36190784c27",
+    "datasets": {
+      "dl19": {
+        "benchmark": "TREC-DL19",
+        "queries": 43,
+        "passage_occurrences": 4300,
+        "qrels": 9260,
+        "manifest_sha256": "84c7cc23ce0f7309a48432c449e7856aeff96f9e2571f1f18cdb405703a6c297",
+        "candidate_sha256": "865a4158341f4a20163910214484c42e10889955d07e3bd255944dc04b4b29a3",
+        "qrels_sha256": "8a1f10d550732e4cd91d7fc49846a3784de4040972f583e69285a88f3c5fee92"
+      },
+      "dl20": {
+        "benchmark": "TREC-DL20",
+        "queries": 54,
+        "passage_occurrences": 5400,
+        "qrels": 11386,
+        "manifest_sha256": "494d6f39537b65981ea6707c7ba232e890460ad8f51e86628d2c2a5547288ea4",
+        "candidate_sha256": "e3dd06cf93e0bf07c56f096066fd39237770f23c8342ae636e76b55a57c2747e",
+        "qrels_sha256": "60d4c34561f9687f8f73e0a752ba80ab80159b3e9c1bedd0a351f747ed6f5684"
+      }
+    },
+    "full_qrel_query_denominators": {
+      "dl19": 43,
+      "dl20": 54,
+      "combined_query_weighted": 97
+    },
+    "candidate_pool_per_query": 100,
+    "retriever_declaration": {
+      "name": "BM25",
+      "k1": 0.9,
+      "b": 0.4,
+      "top_k": 100
+    },
+    "candidate_revision": "39db0a25a552dd2a12012df22029686bf7fdc050",
+    "retrieval_rerun": false,
+    "verification": {
+      "input_path": "runs/external/ir-holdout/provider-listwise-score-v1/input.json",
+      "input_sha256": "cc7bc949dbc269dacb61bdb61fc8982db14bc4df3698f9d32f5f1c8b6795eb83",
+      "query_rows_canonical_sha256": "d197642c56b2788dcbe4a1a7e82582b895bb67fc23dea2fca53fb36190784c27",
+      "all_97_queries_and_9700_passage_occurrences_exactly_match_author_style_truncation": true,
+      "all_document_ids_and_bm25_candidate_order_preserved": true,
+      "bm25_rank_and_score_fields_excluded_from_provider_input": true,
+      "qrels_never_in_provider_state": true,
+      "over_128_reencoded_occurrences": [
+        {
+          "benchmark": "dl19",
+          "query_id": "183378",
+          "document_id": "1603312",
+          "reencoded_tokens": 129
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "1113256",
+          "document_id": "7843128",
+          "reencoded_tokens": 129
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "911232",
+          "document_id": "8422900",
+          "reencoded_tokens": 129
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "1030303",
+          "document_id": "5929352",
+          "reencoded_tokens": 129
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "673670",
+          "document_id": "1104655",
+          "reencoded_tokens": 129
+        }
+      ],
+      "replacement_occurrences": [
+        {
+          "benchmark": "dl19",
+          "query_id": "19335",
+          "document_id": "8412683"
+        },
+        {
+          "benchmark": "dl19",
+          "query_id": "183378",
+          "document_id": "1603312"
+        },
+        {
+          "benchmark": "dl19",
+          "query_id": "1112341",
+          "document_id": "2830103"
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "1113256",
+          "document_id": "7843128"
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "1131069",
+          "document_id": "983919"
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "911232",
+          "document_id": "8422900"
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "1030303",
+          "document_id": "6939426"
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "1030303",
+          "document_id": "5929352"
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "673670",
+          "document_id": "1398756"
+        },
+        {
+          "benchmark": "dl20",
+          "query_id": "673670",
+          "document_id": "1104655"
+        }
+      ],
+      "twenty_longest_serialized_passage_stress_proxy": {
+        "method": "For each query, choose twenty documents with greatest cl100k tokens of their standalone JSON-serialized text, then build a 20-score request. This is a long-input diagnostic, not a proof of maximum adaptive-window token count or actual billing.",
+        "request_tokens": {
+          "min": 3520,
+          "max": 4086,
+          "median": 4004,
+          "sum": 384725,
+          "count": 97
+        },
+        "state_tokens": {
+          "min": 2133,
+          "max": 2700,
+          "median": 2618,
+          "sum": 250259,
+          "count": 97
+        },
+        "openai_input_instructions_schema_tokens": {
+          "min": 4300,
+          "max": 4866,
+          "median": 4784,
+          "sum": 460385,
+          "count": 97
+        }
+      },
+      "minimal_twenty_integer_answer_cl100k_tokens": 183
+    },
+    "isolation": "Use namespaces (benchmark, query_id). Keep qrels, BM25 scores/ranks and provenance out of model state; passage IDs are local trace metadata, window labels P1..P20 are the visible reference names. Preserve candidate order through the id/text list.",
+    "reuse_terms": "MS MARCO non-commercial research terms and underlying-document-right limitations are recorded in each prepared manifest. Holdout payloads and raw responses remain in ignored runs/external; do not export them into training, the public repository or the CC0 synthetic dataset."
+  },
+  "preprocessing": {
+    "source_commit": "ac843ed63a302900d76722b83be926fdb84a3936",
+    "source_urls": [
+      "https://github.com/ielab/llm-rankers/blob/ac843ed63a302900d76722b83be926fdb84a3936/jev/jev_rankers.py#L315",
+      "https://github.com/ielab/llm-rankers/blob/ac843ed63a302900d76722b83be926fdb84a3936/jev/run_jev.py#L154"
+    ],
+    "passage_whitespace": "Already collapsed by the prepared converter using space.join(text.split()); do not replace stored passages or reprocess per provider.",
+    "query_whitespace": "Official query strings preserved before truncation.",
+    "tokenizer": "tiktoken.get_encoding(cl100k_base)",
+    "tiktoken_version": "0.11.0",
+    "query_prefix_tokens": 32,
+    "passage_prefix_tokens": 128,
+    "exact_operation": "encoding.decode(encoding.encode(text)[:limit]) with default arguments, independently for each query and passage; no ellipsis, no character/word truncation, no second truncation after decode.",
+    "decode_boundary": "The prefix has at most 128 tokens; the decoded string can re-encode to 129 and can contain U+FFFD. The observed 10 replacement and 5 over-limit occurrences are retained and identified, not silently repaired.",
+    "historical_limit": "The author called cl100k_base approximate because Jev tokenizer is not public. Historical tiktoken/versioned backend and original mutable-main candidate bytes were not pinned. This follows the source policy but is not byte-identical reproduction of the tweet run.",
+    "cpu_runtime": "runs/trec-provider-runtime/bin/python",
+    "runtime_installation": "Root installed the isolated ignored Python 3.12/tiktoken 0.11.0 runtime during readiness work. The previously checked system, bundled and three existing project runtimes lacked tiktoken.",
+    "independent_token_statistics": {
+      "python": "3.12.14",
+      "python_executable": "runs/trec-provider-runtime/bin/python",
+      "tiktoken_version": "0.11.0",
+      "encoding": "cl100k_base",
+      "encoding_vocab_size": 100277,
+      "encoding_mergeable_ranks_sha256": "b5ad2d1bc98ecfed43daa3c28ae32e91409f68c2830d1cb08425fc10dad677e9",
+      "datasets": {
+        "dl19": {
+          "queries": 43,
+          "passage_occurrences": 4300,
+          "query_tokens_before": {
+            "count": 43,
+            "min": 3,
+            "median": 7,
+            "p95": 9,
+            "max": 12,
+            "sum": 283
+          },
+          "query_tokens_after": {
+            "count": 43,
+            "min": 3,
+            "median": 7,
+            "p95": 9,
+            "max": 12,
+            "sum": 283
+          },
+          "passage_tokens_before": {
+            "count": 4300,
+            "min": 19,
+            "median": 74.0,
+            "p95": 150,
+            "max": 265,
+            "sum": 363855
+          },
+          "passage_tokens_after": {
+            "count": 4300,
+            "min": 19,
+            "median": 74.0,
+            "p95": 128,
+            "max": 129,
+            "sum": 351397
+          },
+          "queries_truncated": 0,
+          "passage_occurrences_truncated": 535,
+          "new_unicode_replacement_characters_after_decode_occurrences": 3,
+          "truncated_query_rows_canonical_sha256": "38f58be37bc8327dda417d9eaa9da6d31eedd5fef9b439eb1eef770bf6e3aa2d",
+          "fixed_bm25_window_count": 387,
+          "fixed_bm25_window_request_tokens": {
+            "count": 387,
+            "min": 2543,
+            "median": 3137,
+            "p95": 3514,
+            "max": 3797,
+            "sum": 1214742
+          },
+          "fixed_bm25_window_state_tokens": {
+            "count": 387,
+            "min": 1157,
+            "median": 1750,
+            "p95": 2128,
+            "max": 2410,
+            "sum": 678258
+          },
+          "fixed_bm25_window_state_plus_longest_question_tokens": {
+            "count": 387,
+            "min": 1220,
+            "median": 1813,
+            "p95": 2191,
+            "max": 2473,
+            "sum": 702639
+          },
+          "fixed_bm25_window_request_bytes": {
+            "count": 387,
+            "min": 11255,
+            "median": 13742,
+            "p95": 15395,
+            "max": 16378,
+            "sum": 5322444
+          },
+          "fixed_bm25_window_openai_proxy_tokens": {
+            "count": 387,
+            "min": 3323,
+            "median": 3917,
+            "p95": 4294,
+            "max": 4577,
+            "sum": 1516602
+          },
+          "fixed_bm25_window_records_sha256": "3f0b8375bd15420f8efb5917bf2e62cf36b5dce194b64dc6202533816e2d7218"
+        },
+        "dl20": {
+          "queries": 54,
+          "passage_occurrences": 5400,
+          "query_tokens_before": {
+            "count": 54,
+            "min": 3,
+            "median": 7.0,
+            "p95": 11,
+            "max": 18,
+            "sum": 390
+          },
+          "query_tokens_after": {
+            "count": 54,
+            "min": 3,
+            "median": 7.0,
+            "p95": 11,
+            "max": 18,
+            "sum": 390
+          },
+          "passage_tokens_before": {
+            "count": 5400,
+            "min": 14,
+            "median": 77.0,
+            "p95": 151,
+            "max": 279,
+            "sum": 466911
+          },
+          "passage_tokens_after": {
+            "count": 5400,
+            "min": 14,
+            "median": 77.0,
+            "p95": 128,
+            "max": 129,
+            "sum": 449806
+          },
+          "queries_truncated": 0,
+          "passage_occurrences_truncated": 725,
+          "new_unicode_replacement_characters_after_decode_occurrences": 7,
+          "truncated_query_rows_canonical_sha256": "65e3d9ed976428e177f707fd4c7dff2fb67fec7ba88be372a943ba8b66c124f3",
+          "fixed_bm25_window_count": 486,
+          "fixed_bm25_window_request_tokens": {
+            "count": 486,
+            "min": 2544,
+            "median": 3161.5,
+            "p95": 3606,
+            "max": 3838,
+            "sum": 1543017
+          },
+          "fixed_bm25_window_state_tokens": {
+            "count": 486,
+            "min": 1158,
+            "median": 1775.5,
+            "p95": 2220,
+            "max": 2452,
+            "sum": 869307
+          },
+          "fixed_bm25_window_state_plus_longest_question_tokens": {
+            "count": 486,
+            "min": 1221,
+            "median": 1838.5,
+            "p95": 2283,
+            "max": 2515,
+            "sum": 899925
+          },
+          "fixed_bm25_window_request_bytes": {
+            "count": 486,
+            "min": 10904,
+            "median": 13797.0,
+            "p95": 15660,
+            "max": 17673,
+            "sum": 6698948
+          },
+          "fixed_bm25_window_openai_proxy_tokens": {
+            "count": 486,
+            "min": 3324,
+            "median": 3941.5,
+            "p95": 4386,
+            "max": 4618,
+            "sum": 1922097
+          },
+          "fixed_bm25_window_records_sha256": "5b2e2b7de05bd78b8e4b59b146b31cc12baa2962fff530f3ba3d0960ebd2e485"
+        }
+      },
+      "proxy_note": "cl100k_base counts of specified serializations; not Jev/OpenAI actual billed tokens. Nine fixed BM25-order windows are an input-only reference, not adaptive provider output.",
+      "combined": {
+        "queries": 97,
+        "passage_occurrences": 9700,
+        "queries_truncated": 0,
+        "passage_occurrences_truncated": 1260,
+        "query_tokens_before": {
+          "count": 97,
+          "min": 3,
+          "median": 7,
+          "p95": 11,
+          "max": 18,
+          "sum": 673
+        },
+        "query_tokens_after": {
+          "count": 97,
+          "min": 3,
+          "median": 7,
+          "p95": 11,
+          "max": 18,
+          "sum": 673
+        },
+        "passage_tokens_before": {
+          "count": 9700,
+          "min": 14,
+          "median": 76.0,
+          "p95": 151,
+          "max": 279,
+          "sum": 830766
+        },
+        "passage_tokens_after": {
+          "count": 9700,
+          "min": 14,
+          "median": 76.0,
+          "p95": 128,
+          "max": 129,
+          "sum": 801203
+        },
+        "fixed_bm25_window_request_tokens": {
+          "count": 873,
+          "min": 2543,
+          "median": 3150,
+          "p95": 3584,
+          "max": 3838,
+          "sum": 2757759
+        },
+        "fixed_bm25_window_state_tokens": {
+          "count": 873,
+          "min": 1157,
+          "median": 1764,
+          "p95": 2198,
+          "max": 2452,
+          "sum": 1547565
+        },
+        "fixed_bm25_window_openai_proxy_tokens": {
+          "count": 873,
+          "min": 3323,
+          "median": 3930,
+          "p95": 4364,
+          "max": 4618,
+          "sum": 3438699
+        },
+        "fixed_bm25_window_openai_wire_payload_tokens": {
+          "count": 873,
+          "min": 3551,
+          "median": 4163,
+          "p95": 4594,
+          "max": 4843,
+          "sum": 3641412
+        },
+        "truncated_query_rows_canonical_sha256": "c512e8cdca6e742f4f2ff44480574edef939bedc3ef40d72213e576bdc8c5e2f"
+      }
+    }
+  },
+  "ranking_protocol": {
+    "method": "listwise_score",
+    "request_profile": "general-ir-v1",
+    "window_size": 20,
+    "step_size": 10,
+    "passes": 1,
+    "direction": "bottom_to_top",
+    "top_k_parameter": 100,
+    "evaluation_cutoff": 10,
+    "window_indices_zero_based_half_open": [
+      [
+        80,
+        100
+      ],
+      [
+        70,
+        90
+      ],
+      [
+        60,
+        80
+      ],
+      [
+        50,
+        70
+      ],
+      [
+        40,
+        60
+      ],
+      [
+        30,
+        50
+      ],
+      [
+        20,
+        40
+      ],
+      [
+        10,
+        30
+      ],
+      [
+        0,
+        20
+      ]
+    ],
+    "questions_per_request": 20,
+    "levels_per_score": 4,
+    "total_level_descriptions_per_request": 80,
+    "state_schema": {
+      "query": "truncated query",
+      "passages": "P1..P20 mapped to truncated passage text"
+    },
+    "question_template": "How relevant is passage {label} to the query?",
+    "criteria": [
+      "Unrelated to the query.",
+      "On the query's topic but does not answer it.",
+      "Provides useful information that partially answers the query.",
+      "Directly and comprehensively answers the query."
+    ],
+    "sorting": "Stable descending sort by actual returned Score within the current window; exact scalar ties retain current window order. Apply the next window to the updated ordering.",
+    "provider_adaptation": "Same initial 100 identified passages, truncated bytes, rubric, initial order and algorithm settings. Later windows may contain different passages/order for different providers. Trace every actual window and request hash; do not present them as a fully identical per-HTTP prompt experiment.",
+    "signals": "Jev uses its actual finite expected Score in [0,3]. OpenAI returns an integer level 0..3 under strict JSON Schema. These are different-resolution signals. Do not invent probability vectors or call OpenAI integers calibrated probabilities.",
+    "why_selected": "All providers can produce per-passage scalar levels. It is an existing source window regime and needs 873 rather than 9,700 pointwise calls per provider, while keeping each context/question set bounded. No claim of empirical superiority over the other methods is made.",
+    "other_methods": "Do not reconstruct full listwise Choice rankings from a categorical winner. Pairwise/setwise adaptive heaps need a separately defined categorical-compatible interface and request budget; do not fabricate distributions to satisfy the existing probability-based callback. The 100/100 single-window setting is a separate possible ablation, not an automatic replacement.",
+    "source_difference": "The general-ir-v1 rubric/prompts and direct TypeSafe/Responses transports differ from the historical author implementation. Reproducing its exact prompts, gateway, concurrency and mutable model would be a separate protocol.",
+    "offline_validation": "Synthetic constant-score callback only: existing rerank produced nine 20-question windows and 100 output IDs; payload_for built both OpenAI schemas without a network call. This is structural verification, not model evidence."
+  },
+  "providers": {
+    "jev": {
+      "requested_model": "jev-1.13.0",
+      "endpoint": "https://api.typesafe.ai/v1/systemone",
+      "response": "Require pinned returned model, exact answer keys/types, finite Score 0..3, and valid raw levels/probability schema. Record full original response, output usage and validation flags."
+    },
+    "luna": {
+      "requested_model": "gpt-5.6-luna",
+      "reasoning_effort": "none",
+      "endpoint": "https://api.openai.com/v1/responses",
+      "max_output_tokens": 2048
+    },
+    "astra": {
+      "requested_model": "gpt-6-astra",
+      "reasoning_effort": "low",
+      "endpoint": "https://api.openai.com/v1/responses",
+      "max_output_tokens": 2048
+    },
+    "openai_contract": "Reuse payload_for and validate: store=false; strict JSON Schema answers object, twenty integer-enum properties with all required and additionalProperties=false. After validating the real response, adapt each integer to {type:score, score:value} for rerank; omit probabilities. Record requested and returned identities and fail/stop on unexpected model identity."
+  },
+  "limits_and_capacity": {
+    "jev_official": "Recorded docs: 64k tokens per whole request; 32k state plus longest question; Score 2..10 levels; Choice up to 255 candidates. A maximum total question count is not stated in the captured API reference, so 20 questions is a selected workload size, not a documented global maximum.",
+    "jev_rate_note": "Recorded docs list 250,000 tokens/second and 1,200 requests/minute but say limits can change. Use serial requests and stop/back off through an explicit operational event on 429/529; no assumption of guaranteed account throughput.",
+    "openai_schema": "Fresh official Structured Outputs page allows 5,000 total object properties, 10 nesting levels and 1,000 enum values. The planned response has 21 object properties including root answers, two object levels and 80 integer enum entries; it is within those schema limits.",
+    "offline_fixed_window_max": "BM25 unchanged-order diagnostic: request JSON max 3,838 cl100k tokens; state max 2,452; state plus longest question max 2,515; OpenAI input+instructions+schema sum max 4,618.",
+    "offline_long_input_stress": {
+      "method": "For each query, choose twenty documents with greatest cl100k tokens of their standalone JSON-serialized text, then build a 20-score request. This is a long-input diagnostic, not a proof of maximum adaptive-window token count or actual billing.",
+      "request_tokens": {
+        "min": 3520,
+        "max": 4086,
+        "median": 4004,
+        "sum": 384725,
+        "count": 97
+      },
+      "state_tokens": {
+        "min": 2133,
+        "max": 2700,
+        "median": 2618,
+        "sum": 250259,
+        "count": 97
+      },
+      "openai_input_instructions_schema_tokens": {
+        "min": 4300,
+        "max": 4866,
+        "median": 4784,
+        "sum": 460385,
+        "count": 97
+      }
+    },
+    "token_boundary": "These are exact counts under the named local serialization and cl100k encoding, not provider billing/context tokens. Actual adaptive windows must be measured/logged as built; payload feasibility is not an endpoint success guarantee.",
+    "proposed_preflight_proxy_cap": 6000,
+    "cap_semantics": "If the actual OpenAI input+instructions+schema cl100k proxy exceeds 6,000 before send, stop for protocol inspection, keep pending status and do not silently drop candidates/questions or truncate further.",
+    "proposed_preflight_proxy_cap_status": "6000 cl100k proxy was a planning suggestion only and is not enforced by the selected runner. Log actual request sizes; the frozen truncated inputs and window/level counts define the implemented request shape."
+  },
+  "request_budget": {
+    "per_successfully_collected_query": 9,
+    "per_provider": {
+      "dl19": 387,
+      "dl20": 486,
+      "total": 873
+    },
+    "all_three_providers": 2619,
+    "score_judgment_occurrences_per_provider": 17460,
+    "unique_candidate_occurrences_per_provider": 9700,
+    "query_observations_per_provider": 97,
+    "counting_rule": "The 17,460 Score judgments include repeated sliding-window passages and are not independent problems. nDCG uses query denominators 43/54, not window, passage or judgment counts.",
+    "request_count_failure_rule": "Nine per query is the complete-collection count. Mass-only supplemental continuation retains all nine if otherwise valid. A hard error stops its query, so actual calls can be lower; terminal infrastructure rejection or budget halt leaves unstarted queries pending.",
+    "retries": 0,
+    "warmups": 0,
+    "concurrency": 1,
+    "repetitions": 1,
+    "proposed_timeout_seconds": 60,
+    "proposed_max_seconds_per_provider": 10800,
+    "resume": "The first runner writes a new output directory for every bounded run and has no in-place resume. Preserve partial traces. A later continuation must explicitly select unattempted queries against the same input hash and must not silently retry/replace failed queries or claim a new complete97 run."
+  },
+  "scoring_and_failure_policy": {
+    "preregistered_update": "Before any TREC model calls, parent selected strict primary plus mass-only actual-scalar supplemental continuation. This is a forward-declared analysis contract, not post-hoc relaxation.",
+    "metric": "nDCG@10, raw nonnegative qrel gain divided by log2(rank+1); negative/unjudged/absent qrels have gain zero. The ideal DCG uses all official qrels for that query, not only the top-100 candidate pool.",
+    "denominators": "DL19 all 43 judged queries; DL20 all 54. Combined optional score is weighted over all 97, with both year scores retained. Name query keys by benchmark and ID.",
+    "primary_strict": "Validate exact returned schema/model/keys/types, finite scalar range, full expected probability keys, finite probabilities in [0,1], probability mass within absolute 1e-6 and Score/expectation agreement using two-decimal consistency tolerance 0.035 (plus numerical epsilon) for four levels. Keep raw values unchanged.",
+    "mass_only_continuation": "A finite in-range actual Score with otherwise valid response/schema/identity and only a probability-mass failure may continue the remaining adaptive windows for a separately labeled actual-scalar supplemental ranking. The query primary strict-valid flag stays false permanently and contributes zero nDCG in the full denominator.",
+    "other_failures": "Transport/HTTP errors, refusal/incomplete output, missing/wrong answer keys/types, nonfinite/out-of-range Score, malformed probability keys/ranges or Score-expectation inconsistency are not mass-only. Stop that query, preserve error/trace, and give it zero in both primary and supplemental full-denominator analyses. Never treat an invalid response as relevance zero and continue sorting.",
+    "no_renormalization": "Do not renormalize probability mass, reconstruct a probability vector from categorical OpenAI output, or replace the actual Jev scalar with a recomputed expectation. Retain strict_valid and scalar_complete as distinct flags.",
+    "partial_runs": "During a global stop, report complete/failed/pending queries separately. Any full-denominator nDCG with pending queries represented as zero is explicitly provisional; a final full97 result requires no pending queries. A success-only average may be supplementary, never replace the full denominator.",
+    "reporting": "Publish primary strict and supplemental scalar results in separate columns with counts of mass-only invalid queries, other failed queries, pending queries, complete rankings and actual calls. Preserve entire 100-ID permutations and trace window IDs so no subset/result selection changes the denominator.",
+    "latency": "Measure whole-query wall time including all windows, validations and operational waiting. Also report per-attempt HTTP-to-complete-response latency with failures separate. Serial direct endpoints differ from the historical multi-worker Vercel experiment; do not infer matched-hardware or source-table latency reproduction."
+  },
+  "cost_plan": {
+    "status": "planning_scenarios_not_actual_usage_or_invoices",
+    "rates_usd_per_million": {
+      "jev": {
+        "input": 0.042,
+        "output": 0
+      },
+      "gpt-5.6-luna": {
+        "input": 0.2,
+        "cached_input": 0.02,
+        "output": 1.2
+      },
+      "gpt-6-astra": {
+        "input": 10,
+        "cached_input": 1,
+        "output": 50
+      }
+    },
+    "sources": {
+      "jev": "https://docs.typesafe.ai/models",
+      "luna": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "astra": "https://developers.openai.com/api/docs/models/gpt-6-astra"
+    },
+    "actual_accounting": "For each attempt with usage, estimate uncached_input*input_rate + cached_input*cached_rate + output*output_rate, divided by 1e6. Include reasoning in the provider-reported output count without adding it a second time. Preserve errored-attempt usage. Missing usage/cost is unknown, never free.",
+    "rate_boundary": "Short-context Standard assumptions. Fresh official pages separately mention cache-write charges and other service tiers; these scenarios do not model unspecified cache-write charges, discounts or invoices. Actual service tier, returned usage categories and any unknown charge must be disclosed.",
+    "proxy_basis": "873 fixed BM25-order windows: request JSON 2,757,759 cl100k tokens as a Jev-input proxy; OpenAI input+instructions+schema sum 3,438,699 cl100k tokens. Model-selected windows, native tokenizers and hidden protocol overhead differ. These are illustrative input assumptions, not a cost bound.",
+    "illustrative_scenarios": [
+      {
+        "assumed_billed_output_tokens_per_request": 256,
+        "assumed_no_cached_input": true,
+        "gpt_5_6_luna_estimated_usd": 0.9559254,
+        "gpt_6_astra_estimated_usd": 45.56139,
+        "jev_estimated_usd_from_different_request_json_proxy": 0.11582587800000001
+      },
+      {
+        "assumed_billed_output_tokens_per_request": 1024,
+        "assumed_no_cached_input": true,
+        "gpt_5_6_luna_estimated_usd": 1.7604822,
+        "gpt_6_astra_estimated_usd": 79.08459,
+        "jev_estimated_usd_from_different_request_json_proxy": 0.11582587800000001
+      },
+      {
+        "assumed_billed_output_tokens_per_request": 2048,
+        "assumed_no_cached_input": true,
+        "gpt_5_6_luna_estimated_usd": 2.8332245999999994,
+        "gpt_6_astra_estimated_usd": 123.78219,
+        "jev_estimated_usd_from_different_request_json_proxy": 0.11582587800000001
+      },
+      {
+        "assumed_billed_output_tokens_per_request": 4096,
+        "assumed_no_cached_input": true,
+        "gpt_5_6_luna_estimated_usd": 4.9787094,
+        "gpt_6_astra_estimated_usd": 213.17739,
+        "jev_estimated_usd_from_different_request_json_proxy": 0.11582587800000001
+      }
+    ],
+    "spend_guard": "The selected runner stops before the next OpenAI call once the known returned-usage standard-rate estimate reaches $80. A single final call can cross that threshold. Missing/unknown cost is tracked separately; this is not a hard invoice cap. Preserve incomplete/pending queries on request/time/cost stops. Jev has no runtime price estimate in this runner; keep that value null/not-estimated and calculate any independent estimate from actual usage separately.",
+    "source_input_not_for_tuning": "Do not select a cheaper/easier query subset, adapt the rubric to qrels, or change truncation/parameters based on holdout outcomes.",
+    "proposed_spend_stop_estimates_usd_superseded": {
+      "jev": 2,
+      "luna": 10,
+      "astra": 250
+    },
+    "proposal_status": "The earlier Jev2/Luna10/Astra250 planning suggestion was not adopted for the first run; use selected_first_run_limits below. The 4096-output scenario is also a comparison scenario, not the active cap.",
+    "selected_first_run_limits": {
+      "selected_by": "parent agent operational choice, not a user-specified dollar budget",
+      "max_output_tokens_openai": 2048,
+      "cost_limit_usd_argument": 80,
+      "enforced_usage_estimate_stop_models": [
+        "gpt-5.6-luna",
+        "gpt-6-astra"
+      ],
+      "jev_runtime_cost_estimate": null,
+      "jev_runtime_estimate_stop": null,
+      "jev_policy": "Record actual returned input usage; any Jev price calculation is a separate, explicitly labeled estimate. Unestimated runtime cost must be null/not-estimated, not zero. Request/time caps still apply.",
+      "max_requests_per_provider": 873,
+      "max_seconds_per_provider": 10800,
+      "timeout_seconds": 60,
+      "decision_after_first_query": "Inspect completion, validation and returned usage after the first query to decide any later stage. This report does not claim such an inspection or authorize a new stage.",
+      "hard_invoice_cap": false
+    }
+  },
+  "official_openai_sources_fetched": [
+    {
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "http_status": 200,
+      "html_sha256": "bfd2cf25bde3d5c3072f30016b292f21c3a1ddc75386336f1a94ff621c975153",
+      "observed_standard_rates": "$0.20 input / $0.02 cached input / $1.20 output per million"
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+      "http_status": 200,
+      "html_sha256": "416a07723e5864e98734ab71700e4be85140f808316531bbbfdf3984693885a9",
+      "observed_standard_rates": "$10 input / $1 cached input / $50 output per million; cache writes listed separately"
+    },
+    {
+      "url": "https://developers.openai.com/api/docs/guides/structured-outputs",
+      "http_status": 200,
+      "html_sha256": "e764c61a36e66df520ea6894f87e3bf78148a72e29f39cc7c3719cd5498d38cb",
+      "observed_limits": "5000 object properties / 10 nesting levels / 1000 enum values"
+    }
+  ],
+  "readiness_gates_before_dispatch": [
+    "Rehash frozen source manifests/candidates/qrels and normalized provider input; all must match this report. No full-data download, model training or GPU allocation is required.",
+    "Record final runner commit/source digest, Python/tiktoken versions and the selected endpoint/model/output/reasoning/transport/60-second timeout/10800-second duration/$80 OpenAI estimate-stop settings before API calls.",
+    "Pass CPU stub tests of exact input-only algorithm/window count, OpenAI integer adapter, Jev scalar/mass/expectation validation, mass-only continuation preserving primary invalidity, other-error query stop and no implicit retries.",
+    "Check response coverage and ranking permutation; use all judged queries/qrels. Verify metric arithmetic against the existing independent linear-gain contract and downloaded BM25 verification without replacing qrels with candidate-only judgments.",
+    "Save raw payloads/responses/traces privately, redact credentials, and publish only derived counts/metrics/hashes. Do not publicly release restricted passage text.",
+    "This report verifies readiness of inputs and the proposed protocol only. Runner integration, actual API acceptance and model-quality results are not claimed here."
+  ],
+  "input_and_source_sha256": {
+    "runs/external/ir-holdout/provider-listwise-score-v1/input.json": "cc7bc949dbc269dacb61bdb61fc8982db14bc4df3698f9d32f5f1c8b6795eb83",
+    "runs/external/ir-holdout/provider-listwise-score-v1/preparation.json": "05d26bb2ab5abb4641a3e419619050641d52ced762fd4f94ebfb272e437502a1",
+    "runs/external/ir-holdout/prepared/dl19/manifest.json": "84c7cc23ce0f7309a48432c449e7856aeff96f9e2571f1f18cdb405703a6c297",
+    "runs/external/ir-holdout/prepared/dl19/candidates.jsonl": "865a4158341f4a20163910214484c42e10889955d07e3bd255944dc04b4b29a3",
+    "runs/external/ir-holdout/prepared/dl19/qrels.txt": "8a1f10d550732e4cd91d7fc49846a3784de4040972f583e69285a88f3c5fee92",
+    "runs/external/ir-holdout/prepared/dl19/verification.json": "4a0e27044dbc10b80bdbd9d606919d83ecff8175ae8234f15673fe02c26055a4",
+    "runs/external/ir-holdout/prepared/dl20/manifest.json": "494d6f39537b65981ea6707c7ba232e890460ad8f51e86628d2c2a5547288ea4",
+    "runs/external/ir-holdout/prepared/dl20/candidates.jsonl": "e3dd06cf93e0bf07c56f096066fd39237770f23c8342ae636e76b55a57c2747e",
+    "runs/external/ir-holdout/prepared/dl20/qrels.txt": "60d4c34561f9687f8f73e0a752ba80ab80159b3e9c1bedd0a351f747ed6f5684",
+    "runs/external/ir-holdout/prepared/dl20/verification.json": "705cf4793d8fc1599d9186d0186ccf4241085099492f25bf1b2a88a8dec57c2d",
+    "jev/ir_eval.py": "a307096e19f8d212b0b81eee7a75b033d4d4e073abf0a9d43ee02499fc690da3",
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "scripts/benchmark_openai_api.py": "63949cd352f7bb67f1a852dbb7770b70cb8bc0657249fc2a13b0f51dfcd3e3eb",
+    "scripts/benchmark_jev_api_latency.py": "e1ad737c0a7705fa0a4aaad7c89127404318ad4574c19a0b0894c9f4d90005b0",
+    "reports/ir-control-v1/source-code-research.json": "103004e2b2131ab9cba4afd3ba8174575c5351591d0031a506b5fa9bb756d6b6",
+    "runs/external/ir-holdout/sources/author-rankers.py": "47dfc959884f5d684ed3d09e293fd25d9f3490cc19124aa1506756070b83f9b9",
+    "runs/external/ir-holdout/sources/author-run-initial.py": "bb49144df8160c9e36c4e2f8b265a809895c134646c5b3539abd4d25592b5bcd",
+    "runs/external/ir-holdout/sources/author-converter.py": "66cda937575ef493ab675f344dd8ac084dd2b60e29c8e860a4166389da58fe67",
+    "reports/inference-latency/jev-research/api.md": "7ea1c82d9d16bd06e3d38885a5292548293f91e6d1ade4682c27398ced51a9e5",
+    "reports/inference-latency/jev-research/models.md": "9d20bb3c90a0147532d0b20ddc4c64579391be7842e965543b27bad684eeb4d6"
+  },
+  "integrity": {
+    "frozen_provider_input_97_queries_and_9700_passages_independently_verified": true,
+    "source_manifests_and_data_hashes_verified": true,
+    "new_api_inference_calls_by_this_subtask": 0,
+    "new_gpu_calls": 0,
+    "official_documentation_http_fetches_only": 3,
+    "model_results_claimed": false,
+    "frozen_inputs_or_models_modified": false,
+    "only_repository_output": "reports/ir-control-v1/trec-holdout/provider-evaluation-plan.json"
+  },
+  "updated_at_utc": "2026-09-20T23:29:19.749146+00:00",
+  "runner_readonly_review": {
+    "path": "scripts/evaluate_trec_provider.py",
+    "review_scope": "Frozen-input hash/schema/count/IDs and mass-only supplemental continuation. No calls or edits.",
+    "findings": "No mass-only validation escape found: all keys/types/ranges/positive mass and .035 scalar-expectation consistency are checked before continuation; raw samples are retained and strict-invalid queries have no primary ranking. Input loader binds the exact hash and checks 97=43+54 and 100 identified passages/query, with no re-truncation.",
+    "cost_followup": "Runner author is changing Jev unestimated cost fields to null to prevent a zero-cost interpretation. The final runner source digest and final tests must be captured by root before dispatch; this plan does not certify an in-flight file revision."
+  }
+}

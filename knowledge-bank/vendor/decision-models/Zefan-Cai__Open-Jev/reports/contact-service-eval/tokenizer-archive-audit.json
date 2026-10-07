@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "verified": true,
+  "checked_at_utc": "2026-09-20T17:23:42.941707+00:00",
+  "input_files_sha256": {
+    "reports/contact-service-eval/tokenizer-lengths.json": "d23b1caefc8035706c02c94916bd64e057241b450833b4e0677f41840565e6aa",
+    "reports/contact-service-eval/tokenizer-lengths-raw.json.gz": "b602c182dbac1a2c611fa91b8045af3c80f51c3564bb1a2293dc7d6e4bd43fff",
+    "reports/contact-service-eval/capture_tokenizer_lengths.py": "af7311df60970566c230377548ac39c8f3dc45ef024c27e7145b27563c47893e",
+    "reports/contact-service-eval/verify_heldout.py": "e7bcdaa11aa382e8dec2f449a1ec6ffb75e3edea2a8643ad7131d989aec8f861"
+  },
+  "verifier_sha256": "e32af3c51dc4281be2a7f3c9b4ae7fc2506469efcf623f17c63934e8373c331e",
+  "corpus_inputs": {
+    "email-selection-control-v1": {
+      "manifest_sha256": "4c18cc791425003c5c8f052ce27ed034dfb54c79ddac24de13f7290ab3b3316c",
+      "cases_sha256": "49ce82cd0cbd79bf2164f8c2a24b733bcea44a146a9f5568c06a5e3aaee72495",
+      "heldout_documents": 784
+    },
+    "phone-extraction-control-v1": {
+      "manifest_sha256": "1001f1e04795308bf4f68db51076e8e1e1e47802986de54fc33b3b8d33548cfb",
+      "cases_sha256": "d4112d1832307d03f802aa3f307a592b0b066c2d8a6e9226e5a99b488c73ca79",
+      "heldout_documents": 1140
+    }
+  },
+  "request_counts": {
+    "email-selection-control-v1/test/selection": 224,
+    "email-selection-control-v1/ood/selection": 560,
+    "phone-extraction-control-v1/test/selection": 340,
+    "phone-extraction-control-v1/test/attributes": 952,
+    "phone-extraction-control-v1/ood/selection": 800,
+    "phone-extraction-control-v1/ood/attributes": 2240
+  },
+  "candidate_sequences_per_tokenizer": 27872,
+  "ordered_identity_sha256": "b76139ae84dcbd6d07a92a22a19aebd5586d248ac4b8bbb6983e8410441f90f1",
+  "independently_reconstructed_prompt_payload_sha256": "c434dd31ba3bb46ca9d1b6344a2941f9b606e745a0fc600113afa97062bee59c",
+  "models": {
+    "2b": {
+      "sequences": 27872,
+      "minimum": 570,
+      "maximum": 1208,
+      "over_4096": 0,
+      "over_16384": 0,
+      "maximum_example": {
+        "corpus": "email-selection-control-v1",
+        "split": "ood",
+        "case_id": "contact-family-91e23e47ead934862082:document:12",
+        "stage": "selection",
+        "candidate_id": null,
+        "head": "span",
+        "option_index": 4
+      },
+      "lengths_sha256": "a6a51006736fef2d1c0ae1f7af188d2b182f4e09b6a3250304a2f3bea0ad5eec"
+    },
+    "9b": {
+      "sequences": 27872,
+      "minimum": 570,
+      "maximum": 1208,
+      "over_4096": 0,
+      "over_16384": 0,
+      "maximum_example": {
+        "corpus": "email-selection-control-v1",
+        "split": "ood",
+        "case_id": "contact-family-91e23e47ead934862082:document:12",
+        "stage": "selection",
+        "candidate_id": null,
+        "head": "span",
+        "option_index": 4
+      },
+      "lengths_sha256": "a6a51006736fef2d1c0ae1f7af188d2b182f4e09b6a3250304a2f3bea0ad5eec"
+    },
+    "27b": {
+      "sequences": 27872,
+      "minimum": 570,
+      "maximum": 1208,
+      "over_4096": 0,
+      "over_16384": 0,
+      "maximum_example": {
+        "corpus": "email-selection-control-v1",
+        "split": "ood",
+        "case_id": "contact-family-91e23e47ead934862082:document:12",
+        "stage": "selection",
+        "candidate_id": null,
+        "head": "span",
+        "option_index": 4
+      },
+      "lengths_sha256": "a6a51006736fef2d1c0ae1f7af188d2b182f4e09b6a3250304a2f3bea0ad5eec"
+    }
+  },
+  "this_verifier_decode_log": {
+    "email-selection-control-v1": {
+      "cases.jsonl": {
+        "prefix_routed_lines_by_split": {
+          "train": 1876,
+          "calibration": 42,
+          "validation": 98,
+          "test": 224,
+          "ood": 560
+        },
+        "full_payloads_decoded_by_split": {
+          "train": 0,
+          "calibration": 0,
+          "validation": 0,
+          "test": 224,
+          "ood": 560
+        },
+        "non_heldout_payloads_decoded": 0
+      }
+    },
+    "phone-extraction-control-v1": {
+      "cases.jsonl": {
+        "prefix_routed_lines_by_split": {
+          "train": 2600,
+          "calibration": 180,
+          "validation": 80,
+          "test": 340,
+          "ood": 800
+        },
+        "full_payloads_decoded_by_split": {
+          "train": 0,
+          "calibration": 0,
+          "validation": 0,
+          "test": 340,
+          "ood": 800
+        },
+        "non_heldout_payloads_decoded": 0
+      }
+    }
+  },
+  "capture_source_observation": "The preserved capture source json.loads-decoded every case line locally before split filtering, including training reference fields. Those references were not used to select or render prompts. Only heldout A and every heldout actual-candidate B request are in the reconstructed payload and archive. This verifier filters bytes before full case decoding.",
+  "scope": {
+    "tokenizer_rerun": false,
+    "model_loaded": false,
+    "http_or_network_used": false,
+    "gpu_used": false,
+    "producer_oracle_imported": false,
+    "independent_token_count_recomputation": false,
+    "verified": "Frozen request lineage, exact prompt payload, complete ordered sequence identities, recorded length arithmetic and capture/helper hashes.",
+    "limitation": "Token lengths remain observations from the pinned tokenizer capture; this offline audit does not independently run tokenization or prove model quality. All possible B inputs are length paths, not A predictions."
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "created_at_utc": "2026-10-03T19:39:14.453068+00:00",
+  "findings": [
+    {
+      "actual_endpoint_accessed": false,
+      "id": "generic_foreign_proc_input",
+      "origin": "independent reviewer child static dataflow review",
+      "problem": "Generic same-UID regular /proc/<foreign PID>/status could be read before JSON rejection.",
+      "remedy": "Reject /proc and descendants before descriptor traversal; fixed dedicated own/kernel proc reader stays unchanged."
+    },
+    {
+      "actual_endpoint_accessed": false,
+      "id": "generic_device_open_before_regular_fstat",
+      "origin": "root static source review; independently confirmed by original read_regular open-before-fstat ordering",
+      "problem": "A generic /dev/nvidia0 path could be opened before regular-file fstat rejection; opening is itself an undeclared device operation. Literal /sys generic inputs also lie outside declared request/source/bootstrap/output scope.",
+      "remedy": "Surgical known-boundary refusal for /proc,/sys,/dev and descendants in normalized_path, before directory or endpoint open; mocked table fixture, no actual endpoint probe."
+    }
+  ],
+  "limits": [
+    "Both findings are static possible operations under malformed inputs, not evidence of performed foreign-proc/device access.",
+    "No model, Torch, pidfd, signal, foreign queue, GPU, SSH or endpoint probe was executed for these findings.",
+    "Original failed subset receipt and prior ABI attempt remain immutable and consumed; final source has not been accepted by this receipt."
+  ],
+  "original_source_sha256": "ad4e37d2d1d4ae66120f75caf064f97d5ce463a0ede62078014d30595d6d4481",
+  "original_subset_receipt_sha256": "d270bfab07a0f2549b05af200756b79dab19f521711ab28f436d9c1663c9d2e7",
+  "schema_version": 1,
+  "scope": "independent_static_original_scope_findings_no_endpoint_access",
+  "status": "original_findings_retained_pending_final_amendment_review"
+}

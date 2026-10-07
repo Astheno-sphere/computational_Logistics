@@ -1,0 +1,1339 @@
+{
+  "configuration": {
+    "created_at_utc": "2026-09-20T01:03:29.997451+00:00",
+    "endpoint": "http://127.0.0.1:8791/v1/systemone",
+    "seeds": [
+      10001,
+      10002,
+      10003
+    ],
+    "max_steps": 40,
+    "games": [
+      "snake",
+      "trex_runner",
+      "tile_platformer",
+      "wikiracing",
+      "doom_basic"
+    ],
+    "expected_model": "Qwen/Qwen3.5-9B",
+    "expected_method": "lora_decision_head",
+    "timeout_seconds": 60,
+    "policy_order": [
+      "model",
+      "random",
+      "teacher"
+    ],
+    "wiki_graph_sha256": "ece669f2bcd77cdc8ac60af80a0acdd0f5d1503df4d3fcbbaa42e652453c7c87",
+    "scope": "Paired seeded integration rollouts; seeds/layouts are not guaranteed held out from training. Local simplified games and tiny Wiki fixture, not original-game benchmark scores.",
+    "teacher_role": "Separately evaluated code baseline; never invoked to repair model output or scored as ground-truth action accuracy.",
+    "timing_scope": "Policy timing excludes environment stepping. Model policy includes HTTP and scorer work; baseline policies measure local code. No proprietary Jev latency comparison."
+  },
+  "service_identity": {
+    "model": "Qwen/Qwen3.5-9B",
+    "method": "lora_decision_head",
+    "temperature": 1.4205161837096647,
+    "checkpoint_sha256": "7aa5f62fa39b83aee07915e7e351da5c4c38b4ce5f751cf22c7d45edf7dfc0ef",
+    "base_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+    "code_commit": "99e881108c6cacadafd364088505e84975ca43fc"
+  },
+  "requested_episodes": 45,
+  "attempted_episodes": 45,
+  "error_episodes": 0,
+  "complete": true,
+  "by_game": {
+    "snake": {
+      "paired_initial_states_match": {
+        "10001": true,
+        "10002": true,
+        "10003": true
+      },
+      "policies": {
+        "model": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 0,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 0,
+          "mean_steps_valid": 6,
+          "mean_reward_valid": -1.0,
+          "mean_native_outcomes_valid": {
+            "food_collected": 0
+          },
+          "decision_timing_kind": "learned HTTP round trip",
+          "mean_episode_decision_latency_ms_valid": 53.34665088189973,
+          "mean_episode_environment_latency_ms_valid": 0.015329880019028982
+        },
+        "random": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 0,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 0,
+          "mean_steps_valid": 13.333333333333334,
+          "mean_reward_valid": -1.0,
+          "mean_native_outcomes_valid": {
+            "food_collected": 0
+          },
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.002380473571911193,
+          "mean_episode_environment_latency_ms_valid": 0.0033155922391261273
+        },
+        "teacher": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "max_steps": 3
+          },
+          "native_successes": 0,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 0,
+          "mean_steps_valid": 40,
+          "mean_reward_valid": 7.666666666666667,
+          "mean_native_outcomes_valid": {
+            "food_collected": 7.666666666666667
+          },
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.06446520177026589,
+          "mean_episode_environment_latency_ms_valid": 0.004844662422935168
+        }
+      }
+    },
+    "trex_runner": {
+      "paired_initial_states_match": {
+        "10001": true,
+        "10002": true,
+        "10003": true
+      },
+      "policies": {
+        "model": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 2,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 0.6666666666666666,
+          "mean_steps_valid": 9.666666666666666,
+          "mean_reward_valid": 9.0,
+          "mean_native_outcomes_valid": {
+            "obstacles_cleared": 9.333333333333334
+          },
+          "decision_timing_kind": "learned HTTP round trip",
+          "mean_episode_decision_latency_ms_valid": 57.69632553888692,
+          "mean_episode_environment_latency_ms_valid": 0.09184630794657601
+        },
+        "random": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 0,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 0,
+          "mean_steps_valid": 1.3333333333333333,
+          "mean_reward_valid": -0.6666666666666666,
+          "mean_native_outcomes_valid": {
+            "obstacles_cleared": 0.3333333333333333
+          },
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.004741984109083812,
+          "mean_episode_environment_latency_ms_valid": 0.02956918130318324
+        },
+        "teacher": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 3,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 1,
+          "mean_steps_valid": 12,
+          "mean_reward_valid": 12.0,
+          "mean_native_outcomes_valid": {
+            "obstacles_cleared": 12
+          },
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.13226048193044132,
+          "mean_episode_environment_latency_ms_valid": 0.05210175489385922
+        }
+      }
+    },
+    "tile_platformer": {
+      "paired_initial_states_match": {
+        "10001": true,
+        "10002": true,
+        "10003": true
+      },
+      "policies": {
+        "model": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "max_steps": 3
+          },
+          "native_successes": 0,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 0,
+          "mean_steps_valid": 40,
+          "mean_reward_valid": 0.0,
+          "mean_native_outcomes_valid": {
+            "progress_tiles": 0
+          },
+          "decision_timing_kind": "learned HTTP round trip",
+          "mean_episode_decision_latency_ms_valid": 129.50470459957918,
+          "mean_episode_environment_latency_ms_valid": 0.026701251044869423
+        },
+        "random": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 0,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 0,
+          "mean_steps_valid": 14.666666666666666,
+          "mean_reward_valid": 11.0,
+          "mean_native_outcomes_valid": {
+            "progress_tiles": 12.666666666666666
+          },
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.0026742651972178283,
+          "mean_episode_environment_latency_ms_valid": 0.007701957238990455
+        },
+        "teacher": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 3,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 1,
+          "mean_steps_valid": 22,
+          "mean_reward_valid": 44.0,
+          "mean_native_outcomes_valid": {
+            "progress_tiles": 44
+          },
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.6114028281334675,
+          "mean_episode_environment_latency_ms_valid": 0.006809717778003577
+        }
+      }
+    },
+    "wikiracing": {
+      "paired_initial_states_match": {
+        "10001": true,
+        "10002": true,
+        "10003": true
+      },
+      "policies": {
+        "model": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 3,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 1,
+          "mean_steps_valid": 2,
+          "mean_reward_valid": 1.0,
+          "mean_native_outcomes_valid": {},
+          "decision_timing_kind": "learned HTTP round trip",
+          "mean_episode_decision_latency_ms_valid": 60.026378370821476,
+          "mean_episode_environment_latency_ms_valid": 0.06169235954682032
+        },
+        "random": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "no_legal_actions": 3
+          },
+          "native_successes": 0,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 0,
+          "mean_steps_valid": 2.6666666666666665,
+          "mean_reward_valid": 0.0,
+          "mean_native_outcomes_valid": {},
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.0036625812451044717,
+          "mean_episode_environment_latency_ms_valid": 0.019427699347337086
+        },
+        "teacher": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": 3,
+          "native_success_outcomes_observed": 3,
+          "native_success_rate_among_valid_with_outcome": 1,
+          "mean_steps_valid": 2,
+          "mean_reward_valid": 1.0,
+          "mean_native_outcomes_valid": {},
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.03903048733870188,
+          "mean_episode_environment_latency_ms_valid": 0.019572054346402485
+        }
+      }
+    },
+    "doom_basic": {
+      "paired_initial_states_match": {
+        "10001": true,
+        "10002": true,
+        "10003": true
+      },
+      "policies": {
+        "model": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": null,
+          "native_success_outcomes_observed": 0,
+          "native_success_rate_among_valid_with_outcome": null,
+          "mean_steps_valid": 8.333333333333334,
+          "mean_reward_valid": 62.333333333333336,
+          "mean_native_outcomes_valid": {
+            "engine_total_reward": 62.333333333333336,
+            "elapsed_tics": 0
+          },
+          "decision_timing_kind": "learned HTTP round trip",
+          "mean_episode_decision_latency_ms_valid": 60.70394908557787,
+          "mean_episode_environment_latency_ms_valid": 1.798517479928154
+        },
+        "random": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": null,
+          "native_success_outcomes_observed": 0,
+          "native_success_rate_among_valid_with_outcome": null,
+          "mean_steps_valid": 11.666666666666666,
+          "mean_reward_valid": 46.0,
+          "mean_native_outcomes_valid": {
+            "engine_total_reward": 46.0,
+            "elapsed_tics": 0
+          },
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.009861874884815627,
+          "mean_episode_environment_latency_ms_valid": 1.0547486224001454
+        },
+        "teacher": {
+          "attempted": 3,
+          "valid": 3,
+          "errors": 0,
+          "stopping_reasons": {
+            "terminal": 3
+          },
+          "native_successes": null,
+          "native_success_outcomes_observed": 0,
+          "native_success_rate_among_valid_with_outcome": null,
+          "mean_steps_valid": 5.666666666666667,
+          "mean_reward_valid": 80.33333333333333,
+          "mean_native_outcomes_valid": {
+            "engine_total_reward": 80.33333333333333,
+            "elapsed_tics": 0
+          },
+          "decision_timing_kind": "local baseline code",
+          "mean_episode_decision_latency_ms_valid": 0.04327611884835995,
+          "mean_episode_environment_latency_ms_valid": 1.0412685629544836
+        }
+      }
+    }
+  },
+  "episodes": [
+    {
+      "game": "snake",
+      "policy": "model",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/snake-model-seed-10001.json",
+      "metrics": {
+        "steps": 6,
+        "stop_reason": "terminal",
+        "total_reward": -1.0,
+        "mean_decision_latency_ms": 55.20455756535133,
+        "food_collected": 0,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "6e3533b630d803c00ba7c6076f632d134f97dcb2843e8831bda9c1329068cb26",
+      "timing": {
+        "mean_decision_latency_ms": 55.20455756535133,
+        "mean_environment_latency_ms": 0.01959937314192454
+      }
+    },
+    {
+      "game": "snake",
+      "policy": "random",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/snake-random-seed-10001.json",
+      "metrics": {
+        "steps": 15,
+        "stop_reason": "terminal",
+        "total_reward": -1.0,
+        "mean_decision_latency_ms": 0.0033762305974960327,
+        "food_collected": 0,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "6e3533b630d803c00ba7c6076f632d134f97dcb2843e8831bda9c1329068cb26",
+      "timing": {
+        "mean_decision_latency_ms": 0.0033762305974960327,
+        "mean_environment_latency_ms": 0.004436696569124858
+      }
+    },
+    {
+      "game": "snake",
+      "policy": "teacher",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/snake-teacher-seed-10001.json",
+      "metrics": {
+        "steps": 40,
+        "stop_reason": "max_steps",
+        "total_reward": 7.0,
+        "mean_decision_latency_ms": 0.059744762256741524,
+        "food_collected": 7,
+        "collision": false,
+        "success": false
+      },
+      "initial_state_sha256": "6e3533b630d803c00ba7c6076f632d134f97dcb2843e8831bda9c1329068cb26",
+      "timing": {
+        "mean_decision_latency_ms": 0.059744762256741524,
+        "mean_environment_latency_ms": 0.00432431697845459
+      }
+    },
+    {
+      "game": "snake",
+      "policy": "model",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/snake-model-seed-10002.json",
+      "metrics": {
+        "steps": 6,
+        "stop_reason": "terminal",
+        "total_reward": -1.0,
+        "mean_decision_latency_ms": 47.71776621540388,
+        "food_collected": 0,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "0c78274dc5db33c3fedbef1c9c65b0bd7de18a19c5804f54c4d2485f40be0326",
+      "timing": {
+        "mean_decision_latency_ms": 47.71776621540388,
+        "mean_environment_latency_ms": 0.010576099157333374
+      }
+    },
+    {
+      "game": "snake",
+      "policy": "random",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/snake-random-seed-10002.json",
+      "metrics": {
+        "steps": 19,
+        "stop_reason": "terminal",
+        "total_reward": -1.0,
+        "mean_decision_latency_ms": 0.0016399120029650237,
+        "food_collected": 0,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "0c78274dc5db33c3fedbef1c9c65b0bd7de18a19c5804f54c4d2485f40be0326",
+      "timing": {
+        "mean_decision_latency_ms": 0.0016399120029650237,
+        "mean_environment_latency_ms": 0.0025785871242222035
+      }
+    },
+    {
+      "game": "snake",
+      "policy": "teacher",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/snake-teacher-seed-10002.json",
+      "metrics": {
+        "steps": 40,
+        "stop_reason": "max_steps",
+        "total_reward": 9.0,
+        "mean_decision_latency_ms": 0.06821672432124615,
+        "food_collected": 9,
+        "collision": false,
+        "success": false
+      },
+      "initial_state_sha256": "0c78274dc5db33c3fedbef1c9c65b0bd7de18a19c5804f54c4d2485f40be0326",
+      "timing": {
+        "mean_decision_latency_ms": 0.06821672432124615,
+        "mean_environment_latency_ms": 0.0055658165365457535
+      }
+    },
+    {
+      "game": "snake",
+      "policy": "model",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/snake-model-seed-10003.json",
+      "metrics": {
+        "steps": 6,
+        "stop_reason": "terminal",
+        "total_reward": -1.0,
+        "mean_decision_latency_ms": 57.11762886494398,
+        "food_collected": 0,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "9920fb58844e9d99312a2c69c819bc5bf869e9b8870af57a5f53b7e6a7273a59",
+      "timing": {
+        "mean_decision_latency_ms": 57.11762886494398,
+        "mean_environment_latency_ms": 0.01581416775782903
+      }
+    },
+    {
+      "game": "snake",
+      "policy": "random",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/snake-random-seed-10003.json",
+      "metrics": {
+        "steps": 6,
+        "stop_reason": "terminal",
+        "total_reward": -1.0,
+        "mean_decision_latency_ms": 0.002125278115272522,
+        "food_collected": 0,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "9920fb58844e9d99312a2c69c819bc5bf869e9b8870af57a5f53b7e6a7273a59",
+      "timing": {
+        "mean_decision_latency_ms": 0.002125278115272522,
+        "mean_environment_latency_ms": 0.002931493024031321
+      }
+    },
+    {
+      "game": "snake",
+      "policy": "teacher",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/snake-teacher-seed-10003.json",
+      "metrics": {
+        "steps": 40,
+        "stop_reason": "max_steps",
+        "total_reward": 7.0,
+        "mean_decision_latency_ms": 0.06543411873281002,
+        "food_collected": 7,
+        "collision": false,
+        "success": false
+      },
+      "initial_state_sha256": "9920fb58844e9d99312a2c69c819bc5bf869e9b8870af57a5f53b7e6a7273a59",
+      "timing": {
+        "mean_decision_latency_ms": 0.06543411873281002,
+        "mean_environment_latency_ms": 0.0046438537538051605
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "model",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/trex_runner-model-seed-10001.json",
+      "metrics": {
+        "steps": 12,
+        "stop_reason": "terminal",
+        "total_reward": 12.0,
+        "mean_decision_latency_ms": 55.96768902614713,
+        "obstacles_cleared": 12,
+        "collision": false,
+        "success": true
+      },
+      "initial_state_sha256": "41a55bc1ce4dd405a9592b413395d3334c62267619af2c50c1515b0a8c7d25c3",
+      "timing": {
+        "mean_decision_latency_ms": 55.96768902614713,
+        "mean_environment_latency_ms": 0.09326481570800145
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "random",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/trex_runner-random-seed-10001.json",
+      "metrics": {
+        "steps": 1,
+        "stop_reason": "terminal",
+        "total_reward": -1.0,
+        "mean_decision_latency_ms": 0.0048074871301651,
+        "obstacles_cleared": 0,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "41a55bc1ce4dd405a9592b413395d3334c62267619af2c50c1515b0a8c7d25c3",
+      "timing": {
+        "mean_decision_latency_ms": 0.0048074871301651,
+        "mean_environment_latency_ms": 0.025272369384765625
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "teacher",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/trex_runner-teacher-seed-10001.json",
+      "metrics": {
+        "steps": 12,
+        "stop_reason": "terminal",
+        "total_reward": 12.0,
+        "mean_decision_latency_ms": 0.12393031890193622,
+        "obstacles_cleared": 12,
+        "collision": false,
+        "success": true
+      },
+      "initial_state_sha256": "41a55bc1ce4dd405a9592b413395d3334c62267619af2c50c1515b0a8c7d25c3",
+      "timing": {
+        "mean_decision_latency_ms": 0.12393031890193622,
+        "mean_environment_latency_ms": 0.04626810550689697
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "model",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/trex_runner-model-seed-10002.json",
+      "metrics": {
+        "steps": 12,
+        "stop_reason": "terminal",
+        "total_reward": 12.0,
+        "mean_decision_latency_ms": 56.58313833797971,
+        "obstacles_cleared": 12,
+        "collision": false,
+        "success": true
+      },
+      "initial_state_sha256": "c8cacd5e1c60fcc4d00ab054d03d67aca94bfaebd9d5d708d4757fbc70f641c7",
+      "timing": {
+        "mean_decision_latency_ms": 56.58313833797971,
+        "mean_environment_latency_ms": 0.09198983510335286
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "random",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/trex_runner-random-seed-10002.json",
+      "metrics": {
+        "steps": 1,
+        "stop_reason": "terminal",
+        "total_reward": -1.0,
+        "mean_decision_latency_ms": 0.005535781383514404,
+        "obstacles_cleared": 0,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "c8cacd5e1c60fcc4d00ab054d03d67aca94bfaebd9d5d708d4757fbc70f641c7",
+      "timing": {
+        "mean_decision_latency_ms": 0.005535781383514404,
+        "mean_environment_latency_ms": 0.021381303668022156
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "teacher",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/trex_runner-teacher-seed-10002.json",
+      "metrics": {
+        "steps": 12,
+        "stop_reason": "terminal",
+        "total_reward": 12.0,
+        "mean_decision_latency_ms": 0.1373589038848877,
+        "obstacles_cleared": 12,
+        "collision": false,
+        "success": true
+      },
+      "initial_state_sha256": "c8cacd5e1c60fcc4d00ab054d03d67aca94bfaebd9d5d708d4757fbc70f641c7",
+      "timing": {
+        "mean_decision_latency_ms": 0.1373589038848877,
+        "mean_environment_latency_ms": 0.047427757332722344
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "model",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/trex_runner-model-seed-10003.json",
+      "metrics": {
+        "steps": 5,
+        "stop_reason": "terminal",
+        "total_reward": 3.0,
+        "mean_decision_latency_ms": 60.53814925253391,
+        "obstacles_cleared": 4,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "0784241991fdc574f18fc66e72a332a47d5652215e896db31e0dcd85eaf51a67",
+      "timing": {
+        "mean_decision_latency_ms": 60.53814925253391,
+        "mean_environment_latency_ms": 0.09028427302837372
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "random",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/trex_runner-random-seed-10003.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 0.0,
+        "mean_decision_latency_ms": 0.00388268381357193,
+        "obstacles_cleared": 1,
+        "collision": true,
+        "success": false
+      },
+      "initial_state_sha256": "0784241991fdc574f18fc66e72a332a47d5652215e896db31e0dcd85eaf51a67",
+      "timing": {
+        "mean_decision_latency_ms": 0.00388268381357193,
+        "mean_environment_latency_ms": 0.04205387085676193
+      }
+    },
+    {
+      "game": "trex_runner",
+      "policy": "teacher",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/trex_runner-teacher-seed-10003.json",
+      "metrics": {
+        "steps": 12,
+        "stop_reason": "terminal",
+        "total_reward": 12.0,
+        "mean_decision_latency_ms": 0.13549222300450006,
+        "obstacles_cleared": 12,
+        "collision": false,
+        "success": true
+      },
+      "initial_state_sha256": "0784241991fdc574f18fc66e72a332a47d5652215e896db31e0dcd85eaf51a67",
+      "timing": {
+        "mean_decision_latency_ms": 0.13549222300450006,
+        "mean_environment_latency_ms": 0.06260940184195836
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "model",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-model-seed-10001.json",
+      "metrics": {
+        "steps": 40,
+        "stop_reason": "max_steps",
+        "total_reward": 0.0,
+        "mean_decision_latency_ms": 133.30823755823076,
+        "success": false,
+        "dead": false,
+        "progress_tiles": 0
+      },
+      "initial_state_sha256": "16d5f86a327abed25aea3e1db9f49fbad1078f2da831f1b94a0a380f67239b02",
+      "timing": {
+        "mean_decision_latency_ms": 133.30823755823076,
+        "mean_environment_latency_ms": 0.029889028519392014
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "random",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-random-seed-10001.json",
+      "metrics": {
+        "steps": 24,
+        "stop_reason": "terminal",
+        "total_reward": 16.0,
+        "mean_decision_latency_ms": 0.002342198664943377,
+        "success": false,
+        "dead": true,
+        "progress_tiles": 16
+      },
+      "initial_state_sha256": "16d5f86a327abed25aea3e1db9f49fbad1078f2da831f1b94a0a380f67239b02",
+      "timing": {
+        "mean_decision_latency_ms": 0.002342198664943377,
+        "mean_environment_latency_ms": 0.007057484860221545
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "teacher",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-teacher-seed-10001.json",
+      "metrics": {
+        "steps": 22,
+        "stop_reason": "terminal",
+        "total_reward": 44.0,
+        "mean_decision_latency_ms": 0.5801819603551518,
+        "success": true,
+        "dead": false,
+        "progress_tiles": 44
+      },
+      "initial_state_sha256": "16d5f86a327abed25aea3e1db9f49fbad1078f2da831f1b94a0a380f67239b02",
+      "timing": {
+        "mean_decision_latency_ms": 0.5801819603551518,
+        "mean_environment_latency_ms": 0.006266107613390142
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "model",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-model-seed-10002.json",
+      "metrics": {
+        "steps": 40,
+        "stop_reason": "max_steps",
+        "total_reward": 0.0,
+        "mean_decision_latency_ms": 127.67447736114264,
+        "success": false,
+        "dead": false,
+        "progress_tiles": 0
+      },
+      "initial_state_sha256": "80cfb3c12e092c984c6f093fef51386654f2cc87ab10828b120429c502b08cc8",
+      "timing": {
+        "mean_decision_latency_ms": 127.67447736114264,
+        "mean_environment_latency_ms": 0.025722524151206017
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "random",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-random-seed-10002.json",
+      "metrics": {
+        "steps": 7,
+        "stop_reason": "terminal",
+        "total_reward": 4.0,
+        "mean_decision_latency_ms": 0.0030012535197394235,
+        "success": false,
+        "dead": true,
+        "progress_tiles": 6
+      },
+      "initial_state_sha256": "80cfb3c12e092c984c6f093fef51386654f2cc87ab10828b120429c502b08cc8",
+      "timing": {
+        "mean_decision_latency_ms": 0.0030012535197394235,
+        "mean_environment_latency_ms": 0.007938859718186515
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "teacher",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-teacher-seed-10002.json",
+      "metrics": {
+        "steps": 22,
+        "stop_reason": "terminal",
+        "total_reward": 44.0,
+        "mean_decision_latency_ms": 0.6213078105991537,
+        "success": true,
+        "dead": false,
+        "progress_tiles": 44
+      },
+      "initial_state_sha256": "80cfb3c12e092c984c6f093fef51386654f2cc87ab10828b120429c502b08cc8",
+      "timing": {
+        "mean_decision_latency_ms": 0.6213078105991537,
+        "mean_environment_latency_ms": 0.007107599892399528
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "model",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-model-seed-10003.json",
+      "metrics": {
+        "steps": 40,
+        "stop_reason": "max_steps",
+        "total_reward": 0.0,
+        "mean_decision_latency_ms": 127.53139887936413,
+        "success": false,
+        "dead": false,
+        "progress_tiles": 0
+      },
+      "initial_state_sha256": "cfbaff635b07f2010cfb9d2bb6388725326f13234630b2c2bcbb76457b20c128",
+      "timing": {
+        "mean_decision_latency_ms": 127.53139887936413,
+        "mean_environment_latency_ms": 0.02449220046401024
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "random",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-random-seed-10003.json",
+      "metrics": {
+        "steps": 13,
+        "stop_reason": "terminal",
+        "total_reward": 13.0,
+        "mean_decision_latency_ms": 0.0026793434069706844,
+        "success": false,
+        "dead": true,
+        "progress_tiles": 16
+      },
+      "initial_state_sha256": "cfbaff635b07f2010cfb9d2bb6388725326f13234630b2c2bcbb76457b20c128",
+      "timing": {
+        "mean_decision_latency_ms": 0.0026793434069706844,
+        "mean_environment_latency_ms": 0.008109527138563303
+      }
+    },
+    {
+      "game": "tile_platformer",
+      "policy": "teacher",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/tile_platformer-teacher-seed-10003.json",
+      "metrics": {
+        "steps": 22,
+        "stop_reason": "terminal",
+        "total_reward": 44.0,
+        "mean_decision_latency_ms": 0.632718713446097,
+        "success": true,
+        "dead": false,
+        "progress_tiles": 44
+      },
+      "initial_state_sha256": "cfbaff635b07f2010cfb9d2bb6388725326f13234630b2c2bcbb76457b20c128",
+      "timing": {
+        "mean_decision_latency_ms": 0.632718713446097,
+        "mean_environment_latency_ms": 0.007055445828221061
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "model",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/wikiracing-model-seed-10001.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 1.0,
+        "mean_decision_latency_ms": 65.9654950723052,
+        "success": true,
+        "path": [
+          "Computer",
+          "Mathematics",
+          "Physics"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 65.9654950723052,
+        "mean_environment_latency_ms": 0.06443634629249573
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "random",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/wikiracing-random-seed-10001.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "no_legal_actions",
+        "total_reward": 0.0,
+        "mean_decision_latency_ms": 0.00384356826543808,
+        "success": false,
+        "path": [
+          "Computer",
+          "Music",
+          "Art"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 0.00384356826543808,
+        "mean_environment_latency_ms": 0.020286068320274353
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "teacher",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/wikiracing-teacher-seed-10001.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 1.0,
+        "mean_decision_latency_ms": 0.04244223237037659,
+        "success": true,
+        "path": [
+          "Computer",
+          "Mathematics",
+          "Physics"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 0.04244223237037659,
+        "mean_environment_latency_ms": 0.02161134034395218
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "model",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/wikiracing-model-seed-10002.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 1.0,
+        "mean_decision_latency_ms": 57.23257455974817,
+        "success": true,
+        "path": [
+          "Computer",
+          "Mathematics",
+          "Physics"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 57.23257455974817,
+        "mean_environment_latency_ms": 0.06268080323934555
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "random",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/wikiracing-random-seed-10002.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "no_legal_actions",
+        "total_reward": 0.0,
+        "mean_decision_latency_ms": 0.004019588232040405,
+        "success": false,
+        "path": [
+          "Computer",
+          "Music",
+          "Art"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 0.004019588232040405,
+        "mean_environment_latency_ms": 0.019121915102005005
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "teacher",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/wikiracing-teacher-seed-10002.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 1.0,
+        "mean_decision_latency_ms": 0.038331374526023865,
+        "success": true,
+        "path": [
+          "Computer",
+          "Mathematics",
+          "Physics"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 0.038331374526023865,
+        "mean_environment_latency_ms": 0.01879967749118805
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "model",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/wikiracing-model-seed-10003.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 1.0,
+        "mean_decision_latency_ms": 56.88106548041105,
+        "success": true,
+        "path": [
+          "Computer",
+          "Mathematics",
+          "Physics"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 56.88106548041105,
+        "mean_environment_latency_ms": 0.05795992910861969
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "random",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/wikiracing-random-seed-10003.json",
+      "metrics": {
+        "steps": 4,
+        "stop_reason": "no_legal_actions",
+        "total_reward": 0.0,
+        "mean_decision_latency_ms": 0.0031245872378349304,
+        "success": false,
+        "path": [
+          "Computer",
+          "Mathematics",
+          "Computer",
+          "Music",
+          "Art"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 0.0031245872378349304,
+        "mean_environment_latency_ms": 0.018875114619731903
+      }
+    },
+    {
+      "game": "wikiracing",
+      "policy": "teacher",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/wikiracing-teacher-seed-10003.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 1.0,
+        "mean_decision_latency_ms": 0.0363178551197052,
+        "success": true,
+        "path": [
+          "Computer",
+          "Mathematics",
+          "Physics"
+        ]
+      },
+      "initial_state_sha256": "d281ecc07dcf771d27ab2fff23588cbc8d4808f8c578d6001c3c944177d85d86",
+      "timing": {
+        "mean_decision_latency_ms": 0.0363178551197052,
+        "mean_environment_latency_ms": 0.01830514520406723
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "model",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/doom_basic-model-seed-10001.json",
+      "metrics": {
+        "steps": 11,
+        "stop_reason": "terminal",
+        "total_reward": 54.0,
+        "mean_decision_latency_ms": 61.452290551228955,
+        "engine_total_reward": 54.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "d13a926222a3573cb5cc044f8db9f343851d0a1e39619bc1d1305197c4c75ba5",
+      "timing": {
+        "mean_decision_latency_ms": 61.452290551228955,
+        "mean_environment_latency_ms": 1.7560271715576
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "random",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/doom_basic-random-seed-10001.json",
+      "metrics": {
+        "steps": 31,
+        "stop_reason": "terminal",
+        "total_reward": -52.0,
+        "mean_decision_latency_ms": 0.0036529475642788794,
+        "engine_total_reward": -52.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "d13a926222a3573cb5cc044f8db9f343851d0a1e39619bc1d1305197c4c75ba5",
+      "timing": {
+        "mean_decision_latency_ms": 0.0036529475642788794,
+        "mean_environment_latency_ms": 0.9548665294724126
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "teacher",
+      "seed": 10001,
+      "valid": true,
+      "trace": "trajectories/doom_basic-teacher-seed-10001.json",
+      "metrics": {
+        "steps": 11,
+        "stop_reason": "terminal",
+        "total_reward": 59.0,
+        "mean_decision_latency_ms": 0.037947330962527885,
+        "engine_total_reward": 59.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "d13a926222a3573cb5cc044f8db9f343851d0a1e39619bc1d1305197c4c75ba5",
+      "timing": {
+        "mean_decision_latency_ms": 0.037947330962527885,
+        "mean_environment_latency_ms": 0.9795183485204523
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "model",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/doom_basic-model-seed-10002.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 95.0,
+        "mean_decision_latency_ms": 62.00116407126188,
+        "engine_total_reward": 95.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "2b61e03bf1f8ef1d38bca4ebb91fcb69c72e32fab9eb1ea0c93bd525b01d0f4a",
+      "timing": {
+        "mean_decision_latency_ms": 62.00116407126188,
+        "mean_environment_latency_ms": 1.8550893291831017
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "random",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/doom_basic-random-seed-10002.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 95.0,
+        "mean_decision_latency_ms": 0.011487863957881927,
+        "engine_total_reward": 95.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "2b61e03bf1f8ef1d38bca4ebb91fcb69c72e32fab9eb1ea0c93bd525b01d0f4a",
+      "timing": {
+        "mean_decision_latency_ms": 0.011487863957881927,
+        "mean_environment_latency_ms": 0.9957877919077873
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "teacher",
+      "seed": 10002,
+      "valid": true,
+      "trace": "trajectories/doom_basic-teacher-seed-10002.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 95.0,
+        "mean_decision_latency_ms": 0.04878547042608261,
+        "engine_total_reward": 95.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "2b61e03bf1f8ef1d38bca4ebb91fcb69c72e32fab9eb1ea0c93bd525b01d0f4a",
+      "timing": {
+        "mean_decision_latency_ms": 0.04878547042608261,
+        "mean_environment_latency_ms": 1.109948381781578
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "model",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/doom_basic-model-seed-10003.json",
+      "metrics": {
+        "steps": 12,
+        "stop_reason": "terminal",
+        "total_reward": 38.0,
+        "mean_decision_latency_ms": 58.65839263424277,
+        "engine_total_reward": 38.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "71231ddc9b28dd6d63ce8c9fb9a89225d97f5277880e8a852f40bc6e4cf1e773",
+      "timing": {
+        "mean_decision_latency_ms": 58.65839263424277,
+        "mean_environment_latency_ms": 1.7844359390437603
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "random",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/doom_basic-random-seed-10003.json",
+      "metrics": {
+        "steps": 2,
+        "stop_reason": "terminal",
+        "total_reward": 95.0,
+        "mean_decision_latency_ms": 0.014444813132286072,
+        "engine_total_reward": 95.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "71231ddc9b28dd6d63ce8c9fb9a89225d97f5277880e8a852f40bc6e4cf1e773",
+      "timing": {
+        "mean_decision_latency_ms": 0.014444813132286072,
+        "mean_environment_latency_ms": 1.2135915458202362
+      }
+    },
+    {
+      "game": "doom_basic",
+      "policy": "teacher",
+      "seed": 10003,
+      "valid": true,
+      "trace": "trajectories/doom_basic-teacher-seed-10003.json",
+      "metrics": {
+        "steps": 4,
+        "stop_reason": "terminal",
+        "total_reward": 87.0,
+        "mean_decision_latency_ms": 0.043095555156469345,
+        "engine_total_reward": 87.0,
+        "elapsed_tics": 0
+      },
+      "initial_state_sha256": "71231ddc9b28dd6d63ce8c9fb9a89225d97f5277880e8a852f40bc6e4cf1e773",
+      "timing": {
+        "mean_decision_latency_ms": 0.043095555156469345,
+        "mean_environment_latency_ms": 1.0343389585614204
+      }
+    }
+  ]
+}

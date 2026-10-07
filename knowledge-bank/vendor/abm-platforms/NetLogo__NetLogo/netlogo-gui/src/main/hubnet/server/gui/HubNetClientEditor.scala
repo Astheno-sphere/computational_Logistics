@@ -1,0 +1,136 @@
+// (C) Uri Wilensky. https://github.com/NetLogo/NetLogo
+
+package org.nlogo.hubnet.server.gui
+
+import java.awt.{ Component, Dimension }
+import java.awt.event.ActionEvent
+import javax.swing.{ AbstractAction, JFrame, ScrollPaneConstants }
+
+import org.nlogo.analytics.Analytics
+import org.nlogo.api.ModelType
+import org.nlogo.core.{ I18N, Widget => CoreWidget }
+import org.nlogo.swing.{ BoxAlign, BoxColumn, BoxRow, FocusRoot, MaximumHeight, Menu, MenuBar, NetLogoIcon, OptionPane,
+                         ScrollPane, UserAction, WindowAutomator, ZoomableBorder, ZoomableWindow }
+import org.nlogo.theme.{ InterfaceColors, ThemeSync }
+import org.nlogo.window.{ WidgetInfo, MenuBarFactory, InterfaceFactory, GUIWorkspace, AbstractWidgetPanel }
+
+class HubNetClientEditor(workspace: GUIWorkspace,
+                         linkParent: Component,
+                         iFactory: InterfaceFactory,
+                         menuFactory: MenuBarFactory) extends JFrame
+        with org.nlogo.window.Event.LinkChild
+        with FocusRoot
+        with ZoomableWindow(Option(workspace.getFrame))
+        with ThemeSync
+        with NetLogoIcon {
+  WindowAutomator.automate(this)
+  val interfacePanel: AbstractWidgetPanel = iFactory.widgetPanel(this, workspace, WidgetInfo.hubNetInfos)
+  private val scrollPane = new ScrollPane(interfacePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
+    setBorder(null)
+  }
+
+  private val toolbar = new BoxRow(interfacePanel.widgetControls, BoxAlign.Start) with MaximumHeight {
+    setOpaque(true)
+    setBorder(new ZoomableBorder(6, 0, 6, 0))
+  }
+
+  private val clientMenuBar = new MenuBar {
+    setFocusable(false)
+
+    add(menuFactory.createEditMenu).setFocusable(false)
+    add(new HubNetToolsMenu)
+    add(menuFactory.createZoomMenu).setFocusable(false)
+    add(menuFactory.createHelpMenu).setFocusable(false)
+  }
+
+  setTitle(getTitle(workspace.modelNameForDisplay, workspace.getModelDir, workspace.getModelType))
+
+  setContentPane(new BoxColumn(Seq(
+    toolbar,
+    scrollPane
+  )))
+
+  setJMenuBar(clientMenuBar)
+  setSize(getPreferredSize)
+  setCanFocus(false)
+
+  getRootPane.setFocusable(false)
+  getContentPane.setFocusable(false)
+
+  override def getDefaultComponent: Option[Component] =
+    Option(interfacePanel)
+
+  override def getFocusOrder: Map[Component, (Component, Component)] = {
+    ((interfacePanel -> (null, interfacePanel.widgetControls.widgetMenu)) +:
+     (interfacePanel.widgetControls.widgetMenu -> (interfacePanel, null)) +:
+     interfacePanel.widgetControls.toolButtons.map(_ -> (null, interfacePanel))).toMap
+  }
+
+  override def getPreferredSize = if (interfacePanel.empty) new Dimension(700, 550) else super.getPreferredSize
+  def getLinkParent = linkParent
+  def close(): Unit = {interfacePanel.removeAllWidgets()}
+  override def requestFocus(): Unit = {interfacePanel.requestFocus()}
+  def getWidgetsForSaving: Seq[CoreWidget] = interfacePanel.getWidgetsForSaving
+
+  def interfaceWidgets: Seq[CoreWidget] =
+    interfacePanel.getWidgetsForSaving
+
+  def load(widgets: Seq[CoreWidget]): Unit = {
+    interfacePanel.loadWidgets(widgets, false)
+    setSize(getPreferredSize)
+  }
+
+  def setTitle(title: String, directory: String, mt: ModelType): Unit = {setTitle(getTitle(title, directory, mt))}
+
+  private def getTitle (title:String, directory:String, mt: ModelType) = {
+    // on OS X, use standard window title format. otherwise use Windows convention
+    val t = if (!System.getProperty("os.name").startsWith("Mac")) {
+      title + " - " + I18N.gui.get("menu.tools.hubNetClientEditor")
+    } else {
+      // 8212 is the unicode value for an em dash. we use the number since
+      // we don't want non-ASCII characters in the source files -- AZS 6/14/2005
+      I18N.gui.get("menu.tools.hubNetClientEditor") + " " + 8212.toChar + " " + title
+    }
+    // OS X UI guidelines prohibit paths in title bars, but oh well...
+    if (mt == ModelType.Normal) t + " {" + directory + "}" else t
+  }
+
+  override def syncTheme(): Unit = {
+    toolbar.setBackground(InterfaceColors.toolbarBackground())
+    scrollPane.setBackground(InterfaceColors.interfaceBackground())
+
+    clientMenuBar.syncTheme()
+    interfacePanel.syncTheme()
+  }
+
+  override def setVisible(visible: Boolean): Unit = {
+    if (visible)
+      Analytics.hubNetEditorOpen()
+
+    super.setVisible(visible)
+  }
+
+  private class HubNetToolsMenu extends Menu(I18N.gui.get("menu.tools"), Menu.model) {
+    setMnemonic('T')
+    setFocusable(false)
+
+    offerAction(ConvertWidgetSizes)
+  }
+
+  private object ConvertWidgetSizes extends AbstractAction(I18N.gui.get("menu.tools.convertWidgetSizes"))
+                                    with UserAction.MenuAction {
+
+    override def actionPerformed(e: ActionEvent): Unit = {
+      if (new OptionPane(HubNetClientEditor.this, I18N.gui.get("menu.tools.convertWidgetSizes"),
+                         I18N.gui.get("menu.tools.convertWidgetSizes.prompt"),
+                         Seq(I18N.gui.get("menu.tools.convertWidgetSizes.resizeAndAdjust"),
+                             I18N.gui.get("common.buttons.cancel")),
+                         OptionPane.Icons.info).getSelectedIndex == 0) {
+        interfacePanel.convertWidgetSizes()
+
+        setSize(getPreferredSize)
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+@echo off
+
+setlocal ENABLEDELAYEDEXPANSION
+
+set BASE_DIR=%~dp0
+
+if defined JAVA_HOME (
+  set "JAVA=%JAVA_HOME%\bin\java.exe"
+) ELSE (
+  ECHO JAVA_HOME not defined, using java on PATH.
+  ECHO If you encounter errors, set JAVA_HOME or update your PATH to include java.exe.
+  set "JAVA=java.exe"
+)
+
+REM -Dfile.encoding=UTF-8         ensure Unicode characters in model files are compatible cross-platform
+REM -Dnetlogo.docs.dir=...        tell netlogo where to find the manual PDF
+REM -Dnetlogo.models.dir=...      tell netlogo where to find the library models
+REM -Dnetlogo.extensions.dir=...  tell netlogo where to find extensions
+
+SET "JVM_OPTS=-XX:MaxRAMPercentage=50 -Dfile.encoding=UTF-8 -Dnetlogo.docs.dir=^"%BASE_DIR%\" -Dnetlogo.models.dir=^"%BASE_DIR%\models^" -Dnetlogo.extensions.dir=^"%BASE_DIR%\extensions^" --add-exports=java.base/java.lang=ALL-UNNAMED --add-exports=java.desktop/sun.awt=ALL-UNNAMED --add-exports=java.desktop/sun.java2d=ALL-UNNAMED"
+
+set ARGS=
+
+REM Process the arguments, some of which should be passed as java parameters
+REM All other arguments will be passed to NetLogo as given to this script.
+
+FOR %%a IN (%*) DO (
+  SET "ARG=%%a"
+  IF "!ARG!" == "--3D" (
+    SET "JVM_OPTS=!JVM_OPTS! -Dorg.nlogo.is3d=true"
+  ) ELSE (
+    IF "!ARG:~0,2!" == "-D" (
+      SET "JVM_OPTS=!JVM_OPTS! !ARG!"
+    ) ELSE (
+      SET "ARGS=!ARGS! !ARG!"
+    )
+  )
+)
+
+REM the NetLogo jar specifies other dependencies within its included classpath
+
+SET "ABSOLUTE_CLASSPATH=%BASE_DIR%{{{netlogoJar}}}"
+
+REM -classpath ....               specify jars
+REM org.nlogo.headless.Main       specify we want headless, not GUI
+REM org.nlogo.app.App             specify we want GUI, not headless
+
+"%JAVA%" %JVM_OPTS% -classpath "%ABSOLUTE_CLASSPATH%" {{{mainClass}}} %ARGS%

@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "dataset": "workflow-controls-v1",
+  "groups_per_workflow": 250,
+  "seed": 42,
+  "summary": {
+    "records": 31500,
+    "groups": 1000,
+    "unique_inputs": 29832,
+    "splits": {
+      "calibration": 1785,
+      "ood": 3150,
+      "test": 3069,
+      "train": 22416,
+      "validation": 1080
+    },
+    "kinds": {
+      "noul": 31500
+    },
+    "families": {
+      "policy": 31500
+    },
+    "sources": {
+      "workflow-controls-v1/agent_trace_observability": 5250,
+      "workflow-controls-v1/customer_service": 6000,
+      "workflow-controls-v1/invoice_processing": 7500,
+      "workflow-controls-v1/security_incidents": 12750
+    }
+  },
+  "workflow_cases": 3000,
+  "files_sha256": {
+    "train.jsonl": "0144de7c99af670ab3107b15d6abdf1ee2170ff652377208b6e432bf02134e6a",
+    "calibration.jsonl": "04570c3cab3cccb0fab92abe6d0833f7499d90ecf35d610092438b8fe0389f1a",
+    "validation.jsonl": "cdbf7fb55b04aebfdcb4bbe949895ec98f166f921da258ff072ddf4e5e58cdf9",
+    "test.jsonl": "c2c18d0081a7eeac36d88cc2bc5caadb675db4ca52dba21d7f2daaaaaeffcb1c",
+    "ood.jsonl": "5b85328e07ea28f3cb3a5566748ff4738b8a311d5c2edde0b3d054ad36a355d3",
+    "workflow_cases.jsonl": "79c18d40beca726e977b220a9c613c940351d5c715322a5643563b2a089c6778"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "positive_action_counts": {
+    "agent_trace_observability/AUTO-CLOSE": 35,
+    "agent_trace_observability/COUNT ONLY": 34,
+    "agent_trace_observability/FILE ISSUE · ROUTE": 36,
+    "agent_trace_observability/HUMAN REVIEW": 37,
+    "agent_trace_observability/NOT A BUG": 36,
+    "agent_trace_observability/PAGE ON-CALL": 535,
+    "agent_trace_observability/PRIORITY REVIEW": 37,
+    "customer_service/CANCEL": 21,
+    "customer_service/CLOSE": 63,
+    "customer_service/FLAG FOR REVIEW": 123,
+    "customer_service/FREEZE CARD": 21,
+    "customer_service/HAND OFF": 354,
+    "customer_service/REFUND": 42,
+    "customer_service/SAY": 624,
+    "customer_service/SET INTENT": 501,
+    "invoice_processing/DISPUTE LINES": 100,
+    "invoice_processing/DUPLICATE": 300,
+    "invoice_processing/FRAUD REVIEW": 75,
+    "invoice_processing/HOLD": 675,
+    "invoice_processing/HOLD FOR DOCUMENTS": 150,
+    "invoice_processing/PAY": 25,
+    "invoice_processing/REQUEST CORRECTED INVOICE": 75,
+    "invoice_processing/ROUTE FOR APPROVAL": 175,
+    "invoice_processing/SCHEDULE": 25,
+    "invoice_processing/SHORT PAY": 25,
+    "security_incidents/AUTO CLOSE": 22,
+    "security_incidents/BLOCK DESTINATION": 14,
+    "security_incidents/BLOCK EGRESS ASSET": 15,
+    "security_incidents/BLOCK SENDER": 18,
+    "security_incidents/DISABLE ACCOUNT": 16,
+    "security_incidents/ESCALATE TIER2": 50,
+    "security_incidents/ESCALATE URGENT": 439,
+    "security_incidents/ISOLATE HOST": 15,
+    "security_incidents/KILL PROCESS": 14,
+    "security_incidents/NOTIFY USER": 36,
+    "security_incidents/PURGE MAILBOXES": 17,
+    "security_incidents/QUARANTINE FILE": 13,
+    "security_incidents/QUARANTINE MESSAGE": 16,
+    "security_incidents/REMOVE FORWARDING RULES": 12,
+    "security_incidents/REQUIRE REAUTH": 18,
+    "security_incidents/REVOKE ACCESS KEY": 17,
+    "security_incidents/REVOKE SESSIONS": 18
+  },
+  "sources": {
+    "customer_service": "https://evals.typesafe.ai/customer_service",
+    "security_incidents": "https://evals.typesafe.ai/security_incidents",
+    "agent_trace_observability": "https://evals.typesafe.ai/agent_trace_observability",
+    "invoice_processing": "https://evals.typesafe.ai/invoice_processing"
+  },
+  "official_examples_used": 0,
+  "limits": "Local deterministic synthetic policy labels. OOD changes numeric ranges, entity IDs and customer wording, not real traffic. No learned quality claim."
+}

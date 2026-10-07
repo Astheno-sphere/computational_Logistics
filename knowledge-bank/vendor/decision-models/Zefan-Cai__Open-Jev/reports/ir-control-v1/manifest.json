@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "ir-control-v1",
+    "groups": 200,
+    "ood_groups": 40,
+    "ood_assignment": "index_mod_10_greater_or_equal_8",
+    "seed": 42,
+    "license": "CC0-1.0",
+    "split_policy": "whole_system_family_all_query_mode_counterfactuals_and_passages; reserved_brief_wording_ood",
+    "source_interface": "https://github.com/ielab/llm-rankers/blob/ac843ed63a302900d76722b83be926fdb84a3936/jev/jev_rankers.py",
+    "source_code_or_examples_imported": false,
+    "generator_sha256": "c615f711e57ccf5488468de3aa649447c2bc8d4c884e4aa42c820459b9b781d0"
+  },
+  "summary": {
+    "records": 11600,
+    "groups": 200,
+    "unique_inputs": 11600,
+    "splits": {
+      "calibration": 464,
+      "ood": 2320,
+      "test": 986,
+      "train": 7366,
+      "validation": 464
+    },
+    "kinds": {
+      "choice": 2000,
+      "noul": 3200,
+      "score": 6400
+    },
+    "families": {
+      "evidence": 11600
+    },
+    "sources": {
+      "ir-control-v1": 11600
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "6d33876576fb7989abbf9edcd878074f4da7d4f502d770d110a848bbe259541d",
+    "calibration.jsonl": "7ad15592ec8b1d2e6c2d819fb186dc2dec47f8ed9214072f6f45452be7194e61",
+    "validation.jsonl": "0ecbe867ae894a83101805328be1b1d983cc210fb624fa78d2aedd59f8b702ec",
+    "test.jsonl": "97637e12062c98447b49cfa8cc9669e86525dce0078657a08fd9f1b54e5e2869",
+    "ood.jsonl": "fa6332b13395ef37ab4c88e4c5888201f8c814fdd26d387bc5684e7bf410076b",
+    "queries.jsonl": "7b5531d2efc5a650cf240fc57156774dc556b23d300d1d48a5302d7b046ee106",
+    "cases.jsonl": "2261aea158332b8831a5bd8547bc39cb178671ebc5685a4ecfe8360fdaa6f492"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "query_count": 400,
+  "request_case_count": 8800,
+  "request_methods": {
+    "pointwise_noul": 3200,
+    "pointwise_score": 3200,
+    "pairwise": 800,
+    "setwise": 800,
+    "listwise_choice": 400,
+    "listwise_score": 400
+  },
+  "relevance_counts": {
+    "3": 400,
+    "1": 1600,
+    "2": 400,
+    "0": 800
+  },
+  "training_performed": false,
+  "model_inference_performed": false,
+  "external_trec_downloaded": false,
+  "external_trec_evaluated": false,
+  "scope": "Original finite graded-relevance controls; query families and counterfactuals are correlated. Not a TREC reproduction.",
+  "target_semantics": "Score: four-level hard grade. Noul: both requested current values are supplied. Choice: uniform over equally best passages; not measured model uncertainty or full ranking supervision."
+}

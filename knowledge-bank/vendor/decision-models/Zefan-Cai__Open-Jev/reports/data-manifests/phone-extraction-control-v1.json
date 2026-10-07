@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "phone-extraction-control-v1",
+    "groups": 200,
+    "ood_groups": 40,
+    "seed": 42,
+    "license": "CC0-1.0",
+    "split_policy": "complete_document_family_same_split; hash_id_splits; message_layout_and_role_labels_reserved_ood",
+    "library_version": "9.0.14",
+    "candidate_extractor": {
+      "pattern": "(?<![\\w+])\\+?[0-9](?:[0-9 ()\\t.\\-]*[0-9])?(?!\\w)",
+      "minimum_ascii_digits": 7,
+      "reads_query_or_gold": false,
+      "offset_unit": "Python Unicode characters",
+      "known_limits": "Extensions, outer parentheses and Unicode separators may produce partial/missed candidates, retained without repair."
+    },
+    "source_files_sha256": {
+      "case_phone_extraction.py": "4b9cb3b196733603a8f0e57d797c9fc5affe9c39a45cf30c015a6ad454ccfa6d",
+      "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+    }
+  },
+  "summary": {
+    "records": 19000,
+    "groups": 200,
+    "unique_inputs": 19000,
+    "splits": {
+      "calibration": 855,
+      "ood": 3800,
+      "test": 1615,
+      "train": 12350,
+      "validation": 380
+    },
+    "kinds": {
+      "choice": 15000,
+      "noul": 4000
+    },
+    "families": {
+      "evidence": 19000
+    },
+    "sources": {
+      "phone-extraction-control-v1": 19000
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "407bd4c4d0b9e703d83e2db6327acb2604f032188a0535578bce7d9d4688859e",
+    "calibration.jsonl": "48a9d3aa1da99f6a8794e5a139e9b3d3a2b6f127edfab478e2f00d2d6c119dca",
+    "validation.jsonl": "7a078bb9b2bd0b4c58858ace347ad4a9c513122b628799193c1214b5ff6ff395",
+    "test.jsonl": "dfc1180917d4c8717bc15c5c2162e2dbea24172158d593b062c8cb5eb1360903",
+    "ood.jsonl": "576fb66309089809a4646aeb88e3cc3d187c42498eb6d564c9bc79cad730f88b",
+    "families.jsonl": "ec222bf059005230d810c2d093d7963c9773b306ebdd62a255833ae007af1bc2",
+    "cases.jsonl": "d4112d1832307d03f802aa3f307a592b0b066c2d8a6e9226e5a99b488c73ca79"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "family_count": 200,
+  "document_count": 4000,
+  "typed_record_count": 19000,
+  "candidate_count": 11200,
+  "head_counts": {
+    "selection/span": 3800,
+    "selection/target_present": 4000,
+    "attributes/region": 11200
+  },
+  "selection_reference_counts": {
+    "recalled": 2600,
+    "target_absent": 600,
+    "ambiguous_target": 200,
+    "candidate_miss": 600
+  },
+  "candidate_recall": {
+    "denominator": "documents with exactly one populated requested-role field",
+    "recalled": 2600,
+    "missed": 600,
+    "eligible": 3200,
+    "rate": 0.8125,
+    "ambiguous_documents_excluded": 200,
+    "absent_documents_excluded": 600
+  },
+  "attribute_reference_counts": {
+    "region": {
+      "US": 2997,
+      "GB": 3007,
+      "CA": 2996,
+      "unknown": 400,
+      "review": 1800
+    },
+    "normalized_status": {
+      "formatted": 9000,
+      "review": 2200
+    },
+    "formatted_but_metadata_invalid": 3007
+  },
+  "omitted_supervision_counts": {
+    "forced_single_candidate": 200
+  },
+  "observed_order_diversity": {
+    "field_order_count": 20,
+    "recalled_target_candidate_ids": {
+      "span_0": 778,
+      "span_1": 897,
+      "span_2": 861,
+      "span_3": 64
+    },
+    "ordering_rule": "One shuffle of complete fields using opaque document nonce; no target/label-dependent order selection."
+  },
+  "counts": {
+    "train": 12350,
+    "calibration": 855,
+    "validation": 380,
+    "test": 1615,
+    "ood": 3800
+  },
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false,
+  "conditional_attributes_note": "B covers all actual candidates including distractors and partials; reference-candidate results are not end-to-end model metrics."
+}

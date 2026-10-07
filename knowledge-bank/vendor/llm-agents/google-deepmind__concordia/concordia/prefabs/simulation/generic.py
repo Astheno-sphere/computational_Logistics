@@ -1,0 +1,726 @@
+# Copyright 2025 DeepMind Technologies Limited.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Adaptable simulation prefab that can be configured to run any simulation."""
+
+from collections.abc import Callable, Mapping
+import copy
+import functools
+import inspect
+import json
+import os
+from typing import Any
+
+from absl import logging
+from concordia.associative_memory import basic_associative_memory as associative_memory
+from concordia.environment import engine as engine_lib
+from concordia.environment import step_controller as step_controller_lib
+from concordia.environment.engines import sequential
+from concordia.language_model import language_model
+from concordia.typing import entity as entity_lib
+from concordia.typing import entity_component
+from concordia.typing import prefab as prefab_lib
+from concordia.typing import simulation as simulation_lib
+from concordia.utils import structured_logging
+import numpy as np
+
+Config = prefab_lib.Config
+Role = prefab_lib.Role
+
+
+class Simulation(simulation_lib.Simulation):
+  """Define the simulation API object."""
+
+  def __init__(
+      self,
+      config: Config,
+      model: language_model.LanguageModel,
+      embedder: Callable[[str], np.ndarray],
+      engine: engine_lib.Engine = sequential.Sequential(),
+      override_agent_model: language_model.LanguageModel | None = None,
+      override_game_master_model: language_model.LanguageModel | None = None,
+  ):
+    """Initialize the simulation object.
+
+    This simulation differentiates between game masters and entities. Game
+    masters are responsible for creating the world state and resolving events.
+    Entities are passive agents that react to the world state. Game masters are
+    a kind of entity and both are interchangeable once instantiated. However,
+    there is one critical difference in how they are configured which we
+    implement here in this file. The difference is that game masters are
+    configured with references to all entities, but entities are never
+    given references to other entities or game masters.
+
+    Args:
+      config: the config to use.
+      model: the default language model to use.
+      embedder: the sentence transformer to use.
+      engine: the engine to use, defaults to sequential.Sequential().
+      override_agent_model: optional model to use for agents/entities instead of
+        the default model. Useful for using pretrained models for agents.
+      override_game_master_model: optional model to use for game masters instead
+        of the default model.
+    """
+    self._config = config
+    self._model = model
+    self._agent_model = override_agent_model if override_agent_model else model
+    self._game_master_model = (
+        override_game_master_model if override_game_master_model else model
+    )
+    self._embedder = embedder
+    self._engine = engine
+    self.game_masters = []
+    self.entities = []
+    self._raw_log = []
+    self._entity_to_prefab_config: dict[str, prefab_lib.InstanceConfig] = {}
+    self._checkpoints_path = None
+    self._checkpoint_counter = 0
+
+    # All game masters share the same memory bank.
+    # allow_duplicates=True because the same action (e.g., "Bob: defect") may
+    # recur across different rounds and should not be deduplicated.
+    self.game_master_memory_bank = associative_memory.AssociativeMemoryBank(
+        sentence_embedder=embedder,
+        allow_duplicates=True,
+    )
+    all_data = self._config.instances
+    gm_configs = [
+        entity_cfg
+        for entity_cfg in all_data
+        if entity_cfg.role == Role.GAME_MASTER
+    ]
+    entities_configs = [
+        entity_cfg for entity_cfg in all_data if entity_cfg.role == Role.ENTITY
+    ]
+    initializer_configs = [
+        entity_cfg
+        for entity_cfg in all_data
+        if entity_cfg.role == Role.INITIALIZER
+    ]
+
+    for entity_config in entities_configs:
+      self.add_entity(entity_config)
+
+    for gm_config in initializer_configs + gm_configs:
+      self.add_game_master(gm_config)
+
+  def get_raw_log(self) -> list[Mapping[str, Any]]:
+    """Get the raw log of the simulation."""
+    return copy.deepcopy(self._raw_log)
+
+  def get_entity_prefab_config(
+      self, entity_name: str
+  ) -> prefab_lib.InstanceConfig | None:
+    """Get the prefab config for a given entity name."""
+    return self._entity_to_prefab_config.get(entity_name)
+
+  def get_game_masters(self) -> list[entity_lib.Entity]:
+    """Get the game masters.
+
+    The function returns a copy of the game masters list to avoid modifying the
+    original list. However, the game masters are not deep copied, so changes
+    to the game masters will be reflected in the simulation.
+
+    Returns:
+      A list of game master entities.
+    """
+    return copy.copy(self.game_masters)
+
+  def get_entities(self) -> list[entity_lib.Entity]:
+    """Get the entities.
+
+    The function returns a copy of the entities list to avoid modifying the
+    original list. However, the entities are not deep copied, so changes
+    to the entities will be reflected in the simulation.
+
+    Returns:
+      A list of entities.
+    """
+    return copy.copy(self.entities)
+
+  def add_game_master(  # pyrefly: ignore[bad-override]
+      self,
+      instance_config: prefab_lib.InstanceConfig,
+      state: entity_component.EntityState | None = None,
+  ):
+    """Add a game master to the simulation."""
+    if instance_config.role not in [Role.GAME_MASTER, Role.INITIALIZER]:
+      raise ValueError(
+          "Instance config role must be GAME_MASTER or INITIALIZER"
+      )
+
+    game_master_prefab = copy.deepcopy(
+        self._config.prefabs[instance_config.prefab]
+    )
+    game_master_prefab.params = instance_config.params
+    game_master_prefab.entities = self.entities
+    game_master = game_master_prefab.build(
+        model=self._game_master_model, memory_bank=self.game_master_memory_bank
+    )
+
+    if any(gm.name == game_master.name for gm in self.game_masters):
+      logging.info("Game master %s already exists.", game_master.name)
+      return
+
+    if state:
+      game_master.set_state(state)
+
+    self._entity_to_prefab_config[game_master.name] = instance_config
+
+    self.game_masters.append(game_master)
+
+  def add_entity(  # pyrefly: ignore[bad-override]
+      self,
+      instance_config: prefab_lib.InstanceConfig,
+      state: entity_component.EntityState | None = None,
+  ):
+    """Add an entity to the simulation."""
+    if instance_config.role != Role.ENTITY:
+      raise ValueError("Instance config role must be ENTITY")
+
+    entity_prefab = copy.deepcopy(self._config.prefabs[instance_config.prefab])
+    entity_prefab.params = instance_config.params
+
+    memory_bank = associative_memory.AssociativeMemoryBank(
+        sentence_embedder=self._embedder,
+    )
+    entity = entity_prefab.build(
+        model=self._agent_model, memory_bank=memory_bank
+    )
+
+    if any(e.name == entity.name for e in self.entities):
+      logging.info("Entity %s already exists.", entity.name)
+      return
+
+    # Check if a pre-loaded memory state was passed in the entity's params.
+    memory_state = instance_config.params.get("memory_state")
+    if memory_state:
+      logging.info(
+          "Found pre-loaded memory state for %s. Setting it.", entity.name
+      )
+      try:
+        memory_component = entity.get_component("__memory__")
+        memory_component.set_state(memory_state)  # pyrefly: ignore[bad-argument-type]
+        logging.info(
+            "Successfully set pre-loaded memories for %s.", entity.name
+        )
+      except (KeyError, TypeError, ValueError) as e:
+        logging.error(
+            "Error setting pre-loaded memory for %s: %s", entity.name, e
+        )
+        raise
+
+    if state:
+      entity.set_state(state)
+
+    self.entities.append(entity)
+    self._entity_to_prefab_config[entity.name] = instance_config
+
+    # Update game masters to be aware of the new entity
+    for game_master in self.game_masters:
+      if hasattr(game_master, "entities"):
+        game_master.entities = self.entities
+
+  def play(
+      self,
+      premise: str | None = None,
+      max_steps: int | None = None,
+      raw_log: list[Mapping[str, Any]] | None = None,
+      get_state_callback: Callable[[dict[str, Any]], None] | None = None,
+      checkpoint_path: str | None = None,
+      step_controller: step_controller_lib.StepController | None = None,
+      step_callback: (
+          Callable[[step_controller_lib.StepData], None] | None
+      ) = None,
+  ) -> structured_logging.SimulationLog:
+    """Run the simulation.
+
+    Args:
+      premise: A string to use as the initial premise of the simulation.
+      max_steps: The maximum number of steps to run the simulation for.
+      raw_log: A list to store the raw log of the simulation. This is used to
+        generate the HTML log. Data in the supplied raw_log will be appended
+        with the log from the simulation. If None, a new list is created.
+      get_state_callback: A callback to be called when saving a checkpoint. This
+        callback is called with a dictionary containing the current state of all
+        entities and game masters.
+      checkpoint_path: The path to save the checkpoints. If None, no checkpoints
+        are saved.
+      step_controller: Optional step controller for step-by-step control.
+      step_callback: Optional callback called after each step completes.
+
+    Returns:
+      SimulationLog object with structured data. Use .to_html() for HTML output
+      or .to_json() for JSON serialization.
+    """
+    if premise is None:
+      premise = self._config.default_premise
+    if max_steps is None:
+      max_steps = self._config.default_max_steps
+
+    if raw_log is None:
+      raw_log = self._raw_log
+    else:
+      self._raw_log = raw_log
+
+    self._get_state_callback = get_state_callback
+
+    if checkpoint_path or get_state_callback:
+      checkpoint_callback = functools.partial(
+          self.save_checkpoint,
+          checkpoint_path=checkpoint_path,  # pyrefly: ignore[bad-argument-type]
+      )
+    else:
+      checkpoint_callback = None
+
+    # Ensure game masters are ordered Initializers first
+    initializers = [
+        gm
+        for gm in self.game_masters
+        if self._entity_to_prefab_config[gm.name].role == Role.INITIALIZER
+    ]
+    other_gms = [
+        gm
+        for gm in self.game_masters
+        if self._entity_to_prefab_config[gm.name].role == Role.GAME_MASTER
+    ]
+    sorted_game_masters = initializers + other_gms
+
+    callback = step_callback
+    if step_controller is not None:
+
+      def completed_step(data):
+        try:
+          if step_callback is not None:
+            step_callback(data)
+        finally:
+          step_controller.complete_step()
+
+      callback = completed_step
+
+    self._engine.run_loop(
+        game_masters=sorted_game_masters,
+        entities=self.entities,
+        premise=premise,
+        max_steps=max_steps,
+        verbose=True,
+        log=raw_log,
+        checkpoint_callback=checkpoint_callback,
+        step_controller=step_controller,
+        step_callback=callback,
+    )
+
+    # Build and return structured log
+    simulation_log = structured_logging.SimulationLog.from_raw_log(raw_log)
+    entity_memories: dict[str, list[str]] = {}
+    for player in self.entities:
+      if (
+          not isinstance(player, entity_component.EntityWithComponents)
+          or player.get_component("__memory__") is None
+      ):
+        continue
+      entity_memory_component = player.get_component("__memory__")
+      entity_memories[player.name] = (
+          entity_memory_component.get_all_memories_as_text()  # pyrefly: ignore[missing-attribute]
+      )
+
+    game_master_memories = (
+        self.game_master_memory_bank.get_all_memories_as_text()
+    )
+
+    simulation_log.attach_memories(
+        entity_memories=entity_memories,
+        game_master_memories=game_master_memories,
+    )
+
+    return simulation_log
+
+  def make_checkpoint_data(self) -> dict[str, Any]:
+    """Helper to create a checkpoint data dict."""
+
+    checkpoint_data = {
+        "engine": {
+            "name": type(self._engine).__name__,
+            "module": type(self._engine).__module__,
+        },
+        "entities": {},
+        "game_masters": {},
+        "raw_log": copy.deepcopy(self._raw_log),
+        "checkpoint_counter": self._checkpoint_counter,
+    }
+
+    # Save entities
+    for entity in self.entities:
+      if not isinstance(entity, entity_component.EntityWithComponents):
+        continue
+      prefab_config = self.get_entity_prefab_config(entity.name)
+      if not prefab_config:
+        logging.warning("Prefab config not found for entity %s", entity.name)
+        continue
+      entity_state = entity.get_state()
+      save_data = {
+          "prefab_type": prefab_config.prefab,
+          "entity_params": self._make_json_serializable(prefab_config.params),
+          "components": self._make_json_serializable(entity_state),
+          "component_info": self._extract_component_info(entity),
+      }
+      checkpoint_data["entities"][entity.name] = save_data
+
+    # Save game masters
+    for gm in self.game_masters:
+      if not isinstance(gm, entity_component.EntityWithComponents):
+        continue
+      prefab_config = self.get_entity_prefab_config(gm.name)
+      if not prefab_config:
+        logging.warning("Prefab config not found for game master %s", gm.name)
+        continue
+      gm_state = gm.get_state()
+      save_data = {
+          "prefab_type": prefab_config.prefab,
+          "entity_params": self._make_json_serializable(prefab_config.params),
+          "role": self._entity_to_prefab_config[gm.name].role.name,
+          "components": self._make_json_serializable(gm_state),
+          "component_info": self._extract_component_info(gm),
+      }
+      checkpoint_data["game_masters"][gm.name] = save_data
+
+    self._checkpoint_counter += 1
+
+    return checkpoint_data
+
+  def _make_json_serializable(self, obj: Any) -> Any:
+    """Recursively convert an object to be JSON serializable.
+
+    Non-serializable values are skipped rather than converted.
+
+    Args:
+      obj: The object to convert.
+
+    Returns:
+      A JSON-serializable version of the object, or None if not serializable.
+    """
+    if obj is None or isinstance(obj, (str, int, float, bool)):
+      return obj
+    if isinstance(obj, dict):
+      result = {}
+      for k, v in obj.items():
+        serialized = self._make_json_serializable(v)
+        if serialized is not None or v is None:
+          result[k] = serialized
+      return result
+    if isinstance(obj, (list, tuple)):
+      return [self._make_json_serializable(item) for item in obj]
+    return None
+
+  @staticmethod
+  def _constructor_parameters(component: Any) -> list[dict[str, Any]]:
+    """Describe a component class's constructor parameters for inspection.
+
+    Defaults are included when they are JSON scalars or short JSON values;
+    other defaults (objects, callables) are summarized by their type name.
+
+    Args:
+      component: A constructed component.
+
+    Returns:
+      One record per parameter with its name, whether it is required, its
+      annotation and its default when one exists.
+    """
+    try:
+      signature = inspect.signature(type(component).__init__)
+    except (TypeError, ValueError):
+      return []
+    parameters = []
+    for parameter in list(signature.parameters.values())[1:]:
+      if parameter.kind in (parameter.VAR_POSITIONAL, parameter.VAR_KEYWORD):
+        continue
+      record: dict[str, Any] = {
+          "name": parameter.name,
+          "required": parameter.default is inspect.Parameter.empty,
+      }
+      if parameter.annotation is not inspect.Parameter.empty:
+        annotation = parameter.annotation
+        record["annotation"] = (
+            annotation
+            if isinstance(annotation, str)
+            else getattr(annotation, "__name__", None) or str(annotation)
+        ).replace("typing.", "")
+      if parameter.default is not inspect.Parameter.empty:
+        default = parameter.default
+        try:
+          text = json.dumps(default, allow_nan=False)
+          record["default"] = (
+              default if len(text) <= 200 else text[:197] + "..."
+          )
+        except (TypeError, ValueError):
+          record["default_type"] = type(default).__name__
+      parameters.append(record)
+    return parameters
+
+  def _extract_component_info(
+      self, entity: entity_component.EntityWithComponents
+  ) -> dict[str, Any]:
+    """Extract component class names and metadata from an entity.
+
+    This provides structural information about the entity's components
+    that can be used by visualization tools.
+
+    Args:
+      entity: The entity to extract component info from.
+
+    Returns:
+      A dictionary with component metadata including class names.
+    """
+    info: dict[str, Any] = {}
+
+    # Try to access EntityAgent internals if available
+    # These are implementation details but useful for visualization
+    if hasattr(entity, "_act_component"):
+      act_comp = getattr(entity, "_act_component")
+      info["act_component"] = {
+          "class_name": type(act_comp).__name__,
+          "module": type(act_comp).__module__,
+          "parameters": self._constructor_parameters(act_comp),
+      }
+
+    if hasattr(entity, "_context_components"):
+      ctx_comps = getattr(entity, "_context_components")
+      info["context_components"] = {}
+      for comp_name, comp in ctx_comps.items():
+        comp_info = {
+            "class_name": type(comp).__name__,
+            "module": type(comp).__module__,
+            "parameters": self._constructor_parameters(comp),
+        }
+        if hasattr(comp, "get_state"):
+          try:
+            raw_state = comp.get_state()
+            comp_info["state"] = self._make_json_serializable(raw_state)
+          except (TypeError, ValueError, AttributeError):
+            comp_info["state"] = {}  # pyrefly: ignore[bad-assignment]
+        if hasattr(comp, "get_dynamic_state"):
+          try:
+            dynamic = comp.get_dynamic_state()
+            json.dumps(dynamic, allow_nan=False)
+            comp_info["dynamic_state"] = copy.deepcopy(dynamic)
+          except (TypeError, ValueError, AttributeError):
+            comp_info["dynamic_state"] = {}  # pyrefly: ignore[bad-assignment]
+        info["context_components"][comp_name] = comp_info
+
+    return info
+
+  def set_component_dynamic_state(
+      self,
+      entity_name: str,
+      component_name: str,
+      key: str,
+      value: Any,
+  ) -> None:
+    """Set a dynamic state variable on a component.
+
+    This validates that the key is declared as dynamic by the component's
+    get_dynamic_state method, then applies the change by patching the
+    full state via get_state/set_state.
+
+    Args:
+      entity_name: The name of the entity owning the component.
+      component_name: The name of the context component to modify.
+      key: The state key to modify (must be in get_dynamic_state()).
+      value: The new value for the key.
+
+    Raises:
+      KeyError: If the entity, component, or key is not found.
+      ValueError: If the key is not declared as dynamic.
+    """
+    target_entity = None
+    for e in self.entities:
+      if e.name == entity_name:
+        target_entity = e
+        break
+    if target_entity is None:
+      for gm in self.game_masters:
+        if gm.name == entity_name:
+          target_entity = gm
+          break
+    if target_entity is None:
+      raise KeyError(f"Entity '{entity_name}' not found.")
+
+    if not isinstance(target_entity, entity_component.EntityWithComponents):
+      raise TypeError(f"Entity '{entity_name}' does not support components.")
+
+    try:
+      component = target_entity.get_component(component_name)
+    except KeyError as exc:
+      raise KeyError(
+          f"Component '{component_name}' not found on entity '{entity_name}'."
+      ) from exc
+
+    dynamic_state = component.get_dynamic_state()
+    if key not in dynamic_state:
+      raise ValueError(
+          f"Key '{key}' is not a dynamic state variable of component "
+          f"'{component_name}'. Dynamic keys: {list(dynamic_state.keys())}"
+      )
+
+    current_state = dict(component.get_state())
+    current_state[key] = value
+    component.set_state(current_state)
+    logging.info(
+        "Updated dynamic state: entity=%s, component=%s, key=%s",
+        entity_name,
+        component_name,
+        key,
+    )
+
+  def save_checkpoint(self, step: int, checkpoint_path: str):
+    """Saves the state of all entities at the current step."""
+    if not checkpoint_path and not self._get_state_callback:
+      return
+
+    checkpoint_data = self.make_checkpoint_data()
+
+    if self._get_state_callback:
+      self._get_state_callback(checkpoint_data)
+
+    if not checkpoint_path:
+      return
+
+    os.makedirs(checkpoint_path, exist_ok=True)
+    checkpoint_file = os.path.join(
+        checkpoint_path, f"step_{step}_checkpoint.json"
+    )
+    try:
+      with open(checkpoint_file, "w") as f:
+        json.dump(checkpoint_data, f, indent=2)
+      logging.info("Step %s: Saved checkpoint to %s", step, checkpoint_file)
+    except IOError as e:
+      logging.error("Error saving checkpoint at step %s: %s", step, e)
+
+  def load_from_checkpoint(
+      self,
+      checkpoint: dict[str, Any],
+  ):
+    """Loads entity and game master states from an owned checkpoint copy.
+
+    Component setters may retain nested mutable state, and parameter fallback
+    may modify dictionaries. Keep both isolated from the caller and other
+    restores of the same checkpoint. This does not restore engine cursors or
+    make arbitrary components, shared external services or models deterministic.
+
+    Args:
+      checkpoint: the checkpoint data to restore from. A deep copy is taken, so
+        the caller's dictionary is never mutated.
+    """
+    checkpoint = copy.deepcopy(checkpoint)
+
+    # Load entities
+    entity_states = checkpoint.get("entities", {})
+    for entity_name, state in entity_states.items():
+      self._load_entity_from_state(entity_name, state, Role.ENTITY)
+
+    # Load game masters
+    gm_states = checkpoint.get("game_masters", {})
+    for gm_name, state in gm_states.items():
+      role_name = state.get("role")
+      try:
+        role = (
+            Role[role_name]
+            if role_name in Role.__members__
+            else Role.GAME_MASTER
+        )
+      except KeyError:
+        logging.warning(
+            "Invalid role %s for %s, using GAME_MASTER.", role_name, gm_name
+        )
+        role = Role.GAME_MASTER
+      self._load_entity_from_state(gm_name, state, role)
+
+    # Important: Update game masters to be aware of any new entities
+    for game_master in self.game_masters:
+      if hasattr(game_master, "entities"):
+        game_master.entities = self.entities
+
+    self._checkpoint_counter = checkpoint.get("checkpoint_counter", 0)
+
+    # Update raw log
+    self._raw_log = checkpoint.get("raw_log", [])
+
+  def _load_entity_from_state(
+      self,
+      entity_name: str,
+      state: dict[str, Any],
+      default_role: Role,
+  ):
+    """Helper to load a single entity or game master from state."""
+    prefab_type = state.get("prefab_type")
+    entity_params = state.get("entity_params")
+    entity_components_state = state.get("components")
+
+    if not isinstance(prefab_type, str):
+      logging.warning("Prefab type is not a string for %s.", entity_name)
+      return
+    if not prefab_type or prefab_type not in self._config.prefabs:
+      logging.warning(
+          "Prefab type %s not found for %s.", prefab_type, entity_name
+      )
+      return
+    if entity_params is None or entity_components_state is None:
+      logging.warning("Missing params or components state for %s.", entity_name)
+      return
+
+    original_instance = next(
+        (
+            instance_config
+            for instance_config in self._config.instances
+            if instance_config.params.get("name") == entity_name
+        ),
+        None,
+    )
+    if original_instance:
+      for key, value in original_instance.params.items():
+        if key not in entity_params:
+          entity_params[key] = value
+
+    instance_config = prefab_lib.InstanceConfig(
+        prefab=prefab_type,
+        role=default_role,
+        params=entity_params,
+    )
+
+    if default_role == Role.ENTITY:
+      existing_entity = next(
+          (e for e in self.entities if e.name == entity_name), None
+      )
+      if existing_entity:
+        if isinstance(existing_entity, entity_component.EntityWithComponents):
+          logging.info(
+              "Updating existing entity %s from checkpoint.", entity_name
+          )
+          existing_entity.set_state(entity_components_state)
+      else:
+        logging.info("Adding new entity %s from checkpoint.", entity_name)
+        self.add_entity(instance_config, state=entity_components_state)
+    elif default_role in [Role.GAME_MASTER, Role.INITIALIZER]:
+      existing_gm = next(
+          (gm for gm in self.game_masters if gm.name == entity_name), None
+      )
+      if existing_gm:
+        if isinstance(existing_gm, entity_component.EntityWithComponents):
+          logging.info(
+              "Updating existing game master %s from checkpoint.", entity_name
+          )
+          existing_gm.set_state(entity_components_state)
+      else:
+        logging.info("Adding new game master %s from checkpoint.", entity_name)
+        self.add_game_master(instance_config, state=entity_components_state)

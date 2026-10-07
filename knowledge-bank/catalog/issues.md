@@ -5,12 +5,13 @@
 - `vendor/harvested-environment-and-nature/Zhonghao1995__agentic-swmm-workflow/skills/swmm-plot/SKILL.md`: bad YAML: mapping values are not allowed here
 - `vendor/harvested-environment-and-nature/Zhonghao1995__agentic-swmm-workflow/skills/swmm-plot/SKILL.md`: skill has no description: Claude cannot know when to load it
 
-## Same skill name in several sources (98)
+## Same skill name in several sources (99)
 Installing two with the same name collides. Pick one, or rename on import.
 
 - **academy-guide**: anthropics__skills `vendor/claude-skill-registries/anthropics__skills/skills/academy-guide/SKILL.md`; davila7__claude-code-templates `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/productivity/academy-guide/SKILL.md`
 - **algorithmic-art**: anthropics__skills `vendor/claude-skill-registries/anthropics__skills/skills/algorithmic-art/SKILL.md`; davila7__claude-code-templates `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/creative-design/algorithmic-art/SKILL.md`
 - **api-design-principles**: davila7__claude-code-templates `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/development/api-design-principles/SKILL.md`; wshobson__agents `vendor/claude-skill-registries/wshobson__agents/plugins/backend-development/skills/api-design-principles/SKILL.md`
+- **archify**: tt-a1i__archify `vendor/abm-visualisation/tt-a1i__archify/archify/SKILL.md`; NousResearch__hermes-agent `vendor/agent-harnesses/NousResearch__hermes-agent/optional-skills/creative/archify/SKILL.md`
 - **architecture-decision-records**: davila7__claude-code-templates `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/development/architecture-decision-records/SKILL.md`; wshobson__agents `vendor/claude-skill-registries/wshobson__agents/plugins/documentation-generation/skills/architecture-decision-records/SKILL.md`
 - **architecture-patterns**: davila7__claude-code-templates `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/development/architecture-patterns/SKILL.md`; wshobson__agents `vendor/claude-skill-registries/wshobson__agents/plugins/backend-development/skills/architecture-patterns/SKILL.md`
 - **async-python-patterns**: davila7__claude-code-templates `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/development/async-python-patterns/SKILL.md`; wshobson__agents `vendor/claude-skill-registries/wshobson__agents/plugins/python-development/skills/async-python-patterns/SKILL.md`

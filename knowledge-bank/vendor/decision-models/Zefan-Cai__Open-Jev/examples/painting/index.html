@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Open-Jev · Probability painting</title>
+<style>
+body{margin:0;background:#101817;color:#eff3e9;font:16px system-ui}main{max-width:1100px;margin:auto;padding:40px 24px}h1{font-size:38px;letter-spacing:-1.5px;margin:10px 0}p{color:#b4c4bc;line-height:1.6}a{color:#b8e6a3}.layout{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:30px}.panel{padding:24px;border:1px solid #34473d;border-radius:18px;background:#192620}label{display:block;margin:14px 0 7px}textarea,input,select,button{box-sizing:border-box;border:1px solid #496050;border-radius:8px;background:#132018;color:#eff3e9;padding:12px;font:inherit;width:100%}textarea{height:125px;resize:vertical}button{cursor:pointer;background:#c6edae;color:#15321c;font-weight:650;margin-top:12px}button.secondary{background:#233d2b;color:#eff3e9}button:disabled{opacity:.5;cursor:wait}.row{display:flex;gap:12px}.row>*{flex:1}canvas{display:block;width:100%;height:auto;background:#fff;image-rendering:pixelated;border-radius:6px}#status{min-height:56px;white-space:pre-wrap}small{color:#a6bbae}#source{display:inline-block;border:1px solid #779568;padding:5px 9px;border-radius:6px;color:#d4eabb;font-size:12px;margin-bottom:14px}@media(max-width:740px){.layout{grid-template-columns:1fr}h1{font-size:30px}}
+</style>
+<main>
+<small>OPEN-JEV / INTERACTIVE EXAMPLES</small>
+<h1>Paint with probabilities.</h1>
+<p>One typed question per pixel or color channel. Software turns the answers into a picture.</p>
+<div class="layout">
+<section class="panel">
+<label for="prompt">Image description</label><textarea id="prompt">A small red sailboat on blue water beneath a white sky.</textarea>
+<div class="row"><div><label for="mode">Representation</label><select id="mode"><option value="silhouette">Silhouette · Noul</option><option value="palette">16 colors · Choice</option><option value="rgb">RGB channels · Noul</option><option value="hsl">HSL · Choice + Score</option></select></div><div><label for="size">Grid</label><select id="size"><option>8</option><option>12</option><option>16</option><option>24</option><option>32</option></select></div></div>
+<label for="endpoint">Local inference endpoint</label><input id="endpoint" spellcheck="false">
+<label for="model">Model</label><input id="model" value="open-jev" spellcheck="false">
+<button id="run">Run model</button><div class="row"><button class="secondary" id="reference">Load procedural reference</button><button class="secondary" id="stop" disabled>Stop</button></div>
+<p id="status" role="status">Load a reference to inspect the renderer, or connect a local model.</p>
+<small>Reference images have exact geometry labels. They do not measure model art quality.</small>
+</section>
+<section class="panel"><span id="source">NO RESULT</span><canvas id="canvas" width="8" height="8"></canvas><p id="caption">Model predictions and reference data are labelled separately.</p><small>HSL uses independent channel marginals. The display shows mean RGB, without texture effects.</small></section>
+</div>
+<p><a href="https://github.com/Zefan-Cai/Open-Jev-Dev/blob/main/docs/painting.md">Task and data documentation</a> · Inspired by <a href="https://github.com/achimala/jev-paint">jev-paint</a></p>
+</main>
+<script type="module" src="app.mjs"></script>
+</html>

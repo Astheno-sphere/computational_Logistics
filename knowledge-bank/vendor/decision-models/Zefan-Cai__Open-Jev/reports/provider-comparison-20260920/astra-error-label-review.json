@@ -1,0 +1,1775 @@
+{
+  "schema_version": 1,
+  "status": "read_only_review_completed",
+  "reviewed_at_utc": "2026-09-20T22:57:39.254041+00:00",
+  "scope": "All 12 ViZDoom and both tile-platformer hard examples in the frozen 146-labelled-decision/189-request coverage pass, plus the flagged customer severity example. This is a bounded post-hoc audit, not a review of all other labels or a new benchmark.",
+  "review_selection": {
+    "initial_trigger": "Five Astra hard exact-reference mismatches.",
+    "expanded_source_slice": "Every ViZDoom case (four Choice, four Noul, four Score) and both platformer cases, including provider-correct cases.",
+    "customer": "One originally flagged case with separate peer review; excluded only in the additional seven-row sensitivity."
+  },
+  "summary": {
+    "reviewed_decisions": 15,
+    "by_classification": {
+      "visible_rule_supports_gold": 8,
+      "equivalent_actions_one_hot_reference": 2,
+      "missing_visible_policy_parameters": 4,
+      "semantic_rubric_ambiguity_needs_adjudication": 1
+    },
+    "initial_astra_mismatch_ids": [
+      "heldout-440b79816df5d2b096490a3f",
+      "heldout-4969b949eadbf8f0b0f759b6",
+      "heldout-980797db52947e38a811de92",
+      "heldout-ab8e9e343ae9ba535594d5ef",
+      "heldout-dbc250a7f6a89e0e447265e4"
+    ],
+    "confirmed_unambiguous_model_errors_among_initial_five": 0,
+    "literal_primary_mismatches_preserved": true
+  },
+  "classifications": {
+    "equivalent_actions_one_hot_reference": {
+      "finding": "Both reviewed platformer states are airborne. Their disclosed physics ignores another jump request; right_run and right_run_jump produce identical position, reward and terminal status. Gold is a one-hot BFS enumeration preference, not a unique task action.",
+      "interpretation": "An exact-reference mismatch here is not evidence of an inferior game transition.",
+      "future_version_only": "Accept equivalent/optimal action sets, or explicitly state a canonical tie rule before evaluating every provider."
+    },
+    "missing_visible_policy_parameters": {
+      "finding": "The named momentum-aware tracking policy has no formula, fixed eight-tic projection horizon, ten-unit deadband or sign convention in the supplied request. Source code reproduces the gold, but differently parameterized momentum-aware policies also fit the prompt.",
+      "interpretation": "Apply this flag to all four movement Choice requests, including correctly guessed ones. Keep attack and alignment questions with explicit thresholds.",
+      "future_version_only": "Publish the exact policy in a new request/data version and re-evaluate all providers; do not mutate frozen labels."
+    },
+    "visible_rule_supports_gold": {
+      "finding": "The Noul attack condition or Score criteria explicitly state the numerical rules needed to derive these eight gold labels under the declared visible-target convention.",
+      "interpretation": "Retain all eight; absent movement-policy parameters do not affect these separate questions."
+    },
+    "semantic_rubric_ambiguity_needs_adjudication": {
+      "finding": "Account-category metadata forces severity zero, while the visible access-restoration wording can imply functional loss. The no-malfunction fallback does not explicitly equate account recovery with no functional impact. Score two also lacks evidence that no workaround exists.",
+      "interpretation": "Zero matches generator intent but is not semantically unique. Do not automatically change gold to two or describe this as a clear reasoning failure.",
+      "future_version_only": "State the actual functional impact and workaround availability explicitly, then version any replacement task."
+    }
+  },
+  "technical_exclusion_rule": "Within the complete affected source slice, exclude every movement Choice missing the named tracking-policy parameters and every platformer state with a proven gold-equivalent alternative action. Do not choose exclusions according to provider correctness.",
+  "technical_flagged_request_ids": [
+    "heldout-440b79816df5d2b096490a3f",
+    "heldout-45f35dacf0ccedcbe417a12f",
+    "heldout-980797db52947e38a811de92",
+    "heldout-ab8e9e343ae9ba535594d5ef",
+    "heldout-c04f8197932d712f43d0c81d",
+    "heldout-dbc250a7f6a89e0e447265e4"
+  ],
+  "additional_customer_flagged_request_ids": [
+    "heldout-4969b949eadbf8f0b0f759b6"
+  ],
+  "sensitivity_interpretation": "Both post-hoc sensitivities apply identical request-ID exclusions to all three completed provider coverage reports and preserve their scoring and validation policies. These are supplementary narrower analyses; neither replaces the primary score nor establishes accuracy on a corrected benchmark. No revised gold, redistributed targets, rerun, uncertainty estimate or population claim is made.",
+  "reviews": [
+    {
+      "request_id": "heldout-047fd676fe8f63005f34617c",
+      "record_id": "vizdoom-basic-v1:190919:id:107:4:noul",
+      "source": "vizdoom-basic-v1",
+      "split": "test",
+      "kind": "noul",
+      "question_id": "decision",
+      "frozen_gold": "false",
+      "target": [
+        1.0,
+        0.0
+      ],
+      "request_sha256": "128818a23110761d3b16291b1da8210852f2247ff1b4ba7ab9331e42894ddd59",
+      "row_sha256": "d1552793d55f0f2920666ab7552c7e33fa1b6c85b76de5b1210ae4cccf72467a",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 4,
+          "ammo": 50.0,
+          "elapsed_tics": 30,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": 5.749191
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 400.661375,
+            "name": "Cacodemon",
+            "relative_bearing_deg": 16.581389
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": 98.674057
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "Should the tracking policy press attack now: a visible target is within 3 degrees, ammunition remains, and the player is alive?"
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "visible_rule_supports_gold",
+      "gold_uniquely_supported_by_visible_input": true,
+      "technical_sensitivity_exclude": false,
+      "evidence": {
+        "target_present": true,
+        "health": 100.0,
+        "ammo": 50.0,
+        "absolute_bearing_deg": 16.581389,
+        "visible_rule": "Target present, player health and ammo positive, absolute bearing <= 3 degrees.",
+        "independent_visible_rule_answer": "false"
+      }
+    },
+    {
+      "request_id": "heldout-1e4349319a36030d5f40041a",
+      "record_id": "vizdoom-basic-v1:190919:id:192:5:noul",
+      "source": "vizdoom-basic-v1",
+      "split": "test",
+      "kind": "noul",
+      "question_id": "decision",
+      "frozen_gold": "true",
+      "target": [
+        0.0,
+        1.0
+      ],
+      "request_sha256": "85932223df29e6003d7f076b4c82125a83c4e8ee112e12bf4d91d750e0d49c92",
+      "row_sha256": "d736aecae3842889c2df509d010669578bf08dda9c27c92e73b95b388cbbcc07",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 4,
+          "ammo": 50.0,
+          "elapsed_tics": 34,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": 0.694504
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 384.125424,
+            "name": "Cacodemon",
+            "relative_bearing_deg": 1.46421
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": 88.590439
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "Should the tracking policy press attack now: a visible target is within 3 degrees, ammunition remains, and the player is alive?"
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "visible_rule_supports_gold",
+      "gold_uniquely_supported_by_visible_input": true,
+      "technical_sensitivity_exclude": false,
+      "evidence": {
+        "target_present": true,
+        "health": 100.0,
+        "ammo": 50.0,
+        "absolute_bearing_deg": 1.46421,
+        "visible_rule": "Target present, player health and ammo positive, absolute bearing <= 3 degrees.",
+        "independent_visible_rule_answer": "true"
+      }
+    },
+    {
+      "request_id": "heldout-36356a6fa7cfd3fe34d68bdf",
+      "record_id": "vizdoom-basic-v1:190919:ood:34:1:noul",
+      "source": "vizdoom-basic-v1",
+      "split": "ood",
+      "kind": "noul",
+      "question_id": "decision",
+      "frozen_gold": "false",
+      "target": [
+        1.0,
+        0.0
+      ],
+      "request_sha256": "e95e7cdbc068431420b46115551bedef06534178b85789b6c47e178a39e71b4f",
+      "row_sha256": "276e8315359886aedc5d43f580c9d6b7bc43134bbb2ec93e66544bbb2ccd0dc8",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 8,
+          "ammo": 50.0,
+          "elapsed_tics": 22,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": 3.951416
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 416.854941,
+            "name": "Cacodemon",
+            "relative_bearing_deg": 22.900243
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": 53.851013
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "Should the tracking policy press attack now: a visible target is within 3 degrees, ammunition remains, and the player is alive?"
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "visible_rule_supports_gold",
+      "gold_uniquely_supported_by_visible_input": true,
+      "technical_sensitivity_exclude": false,
+      "evidence": {
+        "target_present": true,
+        "health": 100.0,
+        "ammo": 50.0,
+        "absolute_bearing_deg": 22.900243,
+        "visible_rule": "Target present, player health and ammo positive, absolute bearing <= 3 degrees.",
+        "independent_visible_rule_answer": "false"
+      }
+    },
+    {
+      "request_id": "heldout-440b79816df5d2b096490a3f",
+      "record_id": "tile_platformer-v1:7e0c2f9ad3c86754dd7517ac:216889a7a50791ceec751019",
+      "source": "tile_platformer-v1",
+      "split": "test",
+      "kind": "choice",
+      "question_id": "decision",
+      "frozen_gold": "right_run_jump",
+      "target": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "request_sha256": "03b8710c9665a8db4874bc3139fbdc2a0f4e1462a870fd9cc86168b9a82a10de",
+      "row_sha256": "c1a1b5a1c37fcc6dfe630a58c30d1959522f2fd70651d7c3f3658c34bc8a84fe",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "objective": "Reach the flag without falling into a gap.",
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible.",
+          "player": {
+            "grounded": false,
+            "jump_phase": "rising",
+            "x": 10,
+            "y": 3
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "terrain": {
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "flag_x": 46,
+            "gap_distance_tiles": 8,
+            "null_means": "gap",
+            "observation_reliability": "exact_local_engine",
+            "obstacle_distance_tiles": null
+          },
+          "trajectory": {
+            "crossing_known_gap": false,
+            "jump_tick": 1,
+            "launch_height": 0
+          }
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "equivalent_actions_one_hot_reference",
+      "gold_uniquely_supported_by_visible_input": false,
+      "technical_sensitivity_exclude": true,
+      "evidence": {
+        "position_before": [
+          10,
+          3,
+          1,
+          0
+        ],
+        "equivalent_actions": [
+          "right_run",
+          "right_run_jump"
+        ],
+        "transitions": {
+          "right_run": [
+            [
+              12,
+              2,
+              2,
+              0
+            ],
+            false,
+            false
+          ],
+          "right_run_jump": [
+            [
+              12,
+              2,
+              2,
+              0
+            ],
+            false,
+            false
+          ]
+        },
+        "same_immediate_reward": 2.0,
+        "teacher_action": [
+          "right_run_jump"
+        ],
+        "teacher_enumeration_order": [
+          "right_run_jump",
+          "right_run",
+          "right_jump",
+          "right",
+          "jump",
+          "noop",
+          "left"
+        ],
+        "future_physics_depends_on_position_not_previous_action_tag": true
+      }
+    },
+    {
+      "request_id": "heldout-45f35dacf0ccedcbe417a12f",
+      "record_id": "vizdoom-basic-v1:190919:ood:39:3:choice",
+      "source": "vizdoom-basic-v1",
+      "split": "ood",
+      "kind": "choice",
+      "question_id": "decision",
+      "frozen_gold": "Strafe left",
+      "target": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "request_sha256": "7a858747b79161268a87917e534be231620446634224d6fa3d9caf904768fd9d",
+      "row_sha256": "7f5d664b736343c84c7497a1f8e7a33267f8957abf8de85dd2cac7be8540a8fd",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 8,
+          "ammo": 50.0,
+          "elapsed_tics": 38,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": -6.567276
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 384.943376,
+            "name": "Cacodemon",
+            "relative_bearing_deg": -4.012087
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": -89.950912
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "Which lateral movement does the momentum-aware tracking policy choose to align with the nearest visible target?",
+            "criteria": {
+              "Strafe left": null,
+              "Strafe right": null,
+              "Hold lateral movement": null
+            }
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "missing_visible_policy_parameters",
+      "gold_uniquely_supported_by_visible_input": false,
+      "technical_sensitivity_exclude": true,
+      "evidence": {
+        "source_formula": "distance_units * sin(radians(relative_bearing_deg)) - lateral_units_per_tic * 8.0",
+        "source_movement_rule": "left if error > 10.0; right if error < -10.0; otherwise hold",
+        "lateral_error_units": -26.93330095116347,
+        "momentum_correction_units": -52.538208,
+        "predicted_error_units": 25.604907048836527,
+        "visible_action_window_tics": 8,
+        "source_horizon_tics": 8,
+        "source_deadband_units": 10,
+        "same_momentum_formula_other_deadbands": {
+          "5": "Strafe left",
+          "10": "Strafe left",
+          "40": "Hold lateral movement"
+        },
+        "alternative_examples_are_not_inferences_about_model_reasoning": true
+      }
+    },
+    {
+      "request_id": "heldout-4969b949eadbf8f0b0f759b6",
+      "record_id": "customer-control-v1:42:11:bug_severity",
+      "source": "customer-control-v1",
+      "split": "test",
+      "kind": "score",
+      "question_id": "decision",
+      "frozen_gold": "0",
+      "target": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "request_sha256": "22414b65297e3376a6a11c58d7a91e94ed71bf1f16e7d4ae7eb9fe9a5ced5001",
+      "row_sha256": "9e905f10713e7398a1cae159651bf69227f9e2c24804dac49c9f845cc665f040",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": "Conversation with account holder Harbor-d059d68000.\nCustomer message: I need access restored after changing the email address used to sign in. That is the request I want you to handle first.\nSupport: Please tell us more.\nCustomer response: This is frustrating, but I appreciate your help and will keep this constructive. I will keep using the service and renew my subscription.",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "How severe is the reported issue? Use the stated functional impact and the existence of a workaround. Use no functional impact when no malfunction is described. In this synthetic control, if a broken feature is described but the availability of a workaround is explicitly unknown, the two latent possibilities (workaround exists; no workaround exists) are equally likely.",
+            "criteria": [
+              "Cosmetic; no impact to functionality",
+              "Broken or degraded feature; workaround exists",
+              "Blocking issue; no workaround exists"
+            ]
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "semantic_rubric_ambiguity_needs_adjudication",
+      "gold_uniquely_supported_by_visible_input": false,
+      "technical_sensitivity_exclude": false,
+      "additional_customer_sensitivity_exclude": true,
+      "evidence": {
+        "visible_issue": "I need access restored after changing the email address used to sign in.",
+        "visible_fallback": "Use no functional impact when no malfunction is described.",
+        "high_severity_criterion": "Blocking issue; no workaround exists",
+        "hidden_control_categories": [
+          "account"
+        ],
+        "hidden_control_severity": 0,
+        "generator_rule": "No latent bug_report category => severity zero, apart from explicit generated severity ambiguity.",
+        "no_workaround_evidence_present": false
+      },
+      "independent_peer_review": {
+        "reviewer": "/root/latency_presentation",
+        "method": "Read only final state, rubric and source generator; no model reasoning, API calls or edits.",
+        "conclusion": "Zero fits generator intent, but access restoration can imply functional impact. Two lacks no-workaround evidence. Preserve original score and flag for adjudication."
+      }
+    },
+    {
+      "request_id": "heldout-5db56e61c83d86b14c39349d",
+      "record_id": "vizdoom-basic-v1:190919:ood:26:3:score",
+      "source": "vizdoom-basic-v1",
+      "split": "ood",
+      "kind": "score",
+      "question_id": "decision",
+      "frozen_gold": "4",
+      "target": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "request_sha256": "f38c0031f5e08c6a7dbbc609c9032651709ced43ef21923103d163df903ce564",
+      "row_sha256": "fa2f872d007d2f34893a2b1d4aac4ca73179e9d0402ece9d41a17c605c5356f7",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 8,
+          "ammo": 50.0,
+          "elapsed_tics": 38,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": -6.567276
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 384.04431,
+            "name": "Cacodemon",
+            "relative_bearing_deg": -0.87037
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": -89.950912
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "Rate the current shot alignment using the supplied ordered suitability grades. These grades are an aiming heuristic, not expected game reward.",
+            "criteria": [
+              "Cannot usefully aim a shot: no live visible target, no ammunition, dead player, or absolute target bearing above 22 degrees.",
+              "Very poor alignment: live visible target and ammunition, player alive, absolute target bearing above 12 and at most 22 degrees.",
+              "Coarse alignment: live visible target and ammunition, player alive, absolute target bearing above 6 and at most 12 degrees.",
+              "Near alignment: live visible target and ammunition, player alive, absolute target bearing above 3 and at most 6 degrees.",
+              "Aligned for the script's shot: live visible target and ammunition, player alive, absolute target bearing at most 3 degrees."
+            ]
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "visible_rule_supports_gold",
+      "gold_uniquely_supported_by_visible_input": true,
+      "technical_sensitivity_exclude": false,
+      "evidence": {
+        "target_present": true,
+        "health": 100.0,
+        "ammo": 50.0,
+        "absolute_bearing_deg": 0.87037,
+        "visible_rule": "Visible ordered criteria use angle boundaries 3, 6, 12 and 22 degrees, plus target/ammo/player-alive conditions.",
+        "independent_visible_rule_answer": "4"
+      }
+    },
+    {
+      "request_id": "heldout-980797db52947e38a811de92",
+      "record_id": "tile_platformer-v1:2f3351ec9a89e19e77109c84:36ac3b14a9932c3ce005114c",
+      "source": "tile_platformer-v1",
+      "split": "test",
+      "kind": "choice",
+      "question_id": "decision",
+      "frozen_gold": "right_run_jump",
+      "target": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "request_sha256": "874a673b481b54d40ff51424c09c865e891f34bf457a696e3618d213cb20f1f7",
+      "row_sha256": "f000a4329a763142db5c8fa6b7c9cb1ebd5657d11f59f6bba86b7b211dd695c0",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "objective": "Reach the flag without falling into a gap.",
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible.",
+          "player": {
+            "grounded": false,
+            "jump_phase": "falling",
+            "x": 18,
+            "y": 2
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "terrain": {
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "flag_x": 46,
+            "gap_distance_tiles": null,
+            "null_means": "gap",
+            "observation_reliability": "exact_local_engine",
+            "obstacle_distance_tiles": null
+          },
+          "trajectory": {
+            "crossing_known_gap": true,
+            "jump_tick": 2,
+            "launch_height": 0
+          }
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "equivalent_actions_one_hot_reference",
+      "gold_uniquely_supported_by_visible_input": false,
+      "technical_sensitivity_exclude": true,
+      "evidence": {
+        "position_before": [
+          18,
+          2,
+          2,
+          0
+        ],
+        "equivalent_actions": [
+          "right_run",
+          "right_run_jump"
+        ],
+        "transitions": {
+          "right_run": [
+            [
+              20,
+              0,
+              -1,
+              0
+            ],
+            false,
+            false
+          ],
+          "right_run_jump": [
+            [
+              20,
+              0,
+              -1,
+              0
+            ],
+            false,
+            false
+          ]
+        },
+        "same_immediate_reward": 2.0,
+        "teacher_action": [
+          "right_run_jump"
+        ],
+        "teacher_enumeration_order": [
+          "right_run_jump",
+          "right_run",
+          "right_jump",
+          "right",
+          "jump",
+          "noop",
+          "left"
+        ],
+        "future_physics_depends_on_position_not_previous_action_tag": true
+      }
+    },
+    {
+      "request_id": "heldout-9a8b43d88ab67b6847290333",
+      "record_id": "vizdoom-basic-v1:190919:id:333:4:score",
+      "source": "vizdoom-basic-v1",
+      "split": "test",
+      "kind": "score",
+      "question_id": "decision",
+      "frozen_gold": "1",
+      "target": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "request_sha256": "77ee367c075a30d30452e4de67556ff00468ea4f5d87a4057df99ec2600d56f5",
+      "row_sha256": "5ed0391f716fc6cf2d82324d9f3aad8effd1b01efce924bfa9f54ec2ac44970b",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 4,
+          "ammo": 50.0,
+          "elapsed_tics": 30,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": -5.749329
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 399.760434,
+            "name": "Cacodemon",
+            "relative_bearing_deg": -16.142064
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": -34.675079
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "Rate the current shot alignment using the supplied ordered suitability grades. These grades are an aiming heuristic, not expected game reward.",
+            "criteria": [
+              "Cannot usefully aim a shot: no live visible target, no ammunition, dead player, or absolute target bearing above 22 degrees.",
+              "Very poor alignment: live visible target and ammunition, player alive, absolute target bearing above 12 and at most 22 degrees.",
+              "Coarse alignment: live visible target and ammunition, player alive, absolute target bearing above 6 and at most 12 degrees.",
+              "Near alignment: live visible target and ammunition, player alive, absolute target bearing above 3 and at most 6 degrees.",
+              "Aligned for the script's shot: live visible target and ammunition, player alive, absolute target bearing at most 3 degrees."
+            ]
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "visible_rule_supports_gold",
+      "gold_uniquely_supported_by_visible_input": true,
+      "technical_sensitivity_exclude": false,
+      "evidence": {
+        "target_present": true,
+        "health": 100.0,
+        "ammo": 50.0,
+        "absolute_bearing_deg": 16.142064,
+        "visible_rule": "Visible ordered criteria use angle boundaries 3, 6, 12 and 22 degrees, plus target/ammo/player-alive conditions.",
+        "independent_visible_rule_answer": "1"
+      }
+    },
+    {
+      "request_id": "heldout-ab8e9e343ae9ba535594d5ef",
+      "record_id": "vizdoom-basic-v1:190919:id:51:7:choice",
+      "source": "vizdoom-basic-v1",
+      "split": "test",
+      "kind": "choice",
+      "question_id": "decision",
+      "frozen_gold": "Hold lateral movement",
+      "target": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "request_sha256": "6939b7ce061b13b1d7166da262874bbed60fb211a6046537aaf59e3221730eb2",
+      "row_sha256": "50aa65f7bf8baff741d0d9041c52e98909e298c7f5275455202fada00834fdcd",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 4,
+          "ammo": 50.0,
+          "elapsed_tics": 42,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": -1.246384
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 384.31613,
+            "name": "Cacodemon",
+            "relative_bearing_deg": -2.324106
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": -82.707657
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "Which lateral movement does the momentum-aware tracking policy choose to align with the nearest visible target?",
+            "criteria": {
+              "Strafe left": null,
+              "Strafe right": null,
+              "Hold lateral movement": null
+            }
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "missing_visible_policy_parameters",
+      "gold_uniquely_supported_by_visible_input": false,
+      "technical_sensitivity_exclude": true,
+      "evidence": {
+        "source_formula": "distance_units * sin(radians(relative_bearing_deg)) - lateral_units_per_tic * 8.0",
+        "source_movement_rule": "left if error > 10.0; right if error < -10.0; otherwise hold",
+        "lateral_error_units": -15.58485653336681,
+        "momentum_correction_units": -9.971072,
+        "predicted_error_units": -5.613784533366811,
+        "visible_action_window_tics": 4,
+        "source_horizon_tics": 8,
+        "source_deadband_units": 10,
+        "same_momentum_formula_other_deadbands": {
+          "5": "Strafe right",
+          "10": "Hold lateral movement",
+          "40": "Hold lateral movement"
+        },
+        "alternative_examples_are_not_inferences_about_model_reasoning": true
+      }
+    },
+    {
+      "request_id": "heldout-b0daa83f5adf226b86545a79",
+      "record_id": "vizdoom-basic-v1:190919:id:32:2:score",
+      "source": "vizdoom-basic-v1",
+      "split": "test",
+      "kind": "score",
+      "question_id": "decision",
+      "frozen_gold": "1",
+      "target": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "request_sha256": "1d20e601590b43286076a95a87423d6226634644bfb013195c8c215539e7e74f",
+      "row_sha256": "5b9978a29494519582fcdfbab449b609152edf0cab0b187740633521b3c67d14",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 4,
+          "ammo": 50.0,
+          "elapsed_tics": 22,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": -3.951492
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 409.358975,
+            "name": "Cacodemon",
+            "relative_bearing_deg": -20.273055
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": 10.148788
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "Rate the current shot alignment using the supplied ordered suitability grades. These grades are an aiming heuristic, not expected game reward.",
+            "criteria": [
+              "Cannot usefully aim a shot: no live visible target, no ammunition, dead player, or absolute target bearing above 22 degrees.",
+              "Very poor alignment: live visible target and ammunition, player alive, absolute target bearing above 12 and at most 22 degrees.",
+              "Coarse alignment: live visible target and ammunition, player alive, absolute target bearing above 6 and at most 12 degrees.",
+              "Near alignment: live visible target and ammunition, player alive, absolute target bearing above 3 and at most 6 degrees.",
+              "Aligned for the script's shot: live visible target and ammunition, player alive, absolute target bearing at most 3 degrees."
+            ]
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "visible_rule_supports_gold",
+      "gold_uniquely_supported_by_visible_input": true,
+      "technical_sensitivity_exclude": false,
+      "evidence": {
+        "target_present": true,
+        "health": 100.0,
+        "ammo": 50.0,
+        "absolute_bearing_deg": 20.273055,
+        "visible_rule": "Visible ordered criteria use angle boundaries 3, 6, 12 and 22 degrees, plus target/ammo/player-alive conditions.",
+        "independent_visible_rule_answer": "1"
+      }
+    },
+    {
+      "request_id": "heldout-b144a62ce74b74ae5c937d08",
+      "record_id": "vizdoom-basic-v1:190919:ood:52:3:noul",
+      "source": "vizdoom-basic-v1",
+      "split": "ood",
+      "kind": "noul",
+      "question_id": "decision",
+      "frozen_gold": "false",
+      "target": [
+        1.0,
+        0.0
+      ],
+      "request_sha256": "8418e4fea12a8b8a3ce1b7d8fd08e5135773d38de15ffb2caef532a55305d5c7",
+      "row_sha256": "7ada046bca478746c917b987e3a16132e357ad7bf7698e73c0c116383caaba16",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 8,
+          "ammo": 50.0,
+          "elapsed_tics": 38,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": -6.567276
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 385.156583,
+            "name": "Cacodemon",
+            "relative_bearing_deg": -4.441361
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": -89.950912
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "Should the tracking policy press attack now: a visible target is within 3 degrees, ammunition remains, and the player is alive?"
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "visible_rule_supports_gold",
+      "gold_uniquely_supported_by_visible_input": true,
+      "technical_sensitivity_exclude": false,
+      "evidence": {
+        "target_present": true,
+        "health": 100.0,
+        "ammo": 50.0,
+        "absolute_bearing_deg": 4.441361,
+        "visible_rule": "Target present, player health and ammo positive, absolute bearing <= 3 degrees.",
+        "independent_visible_rule_answer": "false"
+      }
+    },
+    {
+      "request_id": "heldout-b577d763981c1067652abef8",
+      "record_id": "vizdoom-basic-v1:190919:ood:23:1:score",
+      "source": "vizdoom-basic-v1",
+      "split": "ood",
+      "kind": "score",
+      "question_id": "decision",
+      "frozen_gold": "3",
+      "target": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      "request_sha256": "447cd3e5564db5673fb76cdbf3fc0f2f41d6e1e509a7a32217735e777b4a278e",
+      "row_sha256": "ce3ed34b7f403d4b51018b53e0c63874ab18d55bfa861775e6dfdc9249b6b58d",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 8,
+          "ammo": 50.0,
+          "elapsed_tics": 22,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": -3.951492
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 384.918278,
+            "name": "Cacodemon",
+            "relative_bearing_deg": -3.958464
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": 10.148788
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "Rate the current shot alignment using the supplied ordered suitability grades. These grades are an aiming heuristic, not expected game reward.",
+            "criteria": [
+              "Cannot usefully aim a shot: no live visible target, no ammunition, dead player, or absolute target bearing above 22 degrees.",
+              "Very poor alignment: live visible target and ammunition, player alive, absolute target bearing above 12 and at most 22 degrees.",
+              "Coarse alignment: live visible target and ammunition, player alive, absolute target bearing above 6 and at most 12 degrees.",
+              "Near alignment: live visible target and ammunition, player alive, absolute target bearing above 3 and at most 6 degrees.",
+              "Aligned for the script's shot: live visible target and ammunition, player alive, absolute target bearing at most 3 degrees."
+            ]
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "visible_rule_supports_gold",
+      "gold_uniquely_supported_by_visible_input": true,
+      "technical_sensitivity_exclude": false,
+      "evidence": {
+        "target_present": true,
+        "health": 100.0,
+        "ammo": 50.0,
+        "absolute_bearing_deg": 3.958464,
+        "visible_rule": "Visible ordered criteria use angle boundaries 3, 6, 12 and 22 degrees, plus target/ammo/player-alive conditions.",
+        "independent_visible_rule_answer": "3"
+      }
+    },
+    {
+      "request_id": "heldout-c04f8197932d712f43d0c81d",
+      "record_id": "vizdoom-basic-v1:190919:ood:74:3:choice",
+      "source": "vizdoom-basic-v1",
+      "split": "ood",
+      "kind": "choice",
+      "question_id": "decision",
+      "frozen_gold": "Strafe left",
+      "target": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "request_sha256": "23156d4ed7cc86b203cb4b46eb6a74f7663d6e0fdcaa46c239f6edb903cfe220",
+      "row_sha256": "7f863836e444ecc537e1897f5178017cf0a6e16dfb8c76827e9196855217a21c",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 8,
+          "ammo": 50.0,
+          "elapsed_tics": 38,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": -1.335785
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 384.524425,
+            "name": "Cacodemon",
+            "relative_bearing_deg": 2.992725
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": 110.246445
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "Which lateral movement does the momentum-aware tracking policy choose to align with the nearest visible target?",
+            "criteria": {
+              "Strafe left": null,
+              "Strafe right": null,
+              "Hold lateral movement": null
+            }
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "missing_visible_policy_parameters",
+      "gold_uniquely_supported_by_visible_input": false,
+      "technical_sensitivity_exclude": true,
+      "evidence": {
+        "source_formula": "distance_units * sin(radians(relative_bearing_deg)) - lateral_units_per_tic * 8.0",
+        "source_movement_rule": "left if error > 10.0; right if error < -10.0; otherwise hold",
+        "lateral_error_units": 20.07569612514665,
+        "momentum_correction_units": -10.68628,
+        "predicted_error_units": 30.76197612514665,
+        "visible_action_window_tics": 8,
+        "source_horizon_tics": 8,
+        "source_deadband_units": 10,
+        "same_momentum_formula_other_deadbands": {
+          "5": "Strafe left",
+          "10": "Strafe left",
+          "40": "Hold lateral movement"
+        },
+        "alternative_examples_are_not_inferences_about_model_reasoning": true
+      }
+    },
+    {
+      "request_id": "heldout-dbc250a7f6a89e0e447265e4",
+      "record_id": "vizdoom-basic-v1:190919:id:60:6:choice",
+      "source": "vizdoom-basic-v1",
+      "split": "test",
+      "kind": "choice",
+      "question_id": "decision",
+      "frozen_gold": "Hold lateral movement",
+      "target": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "request_sha256": "42a51993171a9d1d89c2ec5cbc08199ac3e033e46a620c6332fbc241be6bcd03",
+      "row_sha256": "5681f59f062781ecc1f5e38b8a1f864eb6a6e546ef262704de5df3bab8699dcf",
+      "original_and_frozen_mixture_row_identical": true,
+      "provider_candidate_prompts_equal_original": true,
+      "visible_request": {
+        "state": {
+          "action_window_tics": 4,
+          "ammo": 50.0,
+          "elapsed_tics": 38,
+          "health": 100.0,
+          "movement": {
+            "forward_units_per_tic": 0.0,
+            "lateral_units_per_tic": 0.255905
+          },
+          "nearest_visible_enemy": {
+            "distance_units": 384.137973,
+            "name": "Cacodemon",
+            "relative_bearing_deg": 1.535689
+          },
+          "player": {
+            "heading_deg": 0.0,
+            "x_units": -384.0,
+            "y_units": 125.268311
+          },
+          "visible_enemy_count": 1
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "Which lateral movement does the momentum-aware tracking policy choose to align with the nearest visible target?",
+            "criteria": {
+              "Strafe left": null,
+              "Strafe right": null,
+              "Hold lateral movement": null
+            }
+          }
+        }
+      },
+      "source_teacher_reproduced": true,
+      "classification": "missing_visible_policy_parameters",
+      "gold_uniquely_supported_by_visible_input": false,
+      "technical_sensitivity_exclude": true,
+      "evidence": {
+        "source_formula": "distance_units * sin(radians(relative_bearing_deg)) - lateral_units_per_tic * 8.0",
+        "source_movement_rule": "left if error > 10.0; right if error < -10.0; otherwise hold",
+        "lateral_error_units": 10.29475181809128,
+        "momentum_correction_units": 2.04724,
+        "predicted_error_units": 8.24751181809128,
+        "visible_action_window_tics": 4,
+        "source_horizon_tics": 8,
+        "source_deadband_units": 10,
+        "same_momentum_formula_other_deadbands": {
+          "5": "Strafe left",
+          "10": "Hold lateral movement",
+          "40": "Hold lateral movement"
+        },
+        "alternative_examples_are_not_inferences_about_model_reasoning": true
+      }
+    }
+  ],
+  "providers": {
+    "jev-coverage-quality": {
+      "provider": [
+        "jev-1.13.0"
+      ],
+      "source_report": "reports/provider-comparison-20260920/jev-coverage-quality.json",
+      "source_report_sha256": "f08013d9d189cdac5c712db4537cae301215210adcc466b23cb2f6592a6ac0a9",
+      "categorical_only_policy_preserved": true,
+      "primary_original_unchanged": {
+        "evaluated": 146,
+        "successful_responses": 146,
+        "errors": 0,
+        "hard_targets": 140,
+        "usable_decisions_with_probability_mass_failure": 3,
+        "hard_correct": 117,
+        "hard_accuracy_including_errors": 0.8357142857142857,
+        "soft_targets": 6,
+        "expected_accuracy_including_errors": 0.8125
+      },
+      "technical_six_row_sensitivity": {
+        "excluded_request_ids": [
+          "heldout-440b79816df5d2b096490a3f",
+          "heldout-45f35dacf0ccedcbe417a12f",
+          "heldout-980797db52947e38a811de92",
+          "heldout-ab8e9e343ae9ba535594d5ef",
+          "heldout-c04f8197932d712f43d0c81d",
+          "heldout-dbc250a7f6a89e0e447265e4"
+        ],
+        "excluded_decisions": 6,
+        "excluded_correct_hard_decisions": 2,
+        "retained_labelled_decisions": 140,
+        "hard_correct": 115,
+        "hard_denominator": 134,
+        "hard_accuracy_including_errors": 0.8582089552238806,
+        "retained_soft_targets": 6,
+        "expected_accuracy_including_errors": 0.8330357142857143,
+        "retained_request_failures": 0,
+        "retained_categorical_decisions_with_probability_mass_failure": 2
+      },
+      "additional_customer_seven_row_sensitivity": {
+        "excluded_request_ids": [
+          "heldout-440b79816df5d2b096490a3f",
+          "heldout-45f35dacf0ccedcbe417a12f",
+          "heldout-4969b949eadbf8f0b0f759b6",
+          "heldout-980797db52947e38a811de92",
+          "heldout-ab8e9e343ae9ba535594d5ef",
+          "heldout-c04f8197932d712f43d0c81d",
+          "heldout-dbc250a7f6a89e0e447265e4"
+        ],
+        "excluded_decisions": 7,
+        "excluded_correct_hard_decisions": 2,
+        "retained_labelled_decisions": 139,
+        "hard_correct": 115,
+        "hard_denominator": 133,
+        "hard_accuracy_including_errors": 0.8646616541353384,
+        "retained_soft_targets": 6,
+        "expected_accuracy_including_errors": 0.8390287769784173,
+        "retained_request_failures": 0,
+        "retained_categorical_decisions_with_probability_mass_failure": 2
+      },
+      "reviewed_decisions": {
+        "heldout-4969b949eadbf8f0b0f759b6": {
+          "correct": false,
+          "selected_answer": "2",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-440b79816df5d2b096490a3f": {
+          "correct": false,
+          "selected_answer": "noop",
+          "success": true,
+          "strict_probability_mass_failure": true
+        },
+        "heldout-980797db52947e38a811de92": {
+          "correct": false,
+          "selected_answer": "right",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-45f35dacf0ccedcbe417a12f": {
+          "correct": true,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-c04f8197932d712f43d0c81d": {
+          "correct": true,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-36356a6fa7cfd3fe34d68bdf": {
+          "correct": true,
+          "selected_answer": "false",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b144a62ce74b74ae5c937d08": {
+          "correct": true,
+          "selected_answer": "false",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-5db56e61c83d86b14c39349d": {
+          "correct": true,
+          "selected_answer": "4",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b577d763981c1067652abef8": {
+          "correct": true,
+          "selected_answer": "3",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-dbc250a7f6a89e0e447265e4": {
+          "correct": false,
+          "selected_answer": "Strafe right",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-ab8e9e343ae9ba535594d5ef": {
+          "correct": false,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-1e4349319a36030d5f40041a": {
+          "correct": true,
+          "selected_answer": "true",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-047fd676fe8f63005f34617c": {
+          "correct": true,
+          "selected_answer": "false",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-9a8b43d88ab67b6847290333": {
+          "correct": true,
+          "selected_answer": "1",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b0daa83f5adf226b86545a79": {
+          "correct": true,
+          "selected_answer": "1",
+          "success": true,
+          "strict_probability_mass_failure": false
+        }
+      }
+    },
+    "openai-gpt-5.6-luna-coverage-quality": {
+      "provider": [
+        "gpt-5.6-luna"
+      ],
+      "source_report": "reports/provider-comparison-20260920/openai-gpt-5.6-luna-coverage-quality.json",
+      "source_report_sha256": "f58d4239c04eb059d0463bab2b0e6442da1e5a487dde8fbc68e4dd1496aa2058",
+      "categorical_only_policy_preserved": false,
+      "primary_original_unchanged": {
+        "evaluated": 146,
+        "successful_responses": 146,
+        "errors": 0,
+        "hard_targets": 140,
+        "usable_decisions_with_probability_mass_failure": 0,
+        "hard_correct": 109,
+        "hard_accuracy_including_errors": 0.7785714285714286,
+        "soft_targets": 6,
+        "expected_accuracy_including_errors": 0.7554223744292238
+      },
+      "technical_six_row_sensitivity": {
+        "excluded_request_ids": [
+          "heldout-440b79816df5d2b096490a3f",
+          "heldout-45f35dacf0ccedcbe417a12f",
+          "heldout-980797db52947e38a811de92",
+          "heldout-ab8e9e343ae9ba535594d5ef",
+          "heldout-c04f8197932d712f43d0c81d",
+          "heldout-dbc250a7f6a89e0e447265e4"
+        ],
+        "excluded_decisions": 6,
+        "excluded_correct_hard_decisions": 3,
+        "retained_labelled_decisions": 140,
+        "hard_correct": 106,
+        "hard_denominator": 134,
+        "hard_accuracy_including_errors": 0.7910447761194029,
+        "retained_soft_targets": 6,
+        "expected_accuracy_including_errors": 0.7663690476190477,
+        "retained_request_failures": 0,
+        "retained_categorical_decisions_with_probability_mass_failure": 0
+      },
+      "additional_customer_seven_row_sensitivity": {
+        "excluded_request_ids": [
+          "heldout-440b79816df5d2b096490a3f",
+          "heldout-45f35dacf0ccedcbe417a12f",
+          "heldout-4969b949eadbf8f0b0f759b6",
+          "heldout-980797db52947e38a811de92",
+          "heldout-ab8e9e343ae9ba535594d5ef",
+          "heldout-c04f8197932d712f43d0c81d",
+          "heldout-dbc250a7f6a89e0e447265e4"
+        ],
+        "excluded_decisions": 7,
+        "excluded_correct_hard_decisions": 3,
+        "retained_labelled_decisions": 139,
+        "hard_correct": 106,
+        "hard_denominator": 133,
+        "hard_accuracy_including_errors": 0.7969924812030075,
+        "retained_soft_targets": 6,
+        "expected_accuracy_including_errors": 0.7718824940047962,
+        "retained_request_failures": 0,
+        "retained_categorical_decisions_with_probability_mass_failure": 0
+      },
+      "reviewed_decisions": {
+        "heldout-4969b949eadbf8f0b0f759b6": {
+          "correct": false,
+          "selected_answer": "1",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-440b79816df5d2b096490a3f": {
+          "correct": false,
+          "selected_answer": "right",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-980797db52947e38a811de92": {
+          "correct": true,
+          "selected_answer": "right_run_jump",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-45f35dacf0ccedcbe417a12f": {
+          "correct": true,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-c04f8197932d712f43d0c81d": {
+          "correct": true,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-36356a6fa7cfd3fe34d68bdf": {
+          "correct": true,
+          "selected_answer": "false",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b144a62ce74b74ae5c937d08": {
+          "correct": false,
+          "selected_answer": "true",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-5db56e61c83d86b14c39349d": {
+          "correct": true,
+          "selected_answer": "4",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b577d763981c1067652abef8": {
+          "correct": true,
+          "selected_answer": "3",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-dbc250a7f6a89e0e447265e4": {
+          "correct": false,
+          "selected_answer": "Strafe right",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-ab8e9e343ae9ba535594d5ef": {
+          "correct": false,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-1e4349319a36030d5f40041a": {
+          "correct": true,
+          "selected_answer": "true",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-047fd676fe8f63005f34617c": {
+          "correct": true,
+          "selected_answer": "false",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-9a8b43d88ab67b6847290333": {
+          "correct": true,
+          "selected_answer": "1",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b0daa83f5adf226b86545a79": {
+          "correct": true,
+          "selected_answer": "1",
+          "success": true,
+          "strict_probability_mass_failure": false
+        }
+      }
+    },
+    "openai-gpt-6-astra-coverage-quality": {
+      "provider": [
+        "gpt-6-astra"
+      ],
+      "source_report": "reports/provider-comparison-20260920/openai-gpt-6-astra-coverage-quality.json",
+      "source_report_sha256": "7da5f1494ca1d7e8b139f7911379fd4dab0d6a665d3e1ebc81de6cc38564dd8d",
+      "categorical_only_policy_preserved": false,
+      "primary_original_unchanged": {
+        "evaluated": 146,
+        "successful_responses": 146,
+        "errors": 0,
+        "hard_targets": 140,
+        "usable_decisions_with_probability_mass_failure": 0,
+        "hard_correct": 135,
+        "hard_accuracy_including_errors": 0.9642857142857143,
+        "soft_targets": 6,
+        "expected_accuracy_including_errors": 0.9357876712328768
+      },
+      "technical_six_row_sensitivity": {
+        "excluded_request_ids": [
+          "heldout-440b79816df5d2b096490a3f",
+          "heldout-45f35dacf0ccedcbe417a12f",
+          "heldout-980797db52947e38a811de92",
+          "heldout-ab8e9e343ae9ba535594d5ef",
+          "heldout-c04f8197932d712f43d0c81d",
+          "heldout-dbc250a7f6a89e0e447265e4"
+        ],
+        "excluded_decisions": 6,
+        "excluded_correct_hard_decisions": 2,
+        "retained_labelled_decisions": 140,
+        "hard_correct": 133,
+        "hard_denominator": 134,
+        "hard_accuracy_including_errors": 0.9925373134328358,
+        "retained_soft_targets": 6,
+        "expected_accuracy_including_errors": 0.9616071428571429,
+        "retained_request_failures": 0,
+        "retained_categorical_decisions_with_probability_mass_failure": 0
+      },
+      "additional_customer_seven_row_sensitivity": {
+        "excluded_request_ids": [
+          "heldout-440b79816df5d2b096490a3f",
+          "heldout-45f35dacf0ccedcbe417a12f",
+          "heldout-4969b949eadbf8f0b0f759b6",
+          "heldout-980797db52947e38a811de92",
+          "heldout-ab8e9e343ae9ba535594d5ef",
+          "heldout-c04f8197932d712f43d0c81d",
+          "heldout-dbc250a7f6a89e0e447265e4"
+        ],
+        "excluded_decisions": 7,
+        "excluded_correct_hard_decisions": 2,
+        "retained_labelled_decisions": 139,
+        "hard_correct": 133,
+        "hard_denominator": 133,
+        "hard_accuracy_including_errors": 1.0,
+        "retained_soft_targets": 6,
+        "expected_accuracy_including_errors": 0.9685251798561151,
+        "retained_request_failures": 0,
+        "retained_categorical_decisions_with_probability_mass_failure": 0
+      },
+      "reviewed_decisions": {
+        "heldout-4969b949eadbf8f0b0f759b6": {
+          "correct": false,
+          "selected_answer": "2",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-440b79816df5d2b096490a3f": {
+          "correct": false,
+          "selected_answer": "right_run",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-980797db52947e38a811de92": {
+          "correct": false,
+          "selected_answer": "right_run",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-45f35dacf0ccedcbe417a12f": {
+          "correct": true,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-c04f8197932d712f43d0c81d": {
+          "correct": true,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-36356a6fa7cfd3fe34d68bdf": {
+          "correct": true,
+          "selected_answer": "false",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b144a62ce74b74ae5c937d08": {
+          "correct": true,
+          "selected_answer": "false",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-5db56e61c83d86b14c39349d": {
+          "correct": true,
+          "selected_answer": "4",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b577d763981c1067652abef8": {
+          "correct": true,
+          "selected_answer": "3",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-dbc250a7f6a89e0e447265e4": {
+          "correct": false,
+          "selected_answer": "Strafe left",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-ab8e9e343ae9ba535594d5ef": {
+          "correct": false,
+          "selected_answer": "Strafe right",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-1e4349319a36030d5f40041a": {
+          "correct": true,
+          "selected_answer": "true",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-047fd676fe8f63005f34617c": {
+          "correct": true,
+          "selected_answer": "false",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-9a8b43d88ab67b6847290333": {
+          "correct": true,
+          "selected_answer": "1",
+          "success": true,
+          "strict_probability_mass_failure": false
+        },
+        "heldout-b0daa83f5adf226b86545a79": {
+          "correct": true,
+          "selected_answer": "1",
+          "success": true,
+          "strict_probability_mass_failure": false
+        }
+      }
+    }
+  },
+  "source_rule_locations": {
+    "platformer_transition": {
+      "path": "jev/games.py",
+      "start_line": 673
+    },
+    "platformer_bfs_tie_order": {
+      "path": "jev/games.py",
+      "start_line": 734
+    },
+    "doom_tracking": {
+      "path": "jev/case_doom.py",
+      "start_line": 39
+    },
+    "customer_targets": {
+      "path": "jev/case_customer.py",
+      "start_line": 140
+    }
+  },
+  "artifacts_sha256": {
+    "data/provider-comparison-v1/manifest.json": "f03b181d6470732dea6818df75c18ee80cb9401281bfe4fad410ed0829bac727",
+    "data/provider-comparison-v1/gold.json": "d5ce66697b4c2b162a3d7559fdf6c445591483436d6b64666770b1cf98305126",
+    "data/provider-comparison-v1/requests.json": "ecb1e3bc62cfd72ceb51bdb1bfab5dbc74afe64440cb653dd85dc86e05833b5d",
+    "data/browser-drone-expansion-v1/manifest.json": "ba001b88787ce21576017897a0cbdedd5917ceb29ad3522b0e1fb7b4836d49df",
+    "data/browser-drone-expansion-v1/test.jsonl": "662d5e79da70eba77ad740eb37576b8157e53e5c1d8cd9344c60ec56d3969637",
+    "data/browser-drone-expansion-v1/ood.jsonl": "364992ae82a2d8b6f3f4ed68a0efa06d9a6b9ae469d81113d4165f762eec0a94",
+    "data/case-customer/manifest.json": "c6aeccce228aad4808661b024ecfad8808d1ca2927c53593b5462be2ed4fed74",
+    "data/case-customer/test.jsonl": "cb4eadd92823d9431c329fc9409f189d4ebfe0e8c66a486fa098791ba83fa87a",
+    "data/case-customer/ood.jsonl": "317bf314f27a642f034a19f678b11f42a4d5d1209791bcecc737e95f233394b8",
+    "data/control-games-v1/manifest.json": "316555d96755d5a272f61817ca102cc466b69be0d73f86c5afb574841aef0377",
+    "data/control-games-v1/test.jsonl": "8ee800b607261f1ff23e429820c55d47564498c88417dd571e9f27c61c932d3d",
+    "data/control-games-v1/ood.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "data/doom-basic-v1/manifest.json": "0d73da67d1e14dbdc4b1712346c506c2cad1e452b2e96c8366cb4b44d0e10e9e",
+    "data/doom-basic-v1/test.jsonl": "12a31f29dfc171fa0857cae0543f5550eb04a5fc30716ebdf9b858778de04c19",
+    "data/doom-basic-v1/ood.jsonl": "6bb7684ef5eb6549d56c97e5706334c088a7fbea51a94a4588e0b22b6a1192df",
+    "reports/provider-comparison-20260920/jev-coverage-quality.json": "f08013d9d189cdac5c712db4537cae301215210adcc466b23cb2f6592a6ac0a9",
+    "reports/provider-comparison-20260920/openai-gpt-5.6-luna-coverage-quality.json": "f58d4239c04eb059d0463bab2b0e6442da1e5a487dde8fbc68e4dd1496aa2058",
+    "reports/provider-comparison-20260920/openai-gpt-6-astra-coverage-quality.json": "7da5f1494ca1d7e8b139f7911379fd4dab0d6a665d3e1ebc81de6cc38564dd8d",
+    "runs/provider-comparison-20260920/openai-gpt-6-astra-coverage-v1/samples.jsonl": "88f0cb962663e53d30fcc1df0f035dbff0cf18f9ef531fd539c84fbbbe877626",
+    "jev/case_customer.py": "917151a0f0b764f7261a2495dd22d757113328fb3e30edc06be166c5e71fce6f",
+    "jev/case_doom.py": "70b97a01c942499c4eccfe468be60ac3a77f6e60aa550d853ed9b0e6a7f1e29b",
+    "jev/games.py": "5b7ac9f459bd86a724b39c7c2f87f8e8d7441a28aa7a7f14ef0fe94366544afe",
+    "scripts/build_provider_suite.py": "09ac07cca6809a5f9c8ad0e17b55c3d6fd751d9cdd9eb7dff004ad95c998a8c1",
+    "scripts/summarize_provider_quality.py": "708b460f95e55e473cccac7ebbc5d015be99e8d908d82ac7ed0f9ba039999367"
+  },
+  "integrity": {
+    "frozen_request_and_gold_hashes_verified": true,
+    "all_15_rows_match_original_component_and_frozen_mixture": true,
+    "all_15_request_candidate_prompts_match_original_rows": true,
+    "all_15_source_reference_labels_reproduced": true,
+    "source_test_ood_hashes_verified": true,
+    "new_api_calls": 0,
+    "game_engine_rollouts": 0,
+    "local_platformer_transition_checks": 2,
+    "provider_scores_modified": false,
+    "frozen_gold_or_requests_modified": false,
+    "training_data_modified": false,
+    "active_27b_training_modified": false,
+    "model_encrypted_reasoning_copied_or_interpreted": false
+  }
+}

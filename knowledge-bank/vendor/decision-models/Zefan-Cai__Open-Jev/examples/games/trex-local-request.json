@@ -1,0 +1,35 @@
+{
+  "state": {
+    "objective": "Pass every obstacle without a collision.",
+    "current_speed": 12,
+    "speed_mode": "normal",
+    "dinosaur_motion_when_observed": "running",
+    "target_obstacle": {
+      "kind": "large_cactus",
+      "group_size": "single",
+      "flight_path": "ground_hazard",
+      "width": 1.1,
+      "height": 1.75,
+      "bottom": 0
+    },
+    "runner_geometry": {
+      "player_width": 1,
+      "standing_height": 2,
+      "duck_height": 0.8,
+      "obstacle_start_x": 12
+    },
+    "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+  },
+  "questions": {
+    "action": {
+      "type": "choice",
+      "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+      "criteria": {
+        "jump_short": null,
+        "jump_full": null,
+        "duck": null,
+        "keep_running": null
+      }
+    }
+  }
+}

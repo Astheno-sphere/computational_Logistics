@@ -1,0 +1,80 @@
+# Open-Jev 2B, prebuilt with the model and serving on start.
+#
+#   docker compose up -d --build                  # GPU (NVIDIA Container Toolkit)
+#   docker compose up -d --build open-jev-cpu     # CPU only
+#
+# Name the CPU service explicitly. Passing only --profile cpu would start the
+# GPU service as well, and the two claim the same port.
+#
+# The first build downloads the pinned checkpoint package and base weights
+# (about 4.6 GB) into the image; afterwards the container needs no network.
+
+x-open-jev: &open-jev
+  build:
+    context: .
+    dockerfile: Dockerfile
+  # Published on the loopback interface only; set JEV_BIND_ADDRESS=0.0.0.0 to
+  # reach it from other machines. The server performs no business action, but it
+  # has no authentication either.
+  ports:
+    - "${JEV_BIND_ADDRESS:-127.0.0.1}:${JEV_PORT:-8791}:${JEV_PORT:-8791}"
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 30s
+
+x-healthcheck: &healthcheck
+  # The server binds its port only after the checkpoint is loaded, so healthy
+  # means the model is ready rather than that the process started.
+  test: ["CMD", "python", "-c", "import os,urllib.request;urllib.request.urlopen('http://127.0.0.1:'+os.environ['JEV_PORT']+'/health',timeout=5).read()"]
+  interval: 15s
+  timeout: 10s
+  retries: 5
+  start_period: 300s
+
+services:
+  open-jev:
+    <<: *open-jev
+    image: open-jev:2b
+    environment:
+      JEV_DEVICE: "${JEV_DEVICE:-cuda:0}"
+      JEV_PORT: "${JEV_PORT:-8791}"
+      JEV_MAX_LENGTH: "${JEV_MAX_LENGTH:-4096}"
+      # Candidate sequences scored per forward pass. Lower it if a small GPU
+      # runs out of memory on wide Choice questions.
+      JEV_BATCH_SIZE: "${JEV_BATCH_SIZE:-32}"
+      # Off by default: prefix reuse exceeded the probability tolerance on 9 of
+      # 11 measured workloads (docs/inference-latency.md).
+      JEV_PREFIX_CACHE: "${JEV_PREFIX_CACHE:-off}"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck: *healthcheck
+
+  # docker compose up -d --build open-jev-cpu
+  # Naming the service enables its profile; the GPU service stays down.
+  open-jev-cpu:
+    <<: *open-jev
+    profiles: ["cpu"]
+    image: open-jev:2b-cpu
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TORCH_INDEX_URL: https://download.pytorch.org/whl/cpu
+    environment:
+      JEV_DEVICE: cpu
+      JEV_PORT: "${JEV_PORT:-8791}"
+      JEV_MAX_LENGTH: "${JEV_MAX_LENGTH:-4096}"
+      JEV_BATCH_SIZE: "${JEV_BATCH_SIZE:-8}"
+      JEV_PREFIX_CACHE: "${JEV_PREFIX_CACHE:-off}"
+    healthcheck:
+      <<: *healthcheck
+      # A first CPU load is far slower than a GPU one.
+      interval: 20s
+      timeout: 15s
+      retries: 10
+      start_period: 900s

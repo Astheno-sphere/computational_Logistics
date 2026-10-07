@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "status": "passed_build_schema_and_example_checks",
+  "checked_at_utc": "2026-09-20T15:21:50.794306+00:00",
+  "python_version": "3.12.14",
+  "generation_command": "PYTHONDONTWRITEBYTECODE=1 python3.12 -m jev.case_amount_extraction --output-dir data/amount-extraction-control-v1 --groups 200 --ood-groups 40 --seed 42",
+  "manifest_sha256": "6f89f81336ac36505c563193da27fca2155fa566175451854f0ac410979ea80b",
+  "source_files_sha256": {
+    "case_amount_extraction.py": "d87466f66b0c07d1c6df6e65579db3e0494317c57578695fffa52536307100fd",
+    "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+    "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+  },
+  "tracked_manifest_identical": true,
+  "data_files_match_manifest": true,
+  "family_count": 200,
+  "document_count": 3200,
+  "typed_record_count": 49600,
+  "candidate_count": 14800,
+  "head_counts": {
+    "selection/span": 3000,
+    "selection/target_present": 3200,
+    "attributes/currency": 14800,
+    "attributes/direction_known": 14800,
+    "attributes/is_credit": 13800
+  },
+  "split_counts": {
+    "train": 32984,
+    "calibration": 2232,
+    "validation": 992,
+    "test": 3472,
+    "ood": 9920
+  },
+  "candidate_recall": {
+    "denominator": "documents with exactly one populated requested-role field",
+    "recalled": 2000,
+    "missed": 400,
+    "eligible": 2400,
+    "fraction": "2000/2400",
+    "rate": 0.8333333333333334,
+    "ambiguous_documents_excluded": 200,
+    "absent_documents_excluded": 600
+  },
+  "selection_reference_counts": {
+    "recalled": 2000,
+    "target_absent": 600,
+    "candidate_miss": 400,
+    "ambiguous_target": 200
+  },
+  "attribute_reference_counts": {
+    "currency": {
+      "USD": 4489,
+      "EUR": 5289,
+      "review": 600,
+      "GBP": 4422
+    },
+    "direction_known": {
+      "true": 13800,
+      "false": 1000
+    },
+    "normalized_status": {
+      "ready": 13600,
+      "review": 1200
+    }
+  },
+  "omitted_supervision_counts": {
+    "undefined_direction": 1000,
+    "forced_single_candidate": 200
+  },
+  "standard_validator": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3.12 -m jev.data validate data/amount-extraction-control-v1",
+    "exit_code": 0,
+    "summary": {
+      "records": 49600,
+      "groups": 200,
+      "unique_inputs": 49600,
+      "splits": {
+        "calibration": 2232,
+        "ood": 9920,
+        "test": 3472,
+        "train": 32984,
+        "validation": 992
+      },
+      "kinds": {
+        "choice": 17800,
+        "noul": 31800
+      },
+      "families": {
+        "evidence": 49600
+      },
+      "sources": {
+        "amount-extraction-control-v1": 49600
+      }
+    },
+    "stdout": "{\n  \"records\": 49600,\n  \"groups\": 200,\n  \"unique_inputs\": 49600,\n  \"splits\": {\n    \"calibration\": 2232,\n    \"ood\": 9920,\n    \"test\": 3472,\n    \"train\": 32984,\n    \"validation\": 992\n  },\n  \"kinds\": {\n    \"choice\": 17800,\n    \"noul\": 31800\n  },\n  \"families\": {\n    \"evidence\": 49600\n  },\n  \"sources\": {\n    \"amount-extraction-control-v1\": 49600\n  }\n}\n",
+    "stderr": ""
+  },
+  "generator_help_exit_code": 0,
+  "examples": [
+    {
+      "path": "examples/amount-extraction-selection.json",
+      "sha256": "8c6611dcade1a4714541e149f54c1b9509a2a4fed6aee6af02eefeda94b7bf0d",
+      "heads": [
+        "span",
+        "target_present"
+      ],
+      "types": [
+        "choice",
+        "noul"
+      ],
+      "request_only": true,
+      "matches_documented_builder_call": true
+    },
+    {
+      "path": "examples/amount-extraction-attributes.json",
+      "sha256": "cd3a09b5eefa79b1129b297ae1dda698d32a65b3f8b2426ebfb34f7c6fe73c8a",
+      "heads": [
+        "currency",
+        "direction_known",
+        "is_credit"
+      ],
+      "types": [
+        "choice",
+        "noul",
+        "noul"
+      ],
+      "request_only": true,
+      "matches_documented_builder_call": true
+    }
+  ],
+  "documentation_example_code_sha256": "40885d58682f9ffb5567d276c39d9974e43a6a62a5e3d67deca2fb4dcdf25c81",
+  "examples_listing": {
+    "checked": true,
+    "method": "Actual loopback GET /examples.json; no inference requested",
+    "checked_at_utc": "2026-09-20T15:19:04.782172+00:00",
+    "unchanged_example_bytes_confirmed_after_generator_id_change": true,
+    "unchanged_example_bytes_confirmed_after_generator_id_and_order_changes": true
+  },
+  "preserved_initial_candidate": {
+    "path": "data/amount-extraction-control-v1-draft-currency-coverage",
+    "reason": "Added GBP and known currency-symbol coverage before final audit",
+    "manifest_sha256": "df326b72c97f3bef0de431e375185bd94cf12f82072909e1989c40cca7f02a2e"
+  },
+  "scope": {
+    "training_performed": false,
+    "model_inference_performed": false,
+    "remote_or_gpu_operations": false,
+    "external_or_official_examples_read": false,
+    "existing_corpora_or_shared_sources_modified": false,
+    "mixed_into_training": false
+  },
+  "limitations": [
+    "Controlled public invoice/ledger grammar, not arbitrary PDF/OCR extraction.",
+    "Candidate recall is a measured regex property; all 400 unique-target misses are retained.",
+    "B supervises attributes conditional on actual candidates, not end-to-end model predictions.",
+    "Normalizer also applies deterministic grammar, currency and direction guards; report raw model accuracy separately from guard coverage.",
+    "Email and phone normalization are not included."
+  ],
+  "preserved_ordinal_candidate": {
+    "path": "data/amount-extraction-control-v1-draft-invoice-identifiers",
+    "reason": "Remove variant ordinals from visible invoice IDs; replace with opaque hash suffixes",
+    "manifest_sha256": "e43b7aa247d1fee407af7f683189679d1f39df4089f64373963bb1c6c5f921cf"
+  },
+  "observed_order_diversity": {
+    "field_order_count": 303,
+    "recalled_target_candidate_ids": {
+      "span_2": 380,
+      "span_1": 426,
+      "span_0": 419,
+      "span_4": 380,
+      "span_3": 395
+    },
+    "ordering_rule": "Shuffle complete field lines once using family and opaque document nonce; no query, gold target or label-based permutation selection."
+  },
+  "preserved_unshuffled_candidate": {
+    "path": "data/amount-extraction-control-v1-draft-field-order",
+    "reason": "Remove fixed requested-role positions by uniformly shuffling complete field lists with document-specific seeds independent of query/reference labels",
+    "manifest_sha256": "e8bab508832e02ab750d1199530bcc17c1f2c5ff5c9527c9894bd0d5dce56178"
+  }
+}

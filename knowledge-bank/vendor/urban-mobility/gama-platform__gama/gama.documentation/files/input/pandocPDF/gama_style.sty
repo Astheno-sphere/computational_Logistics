@@ -1,0 +1,93 @@
+\usepackage{listings}
+
+%\DeclareTextSymbol{\degre}{T1}{6}
+%\lstset{
+%basicstyle=\small\ttfamily,
+%columns=flexible,
+%breaklines=true,
+%    extendedchars=true,
+%    literate={á}{{\'a}}1 {ã}{{\~a}}1 {é}{{\'e}}1 {è}{{\`e}}1,
+%}
+
+% Define Colors
+\usepackage{color}
+\definecolor{stringColor}{RGB}{116,167,251}
+\definecolor{commentColor}{RGB}{63,127,95}
+\definecolor{statementColor}{RGB}{127,0,85}
+\definecolor{operatorColor}{RGB}{46,93,78}
+\definecolor{facetColor}{RGB}{154,72,71}
+\definecolor{typeColor}{RGB}{0,79,116}
+\definecolor{literalColor}{RGB}{125,125,125}
+ 
+% Define Language
+\lstdefinelanguage{gaml}
+{
+% this part is automatically generated from MainGeneratedPDF, do not edit
+% list of statement
+morekeywords={
+species, global, grid, model, import, output, abort, action, add, agents, annealing, ask, aspect, assert, benchmark, betad, break, browse, camera, capture, catch, category, chart, conscious_contagion, continue, coping, create, data, datalist, default, display, display_grid, do, do_rule, draw, else, emotional_contagion, enforcement, error, event, experiment, focus, focus_on, genetic, global, graphics, grid, highlight, hill_climbing, if, image_layer, init, inspect, invoke, law, layout, let, light, loop, match, match_between, match_one, match_regex, mesh, migrate, monitor, morris, norm, output, overlay, parameter, perceive, permanent, plan, pso, put, reactive_tabu, reflex, release, remove, restore, return, rotation, rule, sanction, set, sobol, socialize, species, species_layer, state, status, stochanalyse, switch, tabu, task, test, text, trace, transition, unconscious_contagion, user_command, user_init, user_input, user_panel, using, Variable_container, Variable_number, warn
+},
+% list of type
+morekeywords=[2]{
+action, agent, bool, container, conversation, date, directory, field, file, float, font, geometry, graph, image, int, kml, list, map, matrix, message, pair, path, point, regression, rgb, skill, species, string, topology, unknown
+},
+% list of operator
+morekeywords=[3]{
+abs, accumulate, acos, action, add_days, add_edge, add_hours, add_minutes, add_months, add_ms, add_node, add_point, add_seconds, add_weeks, add_years, adjacency, after, agent, agent_closest_to, agent_farthest_to, agent_file, agent_from_geometry, agent_intersecting, agents_at_distance, agents_covering, agents_crossing, agents_inside, agents_overlapping, agents_partially_overlapping, agents_touching, all_indexes_of, all_match, all_pairs_shortest_path, all_verify, alpha_index, among, any, arc, around, as, as_4_grid, as_distance_graph, as_edge_graph, as_grid, as_hexagonal_grid, as_int, as_intersection_graph, as_map, as_matrix, as_path, as_spatial_graph, asin, at, at_distance, at_location, atan, atan2, before, beta_index, between, betweenness_centrality, biggest_cliques_of, binomial, blend, bool, box, brewer_colors, brewer_palettes, buffer, capitalize, cartesian_product, ceil, cell_at, cells_in, cells_overlapping, char, choose, circle, clean, clean_network, closest_to, collect, column_at, columns_list, command, compress, cone, cone3D, connected_components_of, connectivity_index, container, contains, contains_all, contains_any, contains_edge, contains_key, contains_node, contains_value, contains_vertex, conversation, convex_hull, copy, copy_between, copy_from_clipboard, copy_to_clipboard, cos, cos_rad, count, covering, create_map, cross, crossing, crs, CRS_transform, csv_file, cube, curve, cylinder, date, dead, decompress, degree_of, deserialize, directed, directory, distinct, div, edge, edge_between, edge_betweenness, edges, ellipse, elliptical_arc, empty, enlarged_by, enter, envelope, eval_gaml, even, every, every_cycle, exp, exp_density, exp_rnd, fact, farthest_to, field, field_with, file, first, first_of, first_with, flatten, flip, float, floor, font, from, from_binary, from_gaml, from_json, gamma_density, gamma_index, gamma_rnd, gamma_trunc_rnd, gauss, gauss_rnd, generate_barabasi_albert, generate_complete_graph, generate_random_graph, generate_terrain, generate_watts_strogatz, geojson_file, geometry, geometry_collection, girvan_newman_clustering, gradient, graph, grayscale, grid_at, grid_cells_to_graph, grid_file, group_by, hexagon, hsb, hypot, image, image_file, in, in_degree_of, in_edges_of, indented_by, index_by, index_of, inside, int, inter, interleave, intersecting, intersection, inverse_rotation, is, is_agent, is_csv, is_error, is_finite, is_geojson, is_grid, is_image, is_json, is_number, is_osm, is_pgm, is_reachable, is_shape, is_simulation, is_skill, is_svg, is_threeds, is_warning, is_xml, json_file, k_spanning_tree_clustering, kml, label_propagation_clustering, last, last_index_of, last_of, last_with, layout_circle, layout_force, layout_force_FR, layout_force_FR_indexed, layout_grid, length, line, link, list, list_with, ln, load_shortest_paths, log, lognormal_density, lognormal_rnd, lognormal_trunc_rnd, lower_case, main_connected_component, map, masked_by, matrix, matrix_with, max_flow_between, maximal_cliques_of, mean, message, milliseconds_between, minus_days, minus_hours, minus_minutes, minus_months, minus_ms, minus_seconds, minus_weeks, minus_years, mod, months_between, nb_cycles, neighbors_at, neighbors_of, node, nodes, none_matches, none_verifies, norm, normalized_rotation, of, of_generic_species, of_species, one_matches, one_of, one_verifies, osm_file, out_degree_of, out_edges_of, overlapping, pair, pair, palette, partially_overlapping, path, path_between, paths_between, pgm_file, plan, play_sound, plus_days, plus_hours, plus_minutes, plus_months, plus_ms, plus_seconds, plus_weeks, plus_years, point, points_in, poisson, polygon, polyhedron, polyline, polyplan, predecessors_of, pyramid, range, rectangle, reduced_by, regex_matches, regression, remove_duplicates, remove_node_from, replace, replace_regex, reverse, rewire_n, rgb, rgb, rnd, rnd_choice, rnd_color, rotated_by, rotation_composition, round, row_at, rows_list, sample, scale, scaled_by, scaled_to, select, serialize, shape_file, shuffle, signum, simplification, simulation_file, sin, sin_rad, since, skeletonize, skew_gauss, skill, smooth, solid, sort, sort_by, source_of, spatial_graph, species, species_of, sphere, split_at, split_geometry, split_lines, split_with, sqrt, square, squircle, strahler, string, subtract_days, subtract_hours, subtract_minutes, subtract_months, subtract_ms, subtract_seconds, subtract_weeks, subtract_years, successors_of, sum, sum_of, svg_file, tan, tan_rad, tanh, target_of, teapot, TGauss, threeds_file, to, to_binary, to_GAMA_CRS, to_gaml, to_geojson, to_hsb, to_json, to_list, to_rectangles, to_segments, to_squares, to_sub_geometries, to_triangles, tokenize, topology, touching, transformed_by, translated_by, translated_to, triangle, triangulate, truncated_gauss, uncompress, undirected, union, unknown, until, unzip, upper_case, use_cache, user_confirm, user_input_dialog, values_in, voronoi, weibull_density, weibull_rnd, weibull_trunc_rnd, weight_of, where, with_alpha, with_k_shortest_path_algorithm, with_max_of, with_min_of, with_precision, with_shortest_path_algorithm, with_size, with_style, with_weights, without_holes, wizard, wizard_page, xml_file, years_between, zip
+},
+% list of facet
+morekeywords=[4]{
+name, type, of, index, virtual, to, item, at, all, value, rotate, trace, selectable, fading, position, size, transparency, visible, name, aspect, refresh, name, temp_end, init_solution, temp_decrease, temp_init, nb_iter_cst_temp, maximize, minimize, aggregation, parallel, target, as, name, value, label, warning, message, repeat, name, sampling, outputs, sample, factorial, results, report, name, dynamic, distance, location, target, lens, locked, target, as, returns, name, expanded, color, x_range, y_range, y2_range, position, size, reverse_axes, background, x_serie, x_serie_labels, y_serie_labels, x_log_scale, y_log_scale, y2_log_scale, axes, x_tick_values_visible, y_tick_values_visible, y2_tick_values_visible, title_visible, x_tick_line_visible, y_tick_line_visible, tick_line_color, type, style, gap, y_tick_unit, y2_tick_unit, x_tick_unit, name, x_label, y_label, y2_label, color, series_label_position, label_background_color, label_text_color, memorize, tick_font, label_font, transparency, visible, legend_font, title_font, name, emotion_detected, emotion_created, charisma, when, threshold, decay, intensity, receptivity, belief, desire, emotion, uncertainty, ideal, obligation, desires, beliefs, emotions, uncertainties, ideals, obligations, new_desire, new_belief, new_emotion, new_uncertainty, new_ideal, new_desires, new_beliefs, new_emotions, new_uncertainties, new_ideals, remove_beliefs, remove_desires, remove_emotions, remove_ideals, remove_obligations, remove_uncertainties, remove_belief, remove_ideal, remove_desire, remove_intention, remove_emotion, remove_uncertainty, remove_obligation, when, threshold, parallel, strength, lifetime, name, species, returns, from, number, as, with, value, legend, use_second_y_axis, y_err_values, x_err_values, y_minmax_values, marker_size, color, accumulate_values, line_visible, marker, marker_shape, fill, thickness, style, value, y_err_values, x_err_values, use_second_y_axis, y_minmax_values, marker_size, legend, marker, marker_shape, accumulate_values, line_visible, fill, color, thickness, style, value, virtual, parent, background, name, type, antialias, refresh, toolbar, fullscreen, show_fps, axes, orthographic_projection, light, locked, camera, keystone, z_near, z_far, autosave, position, rotate, selectable, size, transparency, species, visible, border, elevation, texture, smooth, grayscale, triangulation, hexagonal, text, wireframe, refresh, action, with, internal_function, when, priority, name, geometry, texture, wireframe, border, at, anchor, size, color, rotate, font, depth, precision, begin_arrow, end_arrow, lighted, perspective, width, name, emotion_detected, emotion_created, charisma, when, threshold, decay, intensity, receptivity, name, when, norm, obligation, law, sanction, reward, message, name, type, action, name, title, benchmark, parent, skills, control, keep_seed, keep_simulations, repeat, until, parallel, type, virtual, schedules, record, autorun, id, var, expression, when, lifetime, truth, agent_cause, belief, desire, emotion, uncertainty, ideal, is_uncertain, strength, value, name, pop_dim, crossover_prob, mutation_prob, nb_prelim_gen, max_gen, improve_sol, stochastic_sel, maximize, minimize, aggregation, position, background, border, rotate, trace, fading, size, transparency, visible, name, refresh, color, value, name, iter_max, init_solution, maximize, minimize, aggregation, condition, rotate, position, size, transparency, visible, name, gis, color, refresh, name, refresh, value, attributes, type, belief, beliefs, new_obligation, new_obligations, when, parallel, strength, lifetime, threshold, all, name, value, editors, toolbars, controls, parameters, navigator, consoles, tray, background, tabs, name, value, of, index, type, name, location, type, direction, angle, constant_attenuation, linear_attenuation, quadratic_attenuation, active, intensity, show, dynamic, from, to, step, name, over, while, times, value, position, rotate, above, no_data, scale, size, transparency, visible, border, wireframe, smooth, source, texture, grayscale, color, triangulation, text, refresh, source, target, returns, name, color, refresh, value, name, sample, levels, outputs, report, csv, results, when, finished_when, priority, name, intention, obligation, threshold, lifetime, instantaneous, synchronized, autosave, rounded, border, position, size, transparency, left, visible, right, center, background, color, name, type, init, min, max, category, var, unit, on_change, enables, disables, updates, in_workspace, extensions, slider, colors, labels, step, read_only, among, name, as, when, parallel, in, emotion, threshold, target, when, finished_when, priority, name, intention, emotion, threshold, instantaneous, name, iter_max, num_particles, weight_inertia, weight_cognitive, weight_social, maximize, minimize, aggregation, at, key, all, item, in, name, iter_max, init_solution, tabu_list_size_init, tabu_list_size_max, tabu_list_size_min, nb_tests_wthout_col_max, cycle_size_max, cycle_size_min, maximize, minimize, aggregation, when, name, target, as, in, returns, item, from, index, key, all, target, from, value, dynamic, location, axis, angle, belief, desire, emotion, uncertainty, ideal, obligation, desires, beliefs, emotions, uncertainties, ideals, obligations, new_desire, new_belief, new_emotion, new_uncertainty, new_ideal, new_desires, new_beliefs, new_emotions, new_uncertainties, new_ideals, remove_beliefs, remove_desires, remove_emotions, remove_ideals, remove_obligations, remove_uncertainties, remove_belief, remove_ideal, remove_desire, remove_intention, remove_emotion, remove_uncertainty, remove_obligation, when, threshold, parallel, strength, lifetime, all, name, name, name, value, name, sample, outputs, results, report, path, name, liking, dominance, solidarity, familiarity, trust, agent, when, parallel, width, height, cell_width, cell_height, neighbors, horizontal_orientation, use_individual_shapes, use_regular_agents, optimizer, use_neighbors_cache, file, files, torus, name, parent, edge_species, skills, mirrors, control, compile, frequency, schedules, topology, virtual, position, rotate, selectable, size, transparency, trace, fading, visible, species, aspect, refresh, initial, final, name, color, message, name, sampling, outputs, sample, report, results, value, name, iter_max, init_solution, tabu_list_size, maximize, minimize, aggregation, weight, name, name, color, background, font, category, message, when, to, name, emotion, charisma, when, threshold, decay, receptivity, continue, color, category, action, name, when, with, initial, name, name, type, init, min, slider, max, returns, among, initial, name, topology, name, type, init, update, function, const, on_change, of, index, name, type, init, update, function, const, on_change, min, max, step, among, message
+},
+% list of literal
+morekeywords=[5]{
+true, false, unknown, nil
+},
+% end of the automatically generated part
+  sensitive=false, % keywords are not case-sensitive
+  morecomment=[l]{//}, % l is for line comment
+  morecomment=[s]{/*}{*/}, % s is for start and end delimiter
+  morestring=[b]" % defines that strings are enclosed in double quotes
+} 
+
+%  moredirectives={define,elif,else,endif,error,if,ifdef,ifndef,line,%
+%      include,pragma,undef,warning}
+      
+%   procnamekeys={report,program,form,function,module},%
+   
+%   morekeywords=[2]{.align
+   
+%      morendkeywords={True,False,Start,Int,Real,Char,Bool,String,World,%
+%      File,ProcId},%
+%   moredelim=*[directive]\#,%
+  
+%     alsoother={@},%
+%   alsoletter={\%~:-/},%
+
+ 
+% Set Language
+\lstset{
+  language={gaml},
+  basicstyle=\small\ttfamily, % Global Code Style
+  captionpos=b, % Position of the Caption (t for top, b for bottom)
+  extendedchars=true, % Allows 256 instead of 128 ASCII characters
+  tabsize=2, % number of spaces indented when discovering a tab 
+  columns=fixed, % make all characters equal width
+  keepspaces=true, % does not ignore spaces to fit width, convert tabs to spaces
+  showstringspaces=false, % lets spaces in strings appear as real spaces
+  breaklines=true, % wrap lines if they don't fit
+  frame=trbl, % draw a frame at the top, right, left and bottom of the listing
+  frameround=tttt, % make the frame round at all four corners
+  framesep=4pt, % quarter circle size of the round corners
+  numbers=none, % show line numbers at the left
+  numberstyle=\tiny\ttfamily\color{literalColor}, % style of the line numbers
+  commentstyle=\color{commentColor}, % style of comments
+  keywordstyle=\color{statementColor}, % style of statement
+  keywordstyle={[2]\color{typeColor}}, % style of types
+  keywordstyle={[3]\color{operatorColor}}, % style of operators
+  keywordstyle={[4]\color{facetColor}}, % style of facets
+  keywordstyle={[5]\color{literalColor}}, % style of literal
+  stringstyle=\color{stringColor}, % style of strings
+  literate={°}{{\textdegree}}1 {í}{{\'i}}1 
+}
+

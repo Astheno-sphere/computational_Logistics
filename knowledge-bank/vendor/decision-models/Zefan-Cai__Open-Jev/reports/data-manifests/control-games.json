@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "control-games-v1",
+    "seed": 42,
+    "games": [
+      "trex_runner",
+      "tile_platformer"
+    ],
+    "episodes_per_game": 100,
+    "max_steps": 40,
+    "behavior": "even episode indices teacher; odd indices seeded random",
+    "deduplication": "exact runtime state/questions request",
+    "split_groups": {
+      "trex_runner": "complete visible observation",
+      "tile_platformer": "complete terrain layout, all positions kept together"
+    },
+    "ood": "none; all episodes use the unchanged local runtime configuration",
+    "target_basis": "deterministic current-observation teacher, independent of behavior action",
+    "representation": "exact compile_request(**game_request(runtime)) model inputs"
+  },
+  "summary": {
+    "records": 1733,
+    "groups": 117,
+    "unique_inputs": 1733,
+    "splits": {
+      "calibration": 97,
+      "test": 206,
+      "train": 1374,
+      "validation": 56
+    },
+    "kinds": {
+      "choice": 1733
+    },
+    "families": {
+      "policy": 1733
+    },
+    "sources": {
+      "tile_platformer-v1": 1697,
+      "trex_runner-v1": 36
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "f62d4b79188eb3c79588dad81a3ade327b77c115617140f40bb171888a8931d2",
+    "calibration.jsonl": "0a22ea5060afcd7e1692a06b552ef9af4c912ebf940e9249ef3d6b801a0f3748",
+    "validation.jsonl": "b6ada280ce26b3c41cd2ec991d9f3d0476a56c0fcdb83e1360b255440cfe08da",
+    "test.jsonl": "8ee800b607261f1ff23e429820c55d47564498c88417dd571e9f27c61c932d3d",
+    "ood.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ]
+}

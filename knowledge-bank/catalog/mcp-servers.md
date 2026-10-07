@@ -1,4 +1,4 @@
-# MCP servers in the bank (83)
+# MCP servers in the bank (84)
 
 Detected by MCP SDK use in the code. Tool counts are approximate (pattern-matched).
 Read the server code before connecting it: it runs with your permissions.
@@ -76,6 +76,7 @@ Read the server code before connecting it: it runs with your permissions.
 | `pedra-ai__pedra-mcp` | harvested-real-estate | MIT | ts | ? | npx / node | 2026-10-05 | AI real estate photo and video editing via the Pedra API: virtual staging, renovation, room emptying, enhance… |
 | `RantumBits__addressintel-mcp` | harvested-real-estate | MIT | mjs,ts | 7 | npx / node | 2026-08-19 | Read-only SF Peninsula building permit and parcel buildability data: permit search, SB 9 lot-split eligibilit… |
 | `TargetGrps__partelisto-mcp` | harvested-real-estate | MIT | cs | ? | see README | 2026-09-15 | Guest check-in and SES.HOSPEDAJES police registration for Spanish short-term rentals: bookings, guest-form co… |
+| `google-deepmind__concordia` | llm-agents | Apache-2.0 | py | 3 | uvx / pip | 2026-10-06 | Concordia: library for generative agent-based models (Google DeepMind) |
 | `tsinghua-fib-lab__agentsociety` | llm-agents | Apache-2.0 | py | ? | uvx / pip | 2026-09-24 | AgentSociety: LLM-native large-scale social/urban agent simulation |
 | `GRABOSM__osm-mcp` | osm-mcp | MIT | ts | 31 | npx / node |  | OSM MCP, 30 tools incl. routing |
 | `jagan-shanmugam__open-streetmap-mcp` | osm-mcp | MIT | py | 12 | uvx / pip |  | OpenStreetMap location-based services and geospatial data. (from awesome-mcp-servers: location-services) |

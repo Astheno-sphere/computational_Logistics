@@ -1,0 +1,27 @@
+{
+  "state": "A customer says: I was charged twice for one order. The service is working normally. There is no sign of unauthorized access.",
+  "questions": {
+    "route": {
+      "type": "choice",
+      "instructions": "Which team should handle this issue?",
+      "criteria": {
+        "billing": "Problems with charges, invoices, refunds or payments.",
+        "security": "Unauthorized access or account compromise.",
+        "technical": "Service unavailable or a software malfunction."
+      }
+    },
+    "refund_review": {
+      "type": "noul",
+      "instructions": "Does this message describe a duplicate charge?"
+    },
+    "urgency": {
+      "type": "score",
+      "instructions": "Assess the urgency using only the given evidence.",
+      "criteria": [
+        "Routine: no service disruption or active security compromise is reported.",
+        "Urgent: an ongoing service disruption is reported.",
+        "Critical: active unauthorized access is reported."
+      ]
+    }
+  }
+}

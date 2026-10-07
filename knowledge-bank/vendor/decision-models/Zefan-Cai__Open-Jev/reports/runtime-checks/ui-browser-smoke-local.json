@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "status": "passed_after_two_ui_fixes",
+  "completed_at_utc": "2026-09-20T12:12:56.120375+00:00",
+  "scope": "Local CPU browser/HTTP protocol fixture only. Deterministic logits test request validation, browser interaction and rendering; no trained-model predictions, accuracy or artistic-quality evaluation.",
+  "platform": "macOS-26.4.1-arm64-arm-64bit-Mach-O",
+  "browser": "Chrome/148.0.7778.97",
+  "node": "v25.2.1",
+  "head_before_uncommitted_fixes": "ac83f0456081a24d09636f6e3ef44cbfff8e0d5b",
+  "source_sha256": {
+    "jev/server.py": {
+      "before_head_sha256": "6b1806c3ea108720eb76c868d0cffa7d6d3e41de556da40755b86d88642c555e",
+      "after_sha256": "857831ce4f6710d44500bf93d11d0117b9bfb38c91cbaa4527ae6b10747deac1"
+    },
+    "jev/api.py": {
+      "before_head_sha256": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "after_sha256": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254"
+    },
+    "jev/serving.py": {
+      "before_head_sha256": "e181c7dfaa7d0e2af0e79b77ad82a2264ff80fefe147587b0bae25d0aaa6b958",
+      "after_sha256": "e181c7dfaa7d0e2af0e79b77ad82a2264ff80fefe147587b0bae25d0aaa6b958"
+    },
+    "examples/index.html": {
+      "before_head_sha256": "8770569b785771b83e1acb22e3b4b89d08ff2157396fcc5bc506c147e266ab7c",
+      "after_sha256": "8770569b785771b83e1acb22e3b4b89d08ff2157396fcc5bc506c147e266ab7c"
+    },
+    "examples/painting/index.html": {
+      "before_head_sha256": "895daaf05fe19378ae188c5587085be312ac7ce692a4292ba5c19bd329eeee28",
+      "after_sha256": "895daaf05fe19378ae188c5587085be312ac7ce692a4292ba5c19bd329eeee28"
+    },
+    "examples/painting/app.mjs": {
+      "before_head_sha256": "3993d2d6fe8cd14954058e19bf1984684d38dbd0cfdfa01a2939e71c83a1406b",
+      "after_sha256": "ca7874d79d2f3f91cb045887661afb00b08d2f0ac28dd27547d5501c7defab02"
+    },
+    "examples/painting/reference.json": {
+      "before_head_sha256": "f4611b67a85821dca13544cff1d3dce0deb5a3cf1d88e92d1300b4cc62e7750d",
+      "after_sha256": "f4611b67a85821dca13544cff1d3dce0deb5a3cf1d88e92d1300b4cc62e7750d"
+    }
+  },
+  "browser_launch": {
+    "argv": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--remote-debugging-port=0",
+      "--user-data-dir=/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/open-jev-ui-smoke-z9qwsrip/chrome-profile",
+      "about:blank"
+    ],
+    "gpu_acceleration_disabled": true,
+    "dedicated_profile": true,
+    "fixture_url": "http://127.0.0.1:55035"
+  },
+  "browser_commands": [
+    [
+      "node",
+      "/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/open-jev-ui-smoke-z9qwsrip/smoke.mjs",
+      "before"
+    ],
+    [
+      "node",
+      "/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/open-jev-ui-smoke-z9qwsrip/smoke.mjs",
+      "after"
+    ]
+  ],
+  "fixture": {
+    "model_name": "PROTOCOL_FIXTURE_NO_MODEL",
+    "method": "LOCAL_CPU_UI_SMOKE_FIXTURE",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "scope": "The before run used the same fixture scoring/delay logic from inline Python and logged counts; the archived fixture.py is the file used for the after run. Both use the actual jev.server/Predictor and default checkout static root.",
+    "training_dependencies_installed": false,
+    "model_loaded": false
+  },
+  "fixes": [
+    {
+      "issue": "Data and report artifacts were advertised as runnable examples",
+      "before": {
+        "example_files": 42,
+        "unrunnable_files": [
+          "painting/reference.json",
+          "games/trex-state.json",
+          "games/mario-state.json",
+          "games/baseline-smoke-report.json",
+          "games/wiki-graph.json"
+        ],
+        "error": "request requires state and questions"
+      },
+      "after": {
+        "example_files": 37,
+        "unrunnable_files_present": false
+      },
+      "implementation": "Inventory strictly parses and validates request schemas before listing; direct static artifact URLs remain available."
+    },
+    {
+      "issue": "Editing the endpoint during painting redirected later batches in the same run",
+      "before_paths": [
+        "/v1/systemone",
+        "/v1/inference",
+        "/v1/inference"
+      ],
+      "after_paths": [
+        "/v1/systemone",
+        "/v1/systemone",
+        "/v1/systemone"
+      ],
+      "implementation": "Capture endpoint once at run start. The next run still uses subsequently edited input.",
+      "browser_scenario": "8x8 RGB, three64-question batches; delay fixture response, edit endpoint after firstPOST, wait for completion."
+    }
+  ],
+  "browser_checks": [
+    "initial task loads; valid request renders fixture answers",
+    "invalid JSON error visible and evaluate button re-enabled",
+    "all four procedural representations render without inference requests",
+    "all four painting request forms accepted and fixture pixels rendered",
+    "painting HTTP error visible with no new result label"
+  ],
+  "uncaught_browser_exceptions": {
+    "before": [],
+    "after": []
+  },
+  "tests": [
+    {
+      "command": "python3 -m unittest tests.test_serving -v",
+      "passed": 6,
+      "skipped": 0,
+      "regression": "HTTP inventory excludes reference/graph/list/malformed requests, retains artifact GETs and containment, makes no scorer call while listing."
+    },
+    {
+      "command": "/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/open-jev-base-package-hn0k5n38/final-venv/bin/python -B -m unittest discover -s tests -p test_painting.py -v",
+      "passed": 8,
+      "skipped": 0,
+      "regression": "Node executes actual browser script with test-only DOM/fetch fixtures; endpoint remains constant across a paused first batch and changes for a subsequent run."
+    }
+  ],
+  "artifacts": {
+    "before-results.json": {
+      "path": "reports/runtime-checks/ui-browser-smoke-local/before-results.json",
+      "sha256": "34a8a735a51b462006dedb32c5eab67463814426ed072111c1aaad4c16df7dee"
+    },
+    "after-results.json": {
+      "path": "reports/runtime-checks/ui-browser-smoke-local/after-results.json",
+      "sha256": "41754c92adcdd42c5b4e7ca04a9c2855b17d7644ed3f8c4fafd4be9f12d982ea"
+    },
+    "smoke.mjs": {
+      "path": "reports/runtime-checks/ui-browser-smoke-local/smoke.mjs",
+      "sha256": "e129d01ed45ea1bdb76d2cb30bb2fcca51e3859774f6ddebfb93d91678a94ddb"
+    },
+    "fixture.py": {
+      "path": "reports/runtime-checks/ui-browser-smoke-local/fixture.py",
+      "sha256": "909677e78d391fe0dd85b099cea5611675f93e64552e21fbeb226835bce340a7"
+    },
+    "before-task-lab.png": {
+      "path": "runs/release-ui-check/before-task-lab.png",
+      "sha256": "5d86e692f858ab9ff8e35b142fcbd4e690b776d07fa4f3595cd04f26f27c7d3e",
+      "tracked": false
+    },
+    "before-painting.png": {
+      "path": "runs/release-ui-check/before-painting.png",
+      "sha256": "d4718cd5aab11a79f7ddd774ea22e01a339d44de74d1a2bceafcd16a94b90c81",
+      "tracked": false
+    },
+    "after-task-lab.png": {
+      "path": "runs/release-ui-check/after-task-lab.png",
+      "sha256": "cab4b739ca175ed245dc367df49675d2f6311ef3f9fc322943dc360aa536e2a8",
+      "tracked": false
+    },
+    "after-painting.png": {
+      "path": "runs/release-ui-check/after-painting.png",
+      "sha256": "d4718cd5aab11a79f7ddd774ea22e01a339d44de74d1a2bceafcd16a94b90c81",
+      "tracked": false
+    }
+  },
+  "cleanup": {
+    "owned_processes_signaled": [
+      {
+        "kind": "protocol_fixture",
+        "pid": 96691,
+        "signal": "SIGINT",
+        "identity_checked": true
+      },
+      {
+        "kind": "dedicated_headless_chrome",
+        "pid": 95992,
+        "signal": "SIGTERM",
+        "identity_checked": true
+      }
+    ],
+    "fixture_and_browser_listeners_stopped": true,
+    "other_processes_modified": false
+  },
+  "limits": [
+    "8x8 painting grids and1280x1000 desktop browser viewport were checked; other grid sizes/mobile layouts were not exercised.",
+    "One current local Chrome version; no cross-browser matrix.",
+    "Fixtures establish UI/protocol behavior only, not model competence.",
+    "No N1, GPU, active training runtime or model data operations.",
+    "PNG screenshots remain in ignored local runs/release-ui-check; JSON and scripts are retained in the repository."
+  ]
+}

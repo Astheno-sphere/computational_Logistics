@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "status": "declared_not_dispatched",
+  "at_utc": "2026-10-03T19:56:17.284345+00:00",
+  "scope": "frontier_v8_native_prerequisite_presence_only",
+  "nonce": "bb453ab34ea4a9338bacfec99d13bf36836fade2a44048e19ace1bfb65513061",
+  "source_commit": "8a4889f3136a5f3a4f541228dc2053577a05c7a1",
+  "source_main_merge": "98ff09158568044dd8268816ad7198b531dc5008",
+  "source_integration_receipt_sha256": "47cfac2a2db607a6c31e2d30cb0d19f56ef932ea39979028c35d243f6e197398",
+  "source_local_path": "<LOCAL_CHECKOUT>/runs/frontier-v8-containment-capability-20261003/fresh-CPU-presence-inputs-r1/frontier_v8_containment_capability.py",
+  "source_sha256": "1bcda91a4ac9ab50fe051b140fd7ba0fae649c257b45674d1ab15c2bb9a69412",
+  "request_local_path": "<LOCAL_CHECKOUT>/runs/frontier-v8-containment-capability-20261003/fresh-CPU-presence-inputs-r1/CPU-presence-request-r1.json",
+  "request_sha256": "fe82bec9988b0ee95c6d900b42316ca004e84c3260cffc918837879d5ca4ee8a",
+  "remote_staging_root": "/data/zefan/open-jev-v8-containment-presence-20261003T195617Z-bb453ab34ea4a933",
+  "remote_attempt_directory": "/data/zefan/open-jev-v8-containment-presence-20261003T195617Z-bb453ab34ea4a933/attempt-r1",
+  "historical_input_provenance": {
+    "path": "runs/frontier-v8-runtime-abi-20261003/exact-remote-evidence-r1/inputs/fresh-host-capture.json",
+    "sha256": "b9ad453da80dc2e7fdab71f30351965d4519c7ae51625c3c3f90112bdb33b4a9",
+    "observed_at_utc": "2026-10-03T18:24:16.845778Z",
+    "current_validation_required_in_observer": true
+  },
+  "commands": [
+    {
+      "name": "fresh-staging-reservation-r1",
+      "argv": [
+        "/usr/bin/ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=15",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "LogLevel=ERROR",
+        "sigma@100.64.180.123",
+        "exec /bin/sh -c 'set -eu\numask 077\ntest -d /\ntest ! -L /\ntest -d /data\ntest ! -L /data\ntest -d /data/zefan\ntest ! -L /data/zefan\ntest \"$(/usr/bin/id -u)\" = 1000\ntest -O /data/zefan\nexec /bin/mkdir -m 700 /data/zefan/open-jev-v8-containment-presence-20261003T195617Z-bb453ab34ea4a933\n'"
+      ],
+      "timeout_seconds": 45
+    },
+    {
+      "name": "exact-two-input-SCP-r1",
+      "argv": [
+        "/usr/bin/scp",
+        "-p",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=15",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "LogLevel=ERROR",
+        "<LOCAL_CHECKOUT>/runs/frontier-v8-containment-capability-20261003/fresh-CPU-presence-inputs-r1/frontier_v8_containment_capability.py",
+        "<LOCAL_CHECKOUT>/runs/frontier-v8-containment-capability-20261003/fresh-CPU-presence-inputs-r1/CPU-presence-request-r1.json",
+        "sigma@100.64.180.123:/data/zefan/open-jev-v8-containment-presence-20261003T195617Z-bb453ab34ea4a933/"
+      ],
+      "timeout_seconds": 45
+    },
+    {
+      "name": "actual-CPU-presence-launch-r1",
+      "argv": [
+        "/usr/bin/ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=15",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "LogLevel=ERROR",
+        "sigma@100.64.180.123",
+        "exec /usr/bin/env -i PATH=/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 CUDA_VISIBLE_DEVICES= NVIDIA_VISIBLE_DEVICES=none /home/sigma/miniconda3/envs/llm_env/bin/python3.11 -B -I -S /data/zefan/open-jev-v8-containment-presence-20261003T195617Z-bb453ab34ea4a933/frontier_v8_containment_capability.py --observe-cpu --request /data/zefan/open-jev-v8-containment-presence-20261003T195617Z-bb453ab34ea4a933/CPU-presence-request-r1.json --expected-request-sha256 fe82bec9988b0ee95c6d900b42316ca004e84c3260cffc918837879d5ca4ee8a"
+      ],
+      "timeout_seconds": 60
+    }
+  ],
+  "local_dispatch_ledger": "fresh-CPU-presence-transport-attempt-r1.consumed.json",
+  "limits": [
+    "Presence-only new context; cannot retrospectively diagnose the missing API in old ABI episode",
+    "Plain exclusive mkdir/scp uses trusted SSH/filesystem/ancestor baseline; no per-file transport O_EXCL/O_NOFOLLOW or physical exclusion",
+    "Full stdout is process returned evidence, not independently retrieved remote receipt/marker or fsync durability proof",
+    "Local SSH timeout may interrupt transport; no independent host-loss guard or guaranteed final receipt/cleanup; any failure consumed/no retry",
+    "No alternate interpreter/probe/shim/native body import/containment API/model/Torch/CUDA/pip/Git/install/GPU/queue operations"
+  ],
+  "functional_containment_verified": false,
+  "execution_available": false,
+  "resource_authority": false
+}

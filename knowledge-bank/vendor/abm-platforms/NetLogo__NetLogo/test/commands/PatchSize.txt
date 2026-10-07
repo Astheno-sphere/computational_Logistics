@@ -1,0 +1,17 @@
+ReadPatchSize
+  patch-size => 12
+
+SetPatchSize
+  globals [x]
+  O> set x patch-size
+  O> set-patch-size patch-size * patch-size
+  patch-size = (x * x) => true
+  O> set-patch-size 5.2
+  patch-size => 5.2
+
+SetInvalidPatchSize
+  O> set-patch-size 5
+  O> set-patch-size 0 => ERROR Patch size must be greater than zero.
+  patch-size => 5
+  O> set-patch-size -5 => ERROR Patch size must be greater than zero.
+  patch-size => 5

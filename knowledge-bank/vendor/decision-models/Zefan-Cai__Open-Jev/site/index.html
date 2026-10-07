@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Open-Jev-27B-v1.1: typed decisions, 80/111 on public JevBench Hard, an audited prediction replay, and open model, code and data releases.">
+  <meta property="og:title" content="Open-Jev-27B-v1.1 — Decisions you can inspect.">
+  <meta property="og:description" content="80/111 on public JevBench Hard. Explore the new 27B v1.1 model, an audited prediction replay, and complete evaluation evidence.">
+  <meta property="og:image" content="https://zefan-cai.github.io/open-jev/v1-1/poster.png">
+  <meta property="og:type" content="website">
+  <title>Open-Jev-27B-v1.1 — Typed decisions, open evidence.</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23152032'/%3E%3Cpath d='M18 18h-5v28h5M46 18h5v28h-5M27 19h12v20q0 8-8 8t-8-8' fill='none' stroke='%23bef3d8' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css?v=v11-games-20260923">
+  <script src="./app.js" defer></script>
+  <script src="./jevbench.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M9 5H5v14h14v-4M13 5h6v6M19 5 9 15"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7Z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 16v5h14v-5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  </svg>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#" aria-label="Open-Jev home"><span class="brand-mark" aria-hidden="true">[<b>J</b>]</span> Open-Jev<span class="brand-dot">.</span></a>
+      <nav class="top-nav" aria-label="Main navigation"><a class="workbench-nav-link" href="./workbench/">Try it</a><a href="./v1-1/">v1.1</a><a href="./games/">Games</a><a href="#demos">Demos</a><a href="./benchmarks/">Benchmarks</a><a href="#interface">Interface</a><a href="#latency">Latency</a><a href="#results">Results</a><a href="https://huggingface.co/collections/ZefanCai/open-jev">Hugging Face</a></nav>
+      <a class="header-code" href="https://github.com/Zefan-Cai/Open-Jev"><span class="desktop-label">Source code</span><span class="mobile-label">Code</span><svg class="icon"><use href="#i-external"/></svg></a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero launch-hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="status-dot"></span> OPEN-JEV-27B-v1.1 <span class="preview-tag">New release</span></div>
+        <h1 id="hero-title">Open-Jev-27B<br><span>v1.1</span></h1>
+        <p class="hero-description">Give it context and options.<br>Get typed probabilities for the next decision.</p>
+        <div class="launch-stats"><div><strong>80<span>/111</span></strong><span>Public JevBench Hard</span></div><div><strong>197<span>/231</span></strong><span>Public JevBench overall</span></div></div>
+        <p class="launch-scope">Historical 231-public protocol: Jev scores 81/111 Hard and 200/231 overall. Separate from newer independent open/sealed evaluations. <a href="./benchmarks/#evaluation-versions">See benchmark versions and pending 27B evaluation ↗</a></p>
+        <div class="hero-actions"><a class="button button-dark" href="./v1-1/">Explore v1.1 <svg class="icon"><use href="#i-arrow"/></svg></a><a class="button button-outline" href="https://huggingface.co/ZefanCai/Open-Jev-27B-v1.1">Get the model ↗</a><a class="text-link" href="./workbench/">Try the Open-Jev-2B workbench ↗</a></div>
+        <div class="hero-resource-links"><a href="https://github.com/Zefan-Cai/Open-Jev">Code ↗</a><a href="https://huggingface.co/datasets/ZefanCai/Open-Jev-v1.1">v1.1 data ↗</a><a href="./benchmarks/">Full results ↗</a><a href="https://github.com/Zefan-Cai/Open-Jev/blob/d6a1859d0ff4364be71551f3761fa0323be463cf/docs/deployment.md">Run a trained model ↗</a></div>
+        <p class="launch-package">LoRA rank 8 + decision head over a fixed Qwen3.8-27B base. Adapter package; base weights required.</p>
+      </div>
+      <div class="launch-demo">
+        <div class="launch-demo-heading"><span class="eyebrow">NEW / 27B v1.1 DEMO</span><h2>Same preview.<br>Different target.</h2><p>A changed target. Two actual model predictions.</p></div>
+        <video id="v11-replay" controls playsinline preload="metadata" poster="./v1-1/poster.jpg" aria-label="32-second replay of actual Open-Jev-27B-v1.1 predictions"><source src="./v1-1/replay.mp4" type="video/mp4"><track src="./v1-1/captions.vtt" kind="captions" srclang="en" label="English"></video>
+        <div class="launch-demo-footer"><p>Recorded model outputs · edited playback.<br>Illustrative UI from synthetic text states. No browser actions executed.</p><a class="text-link" href="./v1-1/#inspection">Inspect both cases and probabilities ↗</a></div>
+      </div>
+    </section>
+
+    <section class="launch-results wrap" aria-labelledby="launch-results-title">
+      <div><span class="eyebrow">THE RESULT, WITH ITS SCOPE</span><h2 id="launch-results-title">One answer from Jev<br>on public Hard.</h2><p>Open-Jev-27B-v1.1 reaches 72.07% on the 111 public Hard tasks. Open-Jev-2B scores 46/111; Open-Jev-9B scores 66/111; Jev scores 81/111.</p><p class="launch-scope">Selected external benchmark, separate from the complete 127,787-row internal evaluation. Model scale, data and earlier training differ.</p><a class="text-link" href="./v1-1/#release-results">See results and release details ↗</a></div>
+      <a class="launch-chart" href="./v1-1/benchmark-poster.png"><img src="./v1-1/benchmark-poster.png" width="1600" height="1000" loading="lazy" alt="Public JevBench Hard: Open-Jev-2B 46 of 111, Open-Jev-9B 66 of 111, Open-Jev-27B-v1.1 80 of 111, Jev 1.13 81 of 111. 27B overall is 197 of 231 versus Jev 200 of 231."></a>
+    </section>
+
+    <section class="workbench-promo wrap" aria-labelledby="workbench-promo-title">
+      <div class="workbench-promo-copy"><span class="eyebrow">FOR EVERYDAY WORK</span><h2 id="workbench-promo-title">Turn a column of text into useful categories.</h2><p class="workbench-english" lang="en">Sort support messages, emails, or feedback using categories you define. No code needed in the workbench.</p></div>
+      <div class="workbench-promo-action"><a class="button button-dark" href="./workbench/">Open the workbench<svg class="icon"><use href="#i-arrow"/></svg></a><p lang="en">Powered by Open-Jev-2B on CPU. Start with a few rows.</p></div>
+      <ol class="workbench-steps" aria-label="How to classify your text"><li><span>1</span><strong lang="en">Add text or CSV</strong><small lang="en">Paste or import</small></li><li><span>2</span><strong lang="en">Define categories</strong><small lang="en">Describe each label</small></li><li><span>3</span><strong lang="en">Classify each row</strong><small lang="en">Run your task</small></li><li><span>4</span><strong lang="en">Export results</strong><small lang="en">Save a CSV</small></li></ol>
+    </section>
+
+    <section class="arcade-promo wrap" aria-labelledby="arcade-promo-title">
+      <div><span class="eyebrow">NEW / OPEN-JEV-27B-v1.1 GAME DEMOS</span><h2 id="arcade-promo-title">Your move.<br>Then the model's.</h2><p>Read the board, choose an action, then reveal the model's choice and every option's probability.</p><a class="button button-dark" href="./games/">Enter the game arcade <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+      <div><div class="arcade-links"><a href="./games/#snake"><span aria-hidden="true">↳</span><strong>Snake</strong><small>Find the next turn</small></a><a href="./games/#tic-tac-toe"><span aria-hidden="true">× / ○</span><strong>Tic-tac-toe</strong><small>Find the winning square</small></a><a href="./games/#runner"><span aria-hidden="true">↗</span><strong>Box Runner</strong><small>Jump or duck?</small></a><a href="./games/#platformer"><span aria-hidden="true">▂ ▅ ▂</span><strong>Tile Platformer</strong><small>Choose your next move</small></a></div><p class="arcade-scope">16 independent recorded decisions, including 3 model/reference disagreements. Interactive snapshots, not live model gameplay. Original synthetic game states; no third-party game assets.</p></div>
+    </section>
+
+    <section class="featured-games wrap" id="full-games" aria-labelledby="full-games-title" hidden>
+      <div class="section-heading"><div><span class="eyebrow">FROM START TO FINISH</span><h2 id="full-games-title">Watch complete games.</h2><button class="button button-outline" id="watch-overview" type="button">Watch the pilot replay <svg class="icon"><use href="#i-play"/></svg></button></div><p>Selected successful episodes, from the opening state to the goal. Replayed actions from the original Qwen3.5-9B pilot.</p></div>
+      <div class="featured-game-grid">
+        <button class="featured-game" type="button" data-game-id="doom" aria-label="Watch the complete Doom episode"><img src="./media/gameplay-doom.jpg" width="1280" height="720" loading="lazy" alt="Actual first-person ViZDoom gameplay"><span class="featured-game-copy"><strong>Doom</strong><span>Goal: eliminate the target</span><span class="game-result">11 decisions · target eliminated</span><span class="featured-play">Play full episode ↗</span></span></button>
+        <button class="featured-game" type="button" data-game-id="trex" aria-label="Watch the complete Box Runner episode"><img src="./media/gameplay-trex.jpg" width="1280" height="720" loading="lazy" alt="Box Runner clearing the course obstacles"><span class="featured-game-copy"><strong>Box Runner</strong><span>Goal: clear the course</span><span class="game-result">12 / 12 obstacles cleared</span><span class="featured-play">Play full episode ↗</span></span></button>
+      </div>
+    </section>
+
+    <section class="inventory wrap" aria-label="Current data inventory">
+      <div class="inventory-intro"><span class="eyebrow">THE WORK, IN NUMBERS</span><p>A growing set of<br>inspectable decision tasks.</p></div>
+      <div class="inventory-stat"><strong>408,884</strong><span>typed decision rows</span></div>
+      <div class="inventory-stat"><strong>25</strong><span>task-source identifiers</span></div>
+      <div class="inventory-stat"><strong>268,493</strong><span>training rows in inventory</span></div>
+      <div class="inventory-stat"><strong>107,922</strong><span>test + OOD rows in inventory</span></div>
+      <p class="inventory-note">Prepared corpus inventory, including new retrieval and multilingual mailroom controls. This prepared inventory is separate from the frozen v1.1 mixture. Original 2B/9B results use release-v2; the 27B v1.1 results below use its complete expanded holdouts. Selected API probes are reported separately.</p>
+    </section>
+
+    <section class="interface-section wrap" id="interface" aria-labelledby="interface-title">
+      <div class="section-heading"><div><span class="eyebrow">01 / THE INTERFACE</span><h2 id="interface-title">A small vocabulary.<br>A useful way to think.</h2></div><p>Choose an action. Test a condition. Score a criterion. Ask independent questions over the same context, with outputs you can use directly.</p></div>
+      <div class="interface-layout">
+        <div class="primitive-tabs" role="tablist" aria-label="Decision output types" aria-orientation="vertical">
+          <button type="button" class="primitive-tab active" id="tab-choice" role="tab" aria-selected="true" aria-controls="primitive-panel" data-primitive="choice"><span class="primitive-glyph" aria-hidden="true">↗</span><span><strong>Choice</strong><small>A probability for each candidate.</small></span><span class="primitive-number">01</span></button>
+          <button type="button" class="primitive-tab" id="tab-noul" role="tab" aria-selected="false" aria-controls="primitive-panel" tabindex="-1" data-primitive="noul"><span class="primitive-glyph" aria-hidden="true">◐</span><span><strong>Noul</strong><small>A condition, on a scale from 0 to 1.</small></span><span class="primitive-number">02</span></button>
+          <button type="button" class="primitive-tab" id="tab-score" role="tab" aria-selected="false" aria-controls="primitive-panel" tabindex="-1" data-primitive="score"><span class="primitive-glyph" aria-hidden="true">≋</span><span><strong>Score</strong><small>A score over an ordered rubric.</small></span><span class="primitive-number">03</span></button>
+        </div>
+        <div class="primitive-panel" id="primitive-panel" role="tabpanel" aria-labelledby="tab-choice" tabindex="0">
+          <div class="code-window-top"><span><i></i><i></i><i></i></span><span>POST /v1/systemone</span><span class="code-window-label">Illustrative request</span></div>
+          <pre class="request-code"><code id="primitive-request">{
+  "state": "My order arrived damaged. Please refund it.",
+  "questions": {
+    "route": {
+      "type": "choice",
+      "instructions": "Which team should handle this?",
+      "criteria": {
+        "billing": "Refunds and charges",
+        "engineering": "Software defects"
+      }
+    }
+  }
+}</code></pre>
+          <div class="primitive-explanation"><span class="output-chip" id="primitive-chip">Choice</span><p id="primitive-description">The candidates are yours. The model assigns probabilities; your application decides what to do next.</p></div>
+        </div>
+      </div>
+      <p class="implementation-note">Direct probability decisions, without autoregressive text generation or parsing generated JSON. Independent implementation inspired by Jev; no claim to reproduce its proprietary method or speedups.</p>
+    </section>
+
+    <section class="gallery-section" id="demos" aria-labelledby="gallery-title">
+      <div class="wrap">
+        <div class="section-heading gallery-heading"><div><span class="eyebrow">02 / WATCH & INSPECT</span><h2 id="gallery-title">Decisions in motion.</h2></div><p>Browse <span id="catalog-count">the</span> selected demos across <span id="domain-count">our task</span> categories. Successful examples and interface walkthroughs; see Results for the full evaluation.</p></div>
+        <div class="evidence-legend"><span><i class="legend-dot replay-dot"></i><strong>Model replay</strong> A saved model response</span><span><i class="legend-dot walkthrough-dot"></i><strong>Interface walkthrough</strong> A task contract, without a trained result</span></div>
+        <div class="gallery-toolbar"><div id="category-filters" class="category-filters" role="group" aria-label="Filter demos by category"><button class="filter active" type="button" aria-pressed="true" data-category="All">All demos</button></div><label class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input type="search" id="demo-search" placeholder="Find a task…" aria-label="Search demos" autocomplete="off"><kbd aria-hidden="true">/</kbd></label></div>
+        <div class="gallery-status"><p id="filter-status" role="status" aria-live="polite">Loading demo catalog…</p><span id="evidence-count"></span></div>
+        <div id="demo-grid" class="demo-grid" aria-label="Demo videos"></div>
+        <div id="gallery-empty" class="gallery-empty" hidden><span aria-hidden="true">↗</span><h3>No matching decisions.</h3><p>Try another task name or category.</p><button id="clear-filters" class="button button-dark" type="button">Clear filters</button></div>
+        <div class="gallery-more"><button id="load-more" class="button button-outline" type="button" hidden>Show more demos <svg class="icon"><use href="#i-arrow"/></svg></button></div>
+        <noscript><p class="catalog-error">Enable JavaScript to filter and play the demo catalog. You can also <a href="./catalog.json">read the catalog directly</a>.</p></noscript>
+        <div class="gallery-footnote"><span class="footnote-mark">↳</span><p>These clips make the interface inspectable. A replay of one response is not an end-to-end success rate; an interface walkthrough is not a model capability result.</p></div>
+        <details class="coverage-details" id="coverage-details" hidden><summary>Coverage still in progress <span id="coverage-count"></span></summary><ul id="uncovered-list"></ul></details>
+      </div>
+    </section>
+
+    <section class="latency-section wrap" id="latency" aria-labelledby="latency-title">
+      <div class="section-heading"><div><span class="eyebrow">MEASURE THE DECISION LOOP</span><h2 id="latency-title">How fast is 2B?</h2></div><p>Measured requests from the Open-Jev-2B checkpoint. Inspect the workload, timing boundary and every raw attempt.</p></div>
+      <p id="latency-status" class="latency-status" role="status">Loading the latency report…</p>
+      <div id="latency-content" hidden>
+        <div class="latency-comparison"><strong>Open-Jev-2B vs hosted APIs</strong><p id="latency-jev"></p><p>All providers receive the same saved state and question semantics. The 2B numbers use a warm H100 with cache off and loopback HTTP. Hosted APIs use a fresh HTTPS connection per request, including Internet transit, TLS, routing and scheduling. These are client-observed request times, not a matched-hardware model speedup.</p><p id="latency-openai" hidden></p></div>
+        <p class="latency-scroll-hint">Swipe the table horizontally to compare providers →</p>
+        <div class="latency-table-scroll" tabindex="0" role="region" aria-label="Provider latency comparison, horizontally scrollable"><table class="latency-table" id="latency-provider-table"><caption>P50 / P95 in milliseconds. Counts show valid responses, not semantic accuracy. One request at a time. State tokens use the Qwen tokenizer.</caption><thead><tr id="latency-provider-head"></tr></thead><tbody id="latency-provider-rows"></tbody></table></div>
+        <div id="latency-provider-links" class="latency-links"></div>
+        <details class="latency-diagnostics"><summary>Local timing boundaries and experimental cache diagnostics</summary>
+        <div class="latency-controls"><label for="latency-transport">Timing boundary</label><select id="latency-transport"><option value="http_loopback">Loopback HTTP</option><option value="predictor">In-process Predictor</option></select><span id="latency-runtime"></span></div>
+        <p id="latency-boundary" class="latency-method"></p>
+        <div class="latency-table-scroll" tabindex="0" role="region" aria-label="Latency measurements, horizontally scrollable"><table class="latency-table"><caption>P50 / P95 in milliseconds. Warm model, one request at a time.</caption><thead><tr><th scope="col">Workload</th><th scope="col">State tokens</th><th scope="col">Candidates</th><th scope="col">Cache off</th><th scope="col">Experimental cache</th><th scope="col">Validation</th></tr></thead><tbody id="latency-rows"></tbody></table></div>
+        <p id="latency-cache-note" class="latency-method"></p>
+        <p id="latency-sampling" class="latency-method"></p>
+        </details>
+        <p class="latency-method">For context, TypeSafe's <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">launch article ↗</a> reports 70–500 ms end-to-end for Jev. That vendor range uses unspecified workloads and is separate from our measurements above.</p>
+        <div class="latency-evidence"><div><h3>Watch a measured request.</h3><p>One recorded model response and the full timing distribution for that workload. Playback length is presentation time; the measured request time is printed on screen.</p><div class="latency-links"><a id="latency-raw" class="text-link" href="https://github.com/Zefan-Cai/Open-Jev/tree/main/reports/inference-latency">Raw measurements ↗</a><a class="text-link" href="https://github.com/Zefan-Cai/Open-Jev/blob/main/docs/inference-latency.md">Method & reproduction ↗</a></div><details class="latency-request"><summary>Exact request and recorded response</summary><pre id="latency-example"></pre></details></div><figure id="latency-video-wrap" hidden><video id="latency-video" controls playsinline preload="metadata" aria-label="Open-Jev-2B measured latency evidence"></video><figcaption id="latency-video-caption"></figcaption></figure></div>
+      </div>
+      <noscript><p>Read the <a href="./latency.json">machine-readable latency summary</a> and <a href="https://github.com/Zefan-Cai/Open-Jev/blob/main/docs/inference-latency.md">measurement method</a>.</p></noscript>
+    </section>
+
+    <section class="comparison-section wrap" id="comparison" aria-labelledby="comparison-title">
+      <div class="section-heading"><div><span class="eyebrow">COMPARE THE DECISIONS</span><h2 id="comparison-title">Quality, beside latency.</h2></div><p>Compare categorical answers with fixed reference labels. Inspect the evidence and label limitations behind each result.</p></div>
+      <div class="comparison-context"><p><strong>Coverage is a sample.</strong> These selected suites do not cover the full held-out inventory. Snapshot decisions are not closed-loop task or game win rates.</p><p><strong>The same 76 cases are the direct comparison.</strong> The 2B and 9B results reuse historical predictions verified against exact row and checkpoint hashes. They add no new latency measurements. Hosted model results use new requests.</p></div>
+      <p id="comparison-status" class="comparison-status" role="status">Loading the decision comparison…</p>
+      <div id="comparison-content" hidden>
+        <p id="comparison-scope" class="comparison-method"></p>
+        <p class="comparison-caption"><strong>Reference matches / evaluated hard-target decisions.</strong> Soft targets stay outside this count. Failed decisions count as mismatches; unattempted decisions remain pending. Ambiguous game references are disclosed in the method.</p>
+        <p class="comparison-scroll-hint">Swipe horizontally to compare all five providers →</p>
+        <div class="comparison-table-scroll" tabindex="0" role="region" aria-label="Reference matches across five providers, horizontally scrollable"><table class="comparison-table" id="comparison-table"><caption class="sr-only">Categorical reference matches by suite and provider. Each fraction uses only evaluated hard targets; pending counts are separate.</caption><thead><tr id="comparison-head"></tr></thead><tbody id="comparison-rows"></tbody></table></div>
+        <p id="comparison-mass-note" class="comparison-method" hidden>* A probability-mass flag means the categorical answer was usable even though its probability vector failed strict validation. This table counts that answer separately as a decision; it does not validate or renormalize the probabilities.</p>
+        <details class="comparison-details"><summary>Suite definitions and decision policy</summary><p id="comparison-policy"></p><dl id="comparison-suite-notes"></dl></details>
+      </div>
+      <div class="comparison-links"><a class="text-link" href="./benchmarks/">All benchmark results &amp; scope ↗</a><a id="comparison-method-link" class="text-link" href="https://github.com/Zefan-Cai/Open-Jev/blob/main/docs/provider-comparison.md">Method & detailed results ↗</a><a class="text-link" href="./provider-quality.json">Download comparison JSON ↗</a><a class="text-link" href="https://x.com/Zefan_Cai/status/2101845509170417784">Published comparison thread ↗</a><a class="text-link" href="https://github.com/Zefan-Cai/Open-Jev/blob/main/docs/community-research-20260921.md">Community cases & benchmark plan ↗</a></div>
+      <div id="trec-comparison" hidden>
+        <h3>Retrieval on TREC-DL</h3>
+        <p id="trec-note" class="comparison-method"></p>
+        <div class="comparison-table-scroll" tabindex="0" role="region" aria-label="TREC retrieval results, horizontally scrollable"><table class="comparison-table" id="trec-table"><caption class="comparison-caption">nDCG@10, higher is better. Jev strict and supplementary scalar scores are separate.</caption><thead><tr id="trec-head"></tr></thead><tbody id="trec-rows"></tbody></table></div>
+        <a id="trec-method-link" class="text-link" href="https://github.com/Zefan-Cai/Open-Jev/blob/main/reports/ir-control-v1/trec-holdout/README.md">TREC protocol & evidence ↗</a>
+      </div>
+      <noscript><p class="comparison-method">Read the comparison JSON or the linked method for all results and pending measurements.</p></noscript>
+    </section>
+
+    <section class="comparison-section wrap" id="jevbench" aria-labelledby="jevbench-title">
+      <div class="section-heading"><div><span class="eyebrow">AN EXTERNAL BENCHMARK</span><h2 id="jevbench-title">JevBench, public subset.</h2></div><p>Audited 27B v1.1 and Open-Jev-2B / Open-Jev-9B checkpoints, alongside Jev and GPT. Separate from the 76-case comparison above.</p></div>
+      <div class="comparison-context"><p><strong>231 public tasks, out of 534 total.</strong> Original: 72 · Easy: 48 · Hard: 111. The other 303 private/judge tasks are unavailable; no full-benchmark score is claimed.</p><p><strong>Candidate order differs on 119 of 139 Choice tasks.</strong> The native adapters preserve criteria-map order; the GPT adapter uses its task-label order. Open-Jev and Jev return native probabilities; GPT returns verbalized probabilities in constrained JSON, not token logprobs.</p><p><strong>Timing is diagnostic.</strong> One observation per task, no warmups or retries. The Open-Jev-2B / Open-Jev-9B use one local H100 with loopback HTTP and prefix cache off; hosted models use HTTPS. The new 27B uses four-rank direct execution and its timings are not comparable. These heterogeneous quality requests do not establish a hardware-normalized speedup, throughput, or energy efficiency.</p></div>
+      <p id="jevbench-status" class="comparison-status" role="status">Loading the JevBench audit status…</p>
+      <div id="jevbench-content" hidden>
+        <p class="comparison-scroll-hint">Swipe horizontally to inspect all metrics →</p>
+        <div class="latency-table-scroll" tabindex="0" role="region" aria-label="JevBench public-subset accuracy and timing diagnostics, horizontally scrollable"><table class="latency-table"><caption>Correct / 231 public tasks and / 111 Hard tasks. P50/P95 apply only to the historical HTTP/HTTPS quality runs; 27B direct-execution timings are not comparable.</caption><thead><tr><th scope="col">Model</th><th scope="col">Correct · Accuracy</th><th scope="col">Hard · Accuracy</th><th scope="col">Strict valid</th><th scope="col">Renormalized</th><th scope="col">P50</th><th scope="col">P95</th></tr></thead><tbody id="jevbench-rows"></tbody></table></div>
+        <p class="comparison-method">Strict probability-sum tolerance: 0.001. Vectors within the upstream 0.02 rounding tolerance may be normalized and scored. Score accuracy uses the most probable level; expected-value ordinal MAE is separate. Local compute cost is unmetered, not free.</p>
+        <details class="comparison-details"><summary>Results by public tier and execution settings</summary><div class="latency-table-scroll"><table class="latency-table"><caption>Correct / planned tasks by public tier. The original 2B/9B checkpoints and the new 27B v1.1 checkpoint are labeled separately.</caption><thead><tr><th scope="col">Model</th><th scope="col">Original</th><th scope="col">Easy</th><th scope="col">Hard</th></tr></thead><tbody id="jevbench-tier-rows"></tbody></table></div><p>Open-Jev-2B / Open-Jev-9B: one NVIDIA H100 80GB HBM3, models run serially. New 27B: four-rank frozen-base FSDP2 on shared H100 GPUs, direct collective execution without HTTP. All Open-Jev models: candidate batch size 1, maximum length 16,384, prefix cache off. All streams: concurrency 1, no warmups, no retries. GPT-5.6 Luna: reasoning none. GPT-6 Astra: reasoning low. Both GPT models: maximum 4,096 completion tokens and temperature omitted.</p></details>
+      </div>
+      <p class="comparison-method">27B v1.1 scores <strong>197/231 (85.28%)</strong> and <strong>80/111 Hard (72.07%)</strong>, above Open-Jev-2B / Open-Jev-9B and still three overall and one Hard answer behind Jev. Model scale, data and prior training all differ. ¹ Its four-rank shared-node execution times are not single-GPU or HTTP/API latency measurements; no speedup is claimed.</p>
+      <div class="comparison-links"><a class="text-link" href="https://github.com/Zefan-Cai/Open-Jev/blob/main/docs/jevbench-public.md">JevBench method & audits ↗</a><a class="text-link" href="./jevbench.json">Download JevBench aggregate JSON ↗</a><a class="text-link" href="https://github.com/fstandhartinger/jevbench/tree/f8ce71361165846101d02ebc83ad44e47ae44fc3">Pinned upstream benchmark ↗</a></div>
+      <noscript><p class="comparison-method">Read the linked method and aggregate JSON for audit status and results.</p></noscript>
+    </section>
+
+    <section class="results-section" id="results" aria-labelledby="results-title">
+      <div class="wrap results-layout"><div class="results-copy"><span class="eyebrow light-eyebrow">03 / MEASURED RESULTS</span><h2 id="results-title">Show the work.<br>Keep the limits.</h2><p>27B v1.1 completed all <strong>127,787 expanded Test/OOD rows</strong>. Independent replay verified zero failed, missing or duplicate predictions, model identity and complete process cleanup.</p><a class="text-link light-link" href="https://github.com/Zefan-Cai/Open-Jev/blob/main/docs/internal-full-evaluation.md">Read the complete evaluation report <svg class="icon"><use href="#i-external"/></svg></a><div class="result-context"><span class="result-context-line"></span><p><strong>Keep checkpoint versions separate.</strong><br>The original Open-Jev-2B / Open-Jev-9B results are preserved. New 2B training stopped; new 9B did not start. Final-model JF100 and closed-loop results remain pending.</p></div></div>
+      <div class="results-data"><div class="table-label"><span>HARD-LABEL ACCURACY · CORRECT / HARD ROWS</span><span>All rows evaluated</span></div><div class="results-table-scroll" tabindex="0" role="region" aria-label="Old and expanded Test and OOD results, horizontally scrollable"><table class="results-table full-internal"><caption class="sr-only">Audited hard-label accuracy, with exact hard correct / hard rows; original and expanded panels overlap.</caption><thead><tr><th scope="col">Checkpoint</th><th scope="col">Old Test</th><th scope="col">Old OOD</th><th scope="col">Expanded Test</th><th scope="col">Expanded OOD</th></tr></thead><tbody><tr><th scope="row">Open-Jev<span>Open-Jev-2B</span></th><td><strong>94.71%</strong><small>9,515 / 10,046</small></td><td><strong>86.02%</strong><small>13,287 / 15,446</small></td><td class="not-evaluated">Not evaluated</td><td class="not-evaluated">Not evaluated</td></tr><tr><th scope="row">Open-Jev<span>Open-Jev-9B</span></th><td><strong>97.54%</strong><small>9,799 / 10,046</small></td><td><strong>91.97%</strong><small>14,205 / 15,446</small></td><td class="not-evaluated">Not evaluated</td><td class="not-evaluated">Not evaluated</td></tr><tr class="highlight-result"><th scope="row">Open-Jev<span>27B v1.1</span></th><td><strong>98.31%</strong><small>9,876 / 10,046</small></td><td><strong>95.98%</strong><small>14,825 / 15,446</small></td><td><strong>96.65%</strong><small>41,357 / 42,789</small></td><td><strong>96.44%</strong><small>80,934 / 83,924</small></td></tr></tbody></table></div><div class="result-notes"><p><strong>Old Test / OOD:</strong> 10,532 / 15,920 total rows.<br><strong>Expanded Test / OOD:</strong> 43,301 / 84,486 total rows.</p><p>Soft-target rows (486 / 474 / 512 / 562 respectively) remain in probability metrics. The old panels are unchanged-content subsets of the expanded panels; they overlap. The original 2B/9B checkpoints have not been evaluated on the expanded splits.</p><p>These are matches to prepared reference labels, not gameplay or workflow completion rates. No matching full-data base-model evaluation was run. Source-defined OOD does not establish unrestricted real-world generalization.</p><p>Historical subgroup results remain available: Open-Jev-9B Wiki OOD expected accuracy is 32.74%, and reasoning OOD hard accuracy is 73.60%. T-Rex Test has only four rows. See the original 2B/9B audit and the downloaded source-level metrics.</p><p>27B uses its saved temperature, a 4,096-token limit without truncation, row batch size one and cache off. JevBench is the separate 231-task external evaluation above. Shared multi-GPU times are not single-GPU or HTTP/API latency.</p><a class="text-link light-link" href="./results.json" download="open-jev-verified-results.json">Download verified results <svg class="icon"><use href="#i-download"/></svg></a></div></div></div>
+    </section>
+
+    <section class="start-section wrap" id="start" aria-labelledby="start-title"><div><span class="eyebrow">OPEN RESEARCH, IN PROGRESS</span><h2 id="start-title">Build a smaller<br>decision loop.</h2><p>Inspect the contracts, follow the evidence, and make the next choice explicit.</p></div><div class="start-links"><a class="resource-link" href="https://github.com/Zefan-Cai/Open-Jev"><span class="resource-number">01</span><span><strong>Source code</strong><small>Source, data builders, evaluation tools</small></span><svg class="icon"><use href="#i-external"/></svg></a><a class="resource-link" href="./catalog.json" download="open-jev-catalog.json"><span class="resource-number">02</span><span><strong>Download the demo catalog</strong><small>Requests, answers, provenance and limits</small></span><svg class="icon"><use href="#i-download"/></svg></a><a class="resource-link" href="https://huggingface.co/ZefanCai/Open-Jev-2B"><span class="resource-number">03</span><span><strong>Open-Jev-2B</strong><small>Trained LoRA adapter and decision head</small></span><svg class="icon"><use href="#i-external"/></svg></a><a class="resource-link" href="https://huggingface.co/ZefanCai/Open-Jev-9B"><span class="resource-number">04</span><span><strong>Open-Jev-9B</strong><small>Trained LoRA adapter and decision head</small></span><svg class="icon"><use href="#i-external"/></svg></a><a class="resource-link" href="https://huggingface.co/datasets/ZefanCai/Open-Jev"><span class="resource-number">05</span><span><strong>Original Open-Jev task data</strong><small>Dataset splits, source manifests and reconstruction guide</small></span><svg class="icon"><use href="#i-external"/></svg></a><a class="resource-link" href="./story/"><span class="resource-number">06</span><span><strong>How Open-Jev was built</strong><small>Project origins, methods, data and measured results</small></span><svg class="icon"><use href="#i-arrow"/></svg></a><a class="resource-link" href="https://huggingface.co/ZefanCai/Open-Jev-27B-v1.1"><span class="resource-number">07</span><span><strong>Open-Jev-27B-v1.1</strong><small>LoRA rank 8, decision head and saved calibration</small></span><svg class="icon"><use href="#i-external"/></svg></a><a class="resource-link" href="https://huggingface.co/datasets/ZefanCai/Open-Jev-v1.1"><span class="resource-number">08</span><span><strong>Open-Jev v1.1 data</strong><small>326,619 redistributable rows; complete original mixture documented separately</small></span><svg class="icon"><use href="#i-external"/></svg></a><a class="resource-link" href="https://github.com/Zefan-Cai/Open-Jev/blob/1c4347841ce942b8009d9187735fe5686adbbb1b/docs/support-routing.md"><span class="resource-number">09</span><span><strong>Local support-routing trial</strong><small>Your checkpoint server, review queue and CSV export</small></span><svg class="icon"><use href="#i-external"/></svg></a><a class="resource-link" href="https://github.com/Zefan-Cai/Open-Jev/blob/1c4347841ce942b8009d9187735fe5686adbbb1b/docs/community-evidence.md"><span class="resource-number">10</span><span><strong>Five community reports</strong><small>Exact public excerpts and testable workflow ideas</small></span><svg class="icon"><use href="#i-external"/></svg></a><a class="resource-link" href="./benchmarks/#efficiency"><span class="resource-number">11</span><span><strong>H200 / H100 efficiency measurements</strong><small>Operator, 2B, 27B and retained parity failures</small></span><svg class="icon"><use href="#i-arrow"/></svg></a><p class="access-note">The measured local 2B support trial reached 64.8% routing accuracy versus 82.4% for BM25, with 15.9% error among accepted rows. Human review is required; completed external human trials remain zero. <a href="./benchmarks/#support-trial">Inspect the negative baseline result ↗</a> · <a href="https://github.com/Zefan-Cai/Open-Jev/pull/14">Implementation PR #14 ↗</a></p><p class="access-note">Model packages require their pinned upstream Qwen base weights. The v1.1 dataset is a redistributable projection (326,619 rows / 147,139 training rows), excluding 2,053 Wiki rows from the original 328,672-row mixture. Dataset cards retain source licenses and reconstruction limits.</p></div></section>
+  </main>
+
+  <footer class="site-footer"><div class="wrap footer-inner"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true">[<b>J</b>]</span> Open-Jev<span class="brand-dot">.</span></a><p>Independent research inspired by <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">Jev ↗</a>.<br>Original code: MIT. Data and upstream models retain their licenses.</p><a href="#main" class="back-top">Back to top <span aria-hidden="true">↑</span></a></div></footer>
+
+  <dialog id="demo-modal" aria-labelledby="demo-title">
+    <div class="modal-shell"><div class="modal-header"><span id="modal-evidence" class="evidence-badge"></span><button id="close-modal" class="close-button" type="button" aria-label="Close demo"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="video-frame"><video id="demo-video" controls playsinline preload="none" aria-label="Selected demo video"></video><p id="video-error" class="video-error" hidden>This video could not be loaded. You can still inspect and download its evidence below.</p></div><div class="modal-body"><span id="modal-category" class="eyebrow"></span><h2 id="demo-title"></h2><p id="demo-description" class="modal-description"></p><p id="demo-model" class="demo-model"></p><p id="demo-summary" class="demo-summary"></p><div class="modal-downloads"><a id="video-download" class="button button-dark" download><svg class="icon"><use href="#i-download"/></svg> Download source video</a><button id="evidence-download" class="button button-outline" type="button">Download evidence</button><a id="transcript-download" class="text-link" download>Transcript <span aria-hidden="true">↗</span></a></div><details class="evidence-details"><summary>Inspect the request & response</summary><div class="evidence-columns"><div><h3>Request</h3><pre id="demo-request"></pre></div><div><h3>Answer / evidence</h3><pre id="demo-answer"></pre></div></div></details><div class="provenance-grid"><section><h3>Provenance</h3><p id="demo-provenance"></p><a id="demo-source" class="text-link" target="_blank" rel="noopener">Source reference <svg class="icon"><use href="#i-external"/></svg></a></section><section><h3>What this does & doesn't show</h3><ul id="demo-limitations"></ul></section></div><details class="transcript-details"><summary>Read transcript</summary><div id="demo-transcript" class="transcript-content">Open a demo to read its transcript.</div></details></div></div>
+  </dialog>
+</body>
+</html>

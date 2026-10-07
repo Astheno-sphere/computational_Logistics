@@ -1,0 +1,109 @@
+{
+  "game": {
+    "name": "wikiracing",
+    "source": "Computer",
+    "target": "Physics",
+    "graph_sha256": "ece669f2bcd77cdc8ac60af80a0acdd0f5d1503df4d3fcbbaa42e652453c7c87",
+    "max_candidates": 12
+  },
+  "seed": 10001,
+  "policy": "random_baseline",
+  "is_model": false,
+  "max_steps": 40,
+  "steps": [
+    {
+      "request": {
+        "state": {
+          "current_page": "Computer",
+          "target_page": "Physics",
+          "navigation": "Select one of the offered outgoing article links."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose an offered outgoing link to reach the target article in as few steps as possible.",
+            "criteria": {
+              "Mathematics": null,
+              "Music": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "Music",
+        "probabilities": {
+          "Mathematics": 0.5,
+          "Music": 0.5
+        }
+      },
+      "action": "Music",
+      "reward": 0.0,
+      "next_state": {
+        "current_page": "Music",
+        "target_page": "Physics",
+        "navigation": "Select one of the offered outgoing article links."
+      },
+      "terminal": false,
+      "latency_ms": 0.0053104013204574585,
+      "environment_latency_ms": 0.022631138563156128
+    },
+    {
+      "request": {
+        "state": {
+          "current_page": "Music",
+          "target_page": "Physics",
+          "navigation": "Select one of the offered outgoing article links."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose an offered outgoing link to reach the target article in as few steps as possible.",
+            "criteria": {
+              "Art": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "Art",
+        "probabilities": {
+          "Art": 1.0
+        }
+      },
+      "action": "Art",
+      "reward": 0.0,
+      "next_state": {
+        "current_page": "Art",
+        "target_page": "Physics",
+        "navigation": "Select one of the offered outgoing article links."
+      },
+      "terminal": false,
+      "latency_ms": 0.002376735210418701,
+      "environment_latency_ms": 0.017940998077392578
+    }
+  ],
+  "initial_state": {
+    "current_page": "Computer",
+    "target_page": "Physics",
+    "navigation": "Select one of the offered outgoing article links."
+  },
+  "metrics": {
+    "steps": 2,
+    "stop_reason": "no_legal_actions",
+    "total_reward": 0.0,
+    "mean_decision_latency_ms": 0.00384356826543808,
+    "success": false,
+    "path": [
+      "Computer",
+      "Music",
+      "Art"
+    ]
+  },
+  "evaluation_policy": "random",
+  "evaluation_game": "wikiracing",
+  "evaluation_seed": 10001,
+  "valid": true,
+  "service_identity": null
+}

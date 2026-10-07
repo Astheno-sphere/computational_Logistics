@@ -1,0 +1,33 @@
+{
+  "state": {
+    "objective": "Avoid the obstacle and survive.",
+    "current_speed": 7.5,
+    "speed_mode": "normal",
+    "dinosaur_motion_when_observed": "running",
+    "target_obstacle": {
+      "kind": "small_cactus",
+      "group_size": "single",
+      "flight_path": "ground_hazard"
+    },
+    "timing_policy": "Observed motion is transient; the external controller schedules the chosen maneuver."
+  },
+  "questions": {
+    "maneuver": {
+      "type": "choice",
+      "instructions": "Select a safe maneuver for the obstacle. Let the external controller determine timing.",
+      "criteria": {
+        "jump": "Clear a ground hazard or a bird that blocks both standing and ducking.",
+        "duck": "Pass below a bird that only blocks standing.",
+        "keep_running": "The obstacle clears the standing dinosaur."
+      }
+    },
+    "jump_profile": {
+      "type": "choice",
+      "instructions": "Assuming a jump, select its trajectory. Use a short jump only for a single small cactus.",
+      "criteria": {
+        "short": "One small cactus.",
+        "full": "Any other obstacle."
+      }
+    }
+  }
+}

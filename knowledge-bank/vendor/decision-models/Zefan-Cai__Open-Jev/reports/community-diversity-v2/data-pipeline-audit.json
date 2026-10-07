@@ -1,0 +1,74 @@
+{
+  "status": "passed",
+  "audited_at_utc": "2026-09-21T06:32:11.148169+00:00",
+  "scope": "WANLI conversion artifacts and community-mixture/overlap pipeline code; final mixture requires separate frozen-output screening",
+  "wanli": {
+    "revision": "61c95318fd71c55b6ba355d76253254615f387ec",
+    "source_files_sha256": {
+      "train.jsonl": "85058cf017a911e89242dc29fa0a4ddaad3664cb923dc0a82145fdda14b694e5",
+      "test.jsonl": "4276e0af7fcdf657d1ab7beb54eaf025fda592a76c9ee86b63b7871953fc74fd",
+      "README.md": "63d95359bdd0c572c6196da6aff031593b1bc9d63c6d16d823a5f270b5ff0f9c"
+    },
+    "source_counts": {
+      "test": 5000,
+      "train": 102885
+    },
+    "converted_split_counts": {
+      "calibration": 4707,
+      "ood": 4627,
+      "test": 4998,
+      "train": 82045,
+      "validation": 4830
+    },
+    "retained_rows": 101207,
+    "source_connected_components": 57091,
+    "reserved_test_components": 4830,
+    "retained_connected_components": 57089,
+    "removed": {
+      "conflicting_duplicate_pair": 2,
+      "official_test_seed_or_premise_component": 6675,
+      "duplicate_pair": 1
+    },
+    "license": "CC-BY-4.0",
+    "published_human_gold_verified_for_every_retained_row": true,
+    "original_premise_and_hypothesis_preserved_for_every_retained_row": true,
+    "official_test_component_exclusion_verified": true,
+    "all_source_graph_components_split_isolated": true,
+    "retained_identity_set_matches_independent_filter": true,
+    "split_file_hashes_match_manifest": true
+  },
+  "pipeline_review": {
+    "replay_cap_global_per_source": true,
+    "whole_group_quarantine": true,
+    "source_manifest_checksums_required": true,
+    "both_known_manifest_schemas_supported": true,
+    "nonempty_outputs_rejected_before_writes": true,
+    "final_four_rank_wrap_explicit_in_manifest": true,
+    "benchmark_index_uses_visible_request_fields_only": true,
+    "benchmark_gold_does_not_affect_matching": true,
+    "benchmark_text_not_exported": true,
+    "empty_benchmark_rejected": true,
+    "wanli_output_cannot_overwrite_pinned_source": true
+  },
+  "tests": {
+    "wanli_tests_passed": 5,
+    "mixture_and_overlap_tests_passed": 9,
+    "commands": [
+      "python3 -m unittest discover -s tests -p 'test_wanli_data.py' -v",
+      "python3 -m unittest discover -s tests -p 'test_community_hard_mix.py' -v"
+    ]
+  },
+  "implementation_sha256": {
+    "jev/wanli_data.py": "2624e0cfa1b0c7e2ee80c22d718e3b8a5f7c8c649f25632c0b972e64ea3c651d",
+    "scripts/build_community_hard_mix.py": "01752946f094a95f7b3c8dfd22308deabd013889dd8ccdf07912f6f70b9ef69a",
+    "scripts/screen_training_overlap.py": "9eb4dc46d456c05250bf2b0f4ae1b5b2d172283e5a8a0721422a15773e0f0edb",
+    "tests/test_wanli_data.py": "75b8c2dc89037090084204eeced85bdcefff289ae07c73fc5020773af825bbbb",
+    "tests/test_community_hard_mix.py": "331301921ad1d6675d76a1c7c532c8f06e0ccee5ea950746eb16f3be638025bb"
+  },
+  "limitations": [
+    "WANLI is one English NLI source; its OOD partition is a seed-component holdout.",
+    "Public human annotations can contain errors; preserved labels are not independent proof of semantic truth.",
+    "Lexical screening does not prove semantic or foundation-pretraining independence.",
+    "The final mixed dataset must be checked against frozen evaluation requests after it is rebuilt."
+  ]
+}

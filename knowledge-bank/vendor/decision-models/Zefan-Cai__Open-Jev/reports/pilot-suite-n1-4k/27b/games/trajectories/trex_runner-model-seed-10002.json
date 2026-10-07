@@ -1,0 +1,1113 @@
+{
+  "game": {
+    "name": "trex_runner",
+    "obstacles": 12,
+    "physics": "open-jev-box-runner-v1"
+  },
+  "seed": 10002,
+  "policy": "model_http",
+  "is_model": true,
+  "max_steps": 40,
+  "steps": [
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 12,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "small_cactus",
+            "group_size": "single",
+            "flight_path": "ground_hazard",
+            "width": 0.8,
+            "height": 1.0,
+            "bottom": 0
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_short",
+        "probabilities": {
+          "jump_short": 0.9819911527066438,
+          "jump_full": 0.01681408844658198,
+          "duck": 0.0007700905822241537,
+          "keep_running": 0.0004246682645500964
+        },
+        "confidence": 0.9759882036088584
+      },
+      "action": "jump_short",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 6,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "pterodactyl",
+          "group_size": "single",
+          "flight_path": "blocks_running_only",
+          "width": 1.1,
+          "height": 1.0,
+          "bottom": 1.1
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 131.52138516306877,
+      "environment_latency_ms": 0.06458908319473267,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.12985380552709103
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 6,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "pterodactyl",
+            "group_size": "single",
+            "flight_path": "blocks_running_only",
+            "width": 1.1,
+            "height": 1.0,
+            "bottom": 1.1
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.009173588208679162,
+          "jump_full": 0.8332173938829424,
+          "duck": 0.13316567285631786,
+          "keep_running": 0.024443345052060594
+        },
+        "confidence": 0.7776231918439231
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 6,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "pterodactyl",
+          "group_size": "single",
+          "flight_path": "blocks_running_only",
+          "width": 1.1,
+          "height": 1.0,
+          "bottom": 1.1
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 132.51730799674988,
+      "environment_latency_ms": 0.10180845856666565,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.1308901309967041
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 6,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "pterodactyl",
+            "group_size": "single",
+            "flight_path": "blocks_running_only",
+            "width": 1.1,
+            "height": 1.0,
+            "bottom": 1.1
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.009173588208679162,
+          "jump_full": 0.8332173938829424,
+          "duck": 0.13316567285631786,
+          "keep_running": 0.024443345052060594
+        },
+        "confidence": 0.7776231918439231
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 8,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "large_cactus",
+          "group_size": "triple",
+          "flight_path": "ground_hazard",
+          "width": 3.3000000000000003,
+          "height": 1.75,
+          "bottom": 0
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 133.56037810444832,
+      "environment_latency_ms": 0.10735727846622467,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.13155454583466053
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 8,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "large_cactus",
+            "group_size": "triple",
+            "flight_path": "ground_hazard",
+            "width": 3.3000000000000003,
+            "height": 1.75,
+            "bottom": 0
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.00010980242045652511,
+          "jump_full": 0.9981551963200519,
+          "duck": 0.001556297335408451,
+          "keep_running": 0.00017870392408315304
+        },
+        "confidence": 0.9975402617600692
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 8,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "pterodactyl",
+          "group_size": "single",
+          "flight_path": "blocks_running_only",
+          "width": 1.1,
+          "height": 1.0,
+          "bottom": 1.1
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 158.23611617088318,
+      "environment_latency_ms": 0.0920761376619339,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.1563610564917326
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 8,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "pterodactyl",
+            "group_size": "single",
+            "flight_path": "blocks_running_only",
+            "width": 1.1,
+            "height": 1.0,
+            "bottom": 1.1
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.009728763035668714,
+          "jump_full": 0.840686288748565,
+          "duck": 0.1294381165909328,
+          "keep_running": 0.020146831624833435
+        },
+        "confidence": 0.78758171833142
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 12,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "pterodactyl",
+          "group_size": "single",
+          "flight_path": "clears_running_dinosaur",
+          "width": 1.1,
+          "height": 1.0,
+          "bottom": 2.5
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 133.02717171609402,
+      "environment_latency_ms": 0.0965651124715805,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.13113494217395782
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 12,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "pterodactyl",
+            "group_size": "single",
+            "flight_path": "clears_running_dinosaur",
+            "width": 1.1,
+            "height": 1.0,
+            "bottom": 2.5
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.008335813845554903,
+          "jump_full": 0.5796315896536318,
+          "duck": 0.19217470192779978,
+          "keep_running": 0.2198578945730135
+        },
+        "confidence": 0.4395087862048424
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 10,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "small_cactus",
+          "group_size": "double",
+          "flight_path": "ground_hazard",
+          "width": 1.6,
+          "height": 1.0,
+          "bottom": 0
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 140.74584282934666,
+      "environment_latency_ms": 0.0710897147655487,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.13883679546415806
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 10,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "small_cactus",
+            "group_size": "double",
+            "flight_path": "ground_hazard",
+            "width": 1.6,
+            "height": 1.0,
+            "bottom": 0
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.006936249281813922,
+          "jump_full": 0.9748226240953584,
+          "duck": 0.014802882671502985,
+          "keep_running": 0.0034382439513248493
+        },
+        "confidence": 0.9664301654604778
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 6,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "small_cactus",
+          "group_size": "single",
+          "flight_path": "ground_hazard",
+          "width": 0.8,
+          "height": 1.0,
+          "bottom": 0
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 132.89172388613224,
+      "environment_latency_ms": 0.07665343582630157,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.13104471378028393
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 6,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "small_cactus",
+            "group_size": "single",
+            "flight_path": "ground_hazard",
+            "width": 0.8,
+            "height": 1.0,
+            "bottom": 0
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_short",
+        "probabilities": {
+          "jump_short": 0.9801542101916192,
+          "jump_full": 0.01833050449312045,
+          "duck": 0.0010287514044343244,
+          "keep_running": 0.00048653391082602624
+        },
+        "confidence": 0.9735389469221589
+      },
+      "action": "jump_short",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 6,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "pterodactyl",
+          "group_size": "single",
+          "flight_path": "blocks_running_only",
+          "width": 1.1,
+          "height": 1.0,
+          "bottom": 1.1
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 130.99429570138454,
+      "environment_latency_ms": 0.10157935321331024,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.12950784713029861
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 6,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "pterodactyl",
+            "group_size": "single",
+            "flight_path": "blocks_running_only",
+            "width": 1.1,
+            "height": 1.0,
+            "bottom": 1.1
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.009173588208679162,
+          "jump_full": 0.8332173938829424,
+          "duck": 0.13316567285631786,
+          "keep_running": 0.024443345052060594
+        },
+        "confidence": 0.7776231918439231
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 12,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "small_cactus",
+          "group_size": "double",
+          "flight_path": "ground_hazard",
+          "width": 1.6,
+          "height": 1.0,
+          "bottom": 0
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 131.93793408572674,
+      "environment_latency_ms": 0.08308514952659607,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.13006303645670414
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 12,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "small_cactus",
+            "group_size": "double",
+            "flight_path": "ground_hazard",
+            "width": 1.6,
+            "height": 1.0,
+            "bottom": 0
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.008580755831537773,
+          "jump_full": 0.9738580251931005,
+          "duck": 0.01434202927407967,
+          "keep_running": 0.003219189701282129
+        },
+        "confidence": 0.9651440335908007
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 10,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "small_cactus",
+          "group_size": "single",
+          "flight_path": "ground_hazard",
+          "width": 0.8,
+          "height": 1.0,
+          "bottom": 0
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 132.80065916478634,
+      "environment_latency_ms": 0.0771600753068924,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.13102654553949833
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 10,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "small_cactus",
+            "group_size": "single",
+            "flight_path": "ground_hazard",
+            "width": 0.8,
+            "height": 1.0,
+            "bottom": 0
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_short",
+        "probabilities": {
+          "jump_short": 0.975959869628582,
+          "jump_full": 0.02265681799180682,
+          "duck": 0.0008896617206509257,
+          "keep_running": 0.0004936506589600104
+        },
+        "confidence": 0.9679464928381095
+      },
+      "action": "jump_short",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 6,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "pterodactyl",
+          "group_size": "single",
+          "flight_path": "clears_running_dinosaur",
+          "width": 1.1,
+          "height": 1.0,
+          "bottom": 2.5
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": false,
+      "latency_ms": 132.55356065928936,
+      "environment_latency_ms": 0.0766366720199585,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.13070867769420147
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Pass every obstacle without a collision.",
+          "current_speed": 6,
+          "speed_mode": "normal",
+          "dinosaur_motion_when_observed": "running",
+          "target_obstacle": {
+            "kind": "pterodactyl",
+            "group_size": "single",
+            "flight_path": "clears_running_dinosaur",
+            "width": 1.1,
+            "height": 1.0,
+            "bottom": 2.5
+          },
+          "runner_geometry": {
+            "player_width": 1,
+            "standing_height": 2,
+            "duck_height": 0.8,
+            "obstacle_start_x": 12
+          },
+          "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a maneuver to pass the obstacle. Prefer keep_running when it clears a standing dinosaur, duck when only standing is blocked, and a jump otherwise. Use jump_short only for one small cactus; use jump_full for larger obstacles. The controller handles launch timing using the supplied box geometry.",
+            "criteria": {
+              "jump_short": null,
+              "jump_full": null,
+              "duck": null,
+              "keep_running": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump_full",
+        "probabilities": {
+          "jump_short": 0.011786892463356569,
+          "jump_full": 0.5557053506287533,
+          "duck": 0.17913419410901613,
+          "keep_running": 0.2533735627988739
+        },
+        "confidence": 0.40760713417167116
+      },
+      "action": "jump_full",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Pass every obstacle without a collision.",
+        "current_speed": 6,
+        "speed_mode": "normal",
+        "dinosaur_motion_when_observed": "running",
+        "target_obstacle": {
+          "kind": "pterodactyl",
+          "group_size": "single",
+          "flight_path": "clears_running_dinosaur",
+          "width": 1.1,
+          "height": 1.0,
+          "bottom": 2.5
+        },
+        "runner_geometry": {
+          "player_width": 1,
+          "standing_height": 2,
+          "duck_height": 0.8,
+          "obstacle_start_x": 12
+        },
+        "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+      },
+      "terminal": true,
+      "latency_ms": 133.6456723511219,
+      "environment_latency_ms": 0.09713321924209595,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 4,
+        "inference_seconds": 0.1319593321532011
+      }
+    }
+  ],
+  "initial_state": {
+    "objective": "Pass every obstacle without a collision.",
+    "current_speed": 12,
+    "speed_mode": "normal",
+    "dinosaur_motion_when_observed": "running",
+    "target_obstacle": {
+      "kind": "small_cactus",
+      "group_size": "single",
+      "flight_path": "ground_hazard",
+      "width": 0.8,
+      "height": 1.0,
+      "bottom": 0
+    },
+    "runner_geometry": {
+      "player_width": 1,
+      "standing_height": 2,
+      "duck_height": 0.8,
+      "obstacle_start_x": 12
+    },
+    "timing_policy": "One choice per obstacle; controller centers the jump apex on horizontal overlap. Local box physics, not Chrome physics."
+  },
+  "metrics": {
+    "steps": 12,
+    "stop_reason": "terminal",
+    "total_reward": 12.0,
+    "mean_decision_latency_ms": 135.369337319086,
+    "obstacles_cleared": 12,
+    "collision": false,
+    "success": true
+  },
+  "evaluation_policy": "model",
+  "evaluation_game": "trex_runner",
+  "evaluation_seed": 10002,
+  "valid": true,
+  "service_identity": {
+    "model": "Qwen/Qwen3.8-27B",
+    "method": "lora_decision_head",
+    "temperature": 1.4870151221815284,
+    "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+    "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "code_commit": "99e881108c6cacadafd364088505e84975ca43fc"
+  },
+  "http_responses": [
+    {
+      "request_sha256": "c5ad1272bf9285c97b76fb3da169667a092492669f7fa58e499a54c82090eb83",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_short\", \"probabilities\": {\"jump_short\": 0.9819911527066438, \"jump_full\": 0.01681408844658198, \"duck\": 0.0007700905822241537, \"keep_running\": 0.0004246682645500964}, \"confidence\": 0.9759882036088584}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 991, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.12985380552709103, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "ab752927ab33a06569710a89df77250123a826b5eba2478503f3ab81d09b6123",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.009173588208679162, \"jump_full\": 0.8332173938829424, \"duck\": 0.13316567285631786, \"keep_running\": 0.024443345052060594}, \"confidence\": 0.7776231918439231}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 999, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.1308901309967041, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "ab752927ab33a06569710a89df77250123a826b5eba2478503f3ab81d09b6123",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.009173588208679162, \"jump_full\": 0.8332173938829424, \"duck\": 0.13316567285631786, \"keep_running\": 0.024443345052060594}, \"confidence\": 0.7776231918439231}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 999, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.13155454583466053, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "d00e74d3cc40d3927003ea8d678322fceafc6b7af7211662ad06ba34c5505272",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.00010980242045652511, \"jump_full\": 0.9981551963200519, \"duck\": 0.001556297335408451, \"keep_running\": 0.00017870392408315304}, \"confidence\": 0.9975402617600692}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 1055, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.1563610564917326, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "9ea5b6a101b1b555c20185b93bcc1bc4bc78f369752eed075e7e80584a3e8238",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.009728763035668714, \"jump_full\": 0.840686288748565, \"duck\": 0.1294381165909328, \"keep_running\": 0.020146831624833435}, \"confidence\": 0.78758171833142}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 999, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.13113494217395782, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "3e6e9af0e256fac0c8054bbd64394834cfcc87b2d3108768ba90e81c55248594",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.008335813845554903, \"jump_full\": 0.5796315896536318, \"duck\": 0.19217470192779978, \"keep_running\": 0.2198578945730135}, \"confidence\": 0.4395087862048424}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 1011, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.13883679546415806, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "4b4d79936fd8c4596dd3ebaec1e5ab3cd2df4dededfe8ab36122b43ca268da3d",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.006936249281813922, \"jump_full\": 0.9748226240953584, \"duck\": 0.014802882671502985, \"keep_running\": 0.0034382439513248493}, \"confidence\": 0.9664301654604778}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 991, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.13104471378028393, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "3afaf4435c90d2129e0c0c003b6a7832d278ec41a9280caf02083f9de85e8acb",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_short\", \"probabilities\": {\"jump_short\": 0.9801542101916192, \"jump_full\": 0.01833050449312045, \"duck\": 0.0010287514044343244, \"keep_running\": 0.00048653391082602624}, \"confidence\": 0.9735389469221589}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 987, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.12950784713029861, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "ab752927ab33a06569710a89df77250123a826b5eba2478503f3ab81d09b6123",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.009173588208679162, \"jump_full\": 0.8332173938829424, \"duck\": 0.13316567285631786, \"keep_running\": 0.024443345052060594}, \"confidence\": 0.7776231918439231}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 999, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.13006303645670414, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "fb0f0fed6de2a42329534319fc9bc77ff50c668a06367f5eef64542566f870ef",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.008580755831537773, \"jump_full\": 0.9738580251931005, \"duck\": 0.01434202927407967, \"keep_running\": 0.003219189701282129}, \"confidence\": 0.9651440335908007}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 991, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.13102654553949833, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "50c0724eb53ca15f5e7e8029d369c0420add6262b0fd9292d4b84de3946443ef",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_short\", \"probabilities\": {\"jump_short\": 0.975959869628582, \"jump_full\": 0.02265681799180682, \"duck\": 0.0008896617206509257, \"keep_running\": 0.0004936506589600104}, \"confidence\": 0.9679464928381095}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 991, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.13070867769420147, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "cc28285dcf98db747e2d1191d2630be67a8e2cdbf1067f173bd56b803e98037c",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump_full\", \"probabilities\": {\"jump_short\": 0.011786892463356569, \"jump_full\": 0.5557053506287533, \"duck\": 0.17913419410901613, \"keep_running\": 0.2533735627988739}, \"confidence\": 0.40760713417167116}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 1007, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 4, \"inference_seconds\": 0.1319593321532011, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    }
+  ]
+}

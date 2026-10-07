@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "evidence_kind": "cpu_software_verification",
+  "recorded_at_utc": "2026-09-20T17:26:07.976282+00:00",
+  "python": "3.14.5",
+  "phonenumbers_in_isolated_environment": "9.0.14",
+  "source_files_sha256": {
+    "scripts/evaluate_contact_service.py": "562dac913d4cebf2732aef9d055dd8dea126c2ec2987573321f1554caf06153a",
+    "tests/test_contact_service.py": "3606f0727c3983f833d0ddecf9a6d7218f589d99db0682d2502501e20e4e89eb",
+    "docs/contact-service-evaluation.md": "9db0e606a9b4c405926247426950f3130a7b9a5502fa53ce0e1e8eae84c2d923",
+    "scripts/evaluate_browser_service.py": "3ffbcce8b3411833cc9a0dfaf70147942ce9e3f6b404a72ca834fb65346899aa",
+    "scripts/evaluate_drone_service.py": "84b408c3131a6b922141e02d67a2c9301d9e0784796e61ee3201fae1fc24f602",
+    "jev/case_email_selection.py": "dbcd4beaf0167fb4e4e3115289a63643c21a14221381400e4151c71b6557a544",
+    "jev/case_phone_extraction.py": "4b9cb3b196733603a8f0e57d797c9fc5affe9c39a45cf30c015a6ad454ccfa6d",
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "jev/recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+    "jev/data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+  },
+  "final_phone_extra_tests": {
+    "command": "runs/phone-extraction-control-v1-venv/bin/python -m unittest tests.test_contact_service -v",
+    "exit_code": 0,
+    "discovered": 23,
+    "passed": 23,
+    "skipped": 0,
+    "failures": 0,
+    "errors": 0,
+    "observed_output_summary": "Ran 23 tests in 0.075s\n\nOK",
+    "final_source_execution_count": 1
+  },
+  "final_base_without_phone_tests": {
+    "command": "python3 -m unittest tests.test_contact_service -v",
+    "exit_code": 0,
+    "discovered": 23,
+    "passed": 17,
+    "skipped": 6,
+    "failures": 0,
+    "errors": 0,
+    "observed_output_summary": "Ran 23 tests in 0.040s\n\nOK (skipped=6)",
+    "final_source_execution_count": 1
+  },
+  "command_checks": {
+    "help_command": "python3 -m scripts.evaluate_contact_service --help",
+    "exit_code": 0,
+    "bash_syntax_blocks": 2
+  },
+  "scope": {
+    "fixture_transport_only": true,
+    "temporary_fixture_artifacts_discarded": true,
+    "real_service_requests": 0,
+    "model_inference_performed": false,
+    "training_performed": false,
+    "gpu_used": false,
+    "ssh_used": false,
+    "external_benchmark_used": false,
+    "model_quality_report_produced": false,
+    "sealed_sources_or_corpora_modified": false
+  },
+  "sealed_manifest_sha256": {
+    "email-selection-control-v1": "4c18cc791425003c5c8f052ce27ed034dfb54c79ddac24de13f7290ab3b3316c",
+    "phone-extraction-control-v1": "1001f1e04795308bf4f68db51076e8e1e1e47802986de54fc33b3b8d33548cfb"
+  },
+  "notes": [
+    "The default HTTP dispatch path is mocked for failure-classification tests; those temporary diagnostic reports cannot be marked model-quality evidence.",
+    "Malformed train fixtures intentionally cannot be decoded as JSON, proving the loader only hashes their bytes and parses the leading case ID.",
+    "Only the final source revision test results are listed; an earlier 21-test draft was superseded by metadata-lock and incomplete-run evidence checks."
+  ]
+}

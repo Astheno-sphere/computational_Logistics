@@ -1,0 +1,907 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-09-21T06:50:42.551684+00:00",
+  "scope": "Bounded primary-source broadening beyond docs/community-research-20260921.md. Research-only: zero new training rows, no benchmark/API/model execution.",
+  "summary": {
+    "families": 12,
+    "primary_code_or_cookbook_sources": 20,
+    "public_x_readbacks": 17,
+    "public_x_attempted": 18,
+    "public_x_failed": 1
+  },
+  "access_limits": [
+    "Public GitHub REST discovery is query/page limited; no exhaustiveinternet claim.",
+    "Exact public FxTwitter readbacks: 18 URLs attempted across two passes, 17 successful; no private archive or timeline collection.",
+    "AuthenticatedX search and Xiaohongshu search/content were not performed in this pass; no new Xiaohongshu evidence.",
+    "Robotics archive exceeded the 12 MBfetch bound and was not inspected.",
+    "Remote code was never executed; scripts and described outcomes were source-reviewed only."
+  ],
+  "invariants": [
+    "External public benchmark validation/test text and gold remain held out.",
+    "No JevBench question/gold text was used for data seeding.",
+    "Training proposals require data rights independent of code license and independently checked semantic labels.",
+    "Source identifiers, task families and semantic domains are distinct counts.",
+    "Current 148,639-row iteration and ongoing HTML/SQL work were untouched."
+  ],
+  "families": [
+    {
+      "id": "F01",
+      "title": "Semantic source-code and file search",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "sufianetaouil/every",
+          "url": "https://github.com/sufianetaouil/every",
+          "revision": "aaa72d582a831420dfd23a788e3bc948c798c248",
+          "files": [
+            {
+              "path": "README.md",
+              "url": "https://github.com/sufianetaouil/every/blob/aaa72d582a831420dfd23a788e3bc948c798c248/README.md",
+              "sha256": "937c6827f8aae50d283df4dbb78f16ece49d961f2099a4c61f6727390628cdcb"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/sufianetaouil/every/blob/aaa72d582a831420dfd23a788e3bc948c798c248/LICENSE",
+              "sha256": "d5e5628b73167a7b0210beea9266d22ba3b7861b8a96d0f1bae41cbb25d1551a"
+            }
+          ]
+        }
+      ],
+      "input_and_task_schema": "Natural-language predicate plus a source function and optional callers/callees. One yes/no question scores each unit; rank functions by probability.",
+      "candidate_and_context_scale": "Source reports ~110 questions/request and four requests in flight. Tree-sitter function extraction for nine language families; fallback 150-line chunks. Source text lives in each question instead of a shared positional list.",
+      "evidence_status": "source_implemented_and_author_report_with_small_harness",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "CLI --selftest has 20 handwritten functions, ten positive/ten negative for error swallowing. Author reports recall 10/10 and AUROC 1.0. Whole-repository timing is reported on 1,302 gin functions: 3.7 seconds/$0.018. No broad semantic gold corpus.",
+      "license_and_ingestion_status": "MIT code verified; each scanned repository retains its own code/data license. The handwritten self-test is evaluation-only for our proposed comparison.",
+      "training_implications": "Use independently selected permissive repositories, executable behavior tests and human-reviewed predicates. Include plausible lexical matches that fail the predicate, semantic positives with different names, and caller/callee-dependent cases.",
+      "split_unit": "Repository and dependency/fork family before extracting functions; group near-duplicate functions and all query paraphrases.",
+      "evaluation_metrics": [
+        "Recall@k",
+        "MRR",
+        "AUROC with checked negatives",
+        "cross-file vs local-context accuracy",
+        "latency per repository and per function"
+      ],
+      "caveats": [
+        "Author reports positional shared-list lookup deteriorates past ~16, while per-question embedding reaches 128+; this is a batching ablation to reproduce, not an established API limit.",
+        "Whole-program dataflow is explicitly partial. Repeated threshold-adjacent queries add cost."
+      ]
+    },
+    {
+      "id": "F02",
+      "title": "Source security, PR review and supply-chain triage",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "luantak/is-malicious",
+          "url": "https://github.com/luantak/is-malicious",
+          "revision": "b6052465eb47cf85f347596385954aa06532718a",
+          "files": [
+            {
+              "path": "README.md",
+              "url": "https://github.com/luantak/is-malicious/blob/b6052465eb47cf85f347596385954aa06532718a/README.md",
+              "sha256": "b149237ce148c1a2f4f595002c76b1d8bd6796cea7b4c7bc8ea526fe90e96dd4"
+            },
+            {
+              "path": "src/jev.ts",
+              "url": "https://github.com/luantak/is-malicious/blob/b6052465eb47cf85f347596385954aa06532718a/src/jev.ts",
+              "sha256": "93ba448e6a80f27beb2f8c72675382cb14f271cb58809813b3064dec7b7e94e5"
+            },
+            {
+              "path": "src/chunk.ts",
+              "url": "https://github.com/luantak/is-malicious/blob/b6052465eb47cf85f347596385954aa06532718a/src/chunk.ts",
+              "sha256": "935f74155cd3590ef32435f43bc7b65c3c626365c43ef605a4119e043231d05f"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/luantak/is-malicious/blob/b6052465eb47cf85f347596385954aa06532718a/LICENSE",
+              "sha256": "a475ad098221c027314d40d31a7614604e7da3aa1cb83aa695e5cb4c342be1cd"
+            }
+          ]
+        },
+        {
+          "kind": "github",
+          "repo": "SecurityMindedSolutions/ai-skills",
+          "url": "https://github.com/SecurityMindedSolutions/ai-skills",
+          "revision": "9d0e6e2495daeb56391c4cad0aa558d05d0d84da",
+          "files": [
+            {
+              "path": "skills/jev/code-audit-jev/scripts/run.py",
+              "url": "https://github.com/SecurityMindedSolutions/ai-skills/blob/9d0e6e2495daeb56391c4cad0aa558d05d0d84da/skills/jev/code-audit-jev/scripts/run.py",
+              "sha256": "4c9618f9b503a1989c2855ac4bfd2578ed15eb70a7b69e4c36205b636ec8ce4b"
+            },
+            {
+              "path": "skills/jev/code-audit-jev/references/methodology.md",
+              "url": "https://github.com/SecurityMindedSolutions/ai-skills/blob/9d0e6e2495daeb56391c4cad0aa558d05d0d84da/skills/jev/code-audit-jev/references/methodology.md",
+              "sha256": "a599e40df91d077da186b256dec1a2d661c521d5c5b5eee017093ba645423277"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/SecurityMindedSolutions/ai-skills/blob/9d0e6e2495daeb56391c4cad0aa558d05d0d84da/LICENSE",
+              "sha256": "d642d4f9af13658d3f3eddc6a046458f6bab31c79ea4cc751dec2ad0a40a90c3"
+            }
+          ]
+        },
+        {
+          "kind": "public_x_post",
+          "url": "https://x.com/TechNerdings/status/2101737805932044637",
+          "readback_url": "https://api.fxtwitter.com/TechNerdings/status/2101737805932044637",
+          "author": "TechNerdings",
+          "created_at": "Sun Sep 20 18:18:35 +0000 2026",
+          "text_sha256": "5290f151a8886299ae33e6630d4bcc34a4fa268e773077efedd80378f1dd5a65"
+        }
+      ],
+      "input_and_task_schema": "Source/config/CI state with application context. Per-category Noul checks, severity Score, defect-category Choice; optional suspicious-file and line-window Choices. PR mode judges changed units on both sides.",
+      "candidate_and_context_scale": "is-malicious defaults: 8,000 chars/chunk, 16 files/chunk, concurrency 12. code-audit-jev: one unit/request, dynamic rule bank (22 rules in current report), eight workers; code truncated using a 6,000 estimated-token cap.",
+      "evidence_status": "source_implemented_and_author_report_with_mock_and_real_repository_protocol",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "is-malicious has fixtures and scripted-client tests. code-audit-jev reports mock regression 27 planted defects/17 hard negatives (27 flagged, 16 negatives quiet); PR probe 17/17 defects, no false positives among six negatives. A separate real-repo cascade labels 38 findings via a reasoning agent: two confirmed, two accepted risk, 25 false positives, nine operator scripts. These are not independent human gold.",
+      "license_and_ingestion_status": "Both source licenses MIT; reference monorepo and its raw judgments are not a released labeled corpus. Existing probes/regressions remain evaluation-only.",
+      "training_implications": "Create independent paired vulnerable/fixed source revisions with tests and a human-checked explanation of the defect. Include framework escaping, inherited authorization, safe build settings, operator scripts and controls outside the local unit. Preserve before/after context and cross-file evidence.",
+      "split_unit": "Repository/project and vulnerability lineage, including the fix, before extracting local units.",
+      "evaluation_metrics": [
+        "precision/recall on human-confirmed defects",
+        "false positives on hard negatives",
+        "cross-file recall",
+        "reviewer work saved at fixed recall",
+        "full cascade latency/cost"
+      ],
+      "caveats": [
+        "A public post claims superiority to GitHub Advanced Security; no matched independently labeled comparison was verified.",
+        "Source methodology explicitly exposes missed cross-file controls and false positives; unit classification is a triage stage, not a completed audit.",
+        "Do not seed training from the published planted-defect regression set."
+      ]
+    },
+    {
+      "id": "F03",
+      "title": "Command approval, adversarial framing and abstention",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "eugeniughelbur/jev-engineering",
+          "url": "https://github.com/eugeniughelbur/jev-engineering",
+          "revision": "3161dbfb44f21bafa2ec7940ec18cfb090c7b43d",
+          "files": [
+            {
+              "path": "results/2026-09-20-injection-test.md",
+              "url": "https://github.com/eugeniughelbur/jev-engineering/blob/3161dbfb44f21bafa2ec7940ec18cfb090c7b43d/results/2026-09-20-injection-test.md",
+              "sha256": "c0a3da4556e9c7658587cbac7ff9c9efbdab3a3ea44de80bb56d8b47c6dd4442"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/eugeniughelbur/jev-engineering/blob/3161dbfb44f21bafa2ec7940ec18cfb090c7b43d/LICENSE",
+              "sha256": "94b7323d498415382c2bb5c36f6a0d0d530d0ab3f4a096b2260d5dce5aeb1b50"
+            }
+          ]
+        },
+        {
+          "kind": "github",
+          "repo": "oppih/approval-judge-bridge",
+          "url": "https://github.com/oppih/approval-judge-bridge",
+          "revision": "d21037bdacecfcec445d79e60970561e5dfe895b",
+          "files": [
+            {
+              "path": "README.md",
+              "url": "https://github.com/oppih/approval-judge-bridge/blob/d21037bdacecfcec445d79e60970561e5dfe895b/README.md",
+              "sha256": "aa6d8c220669f23af520fafa3f88fbdd72fe0aa4855c45ad40e6e6201133f7bc"
+            },
+            {
+              "path": "judge_bridge/prompts.py",
+              "url": "https://github.com/oppih/approval-judge-bridge/blob/d21037bdacecfcec445d79e60970561e5dfe895b/judge_bridge/prompts.py",
+              "sha256": "a1709d29a17eec6ed0d7222c4e1a6783218a813fddff1e5e02673af4c5766ee7"
+            },
+            {
+              "path": "tools/replay_battery.py",
+              "url": "https://github.com/oppih/approval-judge-bridge/blob/d21037bdacecfcec445d79e60970561e5dfe895b/tools/replay_battery.py",
+              "sha256": "23d225c1c9b59a276b71adc7cd4771b1c690565c5c5eabff88630fa5c0e820d5"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/oppih/approval-judge-bridge/blob/d21037bdacecfcec445d79e60970561e5dfe895b/LICENSE",
+              "sha256": "c3c04fad006be281a7561925566d54d765f996ec1bfefc45688e276ee40cd3f7"
+            }
+          ]
+        },
+        {
+          "kind": "public_x_post",
+          "url": "https://x.com/Ractorrrrr/status/2101729630726287871",
+          "readback_url": "https://api.fxtwitter.com/Ractorrrrr/status/2101729630726287871",
+          "author": "Ractorrrrr",
+          "created_at": "Sun Sep 20 17:46:06 +0000 2026",
+          "text_sha256": "d2ca664a39533b9e201687933158a41138823b8412e1c582e34c6a3689733192"
+        }
+      ],
+      "input_and_task_schema": "Command, working context and trusted policy plus separate untrusted text. Destructive-action Noul and approve/deny/escalate Choice; probabilities drive an explicitly calibrated review policy.",
+      "candidate_and_context_scale": "Injection report: 30 dangerous +30 safe commands ×5 conditions =300 calls, two questions/call. Approval bridge: 17 replay cases, nine benign/eight dangerous, three candidates.",
+      "evidence_status": "source_implemented_and_author_report_with_replay_harness",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Authors provide batteries and injection-run code. Injection report names OpenRouter typesafe/jev-1.13, mean 449 input tokens and median 371 ms. Dangerous allows: clean 0/30, blunt 0/30, owner-framing 3/30. Table reports benign denials rise from 1/30 clean to 8/30 blunt. A .8 confidence floor catches 5/5 observed attacks but escalates 35/60 clean commands.",
+      "license_and_ingestion_status": "Both code licenses MIT. Keep all public battery/attack inputs held out; new training examples must come from independently authored policies and commands.",
+      "training_implications": "Train policy-bound semantic distinctions, claimed authorization inside untrusted context, safe near-neighbors, and evidence-insufficient abstention. Calibrate on a separate development split; preserve false-block cases, not only attack success.",
+      "split_unit": "Policy, command intent/template and attack lineage; every variant of one command stays together.",
+      "evaluation_metrics": [
+        "attack success rate with fixed denominator",
+        "benign false-block rate",
+        "risk-coverage curve",
+        "calibration/Brier score",
+        "latency including escalation"
+      ],
+      "caveats": [
+        "Narrative in the injection report says all dangerous blunt cases were denied; its table says 29 deny/1 ask. We retain table counts and mark results author-reported.",
+        "Approval bridge also tests unrelated yajev; its failures are not evidence about our checkpoints or Jev.",
+        "X claim 0 attacks with 119/125 requests blocked has no verified benign denominator; it does not establish useful moderation accuracy."
+      ]
+    },
+    {
+      "id": "F04",
+      "title": "Real app feedback and multilingual commerce triage",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "goodrahstar/jev-column-race",
+          "url": "https://github.com/goodrahstar/jev-column-race",
+          "revision": "d9ee360ccd84462f4eab9493a7c2c617d0dab9df",
+          "files": [
+            {
+              "path": "README.md",
+              "url": "https://github.com/goodrahstar/jev-column-race/blob/d9ee360ccd84462f4eab9493a7c2c617d0dab9df/README.md",
+              "sha256": "de93324aa014e6641ae078c9b38da3194cc1d2305364eeebf18846f191ffcb39"
+            },
+            {
+              "path": "lib/columns.mjs",
+              "url": "https://github.com/goodrahstar/jev-column-race/blob/d9ee360ccd84462f4eab9493a7c2c617d0dab9df/lib/columns.mjs",
+              "sha256": "d7e41782c727d040a0b5c1ba32dbe8ee5b9b8289632a2182303fb5ffaba954d9"
+            },
+            {
+              "path": "scripts/fetch-data.mjs",
+              "url": "https://github.com/goodrahstar/jev-column-race/blob/d9ee360ccd84462f4eab9493a7c2c617d0dab9df/scripts/fetch-data.mjs",
+              "sha256": "afcc421d966ab96b2de038fafc189570c5fd932677788edabbadd9996a219484"
+            },
+            {
+              "path": "docs/performance.md",
+              "url": "https://github.com/goodrahstar/jev-column-race/blob/d9ee360ccd84462f4eab9493a7c2c617d0dab9df/docs/performance.md",
+              "sha256": "8da039d59365dc8c57fbf20abffa31bbdced4dcda4fdaea87dfdcd5f1ad8bc31"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/goodrahstar/jev-column-race/blob/d9ee360ccd84462f4eab9493a7c2c617d0dab9df/LICENSE",
+              "sha256": "19e079edd066e08ad7864f040c828af9376284dc0bc4e9c44f6b5b81b22f38ef"
+            }
+          ]
+        },
+        {
+          "kind": "github",
+          "repo": "yuyang2230/jev-agent-skill",
+          "url": "https://github.com/yuyang2230/jev-agent-skill",
+          "revision": "00a25ddb0e5f8e35246ec0f218dba0191f20d465",
+          "files": [
+            {
+              "path": "examples/comment_triage.py",
+              "url": "https://github.com/yuyang2230/jev-agent-skill/blob/00a25ddb0e5f8e35246ec0f218dba0191f20d465/examples/comment_triage.py",
+              "sha256": "c02570efbc5e2e8907c338452b7152ed92f4a1d158eee86795482ccaac2c87f6"
+            },
+            {
+              "path": "references/benchmark-jev-vs-mainmodel.md",
+              "url": "https://github.com/yuyang2230/jev-agent-skill/blob/00a25ddb0e5f8e35246ec0f218dba0191f20d465/references/benchmark-jev-vs-mainmodel.md",
+              "sha256": "aec3d2adb2235a4295baa7414ffc48f632d6512e8ef166ef3095f5b0fbb9e051"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/yuyang2230/jev-agent-skill/blob/00a25ddb0e5f8e35246ec0f218dba0191f20d465/LICENSE",
+              "sha256": "8519b9acf1ed5d015efdefe1686f1356dee56d6fe05c0a75ccf9145cd3fd9e9d"
+            }
+          ]
+        },
+        {
+          "kind": "public_x_post",
+          "url": "https://x.com/rahulbuildsmore/status/2100581721515188451",
+          "readback_url": "https://api.fxtwitter.com/rahulbuildsmore/status/2100581721515188451",
+          "author": "rahulbuildsmore",
+          "created_at": "Thu Sep 17 13:44:43 +0000 2026",
+          "text_sha256": "eb8fed22a9800bedbd77c9a1ca4fd476abebfc38429f260f8f3a28f179f3b5b6"
+        }
+      ],
+      "input_and_task_schema": "Review text and app name; four questions: sentiment Score 5, topic Choice 6, bug Noul, churn Score 4. Commerce variant: comment text, question Noul, presales/technical/logistics/other Choice, priority Score 3 and off-platform-contact risk Noul.",
+      "candidate_and_context_scale": "Review source: 1,000 rows across 17 apps, each 50–420 chars;20 rows/request,80 questions,50 requests/concurrency 8. Commerce report:18 calls with 278–694 input tokens, three repeated requests and three manually compared comments.",
+      "evidence_status": "source_implemented_and_author_report_with_real_text_and_weak_proxy_labels",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Column race has fetch, recorded-run, quality and replay harnesses. Star ratings withheld from model; author sentiment-star Spearman .803 Jev/.822 Gemini. Topic 84.4% and bug 92.6% are inter-model agreement, not accuracy. No human topic/bug/churn labels. Commerce GLM agreement covers only three comments and includes an acknowledged category error.",
+      "license_and_ingestion_status": "Both demo codes MIT. Upstream sealuzh/app_reviews @9 eaa 95 f 66364367 e 8752 b 0 f 34 c 00 f 67 aafa 95 d 15 explicitly lists license unknown. Review text stays research-only until rights verified; customer comments are not automatically licensed by repository code.",
+      "training_implications": "Use a rights-cleared real-review corpus, independently label multi-intent topic, bugs and stated churn; retain user star separately as a weak proxy. Add Chinese/code-switched technical questions, complaints, praise, quoted contact requests and explicit nonreply cases.",
+      "split_unit": "Application/shop/product and conversation thread; exact/near-duplicate review grouping before all derived labels.",
+      "evaluation_metrics": [
+        "human-labeled macro F1 per column",
+        "sentiment-star correlation reported as proxy",
+        "churn precision and false escalation",
+        "batch-order leakage",
+        "whole-job and per-request latency/cost"
+      ],
+      "caveats": [
+        "Author single run:4.576 s/$0.0225 Jev versus 18.781 s/$0.1576 Gemini 3.8 Flash over public internet; not measured by us.",
+        "Jev uses 8.3× input tokens in that harness; output format and list prices explain cost.",
+        "Commerce $0 was an OpenCode Zen free gateway promotion; no general free-inference or calibrated-confidence claim follows."
+      ]
+    },
+    {
+      "id": "F05",
+      "title": "Dynamic document tags and hierarchical taxonomies",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "rinti/wagtail-jev",
+          "url": "https://github.com/rinti/wagtail-jev",
+          "revision": "40d4f23680b857fac8c3986979a06efd2205ae7e",
+          "files": [
+            {
+              "path": "src/wagtail_jev/tag_field.py",
+              "url": "https://github.com/rinti/wagtail-jev/blob/40d4f23680b857fac8c3986979a06efd2205ae7e/src/wagtail_jev/tag_field.py",
+              "sha256": "f241dda4c56e1c8db8475441396fe70bc685b67f184ae0c6512fe1393c070aee"
+            },
+            {
+              "path": "src/wagtail_jev/settings.py",
+              "url": "https://github.com/rinti/wagtail-jev/blob/40d4f23680b857fac8c3986979a06efd2205ae7e/src/wagtail_jev/settings.py",
+              "sha256": "71e922118d8f96a818d7fda86e4be05922ddf0e28e46740933d893f2775496e9"
+            },
+            {
+              "path": "README.md",
+              "url": "https://github.com/rinti/wagtail-jev/blob/40d4f23680b857fac8c3986979a06efd2205ae7e/README.md",
+              "sha256": "0e44d31b1a5ecae6761607ee57a6c192e11932d2c94e0a68be773459b7c5bb42"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/rinti/wagtail-jev/blob/40d4f23680b857fac8c3986979a06efd2205ae7e/LICENSE",
+              "sha256": "5955378b69f50c3d1d3cca86e3524e2ad2055f068c7d9dc3cfd53542d0fe674b"
+            }
+          ]
+        },
+        {
+          "kind": "github",
+          "repo": "FirasSX914/Janus",
+          "url": "https://github.com/FirasSX914/Janus",
+          "revision": "9cb66c488cf884e5997356a0de45f75aa3148774",
+          "files": [
+            {
+              "path": "data/README.md",
+              "url": "https://github.com/FirasSX914/Janus/blob/9cb66c488cf884e5997356a0de45f75aa3148774/data/README.md",
+              "sha256": "d8d7c92d12734f9ad82065e0575fa763e8045315e224580e8a17704e53875671"
+            },
+            {
+              "path": "README.md",
+              "url": "https://github.com/FirasSX914/Janus/blob/9cb66c488cf884e5997356a0de45f75aa3148774/README.md",
+              "sha256": "109edfe1519271b4fd7b7afe80d6ac3f03f76009af6417d26e02f7a476798de5"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/FirasSX914/Janus/blob/9cb66c488cf884e5997356a0de45f75aa3148774/LICENSE",
+              "sha256": "ad12b82965784be86d48050cbee06c7b6014c83e3ce4e5c7b22b23dfdef9ba77"
+            }
+          ]
+        },
+        {
+          "kind": "official_cookbook",
+          "url": "https://docs.typesafe.ai/cookbooks/hierarchical_classification.md",
+          "checked_at_utc": "2026-09-21T06:48:03.732745+00:00",
+          "sha256": "5525161d2b5597a29bd315a58aa817fe00e6bc2470cb31ece0530dbb8221dbfe",
+          "version_note": "Rendered documentation readback, not a Git commit; named model/data revisions recorded per family."
+        },
+        {
+          "kind": "public_x_post",
+          "url": "https://x.com/nutlope/status/2100426999546184123",
+          "readback_url": "https://api.fxtwitter.com/nutlope/status/2100426999546184123",
+          "author": "nutlope",
+          "created_at": "Thu Sep 17 03:29:55 +0000 2026",
+          "text_sha256": "50630477f8e294b6a032a376d2227b5d56a9156929ada46a494cabf4dbb98f71"
+        },
+        {
+          "kind": "public_x_post",
+          "url": "https://x.com/IanArawjo/status/2101697198098452480",
+          "readback_url": "https://api.fxtwitter.com/IanArawjo/status/2101697198098452480",
+          "author": "IanArawjo",
+          "created_at": "Sun Sep 20 15:37:14 +0000 2026",
+          "text_sha256": "04f5ffa049d0195ffbf7e156e241b72c1abdb9693888ecec16fa34eead4c83df"
+        }
+      ],
+      "input_and_task_schema": "Article title/body and dynamic tag catalog; one Noul per tag for multilabel selection. Alternative Choice over a flat catalog or Choice per hierarchy node, with beam search; separate ordinal quality rubrics.",
+      "candidate_and_context_scale": "Wagtail clips body to 12,000 characters and chunks tag questions 40/request; quality rubrics 2–10 levels. Janus WoS:145 Domain/area labels, seven parents,500 abstracts, median 1,377 chars. Official cookbook traverses CPC2026.05, Shopify 2026-02, MeSH2026 and cookbook-file trees.",
+      "evidence_status": "source_implemented_with_author_reports_and_vendor_worked_examples",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Wagtail tests are mocked/integration, not semantic gold. Janus commits a 500-sample WoS publication-metadata holdout and 500 examples from official Banking 77 test. WoS archive taxonomies conflict: numeric 134, hierarchy 133, metadata 145. Cookbook uses four worked documents/expected leaves, not a broad benchmark.",
+      "license_and_ingestion_status": "Wagtail and Janus code MIT. Janus reports CC BY4.0 plus an archive notice for WoS; upstream data rights not independently verified here. Taxonomy/document licenses require separate checks. All Janus heldout samples remain evaluation-only.",
+      "training_implications": "Gather independently licensed documents with actual metadata or reviewed tag assignments; include near-synonymous labels, multiple correct branches, sparse labels and no-fit items. Keep metadata labels distinct from adjudicated human labels and train actual text rather than category templates.",
+      "split_unit": "Document/source collection and taxonomy family; hold out entire branches or a separately frozen taxonomy version for transfer tests.",
+      "evaluation_metrics": [
+        "multilabel micro/macro F1",
+        "leaf and parent accuracy",
+        "tree-distance error",
+        "rare-label coverage",
+        "beam-width quality/cost curve"
+      ],
+      "caveats": [
+        "Wagtail README claims one call regardless tag count, but implementation batches 40.",
+        "WoS145-class score cannot be compared to the standard 134-class literature as the same task.",
+        "Paper-classification X post reports 1,018 titles+summaries,24 topics,$.08/256 msmedian, but upstream summarization cost$3.99 and accuracy evaluation was still pending."
+      ]
+    },
+    {
+      "id": "F06",
+      "title": "Large skill catalog routing with real follow-up context",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "shimo4228/jev-skill-router",
+          "url": "https://github.com/shimo4228/jev-skill-router",
+          "revision": "cc1057725f037a7b407ed52934e79c7151a4e144",
+          "files": [
+            {
+              "path": "scripts/router.py",
+              "url": "https://github.com/shimo4228/jev-skill-router/blob/cc1057725f037a7b407ed52934e79c7151a4e144/scripts/router.py",
+              "sha256": "c41afb590119a77ea5a60d64fc8b540e0c208ca8de6f881583a69652912a1819"
+            },
+            {
+              "path": "README.md",
+              "url": "https://github.com/shimo4228/jev-skill-router/blob/cc1057725f037a7b407ed52934e79c7151a4e144/README.md",
+              "sha256": "c7b4c8a8d11479273a32322b7c4124e5ac8d6f26ab9068c7c7d730232cd20aa0"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/shimo4228/jev-skill-router/blob/cc1057725f037a7b407ed52934e79c7151a4e144/LICENSE",
+              "sha256": "2cc37f07036665060cdaf79c052f21d306523c9b8f3d4060e69a23e468cc1547"
+            }
+          ]
+        },
+        {
+          "kind": "official_cookbook",
+          "url": "https://docs.typesafe.ai/cookbooks/skill_suggestion.md",
+          "checked_at_utc": "2026-09-21T06:47:29.540744+00:00",
+          "sha256": "62728bba4a38dd0e61ae4118524941904a2a687a53e2dd0e08ad3bf63e5198f8",
+          "version_note": "Rendered documentation readback, not a Git commit; named model/data revisions recorded per family."
+        }
+      ],
+      "input_and_task_schema": "User request with a changing skill catalog; wide Choice plus three Noul gates, then top-three Choice with per-skill fit Nouls. The community client passes recent_context=\"\" rather than actual conversation history.",
+      "candidate_and_context_scale": "Community:50–59 skills,240-option chunks, reported APIChoice cap 255; wide~10 k input tokens, two-stage~21.6–25.3 k. Official cookbook:182 skills, short 60-character index, top-three 700-character body excerpts;488 agent requests.",
+      "evidence_status": "source_implemented_and_author/vendor_report_with_environment_mismatch",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Community offline harness and six scripted requests onv 0.2.0 report 6/6 sensible. Six real Japanese follow-ups onv 0.1.0 report 3 sensible/3 wrong; no cross-version pooling. Vendor experiment uses jev-1.12 and claude-haiku-4-5-20251001 under a truncated index; not our models or full-description hosts.",
+      "license_and_ingestion_status": "Community code MIT. Each skill body has its own rights; do not assume host skill catalogs or private session logs are redistributable. Cookbook license not separately verified.",
+      "training_implications": "Collect rights-cleared natural task requests and conversational follow-ups, query+history pairs, near-duplicate skill descriptions, oversized catalogs and no-action/none-of-above cases. Test with and without true preceding turns rather than memorizing skill titles.",
+      "split_unit": "Conversation, skill family/repository and catalog version; keep all paraphrases and skill synonyms together.",
+      "evaluation_metrics": [
+        "top1 and recall@3",
+        "unneeded skill-load rate",
+        "correct abstention",
+        "history/no-history delta",
+        "downstream completed-task rate",
+        "full two-stage latency and token cost"
+      ],
+      "caveats": [
+        "Community hook leaves the host full skill roster in context, so no roster-token saving was demonstrated.",
+        "Official and community protocols differ in base agent, catalog visibility, model version and language.",
+        "Neither returned probability nor fixed.30 gate proves calibration."
+      ]
+    },
+    {
+      "id": "F07",
+      "title": "Database model semantics, units and documentation alignment",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "ryan-sunny/dbt-assay",
+          "url": "https://github.com/ryan-sunny/dbt-assay",
+          "revision": "ebf8812c9aeb19747f7168a0e08d3d224e170b12",
+          "files": [
+            {
+              "path": "docs/VERIFICATION.md",
+              "url": "https://github.com/ryan-sunny/dbt-assay/blob/ebf8812c9aeb19747f7168a0e08d3d224e170b12/docs/VERIFICATION.md",
+              "sha256": "6d9e8bfee0c1037de8af016b138d023d0c98c9b312f0b62c2b0bfd436da7eea8"
+            },
+            {
+              "path": "src/dbt_assay/semantics.py",
+              "url": "https://github.com/ryan-sunny/dbt-assay/blob/ebf8812c9aeb19747f7168a0e08d3d224e170b12/src/dbt_assay/semantics.py",
+              "sha256": "c7b4a36949591f5385e1dffe1e68a6e5513a6ed5aed4fe613d675f95eed6b317"
+            },
+            {
+              "path": "src/dbt_assay/jev.py",
+              "url": "https://github.com/ryan-sunny/dbt-assay/blob/ebf8812c9aeb19747f7168a0e08d3d224e170b12/src/dbt_assay/jev.py",
+              "sha256": "f8b3041c286afd04fe25aaf29c90d0bb06bc3985223d57a5404db56031fe8cf3"
+            },
+            {
+              "path": "README.md",
+              "url": "https://github.com/ryan-sunny/dbt-assay/blob/ebf8812c9aeb19747f7168a0e08d3d224e170b12/README.md",
+              "sha256": "b48a841e0a1c7f3f46dac8ed94f1a7cf0a59348a4131d6ac7b4718c4b2893eaa"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/ryan-sunny/dbt-assay/blob/ebf8812c9aeb19747f7168a0e08d3d224e170b12/LICENSE",
+              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+            }
+          ]
+        }
+      ],
+      "input_and_task_schema": "dbt manifest/compiled SQL, model description, upstream schema, sample values and predicates. Choice/Noul/Score inspect column roles, grain, filter intent, semantic units and whether code supports documentation claims.",
+      "candidate_and_context_scale": "17 question families; subject builder takes at most 12 atomic predicates by default. Header/all comments capped 60/140 lines. Questions share one subject-state; code notes stuffing unrelated subjects together reduces confidence.",
+      "evidence_status": "source_implemented_and_author_field_audit_with_partial_human_verification",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Author field reports discuss a 265-model project and a 357-model warehouse and publishes a per-question verification ledger; reports manual checks on 10 families, two rewritten and five not verified. Unit magnitude initially failed confidently, now language names unit and code checks arithmetic. A prior 213/344 code-contradiction findings unconfirmed; two inspected by author both false despite.95 confidence. Role check 57/61 agreed, three of four disagreements were bad reference labels.",
+      "license_and_ingestion_status": "Apache 2.0 code. Real warehouse schemas/values and public dbt repos retain their own rights; verification prose is not a licensed bulk semantic gold dataset.",
+      "training_implications": "Use original or permissively licensed SQL with executable constraints and independently reviewed meaning. Pair declared docs with actual SQL evidence; deliberately separate absent evidence from contradiction. Label role/unit linguistics independently from deterministic arithmetic and schema checks.",
+      "split_unit": "Warehouse/project plus model lineage; related upstream/downstream SQL and all perturbations grouped.",
+      "evaluation_metrics": [
+        "human agreement by question family",
+        "false contradiction rate",
+        "abstention on missing context",
+        "unit/role semantic accuracy",
+        "executed invariant pass rate"
+      ],
+      "caveats": [
+        "A question passing selected probes does not establish precision of a discovery pipeline.",
+        "Reported whole-field audits and confidence are not automatically training labels.",
+        "Use root-owned SQL converters; this report changes no existing data pipeline."
+      ]
+    },
+    {
+      "id": "F08",
+      "title": "SQL relation enrichment and many-row shared-context evaluation",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "prasanthj/duckdb-jev",
+          "url": "https://github.com/prasanthj/duckdb-jev",
+          "revision": "928da7173d53c34cb40d36b2ef1dc66174c9e91c",
+          "files": [
+            {
+              "path": "docs/live-results.md",
+              "url": "https://github.com/prasanthj/duckdb-jev/blob/928da7173d53c34cb40d36b2ef1dc66174c9e91c/docs/live-results.md",
+              "sha256": "cf7d950be10acc708a38727e5cb58a32d0cab52945e6602df3b077e64acc443b"
+            },
+            {
+              "path": "src/jev_extension.cpp",
+              "url": "https://github.com/prasanthj/duckdb-jev/blob/928da7173d53c34cb40d36b2ef1dc66174c9e91c/src/jev_extension.cpp",
+              "sha256": "5ba67cf0c40ce3d897a3ee7163367d65b53390e42972f0920a6525284d8a0afb"
+            },
+            {
+              "path": "README.md",
+              "url": "https://github.com/prasanthj/duckdb-jev/blob/928da7173d53c34cb40d36b2ef1dc66174c9e91c/README.md",
+              "sha256": "34080d48ed4b539ff8c7c1d4e4fd475b987c246cc64fc8816ac04a63810640e4"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/prasanthj/duckdb-jev/blob/928da7173d53c34cb40d36b2ef1dc66174c9e91c/LICENSE",
+              "sha256": "c74061de5768b42696373876bcead17f7d7f5ae55bb55d742806c899a86cb5c0"
+            }
+          ]
+        }
+      ],
+      "input_and_task_schema": "A SQL relation supplies(row_id, evidence, questions); mixed Choice/Score/Noul results stream back. Implementation batches distinct inputs and handles nulls, duplicates, query caches and in-flight reuse.",
+      "candidate_and_context_scale": "Author tests batch 1/10/25/100;1,000 unique rows at batch 100/concurrency 10 use 10 requests. Source data derive from 12 nested synthetic support templates. Separate query-cache tests 129 rows.",
+      "evidence_status": "source_implemented_and_author_live_functional_throughput_report",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Public C++extension and live/replay harnesses; author main run 1,327 requests/7,750 judgments, two 502 retried. Batch equivalence maximum numeric difference.13; repeatedbatch 1 control.10. Generated raw timing/response artifacts are gitignored, report/harness are public.",
+      "license_and_ingestion_status": "Apache 2.0 code. Support fixtures are author templates, not real production labels; use evaluation fixtures only for a benchmark comparison.",
+      "training_implications": "Generalize batching validation using independently sourced real documents with different semantic targets, repeated/near-duplicate IDs, per-row scope markers and conflicting instructions in adjacent rows. This is an evaluation/protocol gap, not a new semantic domain by itself.",
+      "split_unit": "Source document/template first; preserve all derivatives and duplicate groups. Batch assembly must not cross train/test pools.",
+      "evaluation_metrics": [
+        "strict per-row correctness",
+        "cross-row leakage and permutation sensitivity",
+        "throughput at matched correctness",
+        "request/row/judgment counts separately",
+        "cold/warm cache statistics"
+      ],
+      "caveats": [
+        "Author 1,000 row median.515 s over three repeats includes network/SQL/relay; fixed configuration order is not an isolated causal speedup.",
+        "Zero-request warm cache timing is result reuse, not model inference.",
+        "Small repeated-template agreement does not establish real-document quality or numerical invariance."
+      ]
+    },
+    {
+      "id": "F09",
+      "title": "Closed-loop traffic signal policy",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "skcache/jevtrafficsim",
+          "url": "https://github.com/skcache/jevtrafficsim",
+          "revision": "6d409df5a9b617097b7e8f708819afa62ec05e03",
+          "files": [
+            {
+              "path": "jev/gateway.ts",
+              "url": "https://github.com/skcache/jevtrafficsim/blob/6d409df5a9b617097b7e8f708819afa62ec05e03/jev/gateway.ts",
+              "sha256": "b5ca8d0434c3d1ee643125f95219075403245e3a5a67c61e08743c2e531890d9"
+            },
+            {
+              "path": "jev/schema.ts",
+              "url": "https://github.com/skcache/jevtrafficsim/blob/6d409df5a9b617097b7e8f708819afa62ec05e03/jev/schema.ts",
+              "sha256": "1621ef41a1edc716b24765a540fb40d5d016934eec138c5ac424c1183ad30306"
+            },
+            {
+              "path": "benchmark/scenarios.ts",
+              "url": "https://github.com/skcache/jevtrafficsim/blob/6d409df5a9b617097b7e8f708819afa62ec05e03/benchmark/scenarios.ts",
+              "sha256": "80fd66825ba3bb2990c49791155709c34aa44ca724dc80e9edba8780af20ae57"
+            },
+            {
+              "path": "README.md",
+              "url": "https://github.com/skcache/jevtrafficsim/blob/6d409df5a9b617097b7e8f708819afa62ec05e03/README.md",
+              "sha256": "aa1d00e8cb068c60ef1dd056903e5747082e268888401d63d15a2cb6b34a77bb"
+            }
+          ]
+        }
+      ],
+      "input_and_task_schema": "City aggregate frame of queues, arrivals, waits, occupancy and hotspots. Choice selects global pressure and switching-hint buckets plus corridor/region priority weights. Deterministic signal controller owns legal phases and minimum green/yellow/all-red.",
+      "candidate_and_context_scale": "State max 48 corridors,64 regions,24 hotspots; default questions cover 8 busiest corridors+6 regions+pressure+hint =at most 16. Pressure and priority each four buckets; switching hint three. No vehicle-level identity.",
+      "evidence_status": "source_implemented_with_seeded_headless_harness_no_verified_jev_score",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Fixed/adaptive/Jev client and headless seeded scenario matrix exist. Default benchmark compares only fixed/adaptive, seeds 42/2026; opt-in liveJev path has caps. No human action labels or independently measured closed-loop Jev score verified.",
+      "license_and_ingestion_status": "No top-level license verified in fetched source; do not import code/assets/maps until reuse terms established. Independent simulator trajectory collection is feasible.",
+      "training_implications": "Generate new simulator maps/seeds and multi-step trajectory supervision from legal controllers/rollout search. Distinguish state-level policy preference from actual travel completion, delay and fairness; evaluate full episodes under model latency and stale observations.",
+      "split_unit": "Map/topology, demand pattern and episode seed; neighboring frames stay in one split.",
+      "evaluation_metrics": [
+        "trip completion",
+        "queue/waitP95",
+        "throughput",
+        "starvation/fairness",
+        "latency-aware closed-loop reward"
+      ],
+      "caveats": [
+        "The model does not directly set lamps; claiming autonomous signal control without the deterministic controller would misdescribe the demo.",
+        "Default benchmark has no Jev calls; repository presence is not evidence of improved traffic flow."
+      ]
+    },
+    {
+      "id": "F10",
+      "title": "Chinese tool selection with typed optional arguments",
+      "primary_sources": [
+        {
+          "kind": "github",
+          "repo": "ItBayMax/typesafe-ai-jev-example",
+          "url": "https://github.com/ItBayMax/typesafe-ai-jev-example",
+          "revision": "009204a7444c897416046cd986d650b09bb56740",
+          "files": [
+            {
+              "path": "demos/demo02_function_calling.py",
+              "url": "https://github.com/ItBayMax/typesafe-ai-jev-example/blob/009204a7444c897416046cd986d650b09bb56740/demos/demo02_function_calling.py",
+              "sha256": "05f30ce17d5cc00f2289fa95c89d2cb4dfe2fc2fe414d3c8c20ec34a03a4f754"
+            },
+            {
+              "path": "README.md",
+              "url": "https://github.com/ItBayMax/typesafe-ai-jev-example/blob/009204a7444c897416046cd986d650b09bb56740/README.md",
+              "sha256": "96b57a9f659905a196dbc7228ad2421564a477ad50a25d013a145e51bf345baa"
+            },
+            {
+              "path": "LICENSE",
+              "url": "https://github.com/ItBayMax/typesafe-ai-jev-example/blob/009204a7444c897416046cd986d650b09bb56740/LICENSE",
+              "sha256": "b4c8fc20deee18e1696b9363a05372be9ae29280935015f86fc21f2fc3e99079"
+            }
+          ]
+        }
+      ],
+      "input_and_task_schema": "Chinese user command; Choice selects four tools ornone; independent conditional Choice questions select service/parameters and Noul says whether each optional argument was stated. Dispatcher reads only the chosen tool and applies defaults in code.",
+      "candidate_and_context_scale": "Source code has four services, argument candidate sets 2–4; total 12 Choice(including tool) +5 Noul =17 questions/request. Four operations: logs, metrics, restart, scale.",
+      "evidence_status": "source_implemented_and_author_small_demo_report",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Six-demo suite includes handmade mock probability fixtures and live outputs. Author 28 calls/29,674 input tokens/$0.00125;65 comparisons are mock-versus-model, not independently labeled semantic accuracy. Tool functions form command strings, not execution traces.",
+      "license_and_ingestion_status": "MIT code verified. Keep existing demo requests/mock outputs evaluation-only; no real operational intent corpus.",
+      "training_implications": "Use original Chinese/code-switched requests grounded in rights-cleared real tool schemas. Label missing required arguments, optional defaults, explicit negation and ambiguous target references independently. Include compatible-argument constraints and per-turn outcomes.",
+      "split_unit": "Tool/API family and conversation/task template; hold out catalogs to test dynamic generalization.",
+      "evaluation_metrics": [
+        "tool+all-required-arguments exact match",
+        "unstated-argument detection",
+        "abstention",
+        "invalid-argument rate",
+        "complete task success in a sandbox"
+      ],
+      "caveats": [
+        "Candidate-restricted selection is not unrestricted function-argument generation or a full BFCL score.",
+        "Speculative questions must state their conditions; they cannot see the output of the tool-selection question."
+      ]
+    },
+    {
+      "id": "F11",
+      "title": "Entity alignment and conservative record linkage",
+      "primary_sources": [
+        {
+          "kind": "official_cookbook",
+          "url": "https://docs.typesafe.ai/cookbooks/entity_alignment.md",
+          "checked_at_utc": "2026-09-21T06:48:03.730892+00:00",
+          "sha256": "c8808786d3e4205c05ad2a65e7b880cee229537d0df16004c71523848950206c",
+          "version_note": "Rendered documentation readback, not a Git commit; named model/data revisions recorded per family."
+        }
+      ],
+      "input_and_task_schema": "Two catalog entities with name, manufacturer/brewery, style and numeric attributes. Score 3 selects different/related-review/same; three companion Nouls judge semantic field agreement, arithmetic kept in code.",
+      "candidate_and_context_scale": "Official example 450 Magellan Beer candidate pairs after a first-stage blocker; one pair/request/fourquestions, max workers 6. Vendor modeljev-1.12, reported date 2026-08-11.",
+      "evidence_status": "vendor_worked_benchmark_with_reference_labels_not_reproduced",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Rendered cookbook includes runnable Python and names candidate_pairs.json/json_cache.json. Binary known_same_as is benchmark gold; middle curator category is a proposed policy, not an independently annotated third class. We did not download benchmark pair/gold files.",
+      "license_and_ingestion_status": "Cookbook and Magellan underlying record redistribution licenses not separately verified. Keep 450 publicbenchmark pairs held out; source license review required for any new record corpus.",
+      "training_implications": "Build independent rights-cleared product/organization records with real identity links, variants, abbreviations, transposed fields and hard negatives. Label three-way ambiguity through review; do not treat binary nonmatch as automatically safe to discard.",
+      "split_unit": "Entity identity and connected candidate-pair graph, not rows; variants/aliases of one identity stay together.",
+      "evaluation_metrics": [
+        "merge precision",
+        "duplicate recall",
+        "curator workload at fixed precision",
+        "cluster consistency",
+        "blocking recall separately"
+      ],
+      "caveats": [
+        "Rounding an expected ordinal score is a decision policy with implicit boundaries; the cookbook phrase no threshold to fit does not prove calibration.",
+        "End-to-end performance must include candidate blocking and review, not only pair classification."
+      ]
+    },
+    {
+      "id": "F12",
+      "title": "Document structure recovery and candidate-preserving extraction",
+      "primary_sources": [
+        {
+          "kind": "official_cookbook",
+          "url": "https://docs.typesafe.ai/cookbooks/pre_parsed_value_extraction_cookbook.md",
+          "checked_at_utc": "2026-09-21T06:48:03.820269+00:00",
+          "sha256": "5a2026433afc618ab1ed16994d8c07281399e527482006a92e7e343ddcd96a2d",
+          "version_note": "Rendered documentation readback, not a Git commit; named model/data revisions recorded per family."
+        },
+        {
+          "kind": "official_cookbook",
+          "url": "https://docs.typesafe.ai/cookbooks/date_extraction_cookbook.md",
+          "checked_at_utc": "2026-09-21T06:48:03.740416+00:00",
+          "sha256": "3fdf1a1cef1970feb4d2c1629c73f2ca00a487f47c7eff0b1dc303868d6ee630",
+          "version_note": "Rendered documentation readback, not a Git commit; named model/data revisions recorded per family."
+        },
+        {
+          "kind": "official_cookbook",
+          "url": "https://docs.typesafe.ai/cookbooks/autoformat.md",
+          "checked_at_utc": "2026-09-21T06:48:03.768803+00:00",
+          "sha256": "e0be526400d0afc5d865c8db5ab46b89bc9d8e1a9f7f3df22f7e0d0a15919297",
+          "version_note": "Rendered documentation readback, not a Git commit; named model/data revisions recorded per family."
+        }
+      ],
+      "input_and_task_schema": "Three related document-processing contracts: choose the requested regex span plusnone and semantic attributes; seven Choices read date parts before deterministic calendar resolution; recover stripped formatting by adjacent-line stitch Nouls then block-type Choices and conditional heading/list/callout questions.",
+      "candidate_and_context_scale": "Span worked cases: four email/three phone/four money candidates, plusnone; six country options. Date modeabsolute/relative/none; month/day/year/relativepieces, frozenTODAY2026-07-30. Structure has one question per eligiblelinepair, then three questions/block plus a heading question only for blocks up to 90 characters; six block types and three heading levels(title/section/subsection).",
+      "evidence_status": "vendor_worked_examples_with_runnable_code_no_corpus_level_measurement",
+      "independently_measured_by_open_jev": false,
+      "harness_and_labels": "Rendered code and cached demonstration outputs are available. Structure input is one memo from pinned gist 5 da 03690611 fb 6 ddcbaabdb 91 fb 9 f 91 d 9751 b 113. Date code includes deterministic resolution checks. No independently annotated broad extraction/structure testset was verified.",
+      "license_and_ingestion_status": "Cookbook/gist licensing not separately verified; import no worked-example text. Original documents or permissively licensed structured documents can supply independently constructed training references.",
+      "training_implications": "Derive structure labels from rights-cleared native Markdown/HTML before removing markup; preserve exact source words and split by originaldocument. For extraction use original or permitted documents with role/offset labels and candidate-generation recall. For dates add semantic ambiguity, omitted years, conflicting dates and impossible-calendar cases.",
+      "split_unit": "Originaldocument, sender/template and transformation lineage; semantic variants stay with source. Never generate from cookbook/test examples.",
+      "evaluation_metrics": [
+        "candidate recall",
+        "selected-span exact match",
+        "none precision",
+        "normalized-value/date exact match",
+        "boundary and blockmacroF1",
+        "word-preservation invariant",
+        "end-to-end latency"
+      ],
+      "caveats": [
+        "Fixed candidates guarantee a returned span came from the candidate set, not that it is the right span or that the extractor found every possible answer.",
+        "Date convention/normalization and structure renderer are code behavior, not extra neural capabilities.",
+        "Official structure headline cost and current price/token code are inconsistent; do not reuse its dollar claim without recomputation."
+      ]
+    }
+  ],
+  "secondary_and_watchlist": [
+    {
+      "source": {
+        "kind": "github",
+        "repo": "kazuhideoki/jev-search",
+        "url": "https://github.com/kazuhideoki/jev-search",
+        "revision": "117244d271fc47202fe7e897ab2c8f6178f5b3df",
+        "files": [
+          {
+            "path": "README.md",
+            "url": "https://github.com/kazuhideoki/jev-search/blob/117244d271fc47202fe7e897ab2c8f6178f5b3df/README.md",
+            "sha256": "3c7be6b0944b93398dafb56d4aabb349296f7f16e8136ef75c9a163eba86f8dd"
+          }
+        ]
+      },
+      "status": "source_review_secondary",
+      "finding": "Semantic file rerank:24 k estimated-token batches,20→80 candidates and 15 second Raycast budget. Local CLI is BM25-like withoutJev; max-chunk probability has document-length bias. License not verified."
+    },
+    {
+      "source": {
+        "kind": "github",
+        "repo": "cipherTing/sael",
+        "url": "https://github.com/cipherTing/sael",
+        "revision": "56f38d2515d029bcacaaf50403ca61db70e76d3f",
+        "files": [
+          {
+            "path": "README.md",
+            "url": "https://github.com/cipherTing/sael/blob/56f38d2515d029bcacaaf50403ca61db70e76d3f/README.md",
+            "sha256": "95018e06a1c1c1bf8833bbafae847e3b2d8c85bd30806926fe618a4be8fa5fe2"
+          },
+          {
+            "path": "systemone/example_test.go",
+            "url": "https://github.com/cipherTing/sael/blob/56f38d2515d029bcacaaf50403ca61db70e76d3f/systemone/example_test.go",
+            "sha256": "d746043a6fd87d614a52855507c7556d29bd51051e6df4ec0abadc9ea1c140be"
+          },
+          {
+            "path": "LICENSE",
+            "url": "https://github.com/cipherTing/sael/blob/56f38d2515d029bcacaaf50403ca61db70e76d3f/LICENSE",
+            "sha256": "e906aaf8c29a8e7c8b2b4f55017d38e168632a0b3821fe02ae5c045216bb5e83"
+          }
+        ]
+      },
+      "status": "source_review_secondary",
+      "finding": "MIT Go client with Noul harmful-request and Score 4 severity. Golden replay tests cover structure; README explicitly disclaims semantic accuracy testing."
+    },
+    {
+      "source": {
+        "kind": "public_x_post",
+        "url": "https://x.com/steventey/status/2101706435898069093",
+        "readback_url": "https://api.fxtwitter.com/steventey/status/2101706435898069093",
+        "author": "steventey",
+        "created_at": "Sun Sep 20 16:13:56 +0000 2026",
+        "text_sha256": "cd544ba7e1dd421a4ff8fde9fd2d76a25beb50d040bd3ee1379f6014b24982c5"
+      },
+      "status": "anecdote",
+      "finding": "Dub URL abuse scanner; author mentions 10 k+historical malicious domains. No training procedure, rights, benign denominator or heldoutlabels verified; trained it does not establish finetuningJev weights."
+    },
+    {
+      "source": {
+        "kind": "public_x_post",
+        "url": "https://x.com/LukeDing14/status/2101915343321211012",
+        "readback_url": "https://api.fxtwitter.com/LukeDing14/status/2101915343321211012",
+        "author": "LukeDing14",
+        "created_at": "Mon Sep 21 06:04:04 +0000 2026",
+        "text_sha256": "ad0b71328531b836181c584a25ab35c968fda803e4063b5e0f7b910853e722d3"
+      },
+      "status": "anecdote",
+      "finding": "Chinese sexual-content moderation trial; no input modality, counts, labels or harness verified. Do not infer image support."
+    },
+    {
+      "source": {
+        "kind": "public_x_post",
+        "url": "https://x.com/riyu__li/status/2101895097344561196",
+        "readback_url": "https://api.fxtwitter.com/riyu__li/status/2101895097344561196",
+        "author": "riyu__li",
+        "created_at": "Mon Sep 21 04:43:37 +0000 2026",
+        "text_sha256": "025c01b86e695af8257bcabbf30f7332b5c648dd29410f5809b0244e474fc8f6"
+      },
+      "status": "prototype_report",
+      "finding": "Japanese preschoolteacher verbal-cue reflection withDify; categories/labels not public in readback. Author explicitly says not teacherperformancegrading."
+    },
+    {
+      "source": {
+        "kind": "public_x_post",
+        "url": "https://x.com/ryo_grid/status/2101904352952889504",
+        "readback_url": "https://api.fxtwitter.com/ryo_grid/status/2101904352952889504",
+        "author": "ryo_grid",
+        "created_at": "Mon Sep 21 05:20:23 +0000 2026",
+        "text_sha256": "845a595b9aed4042a9425245814d2ddbe029da6fc97e66e341ea8e11a38a7897"
+      },
+      "status": "proposal",
+      "finding": "Selective testexecution using mizchi/flaker is proposed in a question, not a demonstratedJev integration."
+    },
+    {
+      "source": {
+        "kind": "public_x_post",
+        "url": "https://x.com/makaneko_AI/status/2101909643094380991",
+        "readback_url": "https://api.fxtwitter.com/makaneko_AI/status/2101909643094380991",
+        "author": "makaneko_AI",
+        "created_at": "Mon Sep 21 05:41:25 +0000 2026",
+        "text_sha256": "a8443cdd9747e1fbd3959c33f3c01f6d242e54e50876d8000f8dd871cb2d3441"
+      },
+      "status": "commentary_on_demo",
+      "finding": "Semantic inpagefind comment reposts another author; original implementation not verified in this pass."
+    },
+    {
+      "source": {
+        "kind": "github",
+        "repo": "Dicklesworthstone/skillranker",
+        "url": "https://github.com/Dicklesworthstone/skillranker",
+        "revision": "16743e9f9dee04850d01015d8f5c863a4ed4d0ff",
+        "files": [
+          {
+            "path": "README.md",
+            "url": "https://github.com/Dicklesworthstone/skillranker/blob/16743e9f9dee04850d01015d8f5c863a4ed4d0ff/README.md",
+            "sha256": "3aa348b14229dc4a415921fb4bc156137cab6feb38bd61deca5970dcdcd08fa2"
+          },
+          {
+            "path": "LICENSE",
+            "url": "https://github.com/Dicklesworthstone/skillranker/blob/16743e9f9dee04850d01015d8f5c863a4ed4d0ff/LICENSE",
+            "sha256": "32a82e0a5754e72e51fae44b65a936c831c07376f21c90f5fb9e76897fcc3509"
+          }
+        ]
+      },
+      "status": "license_blocked_lead",
+      "finding": "License is MIT with OpenAI/Anthropic Rider, not ordinaryMIT; do not copy corpus orcode under an assumedMITgrant."
+    }
+  ],
+  "x_followup_evidence": "x-followup-readbacks.json"
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "phonenumbers_version": "9.0.14",
+  "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "python_executable": "/Users/ethan/Codex-new/jev-qwen/runs/phone-extraction-control-v1-venv/bin/python",
+  "recorded_at_utc": "2026-09-20T16:26:43.055381+00:00",
+  "source_files_sha256": {
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "jev/case_phone_extraction.py": "4b9cb3b196733603a8f0e57d797c9fc5affe9c39a45cf30c015a6ad454ccfa6d",
+    "jev/data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e",
+    "jev/recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+    "reports/phone-extraction-control-v1/independent-audit.json": "55d01633df0bd7509caf5f13d90ede380b4d0c13dc90c3cccc43fe2936083b60",
+    "reports/phone-extraction-control-v1/test-verification.json": "1c7c729cd766de3d76054a6049f700796f7aef38d020c1951084a44671123863",
+    "reports/phone-extraction-control-v1/verify.py": "bb934c4bdff11e3cdaf94d54a36dd8257ff4df67db6b76ed3110fcff57abb700",
+    "tests/test_phone_extraction_control.py": "ad3f68ccc669e2ac16e263808240752d1ade29bd5c0011c7082485c6c109fb59"
+  },
+  "working_directory": "/Users/ethan/Codex-new/Open-Jev-Dev",
+  "full_corpus_audit": {
+    "command": "runs/phone-extraction-control-v1-venv/bin/python reports/phone-extraction-control-v1/verify.py --data data/phone-extraction-control-v1 --output reports/phone-extraction-control-v1/independent-audit.json",
+    "exit_code": 0,
+    "elapsed_tool_seconds": 3.569663625,
+    "output_file": "reports/phone-extraction-control-v1/independent-audit.json",
+    "output_sha256": "55d01633df0bd7509caf5f13d90ede380b4d0c13dc90c3cccc43fe2936083b60",
+    "dataset_manifest_sha256": "1001f1e04795308bf4f68db51076e8e1e1e47802986de54fc33b3b8d33548cfb",
+    "family_count": 200,
+    "documents": 4000,
+    "typed_records": 19000,
+    "candidate_count": 11200
+  },
+  "new_audit_behavior_tests": {
+    "command": "runs/phone-extraction-control-v1-venv/bin/python - <<'PY'\nimport copy\nfrom contextlib import redirect_stdout\nimport importlib.util\nimport io\nfrom pathlib import Path\nimport tempfile\nimport unittest\nfrom unittest.mock import patch\nimport phonenumbers\n\nspec=importlib.util.spec_from_file_location('phone_independent_audit',Path('reports/phone-extraction-control-v1/verify.py'))\naudit=importlib.util.module_from_spec(spec)\nspec.loader.exec_module(audit)\n\ndef state(raw,region):\n    policy={**copy.deepcopy(audit.POLICY),'layout':'card','roles':copy.deepcopy(audit.ROLES['card'])}\n    text='Memo: café / 联系卡\\nMobile: '+raw+' | Region: '+region\n    spans=audit.candidates(text)\n    return {'text':text,'policy':policy,'selected_id':'span_0','selected':spans['span_0']}\n\nclass AuditChecks(unittest.TestCase):\n    def test_local_only_never_becomes_complete_e164(self):\n        for region in ('US','CA'):\n            for raw in ('555-0123','5550123','+1 555-0123'):\n                with self.subTest(region=region,raw=raw):\n                    visible=state(raw,region)\n                    result=audit.inspect(visible,phonenumbers)\n                    self.assertTrue(result['possible'])\n                    self.assertEqual(result['reason'],'local_only_number_missing_area_code')\n                    self.assertEqual(result['region'],'review')\n                    self.assertIsNone(result['e164'])\n                    self.assertIsNone(audit.independent_e164(raw,region))\n                    self.assertEqual(audit.normalized(visible,result)['status'],'review')\n    def test_independent_digits_preserve_national_international_equivalence(self):\n        for region,national,international,expected in (\n            ('US','202-555-0100','+1 202-555-0100','+12025550100'),\n            ('CA','416-555-0199','+1 416-555-0199','+14165550199'),\n            ('GB','07700 900123','+44 7700 900123','+447700900123')):\n            for raw in (national,international):\n                self.assertEqual(audit.independent_e164(raw,region),expected)\n                result=audit.inspect(state(raw,region),phonenumbers)\n                self.assertEqual(result['e164'],expected)\n                if region=='GB':\n                    self.assertTrue(result['possible'])\n                    self.assertFalse(result['valid'])\n    def test_unicode_character_offsets_and_partial_guard(self):\n        visible=state('(+1 202-555-0100)','US')\n        selected=visible['selected']\n        self.assertEqual(visible['text'][selected['start']:selected['end']],selected['text'])\n        self.assertFalse(audit.inspect(visible,phonenumbers)['complete_field'])\n        self.assertEqual(audit.inspect(visible,phonenumbers)['reason'],'partial_or_unbound_candidate')\n    def test_overlap_counts_are_per_value_family_split_and_occurrence(self):\n        result=audit.overlap([('a','f1','train'),('a','f1','train'),('a','f2','validation'),('b','f3','train')],'handwritten fixture')\n        self.assertEqual(result['occurrences'],4)\n        self.assertEqual(result['unique_values'],2)\n        self.assertEqual(result['distinct_family_value_pairs'],3)\n        self.assertEqual(result['values_reused_across_families'],1)\n        self.assertEqual(result['values_reused_across_splits'],1)\n        self.assertEqual(result['occurrences_of_values_reused_across_splits'],3)\n        self.assertEqual(result['split_pair_intersections']['train__validation'],1)\n        self.assertEqual(len(result['split_pair_intersections']),10)\n    def test_output_refuses_inputs_existing_files_and_symlinks(self):\n        with tempfile.TemporaryDirectory() as temporary:\n            root=Path(temporary)\n            data=root/'data'\n            data.mkdir()\n            alias=root/'alias'\n            alias.symlink_to(data,target_is_directory=True)\n            existing=root/'existing.json'\n            existing.write_text('preserve')\n            link=root/'link.json'\n            link.symlink_to(existing)\n            dangling=root/'dangling.json'\n            dangling.symlink_to(root/'absent.json')\n            for output in (data/'manifest.json',data/'train.jsonl',alias/'new.json',existing,link,dangling):\n                with self.subTest(output=output),patch.object(audit,'verify',side_effect=AssertionError('must reject before reads')):\n                    with self.assertRaises(ValueError):\n                        audit.main(['--data',str(data),'--output',str(output)])\n            self.assertEqual(existing.read_text(),'preserve')\n            self.assertEqual(list(data.iterdir()),[])\n    def test_output_exclusive_creation_preserves_concurrent_arrival(self):\n        with tempfile.TemporaryDirectory() as temporary:\n            root=Path(temporary)\n            data=root/'data'\n            data.mkdir()\n            output=root/'audit.json'\n            with patch.object(audit,'verify',return_value={'verified':True}),redirect_stdout(io.StringIO()):\n                self.assertEqual(audit.main(['--data',str(data),'--output',str(output)]),0)\n            output.unlink()\n            def concurrent(_):\n                output.write_text('arrived concurrently')\n                return {'verified':True}\n            with patch.object(audit,'verify',side_effect=concurrent):\n                with self.assertRaises(FileExistsError):\n                    audit.main(['--data',str(data),'--output',str(output)])\n            self.assertEqual(output.read_text(),'arrived concurrently')\n\nunittest.main(verbosity=2)\nPY",
+    "exit_code": 0,
+    "tests_run": 6,
+    "passed": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "duration_seconds": 0.014,
+    "captured_output": "test_independent_digits_preserve_national_international_equivalence (__main__.AuditChecks.test_independent_digits_preserve_national_international_equivalence) ... ok\ntest_local_only_never_becomes_complete_e164 (__main__.AuditChecks.test_local_only_never_becomes_complete_e164) ... ok\ntest_output_exclusive_creation_preserves_concurrent_arrival (__main__.AuditChecks.test_output_exclusive_creation_preserves_concurrent_arrival) ... ok\ntest_output_refuses_inputs_existing_files_and_symlinks (__main__.AuditChecks.test_output_refuses_inputs_existing_files_and_symlinks) ... ok\ntest_overlap_counts_are_per_value_family_split_and_occurrence (__main__.AuditChecks.test_overlap_counts_are_per_value_family_split_and_occurrence) ... ok\ntest_unicode_character_offsets_and_partial_guard (__main__.AuditChecks.test_unicode_character_offsets_and_partial_guard) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.014s\n\nOK\n",
+    "scope": "Only new audit behavior: local-only refusal, independently assembled national/international digits, GB possible-but-invalid formatting, Unicode offsets, overlap arithmetic, and exclusive report output. Temporary fixtures; no tests/ files added."
+  },
+  "producer_tests": {
+    "executed_by": "phone implementation agent",
+    "rerun_here": false,
+    "test_file_sha256": "ad3f68ccc669e2ac16e263808240752d1ade29bd5c0011c7082485c6c109fb59",
+    "evidence_path": "reports/phone-extraction-control-v1/test-verification.json",
+    "evidence_sha256": "1c7c729cd766de3d76054a6049f700796f7aef38d020c1951084a44671123863",
+    "reported_final_results": {
+      "phone_extra": {
+        "discovered": 22,
+        "passed": 22,
+        "skipped": 0,
+        "failures": 0,
+        "errors": 0
+      },
+      "without_phone_extra": {
+        "discovered": 22,
+        "passed": 12,
+        "skipped": 10,
+        "failures": 0,
+        "errors": 0
+      }
+    }
+  },
+  "additional_check": {
+    "command": "git diff --check && python3 reports/phone-extraction-control-v1/verify.py --help",
+    "exit_code": 0
+  },
+  "prior_attempts": [],
+  "scope": {
+    "cpu_only": true,
+    "model_inference_performed": false,
+    "remote_or_gpu_work": false,
+    "external_or_official_examples_read": false,
+    "producer_source_or_corpus_modified": false,
+    "shared_library_metadata_is_independent_validity_evidence": false,
+    "unseen_number_generalization_supported": false
+  }
+}

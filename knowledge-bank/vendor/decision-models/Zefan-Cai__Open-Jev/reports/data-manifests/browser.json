@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "browser-control-v1",
+    "groups": 1000,
+    "ood_groups": 200,
+    "seed": 42,
+    "runtime_builder": "jev.community.browser_request",
+    "model_input": "exact compiled runtime state/question/kind/options",
+    "teacher_reads": "caller goal, observed scopes/busy flags/current widget values/actions/options, finite caller text candidates",
+    "ood_axes": [
+      "separate goal grammar and field vocabulary",
+      "nested scope paths",
+      "additional nested/readonly distractors"
+    ],
+    "source_files_sha256": {
+      "case_browser.py": "352d658c23fbdf9a6d6e5b2da41948729866337c24890fd5fbd290a105f3a11e",
+      "community.py": "b784c0c64e9dd72f2ce0ba13f77133a66b996702b9b043687ea9d3ed93fcac2b",
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254"
+    }
+  },
+  "summary": {
+    "records": 21980,
+    "groups": 1000,
+    "unique_inputs": 21980,
+    "splits": {
+      "calibration": 848,
+      "ood": 4408,
+      "test": 2302,
+      "train": 13814,
+      "validation": 608
+    },
+    "kinds": {
+      "choice": 21980
+    },
+    "families": {
+      "policy": 21980
+    },
+    "sources": {
+      "browser-control-v1": 21980
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "32f29e8902cc001fd01929322b0e76e41ff022dc855ade4a088a13a7b8e9058e",
+    "calibration.jsonl": "9af4b5e2d726963e736e54a4c0af8d352a81e8ad99732fada7f7a4b21c06f00c",
+    "validation.jsonl": "cb2fb5c4c734a59d1b877dd095eb0720eb9ad98309987bd0150163c0ec107048",
+    "test.jsonl": "52f22ee5882d7a7b8361260dbeb04fd223bddef731a39b4bc48a99a5b61f258a",
+    "ood.jsonl": "3c187458c8e5d823628098a811932c0be990bcbb3c0f535fb32ba27e33cda994"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "case_count": 12660,
+  "cases_file": "cases.jsonl",
+  "cases_sha256": "608b0c0623f920c68001c07af2c87234ef1fe95a96102f6a25d5ff0cecc61537",
+  "operation_counts": {
+    "CLICK": 1675,
+    "DONE": 1665,
+    "WAIT": 1000,
+    "BLOCKED": 3665,
+    "TYPE_TEXT": 2331,
+    "SELECT": 2324
+  },
+  "variant_counts": {
+    "observed": 1000,
+    "completed": 834,
+    "requested_section_busy": 833,
+    "target_action_unavailable": 834,
+    "operation_unavailable": 1000,
+    "single_candidate_target": 1000,
+    "ambiguous_observed_target": 1000,
+    "goal_counterfactual": 1000,
+    "untrusted_page_instructions": 1000,
+    "id_and_order_permutation": 1000,
+    "requested_value_unavailable": 665,
+    "single_candidate_value": 665,
+    "goal_value_counterfactual_0": 665,
+    "goal_value_counterfactual_1": 665,
+    "ready": 499
+  },
+  "supervision": {
+    "emitted_operation_rows": 12660,
+    "emitted_conditional_rows": 9320,
+    "inactive_conditional_heads_omitted": 68218,
+    "forced_single_candidate_active_heads_omitted": 1665
+  },
+  "limits": "Synthetic finite-goal DOM controls only; no browser execution, hidden future, external/JF100 records, or inactive-head gold labels. Separate from frozen release-v2."
+}

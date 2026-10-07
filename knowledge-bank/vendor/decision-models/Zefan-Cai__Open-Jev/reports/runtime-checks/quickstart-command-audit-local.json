@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "status": "passed_help_and_static_checks",
+  "observed_at_utc": "2026-09-20T13:11:53.942176+00:00",
+  "scope": "README quickstart and installation/startup instructions in resources/checkpoint-package docs. CLI help, shell syntax, local links and argument parsing only; model/training/packaging execution was intercepted before side effects.",
+  "python": "3.14.5 (main, May 10 2026, 10:21:34) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "platform": "macOS-26.4.1-arm64-arm-64bit-Mach-O",
+  "source_sha256": {
+    "README.md": "076edfdc80008b6882f6335ab00c13d0693bdd742f1344ea6cb85e7670aced00",
+    "docs/resources.md": "bf643fd4048d188c2356fe067237d8644f9c95bf7bd05b7ea99b72252b41fb61",
+    "docs/checkpoint-package.md": "8b0468437e5311ec5a03a2f3f20fb1f912ec46092915aa2e82697765c8ac91a7",
+    "pyproject.toml": "c1d47fb5a801ccf464cc6e4033dd8642f73f2a0e1ce7623627b1750b424c0080",
+    "requirements.txt": "47d6b9c1b487c77c04597bccba2ab2cfcc3cf2be80609e0ce20c89b6e11f1f78",
+    "jev/server.py": "857831ce4f6710d44500bf93d11d0117b9bfb38c91cbaa4527ae6b10747deac1",
+    "jev/train.py": "f94d444e77a79c0bf1f20ca7587a036ff0a28a7112c72dc3b6a1edea2c9f8eef",
+    "jev/serving.py": "e181c7dfaa7d0e2af0e79b77ad82a2264ff80fefe147587b0bae25d0aaa6b958",
+    "scripts/package_checkpoint.py": "80cccf7e05ecf542073b401edfcc93bffe6527ae3d93754738beb3b7094861de"
+  },
+  "help_commands": [
+    {
+      "argv": [
+        "python3",
+        "-S",
+        "-B",
+        "-m",
+        "jev.server",
+        "--help"
+      ],
+      "returncode": 0
+    },
+    {
+      "argv": [
+        "python3",
+        "-S",
+        "-B",
+        "-m",
+        "jev.train",
+        "--help"
+      ],
+      "returncode": 0
+    },
+    {
+      "module": "scripts.package_checkpoint",
+      "argument": "--help",
+      "python_site_packages_disabled": true,
+      "returncode": 0,
+      "verified_by": "independent local read-only reviewer; exact argv not retained in this report"
+    }
+  ],
+  "shell_syntax_checks": [
+    {
+      "document": "README.md",
+      "bash_block": 1,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "README.md",
+      "bash_block": 2,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "README.md",
+      "bash_block": 3,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "README.md",
+      "bash_block": 4,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "docs/resources.md",
+      "bash_block": 1,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "docs/resources.md",
+      "bash_block": 2,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "docs/resources.md",
+      "bash_block": 3,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "docs/checkpoint-package.md",
+      "bash_block": 1,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "docs/checkpoint-package.md",
+      "bash_block": 2,
+      "syntax_returncode": 0
+    },
+    {
+      "document": "docs/checkpoint-package.md",
+      "bash_block": 3,
+      "syntax_returncode": 0
+    }
+  ],
+  "local_link_checks": [
+    {
+      "document": "README.md",
+      "local_links": 39,
+      "missing": []
+    },
+    {
+      "document": "docs/resources.md",
+      "local_links": 6,
+      "missing": []
+    },
+    {
+      "document": "docs/checkpoint-package.md",
+      "local_links": 0,
+      "missing": []
+    }
+  ],
+  "documented_commands_parsed": [
+    {
+      "document": "README.md",
+      "argv": [
+        "python",
+        "-m",
+        "jev.server",
+        "--model",
+        "Qwen/Qwen3.5-2B",
+        "--revision",
+        "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "--max-length",
+        "4096"
+      ],
+      "status": "accepted_by_current_parser",
+      "execution_stopped_before": "load_predictor",
+      "captured_arguments": {
+        "checkpoint": null,
+        "model_id": "Qwen/Qwen3.5-2B",
+        "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "device": "cuda:0",
+        "max_length": 4096,
+        "batch_size": 32
+      }
+    },
+    {
+      "document": "README.md",
+      "argv": [
+        "python",
+        "-m",
+        "jev.server",
+        "--checkpoint",
+        "/path/to/run/checkpoint",
+        "--max-length",
+        "4096"
+      ],
+      "status": "accepted_by_current_parser",
+      "execution_stopped_before": "load_predictor",
+      "captured_arguments": {
+        "checkpoint": "/path/to/run/checkpoint",
+        "model_id": null,
+        "revision": null,
+        "device": "cuda:0",
+        "max_length": 4096,
+        "batch_size": 32
+      }
+    },
+    {
+      "document": "README.md",
+      "argv": [
+        "python",
+        "-m",
+        "jev.train",
+        "--model",
+        "Qwen/Qwen3.5-2B",
+        "--revision",
+        "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "--data",
+        "data/release-v2",
+        "--output",
+        "runs/2b-expansion",
+        "--steps",
+        "400",
+        "--train-rows",
+        "0",
+        "--max-length",
+        "4096",
+        "--training-sampling",
+        "shuffled",
+        "--checkpoint-every",
+        "100"
+      ],
+      "status": "accepted_by_current_parser",
+      "execution_stopped_before": "run",
+      "captured_arguments": {
+        "model": "Qwen/Qwen3.5-2B",
+        "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "data": "data/release-v2",
+        "output": "runs/2b-expansion",
+        "steps": 400,
+        "train_rows": 0,
+        "calibration_rows": 128,
+        "eval_rows": 128,
+        "max_length": 4096,
+        "lora_rank": 8,
+        "accumulation": 4,
+        "lr": 5e-05,
+        "head_lr": 0.0001,
+        "brier_weight": 0.1,
+        "seed": 42,
+        "training_sampling": "shuffled",
+        "checkpoint_every": 100,
+        "resume_training": null
+      }
+    },
+    {
+      "document": "docs/checkpoint-package.md",
+      "argv": [
+        "python",
+        "-m",
+        "scripts.package_checkpoint",
+        "--run",
+        "/path/to/completed-run",
+        "--output",
+        "/path/to/new-package"
+      ],
+      "status": "accepted_by_current_parser",
+      "execution_stopped_before": "package",
+      "captured_arguments": {
+        "run": "/path/to/completed-run",
+        "output": "/path/to/new-package",
+        "data": null
+      }
+    },
+    {
+      "document": "docs/checkpoint-package.md",
+      "argv": [
+        "python",
+        "-m",
+        "scripts.package_checkpoint",
+        "--run",
+        "/path/to/copied-completed-run",
+        "--data",
+        "/path/to/frozen-data",
+        "--output",
+        "/path/to/new-package"
+      ],
+      "status": "accepted_by_current_parser",
+      "execution_stopped_before": "package",
+      "captured_arguments": {
+        "run": "/path/to/copied-completed-run",
+        "output": "/path/to/new-package",
+        "data": "/path/to/frozen-data"
+      }
+    }
+  ],
+  "unexpected_training_imports": [],
+  "changes": [
+    {
+      "file": "README.md",
+      "change": "First launch uses the pinned Qwen3.5-2B base, with an isolated environment and interpreter-bound pip. The unpublished-checkpoint placeholder is now conditional and requires a final inference checkpoint."
+    },
+    {
+      "file": "README.md",
+      "change": "Document the second terminal/activated environment, required Git checkout, and Doom/Wiki inputs before the mixture commands."
+    },
+    {
+      "file": "README.md",
+      "change": "Use reasoning seed76109 per root-confirmed frozen configuration; identify400-step training as a bounded example, not a completed full-pass result.",
+      "verification_scope": "The root task handles corpus hash reconstruction; this audit did not rebuild or inspect training data."
+    }
+  ],
+  "unchanged_documents": [
+    "docs/resources.md",
+    "docs/checkpoint-package.md"
+  ],
+  "environment_consistency": [
+    "Declared build backend floor77.0.3 matches the prior local base-wheel validation; no build repeated.",
+    "Transformers/PEFT/Accelerate/Datasets pins match the previously recorded N1 metadata; no fresh runtime query.",
+    "Resources distinguish base macOS CPU package checks from pending clean Linux GPU installation.",
+    "Checkpoint packaging explicitly requires repository scripts/licenses and a completed verified run; flags match its current parser."
+  ],
+  "not_executed": [
+    "Dependency installation or wheel build",
+    "Full test suites or prior browser/protocol checks",
+    "Model loading, GPU inference, training or package creation",
+    "Dataset generation or dataset-file reads",
+    "SSH, N1 or active checkout changes"
+  ]
+}

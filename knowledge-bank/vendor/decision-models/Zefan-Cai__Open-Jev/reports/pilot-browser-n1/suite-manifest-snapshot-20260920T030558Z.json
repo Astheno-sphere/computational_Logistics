@@ -1,0 +1,437 @@
+{
+  "status": "running",
+  "created_at_utc": "2026-09-20T02:56:11.374659+00:00",
+  "hostname": "kwade5342000001",
+  "physical_gpu": 3,
+  "child_cuda_visible_devices": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+  "resource_policy": {
+    "path": "/mnt/localssd/open-jev/eval-repo/state/auto_research/resource_policy.json",
+    "sha256": "8b2aed642f31dae38f3cbb08a5b037e8bdfa42f8cb7ddc3727bab9a8d037d1aa",
+    "expected_hostname": "kwade5342000001",
+    "allowed_gpu_indices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "training_gpu_indices": [
+      0,
+      1,
+      2
+    ],
+    "serial_evaluation_gpu_index": 3
+  },
+  "child_logical_device": "cuda:0",
+  "port": 8791,
+  "code_commit": "5b11fe38401831a24c886d28040d55f9a6f03b41",
+  "script_sha256": "235630a96a93b0630b944165a473843cba5985dad2682d99ba9f95f8d29cef8e",
+  "configuration": {
+    "expected_hostname": "kwade5342000001",
+    "gpu": 3,
+    "checkpoint_root": "/mnt/localssd/open-jev/runs",
+    "checkpoint_template": "{tag}-pilot-v1/checkpoint",
+    "models": [
+      "2b",
+      "9b",
+      "27b"
+    ],
+    "frontier_source": "/mnt/localssd/open-jev/evals/jev-frontier-100",
+    "workflow_cases": "/mnt/localssd/open-jev/eval-repo/data/workflows-v1/workflow_cases.jsonl",
+    "browser_cases": "/data/zefan/open-jev/data/browser-v1/cases.jsonl",
+    "output_root": "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1",
+    "measurements": [
+      "browser"
+    ],
+    "include_doom": false,
+    "include_latency": false,
+    "latency_request": "/mnt/localssd/open-jev/eval-repo/examples/community/drone.json",
+    "max_length": 16384,
+    "batch_size": 1,
+    "startup_timeout": 600,
+    "measurement_timeout": 3600
+  },
+  "models": {
+    "2b": {
+      "checkpoint": "/mnt/localssd/open-jev/runs/2b-pilot-v1/checkpoint",
+      "expected_identity": {
+        "model": "Qwen/Qwen3.5-2B",
+        "method": "lora_decision_head",
+        "checkpoint_sha256": "1d3c0e4e37bf04731edee447363ddc02d084a9c1f10ab829ac4d424f7d7c413b",
+        "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "temperature": 1.7360720317205194,
+        "code_commit": "5b11fe38401831a24c886d28040d55f9a6f03b41",
+        "max_length": 16384
+      },
+      "measurements": {
+        "browser": {
+          "command": [
+            "/mnt/localssd/open-jev/runtime/venv/bin/python",
+            "-m",
+            "scripts.evaluate_browser_service",
+            "--endpoint",
+            "http://127.0.0.1:8791/v1/systemone",
+            "--expected-model",
+            "Qwen/Qwen3.5-2B",
+            "--expected-method",
+            "lora_decision_head",
+            "--cases",
+            "/data/zefan/open-jev/data/browser-v1/cases.jsonl",
+            "--split",
+            "test",
+            "ood",
+            "--parents-per-split",
+            "20",
+            "--variants-per-parent",
+            "3",
+            "--seed",
+            "42",
+            "--expected-revision",
+            "15852e8c16360a2fea060d615a32b45270f8a8fc",
+            "--expected-checkpoint-sha256",
+            "1d3c0e4e37bf04731edee447363ddc02d084a9c1f10ab829ac4d424f7d7c413b",
+            "--output-dir",
+            "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/2b/browser"
+          ],
+          "started_at_utc": "2026-09-20T02:56:23.740403+00:00",
+          "log": "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/2b/browser.log",
+          "pid": 543691,
+          "exit_code": 0,
+          "child_exit_code": 0,
+          "ended_at_utc": "2026-09-20T02:58:19.943662+00:00",
+          "elapsed_seconds": 116.20328378304839
+        }
+      },
+      "gpu_preflight": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      },
+      "cuda_visible_devices": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+      "server_pid": 536135,
+      "server_command": [
+        "/mnt/localssd/open-jev/runtime/venv/bin/python",
+        "-m",
+        "jev.server",
+        "--checkpoint",
+        "/mnt/localssd/open-jev/runs/2b-pilot-v1/checkpoint",
+        "--device",
+        "cuda:0",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8791",
+        "--max-length",
+        "16384",
+        "--batch-size",
+        "1"
+      ],
+      "server_log": "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/2b/server.log",
+      "health": {
+        "status": "ready",
+        "model": "Qwen/Qwen3.5-2B",
+        "method": "lora_decision_head"
+      },
+      "gpu_loaded": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 4861.0,
+        "utilization_percent": 0.0,
+        "compute_processes": [
+          {
+            "pid": 536135,
+            "name": "/mnt/localssd/open-jev/runtime/venv/bin/python",
+            "memory_mib": "4852"
+          }
+        ]
+      },
+      "identity_probe": {
+        "answers": {
+          "identity_probe": {
+            "type": "noul",
+            "noul": 0.8024807004000981
+          }
+        },
+        "model": "Qwen/Qwen3.5-2B",
+        "usage": {
+          "input_tokens": 46,
+          "output_tokens": 0
+        },
+        "metadata": {
+          "method": "lora_decision_head",
+          "temperature": 1.7360720317205194,
+          "candidate_sequences": 1,
+          "inference_seconds": 0.7244133781641722,
+          "checkpoint_sha256": "1d3c0e4e37bf04731edee447363ddc02d084a9c1f10ab829ac4d424f7d7c413b",
+          "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+          "max_length": 16384,
+          "code_commit": "5b11fe38401831a24c886d28040d55f9a6f03b41"
+        }
+      },
+      "server_exit_code": -15,
+      "server_stopped_at_utc": "2026-09-20T02:58:20.149450+00:00",
+      "gpu_after_shutdown": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      }
+    },
+    "9b": {
+      "checkpoint": "/mnt/localssd/open-jev/runs/9b-pilot-v1/checkpoint",
+      "expected_identity": {
+        "model": "Qwen/Qwen3.5-9B",
+        "method": "lora_decision_head",
+        "checkpoint_sha256": "7aa5f62fa39b83aee07915e7e351da5c4c38b4ce5f751cf22c7d45edf7dfc0ef",
+        "base_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+        "temperature": 1.4205161837096647,
+        "code_commit": "5b11fe38401831a24c886d28040d55f9a6f03b41",
+        "max_length": 16384
+      },
+      "measurements": {
+        "browser": {
+          "command": [
+            "/mnt/localssd/open-jev/runtime/venv/bin/python",
+            "-m",
+            "scripts.evaluate_browser_service",
+            "--endpoint",
+            "http://127.0.0.1:8791/v1/systemone",
+            "--expected-model",
+            "Qwen/Qwen3.5-9B",
+            "--expected-method",
+            "lora_decision_head",
+            "--cases",
+            "/data/zefan/open-jev/data/browser-v1/cases.jsonl",
+            "--split",
+            "test",
+            "ood",
+            "--parents-per-split",
+            "20",
+            "--variants-per-parent",
+            "3",
+            "--seed",
+            "42",
+            "--expected-revision",
+            "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+            "--expected-checkpoint-sha256",
+            "7aa5f62fa39b83aee07915e7e351da5c4c38b4ce5f751cf22c7d45edf7dfc0ef",
+            "--output-dir",
+            "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/9b/browser"
+          ],
+          "started_at_utc": "2026-09-20T02:58:36.076451+00:00",
+          "log": "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/9b/browser.log",
+          "pid": 628065,
+          "exit_code": 0,
+          "child_exit_code": 0,
+          "ended_at_utc": "2026-09-20T03:01:22.865957+00:00",
+          "elapsed_seconds": 166.7895385492593
+        }
+      },
+      "gpu_preflight": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      },
+      "cuda_visible_devices": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+      "server_pid": 618778,
+      "server_command": [
+        "/mnt/localssd/open-jev/runtime/venv/bin/python",
+        "-m",
+        "jev.server",
+        "--checkpoint",
+        "/mnt/localssd/open-jev/runs/9b-pilot-v1/checkpoint",
+        "--device",
+        "cuda:0",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8791",
+        "--max-length",
+        "16384",
+        "--batch-size",
+        "1"
+      ],
+      "server_log": "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/9b/server.log",
+      "health": {
+        "status": "ready",
+        "model": "Qwen/Qwen3.5-9B",
+        "method": "lora_decision_head"
+      },
+      "gpu_loaded": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 18623.0,
+        "utilization_percent": 0.0,
+        "compute_processes": [
+          {
+            "pid": 618778,
+            "name": "/mnt/localssd/open-jev/runtime/venv/bin/python",
+            "memory_mib": "18614"
+          }
+        ]
+      },
+      "identity_probe": {
+        "answers": {
+          "identity_probe": {
+            "type": "noul",
+            "noul": 0.8132415353214489
+          }
+        },
+        "model": "Qwen/Qwen3.5-9B",
+        "usage": {
+          "input_tokens": 46,
+          "output_tokens": 0
+        },
+        "metadata": {
+          "method": "lora_decision_head",
+          "temperature": 1.4205161837096647,
+          "candidate_sequences": 1,
+          "inference_seconds": 0.7200009357184172,
+          "checkpoint_sha256": "7aa5f62fa39b83aee07915e7e351da5c4c38b4ce5f751cf22c7d45edf7dfc0ef",
+          "base_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+          "max_length": 16384,
+          "code_commit": "5b11fe38401831a24c886d28040d55f9a6f03b41"
+        }
+      },
+      "server_exit_code": -15,
+      "server_stopped_at_utc": "2026-09-20T03:01:23.144802+00:00",
+      "gpu_after_shutdown": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      }
+    },
+    "27b": {
+      "checkpoint": "/mnt/localssd/open-jev/runs/27b-pilot-v1/checkpoint",
+      "expected_identity": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "temperature": 1.4870151221815284,
+        "code_commit": "5b11fe38401831a24c886d28040d55f9a6f03b41",
+        "max_length": 16384
+      },
+      "measurements": {
+        "browser": {
+          "command": [
+            "/mnt/localssd/open-jev/runtime/venv/bin/python",
+            "-m",
+            "scripts.evaluate_browser_service",
+            "--endpoint",
+            "http://127.0.0.1:8791/v1/systemone",
+            "--expected-model",
+            "Qwen/Qwen3.8-27B",
+            "--expected-method",
+            "lora_decision_head",
+            "--cases",
+            "/data/zefan/open-jev/data/browser-v1/cases.jsonl",
+            "--split",
+            "test",
+            "ood",
+            "--parents-per-split",
+            "20",
+            "--variants-per-parent",
+            "3",
+            "--seed",
+            "42",
+            "--expected-revision",
+            "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+            "--expected-checkpoint-sha256",
+            "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+            "--output-dir",
+            "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/27b/browser"
+          ],
+          "started_at_utc": "2026-09-20T03:01:48.178852+00:00",
+          "log": "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/27b/browser.log",
+          "pid": 749364
+        }
+      },
+      "gpu_preflight": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 0.0,
+        "utilization_percent": 0.0,
+        "compute_processes": []
+      },
+      "cuda_visible_devices": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+      "server_pid": 734721,
+      "server_command": [
+        "/mnt/localssd/open-jev/runtime/venv/bin/python",
+        "-m",
+        "jev.server",
+        "--checkpoint",
+        "/mnt/localssd/open-jev/runs/27b-pilot-v1/checkpoint",
+        "--device",
+        "cuda:0",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8791",
+        "--max-length",
+        "16384",
+        "--batch-size",
+        "1"
+      ],
+      "server_log": "/data/zefan/open-jev/evals/pilot-browser-snapshots-n1-v1/27b/server.log",
+      "health": {
+        "status": "ready",
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head"
+      },
+      "gpu_loaded": {
+        "physical_gpu": 3,
+        "uuid": "GPU-9ab08bcc-ce17-0461-aaf2-5d57ddcb4775",
+        "name": "NVIDIA H100 80GB HBM3",
+        "memory_used_mib": 52965.0,
+        "utilization_percent": 0.0,
+        "compute_processes": [
+          {
+            "pid": 734721,
+            "name": "/mnt/localssd/open-jev/runtime/venv/bin/python",
+            "memory_mib": "52956"
+          }
+        ]
+      },
+      "identity_probe": {
+        "answers": {
+          "identity_probe": {
+            "type": "noul",
+            "noul": 0.9982430814543871
+          }
+        },
+        "model": "Qwen/Qwen3.8-27B",
+        "usage": {
+          "input_tokens": 46,
+          "output_tokens": 0
+        },
+        "metadata": {
+          "method": "lora_decision_head",
+          "temperature": 1.4870151221815284,
+          "candidate_sequences": 1,
+          "inference_seconds": 0.772354856133461,
+          "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+          "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+          "max_length": 16384,
+          "code_commit": "5b11fe38401831a24c886d28040d55f9a6f03b41"
+        }
+      }
+    }
+  },
+  "current_phase": "27b/browser",
+  "suite_pid": 535662,
+  "updated_at_utc": "2026-09-20T03:01:48.179427+00:00"
+}

@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "status": "training_completed_required_comparison_failed_candidate_experimental",
+  "recorded_at_utc": "2026-10-03T02:22:57.227264+00:00",
+  "source": {
+    "training_commit": "87eb8b419685d272f059b3696e0f547e47ebdcc6",
+    "evaluation_commit": "37729b2340e8d00fb211784d2181dd167db4f96b",
+    "plan_sha256": "bab40284419d8ff0bfcdca818047cc96581d0d4e69a7fb891f1c08fe0ec49f35",
+    "data_manifest_sha256": "adcf3c66af2c6398c9039220172d10ce3398c455f40d7fc9bfc0af639a33aae0"
+  },
+  "training": {
+    "status": "complete",
+    "model": "Qwen/Qwen3.5-2B",
+    "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+    "gpu_model": "NVIDIA H100 80GB HBM3",
+    "configured_steps": 948,
+    "journal_steps_observed": 948,
+    "contiguous_steps_1_through_948": true,
+    "finite_loss_and_gradient_norms": true,
+    "configured_accumulation": 4,
+    "configured_train_rows": 3792,
+    "configured_training_sampling": "shuffled",
+    "seed": 20261003,
+    "driver_reported_train_rows_consumed": 3792,
+    "direct_per_row_consumption_observed": false,
+    "calibration_rows": 436,
+    "maximum_length": 4096,
+    "lora_rank": 8,
+    "trainable_parameters_reported": 2508801,
+    "backbone_dtype": "torch.bfloat16",
+    "trainable_lora_head_dtype": "torch.float32",
+    "runtime": {
+      "torch": "2.8.0+cu128",
+      "transformers": "5.10.2",
+      "peft": "0.19.1"
+    },
+    "resume": false,
+    "training_retry_performed": false,
+    "efficiency": {
+      "optimizer_journal_elapsed_seconds": 729.1058789286762,
+      "optimizer_scope": "Elapsed training-loop timer from the last of 948 optimizer journal steps",
+      "complete_frozen_training_pipeline_seconds": 850.086169719696,
+      "complete_pipeline_scope": "Wrapper around frozen train.main plus cleanup and completed-run validation; includes model loading, baseline/final internal inference, Calibration, training and saving",
+      "internal_pipeline_summary_elapsed_seconds": 846.7071583271027,
+      "peak_allocated_tensor_gib": 4.593103885650635,
+      "memory_scope": "PyTorch peak allocated tensors recorded by the training journal; not total GPU memory, reserved memory or a minimum hardware requirement",
+      "speedup_claim": false
+    },
+    "initialization": {
+      "publication": "ZefanCai/Open-Jev-2B",
+      "publication_revision": "0c7aa498b1627be8da4acf34c863ff0ee0a92785",
+      "checkpoint_directory_sha256": "3076462e6356412082e79af909227b39b2863b90def79155ca0821aa506b7ded",
+      "checkpoint_identity_sha256": "d9ab4e8c0b9df7db407b9300e986bfc28503cdd31f7304d8c63d7a0913d09c79",
+      "loaded_lora_and_head_exact": true,
+      "base_frozen": true,
+      "verification_sha256": "79f95a2375344e1f8bdcb0c60daba1680adc9520c9d895148b5d0143ca8299c3"
+    },
+    "first_optimizer_step": {
+      "finite_gradients": true,
+      "lora_A_and_B_nonzero_group_maxima": true,
+      "head_nonzero_group_maximum": true,
+      "base_gradients_absent": true,
+      "checked_after_clipping_before_first_optimizer_update": true,
+      "verification_sha256": "ae4562f714f16a14ad131432cec3801a778d98c25e021b41a430adc381f617e0"
+    },
+    "candidate_checkpoint_directory_sha256": "0eef8f5fdbc3a6a0fdbeb3e020bd6bab5b5dd8a0d261831999e790c1e48087c6",
+    "candidate_checkpoint_files_sha256": {
+      "model.json": "d985eafa4d635113ee8cc912e0512a95aac0bed3426e9256931235b75cb3d6c5",
+      "head.pt": "cc9e7dff68475be1ba3a714e81d3795c3d7492abe873dcc3e1f4b636e86f8e0d",
+      "temperature.json": "878b1cc78afc004fcc76d5e7672360889c002a88836ec9a83fe9905c5532771a",
+      "adapter/adapter_model.safetensors": "86e877b336dd9dbeda53589247d9819b56e55686d29ec54ec3eb0f75923791a9",
+      "adapter/README.md": "f9e934433c6ae81516474d416c6b1dcf5193fe08bf41205363cf0b5b33760c1e",
+      "adapter/adapter_config.json": "f9f92f508a4f62cbcad8bb82e828831ffeb4cf04e39b113a872c578c056fe894"
+    },
+    "original_completion_sha256": "694486383d755c0a436c38b5f99ba7ff85bcac85058326f899f19659d4b7da05"
+  },
+  "comparison": {
+    "status": "failed_before_required_raw_comparison_predictions",
+    "returncode": 1,
+    "original_evaluation_commit": "37729b2340e8d00fb211784d2181dd167db4f96b",
+    "required_prediction_rows_per_checkpoint": 904,
+    "required_comparison_journals": 16,
+    "raw_comparison_prediction_journals_written": 0,
+    "comparison_runtime_records_written": 0,
+    "comparison_summary_written": false,
+    "files_present": [
+      "comparison.lock.json"
+    ],
+    "original_comparison_lock_sha256": "d749e4bf2a929baa1c8433e806edca9e243647765f7ba1861819fe4afc8cbe56",
+    "original_failure_log_sha256": "1c761cf6b5e913771a890a9f6975377cda0541e24b18d8ab4c96dd3b3dfa6125",
+    "training_pipeline_internal_prediction_artifacts_preserved": true,
+    "internal_predictions_substitute_for_required_comparison": false,
+    "valid_scores": null,
+    "safety_gates": {
+      "status": "not_evaluated",
+      "passed": null
+    },
+    "rootcause_status": "sufficient_cpu_reproduction_of_uuid_format_guard_defect",
+    "v7_device_property_read_by_diagnosis": false,
+    "diagnosis_summary": "uuid-format-diagnosis.json"
+  },
+  "restoration": {
+    "status": "independently_verified",
+    "checks_passed": 38,
+    "checks_total": 38,
+    "verified_at_utc": "2026-10-03T02:17:04.262662+00:00",
+    "original_optimizer_sampler_tree_and_configuration_restored": true,
+    "four_workers_and_one_coordinator_verified": true,
+    "three_original_sampling_services_real_completions_verified": true,
+    "protected_gpu0_1_preserved": true,
+    "owned_controller_guard_driver_and_descendants_gone": true,
+    "independent_audit_sha256": "f7597cf2979365c99513ab9bd3dbd48bf97f81edd399fba95b9939c67f5a80cf",
+    "terminal_controller_receipt_sha256": "66a77645dfd94d93eb97cdd146dbb31489e2a2cbdf09b9fb9ea7c3dd7af9861b",
+    "unrelated_queue_process_and_environment_details_published": false
+  },
+  "preservation": {
+    "snapshot_files": 29,
+    "full_snapshot_inventory_matches": true,
+    "snapshot_inventory_sha256": "cc6e56033f2b974fc7fe9a90fe19cafd6c4caa910c015d3b5bd7147c399ba5a1",
+    "original_checkpoint_execution_receipts_locks_and_failure_bytes_unchanged": true
+  },
+  "publication": {
+    "candidate_status": "experimental",
+    "weights_promoted": false,
+    "candidate_weights_published": false,
+    "automatic_promotion": false,
+    "model_capability_improvement_claim": false,
+    "official_jevbench_improvement_claim": false,
+    "natural_business_blind_test_claim": false,
+    "internal_training_scores_published_as_comparison": false
+  },
+  "next_comparison": {
+    "status": "separately_declared_comparison_only_protocol_under_cpu_design",
+    "started_as_of_this_report": false,
+    "training_rerun_permitted": false,
+    "reuse_or_overwrite_failed_comparison_permitted": false,
+    "requires_new_declared_evaluation_source_and_output": true
+  },
+  "public_evidence_files_sha256": {
+    "training-completion.json": "dc7338ca45a7d8cd3a0dd80e65b02afe7a6f65dfca6805b784438f5c57d5167d",
+    "experiment-completion.json": "23c0df3e7cff49bf11d201806f6647d405c789f53e26d00460d5d74bfdc7bb16",
+    "uuid-format-diagnosis.json": "a16fec69b17fea8e8f1236adadd587e9f242349f1ab2fa44c336c9cf38e3ccdc"
+  },
+  "evidence_originals_sha256": {
+    "training_completion": "694486383d755c0a436c38b5f99ba7ff85bcac85058326f899f19659d4b7da05",
+    "experiment_completion": "23c0df3e7cff49bf11d201806f6647d405c789f53e26d00460d5d74bfdc7bb16",
+    "training_run_metadata": "1c8b5a1f1af245a0a61f534d654bf1c408e9993041a9cbed4f9713e5ce2dc87b",
+    "training_summary": "586696e4bfb69cec87b489fc285ce6ffe7169ed0ede94b53fd92d5cfb550881a",
+    "training_journal": "6f9a1237b81fcd795ca76b40ae6805231bd59a0b72cce806af9eaa71bf98e619",
+    "calibration_journal": "7f83c268eb6ebb420aca675abbe5ea61d8e4340ab303d788aff23725c777cff1",
+    "initial_load_verification": "79f95a2375344e1f8bdcb0c60daba1680adc9520c9d895148b5d0143ca8299c3",
+    "first_step_gradient_verification": "ae4562f714f16a14ad131432cec3801a778d98c25e021b41a430adc381f617e0",
+    "independent_uuid_diagnosis": "d2b7b4fd25406cab6c10887943c57f9abbf94dfdc5471665d6051538693b7b92",
+    "independent_restoration_audit": "f7597cf2979365c99513ab9bd3dbd48bf97f81edd399fba95b9939c67f5a80cf"
+  }
+}

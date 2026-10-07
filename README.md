@@ -10,6 +10,11 @@ design and visual storytelling.**
 > the flows of people, vehicles and goods beneath their visible form. This framework models that layer
 > and makes it visible.
 
+**Browse:** [Research atlas](https://astheno-sphere.github.io/computational_Logistics/) (interactive diagrams) ·
+[System](#the-system-and-the-thesis) · [Agent tiers](#hybrid-agent-tiers) · [Theory funnel](#theory-funnel) ·
+[Toolkit](#toolkit) · [Framework](docs/FRAMEWORK.md) · [References](docs/REFERENCES.md) ·
+[Knowledge bank](knowledge-bank/README.md)
+
 ---
 
 ## What this is
@@ -30,9 +35,37 @@ Asthenosphere assembles the pieces a transport and logistics planner needs into 
 It works for any city or region: networks are built from OpenStreetMap by place name or file, in the
 local projected coordinate system. Molde and Kristiansund are the test case.
 
-## Architecture
+## The system and the thesis
 
-<p align="center"><img src="docs/figures/architecture.svg" alt="Modelling framework in five layers: evidence, behaviour, simulation, decision under deep uncertainty, interfaces" width="900"></p>
+<p align="center"><img src="docs/diagrams/abm-thesis-system.png" alt="ABM system and thesis flow: five lanes (evidence, behaviour, simulation, decision under deep uncertainty, story and interfaces) across four thesis articles, each component tagged in repo, in bank or proposed" width="900"></p>
+
+Five lanes across the four thesis articles (A1 behaviour, A2 coupled DCM and ABM, A3 exploration,
+A4 backcasting). Estimated choice models drive the agents. Decision models (Jev) and LLM agents
+(AgentSociety, GATSim, LLM agents in GAMA) stress-test them on policies the surveys never covered.
+Network ABMs (MATSim, eqasim, BEAM, SUMO, GAMA) train surrogates, so thousands of futures stay
+affordable. Results reach agencies as dashboards and as Grasshopper data trees. The diagram is typed
+JSON checked by [Archify](https://github.com/tt-a1i/archify); anyone can edit it and re-run the
+checks ([how](docs/diagrams/README.md)). The interactive version (pan, zoom, trace paths) is on the
+[research atlas](https://astheno-sphere.github.io/computational_Logistics/).
+
+## Hybrid agent tiers
+
+<p align="center"><img src="docs/diagrams/agent-tiers.png" alt="Three agent tiers (estimated logit, decision models, LLM agents) feeding a benchmark harness and the agent-based model" width="900"></p>
+
+Tier 1, estimated logit, drives most agents. Tier 2 decision models (Jev; open versions llm2jev,
+AnyJev, Open-Jev) answer choices the survey never asked, as probabilities that can be compared with
+the logit. Tier 3 LLM agents (AgentSociety, Concordia, OASIS, GATSim, LLM agents in GAMA, Mesa-LLM)
+probe how behaviour adapts over years. All of these repositories are cloned into the knowledge bank.
+[Interactive version](docs/diagrams/workflow-agent-tiers-20261007/agent-tiers.html).
+
+## Theory funnel
+
+<p align="center"><img src="docs/diagrams/theory-funnel.png" alt="Theory funnel: paradigm, deep uncertainty, behaviour, simulation and frontier theories feeding articles A1 to A4" width="900"></p>
+
+Paradigms (sustainable mobility, backcasting) narrow through decision theory under deep uncertainty,
+random utility and new-mobility research (Tirachini and co-authors on crowding, ride-hailing and
+automated transit), agent-based simulation, and the LLM frontier, to the four articles. Entries with
+what each gives the thesis: [`docs/THEORY.md`](docs/THEORY.md); BibTeX: [`docs/references.bib`](docs/references.bib).
 
 ## Toolchain and protocols
 
@@ -115,12 +148,18 @@ python examples/routing_study.py            # terrain-aware routing and vehicle 
 
 The framework is built for scenario-based transport planning under deep uncertainty: estimated
 behaviour driving agent-based models, explored across futures, with backcasting from 2050 targets.
-**Framework proposal**: approaches, toolset, research flow and PhD alignment, with the landscape of
-transport ABM platforms, LLM-driven agents, deep-uncertainty methods, surrogates and visualisation:
-[`docs/FRAMEWORK.md`](docs/FRAMEWORK.md).
-Research questions and a dissertation outline: [`docs/research-proposal-outline.md`](docs/research-proposal-outline.md).
-What we absorb next and from where: [`docs/CHECKLIST.md`](docs/CHECKLIST.md).
-How claims are sourced: [`docs/CLAIMS.md`](docs/CLAIMS.md).
+Suggested reading order for reviewers:
+
+1. [`docs/THEORY.md`](docs/THEORY.md): the theory funnel, what each body of literature gives the thesis.
+2. [`docs/FRAMEWORK.md`](docs/FRAMEWORK.md): approaches, the five-layer loop, hybrid agents, research
+   flow, PhD alignment and what is still missing.
+3. [`docs/research-proposal-outline.md`](docs/research-proposal-outline.md): research questions, four
+   articles, data, methods, work plan.
+4. [`docs/REFERENCES.md`](docs/REFERENCES.md): papers and repositories behind the tool choices, with
+   license status.
+
+Supporting: [`docs/CHECKLIST.md`](docs/CHECKLIST.md) (what to absorb next) and
+[`docs/CLAIMS.md`](docs/CLAIMS.md) (how claims are sourced).
 
 ## Limitations
 
@@ -129,6 +168,8 @@ How claims are sourced: [`docs/CLAIMS.md`](docs/CLAIMS.md).
 - The Rhino-side probe and Hops components follow McNeel's SDK and are tested with recorded payloads,
   but have not yet run in a live Rhino session.
 - GIS export, environmental analysis and Grasshopper optimisation links are planned, not built.
+- Tier 2 and tier 3 agents (decision models, LLM agents) are cloned and placed in the design; the
+  benchmark harness that tests them against the estimated logit is proposed, not yet built.
 
 ## Repository map
 
@@ -138,11 +179,16 @@ agents/            Claude Code agents
 servers/           MCP server and Grasshopper Hops app over a shared core
 examples/          end-to-end studies
 data/synthetic/    synthetic test network and generator
-docs/              architecture and toolchain figures, sample results, proposal outline, checklist, claims policy
+docs/              system diagram (Archify), toolchain figure, sample results, proposal outline, checklist, claims policy
 tests/             pytest suite (run in CI)
 tools/             knowledge-bank tooling: sync, harvest, assemble
 knowledge-bank/    third-party open-source references and books, with licenses
 ```
+
+## License
+
+MIT, © 2026 Arshad Akhtar Abbasia, for the original work in this repository. Third-party material
+under `knowledge-bank/` keeps its own license.
 
 ## Credits
 

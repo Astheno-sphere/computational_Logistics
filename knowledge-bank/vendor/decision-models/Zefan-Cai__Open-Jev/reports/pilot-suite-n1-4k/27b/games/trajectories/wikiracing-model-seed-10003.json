@@ -1,0 +1,150 @@
+{
+  "game": {
+    "name": "wikiracing",
+    "source": "Computer",
+    "target": "Physics",
+    "graph_sha256": "ece669f2bcd77cdc8ac60af80a0acdd0f5d1503df4d3fcbbaa42e652453c7c87",
+    "max_candidates": 12
+  },
+  "seed": 10003,
+  "policy": "model_http",
+  "is_model": true,
+  "max_steps": 40,
+  "steps": [
+    {
+      "request": {
+        "state": {
+          "current_page": "Computer",
+          "target_page": "Physics",
+          "navigation": "Select one of the offered outgoing article links."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose an offered outgoing link to reach the target article in as few steps as possible.",
+            "criteria": {
+              "Mathematics": null,
+              "Music": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "Mathematics",
+        "probabilities": {
+          "Mathematics": 0.6860631513390816,
+          "Music": 0.31393684866091837
+        },
+        "confidence": 0.37212630267816316
+      },
+      "action": "Mathematics",
+      "reward": 0.0,
+      "next_state": {
+        "current_page": "Mathematics",
+        "target_page": "Physics",
+        "navigation": "Select one of the offered outgoing article links."
+      },
+      "terminal": false,
+      "latency_ms": 109.47947017848492,
+      "environment_latency_ms": 0.04937499761581421,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 2,
+        "inference_seconds": 0.10784365050494671
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "current_page": "Mathematics",
+          "target_page": "Physics",
+          "navigation": "Select one of the offered outgoing article links."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose an offered outgoing link to reach the target article in as few steps as possible.",
+            "criteria": {
+              "Computer": null,
+              "Physics": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "Physics",
+        "probabilities": {
+          "Computer": 0.019267378614960515,
+          "Physics": 0.9807326213850395
+        },
+        "confidence": 0.9614652427700789
+      },
+      "action": "Physics",
+      "reward": 1.0,
+      "next_state": {
+        "current_page": "Physics",
+        "target_page": "Physics",
+        "navigation": "Select one of the offered outgoing article links."
+      },
+      "terminal": true,
+      "latency_ms": 109.74953323602676,
+      "environment_latency_ms": 0.045064836740493774,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 2,
+        "inference_seconds": 0.10819254443049431
+      }
+    }
+  ],
+  "initial_state": {
+    "current_page": "Computer",
+    "target_page": "Physics",
+    "navigation": "Select one of the offered outgoing article links."
+  },
+  "metrics": {
+    "steps": 2,
+    "stop_reason": "terminal",
+    "total_reward": 1.0,
+    "mean_decision_latency_ms": 109.61450170725584,
+    "success": true,
+    "path": [
+      "Computer",
+      "Mathematics",
+      "Physics"
+    ]
+  },
+  "evaluation_policy": "model",
+  "evaluation_game": "wikiracing",
+  "evaluation_seed": 10003,
+  "valid": true,
+  "service_identity": {
+    "model": "Qwen/Qwen3.8-27B",
+    "method": "lora_decision_head",
+    "temperature": 1.4870151221815284,
+    "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+    "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "code_commit": "99e881108c6cacadafd364088505e84975ca43fc"
+  },
+  "http_responses": [
+    {
+      "request_sha256": "28f8eec71ec5c5b96a4c2ebbef2a325657e2746969f4210689f04ceb0cf3fcd1",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"Mathematics\", \"probabilities\": {\"Mathematics\": 0.6860631513390816, \"Music\": 0.31393684866091837}, \"confidence\": 0.37212630267816316}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 160, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 2, \"inference_seconds\": 0.10784365050494671, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "edc964b4e1974103c4134f80c3ce21cde98b87f92b62f661b27f3ffbad21d5b8",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"Physics\", \"probabilities\": {\"Computer\": 0.019267378614960515, \"Physics\": 0.9807326213850395}, \"confidence\": 0.9614652427700789}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 162, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 2, \"inference_seconds\": 0.10819254443049431, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    }
+  ]
+}

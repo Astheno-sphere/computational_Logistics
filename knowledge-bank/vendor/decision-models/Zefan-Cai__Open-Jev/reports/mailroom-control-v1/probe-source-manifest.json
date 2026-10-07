@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "mailroom-control-v1",
+    "groups": 10,
+    "seed": 943,
+    "license": "CC0-1.0",
+    "source_interface": "https://github.com/selcukusta/jev-mailroom/tree/06d44889231afb209e29275f14a529ba52c9eb0d",
+    "source_code_or_emails_imported": false,
+    "source_questions_sha256": "d9621c8ccdc9c8bf7dd8132a501390b3d15729a4ef8b1a821ae24d4c14bc5d1d",
+    "source_triage_sha256": "b28e64711d2ebc53244fd1d85989158934e1fe0e6b1710294e40a60a3e259cf9",
+    "generator_sha256": "cd84ef39473153ec23cfebb426db9810ea68b3fcda8040d761671ae282af1a49",
+    "split_policy": "Whole family includes translations, provider/payment/delivery counterfactuals and taxonomy variants. OOD iff index modulo ten >= 8, otherwise stable hash. Expansion preserves every earlier family.",
+    "ood_scope": "Unseen fictional families with reordered body paragraphs; finite controlled grammar, not unrestricted natural mail."
+  },
+  "summary": {
+    "records": 2870,
+    "groups": 10,
+    "unique_inputs": 2860,
+    "splits": {
+      "ood": 574,
+      "test": 287,
+      "train": 2009
+    },
+    "kinds": {
+      "choice": 440,
+      "noul": 2430
+    },
+    "families": {
+      "evidence": 2870
+    },
+    "sources": {
+      "mailroom-control-v1": 2870
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "09c201c2876a205c7c419f34ec86bd92d4eceec45472136aeb86148ba10a1e05",
+    "calibration.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test.jsonl": "043f96ed0b1f8735b7fd7be6eaee6caafec6eb0daef8db6e07f0ff56ed574512",
+    "ood.jsonl": "87664b2c17b95f43be75ac9f1c39b25e1cd0f1835dcdb6af039012760d4a4906",
+    "cases.jsonl": "1faa8eb709bb85ad6c25e911739283f8706de13489d5ac7b2fd6244477f11f46"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "request_cases": 290,
+  "language_counts": {
+    "en": 110,
+    "zh": 90,
+    "tr": 90
+  },
+  "masked_category_cases": 120,
+  "questions_per_request": 11,
+  "choice_questions": 2,
+  "noul_questions": 9,
+  "model_inference_performed": false,
+  "training_performed": false,
+  "real_mail_imported": false,
+  "supervision": "Deterministic semantic labels from original controlled emails. Nonbill category omitted; no confidence, fallback, offline stub, or probability calibration labels.",
+  "deduplication": "Identical model inputs across taxonomy variants share the first row id; every request still contains all eleven questions. Case record_ids may reference a row emitted by an earlier case in the same family."
+}

@@ -1,0 +1,1352 @@
+import argparse
+import multiprocessing as mp
+import os
+import random
+import sys
+import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from typing import Tuple, List
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+from pandas import DataFrame
+from pyrosm import OSM
+from scipy.spatial import cKDTree
+from shapely.geometry import Point
+import hashlib
+
+# Get the absolute path to the directory containing this script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(os.path.dirname(current_dir))
+sys.path.insert(0, parent_dir)
+
+warnings.filterwarnings('ignore')
+
+fastsim_routee_files = {
+    "primary_powertrain": {
+        "ld1-D-Diesel": np.nan,
+        "ld1-G-Gasoline": "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2050_gasoline_Chevrolet_City_Express_Cargo_Van_lookup_table.csv.gz",
+        "ld1-E-BE": "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2047_electric_Ford_Transit_Connect_Van_2WDc2_lookup_table.csv.gz",
+        "ld1-E-H2FC": "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2050_hydrogen_Honda_Odysseyc5_lookup_table.csv.gz",
+        "ld1-E-PHEV": "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2050_electric_Honda_Odysseyc6_Charge_Depleting_lookup_table.csv.gz",
+        "ld3-D-Diesel": np.nan,
+        "ld3-G-Gasoline": "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2015_gasoline_Ford_F150_Pickup_4WD_lookup_table.csv.gz",
+        "ld3-E-BE": "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2050_electric_Ford_F150_Pickup_4WDc3_lookup_table.csv.gz",
+        "ld3-E-H2FC": "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2050_hydrogen_Honda_Odysseyc5_lookup_table.csv.gz",
+        "ld3-E-PHEV": "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2050_electric_Honda_Odysseyc6_Charge_Depleting_lookup_table.csv.gz",
+        "md-D-Diesel": "Freight_Baseline_FASTSimData_2020/Class_6_Box_truck_(Diesel,_2020,_no_program).csv",
+        "md-G-Gasoline": np.nan,
+        "md-E-BE": "Freight_Baseline_FASTSimData_2020/Class_6_Box_truck_(BEV,_2025,_no_program).csv",
+        "md-E-H2FC": np.nan,
+        "md-E-PHEV": "Freight_Baseline_FASTSimData_2020/Class_6_Box_truck_(BEV,_2025,_no_program).csv",
+        "hdt-D-Diesel": "Freight_Baseline_FASTSimData_2020/Class_8_Sleeper_cab_high_roof_(Diesel,_2020,_no_program).csv",
+        "hdt-G-Gasoline": np.nan,
+        "hdt-E-BE": "Freight_Baseline_FASTSimData_2020/Class_8_Sleeper_cab_high_roof_(BEV,_2025,_no_program).csv",
+        "hdt-E-H2FC": np.nan,
+        "hdt-E-PHEV": "Freight_Baseline_FASTSimData_2020/Class_8_Sleeper_cab_high_roof_(BEV,_2025,_no_program).csv",
+        "hdv-D-Diesel": "Freight_Baseline_FASTSimData_2020/Class_8_Box_truck_(Diesel,_2020,_no_program).csv",
+        "hdv-G-Gasoline": np.nan,
+        "hdv-E-BE": "Freight_Baseline_FASTSimData_2020/Class_8_Box_truck_(BEV,_2025,_no_program).csv",
+        "hdv-E-H2FC": np.nan,
+        "hdv-E-PHEV": "Freight_Baseline_FASTSimData_2020/Class_8_Box_truck_(BEV,_2025,_no_program).csv"
+    },
+    "secondary_powertrain": {
+        "ld1-D-Diesel": np.nan,
+        "ld1-G-Gasoline": np.nan,
+        "ld1-E-BE": np.nan,
+        "ld1-E-H2FC": np.nan,
+        "ld1-E-PHEV": ("Gasoline", "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2050_gasoline_Honda_Odysseyc6_Charge_Sustaining_lookup_table.csv.gz"),
+        "ld3-D-Diesel": np.nan,
+        "ld3-G-Gasoline": np.nan,
+        "ld3-E-BE": np.nan,
+        "ld3-E-H2FC": np.nan,
+        "ld3-E-PHEV": ("Gasoline", "Baseline_FASTSimData_Representative_Vehicles_lookup_tables_output/2050_gasoline_Honda_Odysseyc6_Charge_Sustaining_lookup_table.csv.gz"),
+        "md-D-Diesel": np.nan,
+        "md-G-Gasoline": np.nan,
+        "md-E-BE": np.nan,
+        "md-E-H2FC": np.nan,
+        "md-E-PHEV": ("Diesel", "Freight_Baseline_FASTSimData_2020/Class_6_Box_truck_(Diesel,_2020,_no_program).csv"),
+        "hdt-D-Diesel": np.nan,
+        "hdt-G-Gasoline": np.nan,
+        "hdt-E-BE": np.nan,
+        "hdt-E-H2FC": np.nan,
+        "hdt-E-PHEV": ("Diesel", "Freight_Baseline_FASTSimData_2020/Class_8_Sleeper_cab_high_roof_(Diesel,_2020,_no_program).csv"),
+        "hdv-D-Diesel": np.nan,
+        "hdv-G-Gasoline": np.nan,
+        "hdv-E-BE": np.nan,
+        "hdv-E-H2FC": np.nan,
+        "hdv-E-PHEV": ("Diesel",  "Freight_Baseline_FASTSimData_2020/Class_8_Box_truck_(Diesel,_2020,_no_program).csv")
+    }
+}
+
+area_config = {
+    "sfbay": {
+        "work_dir": os.path.expanduser("~/Workspace/Simulation/sfbay"),
+        "network_osm_pbf": os.path.expanduser(
+            "~/Workspace/Simulation/sfbay/network/sfbay-cbg5500-weakConn-network/sfbay-cbg5500-weakConn-network.osm.pbf"),
+        "target_epsg": 26910,
+        "year": 2018,
+        "primary_powertrain": fastsim_routee_files["primary_powertrain"],
+        "secondary_powertrain": fastsim_routee_files["secondary_powertrain"],
+        "batch": "20250730",
+        "scenario": "Baseline",
+        "frism_version": 1.5,
+    },
+    "seattle": {
+        "work_dir": os.path.expanduser("~/Workspace/Simulation/seattle"),
+        "network_osm_pbf": os.path.expanduser(
+            "~/Workspace/Simulation/seattle/network/seattle-cbg120-ferry-weakConn-network/seattle-cbg120-ferry-weakConn-network.osm.pbf"),
+        "target_epsg": 32048,
+        "year": 2018,
+        "primary_powertrain": fastsim_routee_files["primary_powertrain"],
+        "secondary_powertrain": fastsim_routee_files["secondary_powertrain"],
+        "batch": "20250721",
+        "scenario": "Baseline",
+        "frism_version": 1.5,
+    }
+}
+
+# ************************************************************************************************
+
+DEFAULT_AREA = "seattle"
+DEFAULT_BATCH = "20260423"
+DEFAULT_SCENARIO = "2018-Baseline"
+DEFAULT_FRISM_VERSION = 1.5
+DEFAULT_SNAP_COORDINATES = False
+DEFAULT_MAP_FASTSIM_ROUTEE_FILES = False
+DEFAULT_OVERRIDE_EV_FUEL_CAPACITY = False
+DEFAULT_TRACE_VEHICLE_TYPES = False
+DEFAULT_OUTPUT_FORMAT = "parquet"
+
+
+def parse_cli_args():
+    parser = argparse.ArgumentParser(description="Convert FRISM outputs into BEAM freight plans.")
+    parser.add_argument("--area", choices=sorted(area_config.keys()), required=True, help="Scenario area.")
+    parser.add_argument("--batch", required=True, help="FRISM batch identifier.")
+    parser.add_argument("--scenario", required=True, help="Scenario label, for example 2018-Baseline.")
+    parser.add_argument(
+        "--frism-version",
+        type=float,
+        default=DEFAULT_FRISM_VERSION,
+        help=f"FRISM version. Defaults to {DEFAULT_FRISM_VERSION}."
+    )
+    parser.add_argument(
+        "--snap-coordinates",
+        action="store_true",
+        help="Snap coordinates to the road network."
+    )
+    parser.add_argument(
+        "--map-fastsim-routee-files",
+        action="store_true",
+        help="Populate primary and secondary BEAM energy file columns from fastsim_routee_files."
+    )
+    parser.add_argument(
+        "--override-ev-fuel-capacity",
+        action="store_true",
+        help="Ignore file-based primary capacity for electric-primary vehicles and use 1.2e16 J."
+    )
+    parser.add_argument(
+        "--trace-vehicle-types",
+        action="store_true",
+        help="Print vehicle type and fuel resolution details while generating vehicletypes output."
+    )
+    parser.add_argument(
+        "--output-format",
+        choices=["csv", "parquet"],
+        default=DEFAULT_OUTPUT_FORMAT,
+        help=f"Output format for carriers, tours, and payloads. Defaults to {DEFAULT_OUTPUT_FORMAT}."
+    )
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    _cli_args = parse_cli_args()
+else:
+    _cli_args = argparse.Namespace(
+        area=DEFAULT_AREA,
+        batch=DEFAULT_BATCH,
+        scenario=DEFAULT_SCENARIO,
+        frism_version=DEFAULT_FRISM_VERSION,
+        snap_coordinates=DEFAULT_SNAP_COORDINATES,
+        map_fastsim_routee_files=DEFAULT_MAP_FASTSIM_ROUTEE_FILES,
+        override_ev_fuel_capacity=DEFAULT_OVERRIDE_EV_FUEL_CAPACITY,
+        trace_vehicle_types=DEFAULT_TRACE_VEHICLE_TYPES,
+        output_format=DEFAULT_OUTPUT_FORMAT
+    )
+
+
+AREA = _cli_args.area  # seattle or sfbay
+BATCH = _cli_args.batch
+SCENARIO = _cli_args.scenario
+FRISM_VERSION = _cli_args.frism_version
+SNAP_COORDINATES = _cli_args.snap_coordinates  # Snapping here might relocate points to walk only links
+MAP_FASTSIM_ROUTEE_FILES = _cli_args.map_fastsim_routee_files
+OVERRIDE_EV_FUEL_CAPACITY = _cli_args.override_ev_fuel_capacity
+TRACE_VEHICLE_TYPES = _cli_args.trace_vehicle_types
+OUTPUT_FORMAT = _cli_args.output_format
+BUFFER_DISTANCE_METERS = 100  # 100 meters
+MAX_DISTANCE_METERS = 200000  # 200km
+CHUNK_SIZE = 10000  # this affects speed and parallelization of the script
+JOULE_PER_METER_BASE_RATE = 1.213e8  # Base rate for joules per meter, used in fuel consumption calculations
+DEFAULT_MAX_FUEL_CAPACITY_JOULE = 1.2e16
+CONFIG = dict(area_config[AREA])
+CONFIG["batch"] = BATCH
+CONFIG["scenario"] = SCENARIO
+CONFIG["frism_version"] = FRISM_VERSION
+
+# ************************************************************************************************
+
+# System and general constants
+SCENARIO_LABEL = CONFIG["scenario"].replace("_", "")
+# File paths and directories
+DIRECTORY_INPUT = f'{CONFIG["work_dir"]}/frism/{CONFIG["batch"]}/{CONFIG["scenario"]}'
+DIRECTORY_BATCH = f'{CONFIG["work_dir"]}/beam-ft/{CONFIG["batch"]}'
+DIRECTORY_SCENARIO = f'{DIRECTORY_BATCH}/{SCENARIO_LABEL}'
+DIRECTORY_VEHICLE_TECH = f'{DIRECTORY_BATCH}/vehicle-tech'
+
+# Create necessary directories if they don't exist
+Path(DIRECTORY_SCENARIO).mkdir(parents=True, exist_ok=True)
+Path(DIRECTORY_VEHICLE_TECH).mkdir(parents=True, exist_ok=True)
+
+# Variables
+_carriers = None
+_payload_plans = None
+_ondemand_plans = None
+_tours = None
+_vehicle_types = None
+_tourId_with_prefix = {}
+
+# ******************************
+
+def load_osm_network(pbf_path, min_distance_from_edge):
+    """
+    Load OSM network and create/load buffered network with proper distance transformation based on CRS
+
+    Args:
+        pbf_path (str): Path to original OSM PBF file
+        min_distance_from_edge (float): Buffer distance in meters
+
+    Returns:
+        gpd.GeoDataFrame: Network edges with original and buffered geometries in target projected CRS
+
+    Raises:
+        ValueError: If the PBF file doesn't exist or if network extraction fails
+    """
+    # Input validation
+    if not os.path.exists(pbf_path):
+        raise ValueError(f"PBF file not found: {pbf_path}")
+
+    print(f"Loading OSM network from {pbf_path}...")
+    try:
+        osm = OSM(pbf_path)
+        edges = osm.get_network(network_type="driving")
+    except Exception as e:
+        raise ValueError(f"Failed to load OSM network: {str(e)}")
+
+    # Ensure we have a GeoDataFrame
+    if not isinstance(edges, gpd.GeoDataFrame):
+        edges = gpd.GeoDataFrame(edges)
+
+    if edges.empty:
+        raise ValueError("No network edges found in the PBF file")
+
+    print(f"Original CRS: {edges.crs}")
+
+    # Helper function to get CRS units and convert distance
+    def get_crs_units_and_convert_distance(crs, distance_meters):
+        """
+        Get CRS units and convert distance from meters to CRS units
+
+        Args:
+            crs: pyproj/geopandas CRS object
+            distance_meters: Distance in meters
+
+        Returns:
+            tuple: (crs_unit_string, converted_distance)
+        """
+        try:
+            # Get axis information which includes units
+            axis_info = crs.axis_info
+            if axis_info and len(axis_info) > 0:
+                unit_name = axis_info[0].unit_name
+                # Common unit conversions
+                if 'metre' in unit_name.lower() or 'meter' in unit_name.lower():
+                    return 'meters', distance_meters
+                elif 'foot' in unit_name.lower():
+                    return 'feet', distance_meters * 3.28084  # meters to feet
+                elif 'us survey foot' in unit_name.lower():
+                    return 'us_survey_feet', distance_meters * 3.2808333  # meters to US survey feet
+                elif 'degree' in unit_name.lower():
+                    return 'degrees', distance_meters  # Won't work well, but shouldn't reach here
+                else:
+                    return unit_name, distance_meters
+            else:
+                return 'unknown', distance_meters
+        except Exception as e:
+            print(f"Warning: Could not determine CRS units: {str(e)}")
+            return 'unknown', distance_meters
+
+    buffer_label = format_distance_label(BUFFER_DISTANCE_METERS)
+    print(f"Creating {buffer_label} road buffer...")
+
+    # Check if the current CRS is geographic (uses degrees)
+    is_geographic = edges.crs.is_geographic if edges.crs else True
+
+    # Convert to target CRS if needed
+    if is_geographic:
+        try:
+            edges_projected = edges.to_crs(epsg=CONFIG["target_epsg"])
+            target_crs = edges_projected.crs
+            print(f"Converted from geographic to EPSG:{CONFIG['target_epsg']}")
+        except Exception as e:
+            raise ValueError(f"Failed to convert to EPSG:{CONFIG['target_epsg']}: {str(e)}")
+    else:
+        # Already in a projected CRS
+        edges_projected = edges.copy()
+        target_crs = edges.crs
+        print(f"Data is already in projected CRS: {edges.crs}")
+
+    # Get target CRS units and convert buffer distance
+    unit_name, buffer_distance = get_crs_units_and_convert_distance(target_crs, min_distance_from_edge)
+    print(f"Target CRS unit: {unit_name} - buffer distance: {buffer_distance:.2f} {unit_name}")
+
+    # Create buffer in target CRS coordinates (distances converted to CRS units)
+    buffered_edges = edges_projected.copy()
+    buffered_edges['geometry'] = edges_projected['geometry'].buffer(
+        buffer_distance,
+        cap_style=2,  # flat ends
+        join_style=2  # mitered joins
+    )
+
+    # Add buffered geometry as a new column
+    edges_projected['buffered_geometry'] = buffered_edges.geometry
+
+    # Create buffered pbf if it doesn't exist
+    path_without_ext, ext = os.path.splitext(pbf_path)
+    buffer_path = f"{path_without_ext}_{buffer_label}_road_buffer.geojson"
+
+    # Check if file exists and handle overwriting
+    if os.path.exists(buffer_path):
+        try:
+            os.remove(buffer_path)
+            print(f"Removed existing file: {buffer_path}")
+        except Exception as e:
+            print(f"Warning: Failed to remove existing file: {str(e)}")
+
+    # Save buffered network
+    try:
+        # Save the buffered edges as GeoJSON
+        # Convert to geographic coordinates (EPSG:4326) for better compatibility
+        save_gdf = buffered_edges.to_crs(epsg=4326)
+
+        # Make sure all columns are serializable
+        for col in save_gdf.columns:
+            if save_gdf[col].dtype == 'object':
+                save_gdf[col] = save_gdf[col].astype(str)
+
+        # Save to GeoJSON
+        save_gdf.to_file(buffer_path, driver='GeoJSON')
+        print(f"Saved buffered network to: {buffer_path}")
+    except Exception as e:
+        print(f"Warning: Failed to save buffered network: {str(e)}")
+        raise e
+
+    return edges_projected
+
+
+def generate_random_point_near_line(
+        nearest_edge: gpd.GeoSeries,
+        point_geom: Point,
+        max_dist_meters: float
+) -> Tuple[float, float]:
+    """
+    Generate a random point within max_dist_meters of the nearest point on the road
+
+    Args:
+        nearest_edge: GeoSeries row containing the road geometry
+        point_geom: Original point (Shapely Point)
+        max_dist_meters: Maximum distance from road (e.g., 200)
+
+    Returns:
+        Tuple of (x, y) coordinates for the new random point
+    """
+    # Find nearest point on the road
+    proj_distance = nearest_edge.geometry.project(point_geom)
+    nearest_point = nearest_edge.geometry.interpolate(proj_distance)
+
+    # Generate random angle and distance
+    angle = random.uniform(0, 2 * np.pi)  # Random angle between 0 and 2π
+    distance = random.uniform(0, max_dist_meters)  # Random distance up to max
+
+    # Convert to x,y offset
+    dx = distance * np.cos(angle)
+    dy = distance * np.sin(angle)
+
+    # Create new point
+    new_x = nearest_point.x + dx
+    new_y = nearest_point.y + dy
+
+    return new_x, new_y
+
+
+def read_csv_file(filename_):
+    compression = None
+    if filename_.endswith(".gz"):
+        compression = 'gzip'
+    return pd.read_csv(filename_, sep=",", index_col=None, header=0, compression=compression)
+
+
+def add_prefix(prefix, column, row, to_num=True, store_dict=None, veh_type=False, suffix=""):
+    str_value = str(row[column])
+    if to_num and str_value.isnumeric():
+        old = str(int(row[column]))
+    else:
+        old = str(row[column])
+    if veh_type:
+        old_updated = old.replace('_', '-').replace('b2b-', '').replace('b2c-', '') \
+            .replace('Battery Electric', 'BE').replace('H2 Fuel Cell', 'H2FC') \
+            .replace('Diesel', 'Dsl').replace('Gasoline', 'Gas')
+    else:
+        old_updated = old.lower().replace('_', '-').replace('b2b-', '').replace('b2c-', '')
+    second_prefix = ''
+    first_prefix = prefix
+    if 'county' in prefix:
+        first_prefix = first_prefix.replace('county', 'cty')
+
+    new = f"{first_prefix}{second_prefix}{old_updated}{suffix}"
+    if store_dict is not None:
+        store_dict[old] = new
+    return new
+
+
+def normalize_beam_fuel_type(fuel_type):
+    if pd.isna(fuel_type):
+        return np.nan
+
+    normalized = str(fuel_type).strip().lower()
+    fuel_type_map = {
+        'diesel': 'diesel',
+        'gasoline': 'gasoline',
+        'battery electric': 'electricity',
+        'electricity': 'electricity',
+        'h2 fuel cell': 'hydrogen',
+        'hydrogen': 'hydrogen',
+        'natural gas': 'naturalgas',
+        'naturalgas': 'naturalgas',
+        'biodiesel': 'biodiesel',
+        'food': 'food',
+        'phev': 'electricity',
+    }
+    return fuel_type_map.get(normalized, 'undefined')
+
+
+def format_distance_label(distance_meters):
+    if float(distance_meters).is_integer() and distance_meters < 1000:
+        return f"{int(distance_meters)}m"
+
+    distance_km = distance_meters / 1000
+    if float(distance_km).is_integer():
+        return f"{int(distance_km)}km"
+
+    return f"{distance_km:g}km"
+
+
+def resolve_phev_secondary_fuel_type(original_veh_type_id):
+    secondary_config = CONFIG["secondary_powertrain"].get(to_routee_mapping_key(original_veh_type_id))
+    if isinstance(secondary_config, (list, tuple, np.ndarray)) and len(secondary_config) > 0:
+        return normalize_beam_fuel_type(secondary_config[0])
+    return None
+
+
+def ensure_zone_columns_str(df):
+    for column in df.columns:
+        if column.lower().endswith('zone'):
+            df[column] = df[column].astype(str)
+    return df
+
+
+def write_output_table(df, path_without_ext):
+    if OUTPUT_FORMAT == "parquet":
+        df.to_parquet(f"{path_without_ext}.parquet", index=False)
+    else:
+        df.to_csv(f"{path_without_ext}.csv", index=False)
+
+
+def format_payload(_payload_plans: pd.DataFrame) -> pd.DataFrame:
+    """
+    Format payload and adjust coordinates where needed using road buffer for efficiency
+
+    Args:
+        _payload_plans (DataFrame): Input payload data
+
+    Returns:
+        DataFrame: Formatted payload data
+    """
+    # Rename columns and convert data types
+    payload_plans_renames = {
+        'arrivalTimeWindowInSec_lower': 'arrivalTimeWindowInSecLower',
+        'arrivalTimeWindowInSec_upper': 'arrivalTimeWindowInSecUpper',
+        'locationZone_x': 'locationX',
+        'locationZone_y': 'locationY',
+        'true_locationZone': 'mesoZone',
+        'BuyerNAICS': "buyerNAICS",
+        "SellerNAICS": "sellerNAICS"
+    }
+    _payload_plans.rename(columns=payload_plans_renames, inplace=True)
+
+    for naics_column in ['buyerNAICS', 'sellerNAICS']:
+        if naics_column in _payload_plans.columns:
+            _payload_plans[naics_column] = _payload_plans[naics_column].astype(str)
+
+    int_columns = [
+        'sequenceRank', 'payloadType', 'requestType', 'estimatedTimeOfArrivalInSec',
+        'arrivalTimeWindowInSecLower', 'arrivalTimeWindowInSecUpper',
+        'operationDurationInSec', 'locationZone'
+    ]
+    _payload_plans[int_columns] = _payload_plans[int_columns].astype(int)
+
+    # Map payload types and process weights
+    payload_type_map = {
+        1: 'bulk',
+        2: 'fuel_fert',
+        3: 'interm_food',
+        4: 'mfr_goods',
+        5: 'others'
+    }
+    _payload_plans['payloadType'] = _payload_plans['payloadType'].map(payload_type_map)
+    _payload_plans['weightInKg'] = _payload_plans['weightInlb'].astype(float) * 0.45359237
+
+    # Handle different FRISM versions
+    if FRISM_VERSION > 1.0:
+        _payload_plans['deliveryType'] = _payload_plans['requestType'].map({
+            1: 'delivery-only',
+            3: 'pickup-delivery'
+        })
+        _payload_plans['activityType'] = ""
+        _payload_plans.loc[_payload_plans['weightInKg'] < 0, 'activityType'] = 'unloading'
+        _payload_plans.loc[_payload_plans['weightInKg'] >= 0, 'activityType'] = 'loading'
+        _payload_plans['weightInKg'] = np.abs(_payload_plans['weightInKg'])
+
+        _payload_plans['fleetType'] = _payload_plans['truck_mode'].map({
+            'Private Truck': 'private',
+            'For-hire Truck': 'for-hire'
+        }, na_action='ignore')
+    else:
+        _payload_plans.loc[_payload_plans['weightInKg'] < 0, 'activityType'] = 'unloading'
+        _payload_plans.loc[_payload_plans['weightInKg'] >= 0, 'activityType'] = 'loading'
+        _payload_plans['weightInKg'] = np.abs(_payload_plans['weightInKg'])
+
+    # Clean up unnecessary columns
+    payload_plans_drop = ['truck_mode', 'weightInlb', 'cummulativeWeightInlb', 'index']
+    _payload_plans.drop(payload_plans_drop, axis=1, inplace=True, errors='ignore')
+
+    return _payload_plans
+
+
+## ################################
+## Snapping coordinates section
+
+def create_spatial_index_kdtree(edges_gdf_utm: gpd.GeoDataFrame) -> Tuple[np.ndarray, cKDTree]:
+    """Create KD-tree spatial index from UTM coordinates for faster nearest neighbor queries"""
+    # Extract centroids of line segments in UTM coordinates
+    centroids = np.array([[geom.centroid.x, geom.centroid.y] for geom in edges_gdf_utm.geometry])
+    return centroids, cKDTree(centroids)
+
+
+def find_nearest_edge_kdtree(
+        point_utm: Point,
+        edges_gdf_utm: gpd.GeoDataFrame,
+        kdtree: cKDTree,
+        k: int = 5
+) -> Tuple[float, gpd.GeoSeries]:
+    """
+    Find nearest edge using KD-tree with vectorized distance calculations in UTM coordinates
+
+    Args:
+        point_utm: Point geometry in UTM coordinates
+        edges_gdf_utm: GeoDataFrame containing network edges in UTM
+        kdtree: cKDTree spatial index
+        k: Number of nearest neighbors to check
+
+    Returns:
+        Tuple of (minimum distance in meters, nearest edge)
+    """
+    # Find k nearest neighbors using KD-tree
+    distances, indices = kdtree.query([point_utm.x, point_utm.y], k=k)
+
+    # Calculate actual distances to the k nearest edges in meters (UTM)
+    candidate_edges = edges_gdf_utm.iloc[indices]
+    actual_distances = candidate_edges.geometry.distance(point_utm)
+
+    min_idx = actual_distances.idxmin()
+    return actual_distances.min(), edges_gdf_utm.loc[min_idx]
+
+
+def generate_random_point_near_line_utm(
+        nearest_edge_utm: gpd.GeoSeries,
+        point_utm: Point,
+        max_dist_meters: float
+) -> Tuple[float, float]:
+    """
+    Generate a random point within max_dist_meters of the nearest point on the road in UTM coordinates
+    """
+    # Find nearest point on the road
+    proj_distance = nearest_edge_utm.geometry.project(point_utm)
+    nearest_point = nearest_edge_utm.geometry.interpolate(proj_distance)
+
+    # Generate random angle and distance
+    angle = np.random.uniform(0, 2 * np.pi)
+    distance = np.random.uniform(0, max_dist_meters)
+
+    # Convert to x,y offset (in meters since we're in UTM)
+    dx = distance * np.cos(angle)
+    dy = distance * np.sin(angle)
+
+    # Create new UTM coordinates
+    new_x_utm = nearest_point.x + dx
+    new_y_utm = nearest_point.y + dy
+
+    return new_x_utm, new_y_utm
+
+
+def process_points_chunk_vectorized(
+        points_chunk: np.ndarray,
+        edges_gdf_utm: gpd.GeoDataFrame,
+        kdtree: cKDTree,
+        min_distance: float,
+        max_distance: float,
+        chunk_start_idx: int,
+        coordinate_lookup: dict
+) -> List[Tuple[int, float, float, bool, bool]]:
+    """
+    Process a chunk of points using vectorized operations with proper CRS handling
+
+    Args:
+        points_chunk: Array of coordinate pairs to process
+        edges_gdf_utm: GeoDataFrame containing network edges in UTM
+        kdtree: Spatial index for quick nearest neighbor lookups
+        min_distance: Minimum allowed distance from road
+        max_distance: Maximum allowed distance from road
+        chunk_start_idx: Starting index of current chunk
+        coordinate_lookup: Dictionary storing previously processed coordinates
+    """
+    results = []
+    cache_hits = 0
+
+    # Convert input points to UTM for distance calculations
+    points_gdf = gpd.GeoDataFrame(
+        geometry=[Point(x, y) for x, y in points_chunk],
+        crs=4326
+    ).to_crs(CONFIG["target_epsg"])
+
+    for idx, (point_utm, orig_point) in enumerate(zip(points_gdf.geometry, points_chunk)):
+        try:
+            # Check lookup table first
+            coord_key = (orig_point[0], orig_point[1])
+            if coord_key in coordinate_lookup:
+                cached_result = coordinate_lookup[coord_key]
+                results.append((
+                    chunk_start_idx + idx,
+                    cached_result[0],
+                    cached_result[1],
+                    cached_result[2],
+                    cached_result[3]
+                ))
+                cache_hits += 1
+                continue
+
+            # Find nearest edge using UTM coordinates
+            min_dist, nearest_edge_utm = find_nearest_edge_kdtree(point_utm, edges_gdf_utm, kdtree)
+
+            is_far = min_dist > max_distance
+            needs_adjustment = min_dist > min_distance and not is_far
+
+            if needs_adjustment:
+                # Generate new point in UTM coordinates
+                new_x_utm, new_y_utm = generate_random_point_near_line_utm(
+                    nearest_edge_utm,
+                    point_utm,
+                    min_distance
+                )
+
+                # Convert back to original CRS (WGS84)
+                point_updated = gpd.GeoDataFrame(
+                    geometry=[Point(new_x_utm, new_y_utm)],
+                    crs=CONFIG["target_epsg"]
+                ).to_crs(4326).geometry[0]
+
+                result = (
+                    chunk_start_idx + idx,
+                    point_updated.x,
+                    point_updated.y,
+                    is_far,
+                    True
+                )
+            else:
+                result = (
+                    chunk_start_idx + idx,
+                    orig_point[0],
+                    orig_point[1],
+                    is_far,
+                    False
+                )
+
+            # Store in lookup table
+            coordinate_lookup[coord_key] = result[1:]
+            results.append(result)
+
+        except Exception as e:
+            print(f"Warning: Error processing point {chunk_start_idx + idx}: {str(e)}")
+            results.append((
+                chunk_start_idx + idx,
+                orig_point[0],
+                orig_point[1],
+                False,
+                False
+            ))
+
+    if cache_hits > 0:
+        print(f"Cache hits in chunk: {cache_hits}/{len(points_chunk)}")
+    return results
+
+
+def snap_coordinates_when_too_far(_df: pd.DataFrame,
+                                  osm_edges_utm: gpd.GeoDataFrame,
+                                  x_column: str,
+                                  y_column: str,
+                                  coordinate_lookup: dict = None) -> tuple[pd.DataFrame, dict]:
+    """
+    Optimized version of coordinate snapping using KD-tree spatial indexing and lookup table
+
+    Args:
+        _df: DataFrame with coordinate columns in WGS84
+        osm_edges_utm: GeoDataFrame with network in UTM
+        x_column: Name of the column containing X coordinates (longitude)
+        y_column: Name of the column containing Y coordinates (latitude)
+        coordinate_lookup: Optional existing lookup table to use
+
+    Returns:
+        Tuple of (DataFrame with snapped coordinates in WGS84, coordinate lookup dictionary)
+    """
+    min_distance_from_edge = BUFFER_DISTANCE_METERS
+    max_distance_from_edge = MAX_DISTANCE_METERS
+
+    # Convert distances from meters to target CRS units
+    def get_crs_distance_conversion(crs, distance_meters):
+        """Convert distance from meters to target CRS units"""
+        try:
+            axis_info = crs.axis_info
+            if axis_info and len(axis_info) > 0:
+                unit_name = axis_info[0].unit_name
+                if 'metre' in unit_name.lower() or 'meter' in unit_name.lower():
+                    return distance_meters
+                elif 'foot' in unit_name.lower():
+                    return distance_meters * 3.28084  # meters to feet
+                elif 'us survey foot' in unit_name.lower():
+                    return distance_meters * 3.2808333  # meters to US survey feet
+                else:
+                    return distance_meters
+            else:
+                return distance_meters
+        except Exception as e:
+            print(f"Warning: Could not determine CRS units: {str(e)}")
+            return distance_meters
+
+    # Convert buffer distances based on CRS units
+    target_crs = osm_edges_utm.crs
+    min_distance_from_edge = get_crs_distance_conversion(target_crs, BUFFER_DISTANCE_METERS)
+    max_distance_from_edge = get_crs_distance_conversion(target_crs, MAX_DISTANCE_METERS)
+    print(f"Converted distances - min: {min_distance_from_edge:.2f}, max: {max_distance_from_edge:.2f} (CRS units)")
+
+    if coordinate_lookup is None:
+        coordinate_lookup = {}
+        print("Creating new coordinate lookup table...")
+    else:
+        print(f"Using existing lookup table with {len(coordinate_lookup)} entries...")
+
+    print("Creating KD-tree spatial index...")
+    centroids, kdtree = create_spatial_index_kdtree(osm_edges_utm)
+
+    # Extract coordinates in original CRS (WGS84)
+    coords = np.column_stack((
+        _df[x_column].values,
+        _df[y_column].values
+    ))
+
+    # Calculate optimal chunk size based on available CPU cores
+    num_cores = max(1, mp.cpu_count() - 1)
+    chunk_size = min(CHUNK_SIZE, max(1000, len(coords) // (num_cores * 2)))
+    n_chunks = (len(coords) + chunk_size - 1) // chunk_size
+
+    print(f"Processing {len(coords)} points in {n_chunks} chunks using {num_cores} cores...")
+
+    all_results = []
+    far_points = 0
+    total_adjusted = 0
+
+    # Process chunks in parallel using ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=num_cores) as executor:
+        futures = []
+
+        for chunk_idx in range(n_chunks):
+            start_idx = chunk_idx * chunk_size
+            end_idx = min((chunk_idx + 1) * chunk_size, len(coords))
+            chunk_coords = coords[start_idx:end_idx]
+
+            future = executor.submit(
+                process_points_chunk_vectorized,
+                chunk_coords,
+                osm_edges_utm,
+                kdtree,
+                min_distance_from_edge,
+                max_distance_from_edge,
+                start_idx,
+                coordinate_lookup
+            )
+            futures.append(future)
+
+        # Collect results as they complete
+        for future in as_completed(futures):
+            try:
+                results = future.result()
+                for _, _, _, is_far, is_adjusted in results:
+                    if is_far:
+                        far_points += 1
+                    if is_adjusted:
+                        total_adjusted += 1
+                all_results.extend(results)
+            except Exception as e:
+                print(f"Error processing chunk: {str(e)}")
+
+    if far_points > 0:
+        print(f"Warning: {far_points} points are farther than {int(max_distance_from_edge / 1000)} km from any road")
+    if total_adjusted > 0:
+        print(f"Adjusted {total_adjusted} points to be within {int(min_distance_from_edge / 1000)} km of nearest road")
+
+    # Sort results and update DataFrame efficiently
+    all_results.sort(key=lambda r: r[0])
+    result_indices = [r[0] for r in all_results]
+    x_coords = [r[1] for r in all_results]
+    y_coords = [r[2] for r in all_results]
+
+    result_df = _df.copy()
+    result_df[x_column] = pd.Series(x_coords, index=result_indices)
+    result_df[y_column] = pd.Series(y_coords, index=result_indices)
+
+    return result_df, coordinate_lookup
+
+
+def short_hash(s, length=7):
+    return hashlib.md5(s.encode()).hexdigest()[:length]
+
+
+def check_collisions(series, hash_func):
+    """Check for hash collisions in a pandas series"""
+    hash_map = {}
+    collisions = []
+
+    for idx, value in series.items():
+        hash_val = hash_func(value)
+        if hash_val in hash_map:
+            collisions.append({
+                'hash': hash_val,
+                'original1': hash_map[hash_val],
+                'original2': value,
+                'index1': hash_map[f"{hash_val}_idx"],
+                'index2': idx
+            })
+        else:
+            hash_map[hash_val] = value
+            hash_map[f"{hash_val}_idx"] = idx
+
+    return collisions
+
+
+def resolve_collisions(
+        df,
+        id_col='vehicleIdOrig',
+        new_col='vehicleId',
+        hash_func=None,
+        check_collisions=None,
+        hash_length=7,
+        seen_ids=None,
+        seen_hashes=None,
+        allow_duplicates=False
+):
+    """
+    Ensures unique hash values for vehicle IDs in df by modifying duplicates and avoiding original ID duplicates,
+    unless allow_duplicates=True.
+    Prints total collisions, total fixed vehicles, and hash length.
+    Modifies df in-place.
+    """
+    if hash_func is None or check_collisions is None:
+        raise ValueError("Both hash_func and check_collisions must be provided")
+    if seen_ids is None:
+        seen_ids = set()
+    if seen_hashes is None:
+        seen_hashes = set()
+
+    orig_fixed_indices = set()
+    new_ids = []
+
+    # Step 1: Optionally make original IDs unique across all files
+    if not allow_duplicates:
+        for idx, orig_id in enumerate(df[id_col]):
+            base_id = orig_id
+            count = 1
+            # Loop until we find a truly unique ID across all seen_ids
+            while orig_id in seen_ids:
+                count += 1
+                orig_id = f"{base_id}_{count}"
+            new_ids.append(orig_id)
+            if orig_id != base_id:
+                orig_fixed_indices.add(idx)
+            seen_ids.add(orig_id)
+        df[id_col] = new_ids
+    else:
+        # Still add to seen_ids so that future files can check for duplicates
+        for orig_id in df[id_col]:
+            seen_ids.add(orig_id)
+
+    # Step 2: Make hashes unique across all files
+    def hash_with_length(s):
+        return hash_func(s, length=hash_length)
+
+    collision_fixed_indices = set()
+    # Initial hash application
+    df[new_col] = df[id_col].apply(hash_with_length)
+
+    for idx, hashed in enumerate(df[new_col]):
+        base_id = df.at[idx, id_col]
+        count = 1
+        # Loop until we find a unique hash across all seen_hashes
+        while hashed in seen_hashes:
+            count += 1
+            new_id = f"{base_id}_{count}"
+            df.at[idx, id_col] = new_id
+            hashed = hash_with_length(new_id)
+            collision_fixed_indices.add(idx)
+        df.at[idx, new_col] = hashed
+        seen_hashes.add(hashed)
+
+    print(f"Hash length used for {id_col}: {hash_length}")
+    if not allow_duplicates:
+        print(f"Total original {id_col} duplicates fixed: {len(orig_fixed_indices)}")
+    print(f"Total {id_col} hash collisions fixed: {len(collision_fixed_indices)}")
+    print(f"Total with modified {id_col}: {len(orig_fixed_indices | collision_fixed_indices)}")
+
+    return df, seen_ids, seen_hashes
+
+
+def remove_third_segment(s):
+    parts = s.split('-')
+    if len(parts) >= 4:
+        # Remove the third part (index 2)
+        return '-'.join(parts[:2] + parts[3:])
+    else:
+        return s  # Return as is if not enough parts
+
+
+def to_routee_mapping_key(original_veh_type_id):
+    class_part, powertrain_part, fuel_part = str(original_veh_type_id).strip().split('_', 2)
+    class_alias = {"mdv": "md"}.get(class_part.lower(), class_part.lower())
+    fuel_alias = {
+        "Battery Electric": "BE",
+        "H2 Fuel Cell": "H2FC",
+        "Diesel": "Diesel",
+        "Gasoline": "Gasoline",
+        "PHEV": "PHEV",
+    }.get(fuel_part, fuel_part.replace(" ", ""))
+    return f"{class_alias}-{powertrain_part}-{fuel_alias}"
+
+
+def convert_range_miles_to_joule_capacity(fuel_capacity_in_miles, fuel_consumption_joule_per_meter):
+    if pd.isna(fuel_capacity_in_miles):
+        return np.nan
+    return float(fuel_capacity_in_miles) * float(fuel_consumption_joule_per_meter) * 1609.34
+
+
+def resolve_primary_fuel_capacity_joule(original_veh_type_id, converted_capacity_joule):
+    if OVERRIDE_EV_FUEL_CAPACITY and str(original_veh_type_id).endswith("_E_Battery Electric"):
+        return DEFAULT_MAX_FUEL_CAPACITY_JOULE
+    if pd.isna(converted_capacity_joule):
+        return DEFAULT_MAX_FUEL_CAPACITY_JOULE
+    return converted_capacity_joule
+
+
+def resolve_secondary_fuel_capacity_joule(converted_capacity_joule):
+    if pd.isna(converted_capacity_joule):
+        return DEFAULT_MAX_FUEL_CAPACITY_JOULE
+    return converted_capacity_joule
+
+
+def resolve_secondary_vehicle_energy_file(original_veh_type_id):
+    secondary_config = CONFIG["secondary_powertrain"].get(to_routee_mapping_key(original_veh_type_id))
+    if isinstance(secondary_config, (list, tuple, np.ndarray)) and len(secondary_config) > 1:
+        return secondary_config[1]
+    return np.nan
+
+
+def normalize_vehicle_energy_file_path(relative_path):
+    if pd.isna(relative_path):
+        return np.nan
+    relative_path = str(relative_path).strip()
+    if relative_path.startswith("fuel/"):
+        return relative_path
+    return f"fuel/{relative_path}"
+
+
+def compute_fuel_consumption_joule_per_meter(fuel_rate):
+    if pd.isna(fuel_rate):
+        return np.nan
+    return JOULE_PER_METER_BASE_RATE / (float(fuel_rate) * 1609.34)
+
+
+#############################
+## MAIN
+
+if __name__ == '__main__':
+    vehicle_class_fuel_rates = {}
+    seen_veh_ids = set()
+    seen_veh_hashes = set()
+    seen_carrier_ids = set()
+    seen_carrier_hashes = set()
+
+    for filename in sorted(os.listdir(DIRECTORY_INPUT)):
+        filepath = f'{DIRECTORY_INPUT}/{filename}'
+        print(filepath)
+        parts = filename.split('_', 2)
+        if len(parts) < 3:
+            print("Warning! could not read file: ", filename)
+            continue
+        business_type = parts[0].lower()
+        county = parts[1].lower()
+        filetype = parts[2].lower()
+
+        if "carrier" in filetype:
+            df = pd.read_csv(filepath)
+            df['carrierId'] = df.apply(lambda row: add_prefix(f'', 'carrierId', row, False), axis=1).tolist()
+            df['vehicleTypeIdOrig'] = df['vehicleTypeId']
+            df['vehicleTypeId'] = df.apply(
+                lambda row: add_prefix('ft-', 'vehicleTypeId', row, to_num=True, store_dict=None, veh_type=True,
+                                       suffix=f""),
+                axis=1).tolist()
+            df['vehicleTypeId'] = df['vehicleTypeId'].apply(remove_third_segment)
+            df['vehicleIdOrig'] = df.apply(
+                lambda row: f"{str(row['tourId']).lower().replace('_', '-')}--"
+                            f"{str(row['vehicleId']).lower().replace('_', '-')}",
+                axis=1).tolist()
+            # Check for collisions before applying hash
+            df, seen_veh_ids, seen_veh_hashes = resolve_collisions(
+                df,
+                id_col='vehicleIdOrig',
+                new_col='vehicleId',
+                hash_func=short_hash,
+                check_collisions=check_collisions,  # can be None, not used in this version
+                hash_length=7,
+                seen_ids=seen_veh_ids,
+                seen_hashes=seen_veh_hashes
+            )
+            df['vehicleId'] = df.apply(
+                lambda row: add_prefix(f'ft-', 'vehicleId', row),
+                axis=1).tolist()
+
+            df['tourId'] = df.apply(
+                lambda row: add_prefix(f'{business_type}-', 'tourId', row, True, _tourId_with_prefix),
+                axis=1).tolist()
+            if _carriers is None:
+                _carriers = df
+            else:
+                _carriers = pd.concat([_carriers, df])
+        elif "freight_tours" in filetype:
+            df = pd.read_csv(filepath)
+            df['tour_id'] = df.apply(lambda row: _tourId_with_prefix[str(int(row['tour_id']))], axis=1).tolist()
+            if _tours is None:
+                _tours = df
+            else:
+                _tours = pd.concat([_tours, df])
+        elif "payload" in filetype:
+            df = pd.read_csv(filepath)
+            if "ondemand" in county:
+                df['tourId'] = df.apply(lambda row: add_prefix(f'ridehail-', 'tourId', row), axis=1)
+                if _ondemand_plans is None:
+                    _ondemand_plans = df
+                else:
+                    _ondemand_plans = pd.concat([_ondemand_plans, df])
+            else:
+                df['tourId'] = df.apply(lambda row: _tourId_with_prefix[str(int(row['tourId']))], axis=1).tolist()
+                df['payloadId'] = df['tourId'].astype(str) + '-' + df['sequenceRank'].astype(str)
+                _tourId_with_prefix = {}
+                if _payload_plans is None:
+                    _payload_plans = df
+                else:
+                    _payload_plans = pd.concat([_payload_plans, df])
+        elif "vehicle_types" in filename:
+            df = pd.read_csv(filepath)
+
+            # First pass: collect vehicle class and fuel rate information for non-PHEV vehicles
+            for _, row in df.iterrows():
+                veh_class = row['veh_class']
+                fuel_type = row['primary_fuel_type']
+                fuel_rate = row['primary_fuel_rate']
+                normalized_fuel_type = normalize_beam_fuel_type(fuel_type)
+
+                if 'PHEV' not in str(row['veh_type_id']):
+                    vehicle_class_fuel_rates[f"{veh_class}-{normalized_fuel_type}"] = fuel_rate
+
+            # Process all vehicles, handling PHEVs specially
+            nan_vectors = list(np.repeat(np.nan, len(df.index)))
+            vehicle_types_ids = []
+            original_vehicle_types_ids = []
+            primary_fuel_types = []
+            primary_fuel_consumption = []
+            primary_fuel_capacities = []
+            secondary_fuel_types = []
+            secondary_fuel_consumption = []
+            secondary_fuel_capacities = []
+
+            for _, row in df.iterrows():
+                veh_type_id = add_prefix('ft-', 'veh_type_id', row, to_num=True,
+                                         store_dict=None, veh_type=True, suffix=f"")
+                veh_type_id = remove_third_segment(veh_type_id)
+                vehicle_types_ids.append(veh_type_id)
+
+                original_veh_type_id = row["veh_type_id"]
+                original_vehicle_types_ids.append(original_veh_type_id)
+
+                veh_class = row['veh_class']
+                secondary_fuel_type = resolve_phev_secondary_fuel_type(original_veh_type_id)
+                is_phev = 'PHEV' in str(row['veh_type_id'])
+
+                if TRACE_VEHICLE_TYPES and is_phev:
+                    print(
+                        f"[trace] PHEV row veh_type_id={original_veh_type_id} "
+                        f"veh_class={veh_class} primary_fuel_rate={row['primary_fuel_rate']} "
+                        f"resolved_secondary_fuel_type={secondary_fuel_type}"
+                    )
+
+                if is_phev:
+                    primary_fuel_type = normalize_beam_fuel_type(row["primary_fuel_type"])
+                    primary_fuel_consumption_value = compute_fuel_consumption_joule_per_meter(row["primary_fuel_rate"])
+                    primary_range_capacity_joule = convert_range_miles_to_joule_capacity(
+                        row.get("fuel_capacity_in_miles"),
+                        primary_fuel_consumption_value
+                    )
+                    primary_fuel_capacity_value = resolve_primary_fuel_capacity_joule(
+                        original_veh_type_id,
+                        primary_range_capacity_joule
+                    )
+                    primary_fuel_types.append(primary_fuel_type)
+                    primary_fuel_consumption.append(primary_fuel_consumption_value)
+                    primary_fuel_capacities.append(primary_fuel_capacity_value)
+
+                    secondary_fuel_rate = np.nan
+                    if secondary_fuel_type is not None:
+                        secondary_fuel_rate = vehicle_class_fuel_rates.get(f"{veh_class}-{secondary_fuel_type}", np.nan)
+
+                    if secondary_fuel_type is not None and pd.notna(secondary_fuel_rate):
+                        secondary_fuel_types.append(secondary_fuel_type)
+                        secondary_fuel_consumption_value = compute_fuel_consumption_joule_per_meter(secondary_fuel_rate)
+                        secondary_range_capacity_joule = convert_range_miles_to_joule_capacity(
+                            row.get("fuel_capacity_in_miles"),
+                            secondary_fuel_consumption_value
+                        )
+                        secondary_fuel_consumption.append(secondary_fuel_consumption_value)
+                        secondary_fuel_capacities.append(
+                            resolve_secondary_fuel_capacity_joule(secondary_range_capacity_joule)
+                        )
+                    else:
+                        secondary_fuel_types.append(np.nan)
+                        secondary_fuel_consumption.append(np.nan)
+                        secondary_fuel_capacities.append(np.nan)
+                        if TRACE_VEHICLE_TYPES:
+                            print(
+                                f"[trace] PHEV secondary path unavailable veh_type_id={original_veh_type_id} "
+                                f"resolved_secondary_fuel_type={secondary_fuel_type} "
+                                f"secondary_fuel_rate={secondary_fuel_rate}"
+                            )
+                else:
+                    primary_fuel_type = normalize_beam_fuel_type(row["primary_fuel_type"])
+                    primary_fuel_consumption_value = compute_fuel_consumption_joule_per_meter(row["primary_fuel_rate"])
+                    primary_range_capacity_joule = convert_range_miles_to_joule_capacity(
+                        row.get("fuel_capacity_in_miles"),
+                        primary_fuel_consumption_value
+                    )
+                    primary_fuel_capacity_value = resolve_primary_fuel_capacity_joule(
+                        original_veh_type_id,
+                        primary_range_capacity_joule
+                    )
+                    primary_fuel_types.append(primary_fuel_type)
+                    primary_fuel_consumption.append(primary_fuel_consumption_value)
+                    primary_fuel_capacities.append(primary_fuel_capacity_value)
+                    secondary_fuel_types.append(np.nan)
+                    secondary_fuel_consumption.append(np.nan)
+                    secondary_fuel_capacities.append(np.nan)
+
+            if MAP_FASTSIM_ROUTEE_FILES:
+                primary_vehicle_energy_files = [
+                    normalize_vehicle_energy_file_path(
+                        CONFIG["primary_powertrain"].get(to_routee_mapping_key(index), np.nan)
+                    )
+                    for index in original_vehicle_types_ids
+                ]
+                secondary_vehicle_energy_files = [
+                    normalize_vehicle_energy_file_path(resolve_secondary_vehicle_energy_file(index))
+                    for index in original_vehicle_types_ids
+                ]
+            else:
+                primary_vehicle_energy_files = nan_vectors
+                secondary_vehicle_energy_files = nan_vectors
+
+            vehicles_techs = {
+                "vehicleTypeId": vehicle_types_ids,
+                "seatingCapacity": list(np.repeat(1, len(df.index))),
+                "standingRoomCapacity": list(np.repeat(0, len(df.index))),
+                "lengthInMeter": list(np.repeat(12, len(df.index))),
+                "primaryFuelType": primary_fuel_types,
+                "primaryFuelConsumptionInJoulePerMeter": primary_fuel_consumption,
+                "primaryFuelCapacityInJoule": primary_fuel_capacities,
+                "primaryVehicleEnergyFile": primary_vehicle_energy_files,
+                "secondaryFuelType": secondary_fuel_types,
+                "secondaryFuelConsumptionInJoulePerMeter": secondary_fuel_consumption,
+                "secondaryFuelCapacityInJoule": secondary_fuel_capacities,
+                "secondaryVehicleEnergyFile": secondary_vehicle_energy_files,
+                "automationLevel": list(np.repeat(1, len(df.index))),
+                "maxVelocity": df["max_speed(mph)"].astype(float) * 0.44704,
+                "passengerCarUnit": list(np.repeat(1.0, len(df.index))),
+                "rechargeLevel2RateLimitInWatts": nan_vectors,
+                "rechargeLevel3RateLimitInWatts": nan_vectors,
+                "vehicleCategory": list(np.repeat("Class456Vocational", len(df.index))),
+                "sampleProbabilityWithinCategory": list(np.repeat(1.0, len(df.index))),
+                "sampleProbabilityString": nan_vectors,
+                "payloadCapacityInKg": df["payload_capacity_weight"],
+                "vehicleUse": "Freight",
+                "vehicleClass": df["veh_class"]
+            }
+
+            df2 = pd.DataFrame(vehicles_techs)
+            df2["vehicleCategory"] = np.where(df2["vehicleTypeId"].str.contains('hdv'), 'Class78Vocational',
+                                              df2.vehicleCategory)
+            df2["vehicleCategory"] = np.where(df2["vehicleTypeId"].str.contains('hdt'), 'Class78Tractor',
+                                              df2.vehicleCategory)
+            df2["vehicleCategory"] = np.where(df2["vehicleTypeId"].str.contains('ld3'), 'Class2b3Vocational',
+                                              df2.vehicleCategory)
+            df2["vehicleCategory"] = np.where(df2["vehicleTypeId"].str.contains('ld1'), 'Class12aVocational',
+                                              df2.vehicleCategory)
+
+            if _vehicle_types is None:
+                _vehicle_types = df2
+            else:
+                _vehicle_types = pd.concat([_vehicle_types, df2])
+        else:
+            print(f'SKIPPING {filename}')
+
+    _vehicle_types.drop(columns=['index', 'Unnamed: 0'], errors='ignore', inplace=True)
+    _vehicle_types.to_csv(
+        f'{DIRECTORY_VEHICLE_TECH}/vehicletypes--frism--{SCENARIO_LABEL}.csv',
+        index=False)
+
+    # Load OSM network and create buffer
+    _osm_edges_utm = load_osm_network(
+        CONFIG["network_osm_pbf"],
+        min_distance_from_edge=BUFFER_DISTANCE_METERS
+    )
+
+    _coordinate_lookup = {}
+
+    # carrierId,tourId,vehicleId,vehicleTypeId,depotZone,depotX,depotY,MESOZONE,BoundaryZONE
+    carriers_renames = {
+        'depot_zone': 'depotZone',
+        'depot_zone_x': 'depotX',
+        'depot_zone_y': 'depotY',
+        'true_depot_zone': 'mesoZone'
+    }
+    _carriers.rename(columns=carriers_renames, inplace=True)
+    _carriers.drop(['x', 'y', 'index', 'Unnamed: 0'], axis=1, inplace=True, errors='ignore')
+    _carriers['depotZone'] = _carriers['depotZone'].astype(int)
+    if SNAP_COORDINATES:
+        _carriers, _coordinate_lookup = snap_coordinates_when_too_far(
+            _carriers,
+            _osm_edges_utm,
+            "depotX",
+            "depotY",
+            _coordinate_lookup
+        )
+    _carriers = ensure_zone_columns_str(_carriers)
+    # Write
+    write_output_table(_carriers, f'{DIRECTORY_SCENARIO}/carriers--{SCENARIO_LABEL}')
+
+    # tourId,departureTimeInSec,departureLocationZone,maxTourDurationInSec,departureLocationX,departureLocationY
+    tours_renames = {
+        'tour_id': 'tourId',
+        'departureLocation_zone': 'departureLocationZone',
+        'departureLocation_x': 'departureLocationX',
+        'departureLocation_y': 'departureLocationY',
+        'true_depot_zone': 'mesoZone'
+    }
+    _tours.rename(columns=tours_renames, inplace=True)
+    _tours['departureTimeInSec'] = _tours['departureTimeInSec'].astype(int)
+    _tours['maxTourDurationInSec'] = _tours['maxTourDurationInSec'].astype(int)
+    _tours['departureLocationZone'] = _tours['departureLocationZone'].astype(int)
+    _tours.drop(['index', 'Unnamed: 0'], axis=1, inplace=True, errors='ignore')
+    if SNAP_COORDINATES:
+        _tours, _coordinate_lookup = snap_coordinates_when_too_far(
+            _tours,
+            _osm_edges_utm,
+            "departureLocationX",
+            "departureLocationY",
+            _coordinate_lookup
+        )
+    _tours = ensure_zone_columns_str(_tours)
+    # Write
+    write_output_table(_tours, f'{DIRECTORY_SCENARIO}/tours--{SCENARIO_LABEL}')
+
+    # Process payloads
+    print("Processing payload plans...")
+    # Add random_state for reproducibility
+    # sampled_df = _payload_plans.sample(n=1000, random_state=42).copy().reset_index(drop=True)
+    # sampled_df.to_csv(f'{DIRECTORY_SCENARIO}/payloads-sampled--{YEAR}-{SCENARIO_LABEL}.csv', index=False)
+    # Then format and save
+    # Create shared coordinate lookup table
+    _payload_plans = format_payload(_payload_plans)
+    if SNAP_COORDINATES:
+        # Snap coordinates and save
+        _payload_plans, _coordinate_lookup = snap_coordinates_when_too_far(
+            _payload_plans,
+            _osm_edges_utm,
+            "locationX",
+            "locationY",
+            _coordinate_lookup
+        )
+    _payload_plans["operationDurationInSecOG"] = _payload_plans["operationDurationInSec"]
+    # _payload_plans = update_operation_duration(CONFIG, _payload_plans, _tours, _carriers, _vehicle_types)
+    _payload_plans.drop(columns=['index', 'Unnamed: 0', 'requestType'], errors='ignore', inplace=True)
+    _payload_plans = ensure_zone_columns_str(_payload_plans)
+    write_output_table(_payload_plans, f'{DIRECTORY_SCENARIO}/payloads--{SCENARIO_LABEL}')
+
+    if _ondemand_plans is not None:
+        print("Processing ondemand plans...")
+        _ondemand_plans = format_payload(_ondemand_plans)
+        if SNAP_COORDINATES:
+            # Snap coordinates and save, reusing the lookup table
+            _ondemand_plans, _coordinate_lookup = snap_coordinates_when_too_far(
+            _ondemand_plans,
+            _osm_edges_utm,
+            "locationX",
+            "locationY",
+            _coordinate_lookup
+        )
+        _ondemand_plans.drop(columns=['index', 'Unnamed: 0'], errors='ignore', inplace=True)
+        _ondemand_plans = ensure_zone_columns_str(_ondemand_plans)
+        _ondemand_plans.to_csv(f'{DIRECTORY_SCENARIO}/ondemand--{SCENARIO_LABEL}.csv', index=False)
+
+        # Create combined plans file with both regular plans and ondemand plans
+        if _payload_plans is not None:
+            print("Creating combined plans file of payloads and crowdshipments...")
+            # Save the combined file
+            combined_payloads = ensure_zone_columns_str(pd.concat([_payload_plans, _ondemand_plans], ignore_index=True))
+            combined_payloads.to_csv(
+                f'{DIRECTORY_SCENARIO}/payloads+crowdshipments--{SCENARIO_LABEL}.csv', index=False
+            )

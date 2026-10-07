@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "at_utc": "2026-10-04T01:13:57.806668+00:00",
+  "scope": "independent_static_source_audit_reader_error",
+  "finding": "r1 ACK-order text reader used the first H_CTRL_QUIT match in the complete C file, which belonged to the controller function receiving its command. It then compared that earlier unrelated match with coordinator main ACK receive.",
+  "source_behavior_manually_verified": "In coordinator main, guard ACK receive precedes controller quit send; no production defect was found.",
+  "original_r1_receipt_sha256": "c1ff340cb96ed567bb7d0bae3b6c4ed95d0d7d392563eb53730765ff08981295",
+  "original_r1_script_sha256": "d80c2e70212504c6422bac9d710ceede5e826c35f18dbfce180ccc92760c21e9",
+  "correction": "New exclusive r2 reader scopes both textual matches to int main; no production source change, test/compiler execution or host action.",
+  "r1_preserved": true,
+  "original_result": "52/53 static checks; failed ACK reader check",
+  "r2_source_selection": "Same seven exact stable source hashes as r1 and root focused-r1 manifest."
+}

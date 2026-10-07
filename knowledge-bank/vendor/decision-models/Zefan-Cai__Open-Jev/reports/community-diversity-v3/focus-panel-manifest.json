@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "version": "community-pair-v1",
+  "seed": 20260921,
+  "per_source_split": 128,
+  "source_bindings": [
+    {
+      "version": "community-routing-v3",
+      "manifest_sha256": "9ec1fdb644fa949e3cc879c335133f18bda3d741eb93183e5154b3616058a57e",
+      "files_sha256": {
+        "train.jsonl": "d9b16649ace8ba78e6ab16fb45be51eac5e9285a409afdb355c644078687a50b",
+        "calibration.jsonl": "33f7bfcb34b030263421e2d5ba53b37e0933c2780dc3c86fd4f2b28d7ab4d1d8",
+        "validation.jsonl": "9f8aac9345d4add638ca960536d86f18deb7cb59032427b08ba73baec6fb072c",
+        "test.jsonl": "b4fe7d77edb940f2f0087559736f44ae1d62824f46beb82bd71832d1b90c3edb",
+        "ood.jsonl": "95bec3bd456d9316bdd0405f05cae408f63d30f15761fa0c63f67737fc98e43a"
+      }
+    },
+    {
+      "version": "community-workflow-v3",
+      "manifest_sha256": "3fc6c0539c1a32325c9d0e0311c308019d4e2afab88d68f12f738ac636572af4",
+      "files_sha256": {
+        "train.jsonl": "0e9c7b325aaf4f6a83e0b9b9d43594b2f22dd1b9e15ffbf6ddfe83a1f876a706",
+        "calibration.jsonl": "63a4ce4ff8338601679ff60a41e3617a802d0bf9e81b96356cc8b51439e04a39",
+        "validation.jsonl": "6031a9e2971a24c6362e1b32204e7f616ce0d66bd9feba6ab763499f4e96af11",
+        "test.jsonl": "3b71d96c0ce6bd2e8d2fa7ec4f0522c8f4a8594d09a6e1305d4d43ac81f98bbf",
+        "ood.jsonl": "37fb3984e99000f8c9f71d0e3c67cff5cb61f3754564961329fcfb411a5dd843"
+      }
+    },
+    {
+      "version": "sql-semantics-v3",
+      "manifest_sha256": "26aa4e0aab6d30c3bb7f77eda0e36e56c8aaaaa8f04ab9aae5a3ff39022b1f8f",
+      "files_sha256": {
+        "train.jsonl": "ec763cfc84c6f80f428fc2a5eed9bd365c8b48a30beb71fa47712d45802cdd4d",
+        "calibration.jsonl": "3746c535a0d9f8eb95fe1ab337b378bcfc3d691fe36fdb998aaf3c1d7b6827c9",
+        "validation.jsonl": "12fdb95692d0f64ea29d4abe5d62010a5050b908bb6389ff8601530af63d728d",
+        "test.jsonl": "d0d72d7513c284d430322e255c12bab8e4a1abd0bfbbc38c6c35954761183fe1",
+        "ood.jsonl": "12d896af7f855cfc4295ca63767f10dada3ca64bba96d805fb5b0f52eda3d61c"
+      }
+    }
+  ],
+  "selection": "round-robin hash-ordered groups, hash-order views inside each group; independent of labels/predictions",
+  "counts": [
+    {
+      "source": "banking77-routing-v3",
+      "split": "ood",
+      "rows": 128,
+      "unique_groups": 128
+    },
+    {
+      "source": "banking77-routing-v3",
+      "split": "test",
+      "rows": 128,
+      "unique_groups": 128
+    },
+    {
+      "source": "clinc150-routing-v3",
+      "split": "ood",
+      "rows": 128,
+      "unique_groups": 128
+    },
+    {
+      "source": "clinc150-routing-v3",
+      "split": "test",
+      "rows": 128,
+      "unique_groups": 128
+    },
+    {
+      "source": "community-workflow-v3/approval",
+      "split": "ood",
+      "rows": 128,
+      "unique_groups": 18
+    },
+    {
+      "source": "community-workflow-v3/approval",
+      "split": "test",
+      "rows": 128,
+      "unique_groups": 18
+    },
+    {
+      "source": "community-workflow-v3/cms",
+      "split": "ood",
+      "rows": 128,
+      "unique_groups": 18
+    },
+    {
+      "source": "community-workflow-v3/cms",
+      "split": "test",
+      "rows": 128,
+      "unique_groups": 18
+    },
+    {
+      "source": "sql-semantics-v3",
+      "split": "ood",
+      "rows": 128,
+      "unique_groups": 128
+    },
+    {
+      "source": "sql-semantics-v3",
+      "split": "test",
+      "rows": 128,
+      "unique_groups": 128
+    }
+  ],
+  "rows": 1280,
+  "unique_groups": 840,
+  "correlated_views_beyond_first_per_group": 440,
+  "independent_case_count_claimed": false,
+  "ordered_ids_sha256": "c2c5e2d4cc66e361b577832c4c35518c2fe5bd347d7dfb9cfa70e8366179235a",
+  "selection_precedes_inference": true,
+  "excluded_splits": [
+    "train",
+    "calibration",
+    "validation"
+  ],
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "panel_sha256": "9d4787847da32a60ac4e28cfabe85bf59471122b50db133f5f5dd4a0cb5a8621"
+}

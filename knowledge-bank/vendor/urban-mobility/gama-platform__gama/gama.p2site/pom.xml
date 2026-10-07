@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+	  	<groupId>org.gama</groupId>
+	  	<artifactId>gama.parent</artifactId>
+	  	<version>0.0.0-SNAPSHOT</version>
+	  	<relativePath>../gama.parent/</relativePath>
+	</parent>
+	<artifactId>gama.p2site</artifactId>
+	<packaging>eclipse-repository</packaging>
+
+	<distributionManagement>
+		<repository>
+			<uniqueVersion>false</uniqueVersion>
+			<id>p2Repo</id>
+			<url>scp://152.228.133.219/./var/www/gama_updates/0.0.0</url>
+		</repository>
+		<snapshotRepository>
+			<uniqueVersion>false</uniqueVersion>
+			<id>p2Repo</id>
+			<url>scp://152.228.133.219/./var/www/gama_updates/0.0.0</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+
+	<profiles>
+		<!-- This profile is used to upload the repo -->
+		<profile>
+			<id>p2Repo</id>
+			<properties>
+				<!-- Properties relative to the distant host where to upload the repo -->
+				<ftp.url>scp://152.228.133.219</ftp.url>
+				<ftp.toDir>/var/www/gama_updates/0.0.0</ftp.toDir>
+				<!-- Relative path to the repo being uploaded -->
+				<repo.path>${project.build.directory}/repository/</repo.path>
+				<maven.build.cache.skipCache>true</maven.build.cache.skipCache>
+				<maven.build.cache.enabled>false</maven.build.cache.enabled>
+			</properties>
+
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-deploy-plugin</artifactId>
+						<version>2.5</version>
+						<dependencies>
+							<dependency>
+								<groupId>org.apache.maven.wagon</groupId>
+								<artifactId>wagon-ssh</artifactId>
+								<version>3.5.1</version>
+							</dependency>
+						</dependencies>
+					</plugin>
+					<!-- Upload the repo to the server -->
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>wagon-maven-plugin</artifactId>
+						<version>2.0.2</version>
+						<executions>
+							
+							<execution>
+								<id>p2-clear-remote</id>
+								<phase>install</phase>
+								<goals>
+									<goal>sshexec</goal>
+								</goals>
+								<configuration>
+									<serverId>p2Repo</serverId>
+									<url>${ftp.url}</url>
+									<commands>
+										<command>rm -rf ${ftp.toDir}</command>
+									</commands>
+								</configuration>
+							</execution>
+
+							<execution>
+								<id>p2-upload-to-remote</id>
+								<phase>install</phase>
+								<goals>
+									<goal>upload</goal>
+								</goals>
+								<configuration>
+									<rules>
+										<requireFilesSize>
+											<maxsize>50000</maxsize>
+											<minsize>90</minsize>
+										</requireFilesSize>
+									</rules>
+									<removeAll>true</removeAll>
+									<fromDir>${repo.path}</fromDir>
+									<includes>**</includes>
+									<toDir>${ftp.toDir}</toDir>
+									<url>${ftp.url}</url>
+									<serverId>p2Repo</serverId>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+    <properties>
+        <maven.build.cache.skipCache>true</maven.build.cache.skipCache>
+        <maven.build.cache.enabled>false</maven.build.cache.enabled>
+    </properties>
+
+	<build>
+
+		<extensions>
+			<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-ssh-external</artifactId>
+				<version>3.5.1</version>
+			</extension>
+			<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-ssh</artifactId>
+				<version>3.5.1</version>
+			</extension>
+		</extensions>
+	</build>
+</project>

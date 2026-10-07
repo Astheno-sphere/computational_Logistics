@@ -1,0 +1,8 @@
+Total estimated duration (including waiting time): {{ ((plan.end_time | to_timestamp) - (plan.start_time | to_timestamp)) | humanize_duration }}. The estimated duration of each leg below refers to the actual travel time and does not include waiting time.
+{%- for leg in plan.legs %}{%- if not leg.is_transfer %}
+- Transit: {{ leg.transit_route | get_transit_route_type }} on route '{{ leg.transit_route | get_transit_route_long_name }}' from '{{ leg.start_location.stop }}' to '{{ leg.end_location.stop }}', estimated time: {{ ((leg.end_time | to_timestamp) - (leg.start_time | to_timestamp)) | humanize_duration }}.
+    {%- elif leg.start_location.stop != leg.end_location.stop %}
+- Walk from '{{ leg.start_location.stop }}' to '{{ leg.end_location.stop }}' estimated time: {{ ((leg.end_time | to_timestamp) - (leg.start_time | to_timestamp)) | humanize_duration }}.
+    {%- else %}
+{%- endif %}
+{%- endfor %}

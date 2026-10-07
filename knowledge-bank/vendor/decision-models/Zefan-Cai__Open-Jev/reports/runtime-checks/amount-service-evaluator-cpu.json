@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "evidence_kind": "cpu_software_verification",
+  "recorded_at_utc": "2026-09-20T18:21:02.925590+00:00",
+  "python": "3.14.5",
+  "source_files_sha256": {
+    "scripts/evaluate_amount_service.py": "7ebb3a4028ddc5436b4c49e3ea799eb36ed5537518fdae283166866ec0c4d17a",
+    "tests/test_amount_service.py": "09c5fb6955dc9515271aea9fd93969c4169a0af6880395dfc2193e87b12d993e",
+    "docs/amount-service-evaluation.md": "6c90b160180ca3d71fd9c0232293f6d57a9effd23bf07e0f6364442985ce9a93",
+    "scripts/evaluate_contact_service.py": "562dac913d4cebf2732aef9d055dd8dea126c2ec2987573321f1554caf06153a",
+    "tests/test_contact_service.py": "3606f0727c3983f833d0ddecf9a6d7218f589d99db0682d2502501e20e4e89eb",
+    "scripts/evaluate_browser_service.py": "3ffbcce8b3411833cc9a0dfaf70147942ce9e3f6b404a72ca834fb65346899aa",
+    "scripts/evaluate_drone_service.py": "84b408c3131a6b922141e02d67a2c9301d9e0784796e61ee3201fae1fc24f602",
+    "jev/metrics.py": "cb460c78b877a24708a0a8f8ca6b51f9602491f6ea24cd14e9a828c03d92f78b",
+    "jev/case_amount_extraction.py": "d87466f66b0c07d1c6df6e65579db3e0494317c57578695fffa52536307100fd",
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "jev/recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+    "jev/data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+  },
+  "focused_tests": {
+    "command": "python3 -m unittest tests.test_amount_service -v",
+    "exit_code": 0,
+    "discovered": 24,
+    "passed": 24,
+    "skipped": 0,
+    "failures": 0,
+    "errors": 0,
+    "observed_output_summary": "Ran 24 tests in 0.075s\n\nOK",
+    "final_test_source_execution_count": 1
+  },
+  "command_checks": {
+    "help_command": "python3 -m scripts.evaluate_amount_service --help",
+    "exit_code": 0,
+    "bash_syntax_blocks": 2
+  },
+  "sealed_manifest_sha256": {
+    "amount-extraction-control-v1": "6f89f81336ac36505c563193da27fca2155fa566175451854f0ac410979ea80b"
+  },
+  "sealed_artifact_hash_recheck": "All manifest-listed artifacts and frozen amount producer sources verified after focused tests.",
+  "scope": {
+    "fixture_transport_only": true,
+    "temporary_fixture_artifacts_discarded": true,
+    "real_service_requests": 0,
+    "model_inference_performed": false,
+    "training_performed": false,
+    "gpu_used": false,
+    "ssh_used": false,
+    "external_benchmark_used": false,
+    "full_heldout_fake_model_evaluation_performed": false,
+    "model_quality_report_produced": false,
+    "sealed_sources_or_corpora_modified": false,
+    "frozen_contact_tests_rerun": false
+  },
+  "notes": [
+    "Only the final 24-test source revision is reported. An earlier draft failed because synthetic fixture documents omitted required headers; the test helper was corrected without relaxing production validation.",
+    "Shared contact fixture reply/transport helpers are reused without modifying or rerunning their tests. The default HTTP branch is mocked only to test failed-run evidence classification.",
+    "Malformed nonheldout case payloads and typed files in temporary fixtures prove the loader hashes bytes and routes by leading ID before full heldout-only JSON parsing.",
+    "An initial development schema inspection read one sidecar record before the heldout-only evaluator was implemented. Claims of zero nonheldout reference decoding apply to the evaluator/preflight executions, not the entire development session.",
+    "The independently produced tokenizer/preflight/loopback reports are separate artifacts; CPU unit tests do not establish model quality."
+  ]
+}

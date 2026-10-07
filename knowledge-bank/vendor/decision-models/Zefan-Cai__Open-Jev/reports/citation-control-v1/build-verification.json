@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "status": "passed_data_build_and_schema_checks",
+  "checked_at_utc": "2026-09-20T13:15:53.599787+00:00",
+  "python_version": "3.12.14",
+  "command": "python3.12 -m jev.case_citation --output-dir data/citation-control-v1 --groups 200 --ood-groups 40 --seed 42",
+  "manifest_sha256": "069466d7536c579812bf2c870a9ea209d13a695005c299debffe61cd3aeffff4",
+  "source_files_sha256": {
+    "case_citation.py": "e6aec3d46c095a97c23eafd295d5e52918899b4486d547a387f465ec5e668222",
+    "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+    "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+  },
+  "tracked_manifest_identical": true,
+  "document_count": 200,
+  "semantic_records": 4000,
+  "quote_not_found_cases": 400,
+  "split_counts": {
+    "train": 2520,
+    "calibration": 200,
+    "validation": 180,
+    "test": 300,
+    "ood": 800
+  },
+  "reference_label_counts": {
+    "supported": 1400,
+    "contradicted": 1400,
+    "insufficient": 1200
+  },
+  "standard_validator": {
+    "command": "python3.12 -m jev.data validate data/citation-control-v1",
+    "status": "passed",
+    "summary": {
+      "records": 4000,
+      "groups": 200,
+      "unique_inputs": 4000,
+      "splits": {
+        "calibration": 200,
+        "ood": 800,
+        "test": 300,
+        "train": 2520,
+        "validation": 180
+      },
+      "kinds": {
+        "choice": 4000
+      },
+      "families": {
+        "evidence": 4000
+      },
+      "sources": {
+        "citation-control-v1": 4000
+      }
+    }
+  },
+  "mix_compatibility": {
+    "method": "jev.mix_data.mix with only citation-control-v1 into a TemporaryDirectory; standard split counts and validate_records summary matched exactly",
+    "status": "passed",
+    "semantic_rows": 4000,
+    "gated_cases_excluded": 400,
+    "temporary_output_retained": false
+  },
+  "generator_help_exit_code": 0,
+  "source_hashes_match_manifest": true,
+  "scope": {
+    "original_template_generated_documents": true,
+    "external_samples_or_model_outputs_used": false,
+    "jf100_rows_read": false,
+    "training_performed": false,
+    "model_inference_performed": false,
+    "remote_operations": false,
+    "frozen_datasets_written": false,
+    "model_scores": null
+  },
+  "limitations": [
+    "One controlled amount/date/visitor-exception rule family plus explicit delivery-charge negation.",
+    "OOD changes source wording and section layout only.",
+    "Missing-field cases cover date and visitor status; no unknown-amount instance is generated.",
+    "Reference-data and matcher validation are not model accuracy, macro F1, Brier score, or arbitrary factual verification."
+  ]
+}

@@ -1,0 +1,115 @@
+/*******************************************************************************************************
+ *
+ * ColorEditor.java, in gama.ui.shared, is part of the source code of the GAMA modeling and simulation platform
+ * (v.2025-03).
+ *
+ * (c) 2007-2026 UMI 209 UMMISCO IRD/SU & Partners (IRIT, MIAT, ESPACE-DEV, CTU)
+ *
+ * Visit https://github.com/gama-platform/gama for license information and contacts.
+ *
+ ********************************************************************************************************/
+package gama.ui.shared.parameters;
+
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.MenuItem;
+
+import gama.api.gaml.symbols.IParameter;
+import gama.api.gaml.types.GamaColorType;
+import gama.api.gaml.types.Types;
+import gama.api.kernel.agent.IAgent;
+import gama.api.types.color.GamaColorFactory;
+import gama.api.types.color.IColor;
+import gama.ui.shared.controls.FlatButton;
+import gama.ui.shared.interfaces.EditorListener;
+import gama.ui.shared.menus.GamaColorMenu;
+import gama.ui.shared.menus.GamaColorMenu.IColorRunnable;
+import gama.ui.shared.resources.GamaColors;
+import gama.ui.shared.resources.GamaColors.GamaUIColor;
+import gama.ui.shared.resources.IGamaColors;
+
+/**
+ * The Class ColorEditor.
+ */
+public class ColorEditor extends AbstractEditor<IColor> {
+
+	/** The runnable. */
+	final IColorRunnable runnable = (r, g, b) -> modifyAndDisplayValue(GamaColorFactory.createWithRGBA(r, g, b, 255));
+
+	/** The listener. */
+	final SelectionListener listener = new SelectionAdapter() {
+
+		@Override
+		public void widgetDefaultSelected(final SelectionEvent e) {
+			widgetSelected(e);
+		}
+
+		@Override
+		public void widgetSelected(final SelectionEvent e) {
+			final MenuItem i = (MenuItem) e.widget;
+			final String color = i.getText().replace("#", "");
+			final IColor c = GamaColorFactory.get(color);
+			if (c == null) return;
+			modifyAndDisplayValue(c);
+		}
+
+	};
+
+	/** The edit. */
+	private FlatButton edit;
+
+	/**
+	 * Instantiates a new color editor.
+	 *
+	 * @param scope
+	 *            the scope
+	 * @param agent
+	 *            the agent
+	 * @param param
+	 *            the param
+	 * @param l
+	 *            the l
+	 */
+	ColorEditor(final IAgent agent, final IParameter param, final EditorListener<IColor> l) {
+		super(agent, param, l);
+	}
+
+	@Override
+	public void widgetSelected(final SelectionEvent event) {
+		new GamaColorMenu(null).open(edit, event, listener, runnable);
+	}
+
+	@Override
+	public Control createCustomParameterControl(final Composite compo) {
+		edit = FlatButton.menu(compo, IGamaColors.WHITE, "255,255,255   ").withFixedWidth();
+		edit.setSelectionListener(this);
+		displayParameterValue();
+		return edit;
+	}
+
+	@Override
+	protected void displayParameterValue() {
+		internalModification = true;
+		final GamaUIColor color = GamaColors.get(currentValue == null ? GamaColorFactory.BLACK : currentValue);
+		edit.setTextWithoutRecomputingSize(color.toString());
+		edit.setColor(color);
+		internalModification = false;
+	}
+
+	@Override
+	public GamaColorType getExpectedType() { return Types.COLOR; }
+
+	@Override
+	protected void applyEdit() {
+		final RGB rgb = new RGB(currentValue.red(), currentValue.green(), currentValue.blue());
+		GamaColorMenu.openView(runnable, rgb);
+	}
+
+	@Override
+	protected int[] getToolItems() { return new int[] { EDIT, REVERT }; }
+
+}

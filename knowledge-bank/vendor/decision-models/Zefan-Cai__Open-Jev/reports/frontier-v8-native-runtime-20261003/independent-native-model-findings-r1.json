@@ -1,0 +1,32 @@
+{
+  "GPU_actions": 0,
+  "Torch_or_model_imports": 0,
+  "actual_model_or_installed_tensor_validation": false,
+  "candidate_fix_source_sha256": "6c33a98d5b08a0ef0adf41b6a06793847a755ac81c3722bfd38adb35d25ed873",
+  "candidate_fix_tests_sha256": "497c7137e5709f483b646eb4cc393333c5206b52f6565cd2d4120b57d776b7f7",
+  "created_at_utc": "2026-10-03T12:00:49.668945+00:00",
+  "findings": [
+    {
+      "accepted_fix": "Require actual.dtype == expected.dtype == required_dtype and exact shape/value equality, without conversion.",
+      "id": "saved_tensor_dtype_conversion",
+      "issue": "Saved head/adapter tensors could be converted to FP32 before equality without exact saved dtype or lossless conversion proof.",
+      "meaningful_regression": "test_saved_trainable_dtype_cannot_round_into_exact_identity",
+      "original_excerpt": "expected = expected.to(dtype=required_dtype)\nrequire(torch.equal(actual.detach().cpu(), expected), 'Tensor values differ: '+name)"
+    },
+    {
+      "accepted_fix": "Before/after real optional imports, and during loaded-model/training/row/pre-step observation, reject already-loaded scientific modules outside the exact Source A path/hash inventory. Do not import missing modules solely for path inspection.",
+      "id": "cached_scientific_module_origin",
+      "issue": "Only model_file was checked; already-cached jev package/api/metrics/data from another checkout could survive.",
+      "meaningful_regression": "test_cached_scientific_dependencies_from_another_root_reject",
+      "original_excerpt": "require(Path(dependencies.model_file).resolve() == Path(scientific_root).resolve()/'jev/model.py',\n        'Scientific model import location differs')"
+    }
+  ],
+  "original_evidence_edits": 0,
+  "other_author_refinement_observed": "Training observer now uses weakref for initial model so it does not retain old GPU model through the original checkpoint reload. Dedicated CPU regression added.",
+  "reviewer": "natural_trial_gap",
+  "schema_version": 1,
+  "scientific_source_edits": 0,
+  "scope": "Read-only in-progress source inspection; no imports, tests, model or GPU actions. Original snippets are retained from tool transcript; original transient whole-file SHA was not captured, so none is claimed.",
+  "status": "original_static_findings_preserved_fixes_present_pending_final_closure_review",
+  "tests_run_by_reviewer": 0
+}

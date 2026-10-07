@@ -1,0 +1,53 @@
+{
+  "state": {
+    "adapter": "pokemon",
+    "observation": {
+      "observation_id": "battle-turn-3",
+      "phase": "battle",
+      "player": {
+        "hp": 18,
+        "moves": [
+          "scratch",
+          "growl"
+        ]
+      },
+      "opponent": {
+        "hp": 3,
+        "scratch_damage_range": [
+          4,
+          6
+        ]
+      },
+      "recent_events": [
+        "Opponent used a status move"
+      ],
+      "objective": "Win the current battle"
+    }
+  },
+  "questions": {
+    "action": {
+      "type": "choice",
+      "instructions": "Select one observed legal emulator action for the stated local objective. Damage arithmetic and navigation are supplied by the environment.",
+      "criteria": {
+        "move-scratch": "Use the observed Scratch move",
+        "move-growl": "Use the observed Growl move"
+      }
+    },
+    "opponent_faints_0": {
+      "type": "noul",
+      "instructions": {
+        "task": "If this candidate action is executed now, will the opponent faint before the next player decision? Use the supplied battle facts; probability is a forecast, not an observed outcome.",
+        "action_id": "move-scratch",
+        "action_description": "Use the observed Scratch move"
+      }
+    },
+    "opponent_faints_1": {
+      "type": "noul",
+      "instructions": {
+        "task": "If this candidate action is executed now, will the opponent faint before the next player decision? Use the supplied battle facts; probability is a forecast, not an observed outcome.",
+        "action_id": "move-growl",
+        "action_description": "Use the observed Growl move"
+      }
+    }
+  }
+}

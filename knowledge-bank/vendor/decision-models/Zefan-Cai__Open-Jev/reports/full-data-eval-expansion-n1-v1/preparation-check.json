@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "status": "passed_cpu_preparation",
+  "checked_at_utc": "2026-09-20T12:17:20.781299+00:00",
+  "python": "3.12.14",
+  "tests": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3.12 -m unittest discover -s tests -p test_expansion_data_audit.py -v",
+    "passed": 17,
+    "failed": 0,
+    "exit_code": 0
+  },
+  "help_checks": {
+    "capture.py --help": 0,
+    "verify.py --help": 0
+  },
+  "diff_check_exit_code": 0,
+  "implementation_sha256": {
+    "reports/full-data-eval-expansion-n1-v1/expansion_contract.py": "7c22723b42542e03a62d0e6ad3a35124a30997b0d80fba7e9ae25611667e7c79",
+    "reports/full-data-eval-expansion-n1-v1/capture.py": "2e6b519b03bea4cc60700df5d05ccdf25d34c0952be2efaad1a1faca5761b610",
+    "reports/full-data-eval-expansion-n1-v1/verify.py": "302dc4493b4d88b3529b1a1837bf92de5ba87f01c035ddb65a5a2e41df02c829",
+    "tests/test_expansion_data_audit.py": "e86b30b7c0c4c7af6b969c5aff71471bf482f9fbd588ab19e542c2ec79005929"
+  },
+  "independent_arithmetic_sha256": "662b6d7ec9611a98c754f3c51da8ddea8714e779b76c5699ebe242c2d8c8af6a",
+  "producer_commit": "0b6e4fcca3306b9fe98b96a08074e78b4674fd16",
+  "producer_implementation_sha256": {
+    "scripts/evaluate_checkpoints_parallel.py": "6a271eae0d1382aa2619b2ec547866db3c16b34cbaa6d43a7a15824410ecf493",
+    "jev/model.py": "b8f135ef2da1f1205ba715b02f3dcf3c25962a2bec7e92a335198f59b6083c83",
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "jev/data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e",
+    "jev/metrics.py": "cb460c78b877a24708a0a8f8ca6b51f9602491f6ea24cd14e9a828c03d92f78b",
+    "jev/serving.py": "e181c7dfaa7d0e2af0e79b77ad82a2264ff80fefe147587b0bae25d0aaa6b958"
+  },
+  "preflight_metadata_sha256": "a5bf807cbbde3a22f22d909d59d64be5a638bf5c70bbab0293f28abced64c672",
+  "schema_compatibility": {
+    "method": "AST field checks from pinned producer source and standard offline packager; no producer model execution",
+    "assignment_checkpoint_row_and_worker_schemas": "passed",
+    "packager_contains_all_six_training_evidence_files": true,
+    "full_row_count": 40281,
+    "rank_counts": [
+      10071,
+      10070,
+      10070,
+      10070
+    ]
+  },
+  "arithmetic_review": {
+    "path": "arithmetic-review.json",
+    "sha256": "4b691cb9d19868e670952f7d33098445c3226cbaa3461d18018cdaa551fed4d1"
+  },
+  "scope": {
+    "real_dataset_rows_read": false,
+    "jf100_rows_read": false,
+    "remote_capture_invoked": false,
+    "gpu_used": false,
+    "model_loaded": false,
+    "calibration_refitted": false,
+    "final_checkpoint_or_package_audited": false,
+    "model_evaluation_complete": false,
+    "model_scores": null
+  },
+  "limitations": [
+    "Only small synthetic artifacts and existing preflight metadata were checked.",
+    "No completed final 27B checkpoint, package or 40,281-prediction artifact exists in this audit evidence.",
+    "Future explicit capture and offline verification must succeed on the actual completed artifacts before reporting a final-model audit."
+  ]
+}

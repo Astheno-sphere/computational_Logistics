@@ -1,0 +1,242 @@
+/*******************************************************************************************************
+ *
+ * TextDisplayer.java, in gama.ui.shared, is part of the source code of the GAMA modeling and simulation platform
+ * (v.2025-03).
+ *
+ * (c) 2007-2026 UMI 209 UMMISCO IRD/SU & Partners (IRIT, MIAT, ESPACE-DEV, CTU)
+ *
+ * Visit https://github.com/gama-platform/gama for license information and contacts.
+ *
+ ********************************************************************************************************/
+package gama.ui.shared.parameters;
+
+import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
+import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.browser.LocationAdapter;
+import org.eclipse.swt.browser.LocationEvent;
+import org.eclipse.swt.browser.ProgressListener;
+import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Cursor;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Layout;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.forms.HyperlinkSettings;
+import org.eclipse.ui.forms.events.HyperlinkAdapter;
+import org.eclipse.ui.forms.events.HyperlinkEvent;
+
+import gama.api.exceptions.GamaRuntimeException;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.color.IColor;
+import gama.api.types.font.IFont;
+import gama.core.experiment.parameters.InputParameter;
+import gama.core.experiment.parameters.TextStatement;
+import gama.dev.DEBUG;
+import gama.ui.application.workbench.ThemeHelper;
+import gama.ui.shared.controls.text.XmlText;
+import gama.ui.shared.resources.GamaColors;
+import gama.ui.shared.resources.GamaFonts;
+import gama.ui.shared.resources.IGamaColors;
+import gama.ui.shared.utils.WebHelper;
+import gama.ui.shared.utils.WorkbenchHelper;
+
+/**
+ * The Class TextDisplayer.
+ */
+public class TextDisplayer extends AbstractEditor<TextStatement> {
+
+	/** The statement. */
+	TextStatement statement;
+
+	/** The front. */
+	final Color back, front;
+
+	/** The font. */
+	final IFont font;
+
+	/** The Constant MARGIN. */
+	final static int MARGIN = 0;
+
+	/** The is XML. */
+	// boolean isHtml;
+
+	/**
+	 * Instantiates a new command editor.
+	 *
+	 * @param scope
+	 *            the scope
+	 * @param command
+	 *            the command
+	 * @param l
+	 *            the l
+	 */
+	public TextDisplayer(final IScope scope, final TextStatement command) {
+		super(scope.getAgent(), new InputParameter(command.getName(), null), null);
+		statement = command;
+		IColor c = command.getColor(scope);
+		IColor b = command.getBackground(scope);
+		front = c == null ? null : GamaColors.toSwtColor(c);
+		back = b == null ? null : GamaColors.toSwtColor(b);
+		font = command.getFont(scope);
+	}
+
+	/**
+	 * Checks if is html.
+	 *
+	 * @param message
+	 *            the message
+	 */
+	public boolean isHtml(final String message) {
+		return message.contains("<html>");
+	}
+
+	@Override
+	Composite createValueComposite() {
+		composite = new Composite(parent, SWT.NONE);
+		GamaColors.setBackground(parent.getBackground(), composite);
+		GridData data = GridDataFactory.fillDefaults().grab(true, false).span(3, 1).create();
+		composite.setLayoutData(data);
+		Layout layout = new FillLayout();
+		composite.setLayout(layout);
+		composite.addControlListener(ControlListener.controlResizedAdapter(c -> {
+			int height = composite.computeSize(composite.getSize().x, SWT.DEFAULT, true).y + MARGIN;
+			data.heightHint = height;
+			data.minimumHeight = height;
+			parent.requestLayout();
+		}));
+		return composite;
+	}
+
+	@Override
+	protected Control createCustomParameterControl(final Composite composite) throws GamaRuntimeException {
+		String text = statement.getText(getScope());
+		if (text == null) return new Text(composite, SWT.None);
+		Control result = text.contains("<html>") ? buildBrowser(composite, text) : buildForm(composite, text);
+		GamaColors.setBackAndForeground(back, front, result);
+		result.setFont(GamaFonts.getFont(font));
+		return result;
+
+	}
+
+	/**
+	 * Builds the form.
+	 *
+	 * @param composite
+	 *            the composite
+	 * @param text
+	 *            the text
+	 * @return the control
+	 */
+	private Control buildForm(final Composite composite, final String text) {
+		Composite cc = new Composite(composite, SWT.NONE);
+		cc.setLayout(new FillLayout());
+		GridData bData = (GridData) composite.getLayoutData();
+		XmlText form = new XmlText(cc, SWT.NONE | SWT.READ_ONLY, font);
+		form.marginHeight = 5;
+		form.marginWidth = 5;
+		form.setText("<form><p>" + text + "</p></form>", true, true);
+		form.setHyperlinkSettings(getHyperlinkSettings());
+		form.addHyperlinkListener(new HyperlinkAdapter() {
+
+			@Override
+			public void linkActivated(final HyperlinkEvent e) {
+				WebHelper.openPage(e.getHref().toString());
+			}
+
+		});
+		form.addControlListener(ControlListener.controlResizedAdapter(c -> {
+			int height = form.computeSize(composite.getSize().x, SWT.DEFAULT, true).y + MARGIN;
+			bData.heightHint = height;
+			bData.minimumHeight = height;
+			parent.requestLayout();
+		}));
+		return form;
+	}
+
+	/**
+	 * @return
+	 */
+	private HyperlinkSettings getHyperlinkSettings() {
+		HyperlinkSettings settings = new HyperlinkSettings(WorkbenchHelper.getDisplay());
+		settings.setActiveForeground(
+				ThemeHelper.isDark() ? IGamaColors.TOOLTIP.color() : IGamaColors.DARK_ORANGE.color());
+		settings.setActiveBackground(back);
+		settings.setForeground(ThemeHelper.isDark() ? IGamaColors.TOOLTIP.color() : IGamaColors.DARK_ORANGE.color());
+		settings.setBackground(back);
+		settings.setHyperlinkUnderlineMode(HyperlinkSettings.UNDERLINE_HOVER);
+		settings.setHyperlinkCursor(new Cursor(WorkbenchHelper.getDisplay(), SWT.CURSOR_ARROW));
+		settings.setBusyCursor(new Cursor(WorkbenchHelper.getDisplay(), SWT.CURSOR_ARROW));
+		settings.setTextCursor(new Cursor(WorkbenchHelper.getDisplay(), SWT.CURSOR_ARROW));
+		return settings;
+	}
+
+	/**
+	 * Builds the browser.
+	 *
+	 * @param composite
+	 *            the composite
+	 * @param text
+	 *            the text
+	 * @return the control
+	 */
+	private Control buildBrowser(final Composite composite1, final String text) {
+		Composite cc = new Composite(composite1, SWT.NONE);
+		cc.setLayout(new FillLayout());
+		Browser browser = new Browser(cc, SWT.NONE | SWT.READ_ONLY);
+		GridData bData = (GridData) composite1.getLayoutData();
+		browser.setText(text);
+		browser.addProgressListener(ProgressListener.completedAdapter(event -> {
+			try {
+				Double height = (Double) browser.evaluate("return document.body.scrollHeight;"); //$NON-NLS-1$
+				bData.heightHint = height.intValue() + MARGIN;
+				bData.minimumHeight = bData.heightHint;
+				parent.requestLayout();
+			} catch (SWTException e) {
+				DEBUG.OUT("Error in computing the height of the browser: " + e.getMessage());
+			}
+		}));
+		browser.setJavascriptEnabled(true);
+		browser.addLocationListener(new LocationAdapter() {
+
+			@Override
+			public void changing(final LocationEvent event) {
+				// Problem with Edge on Win32, which opens a blank page at
+				// startup
+				if (event.location == null || "about:blank".equals(event.location)) return;
+				WorkbenchHelper.asyncRun(() -> WebHelper.openPage(event.location));
+				event.doit = false;
+			}
+
+		});
+		return browser;
+	}
+
+	@Override
+	EditorLabel createEditorLabel() {
+		return null;
+	}
+
+	@Override
+	Color getEditorControlBackground() { return back == null ? super.getEditorControlBackground() : back; }
+
+	@Override
+	Color getEditorControlForeground() { return front == null ? super.getEditorControlForeground() : front; }
+
+	@Override
+	protected int[] getToolItems() { return new int[0]; }
+
+	@Override
+	protected void displayParameterValue() {
+
+	}
+
+	// @Override
+	// protected Object getEditorControlGridData() { return isXML ? new
+	// FormData() : super.getEditorControlGridData(); }
+
+}

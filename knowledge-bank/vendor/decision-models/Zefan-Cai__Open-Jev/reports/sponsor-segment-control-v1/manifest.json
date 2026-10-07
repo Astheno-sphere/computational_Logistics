@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "sponsor-segment-control-v1",
+    "groups": 400,
+    "ood_groups": 80,
+    "seed": 42,
+    "license": "CC0-1.0",
+    "source_contract": "https://github.com/valentynkit/jev-skip/blob/6837e3e0f1a48cbfc48c85415d99bcfe3eaf0628/lib/questions.ts",
+    "split_policy": "whole_video_family_with_all_payment_counterfactuals; independent_wording_ood",
+    "generator_sha256": "42b34e2316cd75c9bcb41e6f7946244f866017e76c258ec64de10f1dfcfe9b7e"
+  },
+  "summary": {
+    "records": 10800,
+    "groups": 400,
+    "unique_inputs": 10800,
+    "splits": {
+      "calibration": 756,
+      "ood": 2160,
+      "test": 999,
+      "train": 6345,
+      "validation": 540
+    },
+    "kinds": {
+      "choice": 10800
+    },
+    "families": {
+      "rubric": 10800
+    },
+    "sources": {
+      "sponsor-segment-control-v1": 10800
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "cd8a28b09840594f945d389447e77f0d216c852028d4cce05cda28f2506f7148",
+    "calibration.jsonl": "79540596a197fc4364fb3fe4c7525ad8347ee72e48fec3cbfa0b43e5b47b3322",
+    "validation.jsonl": "12a503bb310414659469ddf14aede84b5a64f4dc166bcbf28d870b9fb3a01c60",
+    "test.jsonl": "642f6e6577a4761dee2b862f914978bd6fc6697979e1a954fd9eb9e163865a17",
+    "ood.jsonl": "29ad7566e7b4989c7cec7aee6d8266db26d19a0829d43a5e179cdd2fade325d9",
+    "cases.jsonl": "e5a9288b10cd075941b1a3c0b070a203bbfacbf2cb5db17373b4429d8b1039fa"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "video_families": 400,
+  "video_contexts": 1200,
+  "typed_rows": 10800,
+  "class_counts": {
+    "self_promo": 1200,
+    "content": 2800,
+    "intro": 1200,
+    "sponsor": 400,
+    "other": 2800,
+    "outro": 1200,
+    "recap": 1200
+  },
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false,
+  "scope": "Original controlled transcript categorization; no natural-video accuracy or audio/visual understanding claim. ID reuses sentence templates across independent video families; OOD uses reserved complete sentences. Counterfactuals are correlated, not independent videos from the web."
+}

@@ -1,0 +1,145 @@
+TestIsBreed
+  globals [ glob1 ]
+  breed [mice mouse]
+  breed [frogs frog]
+  is-frog? nobody => false
+  is-frog? turtle 0 => false
+  O> create-turtles 1
+  is-frog? turtle 0 => false
+  O> create-frogs 1
+  is-frog? turtle 1 => true
+  is-mouse? turtle 1 => false
+  O> set glob1 turtle 1
+  O> ask glob1 [ die ]
+  is-frog? glob1 => false
+  is-mouse? glob1 => false
+  O> set glob1 55
+  is-frog? glob1 => false
+
+IsLinkBreed
+  globals [ glob1 ]
+  directed-link-breed [directed-edges directed-edge]
+  undirected-link-breed [undirected-edges undirected-edge]
+  is-directed-edge? nobody => false
+  is-directed-edge? link 0 1 => false
+  O> crt 2
+  O> ask turtle 0 [ create-directed-edge-to turtle 1 ]
+  O> ask turtle 0 [ create-undirected-edge-with turtle 1 ]
+  is-directed-edge? link 0 1 => false
+  is-directed-edge? directed-edge 0 1 => true
+  is-undirected-edge? directed-edge 0 1 => false
+  is-directed-edge? undirected-edge 0 1 => false
+  is-undirected-edge? undirected-edge 0 1 => true
+  O> set glob1 directed-edge 0 1
+  is-directed-edge? glob1 => true
+  is-undirected-edge? glob1 => false
+
+SetBreedToNonBreed
+  breed [frogs frog]
+  directed-link-breed [directed-edges directed-edge]
+  O> crt 1 [ set breed turtles ]
+  O> crt 1 [ set breed frogs ]
+  O> crt 1 [ set breed patches ] => ERROR You can't set BREED to a non-breed agentset.
+  O> crt 1 [ set breed turtles with [true] ] => ERROR You can't set BREED to a non-breed agentset.
+  O> crt 1 [ set breed links ] => ERROR You can't set BREED to a non-breed agentset.
+  O> crt 1 [ set breed directed-edges ] => ERROR You can't set BREED to a non-breed agentset.
+
+BreedNoDupNames
+  breed [as a]
+  breed [bs a]
+  COMPILE> COMPILER ERROR There is already a singular breed name called A
+
+OutOfRangeWhoGivesNobody
+  breed [apples apple]
+  apple -1 => nobody
+
+HatchWithBreedsOwn
+  breed [rabbits rabbit]
+  rabbits-own [energy]
+  O> create-rabbits 1 [ set energy 10 ]
+  T> hatch 1
+  [energy] of turtle 0 => 10
+  [energy] of turtle 1 => 10
+
+SetBreedOfUnbreededTurtleWithVar
+  turtles-own [apples]
+  breed [wolves wolf]
+  O> crt 1 [ set apples 10 set breed wolves set apples 20 ]
+  [apples] of wolf 0 => 20
+
+SetBreedOfBreededTurtleWithVar1
+  breed [frogs frog]
+  breed [wolves wolf]
+  frogs-own [apples]
+  O> create-frogs 1 [ set apples 10 ]
+  [breed] of turtle 0 = frogs => true
+  O> ask turtle 0 [set breed wolves]
+  [breed] of turtle 0 = wolves => true
+  [apples] of wolf 0 => ERROR WOLVES breed does not own variable APPLES
+
+SetBreedOfBreededTurtleWithVar2
+  breed [frogs frog]
+  breed [wolves wolf]
+  wolves-own [apples]
+  O> create-frogs 1
+  [breed] of turtle 0 = frogs => true
+  O> ask turtle 0 [set breed wolves]
+  [breed] of turtle 0 = wolves => true
+  O> ask turtle 0 [set apples 20]
+  [apples] of wolf 0 => 20
+
+DontPropagateGivenShapeOnHatch
+  breed [apples apple]
+  breed [grapes grape]
+  O> create-apples 1 [ set shape "car" hatch-grapes 1 ]
+  [shape] of grape 1 => "default"
+
+DropGivenShapeAfterSwitchingBreeds
+  breed [apples apple]
+  breed [grapes grape]
+  O> create-apples 1 [ set shape "car" set breed grapes ]
+  [shape] of grape 0 => "default"
+
+BreedsOwnVariableInitialization_2D
+  breed [apples apple]
+  undirected-link-breed [bananas banana]
+  turtles-own [tvar]
+  apples-own [avar]
+  patches-own [pvar]
+  links-own [lvar]
+  bananas-own [bvar]
+  O> create-apples 1
+  [tvar] of apple 0 => 0
+  [avar] of apple 0 => 0
+  [pvar] of patch 0 0 => 0
+  O> create-apples 1 [ create-banana-with apple 0 ]
+  [lvar] of banana 0 1 => 0
+  [bvar] of banana 0 1 => 0
+  O> create-turtles 1 [ hatch-apples 1 ]
+  [tvar] of apple 3 => 0
+  [avar] of apple 3 => 0
+  O> ask patch 0 0 [ sprout-apples 1 ]
+  [tvar] of apple 4 => 0
+  [avar] of apple 4 => 0
+
+BreedsOwnVariableInitialization_3D
+  breed [apples apple]
+  undirected-link-breed [bananas banana]
+  turtles-own [tvar]
+  apples-own [avar]
+  patches-own [pvar]
+  links-own [lvar]
+  bananas-own [bvar]
+  O> create-apples 1
+  [tvar] of apple 0 => 0
+  [avar] of apple 0 => 0
+  [pvar] of patch 0 0 0 => 0
+  O> create-apples 1 [ create-banana-with apple 0 ]
+  [lvar] of banana 0 1 => 0
+  [bvar] of banana 0 1 => 0
+  O> create-turtles 1 [ hatch-apples 1 ]
+  [tvar] of apple 3 => 0
+  [avar] of apple 3 => 0
+  O> ask patch 0 0 0 [ sprout-apples 1 ]
+  [tvar] of apple 4 => 0
+  [avar] of apple 4 => 0

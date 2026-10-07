@@ -1,0 +1,38 @@
+data:
+  population_max_size: 2
+  number_of_llm_based_agents: 2
+
+gtfs:
+  cache_enabled: false
+  mode: OTP
+  max_trip_candidates: 5
+  fixed_day: "20250305"
+
+agent:
+  # concurrency
+  remote_llm_max_concurrent_requests: 40
+
+  reschedule_activity_departure_time: true
+  reschedule_transition_ratio: 0.75
+  max_reschedule_amount: 3600
+  pre_schedule_duration: 1800
+  long_term_memory_enabled: true
+  quantify_time_window: false
+  long_term_reflect_interval: 86400
+  long_term_max_entries_query: 12
+  llm_model: "openai/gpt-oss-120b"
+
+  long_term_retrieval__sim_weight: 0.4
+  long_term_retrieval__keyword_weight: 0.3
+  long_term_retrieval__time_weight: 0.3
+  long_term_retrieval__default_reflection_importance_score: 0.16
+
+  long_term_self_reflect_enabled: true
+  long_term_self_reflect_interval_days: 3 # 3 days
+
+  reflection_custom_guidelines: |
+    - You are most sensitive to the arrival times at activity destinations. You must span the consideration over past days, consider the arrival times, and choose the best option.
+  travel_plan_custom_guidelines: |
+    - You are most sensitive to the arrival times at activity destinations. You must realize which travel option is good or not based on the arrival times.
+
+workdir: "../experiments/gpt-oss-120b_05"
