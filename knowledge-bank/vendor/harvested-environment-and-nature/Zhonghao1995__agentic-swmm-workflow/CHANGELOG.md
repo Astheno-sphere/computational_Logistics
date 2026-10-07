@@ -1,0 +1,1007 @@
+# Changelog
+
+All notable changes to Agentic SWMM Workflow are documented here.
+
+## Unreleased
+
+### Memory: proposals with a human decision (2026-09-26)
+
+- A fix the failure loop recorded for the same failure in at least three
+  runs across two cases becomes a proposal: a bullet for the skill that
+  owns the failed tool, or for the operational memory when the tool is
+  agent-internal. A fact the agent records with `record_fact` becomes a
+  proposal for `memory/facts.md`. Proposals are Markdown files under
+  `memory/proposals/` with the evidence, the proposed addition and a
+  unified diff; nothing changes until a human decides.
+- `aiswmm memory proposals [--all]` lists them; `aiswmm memory promote <id>`
+  applies one (a `SKILL.md` or the initial memory only in a source
+  checkout; `facts.md` anywhere) and refuses a target that changed since
+  the proposal; `aiswmm memory reject <id> [--reason]` declines it for
+  good. `aiswmm memory promote-facts` and the fact staging file are
+  gone.
+
+### Memory: retirement of the generated layer (2026-09-26)
+
+- Removed the lessons summariser (`swmm-modeling-memory` skill and its
+  MCP server, `summarize_memory` tool, `aiswmm memory --runs-dir`), the
+  lessons lifecycle (decay pass, `aiswmm memory compact`), the memory
+  MOC, the markdown mirror of negative lessons
+  (`aiswmm memory migrate-negative-lessons-md`), the RAG corpus and its
+  retrieval (`swmm-rag-memory` skill, `retrieve_memory` and
+  `recall_memory_search` tools, `aiswmm audit --no-rag`) and the LLM
+  reflection verb (`aiswmm expert memory-reflect`). None of it was read
+  by the runtime in 131 measured live sessions; the store and its
+  database now carry the memory.
+- `recall_memory` takes a natural-language `query` (plus optional
+  `case_name` and `limit`) and returns matching rows from the store's
+  failures (with their fixes) and negative lessons.
+- The audit hook writes only the store: parametric, runs, calibration,
+  negative lessons (JSONL) and the outcome ledger.
+- The frozen MCP-routed tool set is 20 (was 21); ten module MCP servers
+  ship (were eleven).
+
+### Memory: the failure loop (2026-09-26)
+
+- A tool failure now remembers what fixed it. When the call right after a
+  failed call succeeds, the run-failure ledger records it as the failure's
+  fix (the same tool with the arguments that changed, or another tool
+  instead); the ledger schema is 1.1 and older rows still read.
+- When a failure with the same pattern (tool, class, summary with paths
+  and long numbers collapsed) happens again, the planner's next turn
+  carries a `[failure_memory]` message naming the last fix, and the trace
+  records `failure_hint_shown` and whether the next successful call
+  followed it (`failure_hint_followed`).
+- The `<recent-failures>` digest at session start names the known fix
+  next to each line.
+- The `failures` table gained `pattern` and `fix` columns; a database
+  created before them gets the columns in place.
+
+### Memory: one database (2026-09-26)
+
+- `memory/store/memory.sqlite` now holds the project memory next to the
+  sessions: `failures`, `parametric`, `calibration`, `negative_lessons`
+  and `runs`. The JSONL ledgers stay the append-only truth; each table is
+  a lazily synced index of its ledger, so the writers are unchanged and
+  the readers query the database.
+- `aiswmm memory rebuild` sets the current database aside and rebuilds
+  every table from the ledgers and `runs/`.
+- The parametric memory's separate sqlite index is gone; the database is
+  the index.
+
+### Memory layout: one folder, three kinds (2026-09-06)
+
+- Everything memory-related now lives under `memory/`. `memory/initial/`
+  is the hand-written, shipped memory: the seven startup files the shell
+  loads into its system prompt (formerly `agent/memory/`) and the three
+  reference tables (`reference_benchmarks.yaml`, `storm_library.yaml`,
+  `citations.yaml`, formerly under `memory/modeling-memory/`).
+- `memory/store/` is what the program writes in normal use: the ledgers,
+  the session database (`memory.sqlite`, formerly `runs/sessions.sqlite`,
+  adopted automatically), project overrides and generated views. It lives
+  in the workspace (the checkout, or the directory a pip user runs aiswmm
+  in) and is never committed. On a pip install the memory used to be
+  written into site-packages.
+- `memory/facts.md` holds the promoted project facts (formerly
+  `agent/memory/curated/facts.md`); its staging file sits next to it and
+  is ignored.
+- The program-generated files that were tracked in the repository
+  (lessons, indexes, proposals, the RAG corpus and its indexes) are no
+  longer shipped or tracked; a fresh install starts with an empty store.
+- `aiswmm bootstrap memory` scaffolds the store (ledgers, overrides,
+  README); the reference tables ship with the package and a project
+  overrides one by copying it into the store.
+- The rule behind all of this: a file the program writes in normal use
+  is not in the repository.
+
+## v0.9.4 - What two days of real use changed (2026-09-03)
+
+Every change here came from driving the interactive shell with natural language
+for two days across five Canadian cities, judging each answer as a user would,
+and fixing what the sessions exposed. 102 commits: 78 fixes, 10 new
+capabilities, 4 cost reductions. The test suite grew from 3,289 to 4,067.
+
+The theme is honesty. A product that quietly substitutes one run's numbers for
+another, or records a stray keypress as an expert decision, is worse than one
+that fails loudly, and several of these were only visible by using the thing.
+
+### Fixed, honesty
+
+- **A failed run no longer borrows another run's results.** After a fetch
+  failed, the next question ("what was the peak?") was answered from an earlier
+  successful run, with nothing in the wording to reveal the substitution. The
+  failed run now stays the anchor for the rest of the turn, and the answer says
+  plainly that nothing ran.
+- **A stray keypress is no longer recorded as an expert decision.** The
+  human-in-the-loop review prompt reused the tool-approval seam, where anything
+  other than `y` is a harmless decline. For a decision written into a run's
+  provenance that meant any keypress, including one meant as a command, became
+  a permanent "expert denied" record. Approvals and recorded decisions are now
+  separate seams: the decision prompt takes `y` or `n` and records nothing for
+  anything else.
+- **A recorded approval is no longer narrated as pending.** After the reviewer
+  approved a result, the answer still said the workflow was waiting for a
+  decision. The tool result now states the verdict, what it means, the decision
+  id and the file it was written to.
+- **An answered turn is no longer reported as a failed turn.** A complete,
+  honest answer over one failed read-only call printed "Turn failed with exit
+  code 1" beneath it. That case now has its own exit code and wording.
+- **A declined tool call ends the turn.** One "no" to a fetch used to produce
+  two more prompts for the same fetch with a different area, and the answer
+  then described the decline as a runtime block.
+- **An MCP server that cannot start says why.** Three separate sessions blamed
+  load and timeouts for "MCP process ended before sending a complete line". The
+  cause was two servers with no `node_modules`, dying in 0.1 s with a module
+  error the client read and discarded. The preflight now recognises the launcher
+  form the registry actually uses, the error carries the server's own stderr,
+  and `aiswmm doctor` lists bundled servers that were never installed.
+- **The audit no longer reports missing evidence that exists.** It finds the
+  built INP by canonical layout when no manifest records it, finds the network
+  QA report beside the INP, takes an external INP from the runner manifest,
+  reads the prepared-input validation verdict, and keeps the prior record as a
+  timestamped backup instead of overwriting it.
+- **`apply_patch` refuses to edit a run that has already been audited**, unless
+  explicitly allowed, so an archived result cannot change under its own
+  provenance record.
+
+### Fixed, the shell
+
+- Follow-up questions stay in the run they are about instead of opening an empty
+  folder named after the sentence, and a question about finished work is a chat
+  turn. An imperative "do the whole job for ..." is not a question and opens a
+  run folder.
+- Runs are named after the place rather than the request's verbs, in English and
+  in Chinese.
+- The approval line names what it approves, including the city behind a
+  placeholder bounding box, and an outward-facing tool asks again for a new area
+  within the same turn rather than reusing the first approval.
+- The shell survives a provider error instead of dying with the session, and the
+  model-swap note is said once per process.
+- A missing file names the files that exist, and a miss inside a chat folder
+  points at the run the chat is about.
+
+### Fixed, results and units
+
+- Every peak carries the flow unit from the report; nothing assumes cubic metres
+  per second any more.
+- Parameter sweeps and climate scenario batches each keep their own files
+  instead of overwriting the previous batch.
+- Word reports, captions, run READMEs and generated markdown follow the house
+  style, and the report tool states when its body is the English template.
+
+### Added
+
+- `fetch_swmm_from_canada` accepts a published city name, so "downtown Kelowna"
+  needs no bounding box.
+- `propagate_parameter_ranges`, a typed reference-free uncertainty propagation
+  tool, and a reference-free one-at-a-time sensitivity ranking with an honest
+  split between the two routes.
+- The typed `network_qa` checks an existing INP as well as a network JSON.
+- Typed flooding, surcharge, depth and runoff report sections.
+- The memory layer is read as well as written: failure memory at session start,
+  parametric hits as a prompt block, and the agent path feeding memory anchored
+  on the place the run is named after. Measured on one scenario, the failure
+  memory took a repeat task from one failed call and 27 seconds to zero failed
+  calls and 10 seconds.
+- The threshold gate reads real QA shapes and grades a breach low, medium or
+  high.
+- Every figure renders to the journal figure specification.
+
+### Performance
+
+- The catalogue prologue runs once per process, skill priming loads only the
+  skills actually chosen, and tool schemas are scoped to the goal by default.
+
+### Cases
+
+- [cases/kelowna](cases/kelowna/): the same one-sentence chain on a fifth city,
+  with the study area figure, the hydrograph, the Word report and the model
+  committed so the run reproduces offline.
+
+## v0.9.3 - Installs where it said it did (2026-08-13)
+
+v0.9.2 fixed the Windows installer for x64 machines and shipped two platforms
+that could not install at all. Both are fixed here, each verified by a CI job
+that runs the real one-liner on the real machine, which is what was missing.
+
+### Fixed
+
+- **Windows on ARM could not install, and the error named nothing.** `shapely`
+  and `pyogrio` have never published a `win_arm64` wheel: 130 and 21 releases
+  respectively, zero between them, for every Python from cp310 to cp314. On an
+  ARM64 interpreter pip falls back to a source build and dies on
+  `GDAL_VERSION must be provided as an environment variable`, which says
+  nothing about architecture. The answer is an x64 interpreter under the
+  emulation Windows 11 provides, and getting one took five separate fixes:
+  winget ignores `--architecture` for a package id it already has installed
+  (needs `--force`); winget is absent entirely on some machines (now falls
+  back to a pinned python.org download); `py -3.12` keeps pointing at an
+  already-registered ARM64 build, so a freshly installed x64 one is invisible
+  through the launcher (interpreters are now found on disk); and
+  `platform.machine()` on Windows reports the *parent process* architecture,
+  so every x64 interpreter the installer obtained was then discarded as ARM64
+  (now asks `sysconfig.get_platform()`, the value pip matches wheels against).
+- **The Linux one-liner assumed sudo.** Containers and many server images run
+  as root and ship no sudo, where the hardcoded call died as
+  `sudo: command not found`. The engine build hit the same call and, being
+  non-fatal, left the installer reporting a complete install with no SWMM
+  solver on a machine that could not run a single model. Both scripts now run
+  privileged commands directly when already root, and `apk` and `pacman` join
+  the package-manager list.
+- **A reused virtualenv kept the previous interpreter's binaries.**
+  `python -m venv` over an existing directory repoints the interpreter and
+  leaves site-packages alone, so a venv built by 3.11 and reused by 3.12 ends
+  up cpython-312 with cp311 wheels inside it. pip reports nothing wrong,
+  because the metadata says installed. The installer now rebuilds when the
+  interpreter changes, rebuilds again if the packages still fail to import,
+  and proves the wheels load before the step passes.
+- **A truncated failure told you nothing.** With
+  `$ErrorActionPreference = 'Stop'`, PowerShell 5.1 turns the first stderr
+  line of a native command into a terminating error, so a Python traceback
+  arrived as `Traceback (most recent call last):` and nothing else.
+- **The agent recited its own context at you.** Every continued turn echoed
+  the planner's continuation block, ten lines of internal plumbing under the
+  one line saying what the turn was, into the terminal, the run README, and
+  the report header.
+
+### Added
+
+- **SWMMCanada is reachable.** `fetch_swmm_from_canada` was off for every
+  install, because nothing set its URL and nothing offered to, while the
+  upstream sat on the README front page. Worse, the error text named a
+  `localhost:8000` container that does not exist, so a planner asked how to
+  configure it repeated that address to the user. `aiswmm setup` now offers
+  the real deployment once, defaults to off, and says in words that enabling
+  it sends the requested area to that service.
+- **CI installs on the machines that were breaking.** A `windows-11-arm`
+  runner and a root Linux container, both running the documented one-liner and
+  then asserting that the geospatial stack imports and the solver binary
+  exists. Every defect above was invisible to a matrix whose only Windows
+  runner was x64 and which never ran the bash installer at all.
+- **An install troubleshooting page**, with the reason behind each failure
+  rather than a ritual, linked from one clause in the README.
+- **A second Victoria case study**, run on Windows ARM against the real
+  municipal network, published for what the agent refused to claim: a 6.111%
+  routing continuity error and a flooding volume against zero rainfall, named
+  as disqualifying rather than reported as results.
+
+## v0.9.2 - The install actually works on Windows (2026-08-12)
+
+A day of testing v0.9.1 on a Windows 11 ARM machine, in the product rather
+than in the source. Every fix below has a transcript behind it.
+
+### Fixed
+
+- **The Windows installer no longer walks past a failed step.** `Run-Step`
+  printed its captured log with `Get-Content`, which writes to the PowerShell
+  *output* stream and is therefore appended to the function's return value.
+  The caller's `-not (Run-Step ...)` then evaluated a multi-element array,
+  always truthy, and skipped the failure branch: a failed step neither showed
+  its output nor stopped the install, and the run ended on "Install complete."
+  with "MCP servers: installed". Five more defects travelled with it, all in
+  the same transcript: a sticky `$LASTEXITCODE` that re-failed the next step
+  (a bare `New-Item` "failed" in 0s), an MCP enumeration that recursed into
+  `node_modules` and ran npm in every nested dependency, winget helpers that
+  leaked output into their return values so the "skip MCP" fallback was
+  unreachable, and labels rendering as "... failed failed."
+- **Upgrading from any pre-#381 install was impossible.** `git checkout`
+  aborted on an untracked `mcp/swmm-uncertainty/package-lock.json`, and
+  Windows PowerShell does not raise on a native non-zero exit, so bootstrap
+  reinstalled the *old* tree while the banner printed the new tag.
+- **A reused virtualenv kept the previous interpreter's binaries.**
+  `python -m venv <existing dir>` repoints the interpreter and leaves
+  site-packages alone, so a venv built by 3.11 and later reused by 3.12 ended
+  up cpython-312 with cp311 wheels inside it. pip reported nothing wrong (the
+  metadata says installed; that step passed in 7 seconds having done nothing)
+  and the failure surfaced hours later as a plot that would not draw. Both
+  installers now rebuild on an interpreter change and prove the wheels import
+  before the step passes.
+- **Doctor stopped covering for it.** `_module_available` used
+  `importlib.util.find_spec`, which answers "is this package on disk", not
+  "does it work", so doctor printed `python module: numpy - importable OK`
+  while every import in the product raised.
+- **`search_files` read the whole install to find one line.** 78,626 entries
+  walked, 63,579 surviving the old skip list, against 11,472 worth searching:
+  the gap is `node_modules` from the 11 MCP servers, each file read into
+  memory in full. One search took 2m25s and read like a hang. Now 0.7s, and a
+  capped scan says its results are incomplete rather than implying "not found".
+
+### Added
+
+- **`aiswmm gateway`: the keyless ChatGPT-plan route is reachable.** The
+  `codex` route has been in the table since ADR-0008 and needed a local
+  gateway the product never helped anyone install. `aiswmm gateway login`
+  now installs a pinned CLIProxyAPI build for the running OS and
+  architecture, runs the browser OAuth, and leaves it serving. `aiswmm setup`
+  offers the whole thing inline when you pick `codex`.
+  Architecture is detected, never asked: on Windows, `PROCESSOR_ARCHITEW6432`
+  wins when set, because an x64 Python on an ARM64 machine reports AMD64 and
+  would otherwise be handed the emulated build. Downloads are verified
+  against the release's own checksums and a mismatch writes nothing.
+- **The install surface points at the whole route table.** Every message the
+  installer printed named OpenAI and Claude, so a user who did not want to
+  pay per token was told an API key was the only way in. Next steps is now
+  two commands, and the installer hands over to `aiswmm setup` directly.
+- **Word reports carry the hydraulics they already computed.** Node inflows
+  with time of peak, outfall loadings, conduit peaks and max/full ratios, in
+  the model's own flow units, read from the run's `model.rpt`. They were
+  always there; nothing downstream looked.
+- **SWMM's external-file error names the file.** `ERROR 361 ... Time Series
+  TEMP_ROME` names a series, never the filename, which is two sections away
+  in the INP. The error now resolves it and says which file to copy where.
+
+### Changed
+
+- **A run folder is organised for whoever opens it.** The six agent sidecars
+  move under `_agent/`, SWMM's console progress bars move to
+  `06_runner/_engine/`, and every run gets a `README.md` saying what it was,
+  which file is the deliverable, and what each stage holds. Legacy runs stay
+  readable: the resolver prefers the new location and falls back to the root
+  forever.
+- **Run folders are named after the work.** A pasted path used to name the
+  folder after the user's home directory
+  (`193233_C-Users-Hoz-AppData-Local-agenti_run`) and every non-Latin prompt
+  collapsed to `agent`, so five different questions produced five folders
+  called `agent_chat`.
+
+## v0.9.1 - Install-path honesty (2026-08-11)
+
+A clean-venv audit of what a brand-new user actually receives. Two gaps
+between "installed" and "capable" are closed.
+
+### Fixed
+
+- **Doctor no longer cries wolf on a pip install.** The required-scripts
+  check resolved paths as `repo_root() / path`, which is source-tree only,
+  so a `pip install aiswmm` reported four core scripts (runner, audit, plot,
+  memory summary) as MISSING while the runtime executed them without
+  trouble. A new user's very first diagnostic said the install was broken
+  when it was not. The check now resolves exactly the way the runtime does.
+- **The one-liner installer ships the Word-report dependency.** The Word
+  deliverable is on the README front page and in the case study, but
+  `python-docx` was in neither the core dependencies nor
+  `scripts/requirements.txt`, so a `curl … | bash` user could complete
+  every step of the chain except the one that produces the client
+  document.
+
+### Added
+
+- **Doctor reports the report extra.** Absent `python-docx` is now surfaced
+  the same way the anywhere extra already was, naming the exact command
+  (`pip install aiswmm[report]`) instead of leaving the gap silent.
+- **A `full` extra.** `pip install aiswmm[full]` installs report, gis, and
+  anywhere in one go, for users who want every capability without tracking
+  which extra covers which skill.
+
+## v0.9.0 - The interactive product release (2026-08-09)
+
+41 PRs since v0.8.0 (#363 to #403), driven by live natural-language sessions
+on the real Victoria, BC municipal network rather than by reading code. A
+public case study of one such session ships in `cases/downtown-victoria/`.
+Full suite grows from 3,289 to 3,454 passed.
+
+### Added
+
+- **Study area on arrival** (#398). `fetch_swmm_from_canada` unpacks the
+  upstream bundle into the run's `00_raw/` stage and renders a study-area
+  map (DEM hillshade, subcatchments, conduits, outfalls) before the first
+  simulation, so every Canada run starts with its inputs and its geography
+  on the record.
+- **Product-grade interactive sessions** (#399, #400, #401, #403). Answer a
+  clarifying question and the same session continues instead of restarting;
+  one Y approves the rest of the turn's chain in the quick profile
+  (`--safe` keeps per-tool prompts); successful read-only reconnaissance
+  stays out of the transcript by default; run directories are named after
+  the place in your goal (`191335_downtown-victoria-bc_run`); long tools
+  show a live spinner with elapsed time; and the approval prompt owns its
+  line and its input (a keypress buffered before the question was visible
+  can no longer answer it).
+- **GPT patch envelope and inline calibration search spaces** (#393).
+  `apply_patch` understands the OpenAI patch envelope alongside unified
+  diffs, and `calibrate` accepts an inline search-space object with no file
+  on disk required.
+- **Inline skill index** (#395, #396). The planner's system prompt carries a
+  compact index of every skill, removing the per-session catalog
+  reconnaissance prologue (about a quarter fewer tokens on a typical
+  chain).
+- **Date-first one-shot runs** (#389). Single-shot sessions join the
+  `runs/YYYY-MM-DD/` scheme and the run-root layout is documented.
+- **Report title override** (#403). `generate_report` accepts the `--title`
+  the agent handler had been forwarding all along.
+
+### Fixed
+
+- **The pip wheel ships every skill the runtime references.** The wheel's
+  skill allowlist had drifted: `swmm-report`, `swmm-design-review`,
+  `swmm-anywhere`, and `swmm-water-quality` were missing, so a
+  pip-installed aiswmm could not generate the Word deliverable or run the
+  design review while the git-based one-liner install hid the gap. Caught
+  by this release's wheel smoke; a test now pins runtime skill references
+  against the allowlist so the drift class is closed.
+- **Report figures always embed** (#391, #402). The report's figure scan
+  covers every real plot-directory variant, and plot outputs from both the
+  CLI and the agent path are anchored into the run's canonical `08_plot`
+  stage, so a deliverable can no longer silently miss a figure.
+- **Model Description reads the INP** (#387), not a phantom schema.
+- **Fourteen silent-failure classes closed in one maintenance sweep**
+  (#375 to #388): malformed `.rpt` rows skip instead of truncating the
+  section; healthy runs are no longer classified as failures in memory;
+  manifest readers resolve the runner manifest instead of a root decoy;
+  CSV time-column inference combines Date+Time columns; `calibrate` no
+  longer silently discards `--objective`; runner manifests stamp UTC; CRS
+  identity is canonical EPSG; review resolves canonical run layouts; and
+  more.
+- **Wet-window Canada chain findings** (#397). Fetched models are always
+  plottable (a `[REPORT]` section is injected when the upstream INP lacks
+  one), review verdicts flow as data, and the skill contract matches the
+  behavior.
+- **Network QA truthfulness** (#374). A fatal network can no longer report
+  success through three cooperating layers.
+- **Single-shot honesty** (#390). One-shot sessions stop ending with
+  questions nobody can answer.
+
+### Changed
+
+- **Import surfaces pinned and the registry on a self-registration seam**
+  (#363 to #371). Every tool family now registers itself; the central
+  registry shed its 1,900-line catalog and the import dance is gone, with
+  binding and read-only ratchets green at every step.
+- **Docs** (#372). The swmm-canada skill contract and the two-interfaces
+  guide.
+
+## v0.8.0 - Provider routes, the SWMMCanada chain, climate scenarios (2026-08-08)
+
+Four feature PRs in one day (#357, #360, #361, #362): connect any LLM the way
+you already pay for it, get a real Canadian model from a bounding box, and take
+it from calibration to climate-change what-ifs. Full suite green
+(**3,289 passed**) with a real-swmm5 end-to-end behind each new pipeline.
+
+### Added
+
+- **Ten LLM provider routes from one table** (#357). `openai` (default),
+  `anthropic`, `codex` (a local OpenAI-compatible gateway in front of a
+  ChatGPT subscription), `openrouter`, `deepseek`, `groq`, `gemini`, local
+  keyless `ollama` and `lmstudio`, and `custom` (any `/v1` endpoint: vLLM,
+  proxies, corporate gateways). Three pure-stdlib wire clients cover all of
+  them, including a new chat/completions client with function calling. Adding
+  a provider is one route-table entry.
+- **A detect-first setup wizard.** Bare `aiswmm setup` on a terminal now
+  probes what you already have (exported keys, a running Ollama or LM Studio,
+  a local gateway on :8317/:20128), lists the models local endpoints actually
+  serve, asks only for what is missing, and verifies the connection at the
+  end. Every non-interactive invocation keeps its historical behavior
+  byte for byte.
+- **A local fallback chain.** `provider.fallback = ollama` keeps a session
+  alive through outages, quota windows, and missing keys: the switch engages
+  only on structural failures (401/403/429/5xx, connection loss, absent
+  credentials), replays the full conversation into the fallback, and warns
+  loudly. Request bugs still surface.
+- **`aiswmm login <route>`** for every route, a per-route `login --status`
+  table, and a route-aware doctor.
+- **The SWMMCanada chain, wired and validated live** (#361). One goal can now
+  fetch a real municipal model for a Canadian area, simulate it, and audit it
+  in one run folder. Validated against the hosted service: a downtown
+  Victoria AOI became a real 423-subcatchment network in 173 s, ran under
+  swmm5 unmodified, and audited cleanly; the whole chain took 178 s. Coverage
+  wording now describes the service's model (real pipes where a supported
+  city covers the AOI, 35 cities at last sync, synthesized elsewhere in
+  Canada) instead of embedding a list that goes stale, the natural-language
+  route understands Canadian city phrasing (English and Chinese), and doctor
+  probes the upstream's health endpoint when configured. An opt-in live
+  smoke test (`AISWMM_SWMMCANADA_LIVE=1`) encodes the validation.
+- **`aiswmm climate`: calibrate first, then force** (#362). Batch a model
+  under precipitation-scaled climate scenarios (default 1.0/1.10/1.20/1.35,
+  any `--factors` list) and get a per-scenario comparison of precipitation,
+  runoff, flooding, outflow, and peak flow. `--params-json best_params.json
+  --patch-map patch_map.json` applies calibrated parameters first through
+  the same patch-map contract `aiswmm calibrate` produces, so the deltas are
+  measured on the model that matches reality. Scenario folders are
+  self-contained, land in the canonical `03_climate/` stage, and a failed
+  scenario keeps its row instead of vanishing. Also available to the agent
+  as the `run_climate_scenarios` tool with English and Chinese intent
+  phrasing.
+
+### Fixed
+
+- **`aiswmm run` without `--node` reports a real peak.** The historical
+  literal default `O1` silently produced a null peak on any model that names
+  its outfalls differently, which includes every SWMMCanada and swmmanywhere
+  build. The default now resolves the INP's first outfall.
+- **The audit hook's RAG refresh actually runs.** It invoked
+  `refresh_after_run.py` with the fallback script's flags, so with the
+  refresh entry point installed every audit's corpus refresh exited on a
+  usage error that best-effort handling swallowed. Both invocation shapes
+  are now correct and pinned by tests.
+- **Session labels tell the truth** (#360). Traces and session state write
+  `planner: llm|rule` plus a `provider_route` field naming the route that
+  actually served the turns, instead of the historical `"openai"` literal
+  that meant "an LLM ran" on any backend.
+
+### Changed
+
+- **Provider and model resolution has one seam** (#360).
+  `resolve_selection()` replaces fourteen hand-rolled config lookups, and
+  selecting a route in config without storing a model now resolves the
+  route's shipped default instead of erroring downstream.
+- `agent/swmm_runtime` exposes a lazy package facade; package-level imports
+  are the blessed form and stay import-cheap.
+
+### Also
+
+- Deliberate deferrals are tracked with measured inventories instead of left
+  implicit: #358 (a per-family registration seam for the tool registry) and
+  #359 (closing package-facade bypasses).
+
+## v0.7.7 - Honesty, security, and install hardening (2026-07-16)
+
+A hardening pass across five cross-cutting seams: run honesty, headless safety, provider correctness, scientific-result integrity, and the pip install path. Full suite green (**3,213 passed**), with a focused regression test behind every fix. One behaviour change to know about (below).
+
+### Fixed
+
+- **Calibration never scores a stale or errored run.** Each trial clears its previous `.rpt`/`.out` before running, and a run that writes SWMM `ERROR` lines (even on a zero exit code) or produces no fresh `.out` is reported as a failed trial instead of being scored. A reused trial directory can no longer let an invalid parameter set inherit a previous run's result.
+- **Failure no longer reads as success.** An MCP tool result with `isError: true` is recorded as a failure instead of silently `ok`, a tool handler that raises becomes a normal failed tool result instead of ending the session, and an unresolved tool failure is no longer washed into a clean exit by a closing natural-language turn.
+- **`pip install aiswmm` works out of the box.** The report, design-review, water-quality and RAG-memory tools resolve their bundled scripts from an installed wheel (not only a source checkout), and the wheel now ships the memory files the runtime requires, so `aiswmm setup` reports ready after a fresh install. A new `aiswmm[gis]` extra installs the geospatial stack, with an actionable hint when it is missing.
+- **Rainfall hyetographs match the simulated rain.** Gage `Format` (INTENSITY / VOLUME / CUMULATIVE) and interval are read correctly, so a VOLUME series plots as depth instead of being re-scaled. Visualization only: no simulated or calibrated value changes.
+- **Preflight matches SWMM's own parsing:** section headers are case-insensitive and object IDs compare case-insensitively.
+- **Anthropic multi-turn tool use** replays full conversation history each turn (the Messages API is stateless), and a parallel tool batch always returns exactly one output per call.
+
+### Security
+
+- **`web_fetch_url`** resolves the target host and refuses private, loopback, link-local (including the cloud-metadata address) and other non-public targets, re-validates every redirect, rejects embedded credentials, and goes through the approval gate rather than auto-approving as read-only.
+- **The command allowlist validates arguments:** `pytest` targets must resolve inside the repository, plugin/config-injection flags are refused, and the node script path is normalized before the sandbox check.
+- **The GIS MCP server** no longer accepts a caller-supplied executable path; overrides come only from trusted server-side configuration. Runner output filenames are constrained to the run directory.
+- MCP subprocesses gain a wall timeout and output cap, and the launcher forwards termination signals to its child.
+
+### Changed (behaviour)
+
+- **Non-interactive tool approval now fails closed.** When there is no human on the other end (non-TTY stdin), a side-effecting tool is denied unless trusted automation sets `AISWMM_AUTO_APPROVE=1`. Interactive local use is unchanged. Headless, CI, background, or scripted automation that drives the agent loop must set this variable.
+
+### Also
+
+- CI path filters include `setup.py` and `requirements.lock`, and the test job enforces a coverage floor.
+- Release notes fall back to auto-generated content when a curated file is absent, and the Docker default build ref tracks the stable release.
+
+## v0.7.6 - Real calibration, self-describing sessions, one canonical run layout (2026-07-10)
+
+The biggest bundle since the runtime rework: 14 PRs across three themes. Two behaviour changes to know about (below). Full suite green (**3,060 passed**), 46 new deterministic-core tests plus dispatch guards.
+
+### Added
+
+- **`aiswmm calibrate` drives the real SCE-UA engine** (#339, #340; ADR-0005). Give it a model, an observed series, and a patch-map, and it runs a genuine spotpy SCE-UA experiment with live progress (`progress.json` checkpoints, `--progress` lines), leaving a self-describing experiment dir: `convergence.csv`, `calibration_summary.json` (`engine: sceua-spotpy`, `is_stub: false`), `best_params.json`, `09_audit/` candidate artifacts, `trials/`. A same-units guard screams on >100x magnitude mismatches (the L/s vs m3/s classic). The historical synthetic walker survives behind explicit `--engine synthetic`. Verified end to end against the real swmm5 binary.
+- **Self-describing sessions** (#330, #331, #336; ADR-0003). Every session dir now carries `session.yaml` (verbatim goal, status lifecycle) plus an auto-derived `agent_snapshot.json` (resolved provider/model, prompt hash, tool-schema hash, per-SKILL.md hashes, permission profile) and an environment fingerprint (python, platform, version, git commit, container identity) that flows into `manifest.json` and `experiment_provenance.json`. Interactive turns included.
+- **`aiswmm runs tidy`** (#333): archives stale unaudited agent runs to `runs/archive/` (audited runs never move, nothing is ever deleted, `--dry-run` previews). First real run archived 320 of 553 accumulated directories.
+- **SWMMCanada pre-submit route announce** (#337): with a current upstream, the status line reports "PREVIEW: Real municipal network - Ottawa, ON" before the multi-minute build starts; older upstreams are silently tolerated.
+- **Windows install smoke in CI** (#335): the documented one-liner runs weekly on a hosted Windows runner and smokes the installed CLI; closed the oldest open issue (#3).
+- **Docker Hub mirror** (#338): tagged images dual-publish to docker.io/zhonghao0901 with README sync alongside ghcr.
+
+### Changed (behaviour)
+
+- **`aiswmm calibrate` defaults to the real engine**: a bare invocation now requires `--observed-csv` and `--patch-map`. Scripts that relied on the synthetic walker add `--engine synthetic` (unchanged semantics, still stamped `is_stub: true`).
+- **One canonical run-directory layout** (#332; ADR-0004): new runs use the reserved stage numbers (`05_builder`, `06_runner`, `07_qa`, `08_plot`, `09_audit`, `10_upstream/{swmmanywhere,swmmcanada}`, `11_review`) on every path; the agent runner no longer writes engine outputs flat at the run root. Historical runs stay readable forever (alias-tolerant readers); nothing writes legacy names again, and a real-swmm5 CI guard rejects any new scheme.
+- The rule planner routes "run <model>.inp" to `run_swmm_inp` instead of the doctor fallback (#334); SWMMCanada builds report live stage/percent on the status line (#325).
+
+### Fixed
+
+- Bare `plot_run` converges (the rain-series default resolves itself) and agent-path `audit_run` no longer writes the user's Obsidian vault by default (#329): both found by the new handler-chain convergence test.
+- Skill-directory lookups are resource-aware for pip installs (four call sites moved to `resource_root()`, grep-guarded), so wheel users reach the calibration engine and full agent snapshots (#339).
+- Audit artifacts no longer scatter into the MCP server's working directory on relative paths (#332); swmm-gis no longer hardcodes sibling-skill paths (closed #246); `_resolve_run_dir` deduplicated (closed #296).
+
+### Upstream: SWMMCanada
+
+Option B landed on both sides: upstream `/aoi/preview` now reports `mode`/`city`/`in_canada` from the same dispatcher submit uses, and `GET /api/v1/coverage` exposes the live city registry (8 real-network cities incl. Regina's dual sanitary system) so client city lists can never drift again. The aiswmm client consumes preview best-effort today; coverage consumption follows the production redeploy.
+
+## v0.7.5 - SWMMCanada integration hardened: retry, infiltration choice, Canada geofence (2026-07-05)
+
+A hardening release for the SWMMCanada real-pipe INP source introduced in v0.7.4, plus the completed architecture-deepening pass across runtime, memory, CLI, and agent internals (#301-#320). Tool surface unchanged (56 typed tools, 19 skills); full suite green (**2,932 passed**).
+
+### Added
+
+- **Infiltration method choice on `fetch_swmm_from_canada`** (#323). The upstream submit API's optional `infiltration` field (`CURVE_NUMBER`, `HORTON`, `GREEN_AMPT`) is exposed as a typed enum parameter and passed through verbatim: the SWMMCanada service owns the enum and rejects unknown values, so the client never drifts from upstream's list.
+- **Deterministic Canada geofence pre-check** (#324). `fetch_swmm_from_canada` computes the AOI centre and fails soft, at zero network cost, when it falls outside Canada's coarse WGS84 bounding box, steering the planner to `synth_swmm_from_bbox`. Routing away from the tool no longer relies on tool-description judgement alone; geometry the check cannot read passes through untouched (upstream stays the authority, ADR-0001).
+
+### Changed
+
+- **Chinese and other non-ASCII goals route straight to the LLM planner** (#321), and the per-turn preamble is halved.
+- **Architecture-deepening pass** (#301-#320; internal, no tool-surface change). Highlights: `rpt_summary` becomes the single in-process `.rpt` parsing seam with parity locked across all five parsers (#304, closing #232); one `jsonl_store` primitive owns the JSONL file mechanics (#305); a shared INP-source seam (typed results + handler glue) now backs both `synth_swmm_from_bbox` and `fetch_swmm_from_canada` (#307); MCP wiring becomes a factory plus a public routing registry query (#308); the doctor's data layer, CLI verb set, storm dispatch, plot/run manifest schemas, and memory reflection engine each move behind their own seam (#309-#320).
+
+### Fixed
+
+- **Transient HTTP failures no longer abort a SWMMCanada fetch** (#323, closes #295). All three endpoint calls (submit, poll, download) retry 429/5xx and connection-level blips with exponential backoff honouring `Retry-After`, sharing the backoff implementation with the LLM-provider HTTP layer. Failure semantics are unchanged: non-transient errors surface immediately as stage-tagged hints, and the `.inp` is streamed out of the zip instead of double-buffered.
+- **Exact Keifer-Chu Chicago-from-IDF design storm** (#302); the twin implementations are parity-locked by test.
+- **Runtime-written operational stores are untracked, and CLI tests no longer write repo memory** (#322).
+- **The skill-sweep CI guard no longer assumes the local skill count** (#315).
+
+### Upstream: SWMMCanada
+
+The real-pipe path in this release is powered by [SWMMCanada](https://github.com/Zhonghao1995/SWMMCanada), a separate service that turns an area of interest plus a date range into a runnable SWMM model from Canadian open data: real municipal storm networks for **8 cities** (Victoria, Ottawa, Calgary, Surrey, London, Kitchener-Waterloo, Kelowna, Regina), synthesis anywhere else in Canada, and, where a city publishes it (Regina), the sanitary sewer carried as a second tagged system in the same `.inp`. SWMMCanada does the heavy lifting (data acquisition, network building, validation, mode selection); aiswmm consumes it strictly over the async tasks API (ADR-0001), keeps the whole `swmm_model.zip` as the durable provenance artifact, and records the reported mode in every audit.
+
+## v0.7.4 - SWMMCanada upstream INP source, skill-author, reference-free synth QA (2026-06-27)
+
+A capability-focused release bundling 9 feature/fix PRs since v0.7.3: a new way to source a model (real Canadian municipal pipes), a new skill, reference-free QA for synthesized networks, and reliability hardening across the runtime. Typed tools 55 → **56**, skills 18 → **19**; full suite green (**2,875 passed**), SWMM execution byte-identical.
+
+### Added
+
+- **SWMMCanada upstream real-pipe INP source** (`fetch_swmm_from_canada`, #294). A 5th "INP source": fetch a SWMM model built from **real municipal pipe networks** for supported Canadian cities (Victoria, Ottawa, Calgary, Surrey, London, Kitchener–Waterloo, Kelowna) from the separate SWMMCanada service. Consumed over an **HTTP service boundary** (configurable `AISWMM_SWMMCANADA_URL`), not an in-process import — keeping its heavy geo stack out of aiswmm. The whole `swmm_model.zip` is kept in the run dir as the durable provenance artifact (service URL + task_id recorded as foreign keys); models are uncalibrated first-pass estimates, treated like the synth path. Positioned **alongside** `synth_swmm_from_bbox`, never as a replacement (SWMMCanada is Canada-only + real pipes; swmmanywhere is global + synthesized).
+- **`skill-author` skill + evidence-gated skill-evolution proposals** (#282). A portable, domain-general skill for authoring skills; `summarize_memory` now auto-proposes refine-vs-new-skill, gated on accumulated run evidence. The 19th skill.
+- **Reference-free structural + plausibility QA for synthesized networks** (#283). Structural QA (via `swmm-network`) and a plausibility rulebook (`synth_plausibility.yaml`) that score a model with no observed data — the design-review path for synth/real-pipe models.
+- **Operational run-failure capture for memory observability** (#285).
+- **Discoverable swmm-anywhere synthesis parameter overrides** (#284) — `synth_swmm_from_bbox` exposes `config_overrides` with a symptom→knob guide.
+- **THINKING status line cycles verbs** for live progress feedback (#289).
+
+### Changed
+
+- **`run_swmm_inp` is gated behind preflight validation** (#288) — zero-length conduits, missing inverts, undefined raingages, and unit/step sanity are caught before SWMM runs.
+- **Path/file "not found" errors become actionable hints** (#287) instead of bare stack traces.
+- `CONTEXT.md` is no longer published — kept local as design intent; history untouched (#293).
+
+### Fixed
+
+- **MCP servers respawn and retry on transient transport drops** (#286), so a momentary stdio/transport blip no longer fails a tool call.
+
+## v0.7.3 - One-command install on Windows, latest-release by default (2026-06-13)
+
+Reworks the one-line installers so a single command provisions the full toolchain on a fresh machine, and makes both platforms default to the latest published release.
+
+### Fixed — Windows one-line install
+
+- The Windows one-liner (`irm https://aiswmm.com/install.ps1 | iex`) failed on fresh machines. The bootstrap now clones into `%LOCALAPPDATA%` instead of the current directory (an elevated shell defaults to the write-protected `C:\Windows\System32`) and sets a process-scope `ExecutionPolicy Bypass` before running the cloned installer (the default `Restricted` policy blocked it).
+- The installer rejects the Microsoft Store `python.exe` / `python3.exe` App-execution-alias stubs and auto-installs Python 3.12 (required) and Node.js LTS (best-effort; MCP is skipped if Node is unavailable) via `winget`, refreshing PATH in the running session.
+- The venv's `Scripts` directory is added to the user PATH, so `aiswmm` resolves after install instead of reporting "not recognized".
+
+### Changed — installer entrypoints (both platforms)
+
+- `web/install.ps1` and `web/install.sh` now default to the **latest published release** (resolved via the GitHub API); set `AISWMM_INSTALL_REF` to pin a tag (e.g. `v0.7.2`) or `main`. The bootstrap honors that ref and clones the matching tag.
+- The upfront OpenAI-only model prompt is gone; the AI provider and model are chosen after install via the CLI (`aiswmm login` for OpenAI, `aiswmm login --anthropic` for Claude).
+- A CI job keeps `aiswmm.com/install.{ps1,sh}` in lockstep with `web/install.*`, so the website entrypoints never drift from this repo.
+
+## v0.7.2 - Agent-reachable calibration & sensitivity, three new skills, design storms, memory observability (2026-06-11)
+
+Released alongside our paper in *AI for Engineering* ([doi:10.3390/aieng1010005](https://doi.org/10.3390/aieng1010005)). 70 commits since v0.7.1: the planner's typed-tool surface grows from 38 to **55 tools**, the skill library from 15 to **18 skills**, and the test suite from 2,318 to **2,799 tests** — full suite green, SWMM execution byte-identical.
+
+### Added — calibration & sensitivity analysis become first-class typed tools (v0.7.2)
+
+- **6 calibration tools** (`swmm_sensitivity_scan`, `swmm_calibrate`, `swmm_calibrate_search`, `swmm_calibrate_sceua`, `swmm_calibrate_dream_zs`, `swmm_validate`) and **5 uncertainty tools** (`swmm_sensitivity_oat`, `swmm_sensitivity_morris`, `swmm_sensitivity_sobol`, `swmm_rainfall_ensemble`, `swmm_uncertainty_source_decomposition`) registered as typed ToolSpecs — the planner selects SCE-UA / DREAM-ZS calibration and Morris / Sobol' screening by name instead of via the generic `call_mcp_tool` escape hatch. Intent hints corrected to point at the real tools; a new parity test locks every `preferred_tools` entry to a registered tool name. `swmm-gis` and `swmm-params` stay `call_mcp_tool`-only by design (QGIS-desktop dependencies / pipeline glue) — recorded in CONTEXT.md.
+- **Smaller reachability fixes**: `build_raingage_section` registered; `audit_run` gains `compare_to`; `summarize_memory` gains `obsidian_dir`; `format_rainfall` exposes its full input surface (glob / .dat / multi-station); `plot_run` forwards `focus_day` / `window_start` / `window_end`; `synth_swmm_from_bbox` exposes `config_overrides`; `retrieve_memory` bound to its skill.
+
+### Added — three new skills (v0.7.2)
+
+- **`swmm-water-quality`** — completes SWMM engine coverage for pollutant buildup/washoff: the builder emits `[POLLUTANTS]`/`[LANDUSES]`/`[COVERAGES]`/`[BUILDUP]`/`[WASHOFF]`/`[LOADINGS]` from a `--water-quality-json` config (engine-smoke-verified on SWMM 5.2.4 at 0.000% quality continuity error), the canonical rpt parser gains the four water-quality summary sections, the audit note reports pollutant loads, and `read_wq_loads` exposes them to the planner.
+- **`swmm-design-review`** — deterministic rule-checklist engine over a completed run (INP + RPT + manifest): YAML rulebooks (rules are data, not code), `pass / fail / warn / needs-data` per rule with evidence pointers, `aiswmm review` CLI verb and `review_run` typed tool. Ships a GB 50014-class template rulebook in which **every threshold is marked `verify: true`** — the tool reports findings against a user-confirmed rulebook; it never certifies compliance.
+- **`swmm-report`** — assembles a run's audit artifacts, metrics tables, figures, and the provenance sha256 table into an engineering-formatted Word deliverable (numbered sections, table captions with explanatory narratives, page numbers): `aiswmm report` CLI verb, `generate_report` typed tool, nine-section user-overridable YAML template, deterministic content (timestamps from provenance, never the clock). Installs via the `aiswmm[report]` extra (python-docx).
+
+### Added — design storms (v0.7.2)
+
+- **`generate_design_storm`** — synthesise a Chicago (Keifer-Chu; CN 167-form or generic IDF form) or alternating-block hyetograph from a return period + IDF coefficients, writing the same `--out-json` / `--out-timeseries` contract `format_rainfall` produces, so `build_inp` consumes it unchanged. Storm total equals the IDF depth for the design duration exactly. The legacy explicit-depth shape library (uniform/triangular/huff/scs) remains available as `generate_storm_shape`.
+
+### Added — memory observability & application provenance (v0.7.2)
+
+- **`memories_applied`** — runs record which memory entries programmatically shaped their inputs, in `manifest.json` and `experiment_provenance.json`: a deliverable is now traceable to the memory entries behind it.
+- **Application outcome log** (`memory/modeling-memory/memory_outcome_events.jsonl`) — the post-audit hook appends one outcome event per applied memory (within band / below band / run failed / contradicted / reconfirmed); the derived per-entry **health score** is inspectable via `aiswmm memory health <id>`.
+- **Health-aware recall** — entries rank by health × relevance; *watch*-tier entries are recalled with an evidence-bearing caution; *archived*-tier entries are excluded by default, with explicit `aiswmm memory archive` / `restore` verbs (live stores remain human-gated; read-time filtering never mutates them).
+- **Memory context budget** — the session-start memory block is capped (default 4,000 chars, `memory.context_budget_chars`) with ranked packing and a trace event for exclusions; recall ranking gains an optional recency weighting (`memory.recall_half_life_days`, off by default).
+- **New-case onboarding re-wired** — starting a watershed the system has not seen offers transferred starter parameters from similar past cases (planner-side offer hook + `apply_onboarding` typed tool), restoring the surface orphaned by the dispatch refactor.
+
+### Fixed (v0.7.2)
+
+- **Agent default `run_dir` collision** — the `synth_swmm_from_bbox` default directory was non-timestamped, so re-running a project name silently overwrote the previous run's outputs; now `runs/agent/<safe>-<unix-ts>` with an exists-bump. Explicit `run_dir` passthrough (and the `00_raw/` snapshot-reuse workflow) unchanged.
+- **`Outfall Loading Summary` dropped rows in water-quality runs** — the parser's fixed column-count match excluded rows carrying pollutant columns; now a minimum-width match, byte-identical for non-WQ runs.
+- **`.rpt` parsing consolidated** — the canonical section parser (`rpt_summary.py`) absorbed the largest duplicate, and 23 parity tests pin all five historical parser implementations to identical numbers.
+- **SKILL.md drift sweep** — eight skills' runtime-read docs corrected against code (runnable smoke examples, real CLI flags, current tool lists); dispatch-refactor dead code removed.
+
+### Changed — two API-key LLM providers (OpenAI default + Anthropic opt-in)
+
+The planner is driven by one of two **API-key** backends, both using standard
+function-calling over pure-stdlib `urllib` (no SDK, no subprocess): `openai`
+(the default, OpenAI Responses API) and `anthropic` (opt-in, native Anthropic
+Messages API). This supersedes the short-lived, never-released subscription
+design — routing through an agent SDK made Claude emit its own built-in tools
+instead of aiswmm's registered tools, so raw function-calling was chosen for
+robustness (accepting per-token cost). The provider/auth layer stays
+factory-only, so adding a backend is a `factory.SUPPORTED_PROVIDERS` +
+`make_provider` change.
+
+#### Added (provider layer)
+
+- **Native Anthropic provider** (`agentic_swmm/providers/anthropic_api.py`) — hits `https://api.anthropic.com/v1/messages` with `anthropic-version: 2023-06-01`, translating aiswmm's OpenAI-shaped tool descriptors (`parameters` → `input_schema`) and Responses-style `input_items` (→ `messages` with `tool_use` / `tool_result` blocks). Reads `ANTHROPIC_API_KEY`; honours `AISWMM_ANTHROPIC_MOCK_RESPONSE` / `AISWMM_ANTHROPIC_MOCK_TOOL_CALLS` for offline tests. No new dependency.
+- **`aiswmm login --anthropic`** — stores `ANTHROPIC_API_KEY` in `~/.aiswmm/env` (mode 0600), pins `provider.default = anthropic` + `anthropic.model = claude-sonnet-4-6`. A bare `aiswmm login` targets the current default provider's key.
+
+#### Changed (provider layer)
+
+- **Default provider is `openai`** (`DEFAULT_PROVIDER = "openai"`, model `gpt-5.5`). `anthropic` is the opt-in second backend (`DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6"`); both providers require a model, supplied by per-provider config defaults.
+- **`SUPPORTED_PROVIDERS = ("openai", "anthropic")`** — the factory drops the subscription branch; an unknown provider (including the retired `claude_sdk`) raises `ValueError`.
+- **`aiswmm login` manages API keys** via a `provider → handler` registry; `--status` reports the default provider and which keys are present (no secrets).
+- Doctor / setup / welcome surface a two-API-key view (OpenAI default + Anthropic opt-in); the welcome tip and doctor key-row key on the default provider's key.
+
+#### Removed (provider layer)
+
+- The `claude_sdk` provider, the `claude-agent-sdk` core dependency, the `[claude]` extra, and all subscription / macOS-Keychain detection logic.
+
+## v0.7.1 - SWMManywhere natural-language integration + runtime hardening (2026-05-28)
+
+A single natural-language sentence referring only to a WGS84 bounding box now drives an end-to-end SWMM workflow: synthesise the drainage network from public OSM + DEM data, run SWMM, write a deterministic audit dossier, and render a spatial network map — all via the standard `runs/<date>/<id>/` layout. Synthesis comes from SWMManywhere (Imperial College London, BSD-3-Clause); aiswmm is the agent-side adapter. SWMM execution is byte-identical to v0.7.0 — Tecnopolo `model.out` SHA256 unchanged.
+
+### Added — three new LLM-facing typed tools (v0.7.1)
+
+- **`map_run`** — render the spatial network layout (subcatchments + conduits + outfalls) of a SWMM model as a PNG. Sibling of `plot_run` at the LLM surface (plot_run = hydrograph; map_run = network map). In-process wrapper around the `aiswmm map` CLI verb so the agent can request a network figure in one step. 14 unit tests + family-mapping drift entry.
+- **`plot_run.link`** — new `link` parameter renders a conduit Flow_rate hydrograph when set. Mutually exclusive with `node` (which still renders the node-attribute hydrograph). Plumbed through three layers: ToolSpec schema, `_plot_run_args` mapper (forwards link, suppresses node, picks a sensible default `out_png` filename by link id), and the swmm-plot MCP server's zod Args + CallToolRequestSchema handler (emits `--link` or `--node` to the underlying script, never both). 9 unit tests.
+- **`read_rpt_summary`** — parses SWMM .rpt summary sections (`Link Flow Summary` / `Outfall Loading Summary` / `Node Inflow Summary`) into structured JSON rows sorted by the per-section peak/max column. Replaces the `read_file`-with-4000-char-cap workaround on 300+ KB rpts. The ToolSpec description explicitly steers the LLM to call the tool once per section needed ("CALL THIS TOOL ONCE PER SECTION YOU NEED — the tool is stateless") and to use it instead of `read_file` or `search_files` for rpt data. Verified on the 2026-05-28 Tecnopolo run: the LLM called `read_rpt_summary` four times in a single run with different `section` values. 25 unit tests.
+
+### Fixed (v0.7.1)
+
+- **MCP transport `spawn ENOEXEC`.** A zero-byte `.venv/bin/python` stub (left by a half-finished venv or a test-fixture leak) caused the Node MCP launcher to assign `env.PYTHON` to an unusable executable. The downstream `spawn(PY, ...)` call returned `ENOEXEC` because the kernel cannot recognise an empty file as an executable. Fixed in two layers: `agentic_swmm/utils/subprocess_runner.py:runtime_env()` now pins `PYTHON=sys.executable` so the launcher inherits the correct interpreter, and `scripts/run_mcp_server.mjs` adds `isUsableInterpreter()` that rejects empty / non-executable candidates before assignment. Regression test plants a zero-byte stub and asserts the launcher does not select it.
+- **`final_report.md` "What you got" listed `SKILL.md` paths instead of real artifacts.** `_what_you_got` was reading only `result["path"]`, and only `_read_skill_tool` put a path there. Production handlers nested artifact paths under `result["results"]` / `result["excerpt"]` (MCP JSON) / `result["args"]` / `result["summary"]`. New recursive `_mine_paths()` harvests artifact paths from anywhere in the result payload, with planner-internal-fragment filtering and an introspection-tool skip set (`read_skill`, `read_file`, `list_*`, `select_skill`, `search_files`, `capabilities`). Reports now list the produced `synth.inp`, `model.rpt`, `network_map.png`, audit JSONs in their correct sections. 13 unit tests.
+- **`--max-steps` default 16 → 40** in both `aiswmm agent` and `aiswmm chat`. The 16-step ceiling cut the planner off mid-workflow because `gpt-5.5` typically spends ~15 steps on introspection (`list_skills`, `read_skill ×N`, `list_mcp_tools`, `select_skill`) before the first real op. The new default leaves ~25 steps of headroom. Pinned by 4 tests.
+
+### Changed (v0.7.1)
+
+- **`skills/swmm-anywhere/SKILL.md` install + attribution language humanised.** Same substance (BSD-3-Clause, Imperial College London, GitHub URL, citation request) reframed as one researcher crediting another rather than compliance copy. Upstream-attribution paragraph merged into the install section so it cannot be missed.
+- **`.gitignore`** now covers `*.egg-info/`, caches (`.cache/`, `cache/`, `.pytest_cache/`), coverage output (`.coverage`, `htmlcov/`), Docker-mounted run outputs (`docker-runs/`), memory runtime side-files (`command_trace.json`, `project_overrides.yaml`, `.last_refresh_error.json`), spike research artifacts (`scripts/spike_swmmanywhere/`), and local-only experimental data dirs (`data/Todcreek/of1/`, `examples/hand1/`). `package-lock.json` now tracked for reproducible MCP-server npm installs.
+
+### Evidence (v0.7.1)
+
+- **Byte-identical reproducibility re-verified.** Tecnopolo `model.out` SHA256 = `85c5514a81ea745ebb0c1c3e2aebb0c2cc0d5a6aa3ef00a0fa6c8f7b760be38c` on v0.7.1, identical to the 2026-05-15 canonical lock-in across macOS native vs Docker stacks. Downstream tests that pin this SHA can upgrade v0.7.0 → v0.7.1 without re-baselining. See `docs/byte-identical-reproducibility.md`.
+- **Minimum NL prompt length for the full Tecnopolo chain is 11 words.** `examples/tecnopolo/tecnopolo_r1_199401.inp。run it and audit it and plot the result` reaches synthesise-free SWMM execution + audit + plot end-to-end on the standard prepared INP. See `docs/byte-identical-reproducibility.md` for the recipe.
+- **Cross-session memory layer autonomously activated on a real run.** The LLM planner, with no memory-related keyword in the user prompt, issued `recall_session_history(case_name="tecnopolo")` and recovered two prior Tecnopolo sessions from 12 days earlier — the first user-observable activation of the memory layer on a real workflow. See `docs/v0.7.1-cross-session-memory-evidence.md`.
+- **Natural-language SWMManywhere chain end-to-end on two independent regions.** Greenwich Peninsula (1×1 km) canonical case study figures + NYC Midtown (1×1 km) cross-geography verification. See `docs/v0.7.1-swmmanywhere-nl-driven-evidence.md`.
+
+### Out of scope — next milestone
+
+v0.7.1 ships the **agent-side plumbing** for SWMManywhere and the cross-session memory layer. The modelling-science quality bars are explicitly out of scope and tracked as next-milestone work: calibration of the synthesised network against observed flows, systematic continuity-error characterisation across bbox sizes, a memory-aware calibration loop, negative-precedent handling in memory recall, and time-decay weighting for stale precedents.
+
+### Attribution
+
+Network synthesis in v0.7.1 is the work of [**SWMManywhere**](https://github.com/ImperialCollegeLondon/SWMManywhere) by Imperial College London (BSD-3-Clause licensed). Please cite SWMManywhere in any publication that uses or extends the SWMManywhere workflows shown in this release.
+
+---
+
+## v0.7.0a3 — pre-v0.7.1 dispatch refactor + SWMManywhere skill landing (developer-only marker)
+
+The work below was developed on the `feat/swmmanywhere` branch and ships to users as part of v0.7.1. It is preserved here as a separate developer-facing section because it landed as a coherent design effort over the two weeks before v0.7.1 cut.
+
+### Changed — LLM-driven dispatch refactor
+
+- **`select_workflow_mode` tool removed from the registry.** v0.7.0 placed a forced `select_workflow_mode` first-hop in front of every SWMM-shaped goal: the tool's seven-value enum (`calibration` / `uncertainty` / `prepared_inp_cli` / `full_modular_build` / `existing_run_plot` / `audit_only_or_comparison` / `prepared_demo`) was a GPT-4-era defensive guardrail that hid the concrete SWMM tools from the LLM behind one big "pick a mode" tool. Frontier 2026-era LLMs pick the right function from a flat tools list with high accuracy when each description is well-written; the gate was throwing that capability away and forcing keyword re-classification on top of the LLM's own classifier.
+- **`agentic_swmm/agent/workflow_modes/` directory deleted (12 files, ~1100 LOC).** The per-mode adapter registry that `_dispatch_workflow_mode` routed into is gone. Each adapter was a thin wrapper around a sequence of constrained tool calls; the LLM can now decide the same sequence by reading each tool's description / SKILL.md.
+- **`agentic_swmm/agent/intent_disambiguator.py` deleted.** Its trigger (`wants_plot AND wants_run/demo/calibration/uncertainty`) was a GPT-4-era hedge against keyword-classifier overmatch. With the mode gate gone, the disambiguator has nothing to disambiguate.
+- **`agentic_swmm/agent/tool_handlers/workflow_mode.py` deleted.** The handler for the deleted gate.
+- **New typed-tool handler `agentic_swmm/agent/tool_handlers/swmm_anywhere.py`** exposes the `synth_swmm_from_bbox(bbox, run_dir?, project_name?, refresh_raw?, upstream_defaults?, rain_file?)` tool that wraps `swmmanywhere_runner.run_synth_from_bbox`. The legacy mode enum had no `synth-from-bbox` value, so a "use SWMManywhere on this bbox" prompt always fell through to the wrong mode — that real failure case is what surfaced the refactor.
+- **Planner simplified.** `OpenAIPlanner.run` no longer forces a `select_workflow_mode` step or routes through `_dispatch_workflow_mode` / `_maybe_disambiguate` / `_classify_plot_continuation`. The LLM sees the full `AgentToolRegistry.schemas()` on every turn and picks tools by name. The pre-LLM `_consult_workflow_skills` (context priming) and `_consult_memory_informed_policy` (HITL escalation surface) hooks are unchanged.
+- **System prompt rewritten.** "always call `select_workflow_mode` first" replaced by "read the SKILL.md description for each candidate before invoking a SWMM tool; the description plus the typed schema is the contract you commit to". Agent-internal tool list drops the workflow-mode-selection entry.
+- **Capabilities surface updated.** `aiswmm capabilities` no longer lists `select_workflow_mode` under the "Build" group; the new typed `synth_swmm_from_bbox` entry point takes its place.
+- **Upstream alignment.** Tool surface now mirrors the OpenAI function-calling and Anthropic tool-use APIs: each tool has a name + description + typed parameter schema, and the LLM picks tools from a flat registry. No `select_workflow_mode`-shaped routing layer between the LLM and the real tools.
+- **Migration impact.** Interactive shell behaviour is unchanged from a user's perspective — they never typed `select_workflow_mode` themselves; only the planner did. Anyone with external code that imported `agentic_swmm.agent.workflow_modes`, `agentic_swmm.agent.intent_disambiguator`, or `agentic_swmm.agent.tool_handlers.workflow_mode` will need to update. The `workflow_mode` *string* survives as an optional tag on `audit_run` payloads for provenance bookkeeping; it is no longer a routing surface.
+- **PRD + ADR.** Decision record lives at `.claude/prds/PRD_llm_driven_dispatch.md`; `CONTEXT.md` gains a "Dispatch architecture: LLM-driven over hardcoded mode enum" section after the existing real-data / synth-data discussion.
+- **Tests:** 13 dispatch-layer test files deleted (their behavioural contract is gone), 5 test files modified to drop dispatch-layer assertions, and a new `tests/test_llm_driven_dispatch.py` (5 integration tests) pins the post-refactor contract — bbox prompt + scripted LLM picking `synth_swmm_from_bbox` reaches the executor with no gate, INP-path prompt picks `run_swmm_inp` directly, and `select_workflow_mode` never appears in any plan. Suite: 2140 passing post-refactor.
+
+### Added — `swmm-anywhere` skill (PRD swmmanywhere_integration)
+
+- **New skill `skills/swmm-anywhere/`** synthesises a plausible SWMM drainage network from a bounding box when no real pipe-network data exists. Wraps [ImperialCollegeLondon/SWMManywhere](https://github.com/ImperialCollegeLondon/SWMManywhere) (BSD-3-Clause) — © Imperial College London. End-to-end chain (bbox → OSM/DEM download → 24-step graphfcn pipeline → synth INP → aiswmm `swmm5` → audit + plot) verified at ~38 s on a 1×1 km London Greenwich bbox; peak flow parses cleanly through the standard audit pipeline.
+- **New optional dependency extra** `pip install aiswmm[anywhere]` pulls in the ~27 geo dependencies (geopandas, osmnx, rasterio, pyflwdir, pywbt, …) only for users who opt in. Default `pip install aiswmm` footprint is unchanged.
+- **New deep modules** `agentic_swmm/integrations/raw_snapshot.py` (reusable OSM/DEM hash + cache + verify under `runs/<id>/00_raw/`) and `agentic_swmm/integrations/swmmanywhere_runner.py` (Python wrapper with structured `SynthRunResult` / `SynthRunError`). The wrapper handles three macOS arm64 / SWMManywhere v0.2.2 gotchas inline: pyswmm SIGKILL on import (stubbed before SWMManywhere loads), `base_dir` str→Path coercion, and SWMM 5.2 `ERROR 205` when `[RAINGAGES] FILE` path contains spaces (external files copied next to the INP and the reference rewritten as a bare filename).
+- **Default `outfall_derivation` parameters tuned** in spike 04 A/B testing (`method="withtopo"` + `river_buffer_distance=300` + `outfall_length=200`) — reduces outfall count by ~34 % vs SWMManywhere defaults on the spike test bbox.
+- **New CLI script** `skills/swmm-anywhere/scripts/synth_from_bbox.py` is a thin argparse wrapper around `run_synth_from_bbox` that drops outputs into the standard `runs/<date>/<id>/` audit-pipeline layout.
+- **Planner routing defended in 4 layers** so the LLM planner cannot pick `swmm-anywhere` when the user has real pipe data: (a) exclusive wording in `swmm-anywhere`'s SKILL.md (`"ONLY when no real pipe-network data exists"`), (b) reverse pointers in `swmm-gis` / `swmm-network` SKILL.md, (c) a `synth-from-bbox` intent block in `agent/config/intent_map.json` with an `exclusive_when` rule, (d) a routing rule in `swmm-end-to-end` SKILL.md choosing between real-data and synth-data entry skills based on whether the user attached `.shp`/`.csv`/`network.json`/`.inp`.
+- **`CONTEXT.md` gains a "Real-data path vs Synth-data path" section** making the new orthogonal axis explicit for any agent or contributor reading the doc.
+- **`aiswmm doctor`** now reports a `swmm-anywhere extra` row (`installed` / `not installed` with the install hint) so users can see at a glance whether the synth path is callable.
+- 21 new unit tests (9 `raw_snapshot`, 10 `swmmanywhere_runner`, 2 CLI smoke); D1 verification spike scripts live under `scripts/spike_swmmanywhere/` (gitignored isolated venv + reproducible e2e driver).
+
+## v0.7.0 - Modeling memory, agent runtime, install UX (2026-05-27)
+
+First stable point release on the 0.7.x line. Promotes the v0.7.0a1 / a2 prereleases to stable, folds in the v0.7.0a2 architecture refactor wave that never had its own changelog, and applies the onboarding hotfixes uncovered by the v0.7.0a* dogfood. Default `pip install aiswmm` now resolves to v0.7.0; v0.6.4 remains available on every pinned channel (PyPI, Git tag, Docker image) for paper-aligned reproducibility runs.
+
+### Added
+
+- **Modeling-memory substrate.** An on-disk memory layer under `memory/modeling-memory/`: `parametric_memory` (run-level parameters and QA metrics), `calibration_memory` (accepted calibrations and goodness-of-fit), `reference_benchmarks` (library defaults) with a per-project `project_overrides.yaml` overlay, a citation library, and `negative_lessons` (known-bad parameter regions). Includes watershed-similarity matching, SQLite indexing for large stores, lifecycle-managed `lessons_learned.md` with three-tier decay (`active` → `dormant` → `retired` → archived), and an LLM-assisted reflection workflow (`aiswmm memory reflect --apply`) for human-in-the-loop curation. Scaffold the directory with `aiswmm bootstrap memory`.
+- **Memory-informed runtime.** The planner can read modeling memory to disambiguate ambiguous requests, adapt QA thresholds to project history, and carry parameter priors across watersheds, with a transparency log of which memory entries were used. Opt out per run with `--ignore-memory`.
+- **Claude Agent SDK provider (optional).** A second LLM backend that routes the planner through a Claude Pro/Max subscription via the local `claude` CLI. Install with the optional extra `pip install aiswmm[claude]`. The default OpenAI provider is unchanged and pulls none of this. The provider is gated behind the `AISWMM_ENABLE_EXPERIMENTAL_PROVIDERS` env flag while it stabilises.
+- **New CLI verbs.** `aiswmm compare` (per-node / per-subcatchment run diffs), `aiswmm storm` (Chicago / Huff / SCS design hyetographs), `aiswmm trace` (inspect the agent trace), `aiswmm uncertainty plan`, and `aiswmm bootstrap memory`.
+- **Agent runtime error boundary.** New `@on_exception_return_default` decorator gives tool handlers a uniform soft-fail contract — exceptions become structured error objects in the agent trace instead of crashing the turn.
+- **`sessions.sqlite` integrity check + repair path.** The runtime detects truncated or corrupted session databases at startup and offers a non-destructive repair (rebuilds FTS index, recovers recoverable messages) before falling back to a clean reset.
+- **`CONTEXT.md`.** A repository-root document that captures the domain vocabulary (Session / Run / Case / Provider / Memory / Skill / MCP) and architectural decisions, intended as the canonical onboarding artifact for new contributors and AI agents.
+
+### Changed
+
+- **CLI/UX overhaul.** A unified flag convention across every verb (`--inp` / `--json` / `--quiet` / `--example`), grouped `--help` output, differentiated `error: / cause: / hint:` messages, and an honesty layer that detects SWMM `ERROR` output and stub modes instead of reporting false success. SWMM error text is now routed to stderr.
+- **Calibration workflow closure.** Batch-aware planning, run-progress reporting, and resource estimation.
+- **SWMM solver-version mismatch refused** rather than run silently.
+- **Tool registry deep-modularised.** The 2163-line `tool_registry.py` monolith was split into focused handler packages — `tool_handlers/{web, demo, swmm_memory, swmm_runner, swmm_plot, swmm_builder, swmm_network, swmm_climate, swmm_audit, workflow_mode, introspection, runtime_ops, gap_fill}` — with shared helpers in `tool_handlers/_shared.py`. Adding a new tool family now touches one file instead of grepping a wall.
+- **Intent classifier consolidated.** Keyword-driven intent resolution previously scattered across six modules (`planner.py`, `tool_registry.py`, `single_shot.py`, `runtime_loop.py`, `continuation_classifier.py`, `intent_map.py`) is now centralised in `agent/intent_classifier.py` with a single `classify_intent(goal, *, workflow_state) -> IntentSignals` entrypoint. Bilingual EN/ZH parity, warm-intro gating, and plot-continuation logic are preserved.
+- **Runtime-loop bootstrap phases extracted.** The interactive shell's startup sequence (welcome, profile detection, session resume, memory load, tool registry build) is split into typed phases, each independently testable.
+- **`__version__` now read dynamically from package metadata** (`importlib.metadata.version("aiswmm")`) so `aiswmm --version`, `pyproject.toml`, and the installed wheel can never drift.
+- **OpenAI model selection menu removed** from the `curl|bash` installer. The default is locked to `gpt-5.5`; override via `AISWMM_MODEL` env var if needed.
+
+### Fixed
+
+- **`pip install aiswmm` no longer crashes on first import.** PyYAML was an undeclared dependency on the CLI import chain (`agentic_swmm.memory.reference_benchmarks` imports `yaml` at module level), so the wheel could be installed but `aiswmm --version` would `ModuleNotFoundError`. PyYAML is now an explicit dependency in `pyproject.toml`.
+- **MCP servers now honour the launcher-supplied `.venv` interpreter.** Ten of eleven MCP servers previously hardcoded `python3` in their `spawn` call; on macOS that often resolves to system Python 3.9, below the project's `requires-python>=3.10` floor, causing `ImportError` on every MCP tool call for users who hadn't activated a `.venv`. All servers now read `process.env.PYTHON || "python3"`, matching the pre-existing `swmm-plot` pattern.
+- **`curl|bash` install flow prompts for the OpenAI API key.** The API-key step previously skipped under `--yes` (which `bootstrap.sh` always passes), leaving first-time installers with no key configured and the agent CLI mute. The step now uses `/dev/tty` so it remains interactive even when stdin is piped from `curl`.
+- **Unknown CLI verbs are reported as errors.** `aiswmm bogus` or `aiswmm runn` (typo) used to be silently routed to the LLM planner — without an OpenAI key, the user saw `OPENAI_API_KEY is not set` and concluded (incorrectly) that the tool required a key for everything. The CLI now reports `error: unknown command 'runn'. Did you mean 'run'?` with exit code 2; free-form natural-language goals still work via the explicit `aiswmm agent "<goal>"` entrypoint.
+- **`docs/installation.md` `aiswmm --provider openai` example corrected** to `aiswmm agent --provider openai "..."`. The top-level CLI has no `--provider` flag; that example was silently dropping the argument.
+- **Install step labels match actual behaviour.** Step 4 of `scripts/install.sh` is renamed from "Skill files copy" to "Initialize `~/.aiswmm/` directory" (the step only `mkdir`s; real skill deployment happens later, in `aiswmm setup`). The MCP-server-count footnote ("8 servers") was stale and is now generic ("~11 servers").
+- **README pre-release pointer no longer hard-codes a version number.** Pre-release pointers now refer readers to `CHANGELOG.md` for the current version instead of going stale on every alpha bump.
+
+### Notes
+
+- v0.6.4 reproducibility is **unaffected** — every pinned channel (PyPI, Git tag, Docker image) is immutable, and `pip install aiswmm==0.6.4` / `docker pull ghcr.io/zhonghao1995/agentic-swmm-workflow:v0.6.4` still produce byte-identical environments for paper-aligned runs.
+- The v0.7.0a1 release notes below are preserved as historical context. The v0.7.0a2 tag carried the tool-registry / runtime-loop refactor wave but never published a changelog of its own; that content is folded into the "Changed" section above.
+- The agent runtime stays in its alpha-stage software status as described in the README — the API surface may still evolve before the planned 1.0 release.
+
+## v0.7.0a1 - Modeling memory, Claude Agent SDK provider, CLI/UX overhaul (2026-05-21)
+
+Pre-release (alpha) on top of v0.6.4. Install with `pip install aiswmm==0.7.0a1` or `pip install --pre aiswmm`; the default `pip install aiswmm` still ships v0.6.4. v0.6.4 reproducibility is unaffected — every pinned channel (PyPI, Git tag, Docker image) is immutable.
+
+### Added
+
+- **Modeling-memory substrate.** An on-disk memory layer under `memory/modeling-memory/`: `parametric_memory` (run-level parameters and QA metrics), `calibration_memory` (accepted calibrations and goodness-of-fit), `reference_benchmarks` (library defaults) with a per-project `project_overrides.yaml` overlay, a citation library, and `negative_lessons` (known-bad parameter regions). Includes watershed-similarity matching and SQLite indexing for large stores. Scaffold it with `aiswmm bootstrap memory`.
+- **Memory-informed runtime.** The planner can read modeling memory to disambiguate ambiguous requests, adapt QA thresholds to project history, and carry parameter priors across watersheds, with a transparency log of which memory entries were used. Opt out per run with `--ignore-memory`.
+- **Claude Agent SDK provider (optional).** A second LLM backend that routes the planner through a Claude Pro/Max subscription via the local `claude` CLI. Install the optional extra with `pip install aiswmm[claude]`. The default OpenAI provider is unchanged and pulls none of this.
+- **New CLI verbs:** `aiswmm compare` (per-node / per-subcatchment run diffs), `aiswmm storm` (Chicago / Huff / SCS design hyetographs), `aiswmm trace` (inspect the agent trace), `aiswmm uncertainty plan`, and `aiswmm bootstrap memory`.
+
+### Changed
+
+- **CLI/UX overhaul.** A unified flag convention across every verb (`--inp` / `--json` / `--quiet` / `--example`), grouped `--help` output, differentiated `error: / cause: / hint:` messages, and an honesty layer that detects SWMM `ERROR` output and stub modes instead of reporting false success. SWMM error text is now routed to stderr.
+- Calibration workflow closure: batch-aware planning, run-progress reporting, and resource estimation.
+- A SWMM solver-version mismatch between a model and the resolved `swmm5` binary is now refused rather than run silently.
+
+### Notes
+
+- This is an alpha. The Claude Agent SDK provider is new and not yet exercised at scale — feedback via GitHub Issues is welcome.
+- v0.6.4 remains the latest **stable** release; nothing about it changes.
+
+## v0.6.4 - Byte-reproducibility hardening: pinned `requirements.lock` + auto-built Docker images (2026-05-18)
+
+First stable release on the 0.6.x line since v0.6.1. Closes the three gaps that previously prevented v0.6.x from supporting end-to-end byte-level reproducibility for the companion Agentic SWMM paper.
+
+### Reproducibility
+
+- **New `requirements.lock`** at the repository root. Pins every transitive dependency at the exact versions used to generate the SHA-256 hashes and figures reported in the paper (86 lines, 14 declared top-level packages, Python 3.11). Generated by `pip freeze` against a clean `scripts/requirements.txt` install in a Python 3.11 venv; re-generation steps are documented in the file header.
+- **Dockerfile now installs from `requirements.lock`** when present (falling back to `scripts/requirements.txt` for older tags). This guarantees that `docker pull ghcr.io/zhonghao1995/agentic-swmm-workflow:v0.6.4` produces byte-identical dependency trees on every host.
+- **`Dockerfile` `AGENTIC_SWMM_REF` default bumped to `v0.6.4`.** SWMM 5.2.4 source pull from USEPA upstream is unchanged.
+
+### CI / release automation
+
+- **`.github/workflows/docker.yml` now auto-triggers on `push` of any tag matching `v*`.** Every Git tag now produces a matching `ghcr.io/zhonghao1995/agentic-swmm-workflow:<tag>` image automatically, plus a `latest` alias that follows the newest tag. The previous `workflow_dispatch`-only flow remains available for ad-hoc rebuilds of historical tags.
+- The release commit and tag both pass `tests/test_no_private_machine_paths_in_public_docs.py`, restoring a green CI for the published release tag (v0.6.3a1's release-note file had previously tripped this guard).
+
+### Version metadata consistency
+
+- `pyproject.toml`, `agentic_swmm/__init__.py`, `README.md`, and `docs/installation.md` are all bumped to `0.6.4`.
+- `CITATION.cff` `version:` field updated from the stale `0.5.0` to `0.6.4`.
+- `README.md` and `docs/installation.md` no longer claim that `pip install aiswmm` ships v0.6.1; they now reflect that v0.6.4 is the default stable target.
+
+### What is NOT changed
+
+- No SWMM engine, Skill, MCP, or CLI behaviour changes. All agent surfaces behave identically to v0.6.3-alpha.
+- No QA / audit-gate logic changes. The verification-first provenance contract (Section 2.3.1 of the companion paper) is identical.
+
+## v0.6.3-alpha - Architecture deepening: intent_classifier + tool_handlers + RAG memory exposure (2026-05-16)
+
+Pre-release on top of v0.6.2-alpha. Install with `pip install aiswmm==0.6.3a1` or `pip install --pre aiswmm`. Default `pip install aiswmm` continues to deliver v0.6.1.
+
+This release does NOT introduce new user-facing CLI surface; it is an architectural enhancement release that consolidates and deepens what v0.6.2-alpha shipped. Architecture-audit findings #121 / #122 / #124 (memory portion only) / #127 / #128 are all closed by code here.
+
+### Architectural changes
+
+- **New deep module `agentic_swmm/agent/intent_classifier.py`** (#121). Consolidates keyword-driven intent resolution that was previously scattered across 6 files (`planner.py`, `tool_registry.py`, `single_shot.py`, `runtime_loop.py`, `continuation_classifier.py`, `intent_map.py`) into one auditable module. Exports `classify_intent(goal, *, workflow_state) -> IntentSignals` (dataclass) plus `is_negated(lowered, term)`. 31 new tests including bilingual EN/ZH symmetry, warm-intro gate, plot-continuation, and migration parity for the legacy entry points retained as re-export shims. Adding a new intent now touches one file.
+- **New `agentic_swmm/agent/tool_handlers/` package** (#128 partial). Three skill families extracted from the 2163-LOC `tool_registry.py` monolith: `web.py` (`_web_fetch_url_tool`, `_web_search_tool`), `demo.py` (`_demo_acceptance_tool`), `swmm_memory.py` (`_recall_memory_tool`, `_recall_memory_search_tool`, `_recall_session_history_tool`, `_record_fact_tool` + token-budget helpers). The remaining 7 family slices are queued as follow-up PRs against `tool_registry.py`, which is now ~1900 LOC.
+- **Dead-code purge in `agentic_swmm/agent/single_shot.py`** (#127). Module shrunk from 797 LOC to 144 LOC (-82 %).
+
+### New agent capabilities
+
+- **RAG memory retrieval is now agent-callable** (#124 Part A). New `retrieve_memory` ToolSpec wraps `skills/swmm-rag-memory/scripts/retrieve_memory.py` with `--query`, `--top-k`, `--retriever`, `--project` arguments. Read-only. New intent `memory-retrieval` matches `recall`, `前面`, `以前`, `类似` keywords.
+- `agent/config/intent_map.json:mcp_enabled_skills` now lists all 11 registered MCP servers (previously 8). `integrations/mcp/README.md` updated from "eight" to "eleven".
+
+### Portability completeness
+
+- **`cases/` directory now ships with reference fixtures** (#122). `cases/tecnopolo/case_meta.yaml` and `cases/todcreek/case_meta.yaml` are committed templates with top-level `aliases` field so `_match_registered_case` picks up colloquial forms. Prior to this release, `cases/` was empty despite v0.6.2-alpha release notes claiming portability — that gap is now closed.
+- **`agent/config/intent_map.json:swmm_request_keywords` no longer contains `tecnopolo`** (#122). The AST regression guard from #118 only walked Python `.py` files; the JSON config was a blind spot. The guard is now extended to scan `intent_map.json`.
+- **`welcome.py` reads first registered case's `display_name`** instead of literal "tecnopolo" for the "Things to try" demo line; falls back to "Run a SWMM demo" when `cases/` is empty.
+- **Bonus**: chart title in `skills/swmm-uncertainty/scripts/monte_carlo_propagate.py` made generic so the AST guard's pre-existing failure on that file is cleared.
+
+### Documentation
+
+- **README "preload path" no longer mentions stale `agent/memory/`** (#123). The mismatch was in `skills/swmm-end-to-end/SKILL.md` lines 10/38, fixed there.
+- **README validation-snapshot anchors resolve** (#129). Two new sections added to `docs/validation-evidence.md`: `#information-loss-guided-subcatchment-partition` and `#prior-monte-carlo-uncertainty-smoke`. New CI-style test asserts every README `.md#anchor` link resolves.
+- **Private-machine breadcrumbs removed from public docs** (#126). 14 `/Users/zhonghao` references removed across 5 files; regression test prevents future leaks.
+
+### Hygiene
+
+- **Plot script defaults are self-documenting** (#125). `skills/swmm-plot/scripts/plot_rain_runoff_si.py` no longer presents `TS_RAIN` / `O1` as silent defaults; they now read `<rainfall-series-name>` / `<outfall-or-junction>` and fail fast with a helpful error if a manual CLI hits them. The agent-driven flow always supplies explicit values, so the new error path is unreachable from the agent — but the regression test pins this invariant.
+
+### Test count delta from v0.6.2-alpha
+
+| PR | Tests added |
+|---|---|
+| #130 (#127) | 8 |
+| #134 (#121) | 31 |
+| #136 (#128) | 11 |
+| #131 (#125) | 4 |
+| #132 (#123 + #126 + #129) | 14 |
+| #133 (#122) | 6 |
+| #135 (#124 Part A only — Part B reverted in #137) | 6 |
+| **Total** | **~80** |
+
+### Known limitations carried forward
+
+- **`tool_registry.py` split is partial** (3 of 10 family slices extracted in #128). Remaining 7 slices queued as future PRs.
+- **`docs/framework-validation/saanich-b7-*/network.json`** retains `/Users/zhonghao` paths by design (frozen evidence). Same-directory README documents this.
+
+## v0.6.2-alpha - Runtime hygiene + paper-grade reproducibility hardening (2026-05-16)
+
+Pre-release. Install with `pip install aiswmm==0.6.2a1` or `pip install --pre aiswmm`. Stable users on `pip install aiswmm` continue receiving v0.6.1.
+
+### Bug fixes
+
+- **Warm intro fires once per session, not on every greeting** (#108). The interactive-shell loop reset `turn = 0` after emitting the canned `WARM_INTRO_TEMPLATE`, causing the intro to re-fire on every subsequent open-shaped prompt. Source-level regression guard added in `tests/test_self_intro_on_open_prompt.py`.
+- **First `plot_run` no longer hangs ~90s on matplotlib + swmmtoolbox cold start** (#109/#110). `mcp/swmm-plot/server.js` now fires a fire-and-forget preheat subprocess at server boot to materialize the matplotlib font cache + Python bytecode cache. Subsequent plot calls return in 5-15s on the user's machine instead of 89s.
+- **Plot X-axis no longer renders as a solid black bar** (#112). `skills/swmm-plot/scripts/plot_rain_runoff_si.py` now uses `matplotlib.dates.AutoDateLocator(maxticks=12)` + `ConciseDateFormatter`. Tick count drops from 316 (30-day fixture) to 6 readable labels.
+- **`swmm-end-to-end` and 5 sibling skills now discoverable via `select_skill`** (#113). `SkillRouter._build_buckets()` previously only knew the 8 skills with deterministic tool bindings, so pure-orchestration skills (only a `SKILL.md`) silently disappeared from `list_skills()`. Now seeded from the on-disk `discover_skills()` list.
+- **Workflow router no longer hijacks compound intent like "run X demo and plot"** (#111). The keyword fallback in `_select_workflow_mode_tool` placed `wants_plot AND has_run_dir` before `wants_demo`, so "run Tod Creek demo and plot" was misclassified as `existing_run_plot` and would plot a different (Tecnopolo) run from prior global state. Fixed in two layers: (a) keyword-fallback priority — added `wants_run` signal and reordered branches; (b) new deep module `agentic_swmm/agent/intent_disambiguator.py` invokes a forced-enum LLM call only on detected plot+other-action conflicts (5s timeout, fail-soft to keyword fallback), preserving the deterministic SOP fast-path for unambiguous requests.
+
+### Hardening
+
+- **Doctor now warns on stale editable installs** (#113). `aiswmm doctor` emits a WARN row when the editable install resolves under `.claude/worktrees/`, pointing the user to re-run `pip install -e .` from the main checkout.
+- **Doctor now warns on mcp.json drift** (#114). For each registered MCP server, doctor checks whether the launcher path is under the active `repo_root()`. WARN per drifted server with the remediation command.
+- **New `aiswmm setup --refresh-mcp` flag** (#114). Regenerates only `~/.aiswmm/mcp.json` against the active editable install, leaves `config.toml` / `skills.json` / `memory.json` / `setup_state.json` untouched. Idempotent.
+
+### Portability
+
+- **Runtime contains zero hardcoded watershed names in routing/inference code** (#118). Prior to this release, `agentic_swmm/agent/runtime_loop.py:_case_slug`, `agentic_swmm/agent/continuation_classifier.py:_NEW_RUN_KEYWORDS`, and `skills/swmm-modeling-memory/scripts/summarize_memory.py:project_key` substring-matched `tecnopolo` / `todcreek` to decide case identity. New users applying aiswmm to a different watershed would silently get incorrect labeling. All three sites now consult `agentic_swmm.case.case_registry.list_cases()` (with optional `aliases` via `case_meta.extra`). AST-based regression guard in `tests/test_no_hardcoded_watershed_names.py` prevents future leaks.
+
+## v0.5.0 - QGIS-backed entropy subcatchment preprocessing
+
+- Added an auditable QGIS/GRASS-backed raw GIS preprocessing front end for entropy-guided SWMM subcatchment discretization.
+- Added the generic `qgis_raw_to_entropy_partition` workflow so Tod Creek is a regression case instead of a hard-coded runner.
+- Added QGIS layer normalization with CRS harmonization and boundary clipping for DEM, boundary, land-use, and soil layers.
+- Added MCP-facing QGIS operations for `grass:r.watershed`, `native:reprojectlayer`, `native:clip`, `gdal:warpreproject`, and `gdal:cliprasterbymasklayer`.
+- Added flow-connected WJE/NWJE/WFJS subcatchment partitioning with threshold-sensitivity figures and audit manifests.
+- Added the cell-level entropy/fuzzy-similarity heterogeneity screening map as a QGIS preprocessing diagnostic.
+- Renamed the preload memory package from `openclaw/memory/` to `agentic-ai/memory/` to reflect Codex, OpenClaw, Hermes, and other Agentic AI runtimes.
+- Updated `CITATION.cff` to match the `v0.5.0` repository release.
+
+## v0.4.2 - Adapter benchmark and validation refresh
+
+- Added an optional INP-derived raw adapter benchmark that fetches a fixed public `generate_swmm_inp` fixture, reconstructs raw-like inputs, and documents its evidence boundary.
+- Refreshed validation and modeling-memory documentation after adding the adapter benchmark.
+
+## v0.4.1 - README and memory-loading guidance polish
+
+- Streamlined the README introduction to explain the memory-informed, verification-first workflow in plainer language.
+- Moved detailed validation and benchmark evidence into `docs/validation-evidence.md` so the README stays focused.
+- Clarified that `memory/modeling-memory/` is generated project memory, not startup instruction memory.
+- Clarified the optional OpenClaw/Hermes loading path for `skills/swmm-modeling-memory/` and `memory/modeling-memory/` after multiple audited runs exist.
+
+## v0.4.0 - Modeling memory and controlled skill refinement
+
+- Added GitHub Actions lightweight CI for syntax checks, uncertainty unit tests, and fuzzy uncertainty dry-run coverage.
+- Added `CITATION.cff` so GitHub can expose repository citation metadata.
+- Added root `requirements.txt` as the standard manual Python dependency entrypoint.
+- Added this changelog for release-to-release visibility.
+- Added `skills/swmm-modeling-memory/`, a downstream modeling-memory skill that reads historical experiment audit artifacts without running SWMM or modifying existing skills.
+- Added deterministic summarization of audited runs into `modeling_memory_index.json`, `modeling_memory_index.md`, `lessons_learned.md`, `skill_update_proposals.md`, and `benchmark_verification_plan.md`.
+- Added controlled skill-refinement proposals for recurring assumptions, QA issues, missing evidence, failure patterns, and run-to-run differences.
+- Added public example modeling-memory outputs under `memory/modeling-memory/`.
+- Documented the memory loop as a core part of Agentic SWMM: each audited run can update project memory, while accepted skill changes still require human review and benchmark verification.
+- Updated public OpenClaw memory to include the optional modeling-memory step after experiment audit.
+
+## v0.3.0 - Public agent memory and raw GeoPackage workflow
+
+- Added the public Agentic AI memory package under `agentic-ai/memory/`.
+- Added ordered agent workflow memory for guiding users from input inventory through build, run, QA, audit, and readiness reporting.
+- Added the TUFLOW SWMM Module 03 Raw GeoPackage-to-INP benchmark.
+- Added a README figure showing generated subcatchments, conduits, junctions, and outfall from the raw GeoPackage benchmark.
+- Reframed the README around five-minute one-command onboarding, OpenClaw/Hermes orchestration, verification-first modelling, and Obsidian-compatible audit memory.
+- Added the Agentic SWMM logo and tightened README command examples with expandable sections.
+
+## v0.2.0 - External multi-subcatchment benchmark
+
+- Added the Tecnopolo prepared-input benchmark using an external 40-subcatchment SWMM model.
+- Added benchmark evidence for direct `swmm5` execution, outfall and junction inspection, rainfall-runoff plotting, and audit-ready artifacts.
+- Added README benchmark visualization for the Tecnopolo case.
+
+## Earlier work
+
+- Added one-command install scripts for macOS/Linux and Windows.
+- Added modular SWMM skills for GIS, climate, parameters, network, builder, runner, plotting, calibration, uncertainty, audit, and end-to-end orchestration.
+- Added fuzzy uncertainty propagation with triangular and trapezoidal membership functions, alpha-cut intervals, sampling, and dry-run support.
+- Added Obsidian-compatible experiment audit workflow with provenance and comparison records.
+- Added OpenClaw execution-path documentation and top-level `swmm-end-to-end` orchestration skill.

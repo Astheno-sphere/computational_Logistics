@@ -1,0 +1,153 @@
+"""``aiswmm compare`` — diff two SWMM runs (PRD-06 Phase B.1).
+
+A pure CLI surface over :func:`agentic_swmm.agent.swmm_runtime.compare.compare_runs`.
+Default output is a human-readable table; ``--json`` returns the
+serialized :class:`RunComparison` so a downstream pipeline can post-
+process the diff.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+from agentic_swmm.agent.flag_naming import (
+    register_example_flag,
+    register_path_flag,
+    register_quiet_flag,
+)
+from agentic_swmm.agent.honesty import fail_fast_if_path_missing
+from agentic_swmm.agent.swmm_runtime.compare import (
+    compare_runs,
+    render_comparison_table,
+)
+
+
+_COMPARE_EXAMPLE = (
+    "aiswmm compare --run-a runs/baseline --run-b runs/with-lid --json"
+)
+
+
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    parser = subparsers.add_parser(
+        "compare",
+        # PRD-06 B.1
+        help="Compare two SWMM runs on continuity metrics.",
+    )
+    # ``--run-dir`` / ``--compare-to`` are the spellings ``aiswmm audit`` uses;
+    # a user who learned them there typed them here and got a usage error
+    # (live finding F-24, 2026-09-02). Both spellings land in the same dest.
+    parser.add_argument(
+        "--run-a",
+        "--run-dir",
+        dest="run_a",
+        type=Path,
+        required=True,
+        help="Path to run directory A (alias: --run-dir).",
+    )
+    parser.add_argument(
+        "--run-b",
+        "--compare-to",
+        dest="run_b",
+        type=Path,
+        required=True,
+        help="Path to run directory B (alias: --compare-to).",
+    )
+    parser.add_argument(
+        "--metric",
+        action="append",
+        dest="metrics",
+        default=None,
+        help=(
+            "Restrict the comparison to one or more named metrics. "
+            "Repeatable. Defaults to runoff_continuity_pct + "
+            "flow_continuity_pct."
+        ),
+    )
+    parser.add_argument(
+        "--benchmarks-path",
+        type=Path,
+        default=None,
+        help=(
+            "Optional override for the reference_benchmarks.yaml used "
+            "to classify each metric. Defaults to the repo-shipped library."
+        ),
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the RunComparison as JSON on stdout instead of a table.",
+    )
+    parser.add_argument(
+        "--per-node",
+        action="store_true",
+        help="Expand the full per-node peak-flow table in the default output.",
+    )
+    parser.add_argument(
+        "--per-subcatch",
+        action="store_true",
+        help="Expand the full per-subcatch runoff table in the default output.",
+    )
+    parser.add_argument(
+        "--override-version",
+        action="store_true",
+        help=(
+            "Force the comparison through when the two runs report "
+            "different SWMM solver versions (e.g. 5.1.x vs 5.2.x). "
+            "Without this flag the comparison returns "
+            "verdict='incomparable' to avoid mistaking solver-behaviour "
+            "deltas for parameter-change deltas."
+        ),
+    )
+    register_path_flag(
+        parser,
+        noun="parametric-memory",
+        help_text=(
+            "Optional path to parametric_memory.jsonl used as a fallback "
+            "lookup when experiment_provenance.json lacks a swmm_version "
+            "field. Default: no fallback."
+        ),
+        default=None,
+        legacy_aliases=("--parametric-store",),
+        dest="parametric_store",
+    )
+    register_quiet_flag(parser)
+    register_example_flag(parser, example_text=_COMPARE_EXAMPLE)
+    parser.set_defaults(func=main)
+
+
+def main(args: argparse.Namespace) -> int:
+    # PRD-08 A.1 (audit #16): historically a missing ``--run-a`` or
+    # ``--run-b`` directory produced ``verdict: incomparable`` after
+    # rendering a comparison table. A scripted pipeline could not tell
+    # the difference between "real diverging runs" and "you typo'd the
+    # path". Fail fast with exit code 2 so the structural error is
+    # surfaced before any table renders.
+    fail_fast_if_path_missing(args.run_a, "--run-a")
+    fail_fast_if_path_missing(args.run_b, "--run-b")
+
+    metrics = list(args.metrics) if args.metrics else None
+    comparison = compare_runs(
+        args.run_a,
+        args.run_b,
+        metrics=metrics,
+        benchmarks_path=args.benchmarks_path,
+        override_version=getattr(args, "override_version", False),
+        parametric_store=getattr(args, "parametric_store", None),
+    )
+    if getattr(args, "json", False):
+        print(json.dumps(comparison.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(
+            render_comparison_table(
+                comparison,
+                show_per_node=getattr(args, "per_node", False),
+                show_per_subcatch=getattr(args, "per_subcatch", False),
+            )
+        )
+    # An "incomparable" verdict exits non-zero so a scripted pipeline can
+    # detect the failure mode without parsing JSON. Other verdicts return 0
+    # regardless of which run "won" — the verdict is informational, not an
+    # error class.
+    return 1 if comparison.verdict == "incomparable" else 0

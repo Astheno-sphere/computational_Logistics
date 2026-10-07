@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plugin:
+    name: Plugin (hook + MCP server)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Syntax check (node --check)
+        run: |
+          node --check plugin/hooks/session-start.mjs
+          node --check plugin/mcp-server/index.mjs
+          node --check plugin/lib/grass.mjs
+          node --check plugin/lib/nudge.mjs
+
+      - name: Install MCP server deps
+        working-directory: plugin/mcp-server
+        run: npm install --no-audit --no-fund
+
+      - name: Hook smoke test (graceful offline failure)
+        run: |
+          set -e
+          OUT=$(timeout 8s node plugin/hooks/session-start.mjs || true)
+          echo "Hook output: $OUT"
+          echo "$OUT" | node -e "
+            let s=''; process.stdin.on('data',d=>s+=d).on('end',()=>{
+              const j=JSON.parse(s);
+              if(!j.hookSpecificOutput||j.hookSpecificOutput.hookEventName!=='SessionStart')
+                { console.error('bad hook shape'); process.exit(1); }
+              console.log('hook ok');
+            });
+          "
+
+      - name: MCP server tools/list smoke test
+        run: node .github/scripts/mcp-smoke.mjs
+
+  web:
+    name: Web (Next.js)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: pnpm build

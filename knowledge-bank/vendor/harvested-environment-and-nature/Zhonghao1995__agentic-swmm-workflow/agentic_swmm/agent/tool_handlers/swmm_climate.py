@@ -1,0 +1,437 @@
+"""Rainfall / climate formatting handler (PRD #128 Phase 2 Group B).
+
+Family: ``swmm-climate``.
+
+Single-handler family extracted from ``tool_registry.py`` as part of
+Phase 2 Group B of the registry split (Phase 1 — cross-cutting
+helpers — landed in PR #209, see ``_shared.py``):
+
+* :func:`_format_rainfall_tool` — converts a rainfall CSV into a SWMM
+  TIMESERIES text + metadata JSON pair via the
+  ``swmm-climate.format_rainfall`` MCP tool.
+* :func:`_build_raingage_section_tool` — builds the SWMM [RAINGAGES]
+  section snippet that pairs with a formatted timeseries (issue #246 C1).
+
+The handlers are MCP-routed. See ``swmm_network.py`` for the rationale
+behind the lazy-build / lazy-import pattern (avoids the
+``tool_registry`` import cycle).
+
+``_failure`` comes from ``tool_handlers/_shared`` — the cross-cutting
+helpers every family imports.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from agentic_swmm.agent.tool_handlers._shared import _failure, _object
+from agentic_swmm.agent.types import ToolCall, ToolSpec
+
+
+def _format_rainfall_args(call: ToolCall, session_dir: Path) -> dict[str, Any]:
+    """Map ``format_rainfall`` args to ``swmm-climate.format_rainfall`` MCP."""
+
+    # Lazy import — see ``swmm_network`` module docstring. (#358 PR A
+    # dropped ``_required_repo_file`` here: it was imported but never
+    # called in this mapper.)
+    from agentic_swmm.agent.tool_registry import _repo_output_path
+
+    # At least one of input_csv, input_glob_patterns, or input_dat_paths is
+    # required at the MCP layer; we validate the single-CSV case explicitly
+    # (the most common agent path) and pass all other inputs through.
+    input_csv = call.args.get("input_csv")
+    input_glob_patterns = call.args.get("input_glob_patterns")
+    input_dat_paths = call.args.get("input_dat_paths")
+    if not input_csv and not input_glob_patterns and not input_dat_paths:
+        return _failure(call, "format_rainfall requires input_csv, input_glob_patterns, or input_dat_paths")
+    out_json = _repo_output_path(str(call.args["out_json"]))
+    out_timeseries = _repo_output_path(str(call.args["out_timeseries"]))
+    if out_json is None or out_json.suffix.lower() != ".json":
+        return _failure(call, "out_json must be a repository-relative .json path")
+    if out_timeseries is None or out_timeseries.suffix.lower() not in {".txt", ".dat"}:
+        return _failure(call, "out_timeseries must be a repository-relative .txt or .dat path")
+    args: dict[str, Any] = {
+        "outputJsonPath": str(out_json),
+        "outputTimeseriesPath": str(out_timeseries),
+    }
+    if input_csv:
+        args["inputCsvPath"] = str(input_csv)
+    if input_glob_patterns:
+        args["inputGlobPatterns"] = list(input_glob_patterns)
+    if input_dat_paths:
+        args["inputDatPaths"] = list(input_dat_paths)
+    snake_to_camel = {
+        "additional_input_csv_paths": "additionalInputCsvPaths",
+        "dat_value_units": "datValueUnits",
+        "series_name": "seriesName",
+        "series_name_template": "seriesNameTemplate",
+        "timestamp_column": "timestampColumn",
+        "value_column": "valueColumn",
+        "station_column": "stationColumn",
+        "default_station_id": "defaultStationId",
+        "timestamp_format": "timestampFormat",
+        "window_start": "windowStart",
+        "window_end": "windowEnd",
+        "value_units": "valueUnits",
+        "unit_policy": "unitPolicy",
+        "timestamp_policy": "timestampPolicy",
+    }
+    for snake, camel in snake_to_camel.items():
+        val = call.args.get(snake)
+        if val:
+            args[camel] = val if isinstance(val, list) else str(val)
+    return args
+
+
+def _build_raingage_section_args(call: ToolCall, session_dir: Path) -> dict[str, Any]:
+    """Map ``build_raingage_section`` args to ``swmm-climate.build_raingage_section`` MCP."""
+
+    from agentic_swmm.agent.tool_registry import _repo_output_path
+
+    out_text = call.args.get("out_text_path")
+    out_json = call.args.get("out_json_path")
+    if not out_text:
+        return _failure(call, "missing required argument: out_text_path")
+    if not out_json:
+        return _failure(call, "missing required argument: out_json_path")
+    out_text_path = _repo_output_path(str(out_text))
+    out_json_path = _repo_output_path(str(out_json))
+    if out_text_path is None:
+        return _failure(call, "out_text_path must be a repository-relative path")
+    if out_json_path is None or out_json_path.suffix.lower() != ".json":
+        return _failure(call, "out_json_path must be a repository-relative .json path")
+    args: dict[str, Any] = {
+        "outTextPath": str(out_text_path),
+        "outJsonPath": str(out_json_path),
+    }
+    snake_to_camel = {
+        "gage_id": "gageId",
+        "series_name": "seriesName",
+        "station_id": "stationId",
+        "rainfall_json_path": "rainfallJsonPath",
+        "rain_format": "rainFormat",
+    }
+    for snake, camel in snake_to_camel.items():
+        if call.args.get(snake):
+            args[camel] = str(call.args[snake])
+    if call.args.get("interval_min") is not None:
+        args["intervalMin"] = int(call.args["interval_min"])
+    if call.args.get("scf") is not None:
+        args["scf"] = float(call.args["scf"])
+    return args
+
+
+def _generate_design_storm_args(call: ToolCall, session_dir: Path) -> dict[str, Any]:
+    """Map ``generate_design_storm`` args to ``swmm-climate.generate_design_storm`` MCP."""
+
+    from agentic_swmm.agent.tool_registry import _repo_output_path
+
+    method = call.args.get("method")
+    if not isinstance(method, str) or method not in ("chicago", "alternating_block"):
+        return _failure(call, "method must be 'chicago' or 'alternating_block'")
+    duration = call.args.get("duration_min")
+    if duration is None:
+        return _failure(call, "missing required argument: duration_min")
+    out_json = call.args.get("out_json")
+    if not out_json:
+        return _failure(call, "missing required argument: out_json")
+    out_ts = call.args.get("out_timeseries")
+    if not out_ts:
+        return _failure(call, "missing required argument: out_timeseries")
+
+    out_json_path = _repo_output_path(str(out_json))
+    out_ts_path = _repo_output_path(str(out_ts))
+    if out_json_path is None or out_json_path.suffix.lower() != ".json":
+        return _failure(call, "out_json must be a repository-relative .json path")
+    if out_ts_path is None or out_ts_path.suffix.lower() not in {".txt", ".dat"}:
+        return _failure(call, "out_timeseries must be a repository-relative .txt or .dat path")
+
+    args: dict[str, Any] = {
+        "method": method,
+        "duration": float(duration),
+        "outJson": str(out_json_path),
+        "outTimeseries": str(out_ts_path),
+    }
+
+    # Optional scalar fields — snake_case → camelCase
+    _optfloat = {
+        "return_period": "returnPeriod",
+        "dt": "dt",
+        "r": "r",
+        "a1": "a1",
+        "b": "b",
+        "n": "n",
+        "a_coeff": "aCoeff",
+        "c_coeff": "cCoeff",
+        "c_exp": "cExp",
+    }
+    for snake, camel in _optfloat.items():
+        v = call.args.get(snake)
+        if v is not None:
+            args[camel] = float(v)
+
+    _optstr = {
+        "form": "form",
+        "idf_csv": "idfCsv",
+        "idf_json": "idfJson",
+        "series_name": "seriesName",
+    }
+    for snake, camel in _optstr.items():
+        v = call.args.get(snake)
+        if v is not None:
+            args[camel] = str(v)
+
+    return args
+
+
+def _build_handler() -> Any:
+    from agentic_swmm.agent.tool_handlers._shared import _make_mcp_routed_handler
+
+    return _make_mcp_routed_handler(
+        "swmm-climate", "format_rainfall", args_mapper=_format_rainfall_args
+    )
+
+
+def _build_raingage_handler() -> Any:
+    from agentic_swmm.agent.tool_handlers._shared import _make_mcp_routed_handler
+
+    return _make_mcp_routed_handler(
+        "swmm-climate", "build_raingage_section", args_mapper=_build_raingage_section_args
+    )
+
+
+def _build_design_storm_handler() -> Any:
+    from agentic_swmm.agent.tool_handlers._shared import _make_mcp_routed_handler
+
+    return _make_mcp_routed_handler(
+        "swmm-climate", "generate_design_storm", args_mapper=_generate_design_storm_args
+    )
+
+
+_format_rainfall_tool = _build_handler()
+_build_raingage_section_tool = _build_raingage_handler()
+_generate_design_storm_tool = _build_design_storm_handler()
+
+
+def run_climate_scenarios_tool(call: ToolCall, session_dir: Path) -> dict[str, Any]:
+    """In-process handler for ``run_climate_scenarios`` (ADR-0010).
+
+    Batch-runs precipitation-scaled scenarios of an INP through the
+    audited runner script and writes the comparison summary into the
+    canonical ``03_climate/`` stage. Pure in-process orchestration
+    (like ``fetch_swmm_from_canada``), so it needs no MCP routing and
+    no new binding in EXPECTED_BINDINGS.
+    """
+    from agentic_swmm.agent.tool_handlers._shared import _timestamped_run_dir
+    from agentic_swmm.agent.tool_registry import _resolve_existing_inp
+
+    inp_raw = call.args.get("inp_path")
+    if not isinstance(inp_raw, str) or not inp_raw.strip():
+        return _failure(call, "run_climate_scenarios requires inp_path")
+    inp = _resolve_existing_inp(inp_raw)
+    if inp is None:
+        # Live finding F-105 (2026-09-03, S46): a guessed 06_runner/model.inp
+        # got a bare "not found"; name the INP files that do exist instead.
+        from agentic_swmm.agent.tool_handlers._shared import _missing_file_failure, _repo_path
+
+        candidate = _repo_path(inp_raw)
+        if candidate is None:
+            return _failure(call, f"INP not found (in-repo paths only): {inp_raw}")
+        failure = _missing_file_failure(call, candidate, ".inp")
+        failure["summary"] = f"INP not found (in-repo paths only): {inp_raw}"
+        return failure
+
+    from agentic_swmm.agent.swmm_runtime.climate_scenarios import (
+        DEFAULT_SCENARIOS,
+        parse_factors,
+        run_climate_batch,
+    )
+
+    factors_raw = call.args.get("factors")
+    try:
+        scenarios = (
+            parse_factors(str(factors_raw)) if factors_raw else DEFAULT_SCENARIOS
+        )
+    except ValueError as exc:
+        return _failure(call, f"bad factors: {exc}")
+
+    explicit_run_dir = call.args.get("run_dir")
+    if isinstance(explicit_run_dir, str) and explicit_run_dir.strip():
+        run_dir = Path(explicit_run_dir)
+    else:
+        run_dir = _timestamped_run_dir(call, prefix="climate")
+
+    node_raw = call.args.get("node")
+    node = node_raw.strip() if isinstance(node_raw, str) and node_raw.strip() else None
+
+    result = run_climate_batch(
+        base_inp=inp,
+        run_dir=run_dir,
+        scenarios=scenarios,
+        node=node,
+    )
+    return {
+        "tool": call.name,
+        "ok": result.ok,
+        "run_dir": result.run_dir,
+        "node": result.node,
+        "summary_json": result.summary_json,
+        "summary_md": result.summary_md,
+        "scenarios": [
+            {
+                "name": run.name,
+                "precip_factor": run.precip_factor,
+                "run_ok": run.run_ok,
+                "metrics": run.metrics,
+                "error": run.error,
+            }
+            for run in result.scenarios
+        ],
+        "summary": (
+            f"{sum(1 for r in result.scenarios if r.run_ok)}/{len(result.scenarios)} "
+            f"scenarios ran; summary at {result.summary_md}"
+        ),
+    }
+
+
+__all__ = [
+    "_build_raingage_section_args",
+    "_build_raingage_section_tool",
+    "_format_rainfall_args",
+    "_format_rainfall_tool",
+    "_generate_design_storm_args",
+    "_generate_design_storm_tool",
+    "run_climate_scenarios_tool",
+    "tool_specs",
+]
+
+
+def tool_specs() -> list[ToolSpec]:
+    """This family's self-registered planner tools (issue #358).
+
+    The in-process climate-batch tool plus the three MCP-routed
+    rainfall/raingage/design-storm tools (moved here in C5).
+    """
+    return [
+        ToolSpec(
+            "format_rainfall",
+            "Format rainfall CSV or SWMM .dat files into SWMM TIMESERIES text and metadata JSON using the swmm-climate skill. "
+            "Supply exactly one input mode: a single CSV (input_csv), a glob pattern for multiple CSVs (input_glob_patterns), or .dat files (input_dat_paths). "
+            "Use input_glob_patterns to batch-convert a directory of per-station CSVs; use station_column/series_name_template for multi-station inputs.",
+            _object(
+                {
+                    "input_csv": {"type": "string", "description": "Path to a single rainfall CSV (mutually exclusive with input_glob_patterns and input_dat_paths)."},
+                    "input_glob_patterns": {"type": "array", "items": {"type": "string"}, "description": "Glob patterns matching multiple rainfall CSVs (e.g. ['data/rain_*.csv']). Use to batch-convert a directory."},
+                    "input_dat_paths": {"type": "array", "items": {"type": "string"}, "description": "Paths to SWMM .dat timeseries files. Cannot be combined with CSV inputs."},
+                    "additional_input_csv_paths": {"type": "array", "items": {"type": "string"}, "description": "Additional CSV paths to merge alongside input_csv."},
+                    "dat_value_units": {"type": "string", "description": "Units for .dat file values (required when using input_dat_paths)."},
+                    "out_json": {"type": "string"},
+                    "out_timeseries": {"type": "string"},
+                    "series_name": {"type": "string", "description": "Override series name for single-station outputs."},
+                    "series_name_template": {"type": "string", "description": "Template for multi-station series names, e.g. '{station_id}_rainfall'."},
+                    "timestamp_column": {"type": "string"},
+                    "value_column": {"type": "string"},
+                    "station_column": {"type": "string", "description": "Column name identifying per-station rows in a wide-format CSV."},
+                    "default_station_id": {"type": "string", "description": "Station ID to use when station_column is absent."},
+                    "timestamp_format": {"type": "string", "description": "strptime-compatible timestamp format string."},
+                    "window_start": {"type": "string", "description": "ISO datetime string; crop input timeseries to start at this time."},
+                    "window_end": {"type": "string", "description": "ISO datetime string; crop input timeseries to end at this time."},
+                    "value_units": {"type": "string"},
+                    "unit_policy": {"type": "string", "enum": ["strict", "convert_to_mm_per_hr"]},
+                    "timestamp_policy": {"type": "string", "enum": ["strict", "sort"]},
+                },
+                ["out_json", "out_timeseries"],
+            ),
+            _format_rainfall_tool,
+        ),
+        ToolSpec(
+            "build_raingage_section",
+            "Build the SWMM [RAINGAGES] section snippet that pairs with a formatted timeseries produced by format_rainfall. "
+            "Writes a text fragment (.txt) and a metadata JSON (.json) consumed by build_inp's raingage_json / timeseries_text inputs.",
+            _object(
+                {
+                    "out_text_path": {"type": "string", "description": "Repository-relative path for the output [RAINGAGES] text snippet."},
+                    "out_json_path": {"type": "string", "description": "Repository-relative path for the output raingage metadata JSON."},
+                    "gage_id": {"type": "string", "description": "SWMM gage ID (default: derived from series_name or station_id)."},
+                    "series_name": {"type": "string", "description": "Name of the SWMM TIMESERIES to reference (from format_rainfall output)."},
+                    "station_id": {"type": "string", "description": "Station ID; used to resolve the series name from a multi-station JSON."},
+                    "rainfall_json_path": {"type": "string", "description": "Path to the rainfall metadata JSON produced by format_rainfall; used to auto-detect series_name and interval."},
+                    "rain_format": {"type": "string", "enum": ["INTENSITY", "VOLUME", "CUMULATIVE"], "description": "SWMM rainfall format type."},
+                    "interval_min": {"type": "integer", "description": "Rainfall recording interval in minutes."},
+                    "scf": {"type": "number", "description": "Snow catch factor (default 1.0)."},
+                },
+                ["out_text_path", "out_json_path"],
+            ),
+            _build_raingage_section_tool,
+            is_read_only=False,
+        ),
+        ToolSpec(
+            "generate_design_storm",
+            "Synthesise a design-storm hyetograph from return period and IDF coefficients when no measured rainfall exists. "
+            "Writes SWMM [TIMESERIES] text and metadata JSON that build_inp / build_raingage_section consume unchanged. "
+            "Use format_rainfall instead when you have measured rainfall data.",
+            _object(
+                {
+                    "method": {"type": "string", "enum": ["chicago", "alternating_block"], "description": "chicago = Keifer-Chu hyetograph from IDF formula; alternating_block = from explicit IDF table."},
+                    "duration_min": {"type": "number", "description": "Total storm duration in minutes."},
+                    "out_json": {"type": "string", "description": "Repository-relative path for output metadata JSON."},
+                    "out_timeseries": {"type": "string", "description": "Repository-relative path for output SWMM [TIMESERIES] text (.txt or .dat)."},
+                    "form": {"type": "string", "enum": ["CN", "generic"], "description": "IDF formula form (chicago only). CN: q=167·A1·(1+C·lgP)/(t+b)^n; generic: i=a/(t+b)^c."},
+                    "return_period": {"type": "number", "description": "Return period in years (default 2)."},
+                    "dt": {"type": "number", "description": "Timestep in minutes (default 5)."},
+                    "r": {"type": "number", "description": "Peak-position ratio for chicago method, 0<r<1 (default 0.4)."},
+                    "a1": {"type": "number", "description": "CN form coefficient A1."},
+                    "c_coeff": {"type": "number", "description": "CN form coefficient C."},
+                    "b": {"type": "number", "description": "Both forms: time-offset coefficient b (min)."},
+                    "n": {"type": "number", "description": "CN form exponent n."},
+                    "a_coeff": {"type": "number", "description": "Generic form coefficient a."},
+                    "c_exp": {"type": "number", "description": "Generic form exponent c."},
+                    "idf_csv": {"type": "string", "description": "CSV path with columns duration_min,intensity_mm_per_hr for alternating_block method."},
+                    "idf_json": {"type": "string", "description": "Inline JSON list of {duration_min, intensity_mm_per_hr} objects for alternating_block method."},
+                    "series_name": {"type": "string", "description": "Override series name token (default TS_DESIGN_P<P>Y_<duration>MIN)."},
+                },
+                ["method", "duration_min", "out_json", "out_timeseries"],
+            ),
+            _generate_design_storm_tool,
+            is_read_only=False,
+        ),
+        ToolSpec(
+            "run_climate_scenarios",
+            (
+                "Batch-run precipitation-scaled climate scenarios of a SWMM model "
+                "and write a comparison summary into the canonical 03_climate stage.\n"
+                "USE WHEN: the user wants climate-change forcing, rainfall uplift "
+                "scenarios, a scaled-event or rainfall-ensemble sensitivity (factors below "
+                "1.0 are fine, e.g. 0.8,1.0,1.2), or a what-if comparison over an existing model. "
+                "Calibrate first (aiswmm calibrate) so the deltas mean something, "
+                "then force the calibrated INP.\n"
+                "factors like \"1.0,1.1,1.2,1.35\" scale every rainfall input "
+                "(inline TIMESERIES and FILE-referenced .dat); each scenario runs "
+                "through the audited SWMM runner; the summary compares precip, "
+                "runoff, flooding, outflow, and peak per scenario."
+            ),
+            _object(
+                {
+                    "inp_path": {
+                        "type": "string",
+                        "description": "Base model INP (typically the calibrated model).",
+                    },
+                    "run_dir": {"type": "string"},
+                    "factors": {
+                        "type": "string",
+                        "description": (
+                            "Comma-separated precipitation multipliers; default "
+                            "1.0,1.10,1.20,1.35."
+                        ),
+                    },
+                    "node": {
+                        "type": "string",
+                        "description": "Report node (default: the INP's first outfall).",
+                    },
+                },
+                ["inp_path"],
+            ),
+            run_climate_scenarios_tool,
+        ),
+    ]

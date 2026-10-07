@@ -1,0 +1,162 @@
+"""Locate a Run's artifacts (manifest / INP / OUT) inside its run dir.
+
+This is the run-dir layout contract in code form: manifest-recorded
+paths win, then the conventional subdirectory patterns, then a
+recursive fallback. It lived as private helpers inside the ``plot``
+CLI verb and was reached into by the ``map`` verb and the plot tool
+handler — three consumers importing underscore names across module
+boundaries. The 2026-07 architecture pass gave the family its own
+home next to the other run-contract modules (postflight / rpt_summary).
+
+ADR-0004: the subdirectory patterns below are canonical-first
+(``run_layout.BUILDER`` / ``run_layout.RUNNER``) with a legacy-generation
+fallback resolved through ``run_layout.find_stage`` — see
+``agentic_swmm.agent.swmm_runtime.run_layout`` for the single source of
+truth on stage numbering. The bare ``*.inp`` / ``*.out`` / ``**/*.inp`` /
+``**/*.out`` globs after that are the pre-ADR-0004 flat-layout fallback
+(the agent path used to write straight into the run-dir root); they stay
+so very old runs and one-off directories still resolve.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+from agentic_swmm.agent.swmm_runtime import run_layout
+from agentic_swmm.utils.paths import repo_root
+
+
+def read_manifest(run_dir: Path) -> dict[str, Any]:
+    """Return the run's manifest dict, or ``{}`` when none parses.
+
+    Runner-stage manifest first: ``find_inp``/``find_out`` read the
+    runner schema's ``inp`` / ``files`` keys, and on the canonical
+    layout the root ``manifest.json`` is the CLI top-manifest (no such
+    keys) while the sorted ``**`` glob surfaced ``05_builder`` before
+    ``06_runner`` — either way the manifest fast-path was dead and
+    every lookup fell through to the convention globs (2026-08-08).
+    Root-first order remains for legacy flat runs via the fallback.
+    """
+    candidates: list[Path] = []
+    runner_dir = run_layout.find_stage(run_dir, run_layout.RUNNER)
+    if runner_dir is not None:
+        candidates.append(runner_dir / "manifest.json")
+    candidates.append(run_dir / "manifest.json")
+    candidates.extend(sorted(run_dir.glob("**/manifest.json")))
+    for path in candidates:
+        if path.exists():
+            try:
+                parsed = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            return parsed if isinstance(parsed, dict) else {}
+    return {}
+
+
+def resolve_recorded_path(value: str | None, run_dir: Path) -> Path | None:
+    """Resolve a manifest-recorded path: absolute wins, then run-dir
+    relative, then repo-root relative."""
+    if not value:
+        return None
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    candidate = run_dir / path
+    if candidate.exists():
+        return candidate
+    return repo_root() / path
+
+
+def find_inp(run_dir: Path, manifest: dict[str, Any]) -> Path | None:
+    """Locate the run's INP: manifest-recorded first, then conventions."""
+    recorded = resolve_recorded_path(manifest.get("inp"), run_dir)
+    if recorded and recorded.exists():
+        return recorded
+    matches = sorted((run_dir / "00_inputs").glob("*.inp"))
+    if matches:
+        return matches[0]
+    builder_dir = run_layout.find_stage(run_dir, run_layout.BUILDER)
+    if builder_dir is not None:
+        matches = sorted(builder_dir.glob("*.inp"))
+        if matches:
+            return matches[0]
+    for pattern in ("*.inp", "**/*.inp"):
+        matches = sorted(run_dir.glob(pattern))
+        if matches:
+            return matches[0]
+    return None
+
+
+def find_rpt(run_dir: Path, manifest: dict[str, Any]) -> Path | None:
+    """Locate the run's report: manifest-recorded first, then conventions."""
+    files = manifest.get("files")
+    if isinstance(files, dict):
+        recorded = resolve_recorded_path(files.get("rpt"), run_dir)
+        if recorded and recorded.exists():
+            return recorded
+    runner_dir = run_layout.find_stage(run_dir, run_layout.RUNNER)
+    if runner_dir is not None:
+        matches = sorted(runner_dir.glob("*.rpt"))
+        if matches:
+            return matches[0]
+    for pattern in ("*.rpt", "**/*.rpt"):
+        matches = sorted(run_dir.glob(pattern))
+        if matches:
+            return matches[0]
+    return None
+
+
+def preferred_report_node(
+    run_dir: Path, manifest: dict[str, Any], inp: Path | None
+) -> tuple[str | None, str]:
+    """Return ``(node, reason)`` for a plot or peak that was given no node.
+
+    Once the run's report exists, the outfall carrying the largest total
+    volume wins; before that, the INP's first outfall stands in. Finding
+    F-02 (2026-09-02): "first outfall in the INP" picked a dry outfall on
+    real multi-outfall networks and the flat hydrograph reached the
+    client's report. The reason travels with the choice so the planner
+    and the CLI can say why this node.
+    """
+    from agentic_swmm.agent.swmm_runtime.rpt_summary import dominant_outfall
+
+    rpt = find_rpt(run_dir, manifest)
+    if rpt is not None:
+        try:
+            text = rpt.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            text = ""
+        node = dominant_outfall(text)
+        if node:
+            return node, "outfall carrying the largest total volume in this run (Outfall Loading Summary)"
+    if inp is not None:
+        from agentic_swmm.agent.swmm_runtime.inp_parsing import default_report_node
+
+        node = default_report_node(inp)
+        if node:
+            return node, "first outfall in the INP (no outfall loading rows yet)"
+    return None, ""
+
+
+def find_out(run_dir: Path, manifest: dict[str, Any]) -> Path | None:
+    """Locate the run's binary OUT: manifest-recorded first, then conventions."""
+    files = manifest.get("files")
+    if isinstance(files, dict):
+        recorded = resolve_recorded_path(files.get("out"), run_dir)
+        if recorded and recorded.exists():
+            return recorded
+    runner_dir = run_layout.find_stage(run_dir, run_layout.RUNNER)
+    if runner_dir is not None:
+        matches = sorted(runner_dir.glob("*.out"))
+        if matches:
+            return matches[0]
+    for pattern in ("*.out", "**/*.out"):
+        matches = sorted(run_dir.glob(pattern))
+        if matches:
+            return matches[0]
+    return None
+
+
+__all__ = ["find_inp", "find_out", "read_manifest", "resolve_recorded_path"]

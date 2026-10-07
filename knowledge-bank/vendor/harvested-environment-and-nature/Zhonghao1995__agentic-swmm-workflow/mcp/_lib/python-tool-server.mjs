@@ -1,0 +1,31 @@
+/**
+ * Shared prologue for the McpServer-family Python-tool servers (builder,
+ * climate, experiment-audit, modeling-memory, network, params).
+ *
+ * Each of those six servers spawns a skill script under skills/<name>/scripts/
+ * and expects stdout back; each one used to hand-roll its own copy of this
+ * ~10-line spawnSync wrapper. Converged here per ADR-0006 D5. The five
+ * low-level-SDK servers (calibration, gis, plot, runner, uncertainty) are
+ * untouched -- they don't share this McpServer scaffolding.
+ */
+
+import { spawnSync } from 'node:child_process';
+
+const PY = process.env.PYTHON || 'python3';
+
+export function runPython(script, args) {
+  // Bound the call: a hung script must not block the server's event loop
+  // forever, and runaway output must not exhaust memory (review P2-2).
+  const proc = spawnSync(PY, [script, ...args], {
+    encoding: 'utf8',
+    timeout: Number(process.env.AISWMM_PY_TOOL_TIMEOUT_MS || 300000),
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (proc.error) {
+    throw new Error(proc.error.message);
+  }
+  if (proc.status !== 0) {
+    throw new Error((proc.stderr || proc.stdout || `python failed: ${proc.status}`).trim());
+  }
+  return (proc.stdout || '').trim();
+}

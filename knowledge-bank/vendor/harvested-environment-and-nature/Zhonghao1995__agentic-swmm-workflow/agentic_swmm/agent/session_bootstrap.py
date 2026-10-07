@@ -1,0 +1,515 @@
+"""Interactive-session filesystem bootstrap (PRD-02 + Issue #205).
+
+Before PRD-02 these helpers were private functions on
+``runtime_loop.py`` (``_safe_name`` / ``_display_path`` /
+``_new_interactive_session`` / ``_case_slug`` /
+``_match_registered_case``). They share a single concern — preparing
+the per-session filesystem location and naming the case derived
+from the user's prompt — so collecting them in one module makes
+the REPL caller dramatically shallower.
+
+Issue #205 (Phase 2 of the runtime_loop split) folded four more
+helpers in here as *named lifecycle phases* so the REPL planner-runner
+no longer reaches into runtime_loop's private surface:
+
+- :func:`bootstrap_session_dir` — per-turn run/chat path (was ``_new_turn_dir``).
+- :func:`bootstrap_prior_state` — load prior ``aiswmm_state.json``.
+- :func:`bootstrap_system_prompt` — assemble ``<facts>`` /
+  ``<previous-session>`` extras.
+- :func:`bootstrap_runs_root` — resolve the ``runs/`` root for MOC
+  regeneration.
+
+The functions are kept side-effect-thin (only ``new_interactive_session``
+mkdir's and writes an index line); everything else is pure or
+read-only.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+from datetime import datetime
+from pathlib import Path
+
+from agentic_swmm.agent.swmm_runtime import run_layout
+from typing import Any
+
+from agentic_swmm.agent.ui import display_path
+from agentic_swmm.agent.swmm_runtime.run_layout import agent_file
+
+__all__ = [
+    "bootstrap_prior_state",
+    "bootstrap_runs_root",
+    "bootstrap_session_dir",
+    "bootstrap_system_prompt",
+    "display_path",
+    "infer_case_slug",
+    "is_swmm_run_dir",
+    "new_interactive_session",
+    "safe_name",
+]
+
+
+def new_interactive_session(base_dir: Path) -> tuple[Path, str]:
+    """Create today's run-folder under ``base_dir`` and return ``(dir, label)``.
+
+    Side effects:
+
+    - mkdir ``base_dir/YYYY-MM-DD`` (idempotent),
+    - append a ``session_start`` record to ``_sessions.jsonl`` so the
+      living-memory MOC has a turn-zero anchor.
+
+    The session label is ``session-HHMMSS`` (UTC-naive, local clock).
+    """
+    now = datetime.now()
+    date_dir = base_dir / now.strftime("%Y-%m-%d")
+    date_dir.mkdir(parents=True, exist_ok=True)
+    session_label = f"session-{now.strftime('%H%M%S')}"
+    _append_session_index(
+        date_dir,
+        {
+            "event": "session_start",
+            "session": session_label,
+            "created_at": now.isoformat(timespec="seconds"),
+        },
+    )
+    return date_dir, session_label
+
+
+def _append_session_index(date_dir: Path, event: dict[str, Any]) -> None:
+    index = date_dir / "_sessions.jsonl"
+    with index.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def safe_name(value: str) -> str:
+    """Normalise an arbitrary string into a filesystem-safe slug.
+
+    Mirrors ``agentic_swmm.agent.single_shot._safe_name``: non-alphanumeric
+    runs collapse to ``-``, leading/trailing dashes strip, and an
+    empty result falls back to ``"agent"`` so callers can rely on a
+    non-empty filename fragment.
+    """
+    # ``\w`` with the default Unicode semantics keeps CJK and accented text.
+    # The old ASCII-only class destroyed every non-Latin prompt, so five
+    # different Chinese questions all produced folders named "agent_chat" and
+    # a user scrolling their runs could not tell them apart.
+    cleaned = re.sub(r"[^\w.-]+", "-", value.strip())
+    return cleaned.strip("-") or "agent"
+
+
+def infer_case_slug(prompt: str) -> str:
+    """Derive the case slug for a per-turn run folder from ``prompt``.
+
+    Resolution order (preserved from the previous
+    ``runtime_loop._case_slug``):
+
+    1. ``examples/<name>/...`` path mention → ``safe_name(<name>)[:32]``,
+    2. ``<name>.inp`` mention → ``safe_name(<name>)[:32]``,
+    3. PRD #118 case registry hit (``case_id`` / ``display_name``
+       / ``aliases``),
+    4. plot vocab in the prompt → ``"plot-selection"``,
+    5. fallback: ``_goal_slug(prompt)`` (three content words, F-08).
+    """
+    lowered = prompt.lower()
+    # Note: the character class below includes CJK full-width
+    # punctuation (``，。；``) so prompts mixing English filenames
+    # with Chinese sentence boundaries still capture the filename
+    # cleanly. Kept identical to the previous ``runtime_loop._case_slug``.
+    example = re.search(r"examples/([^/\s，。；;,)]+)", prompt, flags=re.I)
+    if example:
+        return safe_name(example.group(1))[:32]
+    inp = re.search(r"([^/\s，。；;,)]+)\.inp", prompt, flags=re.I)
+    if inp:
+        return safe_name(inp.group(1))[:32]
+    registry_hit = _match_registered_case(lowered)
+    if registry_hit is not None:
+        return registry_hit
+    place = _extract_place_slug(prompt)
+    if place:
+        return place
+    if any(word in lowered for word in ("plot", "作图", "画图", "图")):
+        return "plot-selection"
+    path_slug = _slug_from_path_mention(prompt)
+    if path_slug:
+        return path_slug
+    return _goal_slug(prompt)
+
+
+_SLUG_STOPWORDS = frozenset(
+    "the a an and or of for to in on at by with from that this those these is are was were be do does did "
+    "can could would should will me my our your it its as into about which what how why when where who whom "
+    "please run show tell give make "
+    # Words every modelling request carries; without them in the list the
+    # run was named after the verb and the product instead of the place
+    # (150906_fetch-swmm-model_run for Vancouver, live test 2026-09-03, S43).
+    "fetch swmm model models canada service rainfall period build create generate".split()
+)
+
+
+# Function words and request verbs of a Chinese modelling request; what is
+# left of the longest CJK run after removing them is the place or the object
+# (服务取一个多伦多市中心的 -> 多伦多市中心).
+_CJK_SLUG_STOPWORDS: tuple[str, ...] = (
+    "请帮我", "帮我", "请", "服务", "取一个", "拿一个", "建一个", "一个", "一份", "然后", "运行", "并", "审计",
+    "模型", "降雨", "时段", "导出", "报告", "这次", "上次", "的", "了", "吧",
+)
+
+
+def _goal_slug(prompt: str) -> str:
+    """A short, lower-case, stop-word-free name for a run started by a plain request.
+
+    Live finding F-08 (2026-09-02): the fallback ``safe_name(prompt)[:32]``
+    produced run folders such as ``Which-node-flooded-the-most-and-_run``
+    and ``Draw-the-network-map-for-that-ru_run``: case-preserving,
+    truncated mid-word, full of stop words. Three content words are
+    enough to find the run again: ``which-node-flooded`` becomes
+    ``node-flooded-most``, ``draw-network-map`` stays as it reads.
+    """
+    # Live finding F-76 (2026-09-03): "It's the downtown core" produced
+    # `s-downtown-core`; a one-letter leftover of a contraction is not a word.
+    # Live finding F-101 (2026-09-03, S44): a Chinese request was named after
+    # its date digits (151655_2023-11-11_run) because only [a-z0-9] tokens
+    # counted. When the prompt carries CJK, its first CJK run names the run
+    # and bare digit tokens are dropped.
+    cjk_runs = re.findall(r"[\u4e00-\u9fff]{2,}", prompt)
+    words = [w for w in re.findall(r"[a-z0-9]+", prompt.lower()) if w not in _SLUG_STOPWORDS and len(w) >= 2]
+    if cjk_runs:
+        # Dates and counts in a Chinese sentence are not its subject; a real
+        # Latin word (swmmcanada, victoria) still is.
+        words = [w for w in words if not w.isdigit()]
+    if words:
+        return "-".join(words[:3])[:32]
+    if cjk_runs:
+        longest = max(cjk_runs, key=len)
+        trimmed = longest
+        for word in _CJK_SLUG_STOPWORDS:
+            trimmed = trimmed.replace(word, "")
+        return (trimmed or longest)[:8]
+    # No Latin words at all (a Chinese prompt with no place or file):
+    # keep the old behaviour, shortened.
+    return safe_name(prompt)[:16].strip("-") or "adhoc"
+
+
+#: A path a user pasted: Windows drive form, UNC, or POSIX absolute.
+_PATH_MENTION = re.compile(r"(?:[A-Za-z]:)?(?:[\\/][^\s\"\',，。；;)]+){2,}")
+
+
+def _slug_from_path_mention(prompt: str) -> str | None:
+    """Name a folder after the thing at the end of a pasted path.
+
+    ``C:\\Users\\Hoz\\AppData\\Local\\agentic-swmm-workflow\\examples\\33``
+    used to slug the whole string and truncate it, producing the run folder
+    ``193233_C-Users-Hoz-AppData-Local-agenti_run``: 32 characters that name
+    the user's home directory and not the work. The last component is the
+    part that identifies it.
+    """
+    match = _PATH_MENTION.search(prompt)
+    if match is None:
+        return None
+    raw = match.group(0).rstrip("\\/")
+    tail = re.split(r"[\\/]", raw)[-1]
+    if not tail:
+        return None
+    stem = tail.rsplit(".", 1)[0] if "." in tail[1:] else tail
+    slug = safe_name(stem)[:32]
+    return slug if slug and slug != "agent" else None
+
+
+#: Lowercase district qualifiers that may precede a proper place name.
+_PLACE_PREFIXES = (
+    "downtown", "greater", "north", "south", "east", "west", "central",
+    "old", "inner", "outer",
+)
+
+
+def _extract_place_slug(prompt: str) -> str | None:
+    """Slug from a place name mentioned in the goal, if one is visible.
+
+    User request 2026-08-09: session dirs should read as WHERE the run
+    happened ("downtown-victoria"), not as a vocabulary guess. A
+    multi-step goal mentioning plotting used to name the whole run
+    "plot-selection". Two conservative patterns:
+
+    1. A parenthetical location: "(downtown Victoria, BC)".
+    2. An inline "<qualifier?> <Proper Name...> <,? PROVINCE?>" phrase
+       such as "James Bay area of Victoria BC".
+
+    Returns None rather than guessing when neither matches.
+    """
+    paren = re.search(r"\(([^()]{3,48})\)", prompt)
+    if paren:
+        inner = paren.group(1).strip()
+        if re.search(r"[A-Za-z]", inner) and not inner.lower().endswith((".inp", ".csv")):
+            slug = safe_name(inner)[:32].strip("-").lower()
+            if slug:
+                return slug
+    # The inline form must carry an ANCHOR (district qualifier, place
+    # suffix, or province code): a bare capitalized word is usually a
+    # sentence-initial verb ("Fetch a SWMM model...").
+    prefix_pattern = "|".join(_PLACE_PREFIXES)
+    suffix_pattern = (
+        "Bay|Beach|Creek|Park|Harbour|Harbor|Heights|Hills|Island|Lake|"
+        "Point|Ridge|Valley|Village"
+    )
+    province_pattern = "BC|AB|SK|MB|ON|QC|NB|NS|PE|NL|YT|NT|NU"
+    inline = re.search(
+        rf"\b((?:(?:{prefix_pattern})\s+[A-Z][A-Za-z'-]+(?:\s+[A-Z][A-Za-z'-]+)?)"
+        rf"|(?:[A-Z][A-Za-z'-]+\s+(?:{suffix_pattern})\b(?:\s+area)?"
+        rf"(?:\s+of\s+[A-Z][A-Za-z'-]+)?)"
+        rf"|(?:[A-Z][A-Za-z'-]+(?:\s+[A-Z][A-Za-z'-]+){{0,2}}\s*,?\s+"
+        rf"(?:{province_pattern})\b))",
+        prompt,
+    )
+    if inline:
+        candidate = inline.group(1).strip()
+        generic = {"swmm", "word", "run", "model", "canada", "report", "the"}
+        words = [w for w in re.split(r"[\s,]+", candidate) if w]
+        if words and not all(w.lower() in generic for w in words):
+            if any(w[0].isupper() and w.lower() not in generic for w in words):
+                slug = safe_name(candidate)[:32].strip("-").lower()
+                if slug and slug not in generic:
+                    return slug
+    return None
+
+
+def _match_registered_case(lowered_prompt: str) -> str | None:
+    """Return the first registered case id whose handle appears in the prompt.
+
+    PRD #118 — the registry is read from ``cases/<id>/case_meta.yaml``
+    under ``repo_root()``. Failures are swallowed: a corrupt registry
+    must never block a user's turn.
+    """
+    from agentic_swmm.case import case_registry  # local: registry pulls yaml
+
+    try:
+        cases = case_registry.list_cases()
+    except Exception:  # pragma: no cover - defensive
+        return None
+    for meta in cases:
+        needles: list[str] = [meta.case_id]
+        if meta.display_name:
+            needles.append(meta.display_name)
+        aliases = meta.extra.get("aliases") if isinstance(meta.extra, dict) else None
+        if isinstance(aliases, list):
+            needles.extend(str(a) for a in aliases if isinstance(a, str))
+        for needle in needles:
+            if needle and needle.lower() in lowered_prompt:
+                return meta.case_id
+    return None
+
+
+# --- named lifecycle phases -------------------------------------------------
+#
+# Each phase below replaces a tightly-coupled private helper that used to
+# live on ``runtime_loop.py``. They share the bootstrap concern (preparing
+# session state before the planner runs) and are now independently
+# unit-testable — see ``tests/test_session_bootstrap.py``.
+
+
+def bootstrap_session_dir(date_dir: Path, prompt: str, *, kind: str) -> Path:
+    """Return the per-turn run/chat directory path under ``date_dir``.
+
+    Formerly ``runtime_loop._new_turn_dir``. The path layout is::
+
+        <date_dir>/HHMMSS_<case-slug>_<kind>[_2/3/...]
+
+    The trailing counter is appended only when the unsuffixed path
+    already exists on disk, so concurrent turns within the same second
+    don't clobber each other.
+
+    Pure path-building — the caller is responsible for ``mkdir`` (the
+    REPL still does ``session_dir.mkdir(parents=True, exist_ok=True)``
+    right after this returns). Keeping mkdir out lets tests assert the
+    naming behaviour without touching the filesystem.
+    """
+    now = datetime.now()
+    case = infer_case_slug(prompt)
+    folder = date_dir / f"{now.strftime('%H%M%S')}_{case}_{kind}"
+    counter = 2
+    while folder.exists():
+        folder = date_dir / f"{now.strftime('%H%M%S')}_{case}_{kind}_{counter}"
+        counter += 1
+    return folder
+
+
+def is_swmm_run_dir(path: Path) -> bool:
+    """Return True iff ``path`` looks like a finished SWMM run directory.
+
+    A SWMM run dir is either:
+
+    - has ``manifest.json`` *and* a runner subfolder (canonical
+      ``06_runner`` per ADR-0004, or the legacy ``05_runner`` /
+      ``01_runner`` names), or
+    - contains both ``*.out`` and ``*.rpt`` anywhere under it.
+
+    The REPL uses this to decide whether to pin the path as the
+    "active run" so a follow-up plot / inspect call lands in the same
+    folder rather than spawning a fresh turn dir.
+    """
+    if not path.exists() or not path.is_dir():
+        return False
+    if (path / "manifest.json").exists() and run_layout.find_stage(
+        path, run_layout.RUNNER
+    ):
+        return True
+    return any(path.glob("**/*.out")) and any(path.glob("**/*.rpt"))
+
+
+def bootstrap_prior_state(active_run_dir: Path | None) -> dict[str, Any] | None:
+    """Load ``aiswmm_state.json`` from ``active_run_dir`` if it exists.
+
+    Formerly ``runtime_loop._load_prior_session_state``. The planner
+    consumes this through ``should_introspect`` to skip re-emitting
+    ``list_skills`` / ``list_mcp_*`` calls that the prior turn already
+    made. Returns ``None`` when nothing is available so the planner
+    falls back to its full introspection on the first turn of a fresh
+    case.
+    """
+    if active_run_dir is None:
+        return None
+    state_file = agent_file(active_run_dir, "aiswmm_state.json")
+    if not state_file.exists():
+        return None
+    try:
+        payload = json.loads(state_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def bootstrap_system_prompt(
+    *,
+    session_dir: Path,
+    prior_session_state: dict[str, Any] | None,
+) -> list[str]:
+    """Assemble the per-session system-prompt injections.
+
+    Formerly ``runtime_loop._build_system_prompt_extras``. Order:
+    project facts first (durable user-curated context), then the
+    previous-session banner (volatile recall). Both are gated on the
+    relevant input being non-empty so the system prompt stays tight
+    when there is nothing to inject.
+    """
+    extras: list[str] = []
+    facts_block = _safe_facts_block()
+    if facts_block:
+        extras.append(facts_block)
+    prev_block = _safe_previous_session_block(
+        session_dir=session_dir,
+        prior_session_state=prior_session_state,
+    )
+    if prev_block:
+        extras.append(prev_block)
+    failures_block = _safe_recent_failures_block()
+    if failures_block:
+        extras.append(failures_block)
+    return extras
+
+
+def _safe_recent_failures_block() -> str:
+    """The read side of the run-failure memory (finding F-09, 2026-09-02).
+
+    Wrapped like the facts block: the digest must never block a turn.
+    """
+    from agentic_swmm.memory import run_failures as _failures_mod
+
+    try:
+        return _failures_mod.recent_failure_digest()
+    except Exception:
+        return ""
+
+
+def _safe_facts_block() -> str:
+    """Read ``facts.md`` and wrap it for system-prompt injection.
+
+    Wrapped in a try/except because a corrupt facts file should never
+    block the user's turn — the worst case is a slightly less
+    informed planner.
+    """
+    from agentic_swmm.memory import facts as _facts_mod
+
+    try:
+        return _facts_mod.read_facts_for_injection()
+    except Exception:
+        return ""
+
+
+def _safe_previous_session_block(
+    *,
+    session_dir: Path,
+    prior_session_state: dict[str, Any] | None,
+) -> str:
+    """Return a ``<previous-session>`` fence for ``session_dir``, if any.
+
+    The lookup is keyed on ``case_name`` inferred from either the
+    prior session state or the current session directory's name.
+    Returns the empty string when no prior session exists or any IO
+    fails — never raises in front of the user.
+    """
+    from agentic_swmm.memory import session_db
+    from agentic_swmm.memory.case_inference import infer_case_name
+    from agentic_swmm.memory.session_sync import default_db_path
+
+    try:
+        case_name: str | None = None
+        if prior_session_state:
+            case_name = infer_case_name(prior_session_state)
+        if not case_name:
+            case_name = _infer_case_name_from_dir(session_dir)
+        if not case_name:
+            return ""
+        db_path = default_db_path()
+        if not db_path.exists():
+            return ""
+        with session_db.connect(db_path) as conn:
+            row = session_db.latest_session_for_case(conn, case_name)
+        if not row:
+            return ""
+        current_id = session_db.session_id_from_dir(session_dir)
+        if row.get("session_id") == current_id:
+            return ""
+        return session_db.previous_session_block(row)
+    except Exception:
+        return ""
+
+
+def _infer_case_name_from_dir(session_dir: Path) -> str | None:
+    """Derive the case slug straight from ``session_dir``'s leaf name.
+
+    Mirrors ``case_inference.infer_case_name`` for the case where we
+    only have the session directory in hand (no session_state yet).
+    """
+    leaf = session_dir.name
+    match = re.match(r"^\d+_(?P<case>.+?)_(?:run|chat)(?:_\d+)?$", leaf)
+    if match:
+        return match.group("case")
+    return None
+
+
+def bootstrap_runs_root(session_dir: Path) -> Path:
+    """Return the ``runs/`` root that the MOC should describe.
+
+    Formerly ``runtime_loop._resolve_runs_root_for``. Order:
+
+    1. ``AISWMM_RUNS_ROOT`` env var (lets tests point at a tmp tree).
+    2. The first ancestor of ``session_dir`` named ``runs``.
+    3. ``repo_root() / "runs"`` as a last-resort fallback.
+
+    Mirrors the resolution used by ``commands/audit._runs_root_for`` so
+    the session-end and force-refresh paths agree.
+    """
+    from agentic_swmm.utils.paths import repo_root
+
+    override = os.environ.get("AISWMM_RUNS_ROOT")
+    if override:
+        return Path(override).expanduser().resolve()
+    try:
+        resolved = session_dir.resolve()
+    except OSError:
+        resolved = session_dir
+    for parent in resolved.parents:
+        if parent.name == "runs":
+            return parent
+    return repo_root() / "runs"

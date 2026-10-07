@@ -1,0 +1,140 @@
+"""``aiswmm agent`` subcommand: argparse + dispatch only.
+
+The actual behaviour lives in two sibling modules:
+
+- ``agentic_swmm.agent.runtime_loop`` — interactive shell + OpenAI
+  planner turn loop.
+- ``agentic_swmm.agent.single_shot`` — non-interactive rule-planner
+  flow plus the historical tool-dispatch helpers.
+
+This split lands as a no-behaviour-change move (PRD: Runtime UX).
+``_find_repo_inp`` is re-exported here for backwards compatibility with
+``tests/test_agentic_swmm_cli.py``.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from agentic_swmm.agent.experimental_providers import (
+    available_provider_choices,
+    provider_help_text,
+)
+from agentic_swmm.agent.flag_naming import register_example_flag
+from agentic_swmm.agent.permissions_profile import Profile, profile_from_string
+from agentic_swmm.agent.runtime_loop import run_interactive_shell
+from agentic_swmm.agent.single_shot import _find_repo_inp, run_single_shot
+
+__all__ = [
+    "register",
+    "main",
+    "resolve_profile_string",
+    "resolve_profile_from_args",
+    "_find_repo_inp",
+]
+
+
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    parser = subparsers.add_parser("agent", help="Send one goal through the agent (rule planner by default; --planner llm for the LLM).")
+    parser.add_argument("goal", nargs="*", help="Goal for the local executor.")
+    # ``llm`` is the provider-neutral planner name; ``openai`` is kept as a
+    # deprecated alias so existing scripts/dispatch keep parsing. The chosen
+    # backend is resolved from ``provider.default`` (``openai`` by default,
+    # or ``anthropic``), not from the planner name.
+    parser.add_argument(
+        "--planner",
+        choices=["rule", "llm", "openai"],
+        default="rule",
+        help="Planner backend ('llm' or the deterministic 'rule'). Defaults to rule.",
+    )
+    parser.add_argument(
+        "--provider",
+        choices=available_provider_choices(),
+        help=provider_help_text(
+            "Provider to use with --planner llm. Defaults to config provider.default."
+        ),
+    )
+    parser.add_argument("--model", help="Model override for --planner llm.")
+    parser.add_argument("--session-id", help="Stable session id. Defaults to a timestamped id.")
+    parser.add_argument("--session-dir", type=Path, help="Directory for trace, tool outputs, and final report.")
+    parser.add_argument("--dry-run", action="store_true", help="Plan only; do not execute tools.")
+    parser.add_argument("--interactive", action="store_true", help="Start an interactive agent shell; each prompt is executed with tool access.")
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=40,
+        help=(
+            "Maximum tool calls per turn. Default 40 leaves ~25 steps for real "
+            "operations after the planner's ~15-step introspection overhead "
+            "(list_skills / read_skill / list_mcp_tools / select_skill). Bump "
+            "higher for chains that include plot_run AND map_run AND audit. "
+            "Lower (e.g. --max-steps 16) if you want a tighter token budget."
+        ),
+    )
+    parser.add_argument("--verbose", action="store_true", help="Show full planner/tool details in the terminal.")
+    parser.add_argument(
+        "--safe",
+        action="store_true",
+        help=(
+            "Permission profile SAFE: prompt for every tool call. "
+            "Default is QUICK (auto-approves read-only tools like "
+            "read_file, list_*, search_files, inspect_plot_options)."
+        ),
+    )
+    # ``--quick`` is the legacy spelling of the now-default profile. Keep
+    # it parsable for one release so existing scripts / docs don't break,
+    # but hide it from --help so new users learn the --safe spelling.
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    register_example_flag(
+        parser,
+        example_text='aiswmm agent "run the SWMM model at examples/<case>/model.inp"',
+    )
+    parser.set_defaults(func=main)
+
+
+def resolve_profile_string(args: argparse.Namespace) -> str:
+    """Resolve the user's requested profile to ``"quick"`` / ``"safe"``.
+
+    Precedence rules:
+
+    - ``--safe`` selects ``"safe"`` and wins over ``--quick``.
+    - ``--quick`` alone (without ``--safe``) selects ``"quick"``.
+    - Neither flag → ``"quick"`` (the new default).
+    - Both flags → ``"safe"`` plus a single-line stderr warning so the
+      user knows ``--quick`` was ignored.
+    """
+    want_safe = bool(getattr(args, "safe", False))
+    want_quick = bool(getattr(args, "quick", False))
+    if want_safe and want_quick:
+        print(
+            "warning: --safe overrides --quick; using SAFE profile.",
+            file=sys.stderr,
+        )
+        return "safe"
+    if want_safe:
+        return "safe"
+    if want_quick:
+        return "quick"
+    return "quick"
+
+
+def resolve_profile_from_args(args: argparse.Namespace) -> Profile:
+    """Convenience: ``resolve_profile_string`` composed with ``profile_from_string``.
+
+    Downstream callers (``runtime_loop``, ``single_shot``) consume the
+    enum directly, so they should prefer this helper over re-checking
+    ``args.safe`` / ``args.quick``.
+    """
+    return profile_from_string(resolve_profile_string(args))
+
+
+def main(args: argparse.Namespace) -> int:
+    if args.interactive:
+        return run_interactive_shell(args)
+    return run_single_shot(args)

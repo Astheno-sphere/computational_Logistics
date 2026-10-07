@@ -1,0 +1,214 @@
+"""Non-interactive single-shot executor for the ``aiswmm agent`` CLI.
+
+This module owns the ``--planner rule`` single-shot flow used by tests
+and by ``aiswmm agent <goal>`` without ``--interactive``. The live
+tool-dispatch implementation lives in
+``agentic_swmm/agent/tool_registry.py``; this module only assembles a
+rule-planner plan and hands it to ``run_rule_plan``.
+
+The two module-level helpers (``_find_repo_inp`` and ``_safe_name``) are
+kept at the top of the file because they have external callers
+(``tests/test_agentic_swmm_cli.py`` and ``agent/runtime_loop.py``).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from pathlib import Path
+
+from agentic_swmm.agent.executor import AgentExecutor
+from agentic_swmm.agent.mcp_pool import ensure_session_pool
+from agentic_swmm.agent.planner import rule_plan
+from agentic_swmm.agent.reporting import display_goal, write_event as _write_event
+from agentic_swmm.agent.reporting import write_report as _write_report
+from agentic_swmm.agent.runtime import run_rule_plan
+from agentic_swmm.agent.session_header import (
+    finalize_session_header,
+    try_write_session_header,
+)
+from agentic_swmm.agent.tool_registry import AgentToolRegistry
+from agentic_swmm.agent.ui import agent_say as _agent_say
+from agentic_swmm.agent.ui import compact_plan as _compact_plan
+from agentic_swmm.agent.ui import display_path as _display_path
+from agentic_swmm.utils.paths import register_workspace_root, repo_root, resolve_runs_dir, resource_root
+from agentic_swmm.agent.swmm_runtime.run_layout import agent_file, agent_file_for_write
+
+
+def _safe_name(value: str) -> str:
+    """Normalise an arbitrary string into a filesystem-safe slug."""
+    # Mirror of session_bootstrap.safe_name: ``\w`` keeps CJK and accented
+    # text, which the old ASCII-only class collapsed to nothing.
+    cleaned = re.sub(r"[^\w.-]+", "-", value.strip())
+    return cleaned.strip("-") or "agent"
+
+
+def _find_repo_inp(value: str) -> Path | None:
+    """Resolve a bare ``.inp`` filename to a path under ``examples/``."""
+    if not value or Path(value).is_absolute() or "/" in value:
+        return None
+    root = resource_root() / "examples"
+    if not root.exists():
+        return None
+    matches = sorted(
+        path
+        for path in root.rglob(value)
+        if path.is_file() and path.suffix.lower() == ".inp"
+    )
+    return matches[0] if matches else None
+
+
+ALLOWED_TOOLS = AgentToolRegistry().names
+
+
+def _render_tool_outcome(*, index: int, total: int, name: str, result: dict) -> bool:
+    """Print one tool's outcome. Returns False when the run should stop.
+
+    A result may carry a ``hint``: guidance that explains a refusal the
+    summary alone cannot. It is kept out of the summary because
+    ``run_failures`` matches denials by exact string equality, so the
+    explanation has to travel beside that string rather than inside it.
+    """
+    _agent_say(f"[{index}/{total}] {name}")
+    if result.get("ok"):
+        _agent_say(f"OK: {result.get('summary') or result.get('stdout_tail') or 'ok'}")
+        return True
+    _agent_say(
+        f"FAILED: {result.get('summary') or result.get('stderr_tail') or 'tool failed'}"
+    )
+    hint = result.get("hint")
+    if hint:
+        _agent_say(hint)
+    return False
+
+
+def run_single_shot(args: argparse.Namespace) -> int:
+    """Execute the non-interactive rule-planner flow."""
+    goal = " ".join(args.goal).strip() or "run doctor"
+    # Session-dir taxonomy (2026-08-08, user-requested runs/ root tidy):
+    # one-shot sessions land in the SAME date-first scheme the
+    # interactive shell uses (runs/<YYYY-MM-DD>/<HHMMSS>_<case>_run),
+    # so chats and runs stop living in two parallel hierarchies.
+    # Explicit --session-id or --session-dir preserves the historic
+    # runs/agent/<id> placement byte-for-byte: scripts and tests that
+    # pin paths keep working, and legacy runs/agent/* stays read-only.
+    if args.session_dir:
+        session_dir = args.session_dir.expanduser().resolve()
+    elif args.session_id:
+        session_dir = repo_root() / "runs" / "agent" / _safe_name(args.session_id)
+    else:
+        from datetime import datetime
+
+        from agentic_swmm.agent.session_bootstrap import bootstrap_session_dir
+
+        date_dir = register_workspace_root(resolve_runs_dir()) / datetime.now().strftime("%Y-%m-%d")
+        session_dir = bootstrap_session_dir(date_dir, goal, kind="run")
+    session_dir.mkdir(parents=True, exist_ok=True)
+    trace_path = agent_file_for_write(session_dir, "agent_trace.jsonl")
+    # ADR-0003: make the session dir self-describing before anything runs.
+    # Provider/model mirror runtime_loop's resolution so the header records
+    # what will actually be used, not just what the flags said. Best-effort:
+    # a header failure must never break the session.
+    header_provider = header_model = None
+    if args.planner in ("llm", "openai"):
+        from agentic_swmm.providers.selection import resolve_selection
+
+        _selection = resolve_selection(args.provider, args.model)
+        header_provider = _selection.route
+        header_model = _selection.model
+    try_write_session_header(
+        session_dir,
+        goal=goal,
+        planner="llm" if args.planner in ("llm", "openai") else "rule",
+        profile="safe" if getattr(args, "safe", False) else "quick",
+        provider=header_provider,
+        model=header_model,
+    )
+    # PRD-X: bind a per-process MCP pool so list_mcp_tools / call_mcp_tool
+    # reuse one long-running node child per server instead of paying
+    # cold-start cost every call. Lazy — pool only spawns on first use.
+    ensure_session_pool()
+    registry = AgentToolRegistry()
+    if args.planner in ("llm", "openai"):
+        # Delegate to runtime_loop's LLM planner for the single-shot path.
+        # ``openai`` is the deprecated alias for ``llm``.
+        from agentic_swmm.agent.runtime_loop import run_openai_planner
+
+        try:
+            rc = run_openai_planner(args, goal, session_dir, trace_path, registry)
+        except BaseException:
+            finalize_session_header(session_dir, "interrupted")
+            raise
+        finalize_session_header(session_dir, "completed" if rc == 0 else "failed")
+        return rc
+
+    preview_plan = rule_plan(goal)
+    if len(preview_plan) > args.max_steps:
+        preview_plan = preview_plan[: args.max_steps]
+
+    # The continuation block is for the planner, not for the person
+    # watching. Echoing it put ten lines of internal plumbing on screen
+    # every time a turn continued the previous one.
+    _agent_say(f"Goal: {display_goal(goal)}")
+    _agent_say(f"Session: rule planner → {_display_path(session_dir)}")
+    if args.verbose:
+        _agent_say("Plan:")
+        for index, call in enumerate(preview_plan, start=1):
+            _agent_say(f"  {index}. {call.name} {json.dumps(call.args, sort_keys=True)}")
+    else:
+        _agent_say(f"Plan: {_compact_plan(preview_plan)}")
+
+    if args.dry_run:
+        _write_report(session_dir, goal, preview_plan, [], dry_run=True, allowed_tools=registry.names)
+        _agent_say(f"Dry run only. Trace: {_display_path(trace_path)}")
+        finalize_session_header(session_dir, "completed")
+        return 0
+
+    # Late import keeps the agent runtime free of a CLI-layer dependency
+    # in the import graph (commands/agent.py imports single_shot).
+    from agentic_swmm.commands.agent import resolve_profile_from_args
+
+    profile = resolve_profile_from_args(args)
+    executor = AgentExecutor(
+        registry,
+        session_dir=session_dir,
+        trace_path=trace_path,
+        dry_run=False,
+        profile=profile,
+    )
+    try:
+        outcome = run_rule_plan(
+            goal=goal,
+            registry=registry,
+            executor=executor,
+            max_steps=args.max_steps,
+            trace_path=trace_path,
+        )
+    except BaseException:
+        finalize_session_header(session_dir, "interrupted")
+        raise
+    for index, (call, result) in enumerate(zip(outcome.plan, outcome.results), start=1):
+        if not _render_tool_outcome(
+            index=index, total=len(outcome.plan), name=call.name, result=result
+        ):
+            break
+
+    report = _write_report(
+        session_dir,
+        goal,
+        outcome.plan,
+        outcome.results,
+        dry_run=False,
+        allowed_tools=registry.names,
+    )
+    _write_event(trace_path, {"event": "session_end", "ok": outcome.ok, "report": str(report)})
+    # Issue #60 (UX-5): mirror runtime_loop's session-end MOC refresh so
+    # the non-interactive single-shot path keeps runs/INDEX.md fresh too.
+    # Late import keeps this file free of an audit-layer dep at import time.
+    from agentic_swmm.agent.runtime_loop import _refresh_moc_after_session
+
+    _refresh_moc_after_session(session_dir)
+    _agent_say(f"Final report: {_display_path(report)}")
+    finalize_session_header(session_dir, "completed" if outcome.ok else "failed")
+    return 0 if outcome.ok else 1

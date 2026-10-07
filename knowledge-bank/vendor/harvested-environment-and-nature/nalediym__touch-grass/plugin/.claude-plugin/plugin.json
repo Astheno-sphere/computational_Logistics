@@ -1,0 +1,27 @@
+{
+  "name": "touch-grass",
+  "version": "0.1.0",
+  "description": "Reminds AI coding agents to remind their humans to go outside, based on weather, sunset, and session telemetry.",
+  "author": {
+    "name": "Naledi",
+    "url": "https://touch-grass-xi.vercel.app"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.mjs"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "touch-grass": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-server/index.mjs"]
+    }
+  }
+}
