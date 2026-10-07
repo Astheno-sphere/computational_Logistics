@@ -1,0 +1,108 @@
+package beam.router.skim
+
+import beam.router
+import beam.router.skim
+import beam.router.skim.core.AbstractSkimmer.AGG_SUFFIX
+import beam.router.skim.core._
+import beam.router.skim.readonly._
+import beam.sim.config.BeamConfig.Beam.Router
+import com.google.inject.Inject
+import com.typesafe.scalalogging.LazyLogging
+import org.matsim.core.controler.MatsimServices
+
+import scala.collection.mutable
+
+class Skims @Inject() (
+  matsimServices: MatsimServices,
+  val odSkimmer: ODSkimmer,
+  val tazSkimmer: TAZSkimmer,
+  val driveTimeSkimmer: DriveTimeSkimmer,
+  val transitCrowdingSkimmer: TransitCrowdingSkimmer,
+  val rideHailSkimmer: RideHailSkimmer,
+  val odVehicleTypeSkimmer: ODVehicleTypeSkimmer,
+  val freightSkimmer: FreightSkimmer,
+  val parkingSkimmer: ParkingSkimmer,
+  val asSkimmer: ActivitySimSkimmer,
+  val emissionsSkimmer: EmissionsSkimmer
+) extends LazyLogging {
+
+  import Skims.SkimType
+  lazy val od_skimmer: ODSkims = lookup(SkimType.OD_SKIMMER).asInstanceOf[ODSkims]
+  lazy val taz_skimmer: TAZSkims = lookup(SkimType.TAZ_SKIMMER).asInstanceOf[TAZSkims]
+  lazy val dt_skimmer: DriveTimeSkims = lookup(SkimType.DT_SKIMMER).asInstanceOf[DriveTimeSkims]
+  lazy val tc_skimmer: TransitCrowdingSkims = lookup(SkimType.TC_SKIMMER).asInstanceOf[TransitCrowdingSkims]
+  lazy val rh_skimmer: RideHailSkims = lookup(SkimType.RH_SKIMMER).asInstanceOf[RideHailSkims]
+
+  lazy val od_vehicle_type_skimmer: ODVehicleTypeSkims =
+    lookup(SkimType.OD_VEHICLE_TYPE_SKIMMER).asInstanceOf[ODVehicleTypeSkims]
+  lazy val freight_skimmer: FreightSkims = lookup(SkimType.FREIGHT_SKIMMER).asInstanceOf[FreightSkims]
+  lazy val parking_skimmer: ParkingSkims = lookup(SkimType.PARKING_SKIMMER).asInstanceOf[ParkingSkims]
+  lazy val as_skimmer: ActivitySimSkims = lookup(SkimType.AS_SKIMMER).asInstanceOf[ActivitySimSkims]
+  lazy val emissions_skimmer: EmissionsSkims = lookup(SkimType.EMISSIONS_SKIMMER).asInstanceOf[EmissionsSkims]
+
+  private val skims = mutable.Map.empty[SkimType.Value, AbstractSkimmer]
+  skims.put(SkimType.OD_SKIMMER, addEvent(odSkimmer))
+  skims.put(SkimType.TAZ_SKIMMER, addEvent(tazSkimmer))
+  skims.put(SkimType.DT_SKIMMER, addEvent(driveTimeSkimmer))
+  skims.put(SkimType.TC_SKIMMER, addEvent(transitCrowdingSkimmer))
+  skims.put(SkimType.RH_SKIMMER, addEvent(rideHailSkimmer))
+  skims.put(SkimType.OD_VEHICLE_TYPE_SKIMMER, addEvent(odVehicleTypeSkimmer))
+  skims.put(SkimType.FREIGHT_SKIMMER, addEvent(freightSkimmer))
+  skims.put(SkimType.PARKING_SKIMMER, addEvent(parkingSkimmer))
+  skims.put(SkimType.AS_SKIMMER, addEvent(asSkimmer))
+  skims.put(SkimType.EMISSIONS_SKIMMER, addEvent(emissionsSkimmer))
+
+  private def addEvent(skimmer: AbstractSkimmer): AbstractSkimmer = {
+    matsimServices.addControlerListener(skimmer)
+    matsimServices.getEvents.addHandler(skimmer)
+    skimmer
+  }
+
+  private def lookup(skimType: SkimType.Value): AbstractSkimmerReadOnly = {
+    skims.get(skimType).map(_.readOnlySkim).getOrElse(throw new RuntimeException(s"Skims $skimType does not exist"))
+  }
+}
+
+object Skims {
+
+  object SkimType extends Enumeration {
+    val OD_SKIMMER: router.skim.Skims.SkimType.Value = Value("od-skimmer")
+    val TAZ_SKIMMER: skim.Skims.SkimType.Value = Value("taz-skimmer")
+    val DT_SKIMMER: skim.Skims.SkimType.Value = Value("drive-time-skimmer")
+    val TC_SKIMMER: skim.Skims.SkimType.Value = Value("transit-crowding-skimmer")
+    val RH_SKIMMER: skim.Skims.SkimType.Value = Value("ridehail-skimmer")
+    val OD_VEHICLE_TYPE_SKIMMER: router.skim.Skims.SkimType.Value = Value("od-vehicle-type-skimmer")
+    val FREIGHT_SKIMMER: skim.Skims.SkimType.Value = Value("freight-skimmer")
+    val PARKING_SKIMMER: skim.Skims.SkimType.Value = Value("parking-skimmer")
+    val AS_SKIMMER: router.skim.Skims.SkimType.Value = Value("activity-sim-skimmer")
+    val EMISSIONS_SKIMMER: router.skim.Skims.SkimType.Value = Value("emissions-skimmer")
+  }
+
+  def skimFileNames(skimCfg: Router.Skim): IndexedSeq[(SkimType.Value, String)] = IndexedSeq(
+    SkimType.OD_SKIMMER              -> s"${skimCfg.origin_destination_skimmer.fileBaseName}.csv.gz",
+    SkimType.TAZ_SKIMMER             -> s"${skimCfg.taz_skimmer.fileBaseName}.csv.gz",
+    SkimType.DT_SKIMMER              -> s"${skimCfg.drive_time_skimmer.fileBaseName}.csv.gz",
+    SkimType.RH_SKIMMER              -> s"${RideHailSkimmer.fileBaseName}.csv.gz",
+    SkimType.OD_VEHICLE_TYPE_SKIMMER -> s"${ODVehicleTypeSkimmer.fileBaseName}.csv.gz",
+    SkimType.FREIGHT_SKIMMER         -> s"${FreightSkimmer.fileBaseName}.csv.gz",
+    SkimType.PARKING_SKIMMER         -> s"${ParkingSkimmer.fileBaseName}.csv.gz",
+    SkimType.TC_SKIMMER              -> s"${skimCfg.transit_crowding_skimmer.fileBaseName}.csv.gz",
+    SkimType.EMISSIONS_SKIMMER       -> s"${skimCfg.emissions_skimmer.fileBaseName}.${skimCfg.emissions_skimmer.fileOutputFormat}"
+  )
+
+  def skimAggregatedFileNames(skimCfg: Router.Skim): IndexedSeq[(SkimType.Value, String)] = IndexedSeq(
+    SkimType.OD_SKIMMER              -> s"${skimCfg.origin_destination_skimmer.fileBaseName}$AGG_SUFFIX.csv.gz",
+    SkimType.TAZ_SKIMMER             -> s"${skimCfg.taz_skimmer.fileBaseName}$AGG_SUFFIX.csv.gz",
+    SkimType.DT_SKIMMER              -> s"${skimCfg.drive_time_skimmer.fileBaseName}$AGG_SUFFIX.csv.gz",
+    SkimType.RH_SKIMMER              -> s"${RideHailSkimmer.fileBaseName}$AGG_SUFFIX.csv.gz",
+    SkimType.OD_VEHICLE_TYPE_SKIMMER -> s"${ODVehicleTypeSkimmer.fileBaseName}$AGG_SUFFIX.csv.gz",
+    SkimType.FREIGHT_SKIMMER         -> s"${FreightSkimmer.fileBaseName}$AGG_SUFFIX.csv.gz",
+    SkimType.PARKING_SKIMMER         -> s"${ParkingSkimmer.fileBaseName}$AGG_SUFFIX.csv.gz",
+    SkimType.TC_SKIMMER              -> s"${skimCfg.transit_crowding_skimmer.fileBaseName}$AGG_SUFFIX.csv.gz",
+    SkimType.EMISSIONS_SKIMMER       -> s"${skimCfg.emissions_skimmer.fileBaseName}$AGG_SUFFIX.${skimCfg.emissions_skimmer.fileOutputFormat}"
+  )
+
+//  def skimAggregatedFileNames(skimCfg: Router.Skim): IndexedSeq[(SkimType.Value, String)] =
+//    skimFileNames(skimCfg)
+//      .map { case (skimType, fileName) => skimType -> (fileName + AGG_SUFFIX) }
+}

@@ -1,0 +1,68 @@
+// (C) Uri Wilensky. https://github.com/NetLogo/NetLogo
+
+package org.nlogo.window
+
+import javax.swing.JLabel
+
+import org.nlogo.api.{ Dump, World }
+import org.nlogo.core.I18N
+import org.nlogo.swing.Zoomable
+import org.nlogo.theme.{ InterfaceColors, ThemeSync }
+import org.nlogo.window.Events.{ AfterLoadEvent, PeriodicUpdateEvent, LoadBeginEvent }
+
+object TickCounterLabel {
+  private val TickCounterLabelDefault = I18N.gui.get("tabs.run.speedslider.ticks")
+}
+
+import TickCounterLabel._
+
+class TickCounterLabel(world: World)
+  extends JLabel
+  with AfterLoadEvent.Handler
+  with LoadBeginEvent.Handler
+  with PeriodicUpdateEvent.Handler
+  with Zoomable
+  with ThemeSync {
+  private var _label: String = TickCounterLabelDefault
+
+  setFocusable(false)
+
+  def handle(e: LoadBeginEvent): Unit = {
+    setText("")
+    _label = TickCounterLabelDefault
+    setVisible(true)
+  }
+
+  def handle(e: AfterLoadEvent): Unit = {
+    redrawTickCounter()
+  }
+
+  def handle(e: PeriodicUpdateEvent): Unit = {
+    redrawTickCounter()
+  }
+
+  protected def redrawTickCounter(): Unit = {
+    val ticks = world.ticks
+    val tickText =
+        if (ticks == -1) "" else Dump.number(StrictMath.floor(ticks))
+    setText(s"${_label}: $tickText".trim)
+  }
+
+  /// tick counter
+
+  def visibility_=(visible: Boolean): Unit =
+    setVisible(visible)
+
+  def visibility: Boolean = isVisible
+
+  def label_=(label: Option[String]): Unit = {
+    _label = label.getOrElse(TickCounterLabelDefault)
+    redrawTickCounter()
+  }
+
+  def label: String = _label
+
+  override def syncTheme(): Unit = {
+    setForeground(InterfaceColors.toolbarText())
+  }
+}

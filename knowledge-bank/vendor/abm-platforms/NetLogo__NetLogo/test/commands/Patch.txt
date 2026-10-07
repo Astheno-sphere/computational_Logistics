@@ -1,0 +1,147 @@
+IncorrectlyTypedUseOfPatchPrimitiveOnAPatch_2D
+  globals [ glob1 ]
+  O> set glob1 patch 0 0
+  O> __ignore patch glob1 => COMPILER ERROR PATCH expected 2 inputs, a number and a number.
+  O> ask patch glob1 [ ] => COMPILER ERROR Expected a number here, rather than a list or block.
+
+IncorrectlyTypedUseOfPatchPrimitiveOnAPatch_3D
+  globals [ glob1 ]
+  O> set glob1 patch 0 0 0
+  O> __ignore patch glob1 => COMPILER ERROR PATCH expected 3 inputs, a number, a number and a number.
+  O> ask patch glob1 [ ] => COMPILER ERROR PATCH expected 3 inputs, a number, a number and a number.
+  O> ask patch glob1 glob1 [ ] => COMPILER ERROR Expected a number here, rather than a list or block.
+
+PatchWrapsAndRounds_2D
+  O> set-topology true true
+  [list pxcor pycor] of patch 3 4 => [3 4]
+  [list pxcor pycor] of patch 3.1 4 => [3 4]
+  [list pxcor pycor] of patch 2.9 4 => [3 4]
+  [list pxcor pycor] of patch 2.5 4 => [3 4]
+  [list pxcor pycor] of patch 3.5 4 => [4 4]
+  [list pxcor pycor] of patch 3 4.1 => [3 4]
+  [list pxcor pycor] of patch 3 3.9 => [3 4]
+  [list pxcor pycor] of patch 3 3.5 => [3 4]
+  [list pxcor pycor] of patch 3 4.5 => [3 5]
+  [list pxcor pycor] of patch 6 6 => [-5 -5]
+  [list pxcor pycor] of patch 6 -6 => [-5 5]
+  [list pxcor pycor] of patch -6 6 => [5 -5]
+  [list pxcor pycor] of patch -6 -6 => [5 5]
+  [list pxcor pycor] of patch -6.5 6.5 => [5 -4]
+  [list pxcor pycor] of patch 6.5 -6.5 => [-4 5]
+  O> set-topology false false
+  [list pxcor pycor] of patch 3 4 => [3 4]
+  [list pxcor pycor] of patch 3.1 4 => [3 4]
+  [list pxcor pycor] of patch 2.9 4 => [3 4]
+  [list pxcor pycor] of patch 2.5 4 => [3 4]
+  [list pxcor pycor] of patch 3.5 4 => [4 4]
+  [list pxcor pycor] of patch 3 4.1 => [3 4]
+  [list pxcor pycor] of patch 3 3.9 => [3 4]
+  [list pxcor pycor] of patch 3 3.5 => [3 4]
+  [list pxcor pycor] of patch 3 4.5 => [3 5]
+  patch 6 6 => nobody
+  patch 6 -6 => nobody
+  patch -6 6 => nobody
+  patch -6 -6 => nobody
+  patch -6.5 6.5 => nobody
+  patch 6.5 -6.5 => nobody
+
+PatchWrapsAndRounds_3D
+  O> set-topology true true
+  [list pxcor pycor] of patch 3 4 0 => [3 4]
+  [list pxcor pycor] of patch 3.1 4 0 => [3 4]
+  [list pxcor pycor] of patch 2.9 4 0 => [3 4]
+  [list pxcor pycor] of patch 2.5 4 0 => [3 4]
+  [list pxcor pycor] of patch 3.5 4 0 => [4 4]
+  [list pxcor pycor] of patch 3 4.1 0 => [3 4]
+  [list pxcor pycor] of patch 3 3.9 0 => [3 4]
+  [list pxcor pycor] of patch 3 3.5 0 => [3 4]
+  [list pxcor pycor] of patch 3 4.5 0 => [3 5]
+  [list pxcor pycor] of patch 6 6 0 => [-5 -5]
+  [list pxcor pycor] of patch 6 -6 0 => [-5 5]
+  [list pxcor pycor] of patch -6 6 0 => [5 -5]
+  [list pxcor pycor] of patch -6 -6 0 => [5 5]
+  [list pxcor pycor] of patch -6.5 6.5 0 => [5 -4]
+  [list pxcor pycor] of patch 6.5 -6.5 0 => [-4 5]
+  [(list pxcor pycor pzcor)] of patch 3 4 6.5 => [3 4 -4]
+  [(list pxcor pycor pzcor)] of patch 3 4 -6.5 => [3 4 5]
+  [(list pxcor pycor pzcor)] of patch 3 6.5 6.5 => [3 -4 -4]
+  [(list pxcor pycor pzcor)] of patch 3 -6.5 6.5 => [3 5 -4]
+  [(list pxcor pycor pzcor)] of patch 3 6.5 -6.5 => [3 -4 5]
+  [(list pxcor pycor pzcor)] of patch 3 -6.5 -6.5 => [3 5 5]
+  [(list pxcor pycor pzcor)] of patch 6.5 6.5 6.5 => [-4 -4 -4]
+  [(list pxcor pycor pzcor)] of patch 6.5 -6.5 6.5 => [-4 5 -4]
+  [(list pxcor pycor pzcor)] of patch 6.5 6.5 -6.5 => [-4 -4 5]
+  [(list pxcor pycor pzcor)] of patch 6.5 -6.5 -6.5 => [-4 5 5]
+  [(list pxcor pycor pzcor)] of patch -6.5 6.5 6.5 => [5 -4 -4]
+  [(list pxcor pycor pzcor)] of patch -6.5 -6.5 6.5 => [5 5 -4]
+  [(list pxcor pycor pzcor)] of patch -6.5 6.5 -6.5 => [5 -4 5]
+  [(list pxcor pycor pzcor)] of patch -6.5 -6.5 -6.5 => [5 5 5]
+
+SetVariableRuntime_2D
+  O> ask patch 0 0 [ set pcolor self ] => ERROR can't set patch variable PCOLOR to non-number (patch 0 0)
+
+SetVariableRuntime_3D
+  O> ask patch 0 0 0 [ set pcolor self ] => ERROR can't set patch variable PCOLOR to non-number (patch 0 0 0)
+
+PatchBoundariesAndFloatingPointMagic_2D
+  globals [ magic ]
+  O> set magic 0.4999999999999999167333
+  (word patch 0 0) => "(patch 0 0)"
+  (word patch magic 0) => "(patch 1 0)"
+  (word patch 0 magic) => "(patch 0 1)"
+  (word patch magic magic) => "(patch 1 1)"
+
+PatchColSortOrder_2D
+  O> resize-world -5 5 -5 5
+  O> random-seed 0
+  [pycor] of patches with [pxcor = 1] => [0 5 2 4 -1 1 -2 -4 3 -3 -5]
+
+PatchTowards_2D
+  P> sprout 1
+  max ([towards one-of patches with [myself != self]]       of patches)  < 360 => true
+  min ([towards one-of patches with [myself != self]]       of patches) >=   0 => true
+  max ([towards one-of turtles with [myself != patch-here]] of patches)  < 360 => true
+  min ([towards one-of turtles with [myself != patch-here]] of patches) >=   0 => true
+  [towards patch  0  1] of patch 0 0 => 0
+  [towards patch  1  1] of patch 0 0 => 45
+  [towards patch  1  0] of patch 0 0 => 90
+  [towards patch  1 -1] of patch 0 0 => 135
+  [towards patch  0 -1] of patch 0 0 => 180
+  [towards patch -1 -1] of patch 0 0 => 225
+  [towards patch -1  0] of patch 0 0 => 270
+  [towards patch -1  1] of patch 0 0 => 315
+  [towards patch  0  1] of patch 0 0 => 0
+
+PatchTowards_3D
+  P> sprout 1
+  max ([towards one-of patches with [pxcor != [pxcor] of myself and pycor != [pycor] of myself]] of patches)  < 360 => true
+  min ([towards one-of patches with [pxcor != [pxcor] of myself and pycor != [pycor] of myself]] of patches) >=   0 => true
+  max ([towards one-of turtles with [ xcor != [pxcor] of myself and  ycor != [pycor] of myself]] of patches)  < 360 => true
+  min ([towards one-of turtles with [ xcor != [pxcor] of myself and  ycor != [pycor] of myself]] of patches) >=   0 => true
+  [towards patch  0  1  0] of patch 0 0 0 => 0
+  [towards patch  1  1  0] of patch 0 0 0 => 45
+  [towards patch  1  0  0] of patch 0 0 0 => 90
+  [towards patch  1 -1  0] of patch 0 0 0 => 135
+  [towards patch  0 -1  0] of patch 0 0 0 => 180
+  [towards patch -1 -1  0] of patch 0 0 0 => 225
+  [towards patch -1  0  0] of patch 0 0 0 => 270
+  [towards patch -1  1  0] of patch 0 0 0 => 315
+  [towards patch  0  1  0] of patch 0 0 0 => 0
+  [towards patch  0  1 -1] of patch 0 0 0 => 0
+  [towards patch  1  1 -1] of patch 0 0 0 => 45
+  [towards patch  1  0 -1] of patch 0 0 0 => 90
+  [towards patch  1 -1 -1] of patch 0 0 0 => 135
+  [towards patch  0 -1 -1] of patch 0 0 0 => 180
+  [towards patch -1 -1 -1] of patch 0 0 0 => 225
+  [towards patch -1  0 -1] of patch 0 0 0 => 270
+  [towards patch -1  1 -1] of patch 0 0 0 => 315
+  [towards patch  0  1 -1] of patch 0 0 0 => 0
+  [towards patch  0  1  1] of patch 0 0 0 => 0
+  [towards patch  1  1  1] of patch 0 0 0 => 45
+  [towards patch  1  0  1] of patch 0 0 0 => 90
+  [towards patch  1 -1  1] of patch 0 0 0 => 135
+  [towards patch  0 -1  1] of patch 0 0 0 => 180
+  [towards patch -1 -1  1] of patch 0 0 0 => 225
+  [towards patch -1  0  1] of patch 0 0 0 => 270
+  [towards patch -1  1  1] of patch 0 0 0 => 315
+  [towards patch  0  1  1] of patch 0 0 0 => 0

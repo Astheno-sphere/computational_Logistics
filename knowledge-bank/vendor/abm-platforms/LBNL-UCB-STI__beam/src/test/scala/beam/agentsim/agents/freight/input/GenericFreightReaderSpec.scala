@@ -1,0 +1,355 @@
+package beam.agentsim.agents.freight.input
+
+import beam.agentsim.agents.freight._
+import beam.agentsim.agents.freight.input.FreightReader.{PAYLOAD_ID, PAYLOAD_IDS, PAYLOAD_WEIGHT_IN_KG}
+import beam.agentsim.infrastructure.taz.TAZTreeMap
+import beam.sim.BeamHelper
+import beam.sim.common.GeoUtils
+import beam.sim.config.BeamConfig.Beam.Agentsim.Agents.Freight
+import beam.sim.config.BeamConfig.Beam.Agentsim.SnapLocationAndRemoveInvalidInputs
+import beam.utils.BeamVehicleUtils
+import beam.utils.SnapCoordinateUtils.SnapLocationHelper
+import beam.utils.csv.GenericCsvReader
+import beam.utils.matsim_conversion.MatsimPlanConversion.{AttributesOps, IdOps}
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericData
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import org.matsim.api.core.v01.population._
+import org.matsim.api.core.v01.{Coord, Id}
+import org.matsim.households.{Household, HouseholdImpl, HouseholdsFactory}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito
+import org.mockito.Mockito.when
+import org.apache.parquet.avro.AvroParquetWriter
+import org.apache.parquet.hadoop.metadata.CompressionCodecName
+import org.apache.parquet.hadoop.util.HadoopOutputFile
+import org.scalatest.LoneElement.convertToCollectionLoneElementWrapper
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
+
+import java.nio.file.Files
+import java.util
+import scala.collection.mutable
+import scala.jdk.CollectionConverters._
+import scala.util.Random
+
+/**
+  * @author Dmitry Openkov
+  */
+class GenericFreightReaderSpec extends AnyWordSpecLike with Matchers with BeamHelper {
+  private val freightInputDir = s"${System.getenv("PWD")}/test/test-resources/beam/agentsim/freight"
+
+  private val geoUtils = new GeoUtils {
+    override def localCRS: String = "epsg:26910"
+  }
+  private val tazMap: TAZTreeMap = TAZTreeMap("test/input/beamville/taz-centers.csv", scenarioCRS = geoUtils.localCRS)
+
+  private val freightConfig: Freight = new Freight(
+    carrierParkingFilePath = None,
+    carriersFilePath = s"$freightInputDir/freight-carriers.csv",
+    plansFilePath = s"$freightInputDir/payload-plans.csv",
+    toursFilePath = s"$freightInputDir/freight-tours.csv",
+    isWgs = false,
+    enabled = true,
+    name = "Freight",
+    reader = "Generic",
+    replanning = new Freight.Replanning(departureTime = 0, disableAfterIteration = -1, strategy = ""),
+    generateFixedActivitiesDurations = false,
+    tourSampleSizeAsFractionOfTotal = 1.0,
+    vehicleTypesFilePath = None
+  )
+
+  private val freightConfigWithFreightVehicleTypes: Freight = new Freight(
+    carrierParkingFilePath = None,
+    carriersFilePath = s"$freightInputDir/freight-carriers.csv",
+    plansFilePath = s"$freightInputDir/payload-plans.csv",
+    toursFilePath = s"$freightInputDir/freight-tours.csv",
+    isWgs = false,
+    enabled = true,
+    name = "Freight",
+    reader = "Generic",
+    replanning = new Freight.Replanning(departureTime = 0, disableAfterIteration = -1, strategy = ""),
+    generateFixedActivitiesDurations = false,
+    tourSampleSizeAsFractionOfTotal = 1.0,
+    vehicleTypesFilePath = Some(s"$freightInputDir/vehicleTypesFreightOnly.csv")
+  )
+
+  private val parquetInputDir = Files.createTempDirectory("beam-freight-parquet-spec")
+  writeParquetFromCsv(
+    s"$freightInputDir/freight-carriers.csv",
+    parquetInputDir.resolve("freight-carriers.parquet").toString
+  )
+  writeParquetFromCsv(s"$freightInputDir/payload-plans.csv", parquetInputDir.resolve("payload-plans.parquet").toString)
+  writeParquetFromCsv(s"$freightInputDir/freight-tours.csv", parquetInputDir.resolve("freight-tours.parquet").toString)
+
+  private val freightConfigParquet: Freight = new Freight(
+    carrierParkingFilePath = None,
+    carriersFilePath = parquetInputDir.resolve("freight-carriers.parquet").toString,
+    plansFilePath = parquetInputDir.resolve("payload-plans.parquet").toString,
+    toursFilePath = parquetInputDir.resolve("freight-tours.parquet").toString,
+    isWgs = false,
+    enabled = true,
+    name = "Freight",
+    reader = "Generic",
+    replanning = new Freight.Replanning(departureTime = 0, disableAfterIteration = -1, strategy = ""),
+    generateFixedActivitiesDurations = false,
+    tourSampleSizeAsFractionOfTotal = 1.0,
+    vehicleTypesFilePath = None
+  )
+
+  val rnd = new Random(2333L)
+
+  private val snapLocationHelperMock = Mockito.mock(classOf[SnapLocationHelper])
+
+  private val reader =
+    new GenericFreightReader(
+      freightConfig,
+      geoUtils,
+      rnd,
+      tazMap,
+      snapLocationAndRemoveInvalidInputsParams = SnapLocationAndRemoveInvalidInputs.Params(
+        enabled = false,
+        maxRadiusInMeter = 500000.0,
+        minRadiusInMeter = 100.0
+      ),
+      schedulerParallelismWindow = 60,
+      snapLocationHelperMock
+    )
+
+  "PayloadPlansConverter" should {
+    "read Payload Plans" in {
+      val payloadPlans: Map[Id[PayloadPlan], PayloadPlan] = reader.readPayloadPlans()
+      payloadPlans should have size 16
+      val plan7 = payloadPlans("payload-7".createId)
+      plan7.payloadId should be("payload-7".createId)
+      plan7.locationUTM.getX shouldBe (169369.8 +- 621)
+      plan7.locationUTM.getY shouldBe (3326.017 +- 621)
+      plan7.estimatedTimeOfArrivalInSec should be(18000)
+      plan7.arrivalTimeWindowInSecLower should be(1800)
+      plan7.operationDurationInSec should be(500)
+      plan7.sequenceRank should be(4)
+      plan7.tourId should be("tour-3".createId[FreightTour])
+      plan7.payloadType should be("goods".createId[PayloadType])
+      plan7.weightInKg should be(1500)
+      plan7.activityType should be(FreightActivityType.Loading)
+    }
+
+    "read Freight Tours" in {
+      val tours = reader.readFreightTours()
+      tours should have size 4
+      val tour3 = tours("tour-3".createId)
+      tour3.tourId should be("tour-3".createId)
+      tour3.departureTimeInSec should be(15000)
+      tour3.maxTourDurationInSec should be(36000)
+    }
+
+    "read freight input from parquet files" in {
+      val parquetReader = new GenericFreightReader(
+        freightConfigParquet,
+        geoUtils,
+        new Random(4324L),
+        tazMap,
+        snapLocationAndRemoveInvalidInputsParams = SnapLocationAndRemoveInvalidInputs.Params(
+          enabled = false,
+          maxRadiusInMeter = 500000.0,
+          minRadiusInMeter = 100.0
+        ),
+        schedulerParallelismWindow = 60,
+        snapLocationHelperMock
+      )
+
+      val payloadPlans = parquetReader.readPayloadPlans()
+      val tours = parquetReader.readFreightTours()
+      val vehicleTypes = BeamVehicleUtils.readBeamVehicleTypeFile(s"$freightInputDir/vehicleTypes.csv")
+      val freightCarriers = parquetReader.readFreightCarriers(tours, payloadPlans, vehicleTypes)
+
+      payloadPlans should have size 16
+      tours should have size 4
+      checkFreightCarriers(freightCarriers)
+    }
+
+    "fail to read freight carriers" in {
+      an[IllegalArgumentException] should be thrownBy readCarriers(
+        s"$freightInputDir/vehicleTypesWithoutFreight.csv",
+        freightConfig
+      )
+    }
+
+    def checkFreightCarriers(freightCarriers: scala.IndexedSeq[FreightCarrier]): Unit = {
+      freightCarriers should have size 2
+      val result = freightCarriers.find(_.carrierId == "ft-1".createId[FreightCarrier])
+      result should be('defined)
+      val carrier1 = result.get
+      carrier1.fleet should have size 2
+      carrier1.payloadPlans should have size 13
+      carrier1.tourMap should have size 2
+      carrier1.tourMap should contain key Id.createVehicleId("ft-2")
+      carrier1.tourMap(Id.createVehicleId("ft-2")) should have size 1
+      carrier1.tourMap(Id.createVehicleId("ft-2")).head should have(
+        'tourId ("tour-1".createId[FreightTour]),
+        'departureTimeInSec (1000),
+        'maxTourDurationInSec (36000)
+      )
+      carrier1.plansPerTour should have size 3
+      carrier1.plansPerTour("tour-1".createId) should have size 4
+      carrier1.plansPerTour("tour-2".createId) should have size 4
+      carrier1.plansPerTour("tour-3".createId) should have size 5
+
+      val result2 = freightCarriers.find(_.carrierId == "ft-2".createId[FreightCarrier])
+      result2 should be('defined)
+      val carrier2 = result2.get
+      carrier2.fleet should have size 1
+      carrier2.payloadPlans should have size 3
+      carrier2.tourMap should have size 1
+      carrier2.plansPerTour should have size 1
+    }
+
+    "read freight carriers with all vehicle types in one file" in {
+      val freightCarriers: scala.IndexedSeq[FreightCarrier] =
+        readCarriers(s"$freightInputDir/vehicleTypes.csv", freightConfig)
+      checkFreightCarriers(freightCarriers)
+    }
+
+    "read freight carriers with freight vehicle types in separate file" in {
+      val freightCarriers: scala.IndexedSeq[FreightCarrier] =
+        readCarriers(s"$freightInputDir/vehicleTypesWithoutFreight.csv", freightConfigWithFreightVehicleTypes)
+      checkFreightCarriers(freightCarriers)
+    }
+
+    "generate Population" in {
+      val personPlans = mutable.Map.empty[Id[Person], Plan]
+
+      val populationFactory: PopulationFactory = Mockito.mock(classOf[PopulationFactory])
+      when(populationFactory.createPerson(any())).thenAnswer { invocation =>
+        val personId = invocation.getArgument[Id[Person]](0)
+        val person = Mockito.mock(classOf[Person])
+        when(person.addPlan(any())).thenAnswer { invocation =>
+          val plan: Plan = invocation.getArgument(0)
+          personPlans += (personId -> plan)
+          true
+        }
+        person
+      }
+
+      val householdFactory: HouseholdsFactory = Mockito.mock(classOf[HouseholdsFactory])
+      when(householdFactory.createHousehold(any())).thenAnswer { invocation =>
+        val id = invocation.getArgument[Id[Household]](0)
+        val household = new HouseholdImpl(id)
+        household.setMemberIds(new util.ArrayList())
+        household.setVehicleIds(new util.ArrayList())
+        household
+      }
+
+      reader.generatePopulation(
+        readCarriers(s"$freightInputDir/vehicleTypes.csv", freightConfig).map(x => x.carrierId -> x).toMap,
+        populationFactory,
+        householdFactory
+      )
+
+      personPlans should have size 3
+      val plan1 = personPlans(Id.createPersonId("ft-1"))
+      plan1.getPlanElements should have size 15
+      val firstPayloadCoord = plan1.getPlanElements.get(2).asInstanceOf[Activity].getCoord
+      firstPayloadCoord.getX shouldBe (169369.8 +- 621)
+      firstPayloadCoord.getY shouldBe (1112.351 +- 621)
+      val leg1 = plan1.getPlanElements.get(1).asInstanceOf[Leg]
+      leg1.getAttributes.typedValue[Seq[Id[PayloadPlan]]](PAYLOAD_IDS) shouldBe empty
+      leg1.getAttributes.getAttribute(PAYLOAD_WEIGHT_IN_KG) shouldBe 0.0
+      val leg2 = plan1.getPlanElements.get(3).asInstanceOf[Leg]
+      leg2.getAttributes.typedValue[Id[PayloadPlan]](PAYLOAD_ID) shouldBe "payload-3".createId[PayloadPlan]
+      leg2.getAttributes.typedValue[Seq[Id[PayloadPlan]]](PAYLOAD_IDS).loneElement shouldBe "payload-3"
+        .createId[PayloadPlan]
+      leg2.getAttributes.getAttribute(PAYLOAD_WEIGHT_IN_KG) shouldBe 1300.0
+      val leg7 = plan1.getPlanElements.get(7).asInstanceOf[Leg]
+      leg7.getAttributes.typedValue[Seq[Id[PayloadPlan]]](PAYLOAD_IDS) shouldBe empty
+      leg7.getAttributes.getAttribute(PAYLOAD_WEIGHT_IN_KG) shouldBe 0.0
+      val leg13 = plan1.getPlanElements.get(13).asInstanceOf[Leg]
+      leg13.getAttributes.typedValue[Id[PayloadPlan]](PAYLOAD_ID) shouldBe "payload-7".createId[PayloadPlan]
+      leg13.getAttributes.typedValue[Seq[Id[PayloadPlan]]](PAYLOAD_IDS) should contain theSameElementsInOrderAs Seq(
+        "payload-5",
+        "payload-6",
+        "payload-7"
+      ).map(_.createId[PayloadPlan])
+      leg13.getAttributes.getAttribute(PAYLOAD_WEIGHT_IN_KG) shouldBe 4300.0
+      val payload7Act = plan1.getPlanElements.get(12).asInstanceOf[Activity]
+      payload7Act.getAttributes.getAttribute(PAYLOAD_ID) shouldBe "payload-7".createId[PayloadPlan]
+      val payload7Coord = payload7Act.getCoord
+      payload7Coord.getX shouldBe (169369.8 +- 621)
+      payload7Coord.getY shouldBe (3326.017 +- 621)
+      val plan4 = personPlans(Id.createPersonId("ft-3"))
+      plan4.getPlanElements should have size 5
+      val payload8Act = plan4.getPlanElements.get(2).asInstanceOf[Activity]
+      payload8Act.getAttributes.getAttribute(PAYLOAD_ID) shouldBe "payload-8".createId[PayloadPlan]
+      val payload8Coord = payload8Act.getCoord
+      payload8Coord.getX shouldBe (169369.8 +- 621)
+      payload8Coord.getY shouldBe (3326.017 +- 621)
+      plan4.getPlanElements.get(4).asInstanceOf[Activity].getType should be(FreightActivityType.Depot.toString)
+    }
+  }
+
+  private def readCarriers(vehicleTypesFilePath: String, freightConfig: Freight): IndexedSeq[FreightCarrier] = {
+    val converter = new GenericFreightReader(
+      freightConfig,
+      geoUtils,
+      new Random(4324L),
+      tazMap,
+      snapLocationAndRemoveInvalidInputsParams = SnapLocationAndRemoveInvalidInputs.Params(
+        enabled = false,
+        maxRadiusInMeter = 500000.0,
+        minRadiusInMeter = 100.0
+      ),
+      schedulerParallelismWindow = 60,
+      snapLocationHelperMock
+    )
+    val payloadPlans: Map[Id[PayloadPlan], PayloadPlan] = converter.readPayloadPlans()
+    val tours = converter.readFreightTours()
+    val vehicleTypes = BeamVehicleUtils.readBeamVehicleTypeFile(vehicleTypesFilePath)
+    val freightCarriers: IndexedSeq[FreightCarrier] =
+      new GenericFreightReader(
+        freightConfig,
+        geoUtils,
+        new Random(73737L),
+        tazMap,
+        snapLocationAndRemoveInvalidInputsParams = SnapLocationAndRemoveInvalidInputs.Params(
+          enabled = false,
+          maxRadiusInMeter = 500000.0,
+          minRadiusInMeter = 100.0
+        ),
+        schedulerParallelismWindow = 60,
+        snapLocationHelperMock
+      ).readFreightCarriers(
+        tours,
+        payloadPlans,
+        vehicleTypes
+      )
+    freightCarriers
+  }
+
+  private def writeParquetFromCsv(csvPath: String, parquetPath: String): Unit = {
+    val rows = GenericCsvReader.readAsSeq[java.util.Map[String, String]](csvPath) { row =>
+      new java.util.HashMap[String, String](row)
+    }
+    val header = rows.head.keySet().asScala.toIndexedSeq.sorted
+    val unionSchema =
+      Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(Schema.Type.STRING)).asJava)
+    val fields = header.map(fieldName => new Schema.Field(fieldName, unionSchema, "", null))
+    val schema = Schema.createRecord("FreightInput", "", "beam.agentsim.agents.freight.input", false, fields.asJava)
+    val outputFile = HadoopOutputFile.fromPath(new Path(parquetPath), new Configuration())
+    val writer = AvroParquetWriter
+      .builder[GenericData.Record](outputFile)
+      .withSchema(schema)
+      .withCompressionCodec(CompressionCodecName.SNAPPY)
+      .build()
+
+    try {
+      rows.foreach { row =>
+        val record = new GenericData.Record(schema)
+        header.foreach(fieldName => record.put(fieldName, row.get(fieldName)))
+        writer.write(record)
+      }
+    } finally {
+      writer.close()
+    }
+  }
+}

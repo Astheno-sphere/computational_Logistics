@@ -1,0 +1,176 @@
+// (C) Uri Wilensky. https://github.com/NetLogo/NetLogo
+
+package org.nlogo.window
+
+import java.awt.{ BorderLayout, Container, Dimension }
+import java.awt.event.{ FocusListener, HierarchyEvent, MouseAdapter, MouseEvent, TextListener, TextEvent }
+import javax.swing.{ JLabel, JPanel, ScrollPaneConstants }
+
+import org.nlogo.api.CompilerServices
+import org.nlogo.awt.Hierarchy
+import org.nlogo.editor.{ Colorizer, EditorArea, EditorConfiguration }
+import org.nlogo.swing.{ BoxAlign, BoxColumn, BoxRow, CollapsibleArrow, FocusUtils, MaximumHeight, ScrollPane,
+                         Transparent, Zoomable }
+import org.nlogo.theme.{ InterfaceColors, ThemeSync }
+
+import scala.util.{ Success, Try }
+
+object CodeEditor {
+  def apply(displayName: String, compiler: CompilerServices, colorizer: Colorizer, collapsible: Boolean = false,
+            collapseWhenEmpty: Boolean = false, rows: Int = 5, columns: Int = 30,
+            err: () => Option[Exception] = () => None, changedFunc: => Unit = {}): CodeEditor = {
+
+    val accessor = new PropertyAccessor[String](new DummyEditable, displayName, () => "", _ => {}, () => changedFunc)
+
+    new CodeEditor(accessor, compiler, colorizer, collapsible, collapseWhenEmpty, rows, columns, err)
+  }
+}
+
+class CodeEditor(accessor: PropertyAccessor[String], compiler: CompilerServices, colorizer: Colorizer,
+                 collapsible: Boolean = false, collapseWhenEmpty: Boolean = false, rows: Int = 5, columns: Int = 30,
+                 err: () => Option[Exception] = () => None)
+  extends BoxColumn(3) with PropertyEditor(accessor) with Zoomable {
+
+  lazy val editorConfig =
+    EditorConfiguration.default(rows, columns, compiler, colorizer)
+      .withListener(new TextListener { def textValueChanged(e: TextEvent): Unit = { accessor.changed() } })
+
+  protected lazy val editor = new EditorArea(editorConfig) with AutoIndentHandler
+  protected lazy val scrollPane = new ScrollPane(editor, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED)
+  private val errorLabel = new EditorAreaErrorLabel(editor)
+
+  addHierarchyListener(
+    event => {
+      if ((event.getChangeFlags & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+        editor.setCaretPosition(0)
+      }
+    }
+  )
+
+  // the panel that should collapse
+  private val collapso = new JPanel(new BorderLayout) with Transparent {
+    add(errorLabel, BorderLayout.NORTH)
+    add(scrollPane, BorderLayout.CENTER)
+    if (collapseWhenEmpty) setVisible(false)
+  }
+
+  private val arrow = new CollapsibleArrow(this, !collapsed)
+
+  private val nameLabel = new JLabel(accessor.name) with Zoomable {
+    addMouseListener(new MouseAdapter {
+      override def mouseReleased(e: MouseEvent): Unit = {
+        setVisibility(collapsed)
+      }
+    })
+  }
+
+  private val header = new BoxRow(3, BoxAlign.Start) with MaximumHeight with FocusUtils with ThemeSync {
+    if (collapsible) {
+      setFocusable(true)
+      setPrimaryAction(() => setVisibility(collapsed))
+
+      add(new JLabel(arrow) {
+        addMouseListener(new MouseAdapter {
+          override def mouseReleased(e: MouseEvent): Unit = {
+            setVisibility(collapsed)
+          }
+        })
+      })
+    }
+
+    add(nameLabel)
+
+    override def syncTheme(): Unit = {
+      setFocusColor(InterfaceColors.focus())
+    }
+  }
+
+  add(header)
+  add(collapso)
+
+  def collapsed: Boolean = !collapso.isVisible()
+
+  override def getMaximumSize: Dimension = {
+    new Dimension(super.getMaximumSize.width, {
+      if (collapsible && collapsed) {
+        getPreferredSize.height
+      } else {
+        super.getMaximumSize.height
+      }
+    })
+  }
+
+  private def setVisibility(newVisibility: Boolean): Unit = {
+    if (collapsible && collapseWhenEmpty) {
+      collapso.setVisible(newVisibility)
+
+      arrow.setOpen(!collapsed)
+
+      Hierarchy.getWindow(this).pack()
+
+      if (!collapsed) editor.requestFocus()
+    }
+  }
+
+  override def get: Try[String] = Success(Option(editor.getText).getOrElse(""))
+  override def set(value: String): Unit = {
+    editor.setText(value)
+    setVisibility(value.nonEmpty)
+    editor.select(0, 0)
+    resetError()
+    editor.resetUndoHistory()
+  }
+
+  override def setToolTipText(text: String): Unit = {
+    nameLabel.setToolTipText(text)
+  }
+
+  override def requestFocus(): Unit = { editor.requestFocus() }
+
+  override def hasFocus: Boolean =
+    editor.hasFocus
+
+  override def setEnabled(state: Boolean): Unit = {
+    def setEnabledRecursive(component: Container, state: Boolean): Unit = {
+      component.getComponents().foreach(c => {
+        c.setEnabled(state)
+
+        c match {
+          case con: Container => setEnabledRecursive(con, state)
+          case _ =>
+        }
+      })
+    }
+
+    super.setEnabled(state)
+    setEnabledRecursive(this, state)
+  }
+
+  override def addFocusListener(listener: FocusListener): Unit = {
+    editor.addFocusListener(listener)
+  }
+
+  def resetError(): Unit = {
+    errorLabel.setError(err(), accessor.target.sourceOffset, false)
+  }
+
+  override def syncTheme(): Unit = {
+    editor.setBackground(InterfaceColors.textAreaBackground())
+    editor.setCaretColor(InterfaceColors.textAreaText())
+
+    scrollPane.setBackground(InterfaceColors.textAreaBackground())
+
+    nameLabel.setForeground(InterfaceColors.dialogText())
+
+    header.syncTheme()
+  }
+}
+
+class NonEmptyCodeEditor(accessor: PropertyAccessor[String], compiler: CompilerServices, colorizer: Colorizer,
+                         err: () => Option[Exception] = () => None)
+  extends CodeEditor(accessor, compiler, colorizer, err = err) {
+
+  override def get: Try[String] =
+    super.get.map(_.trim).filter(_.nonEmpty).orElse(defaultError)
+}
