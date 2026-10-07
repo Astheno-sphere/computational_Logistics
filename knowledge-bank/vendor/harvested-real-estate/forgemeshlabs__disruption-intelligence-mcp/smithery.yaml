@@ -1,0 +1,18 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      apiBase:
+        type: string
+        description: Optional hosted API base URL override. Defaults to https://disruption.forgemesh.io.
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', '@forgemeshlabs/disruption-intelligence-mcp'],
+      env: {
+        DISRUPTION_API_BASE: config.apiBase || 'https://disruption.forgemesh.io'
+      }
+    })
+  exampleConfig:
+    apiBase: 'https://disruption.forgemesh.io'

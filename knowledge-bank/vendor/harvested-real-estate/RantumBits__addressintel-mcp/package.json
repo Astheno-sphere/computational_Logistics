@@ -1,0 +1,56 @@
+{
+  "name": "addressintel-mcp",
+  "version": "1.1.2",
+  "description": "MCP server for SF Peninsula building-permit and parcel-buildability data: search permits, SB 9 inventory, ADU and redevelopment leads.",
+  "mcpName": "co.addressintel/permits",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "real-estate",
+    "building-permits",
+    "sb9",
+    "adu",
+    "sf-peninsula"
+  ],
+  "license": "MIT",
+  "homepage": "https://addressintel.co/developers",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RantumBits/addressintel-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RantumBits/addressintel-mcp/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "addressintel-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "node scripts/smoke-test.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

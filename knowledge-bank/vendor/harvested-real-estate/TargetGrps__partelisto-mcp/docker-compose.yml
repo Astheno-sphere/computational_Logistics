@@ -1,0 +1,23 @@
+services:
+  targetgrps-partelisto-mcp:
+    environment:
+      # host.docker.internal reaches the gateway published on the host's localhost:5201 by the
+      # workspace compose stack (see partelisto-local-dev-startup docs) — this service is not part
+      # of that stack's docker network, it talks to the gateway the same way the SPA dev server does.
+      - Gateway__BaseUrl=http://host.docker.internal:5201
+      - Gateway__TenantId=partelisto
+      - Keycloak__Authority=https://auth.partelisto.es/realms/partelisto
+      - Keycloak__Audience=partelisto-mcp
+    image: ${REGISTRY:-targetgrps}/partelisto-mcp:${TAG:-latest}
+    ports: ["5207:8080"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Dockerfile's last stage is "tests" (dotnet test as entrypoint) — without pinning the target,
+      # `docker compose build` defaults to that last stage, not the runtime image. Pin it explicitly.
+      target: runtime
+    healthcheck:
+      test: "wget http://localhost:8080/healthz -q -O - || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 10

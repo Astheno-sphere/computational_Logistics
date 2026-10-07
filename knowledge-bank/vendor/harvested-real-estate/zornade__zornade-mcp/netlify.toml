@@ -1,0 +1,51 @@
+# Netlify configuration for mcp.zornade.com
+# Reverse proxy in front of the Supabase Edge Function `mcp` (MCP server).
+#
+# Public surface:
+#   https://mcp.zornade.com/mcp     -> MCP streamable HTTP endpoint
+#   https://mcp.zornade.com/        -> static landing page (public/index.html)
+#
+# Backend (do not expose in docs):
+#   https://wupqwfqjfpwrapgnogjv.supabase.co/functions/v1/mcp/...
+
+[build]
+  publish = "public"
+  # No build step: this site only serves a static landing page + redirect rules.
+  command = ""
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# ---------------------------------------------------------------------------
+# Reverse proxy: clean public URL -> Supabase Edge Function
+# ---------------------------------------------------------------------------
+# `force = true` is required so the rule wins over the default static handler
+# even if a file with the same path were ever published under /public.
+# `status = 200` makes this a rewrite (URL bar stays on mcp.zornade.com).
+# The root `/` stays on the static landing page.
+[[redirects]]
+  from = "/mcp"
+  to = "https://wupqwfqjfpwrapgnogjv.supabase.co/functions/v1/mcp/mcp"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/mcp/*"
+  to = "https://wupqwfqjfpwrapgnogjv.supabase.co/functions/v1/mcp/mcp/:splat"
+  status = 200
+  force = true
+
+# ---------------------------------------------------------------------------
+# Security headers
+# ---------------------------------------------------------------------------
+# Note: headers declared here apply to responses Netlify itself serves
+# (the static landing page). For proxied responses, upstream headers
+# (CORS, ...) are preserved as returned by Supabase.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options    = "nosniff"
+    X-Frame-Options           = "DENY"
+    Referrer-Policy           = "strict-origin-when-cross-origin"
+    Permissions-Policy        = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
