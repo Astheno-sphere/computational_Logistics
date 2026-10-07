@@ -1,0 +1,331 @@
+<template lang="pug">
+.top-hamburger-menu(@mouseleave="dbCloseQuickMenu")
+
+  .hamburger-menu-icon(@click="showSidebarMenu=!showSidebarMenu"
+    :class="{'is-highlighted': showSidebarMenu}"
+  )
+    i.fa.fa-bars
+
+  settings-panel.settings-popup(v-if="showSettings"
+    @close="toggleSettings()"
+  )
+
+  .dropdown-holder.flex-col(v-if="showSidebarMenu"
+    @mouseover="showSidebarMenu=true"
+  )
+    .x-item(@click="go('/')" style="margin-left: 3px")
+      p: i.x-menu-icon.fas.fa-home
+      p Home
+
+    .space
+      .xsection Sidebar
+      .x-item(:class="{'is-active-side': currentSection===''}" @click="activate('')")
+        p: i.x-menu-icon.fas.fa-check
+        p Hide sidebar
+      .x-item(:class="{'is-active-side': currentSection=='data'}" @click="activate('data')")
+        p: i.x-menu-icon.fas.fa-sitemap
+        p Data sources and folders
+      .x-item(:class="{'is-active-side': currentSection=='split'}" @click="activate('split')")
+        p: i.x-menu-icon.fas.fa-columns
+        p Split view
+      //- .x-item(:class="{'is-active-side': currentSection=='runs'}" @click="activate('runs')")
+      //-   p: i.x-menu-icon.fas.fa-play-circle
+      //-   p Run manager
+
+    .space
+      .xsection Tools
+      //- .x-item(@click="go('/map')")
+      //-   p: i.x-menu-icon.fas.fa-map
+      //-   p Map Builder
+      .x-item(@click="go('/matrix')")
+        p: i.x-menu-icon.fas.fa-th
+        p Matrix Viewer
+
+    .space
+      .xsection Documentation &amp; Help
+
+      a.x-item(href="https://simwrapper.github.io/docs" target="_blank")
+        p: i.x-menu-icon.fas.fa-book-open
+        p Documentation
+      a.x-item(href="https://simwrapper.github.io/docs/guide-getting-started " target="_blank")
+        p: i.x-menu-icon.fas.fa-flag-checkered
+        p Tutorial
+      a.x-item(href="https://github.com/orgs/simwrapper/discussions" target="_blank")
+        p: i.x-menu-icon.fas.fa-comments
+        p Discussion Board
+      a.x-item(href="https://github.com/simwrapper/simwrapper/issues" target="_blank")
+        p: i.x-menu-icon.fas.fa-spider
+        p Bugs/Feature Requests
+
+</template>
+
+<script lang="ts">
+import { defineComponent } from 'vue'
+import type { PropType } from 'vue'
+import isDarkColor from 'is-dark-color'
+import { debounce } from 'debounce'
+
+import globalStore from '@/store'
+import type { NavigationItem } from '@/Globals'
+
+import imgLogo from '@/assets/simwrapper-logo/SW_logo_white.png'
+import imgSidebar from '@/assets/icons/sidebar.png'
+import SettingsPanel from './SettingsPanel.vue'
+
+const BASE_URL = import.meta.env.BASE_URL
+
+export default defineComponent({
+  name: 'SiteNavBar',
+  components: { SettingsPanel },
+
+  props: {
+    currentFolder: { type: String, required: false },
+    projectFolder: { type: String, required: false },
+  },
+
+  data() {
+    return {
+      showSidebarMenu: false,
+      showSettings: false,
+      selectedGroup: -1,
+      dbCloseQuickMenu: {} as any,
+      isDark: false,
+      imgLogo,
+      imgSidebar,
+      navbar: {
+        left: [],
+        right: [],
+        baseURL: '',
+      },
+    }
+  },
+
+  computed: {
+    currentSection() {
+      const section = globalStore.state.activeLeftSection
+      // console.log(123, section)
+      return section
+    },
+  },
+
+  mounted() {
+    this.dbCloseQuickMenu = debounce(this.closeQuickMenu, 750)
+  },
+
+  methods: {
+    closeQuickMenu() {
+      this.showSidebarMenu = false
+    },
+
+    go(path: string) {
+      this.showSidebarMenu = false
+      const fullPath = `${BASE_URL}${path}`.replaceAll('//', '/')
+      this.$router.push(fullPath)
+    },
+
+    activate(item: string) {
+      this.$store.commit('setActiveLeftSection', item)
+
+      this.$store.commit('setShowLeftBar', !!item)
+      this.showSidebarMenu = false
+    },
+
+    hasLabel(item: NavigationItem): any {
+      return item.text || item.text_de || item.text_en
+    },
+
+    getLabel(item: NavigationItem): string {
+      let label = ''
+      if (this.$store.state.locale === 'de') {
+        label = item.text_de || item.text || item.text_en || 'item'
+      } else {
+        label = item.text_en || item.text || item.text_de || 'item'
+      }
+      return label
+    },
+
+    getUrl(url: string) {
+      if (url.startsWith('http')) return url
+
+      const baseURL = this.navbar.baseURL
+      const fullUrl = `${baseURL}${url}`
+      return fullUrl
+    },
+
+    getStyle(item: any) {
+      const style = {} as any
+      if (item.style) Object.assign(style, item.style)
+      return style
+    },
+
+    getNavbarStyle(item: any) {
+      const style = {} as any
+      if (item.style) Object.assign(style, item.style)
+
+      // light or dark?
+      const darks = ['black', 'blue', 'brown', 'green', 'red', 'purple']
+      if (darks.includes(style.backgroundColor)) this.isDark = true
+      if (style.backgroundColor && style.backgroundColor.startsWith('#')) {
+        this.isDark = isDarkColor(style.backgroundColor)
+      }
+      // override text color
+      if ('useDarkText' in style) this.isDark = !style.useDarkText
+      return style
+    },
+
+    toggleSettings() {
+      this.showSettings = !this.showSettings
+    },
+
+    navigate(url: string, group: number) {
+      if (group !== undefined) this.selectedGroup = group
+
+      if (url.startsWith('http')) {
+        window.location.href = url
+      } else {
+        // is subfolder absolute path or relative to project?
+        const xsubfolder = url.startsWith('/') ? url : `${this.projectFolder}/${url}`
+
+        const props = {
+          root: this.$store.state.topNavItems.fileSystem.slug || '',
+          xsubfolder,
+          thumbnail: false,
+        }
+
+        this.$emit('navigate', {
+          component: 'TabbedDashboardView',
+          props,
+        })
+      }
+    },
+  },
+})
+</script>
+
+<style scoped lang="scss">
+@import '@/styles.scss';
+
+$appTag: #32926f;
+
+.top-hamburger-menu {
+  user-select: none;
+  gap: 1rem;
+  // background-image: linear-gradient(30deg, #425bda, #246a4f); // #801bec
+  color: #eee;
+  position: relative;
+  z-index: 1000;
+}
+
+.simwrapper-logo {
+  margin-top: 4px;
+  width: 100px;
+}
+
+.sidebar-button {
+  margin: auto 0 auto 4px;
+  width: 16px;
+  filter: brightness(0) invert(1);
+  font-size: 16px;
+}
+
+.hamburger-menu-icon {
+  padding: 5px 12px;
+  z-index: 10000;
+  margin-top: 1px;
+  margin-right: 2px;
+}
+
+.hamburger-menu-icon:hover {
+  background-color: $appTag;
+  cursor: pointer;
+}
+
+.brand.is-highlighted {
+  background-color: $appTag;
+}
+
+.title-section {
+  margin: auto auto;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-left: -9rem;
+}
+
+.right-section {
+  font-size: 15px;
+  margin: auto 1rem auto 0;
+  cursor: pointer;
+}
+
+.x-menu-icon {
+  width: 20px;
+}
+
+.is-active-side {
+  background-color: white;
+  font-weight: bold;
+}
+
+.settings-popup {
+  position: absolute;
+  // top: 34px;
+  // right: 5px;
+  background-color: white;
+  color: #333;
+  padding: 0.5rem 0.5rem 0rem 0.5rem;
+  font-size: 0.9rem;
+  z-index: 10000;
+  border-radius: 0;
+  filter: $filterShadow;
+}
+
+.space {
+  margin: 0.5rem 0 0 0.25rem;
+}
+
+.dropdown-holder {
+  position: absolute;
+  top: 30px;
+  background-color: #eee;
+  color: #333;
+  filter: $filterShadow;
+  padding: 0.25rem 4px 0.25rem 0;
+  width: max-content;
+  z-index: 20000;
+
+  a {
+    color: #333;
+  }
+
+  .fa-cog {
+    cursor: pointer;
+  }
+
+  .xsection {
+    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: bold;
+    color: $appTag;
+    padding: 0.5rem 10px 5px 8px;
+  }
+
+  .x-item {
+    display: flex;
+    padding: 0 0.75rem 0 0.25rem;
+  }
+
+  .x-item:hover {
+    cursor: pointer;
+    background-color: $appTag;
+    color: white;
+  }
+  hr {
+    margin: 4px 0;
+    background-color: #00000011;
+  }
+  p {
+    padding: 4px 0 4px 0.5rem;
+  }
+}
+</style>
