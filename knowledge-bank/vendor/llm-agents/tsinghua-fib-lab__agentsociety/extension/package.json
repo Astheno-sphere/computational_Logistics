@@ -1,0 +1,923 @@
+{
+  "name": "ai-social-scientist",
+  "displayName": "AI Social Scientist",
+  "description": "AI Social Scientist - Next-generation human-AI interaction interface for social science research",
+  "version": "1.7.3",
+  "publisher": "tsinghua-fib-lab",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/tsinghua-fib-lab/agentsociety",
+  "bugs": {
+    "url": "https://github.com/tsinghua-fib-lab/agentsociety/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsinghua-fib-lab/agentsociety.git",
+    "directory": "extension"
+  },
+  "vsce": {
+    "baseContentUrl": "https://github.com/tsinghua-fib-lab/agentsociety/blob/main/extension",
+    "baseImagesUrl": "https://raw.githubusercontent.com/tsinghua-fib-lab/agentsociety/main/extension"
+  },
+  "keywords": [
+    "agentsociety",
+    "social-science",
+    "llm",
+    "claude-code",
+    "codex",
+    "simulation",
+    "research"
+  ],
+  "engines": {
+    "node": "^22.13.0 || >=24",
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:projectStructureView",
+    "onCustomEditor:aiSocialScientist.simSettings",
+    "onCustomEditor:aiSocialScientist.initConfig",
+    "onCommand:aiSocialScientist.initProject",
+    "onCommand:aiSocialScientist.openChat",
+    "onCommand:aiSocialScientist.selectAiChat",
+    "onCommand:aiSocialScientist.deleteLiterature",
+    "onCommand:aiSocialScientist.renameLiterature",
+    "onCommand:aiSocialScientist.openMarkdownInEditor",
+    "onCommand:aiSocialScientist.openTreeFileInEditor",
+    "onCommand:agentsociety.viewPrefillParams",
+    "onCommand:aiSocialScientist.openReplay",
+    "onCommand:aiSocialScientist.startBackend",
+    "onCommand:aiSocialScientist.stopBackend",
+    "onCommand:aiSocialScientist.restartBackend",
+    "onCommand:aiSocialScientist.showBackendLogs",
+    "onCommand:aiSocialScientist.openConfigPage",
+    "onCommand:aiSocialScientist.openHelpPage",
+    "onCommand:aiSocialScientist.openClaudeCodeConfig",
+    "onCommand:aiSocialScientist.openWalkthrough",
+    "onCommand:aiSocialScientist.openSkillMarketplace",
+    "onCommand:aiSocialScientist.openSkillSourcesSettings",
+    "onCommand:aiSocialScientist.openClaudeSkillSourcesSettings",
+    "onCommand:aiSocialScientist.refreshProjectView",
+    "onCommand:aiSocialScientist.formatJsonFile",
+    "onCommand:aiSocialScientist.viewLiteratureIndex",
+    "onCommand:aiSocialScientist.syncLiteratureLibrary",
+    "onCommand:aiSocialScientist.exportLiteratureBibCopy",
+    "onCommand:aiSocialScientist.exportLiteratureBibFile",
+    "onCommand:aiSocialScientist.importLiteratureBib",
+    "onCommand:aiSocialScientist.openPdfPreview",
+    "onCommand:aiSocialScientist.viewStepsYaml",
+    "onCommand:aiSocialScientist.copyFilePath",
+    "onCommand:aiSocialScientist.copyAtReference",
+    "onCommand:aiSocialScientist.viewJsonFile",
+    "onCommand:aiSocialScientist.viewYamlFile",
+    "onCommand:aiSocialScientist.viewAnalysisHarnessStatus",
+    "onCommand:aiSocialScientist.viewCsvFile",
+    "onCommand:aiSocialScientist.viewPaperReview",
+    "onCommand:aiSocialScientist.openInExplorer",
+    "onCommand:aiSocialScientist.exportWorkspaceZip",
+    "onCommand:aiSocialScientist.importWorkspaceZip",
+    "onCommand:aiSocialScientist.toggleLanguage"
+  ],
+  "icon": "resources/icon128.png",
+  "main": "./out/extension.js",
+  "contributes": {
+    "walkthroughs": [
+      {
+        "id": "aiSocialScientist.gettingStarted",
+        "title": "%walkthrough.aiSocialScientist.gettingStarted.title%",
+        "description": "%walkthrough.aiSocialScientist.gettingStarted.description%",
+        "steps": [
+          {
+            "id": "welcome",
+            "title": "%walkthrough.step.welcome.title%",
+            "description": "%walkthrough.step.welcome.description%",
+            "media": {
+              "markdown": "%walkthrough.step.welcome.media%"
+            }
+          },
+          {
+            "id": "firstLaunch",
+            "title": "%walkthrough.step.firstLaunch.title%",
+            "description": "%walkthrough.step.firstLaunch.description%",
+            "media": {
+              "markdown": "%walkthrough.step.firstLaunch.media%"
+            }
+          },
+          {
+            "id": "meetLayout",
+            "title": "%walkthrough.step.meetLayout.title%",
+            "description": "%walkthrough.step.meetLayout.description%",
+            "media": {
+              "markdown": "%walkthrough.step.meetLayout.media%"
+            },
+            "completionEvents": [
+              "onView:projectStructureView"
+            ]
+          },
+          {
+            "id": "configure",
+            "title": "%walkthrough.step.configure.title%",
+            "description": "%walkthrough.step.configure.description%",
+            "media": {
+              "markdown": "%walkthrough.step.configure.media%"
+            },
+            "completionEvents": [
+              "onCommand:aiSocialScientist.openConfigPage",
+              "onCommand:aiSocialScientist.startBackend"
+            ]
+          },
+          {
+            "id": "initProject",
+            "title": "%walkthrough.step.initProject.title%",
+            "description": "%walkthrough.step.initProject.description%",
+            "media": {
+              "markdown": "%walkthrough.step.initProject.media%"
+            },
+            "completionEvents": [
+              "onCommand:aiSocialScientist.initProject"
+            ]
+          },
+          {
+            "id": "exploreSkills",
+            "title": "%walkthrough.step.exploreSkills.title%",
+            "description": "%walkthrough.step.exploreSkills.description%",
+            "media": {
+              "markdown": "%walkthrough.step.exploreSkills.media%"
+            },
+            "completionEvents": [
+              "onCommand:aiSocialScientist.openSkillMarketplace"
+            ]
+          },
+          {
+            "id": "startChat",
+            "title": "%walkthrough.step.startChat.title%",
+            "description": "%walkthrough.step.startChat.description%",
+            "media": {
+              "markdown": "%walkthrough.step.startChat.media%"
+            },
+            "completionEvents": [
+              "onCommand:aiSocialScientist.openChat"
+            ]
+          },
+          {
+            "id": "cliAssistants",
+            "title": "%walkthrough.step.cliAssistants.title%",
+            "description": "%walkthrough.step.cliAssistants.description%",
+            "media": {
+              "markdown": "%walkthrough.step.cliAssistants.media%"
+            },
+            "completionEvents": [
+              "onCommand:aiSocialScientist.openClaudeSkillSourcesSettings",
+              "onCommand:aiSocialScientist.openConfigPage"
+            ]
+          },
+          {
+            "id": "glossary",
+            "title": "%walkthrough.step.glossary.title%",
+            "description": "%walkthrough.step.glossary.description%",
+            "media": {
+              "markdown": "%walkthrough.step.glossary.media%"
+            }
+          }
+        ]
+      }
+    ],
+    "views": {
+      "aiSocialScientist": [
+        {
+          "id": "projectStructureView",
+          "name": "Project Structure",
+          "when": "workspaceFolderCount > 0"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aiSocialScientist",
+          "title": "AI Social Scientist",
+          "icon": "resources/activitybar.png"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "aiSocialScientist.initProject",
+        "title": "AI Social Scientist: Initialize Research Project",
+        "icon": "$(add)"
+      },
+      {
+        "command": "aiSocialScientist.openChat",
+        "title": "AI Social Scientist: Open AI Chat",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "aiSocialScientist.selectAiChat",
+        "title": "AI Social Scientist: 选择 AI Chat 提供商",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "aiSocialScientist.deleteLiterature",
+        "title": "AI Social Scientist: 删除文献",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "aiSocialScientist.renameLiterature",
+        "title": "AI Social Scientist: 重命名文献",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "aiSocialScientist.viewLiteratureIndex",
+        "title": "AI Social Scientist: 打开文献库",
+        "icon": "$(library)"
+      },
+      {
+        "command": "aiSocialScientist.syncLiteratureLibrary",
+        "title": "AI Social Scientist: 同步完善文献库",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "aiSocialScientist.exportLiteratureBibCopy",
+        "title": "AI Social Scientist: 复制文献 BibTeX",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "aiSocialScientist.exportLiteratureBibFile",
+        "title": "AI Social Scientist: 导出 library.bib",
+        "icon": "$(export)"
+      },
+      {
+        "command": "aiSocialScientist.importLiteratureBib",
+        "title": "AI Social Scientist: 导入 BibTeX",
+        "icon": "$(desktop-download)"
+      },
+      {
+        "command": "aiSocialScientist.openPdfPreview",
+        "title": "AI Social Scientist: 预览 PDF",
+        "icon": "$(file-pdf)"
+      },
+      {
+        "command": "aiSocialScientist.openHtmlReport",
+        "title": "AI Social Scientist: 预览 HTML 报告",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "aiSocialScientist.openTreeFileInEditor",
+        "title": "AI Social Scientist: Open in Editor",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "aiSocialScientist.openMarkdownInEditor",
+        "title": "AI Social Scientist: 在编辑器中打开 Markdown",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "agentsociety.viewPrefillParams",
+        "title": "AI Social Scientist: View Prefill Parameters",
+        "icon": "$(settings)"
+      },
+      {
+        "command": "aiSocialScientist.openReplay",
+        "title": "AI Social Scientist: Open Simulation Replay",
+        "icon": "$(play-circle)"
+      },
+      {
+        "command": "aiSocialScientist.startBackend",
+        "title": "AI Social Scientist: Start Backend Service",
+        "icon": "$(play)"
+      },
+      {
+        "command": "aiSocialScientist.stopBackend",
+        "title": "AI Social Scientist: Stop Backend Service",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "aiSocialScientist.restartBackend",
+        "title": "AI Social Scientist: Restart Backend Service",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aiSocialScientist.showBackendLogs",
+        "title": "AI Social Scientist: Show Backend Logs",
+        "icon": "$(output)"
+      },
+      {
+        "command": "aiSocialScientist.openConfigPage",
+        "title": "AI Social Scientist: 打开配置",
+        "icon": "$(settings)"
+      },
+      {
+        "command": "aiSocialScientist.openHelpPage",
+        "title": "AI Social Scientist: 使用指南",
+        "icon": "$(book)"
+      },
+      {
+        "command": "aiSocialScientist.openClaudeCodeConfig",
+        "title": "AI Social Scientist: Claude Code 配置（配置页）",
+        "icon": "$(key)"
+      },
+      {
+        "command": "aiSocialScientist.openWalkthrough",
+        "title": "AI Social Scientist: 打开快速入门",
+        "icon": "$(map)"
+      },
+      {
+        "command": "aiSocialScientist.openSkillMarketplace",
+        "title": "AI Social Scientist: 技能管理",
+        "icon": "$(extensions)"
+      },
+      {
+        "command": "aiSocialScientist.openSkillSourcesSettings",
+        "title": "AI Social Scientist: Agent 技能源（设置）",
+        "icon": "$(repo)"
+      },
+      {
+        "command": "aiSocialScientist.openClaudeSkillSourcesSettings",
+        "title": "AI Social Scientist: Claude 技能源（设置）",
+        "icon": "$(repo)"
+      },
+      {
+        "command": "aiSocialScientist.refreshProjectView",
+        "title": "AI Social Scientist: Refresh Project View",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aiSocialScientist.formatJsonFile",
+        "title": "AI Social Scientist: Format and View JSON",
+        "icon": "$(json)"
+      },
+      {
+        "command": "aiSocialScientist.viewStepsYaml",
+        "title": "AI Social Scientist: View Steps Timeline",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "aiSocialScientist.copyFilePath",
+        "title": "AI Social Scientist: 复制路径",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "aiSocialScientist.copyAtReference",
+        "title": "AI Social Scientist: 复制 @引用",
+        "icon": "$(quote)"
+      },
+      {
+        "command": "aiSocialScientist.viewJsonFile",
+        "title": "AI Social Scientist: View JSON",
+        "icon": "$(json)"
+      },
+      {
+        "command": "aiSocialScientist.viewCsvFile",
+        "title": "AI Social Scientist: 表格预览 (CSV/TSV)",
+        "icon": "$(table)"
+      },
+      {
+        "command": "aiSocialScientist.viewPaperReview",
+        "title": "%command.aiSocialScientist.viewPaperReview.title%",
+        "icon": "$(feedback)"
+      },
+      {
+        "command": "aiSocialScientist.viewYamlFile",
+        "title": "AI Social Scientist: View YAML",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "aiSocialScientist.viewAnalysisHarnessStatus",
+        "title": "AI Social Scientist: 分析阶段状态",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "aiSocialScientist.openInExplorer",
+        "title": "AI Social Scientist: 在系统中打开",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "aiSocialScientist.exportWorkspaceZip",
+        "title": "导出工作区为 .zip 分享包",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "aiSocialScientist.importWorkspaceZip",
+        "title": "从 .zip 分享包导入工作区",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "aiSocialScientist.toggleLanguage",
+        "title": "AI Social Scientist: 切换中英文",
+        "icon": "$(globe)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "aiSocialScientist.deleteLiterature",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.renameLiterature",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.openTreeFileInEditor",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.openMarkdownInEditor",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.formatJsonFile",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.openPdfPreview",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.viewLiteratureIndex",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.viewStepsYaml",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.copyFilePath",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.copyAtReference",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.viewJsonFile",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.viewCsvFile",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.viewPaperReview",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.viewYamlFile",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.viewAnalysisHarnessStatus",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.openInExplorer",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.selectAiChat",
+          "when": "false"
+        },
+        {
+          "command": "aiSocialScientist.openClaudeCodeConfig",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "aiSocialScientist.openConfigPage",
+          "when": "view == projectStructureView && workspaceFolderCount > 0",
+          "group": "navigation@0"
+        },
+        {
+          "command": "aiSocialScientist.refreshProjectView",
+          "when": "view == projectStructureView && workspaceFolderCount > 0",
+          "group": "navigation@1"
+        },
+        {
+          "command": "aiSocialScientist.openWalkthrough",
+          "when": "view == projectStructureView && workspaceFolderCount > 0",
+          "group": "navigation@2"
+        },
+        {
+          "command": "aiSocialScientist.exportWorkspaceZip",
+          "when": "view == projectStructureView && workspaceFolderCount > 0",
+          "group": "navigation@3"
+        },
+        {
+          "command": "aiSocialScientist.importWorkspaceZip",
+          "when": "view == projectStructureView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "aiSocialScientist.toggleLanguage",
+          "when": "view == projectStructureView",
+          "group": "navigation@5"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "aiSocialScientist.openReplay",
+          "when": "view == projectStructureView && viewItem == experiment",
+          "group": "1_actions"
+        },
+        {
+          "command": "aiSocialScientist.deleteLiterature",
+          "when": "view == projectStructureView && viewItem =~ /^literatureFile/ && !(viewItem =~ /literatureIndex/)",
+          "group": "1_modification"
+        },
+        {
+          "command": "aiSocialScientist.renameLiterature",
+          "when": "view == projectStructureView && viewItem =~ /^literatureFile/ && !(viewItem =~ /literatureIndex/) && !(viewItem =~ /literatureBib/)",
+          "group": "1_modification"
+        },
+        {
+          "command": "aiSocialScientist.viewLiteratureIndex",
+          "when": "view == projectStructureView && (viewItem =~ /literatureRoot/ || viewItem =~ /literatureIndex/)",
+          "group": "1_literature@1"
+        },
+        {
+          "command": "aiSocialScientist.syncLiteratureLibrary",
+          "when": "view == projectStructureView && (viewItem =~ /literatureRoot/ || viewItem =~ /literatureIndex/)",
+          "group": "1_literature@2"
+        },
+        {
+          "command": "aiSocialScientist.importLiteratureBib",
+          "when": "view == projectStructureView && (viewItem =~ /literatureRoot/ || viewItem =~ /literatureIndex/)",
+          "group": "1_literature@3"
+        },
+        {
+          "command": "aiSocialScientist.exportLiteratureBibCopy",
+          "when": "view == projectStructureView && (viewItem =~ /literatureRoot/ || viewItem =~ /literatureIndex/ || viewItem =~ /literatureBib/)",
+          "group": "1_literature@4"
+        },
+        {
+          "command": "aiSocialScientist.exportLiteratureBibFile",
+          "when": "view == projectStructureView && (viewItem =~ /literatureRoot/ || viewItem =~ /literatureIndex/)",
+          "group": "1_literature@5"
+        },
+        {
+          "command": "aiSocialScientist.openHtmlReport",
+          "when": "view == projectStructureView && (viewItem =~ /^reportHtml/ || viewItem =~ / html$/)",
+          "group": "1_view@1"
+        },
+        {
+          "command": "aiSocialScientist.openPdfPreview",
+          "when": "view == projectStructureView && viewItem =~ / pdf$/",
+          "group": "1_view@1"
+        },
+        {
+          "command": "aiSocialScientist.viewJsonFile",
+          "when": "view == projectStructureView && (viewItem =~ / json$/ || viewItem =~ /^json / || viewItem == pidJson)",
+          "group": "1_view@2"
+        },
+        {
+          "command": "aiSocialScientist.viewCsvFile",
+          "when": "view == projectStructureView && viewItem =~ / tabular$/",
+          "group": "1_view@2"
+        },
+        {
+          "command": "aiSocialScientist.viewYamlFile",
+          "when": "view == projectStructureView && viewItem =~ / yaml$/",
+          "group": "1_view@2"
+        },
+        {
+          "command": "aiSocialScientist.viewStepsYaml",
+          "when": "view == projectStructureView && viewItem =~ /stepsYaml/",
+          "group": "1_view@2"
+        },
+        {
+          "command": "aiSocialScientist.viewAnalysisHarnessStatus",
+          "when": "view == projectStructureView && (viewItem == analysisPhaseStep || viewItem == analysisPhaseGroup || viewItem == synthesisPhaseGroup)",
+          "group": "1_view@1"
+        },
+        {
+          "command": "aiSocialScientist.viewPaperReview",
+          "when": "view == projectStructureView && (viewItem == paperReviewRound || viewItem == paperReviewer)",
+          "group": "1_view@1"
+        },
+        {
+          "command": "aiSocialScientist.openTreeFileInEditor",
+          "when": "view == projectStructureView && (viewItem == file || viewItem =~ /^file / || viewItem =~ /^literatureFile/ || viewItem =~ /^reportHtml/ || viewItem =~ /^reportMd/ || viewItem =~ /^paperArtifact/ || viewItem == paperReviewer) && !(viewItem =~ / tabular$/)",
+          "group": "2_actions@1"
+        },
+        {
+          "command": "aiSocialScientist.openMarkdownInEditor",
+          "when": "view == projectStructureView && viewItem =~ /markdown/ && viewItem != 'experiment markdown'",
+          "group": "2_actions@2"
+        },
+        {
+          "command": "aiSocialScientist.formatJsonFile",
+          "when": "view == projectStructureView && (viewItem =~ / json$/ || viewItem =~ /^json / || viewItem == pidJson)",
+          "group": "2_actions@3"
+        },
+        {
+          "command": "aiSocialScientist.openInExplorer",
+          "when": "view == projectStructureView && (viewItem == paperFolder || viewItem =~ /^literatureFile/ || viewItem == file || viewItem =~ /^file / || viewItem =~ / tabular$/ || viewItem == pidJson || viewItem == replayableDatabase || viewItem == experiment || viewItem =~ /markdown/ || viewItem =~ / yaml$/ || viewItem =~ /stepsYaml/ || viewItem =~ /literatureIndex/ || viewItem =~ / json$/ || viewItem =~ /^json / || viewItem =~ /^reportHtml/ || viewItem =~ /^reportMd/ || viewItem =~ /^paperArtifact/ || viewItem =~ / pdf$/ || viewItem =~ / html$/ || viewItem =~ / tex$/ || viewItem == paperReviewRound || viewItem == paperReviewer)",
+          "group": "3_system"
+        },
+        {
+          "command": "aiSocialScientist.copyFilePath",
+          "when": "view == projectStructureView && (viewItem == paperFolder || viewItem =~ /^literatureFile/ || viewItem == file || viewItem =~ /^file / || viewItem =~ / tabular$/ || viewItem == pidJson || viewItem == replayableDatabase || viewItem == experiment || viewItem =~ /markdown/ || viewItem =~ / yaml$/ || viewItem =~ /stepsYaml/ || viewItem =~ /literatureIndex/ || viewItem =~ / json$/ || viewItem =~ /^json / || viewItem =~ /^reportHtml/ || viewItem =~ /^reportMd/ || viewItem =~ /^paperArtifact/ || viewItem =~ / pdf$/ || viewItem =~ / html$/ || viewItem =~ / tex$/ || viewItem == paperReviewRound || viewItem == paperReviewer)",
+          "group": "0_copy@1"
+        },
+        {
+          "command": "aiSocialScientist.copyAtReference",
+          "when": "view == projectStructureView && (viewItem == paperFolder || viewItem =~ /^literatureFile/ || viewItem == file || viewItem =~ /^file / || viewItem =~ / tabular$/ || viewItem == pidJson || viewItem == replayableDatabase || viewItem == experiment || viewItem =~ /markdown/ || viewItem =~ / yaml$/ || viewItem =~ /stepsYaml/ || viewItem =~ /literatureIndex/ || viewItem =~ / json$/ || viewItem =~ /^json / || viewItem =~ /^reportHtml/ || viewItem =~ /^reportMd/ || viewItem =~ /^paperArtifact/ || viewItem =~ / pdf$/ || viewItem =~ / html$/ || viewItem =~ / tex$/ || viewItem == paperReviewRound || viewItem == paperReviewer)",
+          "group": "0_copy@2"
+        }
+      ]
+    },
+    "webview": [
+      {
+        "viewType": "aiSocialScientistChat",
+        "title": "AI Chat",
+        "icon": "$(comment-discussion)"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "aiSocialScientist.simSettings",
+        "displayName": "SIM Settings Editor",
+        "selector": [
+          {
+            "filenamePattern": "**/SIM_SETTINGS.json"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "aiSocialScientist.initConfig",
+        "displayName": "Init Config Editor",
+        "selector": [
+          {
+            "filenamePattern": "**/init/init_config.json"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "configuration": {
+      "title": "AI Social Scientist",
+      "properties": {
+        "aiSocialScientist.backend.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否在插件启动时自动启动本地后端服务",
+          "markdownDescription": "如果启用，插件启动时会自动启动本地后端服务。建议经常使用插件时开启，以便 Agent 技能管理、模块探测、预填参数、回放 API 与 API 文档随时可用。即使后端暂未启动，配置文件编辑、本地文件查看和通过 CLI/Claude Code 运行实验也不会被阻断。"
+        },
+        "aiSocialScientist.preferredAiChat": {
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "claude-code",
+            "codex",
+            "cursor",
+            "vscode-chat"
+          ],
+          "enumDescriptions": [
+            "未设置（自动检测或每次选择）",
+            "Claude Code (anthropic.claude-code)",
+            "Codex (openai.chatgpt)",
+            "Cursor Chat",
+            "VSCode 内置 Chat"
+          ],
+          "description": "默认 AI Chat 提供商。留空时自动检测；检测到多个时弹出选择。"
+        },
+        "aiSocialScientist.language": {
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "zh-CN",
+            "en-US"
+          ],
+          "enumDescriptions": [
+            "跟随 VS Code / code-server 显示语言",
+            "中文",
+            "English"
+          ],
+          "description": "AI Social Scientist 扩展界面语言。留空则跟随 VS Code 显示语言；可通过状态栏或侧栏地球图标一键切换。"
+        },
+        "aiSocialScientist.webConfigImport.webBaseUrl": {
+          "type": "string",
+          "default": "https://agentsociety2.fiblab.net",
+          "description": "AgentSociety Web 配置导入使用的业务 API 基础地址。"
+        },
+        "aiSocialScientist.webConfigImport.clientId": {
+          "type": "string",
+          "default": "7ffcbfe4ae0fcb2c0d63",
+          "description": "Casdoor OAuth Device Flow 客户端 ID。"
+        },
+        "aiSocialScientist.webConfigImport.scope": {
+          "type": "string",
+          "default": "openid profile email offline_access",
+          "description": "Casdoor OAuth Device Flow 请求的 scope。"
+        },
+        "aiSocialScientist.chat.viewColumn": {
+          "type": "string",
+          "default": "beside",
+          "enum": [
+            "beside",
+            "one",
+            "two",
+            "three",
+            "four",
+            "five",
+            "six",
+            "seven",
+            "eight",
+            "nine"
+          ],
+          "enumDescriptions": [
+            "在当前编辑器旁边打开（默认）",
+            "在第一列打开",
+            "在第二列打开",
+            "在第三列打开",
+            "在第四列打开",
+            "在第五列打开",
+            "在第六列打开",
+            "在第七列打开",
+            "在第八列打开",
+            "在第九列打开"
+          ],
+          "description": "Chat面板打开的视图列位置",
+          "markdownDescription": "指定 Chat 面板打开时使用的视图列位置。选择固定的列（如 `two`、`three`）可以避免在打开其他页面（如 Replay）时 Chat 页面被替换或消失。默认为 `beside`（在当前编辑器旁边）。"
+        },
+        "agentSkills.githubToken": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub token（可选）。用于提高 api.github.com 速率限制，便于技能市场拉取目录与元数据。",
+          "markdownDescription": "可选。填写 [Personal Access Token](https://github.com/settings/tokens) 后，技能市场请求 GitHub API 时附带认证，避免匿名 60 次/小时限流导致加载失败。"
+        },
+        "agentSkills.skillSources": {
+          "type": "array",
+          "markdownDescription": "**仅供 Agent 运行时技能市场使用**：从 GitHub 拉取列表并安装到工作区的 `custom/skills`。与本分组下方的「Claude 技能源」互不混用。默认无任何仓库；按需添加条目，形如 `{ owner, repo, branch?, skillsPath? }`。若留空，市场里仅显示提示、不会请求远程列表。触发 GitHub API 限流时，可在「GitHub Token」项填写令牌。",
+          "default": [],
+          "description": "Agent 技能市场 GitHub 源（安装到 custom/skills）。",
+          "items": {
+            "type": "object",
+            "markdownDescription": "单仓库：`owner`/`repo` 为 GitHub 路径；`branch` 默认 main；`skillsPath` 为仓库内技能根目录（相对路径，对应 GitHub API contents 下列出的子目录）。也可用 `path` 代替 `skillsPath`。",
+            "properties": {
+              "owner": {
+                "type": "string",
+                "description": "组织或用户名，如 anthropics"
+              },
+              "repo": {
+                "type": "string",
+                "description": "仓库名，如 skills"
+              },
+              "branch": {
+                "type": "string",
+                "default": "main",
+                "description": "分支名"
+              },
+              "skillsPath": {
+                "type": "string",
+                "description": "仓库内技能根目录，如 skills"
+              }
+            }
+          }
+        },
+        "agentSkills.claudeSkillSources": {
+          "type": "array",
+          "markdownDescription": "**仅供 Claude 目录技能市场使用**：安装到 `.claude/skills`，与上方的「Agent 技能源」互不混用。默认包含 Anthropic 官方示例、[obra/superpowers](https://github.com/obra/superpowers) 开发向技能集、[everything-claude-code](https://github.com/affaan-m/everything-claude-code) 的 `.agents/skills`。可按需增删；留空则不请求远程列表。触发 API 限流时可使用本分组下的 GitHub Token。",
+          "default": [
+            {
+              "owner": "anthropics",
+              "repo": "skills",
+              "branch": "main",
+              "skillsPath": "skills"
+            },
+            {
+              "owner": "obra",
+              "repo": "superpowers",
+              "branch": "main",
+              "skillsPath": "skills"
+            },
+            {
+              "owner": "affaan-m",
+              "repo": "everything-claude-code",
+              "branch": "main",
+              "skillsPath": ".agents/skills"
+            }
+          ],
+          "description": "Claude 技能市场 GitHub 源（安装到 .claude/skills）。",
+          "items": {
+            "type": "object",
+            "markdownDescription": "单仓库：`owner`/`repo` 为 GitHub 路径；`branch` 默认 main；`skillsPath` 为仓库内技能根目录。也可用 `path` 代替 `skillsPath`。",
+            "properties": {
+              "owner": {
+                "type": "string",
+                "description": "组织或用户名"
+              },
+              "repo": {
+                "type": "string",
+                "description": "仓库名"
+              },
+              "branch": {
+                "type": "string",
+                "default": "main",
+                "description": "分支名"
+              },
+              "skillsPath": {
+                "type": "string",
+                "description": "仓库内技能根目录"
+              }
+            }
+          }
+        }
+      }
+    },
+    "configurationDefaults": {
+      "python.terminal.useEnvFile": true
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "npm run compile && npm run build-webview",
+    "rebuild": "npm run clean && npm run build",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "dev": "concurrently -k -n tsc,webview \"npm:watch\" \"npm:watch-webview\"",
+    "clean": "node ./scripts/clean.js",
+    "clean:dry-run": "node ./scripts/clean.js --dry-run",
+    "clean:deep": "node ./scripts/clean.js --deep",
+    "clean-webview": "node -e \"const fs=require('fs'); fs.rmSync('out/webview', { recursive: true, force: true }); fs.mkdirSync('out/webview', { recursive: true });\"",
+    "build-webview": "npm run clean-webview && NODE_ENV=production NODE_OPTIONS=--max-old-space-size=8192 node ./node_modules/webpack/bin/webpack.js --mode production",
+    "watch-webview": "NODE_ENV=development NODE_OPTIONS=--max-old-space-size=4096 webpack --mode development --watch",
+    "check": "npm run lint && npm run test:gateway && npm run build",
+    "package": "vsce package -o ai-social-scientist.vsix",
+    "package:check": "npm run check && npm run package",
+    "lint": "eslint src",
+    "test:gateway": "npm run compile && node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.1",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.2.0",
+    "@types/vscode": "^1.95.0",
+    "@types/write-file-atomic": "^4.0.3",
+    "@vscode/vsce": "^3.9.2",
+    "concurrently": "^10.0.5",
+    "css-loader": "^7.1.5",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "less": "^4.9.1",
+    "less-loader": "^12.3.3",
+    "style-loader": "^3.3.3",
+    "terser-webpack-plugin": "^5.6.1",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "webpack": "^5.111.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.3.4",
+    "@ant-design/x": "^2.9.0",
+    "@ant-design/x-markdown": "^2.9.0",
+    "@deck.gl/core": "^9.4.0",
+    "@deck.gl/layers": "^9.4.0",
+    "@deck.gl/react": "^9.4.0",
+    "@deck.gl/widgets": "^9.4.0",
+    "@luma.gl/webgpu": "^9.4.1",
+    "antd": "^6.6.5",
+    "dayjs": "^1.11.23",
+    "https-proxy-agent": "^7.0.6",
+    "i18next": "^26.4.2",
+    "js-yaml": "^5.4.2",
+    "mapbox-gl": "^3.30.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^17.0.14",
+    "react-map-gl": "^8.1.3",
+    "smol-toml": "^1.8.0",
+    "socks-proxy-agent": "^8.0.5",
+    "write-file-atomic": "^8.0.0"
+  },
+  "overrides": {
+    "serialize-javascript": ">=7.0.3",
+    "minimist": ">=1.0.0",
+    "diff": ">=3.5.1",
+    "mermaid": {
+      "uuid": ">=14.0.0"
+    },
+    "brace-expansion": "5.0.12",
+    "postcss": ">=8.5.18",
+    "dompurify": ">=3.4.12",
+    "fast-uri": ">=3.1.4",
+    "linkify-it": "5.0.2",
+    "shell-quote": ">=1.9.0"
+  },
+  "allowScripts": {
+    "@vscode/vsce-sign@2.0.9": true,
+    "keytar@7.9.0": true
+  }
+}

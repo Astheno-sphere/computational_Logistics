@@ -1,0 +1,391 @@
+# English translations for AgentSociety 2 package.
+# Copyright (C) 2026, FIBLAB
+# This file is distributed under the same license as the AgentSociety 2
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: AgentSociety 2 2.6.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-23 12:41+0800\n"
+"PO-Revision-Date: 2026-03-05 23:55+0800\n"
+"Last-Translator: AgentSociety Team\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../env_modules.rst:2
+msgid "环境模块"
+msgstr "Environment Modules"
+
+#: ../../env_modules.rst:4
+msgid "本部分介绍如何创建和使用环境模块。"
+msgstr "This section covers how to create and work with environment modules."
+
+#: ../../env_modules.rst:7
+msgid "创建自定义模块"
+msgstr "Creating Custom Modules"
+
+#: ../../env_modules.rst:10
+msgid "继承 EnvBase"
+msgstr "Inherit from EnvBase"
+
+#: ../../env_modules.rst:12
+msgid "要创建自定义环境模块，请继承 ``EnvBase`` 并实现必需的方法："
+msgstr ""
+"To create a custom environment module, inherit from ``EnvBase`` and "
+"implement the required methods:"
+
+#: ../../env_modules.rst:15
+msgid "需要实现的方法"
+msgstr "Required Methods to Implement"
+
+#: ../../env_modules.rst:17
+msgid "创建自定义环境模块时，必须实现："
+msgstr "When creating a custom environment module, you must implement:"
+
+#: ../../env_modules.rst:19
+msgid "**async def step(self, tick: int, t: datetime) -> None**"
+msgstr "**async def step(self, tick: int, t: datetime) -> None**"
+
+#: ../../env_modules.rst:21
+msgid "执行一个模拟步骤。在 AgentSociety 模拟期间自动调用。 使用此方法更新时间相关的状态。"
+msgstr ""
+"Execute one simulation step. This is called automatically during "
+"AgentSociety simulations. Use this to update time-dependent state."
+
+#: ../../env_modules.rst:24
+msgid "参数:"
+msgstr "Parameters:"
+
+#: ../../env_modules.rst:25
+msgid "tick: 此步骤的持续时间（秒） t: 此步骤后的当前模拟日期时间"
+msgstr ""
+"tick: Duration of this step in seconds t: Current simulation datetime "
+"after this step"
+
+#: ../../env_modules.rst:28
+msgid "**使用 @tool 装饰的工具**"
+msgstr "**Tools decorated with @tool**"
+
+#: ../../env_modules.rst:30
+msgid "使用 ``@tool`` 装饰器将方法公开为智能体的可调用函数。"
+msgstr ""
+"Use the ``@tool`` decorator to expose methods as callable functions for "
+"agents."
+
+#: ../../env_modules.rst:53
+msgid "参考实现"
+msgstr "Reference Implementation"
+
+#: ../../env_modules.rst:55
+msgid "有关完整的参考实现，请参阅："
+msgstr "For complete reference implementations, see:"
+
+#: ../../env_modules.rst:57
+msgid "``SimpleSocialSpace`` - 社交互动模块"
+msgstr "``SimpleSocialSpace`` - Social interaction module"
+
+#: ../../env_modules.rst:58
+msgid "``PublicGoodsEnv`` - 公共物品博弈模块"
+msgstr "``PublicGoodsEnv`` - Public goods game module"
+
+#: ../../env_modules.rst:59
+msgid "``PrisonersDilemmaEnv`` - 囚徒困境模块"
+msgstr "``PrisonersDilemmaEnv`` - Prisoner's dilemma module"
+
+#: ../../env_modules.rst:62
+msgid "@tool 装饰器"
+msgstr "The @tool Decorator"
+
+#: ../../env_modules.rst:64
+msgid "``@tool`` 装饰器将方法标记为可被智能体调用："
+msgstr "The ``@tool`` decorator marks methods as callable by agents:"
+
+#: ../../env_modules.rst:75
+msgid "参数："
+msgstr "Parameters:"
+
+#: ../../env_modules.rst:77
+msgid ""
+"**readonly** (bool): 工具是否修改环境 * ``True`` = 只读，可用于查询 * ``False`` = "
+"修改状态，可用于干预"
+msgstr ""
+"**readonly** (bool): Whether the tool modifies the environment * ``True``"
+" = read-only, can be used in queries * ``False`` = modifies state, can be"
+" used in interventions"
+
+#: ../../env_modules.rst:81
+msgid ""
+"**kind** (str): 工具的类型 * ``\"observe\"``: 单参数观察（需要 readonly=True） * "
+"``\"statistics\"``: 聚合查询（无参数，需要 readonly=True） * ``None`` 或省略: "
+"常规工具（任何签名，任何 readonly 值）"
+msgstr ""
+"**kind** (str): The type of tool * ``\"observe\"``: Single-parameter "
+"observations (requires readonly=True) * ``\"statistics\"``: Aggregate "
+"queries (no parameters, requires readonly=True) * ``None`` or omitted: "
+"Regular tool (any signature, any readonly value)"
+
+#: ../../env_modules.rst:87
+msgid "工具类型"
+msgstr "Tool Types"
+
+#: ../../env_modules.rst:89
+msgid "**observe**: 单参数观察（需要 readonly=True）"
+msgstr "**observe**: Single-parameter observations (readonly=True required)"
+
+#: ../../env_modules.rst:90
+msgid "**statistics**: 聚合查询（无参数，需要 readonly=True）"
+msgstr "**statistics**: Aggregate queries (no parameters, readonly=True required)"
+
+#: ../../env_modules.rst:91
+msgid "**regular**: 任何其他工具（可以是只读或读写）"
+msgstr "**regular**: Any other tool (can be readonly or read-write)"
+
+#: ../../env_modules.rst:93
+msgid "有关工具类型的更多详情，请参阅 :doc:`concepts`。"
+msgstr "See :doc:`concepts` for more details on tool types."
+
+#: ../../env_modules.rst:96
+msgid "状态持久化与 resume"
+msgstr "State Persistence and Resume"
+
+#: ../../env_modules.rst:98
+msgid ""
+"如果模块带有动态内存态，例如计数器、收件箱或队列，可以实现 workspace 持久化，让仿真在中断后通过 ``--resume`` "
+"继续运行（详见 :doc:`cli`）。基类提供一对可覆盖的钩子，但**不规定状态格式、文件名或目录**。 模块可以自行选择布局；通常把状态写到 "
+"``<workspace_root>/state/ENV_STATE.json``。"
+msgstr ""
+"If a module has dynamic in-memory state, such as counters, inboxes, or "
+"queues, it can implement workspace persistence so the simulation can "
+"continue after an interruption with ``--resume``; see :doc:`cli`. The "
+"base class provides two overridable hooks, but **does not prescribe the "
+"state format, file name, or directory**. Each module can choose its own "
+"layout; state is usually written to "
+"``<workspace_root>/state/ENV_STATE.json``."
+
+#: ../../env_modules.rst:106
+msgid "方法"
+msgstr "Method"
+
+#: ../../env_modules.rst:107
+msgid "作用"
+msgstr "Role"
+
+#: ../../env_modules.rst:108
+msgid "``async def to_workspace(self, workspace_path=None)``"
+msgstr "``async def to_workspace(self, workspace_path=None)``"
+
+#: ../../env_modules.rst:109
+msgid ""
+"把动态状态写入 workspace。society 会在每步结束时通过 router 调用它。建议用 "
+"``agentsociety2.storage.workspace_state.atomic_write_text`` 原子写。"
+msgstr ""
+"Write dynamic state into the workspace. Society calls this through the "
+"router at the end of each step. Use "
+"``agentsociety2.storage.workspace_state.atomic_write_text`` for atomic "
+"writes."
+
+#: ../../env_modules.rst:111
+msgid "``async def restore(self, workspace_path) -> bool``"
+msgstr "``async def restore(self, workspace_path) -> bool``"
+
+#: ../../env_modules.rst:112
+msgid ""
+"从 workspace 恢复动态状态，用于 resume 路径。返回值表示是否加载到了快照，供 router 区分 fresh 和 "
+"resume。该方法只会在 ``__init__`` 与 ``init()`` 之后调用，因此可以安全覆盖 ``init()`` 里的重置。"
+msgstr ""
+"Restore dynamic state from the workspace on the resume path. The return "
+"value indicates whether a snapshot was loaded, allowing the router to "
+"distinguish fresh startup from resume. This method is called only after "
+"``__init__`` and ``init()``, so it can safely override resets performed in"
+" ``init()``."
+
+#: ../../env_modules.rst:115
+msgid "``def _bind_workspace(self, workspace_path)``"
+msgstr "``def _bind_workspace(self, workspace_path)``"
+
+#: ../../env_modules.rst:116
+msgid "绑定到 workspace 目录（幂等），创建该目录。由 ``to_workspace``/``restore`` 自动调用。"
+msgstr ""
+"Bind the module to a workspace directory idempotently and create that "
+"directory. Called automatically by ``to_workspace`` / ``restore``."
+
+#: ../../env_modules.rst:117
+msgid ""
+"``classmethod async def from_workspace(cls, workspace_path, "
+"**init_kwargs)``"
+msgstr ""
+"``classmethod async def from_workspace(cls, workspace_path, "
+"**init_kwargs)``"
+
+#: ../../env_modules.rst:118
+msgid ""
+"重建一个可用的模块：先执行 ``cls(**init_kwargs)``，再调用 ``restore``。resume 时，actor 会从 "
+"``SOCIETY.json`` 读取 ``init_kwargs``。"
+msgstr ""
+"Rebuild a ready module by running ``cls(**init_kwargs)`` and then calling"
+" ``restore``. During resume, the actor reads ``init_kwargs`` from "
+"``SOCIETY.json``."
+
+#: ../../env_modules.rst:121
+msgid "实现示例（参考 ``SimpleSocialSpace`` / ``EconomySpace`` / ``MobilitySpace``）："
+msgstr ""
+"Implementation example; compare ``SimpleSocialSpace``, ``EconomySpace``, "
+"and ``MobilitySpace``:"
+
+#: ../../env_modules.rst:167
+msgid "约定："
+msgstr "Conventions:"
+
+#: ../../env_modules.rst:169
+msgid ""
+"JSON 键只能是字符串。``dict[int, ...]`` 应使用 ``str(k)`` 存、``int(k)`` 读，或用 "
+"``agentsociety2.env.base.dump_int_map``/``load_int_map`` 辅助。"
+msgstr ""
+"JSON keys must be strings. For ``dict[int, ...]``, write keys with "
+"``str(k)`` and read them back with ``int(k)``, or use "
+"``agentsociety2.env.base.dump_int_map`` / ``load_int_map``."
+
+#: ../../env_modules.rst:171
+msgid ""
+"pydantic 模型用 ``model_dump(mode=\"json\")`` 和 ``model_validate``；datetime "
+"用 ``isoformat``/``fromisoformat``；``set`` 存 ``sorted(list)``。"
+msgstr ""
+"For pydantic models, use ``model_dump(mode=\"json\")`` and "
+"``model_validate``. For datetime values, use ``isoformat`` / "
+"``fromisoformat``. Store ``set`` values as ``sorted(list)``."
+
+#: ../../env_modules.rst:173
+msgid ""
+"``asyncio.Lock``、外部子进程、预训练模型权重等不可或不必序列化的对象不存盘，由 ``__init__``/``init()`` "
+"重建（如 ``MobilitySpace`` 的 routing server、``SocialMediaSpace`` 的推荐器）。"
+msgstr ""
+"Do not persist objects that cannot or need not be serialized, such as "
+"``asyncio.Lock``, external subprocesses, or pretrained model weights. "
+"Recreate them in ``__init__`` / ``init()``, as with the routing server in"
+" ``MobilitySpace`` or the recommender in ``SocialMediaSpace``."
+
+#: ../../env_modules.rst:176
+msgid ""
+"持久化与 replay 表（``_agent_state_columns`` 和 "
+"``_env_state_columns``）相互独立。replay 面向 分析，是 append-only 的时序数据；workspace "
+"面向恢复，会覆写最新状态。详见 :doc:`storage`。"
+msgstr ""
+"Persistence and replay tables (``_agent_state_columns`` and "
+"``_env_state_columns``) are independent. Replay is append-only "
+"time-series data for analysis; workspace persistence is for recovery and"
+" overwrites the latest state. See :doc:`storage`."
+
+#: ../../env_modules.rst:180
+msgid "注册模块"
+msgstr "Registering Modules"
+
+#: ../../env_modules.rst:193
+msgid "完整示例"
+msgstr "Complete Example"
+
+#: ../../env_modules.rst:246
+msgid ""
+"生产环境下环境路由跑在一个专用的 Ray actor 里（``EnvRouterProxy``），所有 agent 共享一份 "
+"环境状态；也可在进程内直接用 ``CodeGenRouter``。除默认的 ``CodeGenRouter`` 外还有 "
+"``ReActRouter`` / ``PlanExecuteRouter`` / ``TwoTierReActRouter`` / "
+"``TwoTierPlanExecuteRouter`` / ``SearchToolRouter`` 可选（见 "
+":doc:`architecture`）。"
+msgstr ""
+"In production, environment routing runs in a dedicated Ray actor "
+"(``EnvRouterProxy``), and all agents share the same environment state. "
+"``CodeGenRouter`` can also be used directly in-process. In addition to "
+"the default ``CodeGenRouter``, optional routers include ``ReActRouter``, "
+"``PlanExecuteRouter``, ``TwoTierReActRouter``, "
+"``TwoTierPlanExecuteRouter``, and ``SearchToolRouter`` (see "
+":doc:`architecture`)."
+
+#: ../../env_modules.rst:252
+msgid "示例"
+msgstr "Examples"
+
+#: ../../env_modules.rst:254
+msgid "请参阅 ``agentsociety2.contrib.env`` 中的内置环境类（类名以当前代码为准）："
+msgstr ""
+"See the built-in environment classes in ``agentsociety2.contrib.env`` "
+"(class names follow the current code):"
+
+#: ../../env_modules.rst:256
+msgid "``SimpleSocialSpace`` — 社交互动"
+msgstr "``SimpleSocialSpace`` — social interaction"
+
+#: ../../env_modules.rst:257
+msgid "``PublicGoodsEnv`` — 公共物品博弈"
+msgstr "``PublicGoodsEnv`` — public goods game"
+
+#: ../../env_modules.rst:258
+msgid "``PrisonersDilemmaEnv`` — 囚徒困境"
+msgstr "``PrisonersDilemmaEnv`` — prisoner's dilemma"
+
+#: ../../env_modules.rst:259
+msgid "``TrustGameEnv`` — 信任博弈"
+msgstr "``TrustGameEnv`` — trust game"
+
+#~ msgid ""
+#~ "模块若带动态内存态（计数器、收件箱、队列等），可实现 workspace 持久化，使仿真能在中断后 "
+#~ "``--resume`` 续跑（详见 "
+#~ ":doc:`cli`）。基类提供一对可覆盖的钩子，**不规定状态格式、文件名或目录** ——模块自选布局，通常写到 "
+#~ "``<workspace_root>/state/ENV_STATE.json``。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "把动态状态写入 workspace（每步由 society 经 router "
+#~ "调用）。建议用 "
+#~ "``agentsociety2.storage.workspace_state.atomic_write_text`` 原子写。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "从 workspace 恢复动态状态（resume 路径）。返回是否加载到快照（供 "
+#~ "router 区分 fresh / resume）。仅在 "
+#~ "``__init__`` 与 ``init()`` 之后调用，故可安全覆盖 "
+#~ "``init()`` 的重置。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "重建就绪模块：``cls(**init_kwargs)`` 后 ``restore``。resume "
+#~ "时由 actor 从 ``SOCIETY.json`` 取 "
+#~ "``init_kwargs``。"
+#~ msgstr ""
+
+#~ msgid "约定： - JSON 键只能是字符串——``dict[int, ...]`` 用 ``str(k)`` 存、``int(k)`` 读（或用"
+#~ msgstr ""
+
+#~ msgid "``agentsociety2.env.base.dump_int_map``/``load_int_map`` 辅助）。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "pydantic 模型用 ``model_dump(mode=\"json\")`` / "
+#~ "``model_validate``；datetime 用 "
+#~ "``isoformat``/``fromisoformat``；``set`` 存 "
+#~ "``sorted(list)``。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "``asyncio.Lock``、外部子进程、预训练模型权重等不可/不必序列化的对象不存盘，由 "
+#~ "``__init__``/``init()`` 重建（如 ``MobilitySpace`` 的 "
+#~ "routing server、``SocialMediaSpace`` 的推荐器）。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "持久化与 replay "
+#~ "表（``_agent_state_columns``/``_env_state_columns``）相互独立：replay 面向"
+#~ " 分析（append-only），workspace 面向恢复（覆写最新）。详见 "
+#~ ":doc:`storage`。"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "JSON 键只能是字符串。``dict[int, ...]`` 应使用 ``str(k)``"
+#~ " 存、``int(k)`` 读，或用 "
+#~ "``agentsociety2.env.base.dump_int_map``/``load_int_map`` 辅助）。"
+#~ msgstr ""

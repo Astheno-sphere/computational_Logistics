@@ -1,0 +1,313 @@
+:root {
+    font-weight: normal;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 滚动槽 */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.06);
+    -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.08);
+}
+
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.12);
+    -webkit-box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+body {
+    margin: 0px;
+    color: #FFFFFF;
+    /* display: flex; */
+}
+
+/* New Version */
+
+.ant-layout {
+    color: #FFFFFF;
+}
+
+.ant-layout-header {
+    z-index: 1;
+    width: 100%;
+    height: 68px;
+    opacity: 1;
+
+    align-content: center;
+
+    /* 下阴影 */
+    /* box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); */
+}
+
+.ant-menu {
+    background: transparent;
+    width: 50vw;
+    height: 68px;
+}
+
+.ant-menu-horizontal {
+    border-bottom: 0px;
+}
+
+.ant-divider {
+    margin: 4px 0px;
+}
+
+.ant-typography {
+    margin: 10px 0px;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.deck {
+    position: absolute;
+    top: 68px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 68px);
+    z-index: 0;
+}
+
+.agentsociety-left {
+    position: absolute;
+    top: calc(68px + 20px);
+    left: 0px;
+    z-index: 1;
+}
+
+.left-inner {
+    /* 毛玻璃效果 */
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2);
+
+    /* background: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2); */
+
+    border-radius: 0 8px 8px 0;
+    margin: 8px 0;
+    padding: 0 16px;
+    width: 21vw;
+    height: calc(100vh - 68px - 60px);
+    overflow: auto;
+
+    backdrop-filter: blur(40px);
+
+    /* 增加向左侧收起的动画效果 */
+    transition: transform 0.3s ease-in-out;
+}
+
+.left-inner.collapsed {
+    transform: translateX(-100%);
+}
+
+.left-info-block {
+    height: 30px;
+    min-width: 47%;
+    margin: 2px 2px;
+    padding: 8px;
+
+    border-radius: 4px;
+    align-items: center;
+
+    background: rgba(22, 119, 255, 0.01);
+}
+
+.left-info-block-status {
+    min-width: 47%;
+    margin: 2px 2px;
+    padding: 8px;
+
+    border-radius: 4px;
+    align-items: center;
+
+    background: rgba(22, 119, 255, 0.01);
+}
+
+.left-info-block.selected {
+    background: rgba(22, 119, 255, 0.2);
+}
+
+.left-info-block-status.selected {
+    background: rgba(22, 119, 255, 0.2);
+}
+
+.left-info-block:hover {
+    background: rgba(22, 119, 255, 0.1);
+    cursor: pointer;
+    /* 增加动画效果 */
+    transition: background 0.3s;
+}
+
+.left-info-block-status:hover {
+    background: rgba(22, 119, 255, 0.1);
+    cursor: pointer;
+    /* 增加动画效果 */
+    transition: background 0.3s;
+}
+
+.left-info-history-card {
+    border-radius: 8px;
+    background-color: rgba(192, 192, 192, 0.1);
+    margin: 8px 0;
+    width: 100%;
+}
+
+.left-info-history-inner {
+    padding: 8px;
+}
+
+.agentsociety-right {
+    position: absolute;
+    top: calc(68px + 20px);
+    right: 0px;
+    z-index: 1;
+
+    /* 用于避免动画效果移出屏幕后新增滚动条 */
+    overflow: hidden;
+    /* 添加这一行 */
+    width: 21vw;
+    /* 添加这一行，与子元素宽度相同 */
+}
+
+.right-inner {
+    /* 毛玻璃效果 */
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2);
+
+    /* background: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2); */
+
+    border-radius: 8px 0 0 8px;
+    margin: 8px 0;
+    width: 21vw;
+    height: calc(100vh - 68px - 60px);
+
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    backdrop-filter: blur(40px);
+
+    /* 增加向右侧收起的动画效果 */
+    transition: transform 0.3s ease-in-out;
+}
+
+.right-inner.collapsed {
+    transform: translateX(100%);
+}
+
+.right-inner .ant-sender {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2);
+    margin: 10px 0;
+    width: 20vw;
+
+    backdrop-filter: blur(40px);
+}
+
+.right-inner .ant-select {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2);
+    margin: 10px 8px 12px 0;
+    width: 18vw;
+    height: 56px;
+
+    backdrop-filter: blur(40px);
+}
+
+.right-inner .tabs {
+    max-width: 100%;
+    padding: 0 0 0 8px;
+}
+
+.bubble-no-input {
+    padding: 0 8px 8px 0;
+    height: calc(100vh - 68px - 124px);
+}
+
+.bubble-input {
+    padding: 0 8px 8px 0;
+    height: calc(100vh - 68px - 90px - 112px);
+}
+
+.global-prompt {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    top: 96px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(26vw * 2);
+    z-index: 1;
+    justify-content: center;
+    align-content: center;
+}
+
+.global-prompt-inner {
+    padding: 2px 32px;
+    text-align: center;
+    font-weight: bolder;
+    white-space: pre-line;
+}
+
+.control-progress {
+    position: absolute;
+    background: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2);
+    border-radius: 28px;
+    bottom: 32px;
+    left: calc(50% - 26vw);
+    width: calc(26vw * 2);
+    height: 56px;
+    z-index: 1;
+    justify-content: center;
+    align-content: center;
+}
+
+.status {
+    border-radius: 16px;
+    background: rgba(192, 192, 192, 0.2);
+    height: 32px;
+    margin: 0 0 0 8px;
+    padding: 8px;
+}
+
+.player {
+    border-radius: 16px;
+    background: rgba(192, 192, 192, 0.2);
+    height: 32px;
+    margin: 0 8px;
+    padding: 8px;
+}
+
+.ant-slider .ant-slider-track {
+    /* 渐变的颜色 */
+    background: linear-gradient(90deg, #1677FF22 1%, #1677FF 100%);
+}
+
+.circle-wrap>.ant-select .ant-select-selector {
+    border-radius: 16px;
+}

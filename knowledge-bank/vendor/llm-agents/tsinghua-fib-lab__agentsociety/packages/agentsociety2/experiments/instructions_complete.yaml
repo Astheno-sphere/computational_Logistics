@@ -1,0 +1,1008 @@
+# 完整指令集数据集 - 包含所有功能模块
+# 每个指令包含：
+#   - instruction: 指令文本
+#   - expected_calls: 期望的函数调用列表，格式为 [["moduleName", "functionName", {kwargs}]]
+#     其中 '*' 表示无法预先确定的值
+
+instructions:
+  # 1. 移动 - 查询自身位置
+  - instruction: "Check proximity to home (AOI 500038964) to confirm if I am within visual or walking distance of arrival."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Verify the current coordinates and validity of workplace location AOI 500015164 in the environment."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Check current location to confirm arrival status before initiating next activity."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Get my current position and movement status to understand if I am still in transit or have arrived at the destination."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Check the distance and accessibility of work location AOI 500054504 to plan movement for the upcoming workday."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Check my current position and verify that I am not in transit mode to confirm I can start a new activity."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Get my current location and movement target to understand my current journey status and next destination."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Check my current coordinates to determine precise location within AOI 500064024 before initiating movement."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Verify arrival status at destination AOI 500063707 by confirming location coordinates match expected values."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Query my precise location and status to confirm I am stationary before checking nearby dining options."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  # 2. 移动 - 查找附近POI
+  - instruction: "Search for nearby restaurants within 1km of home (AOI 500038964)"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 1000}]
+
+  - instruction: "Search for nearby cafés within 1 km of home (AOI 500042904)"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": 1000}]
+
+  - instruction: "Search for nearby restaurants within 500 meters of current location (AOI 500063189)"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 500}]
+
+  - instruction: "Search for nearby restaurants within 1 km of current location (AOI 500015164)"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 1000}]
+
+  - instruction: "Search for nearby cafés within 500 meters of current location (AOI 500063189)"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": 500}]
+
+  - instruction: "Search for nearby restaurants within 1km of current location (AOI 500049566)"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 1000}]
+
+  - instruction: "Search for nearby restaurants within 500 meters of AOI 500059965 to identify a suitable lunch option."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 500}]
+
+  - instruction: "Search for nearby cafés within 500 meters of current location AOI 500040872."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": 500}]
+
+  - instruction: "Search for nearby restaurants or cafes within 500 meters of current location (AOI 500000218)"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 500}]
+
+  - instruction: "Search for nearby restaurants within 500 meters of AOI 500059193 to identify a suitable place for nourishment."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 500}]
+
+  # 3. 移动 - 移动至某位置
+  - instruction: "Move to 宽窄巷子鲜牛火锅 (327m from home) on foot."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  - instruction: "Move to workplace at 500000240 and start a work event."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500000240, "mode": "driving"}]
+
+  - instruction: "Move to Argo 希腊餐厅 (ID: 700002365) using MobilitySpace."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700002365, "mode": "driving"}]
+
+  - instruction: "Walk to the café Wagas (ID: 700003809) to begin a mindful transition from work to lunch."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700003809, "mode": "walking"}]
+
+  - instruction: "Move to home location (AOI ID: 500023998) from current location at McDonald's."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500023998, "mode": "driving"}]
+
+  - instruction: "Move to work location AOI 500063189 using walking mode, then resume the mindful work session."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500063189, "mode": "walking"}]
+
+  - instruction: "Move to He kitchen&Co. (POI ID: 700005047) to begin the lunch transition."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700005047, "mode": "walking"}]
+
+  - instruction: "Move to the nearest café (ID: 700009098) using walking as the mode of transportation."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700009098, "mode": "walking"}]
+
+  - instruction: "Move to home location (aoi_id=500051293)"
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500051293, "mode": "walking"}]
+
+  - instruction: "Move to 五十六号院涮肉 (ID: 700008416) using MobilitySpace"
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700008416, "mode": "driving"}]
+
+  # 4. Event - 开始某event
+  - instruction: "Start a sleep event for 8 hours to restore energy."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 28800}]
+
+  - instruction: "Start an 'eating at home' event to satisfy satiety."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start a home activity called 'prepare breakfast' with a description: 'making oatmeal, fruit, and tea'."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start a 'work' event at home to begin the morning routine."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start a 15-minute 'mindful relaxation' event to restore mental clarity and reduce cognitive fatigue."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - instruction: "Start a rest event to begin energy restoration at home."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start a 3-minute pause event at home to savor the quiet and observe the emotional state of calm fulfillment."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 180}]
+
+  - instruction: "Start an 8-hour sleep event at home (AOI 500038964) to restore energy and complete the day's rhythm."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 28800}]
+
+  - instruction: "Start a 'home activity' event labeled 'preparing mindful lunch' for 20 minutes."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - instruction: "Start a 5-minute 'mindful break' event in EventSpace to restore energy after 15 minutes of work."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 300}]
+
+  # 5. Event - 查询当前的event（隐式监控）
+  - instruction: "Continue with the ongoing sleep event to restore energy."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue sleeping; the 8-hour sleep event is already in progress and will complete automatically at 08:00."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue with the ongoing 8-hour sleep event to restore energy."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue the ongoing 'eating at home' event until completion at 04:45."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue the ongoing 'morning work routine' event until its scheduled end at 06:15."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue the ongoing 'eating out' event at Argo 希腊餐厅 until completion at 09:30."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue the ongoing rest event at home until its scheduled end time at 07:00"
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue the ongoing 'quiet reflection' leisure activity at Argo 希腊餐厅 until it naturally completes at 13:45."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue the ongoing 15-minute mindful pause rest event to restore energy while remaining at home."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Continue the ongoing sleep event at home until its scheduled end time at 21:30."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  # 6. Event - 结束当前的event
+  - instruction: "Stop the current night sleep event to end rest."
+    expected_calls:
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "End the current sleep event to wake up at 04:45."
+    expected_calls:
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Stop the ongoing work event to create space for rest."
+    expected_calls:
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "End the current 'deep physiological recovery posture' event immediately to transition from rest to intentional movement."
+    expected_calls:
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "End the ongoing 'online sales tasks' work event."
+    expected_calls:
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Stop the current 'quiet rest' event to transition from rest to nourishment mode."
+    expected_calls:
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Stop the ongoing leisure activity to transition from relaxation back to work responsibilities."
+    expected_calls:
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Stop the current sleep event to end rest."
+    expected_calls:
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "End the current driving motion and begin walking to home (AOI 500063798) immediately."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500063798, "mode": "walking"}]
+
+  - instruction: "Stop passive social media observation and begin a 10-minute 'eating at home' event to consume a light snack."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "eating a light snack", "expected_duration_seconds": 600}]
+
+  # 7. 社交网络 - 看帖子（刷新/浏览feed）
+  - instruction: "Refresh social media feed using chronological algorithm to check for any mindful content before work."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+
+  - instruction: "View a specific post to increment its view count and understand its full content context."
+    expected_calls:
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+
+  - instruction: "Refresh the social media feed using Twitter Ranking algorithm to get personalized mindful content aligned with social connections."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "twitter_ranking", "limit": 20}]
+
+  - instruction: "Search for posts from a specific user to review their content history and mindful sharing patterns."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": 20, "sort_by": "*"}]
+
+  - instruction: "Refresh the social media feed using Reddit Hot algorithm to discover trending mindful content."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "reddit_hot", "limit": 20}]
+
+  - instruction: "Refresh the feed, view a resonant user's post, then follow the user to receive future mindful content."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "follow_user", {"follower_id": "@", "followee_id": "*"}]
+
+  - instruction: "View a user's recent post to understand their mindful presence better."
+    expected_calls:
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+
+  - instruction: "Search for posts about mindfulness, wellness and quiet focus using keyword and tag filters."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "mindfulness", "tags": ["QuietFocus"], "limit": 20, "sort_by": "relevance"}]
+
+  - instruction: "Search for mindfulness and self-care posts to stay aligned with community interests."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "mindfulness", "tags": [], "limit": 20, "sort_by": "relevance"}]
+
+  - instruction: "Refresh the social media feed using a random algorithm for unexpected discoveries in mindful content."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "random", "limit": 20}]
+
+  # 8. 社交网络 - 发帖
+  - instruction: "Post a social media update reflecting on the quiet, mindful morning: 'Woke in stillness. Ate with presence. Work begins in silence. #QuietFocus #MindfulMorning'"
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["QuietFocus", "MindfulMorning"]}]
+
+  - instruction: "Post a status update: 'Woke with the sun. Ate slowly. Felt whole.'"
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": []}]
+
+  - instruction: "Post a quiet, authentic update about morning rest and nourishment using #HealthyLunch."
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["HealthyLunch"]}]
+
+  - instruction: "Post a status update reflecting on the mindful breakfast with the tag #HealthyLunch."
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["HealthyLunch"]}]
+
+  - instruction: "Post a brief status update on social media with #QuietFocus to share the mindful lunch moment authentically."
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["QuietFocus"]}]
+
+  - instruction: "Post a quiet reflection on social media with the tags #QuietFocus and #HealthyLunch, sharing the calm morning rhythm of eating slowly and being present."
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["QuietFocus", "HealthyLunch"]}]
+
+  - instruction: "Post a status update: 'Snacked slowly. Felt the quiet. Felt whole.'"
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": []}]
+
+  - instruction: "Post a quiet reflection on social media saying 'Lunch at Argo — slow bites, quiet mind. #QuietFocus #MindfulLunch'"
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["QuietFocus", "MindfulLunch"]}]
+
+  - instruction: "Post a quiet, reflective status update on social media reflecting on the mindful eating and stillness just experienced, using the hashtag #QuietFocus, then close the app to preserve inner quiet."
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["QuietFocus"]}]
+
+  - instruction: "Post a reflective social media update expressing quiet persistence: 'I've searched the city. I've asked the system. Still, my workplace won't show. But I'm here. Still showing up. Still choosing quiet focus. #QuietFocus'"
+    expected_calls:
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["QuietFocus"]}]
+
+  # 9. 社交网络 - 互动（点赞/评论/转发/关注）
+  - instruction: "Refresh the feed, view a recent #QuietFocus post, then like it to affirm connection."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "like_post", {"user_id": "@", "post_id": "*"}]
+
+  - instruction: "Refresh the feed, view a previously liked post, then unlike it to adjust my digital presence."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "unlike_post", {"user_id": "@", "post_id": "*"}]
+
+  - instruction: "Search for mindfulness posts, view one, then comment on it to deepen conversation."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "mindfulness", "tags": ["QuietFocus"], "limit": 20, "sort_by": "relevance"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "comment_on_post", {"user_id": "@", "post_id": "*", "content": "*"}]
+
+  - instruction: "Refresh the feed, view an inspiring quiet-focus post, then repost it with a reflection to amplify its message."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "repost", {"user_id": "@", "post_id": "*", "comment": "*"}]
+
+  - instruction: "View post_id 298 from User 33, then comment: 'This resonates—showing up even when tired matters.' to deepen social connection."
+    expected_calls:
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": 298}]
+      - ["SocialMediaSpace", "comment_on_post", {"user_id": "@", "post_id": 298, "content": "*"}]
+
+  - instruction: "Search for mindfulness content, view a user's post, then follow the user to stay connected."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "mindfulness", "tags": ["QuietFocus"], "limit": 20, "sort_by": "relevance"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "follow_user", {"follower_id": "@", "followee_id": "*"}]
+
+  - instruction: "Refresh the feed, view a user's post that no longer aligns, then unfollow the user to refine my feed."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "unfollow_user", {"follower_id": "@", "followee_id": "*"}]
+
+  - instruction: "Search for healthy living content, view a post, then like and comment to affirm their wellness journey."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "healthy living", "tags": ["HealthyLunch"], "limit": 20, "sort_by": "relevance"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "like_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "comment_on_post", {"user_id": "@", "post_id": "*", "content": "*"}]
+
+  - instruction: "Refresh the feed, view a thoughtful post, then repost it with a brief note to highlight wisdom in my network."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "repost", {"user_id": "@", "post_id": "*", "comment": "*"}]
+
+  - instruction: "Refresh the feed, view posts from quiet-focus creators, then follow one to build a supportive digital community."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "follow_user", {"follower_id": "@", "followee_id": "*"}]
+
+  # 10. 社交网络 - 沟通（私聊和群组）
+  - instruction: "Send a direct message to user 4 with a thoughtful reflection on the day's quiet moments."
+    expected_calls:
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": 4, "content": "*"}]
+
+  - instruction: "Send a direct message to User 24 expressing gratitude for their silent presence and support."
+    expected_calls:
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": 24, "content": "*"}]
+
+  - instruction: "Create a group chat with close friends to share mindful moments and support each other's quiet journeys."
+    expected_calls:
+      - ["SocialMediaSpace", "create_group_chat", {"owner_id": "@", "group_name": "*", "member_ids": []}]
+
+  - instruction: "Send a message to the mindfulness group chat to share a reflection on today's calm moments."
+    expected_calls:
+      - ["SocialMediaSpace", "send_group_message", {"group_id": "*", "from_user_id": "@", "content": "*"}]
+
+  - instruction: "Send a private message to User 37 acknowledging their supportive words."
+    expected_calls:
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": 37, "content": "*"}]
+
+  - instruction: "Get all messages from a group chat to review the conversation history with close friends."
+    expected_calls:
+      - ["SocialMediaSpace", "get_group_messages", {"group_id": "*", "limit": 50}]
+
+  - instruction: "Send a direct message to User 33 expressing appreciation for their connection and presence."
+    expected_calls:
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": 33, "content": "*"}]
+
+  - instruction: "Send a message to the mindful community group to encourage others in their quiet focus journey."
+    expected_calls:
+      - ["SocialMediaSpace", "send_group_message", {"group_id": "*", "from_user_id": "@", "content": "*"}]
+
+  - instruction: "Send a direct message to User 8 sharing evening reflections on stillness and peace."
+    expected_calls:
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": 8, "content": "*"}]
+
+  - instruction: "Observe my social media state and review recent feed activity to understand overall community engagement patterns."
+    expected_calls:
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+
+  # 11. 社交网络 - 观察（检查资料/通知/分析）
+  - instruction: "Check my social media notifications and available actions to observe community responses."
+    expected_calls:
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+
+  - instruction: "Check my social media state to review followers, following, and post counts."
+    expected_calls:
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+
+  - instruction: "View direct messages with User 24 to review the conversation history and emotional context."
+    expected_calls:
+      - ["SocialMediaSpace", "get_direct_messages", {"user1_id": "@", "user2_id": 24, "limit": 50}]
+
+  - instruction: "Get direct messages with User 37 to understand their supportive messages."
+    expected_calls:
+      - ["SocialMediaSpace", "get_direct_messages", {"user1_id": "@", "user2_id": 37, "limit": 50}]
+
+  - instruction: "Search for #QuietFocus posts to understand community sentiment and participation."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "QuietFocus", "tags": ["QuietFocus"], "limit": 20, "sort_by": "relevance"}]
+
+  - instruction: "Retrieve direct messages with User 33 to review shared quiet reflections."
+    expected_calls:
+      - ["SocialMediaSpace", "get_direct_messages", {"user1_id": "@", "user2_id": 33, "limit": 50}]
+
+  - instruction: "Observe my social media state to review user activity and engagement context."
+    expected_calls:
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+
+  - instruction: "Search the #HealthyLunch topic to see how the community shares nourishment and wellness moments."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "HealthyLunch", "tags": ["HealthyLunch"], "limit": 20, "sort_by": "relevance"}]
+
+  - instruction: "Check direct messages with User 8 to maintain evening connection and stillness sharing."
+    expected_calls:
+      - ["SocialMediaSpace", "get_direct_messages", {"user1_id": "@", "user2_id": 8, "limit": 50}]
+
+  - instruction: "Search for #MindfulWork posts to understand what the community values in quiet focus and mindful living."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "MindfulWork", "tags": ["MindfulWork"], "limit": 20, "sort_by": "relevance"}]
+
+  # 12. 连续社交互动序列
+  - instruction: "Search for #QuietFocus content multiple times to discover resonant posts, then publish a reflective update about morning stillness."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": ["QuietFocus"], "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": ["QuietFocus"], "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": ["QuietFocus"], "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["QuietFocus"]}]
+
+  - instruction: "Search for mindful and quiet content, view one relevant post, then comment to deepen community connection."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "comment_on_post", {"user_id": "@", "post_id": "*", "content": "*"}]
+
+  - instruction: "Refresh the feed twice to assess tone, then view a user's post to understand their content context."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+
+  - instruction: "Search for related posts, repost one with reflection, then publish original content."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "repost", {"user_id": "@", "post_id": "*", "comment": "*"}]
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": "*"}]
+
+  - instruction: "Search for a mindful creator, review related posts, like several, observe community context, then comment on a post."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "like_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "like_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "like_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+      - ["SocialMediaSpace", "comment_on_post", {"user_id": "@", "post_id": "*", "content": "*"}]
+
+  - instruction: "Search #QuietFocus engagement, search related posts, observe community state, then post and follow aligned users."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": ["QuietFocus"], "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": "*"}]
+      - ["SocialMediaSpace", "follow_user", {"follower_id": "@", "followee_id": "*"}]
+      - ["SocialMediaSpace", "follow_user", {"follower_id": "@", "followee_id": "*"}]
+
+  - instruction: "Search wellness content and related community posts, observe community state, then send a direct message to a friend."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": "*", "content": "*"}]
+
+  - instruction: "Create a group chat, send a reflection to the group, then load the group message history."
+    expected_calls:
+      - ["SocialMediaSpace", "create_group_chat", {"owner_id": "@", "group_name": "*", "member_ids": []}]
+      - ["SocialMediaSpace", "send_group_message", {"group_id": "*", "from_user_id": "@", "content": "*"}]
+      - ["SocialMediaSpace", "get_group_messages", {"group_id": "*", "limit": "*"}]
+
+  - instruction: "Search for mindfulness content, review a user's recent post, refresh the feed, then publish a new reflection."
+    expected_calls:
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": "*"}]
+
+  - instruction: "Refresh the feed, view a specific post, comment on it, then send a private message to the author about resonance."
+    expected_calls:
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "comment_on_post", {"user_id": "@", "post_id": "*", "content": "*"}]
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": "*", "content": "*"}]
+
+  # 13. 连续位置查询与移动规划
+  - instruction: "Search for nearby restaurants within 1km of home, identify 嘉和一品 located 10.6m away as the nearest option, and move directly to the restaurant to begin nourishment."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 1000}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  - instruction: "Check proximity to home to confirm walking distance, verify workplace coordinates for validity, then plan the movement route to AOI 500054504 for the upcoming workday."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500054504, "mode": "walking"}]
+
+  - instruction: "Search for cafés within 500m of current location, identify Wagas as the optimal option for mindful transition, then walk to the café to begin the lunch ritual."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": 500}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  - instruction: "Search for restaurants within 500m of workplace AOI 500063189, find Argo 希腊餐厅 located 176.7m away, and move directly to the restaurant to initiate the eating event."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 500}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  - instruction: "Check distance to work location for commute planning, search for nearby dining options within walking range, then plan the movement sequence from home to restaurant to workplace."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 500}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  - instruction: "Search for offices within 1km of current location using MobilitySpace, then search for co-working spaces within 2km radius to evaluate alternative work environments."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": 1000}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": 2000}]
+
+  - instruction: "Check current location coordinates for precision, search for nearby POIs within walking distance, then confirm the walking distance to the selected destination before initiating movement."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": 500}]
+
+  - instruction: "Search for restaurants near home AOI 500024283, identify 左右手中西意面工坊 located 66m away as the closest option, then move to the restaurant to begin the eating event."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 500}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  - instruction: "Search for cafés within 1km radius of current location, identify the nearest option based on distance and ambiance, then plan the walking route to destination while maintaining mindful presence."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": 1000}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  - instruction: "Check proximity to home to confirm arrival status, search for nearby restaurants within 500m for nourishment options, then cancel current movement and redirect to home location when satiety needs shift."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": 500}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  # 14. 复杂Event管理
+  - instruction: "Start an 8-hour sleep event at home to restore energy, continue sleeping uninterrupted until 08:00 while monitoring energy restoration internally, then stop the sleep event to wake up and transition to morning routine."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 28800}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Start a 30-minute 'eating out' event to consume breakfast mindfully, continue the eating event with full sensory awareness until completion at 07:30, monitor satiety levels throughout, then end the event upon scheduled completion."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1800}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Start a 'work' event for 60 minutes of morning routine, extend the duration to 90 minutes to ensure uninterrupted technical work until 06:15, continue the focused session without interruption, then stop the work event to create space for mindful break."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": 5400}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Start a 15-minute 'mindful relaxation' event to restore mental clarity, maintain closed eyes and slow intentional breathing throughout the duration, monitor internal state for calm restoration, then allow the event to conclude naturally at scheduled end time."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 900}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a 'home activity' event for 'prepare breakfast' with description 'making oatmeal, fruit, and tea', continue the preparation process with full presence until completion at 08:05, monitor progress internally, then transition to eating the prepared breakfast."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a 2-minute mindful breathing break to reset attention, continue the breathing exercise with slow deliberate breaths until completion at 08:47, then resume the afternoon work session with renewed focus while maintaining the rhythm of mindful productivity."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 120}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Start a 'quiet reflection' leisure activity at Argo 希腊餐厅 for 45 minutes, continue the reflection until its scheduled completion at 13:45 while observing internal state periodically, then allow the activity to conclude naturally without forced transition."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": 2700}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a 'light work or planning' activity for 60 minutes with internal intention to hydrate after 30 minutes, continue the focused work session while maintaining awareness of the planned hydration pause, then allow the activity to conclude at 17:00 before transitioning to rest."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": 3600}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start an 'eating at home' event for 20 minutes to restore satiety intentionally, continue the mindful consumption with full sensory awareness until completion at 08:50, monitor satiety restoration throughout, then complete the event at scheduled time without digital distraction."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "eating at home", "expected_duration_seconds": 1200}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Start a 30-minute quiet meditation event at home to cultivate inner stillness, continue the meditation until scheduled end at 17:45 while observing ambient stillness and breath rhythm, then post a brief reflection using #QuietEvening and #MindfulRhythm to affirm the completed practice."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1800}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": ["QuietEvening", "MindfulRhythm"]}]
+
+  # 15. 移动+Event组合
+  - instruction: "Check current position and ongoing event, end it if needed, then drive to workplace 500000240, confirm arrival, and start a work event."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500000240, "mode": "driving"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Check current position and event status, end it if needed, then drive home to AOI 500023998, confirm arrival, and start a light snack home activity for 5 minutes."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500023998, "mode": "driving"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "eating a light snack", "expected_duration_seconds": 300}]
+
+  - instruction: "Review the destination POI 700002365, check current event status, end it if needed, then drive to Argo and start a 30-minute eating out event after arrival confirmation."
+    expected_calls:
+      - ["MobilitySpace", "get_poi", {"poi_id": 700002365}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700002365, "mode": "driving"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1800}]
+
+  - instruction: "Review the destination POI 700005047, end any ongoing event, then drive there, confirm arrival, and start the meal consumption event."
+    expected_calls:
+      - ["MobilitySpace", "get_poi", {"poi_id": 700005047}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700005047, "mode": "driving"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Check current status, end any ongoing event, then drive to home AOI 500042904, confirm arrival, and start a sleep event."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500042904, "mode": "driving"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Review POI 700008416, end any ongoing event, then walk there, confirm arrival, and begin the dining event."
+    expected_calls:
+      - ["MobilitySpace", "get_poi", {"poi_id": 700008416}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700008416, "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Check current status and end any ongoing event, walk to AOI 500063189, confirm arrival, and start the work session."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500063189, "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Check current status, end any ongoing event, then walk to home AOI 500038964, confirm arrival, and start a rest-related home activity."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500038964, "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Check current position and events, end any ongoing event, then drive to AOI 500021584, confirm arrival, and start the work event."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500021584, "mode": "driving"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Check current status, end any ongoing event, then walk to home AOI 500063853, confirm arrival, and start a calming home activity."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500063853, "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  # 16. Event+社交网络组合
+  - instruction: "Continue the 'eating out' event at restaurant while passively observing the social media feed without interaction to maintain mindful presence during meal consumption."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+
+  - instruction: "Start a 'work' event at home and refresh the social media feed during a natural pause to briefly reconnect with the mindful community before resuming focused work without disruption."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+
+  - instruction: "Continue the sleep event without any digital interaction to allow uninterrupted energy restoration and preserve the integrity of rest as a non-public practice."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a mindful eating ritual and avoid all social media engagement to fully honor the intention of savoring the moment without digital distraction or performance."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Continue the work session while passively keeping the social media feed visible but inactive as a quiet anchor for connection without breaking focus or initiating interaction."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+
+  - instruction: "Start a rest event and refresh the social media feed to observe calming content that reinforces emotional alignment during the recovery period without active engagement."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "chronological", "limit": 20}]
+
+  - instruction: "Continue the 'eating at home' event while maintaining digital stillness to fully engage in mindful eating and reinforce identity through intentional non-engagement with social media."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a 15-minute mindful pause and avoid all digital interactions to preserve the integrity of rest as a non-public, internal practice focused solely on presence."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - instruction: "Continue the work event while setting an internal intention to refresh the feed at the next natural break at 11:00 AM, maintaining focus until the scheduled pause without premature engagement."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a 'quiet evening reflection' activity and passively observe the #QuietFocus feed to deepen alignment with community values of stillness and presence without posting, liking, or commenting."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": ["QuietFocus"], "limit": 20, "sort_by": "time"}]
+
+  # 17. 移动+社交网络组合
+  - instruction: "Check current location, scan nearby facilities, drive toward work, then refresh the feed and search related posts."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "driving"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+
+  - instruction: "Check location, find nearby restaurants, walk to one, then search for dining-related posts."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+
+  - instruction: "Check location, find nearby workplaces, move to work, refresh the feed, search posts, then follow a user and view one of their posts."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "driving"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "follow_user", {"follower_id": "@", "followee_id": "*"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+
+  - instruction: "Check current location, walk to a destination, search for commute-related posts, view one, then comment."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "comment_on_post", {"user_id": "@", "post_id": "*", "content": "*"}]
+
+  - instruction: "Check current location, explore nearby POIs, move to a selected spot, then search related posts and refresh the feed."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+
+  - instruction: "Check location, move between work and home, observe community state, then send a direct message."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "driving"}]
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": "*", "content": "*"}]
+
+  - instruction: "Check location, walk home, refresh the feed, view a post, then like and comment on it."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "like_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "comment_on_post", {"user_id": "@", "post_id": "*", "content": "*"}]
+
+  - instruction: "Check location, find nearby POIs, search community posts several times, then move to a selected destination."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+
+  - instruction: "Check location, explore nearby POIs, move to a destination, create a travel post, view a related post, then refresh the feed."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "driving"}]
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": "*"}]
+      - ["SocialMediaSpace", "view_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+
+  - instruction: "Check location, find nearby cafés, move to one, search posts about quiet places, like a post, observe community state, then send a message."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+      - ["SocialMediaSpace", "like_post", {"user_id": "@", "post_id": "*"}]
+      - ["SocialMediaSpace", "observe_user", {"person_id": "@"}]
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": "*", "content": "*"}]
+
+  # 18. 三重模块组合（移动+Event+社交网络）
+  - instruction: "Search nearby restaurants, move to Argo, confirm arrival, end any ongoing event, start a 30-minute eating out event, then post a quiet reflection."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700002365, "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1800}]
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": "*"}]
+
+  - instruction: "Check proximity to home, walk home, confirm arrival, end any ongoing event, then start an 8-hour sleep event."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 28800}]
+
+  - instruction: "Search for cafés, move to Wagas, confirm arrival, end any ongoing event, start a 30-minute eating out event, then refresh the feed during the meal."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700003809, "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1800}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+
+  - instruction: "Check current status, walk to the workplace, confirm arrival, end any ongoing event, start a work session, then refresh the feed during a break."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+
+  - instruction: "Search for restaurants near home, move to one, confirm arrival, end any ongoing event, start a 45-minute eating out event, then post a reflection."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 2700}]
+      - ["SocialMediaSpace", "create_post", {"author_id": "@", "content": "*", "tags": "*"}]
+
+  - instruction: "Move to fitness station 700007506, confirm arrival, end any ongoing event, start a work session, then briefly refresh the feed."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700007506, "mode": "driving"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+
+  - instruction: "Search nearby options, move to a restaurant, confirm arrival, end any ongoing event, start a 25-minute eating out event, then refresh the feed."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1500}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+
+  - instruction: "Move between work and home, end any ongoing event, start light work at home for 30 minutes, then refresh the feed and search posts."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "driving"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": 1800}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]
+      - ["SocialMediaSpace", "search_posts", {"keyword": "*", "tags": "*", "limit": "*", "sort_by": "*"}]
+
+  - instruction: "Search for restaurants within 500m, move to one, confirm arrival, end any ongoing event, start a 20-minute eating out event, then send a direct message."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1200}]
+      - ["SocialMediaSpace", "send_direct_message", {"from_user_id": "@", "to_user_id": "*", "content": "*"}]
+
+  - instruction: "Move to the library, confirm arrival, end any ongoing event, start a quiet leisure activity, then refresh the feed."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": 900}]
+      - ["SocialMediaSpace", "refresh_feed", {"user_id": "@", "algorithm": "*", "limit": "*"}]

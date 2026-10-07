@@ -1,0 +1,126 @@
+# Instruction test dataset for env_router performance testing
+# Each instruction contains:
+#   - instruction: The instruction text
+#   - expected_calls: List of expected function calls in format [["moduleName", "functionName", {kwargs}]]
+#     where '*' represents values that cannot be determined beforehand
+
+instructions:
+  # ========== 类别1: 使用MobilitySpace中的一个接口即可完成的 ==========
+  - category: 1
+    instruction: "Check my current location and movement status"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - category: 1
+    instruction: "Query my current position and target destination"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - category: 1
+    instruction: "Check if I am currently moving or idle"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - category: 1
+    instruction: "Get my current location coordinates"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - category: 1
+    instruction: "Check my current trip progress"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  # ========== 类别2: 使用EventSpace中的一个接口即可完成的 ==========
+  - category: 2
+    instruction: "Start cooking breakfast at home for 30 minutes"
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1800}]
+
+  - category: 2
+    instruction: "Start socializing by calling my mom to catch up"
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - category: 2
+    instruction: "Start checking daily planner for 20 minutes"
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - category: 2
+    instruction: "Start journaling for 15 minutes to reflect on insights from the morning's reading and consolidate personal growth."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "other", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - category: 2
+    instruction: "Continue eating breakfast slowly and mindfully."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  # ========== 类别3: 使用MobilitySpace中两个及以上的接口可完成的 ==========
+  - category: 3
+    instruction: "Find nearby cafés within 1km"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": 1000}]
+
+  - category: 3
+    instruction: "Find nearby hospitals within 5km"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "medical_care", "radius": 5000}]
+
+  - category: 3
+    instruction: "Find nearby parks and get details of the closest one"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "outdoor_activity", "radius": "*"}]
+      - ["MobilitySpace", "get_poi", {"poi_id": "*"}]
+
+  - category: 3
+    instruction: "Find nearby sports facilities within 1km"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "sports_facility", "radius": 1000}]
+
+  - category: 3
+    instruction: "Find nearby outdoor activity locations within 1km and get information about the closest park"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "outdoor_activity", "radius": 1000}]
+      - ["MobilitySpace", "get_poi", {"poi_id": "*"}]
+
+  # ========== 类别5: 需要同时使用MobilitySpace和EventSpace ==========
+  - category: 5
+    instruction: "Find nearby cafés within 1km and start having coffee at the nearest one for 30 minutes"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "cafe", "radius": 1000}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1800}]
+
+  - category: 5
+    instruction: "Get my current location and start a work event for 2 hours"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": 7200}]
+
+  - category: 5
+    instruction: "Find nearby parks and start relaxing at the closest park for 1 hour"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "outdoor_activity", "radius": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": 3600}]
+
+  - category: 5
+    instruction: "Find nearby restaurants and start eating out at the nearest restaurant for 1 hour"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "restaurant", "radius": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 3600}]
+
+  - category: 5
+    instruction: "Get my current location, find nearby entertainment venues, and start a leisure event at the closest one for 2 hours"
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "indoor_entertainment", "radius": "*"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": 7200}]

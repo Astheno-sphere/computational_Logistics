@@ -1,0 +1,148 @@
+# Skills system configuration
+skills:
+  enabled: true
+  skills_dir: ./skills
+  active_skills:
+    - '*'
+  # venue_profile: "neurips"
+
+# Tools configuration for ReAct-enabled agents (MetaDataAgent, WriterAgent)
+tools:
+  enabled: true
+  planner_structure_signals_enabled: true # Planner emits soft structure signals
+  table_critic_enabled: true # Enable critic-gated table schema restructuring when justified
+  table_critic_max_iterations: 2 # Max critic/rewrite rounds for table restructuring
+  table_rendered_review_enabled: true # Run final rendered VLM/layout review for table formatting
+  writer_structure_contract_enabled: true # Inject structure quality contract into Writer prompts
+  review_structure_gate_enabled: true # Enforce structure quality gate in Reviewer
+  structure_gate_min_paragraph_threshold: 5 # Trigger gate for dense sections
+  available_tools:
+    - validate_citations
+    - count_words
+    - check_key_points
+    - search_papers
+  max_react_iterations: 3
+  paper_search:
+    # Optional API keys. Leave null/omitted to use anonymous/fallback search.
+    # semantic_scholar_api_key improves Semantic Scholar rate limits.
+    semantic_scholar_api_key: null
+    timeout: 15
+    search_results_per_round: 12 # Papers to return per search round
+    planner_max_queries_per_section: 5 # Max query rounds per section
+    planner_inter_round_delay_sec: 1.5 # Delay between rounds to reduce 429
+    planner_min_target_papers_per_section: 3 # Minimum discovered refs per section
+    semantic_scholar_min_results_before_fallback: 3 # Fallback to arXiv when SS results are low
+    enable_query_cache: true # Reuse repeated query results during service runtime
+    cache_ttl_hours: 24 # Cache TTL for repeated queries
+    citation_budget_enabled: true # Let planner decide per-section citation budgets
+    citation_budget_soft_cap: true # Prefer budgeted refs, allow small overflow
+    citation_budget_export: true # Export budget plan/usage artifacts
+    citation_budget_reserve_size: 4 # Overflow reserve keys per section
+    planner_landscape_max_queries: 8 # Pre-plan broad literature search for research context
+    planner_max_utility_searches: 12 # Dataset / metric / framework triggers after plan
+  research_context:
+    enabled: true # Generate research context summary
+    detailed: true # Detailed mode with trends and gaps
+    top_k_key_papers: 10 # Number of key papers to include (also caps landscape pool for context LLM)
+    claim_evidence_enabled: true # Generate claim-to-evidence mappings
+    contribution_ranking_enabled: true # Generate P0/P1/P2 contribution priorities
+    export_planning_decision_trace: false # Export explicit planning decision trace (debug)
+  core_ref_analysis:
+    enabled: true # LLM deep analysis of user core refs; false uses heuristic fallback only
+    max_abstract_chars: 2000
+    analyze_cross_paper: true
+  docling:
+    enabled: true
+    device: auto
+    do_ocr: false
+    do_table_structure: true
+    do_formula_enrichment: false
+    max_pages: 30
+    download_timeout: 30
+    cleanup_after_analysis: true
+  exemplar:
+    enabled: true
+    prefer_core_refs: true
+    venue_match_required: true
+    recency_years: 5
+    max_external_candidates: 10
+    max_analysis_chars: 8000
+
+agents:
+  - name: paper_parser
+    model:
+      model_name: google/gemini-3-flash-preview
+      api_key: YOUR_OPENROUTER_KEY
+      base_url: https://openrouter.ai/api/v1
+
+  - name: template_parser
+    model:
+      model_name: google/gemini-3-flash-preview
+      api_key: YOUR_OPENROUTER_KEY
+      base_url: https://openrouter.ai/api/v1
+
+  - name: commander
+    model:
+      model_name: google/gemini-3-flash-preview
+      api_key: YOUR_OPENROUTER_KEY
+      base_url: https://openrouter.ai/api/v1
+
+  - name: writer
+    model:
+      model_name: google/gemini-3-flash-preview
+      api_key: YOUR_OPENROUTER_KEY
+      base_url: https://openrouter.ai/api/v1
+    writer_config:
+      max_review_iterations: 2
+      enable_review: true
+      enable_tools: true
+      available_tools:
+        - validate_citations
+        - count_words
+        - check_key_points
+
+  - name: typesetter
+    model:
+      model_name: google/gemini-3-flash-preview
+      api_key: YOUR_OPENROUTER_KEY
+      base_url: https://openrouter.ai/api/v1
+
+  - name: metadata
+    model:
+      model_name: google/gemini-3-flash-preview
+      api_key: YOUR_OPENROUTER_KEY
+      base_url: https://openrouter.ai/api/v1
+    metadata_config:
+      enable_mini_review: true
+      max_review_iterations: 2
+
+  - name: reviewer
+    model:
+      model_name: google/gemini-3-flash-preview
+      api_key: YOUR_OPENROUTER_KEY
+      base_url: https://openrouter.ai/api/v1
+
+  - name: planner
+    model:
+      model_name: google/gemini-3-flash-preview
+      api_key: YOUR_OPENROUTER_KEY
+      base_url: https://openrouter.ai/api/v1
+
+  - name: vlm_review
+    vlm_review_config:
+      enabled: true
+      render_dpi: 150
+      max_pages_to_analyze: 12
+      check_overflow: true
+      check_underfill: true
+      check_layout: true
+      min_fill_percentage: 0.85
+      max_blank_area: 0.15
+
+# Shared VLM service (PlannerAgent for figure/table analysis, VLMReviewAgent for PDF page analysis)
+vlm_service:
+  enabled: true
+  provider: openai
+  model: openai/gpt-4o
+  api_key: YOUR_OPENROUTER_KEY
+  base_url: https://openrouter.ai/api/v1

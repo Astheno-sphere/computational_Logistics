@@ -1,0 +1,73 @@
+story_file:
+  path: state/daily_guidance/YYYY-MM-DD/story.yaml
+  check_command: python scripts/daily_guidance.py check --date YYYY-MM-DD
+  required:
+    - story_id
+    - date
+    - status
+    - segments
+    - self_check
+    - execution
+    - change_log
+
+segment:
+  required:
+    - id
+    - start
+    - end
+    - activity
+    - maslow_reason
+    - tpb_reason
+  start: HH:MM string
+  end: HH:MM string, 24:00 allowed for day end
+
+maslow_reason:
+  required:
+    - need
+    - reason
+    - risk
+    - required
+  need: non-empty string, custom values allowed
+  required: required | soft_required | optional
+
+tpb_reason:
+  required:
+    - want
+    - norm
+    - can
+    - proof
+    - choice
+  want: reason_status
+  norm: reason_status
+  can: reason_status
+  proof: non-empty string
+  choice: commit | revise | delay | skip | observe
+
+reason_status:
+  required:
+    - reason
+    - status
+  status: supported | weak | missing | contradicted
+
+self_check:
+  required:
+    - maslow_result
+    - tpb_result
+    - issues
+  maslow_result: pass | revise
+  tpb_result: pass | revise
+  issues: list
+
+execution:
+  required:
+    - current_segment_id
+    - completed_segments
+    - actual_timeline
+  optional:
+    - pending_deviation
+
+change_log_event:
+  required:
+    - event_id
+    - type
+    - time

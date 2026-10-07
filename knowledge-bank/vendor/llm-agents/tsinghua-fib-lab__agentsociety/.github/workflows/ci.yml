@@ -1,0 +1,128 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "packages/agentsociety2/**"
+      - "!packages/agentsociety2/docs/**"
+      - "!packages/agentsociety2/**/*.md"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "packages/agentsociety2/**"
+      - "!packages/agentsociety2/docs/**"
+      - "!packages/agentsociety2/**/*.md"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/ci.yml"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  MEM0_TELEMETRY: "False"
+  ANONYMIZED_TELEMETRY: "False"
+
+jobs:
+  lint:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.1.0
+
+      - name: Install dependencies
+        working-directory: packages/agentsociety2
+        run: uv sync --extra dev
+
+      - name: Lint with ruff
+        working-directory: packages/agentsociety2
+        run: uv run ruff check .
+
+      - name: Type check with mypy
+        working-directory: packages/agentsociety2
+        run: uv run mypy tests/ --follow-imports=skip
+
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.1.0
+
+      - name: Install dependencies
+        working-directory: packages/agentsociety2
+        run: uv sync --extra dev
+
+      - name: Run tests
+        working-directory: packages/agentsociety2
+        run: |
+          uv run pytest -v \
+            --junitxml=junit.xml \
+            -o junit_family=xunit2 \
+            -o junit_suite_name="agentsociety2-py${{ matrix.python-version }}"
+        env:
+          AGENTSOCIETY_LLM_API_KEY: ${{ secrets.AGENTSOCIETY_LLM_API_KEY }}
+          AGENTSOCIETY_LLM_API_BASE: ${{ secrets.AGENTSOCIETY_LLM_API_BASE }}
+          AGENTSOCIETY_LLM_MODEL: glm-5
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-py${{ matrix.python-version }}
+          path: packages/agentsociety2/junit.xml
+          retention-days: 30
+
+  build:
+    name: Build package
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.1.0
+
+      - name: Build package
+        run: |
+          cd packages/agentsociety2
+          uv build --out-dir dist
+
+      - name: Check distribution
+        run: |
+          cd packages/agentsociety2
+          uv run --with twine twine check dist/*

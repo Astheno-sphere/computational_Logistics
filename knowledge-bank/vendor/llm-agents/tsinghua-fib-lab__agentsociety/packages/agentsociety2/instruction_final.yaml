@@ -1,0 +1,310 @@
+# Instruction test dataset for env_router performance testing
+# Each instruction contains:
+#   - instruction: The instruction text
+#   - expected_calls: List of expected function calls in format [["moduleName", "functionName", {kwargs}]]
+#     where '*' represents values that cannot be determined beforehand
+
+instructions:
+  - instruction: "Start sleeping for 8 hours at home to restore energy."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 28800}]
+
+  - instruction: "Continue sleeping undisturbed until the scheduled wake-up time of 08:00 to fully restore energy."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a 5-minute gentle stretching routine at home to awaken the body mindfully."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 300}]
+
+  - instruction: "Drink a glass of water and enjoy the morning silence for 5 minutes at home before beginning work."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 300}]
+
+  - instruction: "Begin journaling for 10 minutes at home to reflect and set intention for the day."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 600}]
+
+  - instruction: "Set the dining space with care by lighting a candle, playing soft instrumental music, and opening the window to create a calm, intentional atmosphere for eating the breakfast."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start eating a nourishing breakfast at home for 30 minutes to restore satiety and begin the day with mindful self-care."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1800}]
+
+  - instruction: "After breakfast preparation ends at 08:20, begin eating the meal mindfully for 30 minutes to restore satiety and ground the morning."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1800}]
+
+  - instruction: "Begin a 20-minute mindful morning routine at home, combining gentle stretching, drinking water, and journaling to transition into the day with presence."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - instruction: "Start organizing the instructor toolkit (lesson plans, handouts, and digital devices) at home for 10 minutes to ensure all materials are ready for work."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 600}]
+
+  - instruction: "Drive to work location at 500020440 to arrive on time for the start of the workday."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 500020440, "mode": "driving"}]
+
+  - instruction: "Walk to Argo 希腊餐厅 (ID: 700002365) to begin the lunch break."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700002365, "mode": "walking"}]
+
+  - instruction: "Start a 45-minute eating out activity at Argo 希腊餐厅 (POI ID: 700002365) to restore satiety."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 2700}]
+
+  - instruction: "Sit quietly with a warm beverage at home for 5 minutes to savor the morning and center the mind."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 300}]
+
+  - instruction: "Take three slow, deep breaths while silently setting a calm, intentional affirmation for the day: 'I am present, capable, and enough.'"
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start a 15-minute mindful walking meditation around the home premises, focusing on sensory awareness: noticing the texture of the floor, the rhythm of my steps, the quality of air, and ambient sounds."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - instruction: "Begin a 10-minute session of quiet sitting at the lab's skylight to absorb natural light and reflect on the morning's stillness."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "other", "event_name": "*", "expected_duration_seconds": 600}]
+
+  - instruction: "Request a glass of water from the restaurant staff at the current location (POI 700008611) to prepare for the post-meal reflection."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+
+  - instruction: "Compose and send a follow-up text message to my sister, sharing how the quiet joy of the mindful walk has lingered and gently asking how she's been."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Begin a 20-minute mindful walk along the sidewalk and adjacent courtyard near Argo 希腊餐厅, maintaining a steady, unhurried pace to support embodied presence and integrate the calm from lunch."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - instruction: "Start a 90-minute work session at home to engage in focused, distraction-free cognitive tasks, honoring the completed morning ritual and sustaining mindful presence."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": 5400}]
+
+  - instruction: "Sustain the internal affirmation: 'I am working with presence, not pressure,' as a quiet, ongoing mental guide during the current work session."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Walk to the nearest café, He kitchen&Co. (ID: 700005047), located 238 meters from current location, to begin light social observation."
+    expected_calls:
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": 700005047, "mode": "walking"}]
+
+  - instruction: "Order a black coffee at He kitchen&Co. café to support the ongoing light social observation for the next 10–15 minutes."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Remain seated at Argo 希腊restaurant and stay observant for any colleagues who may approach for casual conversation to nurture social connection."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Open the messaging app on personal device and send a brief warm message to Alex to reconnect and satisfy the declining social need."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Initiate a 10-minute voice call with Maya to share insights from the completed work session and reconnect authentically."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": 600}]
+
+  - instruction: "Stop the ongoing 'online sales activities' work event early to begin a 15-minute rest break."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - instruction: "Begin a 20-minute rest break at my workstation, focusing on deep breathing and quiet reflection to restore energy."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - instruction: "Walk to the nearest park and sit quietly for 20 minutes to restore energy and reflect on the day's completion, reinforcing my identity as someone who values mindful transitions."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "outdoor_activity", "radius": "*"}]
+      - ["MobilitySpace", "move_to", {"person_id": "@", "aoi_id_or_poi_id": "*", "mode": "walking"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - instruction: "Find the nearest safe public location (e.g., 24-hour convenience store or well-lit plaza) within 300 meters of my current location."
+    expected_calls:
+      - ["MobilitySpace", "get_person", {"person_id": "@"}]
+      - ["MobilitySpace", "find_nearby_pois", {"x": "*", "y": "*", "category": "*", "radius": 300}]
+
+  - instruction: "Start a 30-minute home activity to read quietly or listen to calming music, maintaining a peaceful, self-directed evening rhythm aligned with autonomy and the absence of system dependency."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1800}]
+
+  - instruction: "Start a 20-minute 'home activity' event labeled as 'write handwritten letter to Maya' to compose a thoughtful, tangible message without digital tools."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - instruction: "Start a 7-hour sleep event at home to restore energy, as scheduled for 20:00."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 25200}]
+
+  - instruction: "Start a 10-minute 'home activity' event with description 'mindful breathing and light stretching to restore energy'."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 600}]
+
+  - instruction: "Serve the home-cooked meal of rice, tofu, and greens and consume it slowly with mindful awareness to maximize satiety restoration and cognitive stabilization."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Hydrate with a glass of water and sit quietly for 2 minutes to reflect on the completion of the self-care ritual, reinforcing autonomous rhythm and mindful closure."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 120}]
+
+  - instruction: "Start a night sleep for 8 hours to restore energy."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 28800}]
+
+  - instruction: "Start an afternoon nap for 90 minutes to restore energy."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 5400}]
+
+  - instruction: "Place the cooked breakfast on the dining table with a glass of water and take a moment of quiet gratitude."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start taking a shower to refresh and begin the morning routine."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start drinking a glass of water to hydrate after waking up."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start cooking a light breakfast for 20 minutes."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - instruction: "Continue the current quiet, idle state for the next 5 minutes to breathe and reflect before eating, honoring the transition from rest to wakefulness."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start journaling for 10 minutes to reflect on the rest and set a calm tone for the day."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 600}]
+
+  - instruction: "Extend the current journaling session by 5 minutes to deepen mindfulness and closure, completing the full 15-minute mindful morning routine as intended."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - instruction: "Eat the prepared breakfast to complete the morning routine transition and maintain high satiety."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start cooking a light, nourishing breakfast (e.g., oatmeal with fruit and nuts) for 15 minutes at home."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - instruction: "Begin reviewing tomorrow's training session materials on the home computer to refresh key concepts and update any outdated content."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Begin writing a brief set of personal intentions for today's training session, focusing on presence, empathy, and student engagement, using the home office setup."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Step out of the home and begin a 15-minute walk around the neighborhood to ground the morning's stillness."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "leisure and entertainment", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - instruction: "Continue eating breakfast mindfully until completion at 02:20 to fully replenish satiety."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a 10-minute mindfulness ritual to transition from personal time to professional readiness, including deep breathing and setting an affirming mantra."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 600}]
+
+  - instruction: "After the mindfulness ritual ends at 02:40, begin preparing a simple, clean workspace for tomorrow's departure by laying out professional attire, packing the training bag, and charging all devices."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start a 5-minute journaling session to reflect on the morning's stillness and how it will inform the tone and energy brought into the classroom."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 300}]
+
+  - instruction: "Continue preparing work materials until 03:30, then check the weather and plan attire for the commute to work."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Begin eating the prepared breakfast (oatmeal with fruit and nuts) to satisfy satiety and sustain energy for the day."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Continue walking at a slow, mindful pace, observing sensory details like the cool morning air, distant sounds, and soft light to deepen presence and transition from internal reflection to external awareness."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+
+  - instruction: "Start a home activity: sit quietly and enjoy the stillness for 15 minutes to honor the natural rhythm of post-ritual calm and allow the mind to rest without structure."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 900}]
+
+  - instruction: "Start a 30-minute nap at home to restore energy."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 1800}]
+
+  - instruction: "Start an eating out activity for 30 minutes at Cafe ID 700009098 to consume lunch."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1800}]
+
+  - instruction: "Start an 'eating out' activity for 25 minutes at Café 700005047 to enjoy a quiet coffee and reflect on the day's accomplishments."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "eating out", "event_name": "*", "expected_duration_seconds": 1500}]
+
+  - instruction: "Resume remote work for the remaining 1.65 hours to fulfill professional responsibilities with mindful presence, honoring the intentional rhythm established this morning."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": 5940}]
+
+  - instruction: "Start a home activity: prepare a healthy dinner for 20 minutes."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 1200}]
+
+  - instruction: "Start work for 8 hours at the office to fulfill occupational responsibilities and maintain safety."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "work", "event_name": "*", "expected_duration_seconds": 28800}]
+
+  - instruction: "Start a home activity: sit quietly for 3 minutes to set daily intentions with mindfulness."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 180}]
+
+  - instruction: "Start a home activity: change into pajamas to signal the transition from active day to rest mode."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Prepare for sleep by dimming the lights, avoiding screen exposure, and settling into a calm, quiet state to support natural energy restoration."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Place the tea cup down gently, close the eyes for one final breath, and return to a natural idle state, carrying the evening's calm forward without agenda."
+    expected_calls:
+      - ["EventSpace", "get_current_event", {"person_id": "@"}]
+      - ["EventSpace", "stop_event", {"person_id": "@", "status": "completed"}]
+
+  - instruction: "Start a home activity: light a candle to create a calm, soothing atmosphere for evening reflection."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Begin preparing for sleep by dimming the lights, turning off all screens, and lying down to rest for 8 hours to consolidate emotional restoration and fully restore energy."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "sleep", "event_name": "*", "expected_duration_seconds": 28800}]
+
+  - instruction: "Start a home activity: brush teeth to complete oral hygiene and refresh the senses after sleep."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": "*"}]
+
+  - instruction: "Start a home activity: journal for 10 minutes to reflect on the afternoon's stillness and capture the emotional clarity, reinforcing self-awareness and personal growth."
+    expected_calls:
+      - ["EventSpace", "start_event", {"person_id": "@", "event_type": "home activity", "event_name": "*", "expected_duration_seconds": 600}]
+

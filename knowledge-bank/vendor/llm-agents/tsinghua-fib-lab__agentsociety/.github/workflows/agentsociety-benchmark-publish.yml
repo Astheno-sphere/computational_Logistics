@@ -1,0 +1,28 @@
+# Legacy benchmark package — publish only on benchmark-v* tags.
+# Not part of AgentSociety2 active CI/security scope (see .github/agentsociety2-scope.yml).
+
+name: Upload Python Package - Agentsociety Benchmark
+
+on:
+  push:
+    tags:
+      # Publish on any tag starting with a `v`, e.g. v1.2.3
+      - benchmark-v*.*.*
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    # Environment and permissions trusted publishing.
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.1.0
+      - run: cd packages/agentsociety-benchmark && uv build
+      - run: uv publish --trusted-publishing always

@@ -1,0 +1,96 @@
+# ═══════════════════════════════════════════════════════════
+# Ray runtime-env packaging exclusions (strict).
+#
+# Ray uploads the editable-install project tree to every worker so they can
+# import agentsociety2. It does NOT honour .gitignore for this upload — only
+# .rayignore. Without this file Ray walks the whole repo and ships ~900MB+
+# of data/docs/binary blobs (agentsociety_data/*.pb.cache is 488MB alone),
+# which is slow and risks the 512MB-per-package limit.
+#
+# Keep ONLY what worker processes need to import agentsociety2 at runtime:
+# the Python package sources under packages/. Exclude everything else.
+# ═══════════════════════════════════════════════════════════
+
+# --- Large runtime data (NOT needed by workers) ---
+agentsociety_data/
+data/
+*.pb
+*.pb.cache
+*.parquet
+
+# --- Docs / paper / media (large binaries, never imported) ---
+docs/
+docs_v1/
+docs_en/
+paper/
+*.gif
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.pdf
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# --- Frontend / VSCode extension (not Python runtime) ---
+frontend/
+extension/
+node_modules/
+*.js
+*.jsx
+*.ts
+*.tsx
+*.css
+*.html
+package-lock.json
+
+# --- Example scripts (driver-only; workers don't import them) ---
+examples/
+
+# --- Other workspace packages not imported by agentsociety2 at runtime ---
+packages/agentsociety/
+packages/agentsociety-community/
+packages/agentsociety-benchmark/
+
+# --- Python build / cache artifacts ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+sdist/
+wheels/
+.venv/
+venv/
+env/
+ENV/
+
+# --- Tooling caches ---
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.tox/
+.cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+junit.xml
+*.log
+
+# --- VCS / editor / scratch ---
+.git/
+.github/
+.gitlab/
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
