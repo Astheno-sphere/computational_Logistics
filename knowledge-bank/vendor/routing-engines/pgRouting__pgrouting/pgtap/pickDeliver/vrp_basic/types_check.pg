@@ -1,0 +1,21 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2021-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT plan(4);
+
+SELECT has_function('pgr_vrponedepot',ARRAY['text','text','text','integer']);
+SELECT function_returns('pgr_vrponedepot',ARRAY['text','text','text','integer'], 'setof record');
+
+SELECT function_args_eq('pgr_vrponedepot',
+    $$SELECT  '{"","","","","oid","opos","vid","tarrival","tdepart"}'::TEXT[] $$
+);
+
+SELECT function_types_eq('pgr_vrponedepot',
+    $$VALUES ('{text,text,text,int4,int4,int4,int4,int4,int4}'::TEXT[])$$);
+
+SELECT finish();
+ROLLBACK;

@@ -1,0 +1,47 @@
+# Geocoder API
+
+## Contact Info
+
+- Leonard Ehrenfried, [mail@leonard.io](mailto:mail@leonard.io)
+
+## Documentation
+
+This sandbox feature implements geocoding endpoints for a number of use cases.
+
+To enable this you need to add the feature to `otp-config.json`.
+
+```json
+// otp-config.json
+{
+  "otpFeatures": {
+    "SandboxAPIGeocoder": true
+  }
+}
+```
+
+### Endpoints
+
+#### Stop clusters
+
+A stop cluster is a deduplicated groups of stops. This means that for any stop that has a parent
+station only the parent is returned and for stops that have _identical_ names and are very close to
+each other, only one is returned.
+
+This is useful for a general-purpose fuzzy stop search.
+
+Path: `/otp/geocode/stopClusters`
+
+It supports the following URL parameters:
+
+| Parameter        | Description                           |
+| ---------------- | ------------------------------------- |
+| `query`          | The query string we want to geocode   |
+| `focusLatitude`  | Optional latitude of the focus point  |
+| `focusLongitude` | Optional longitude of the focus point |
+
+## Changelog
+
+- Initial version (June 2021)
+- Updated to use Lucene (March 2022)
+- Add stop clusters (May 2023)
+- Remove API originally added for the old debug UI (November 2025)

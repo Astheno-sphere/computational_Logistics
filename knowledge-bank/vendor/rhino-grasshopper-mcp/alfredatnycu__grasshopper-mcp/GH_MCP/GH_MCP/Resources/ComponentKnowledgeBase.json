@@ -1,0 +1,215 @@
+{
+  "components": [
+    {
+      "name": "Point",
+      "category": "Params",
+      "subcategory": "Geometry",
+      "description": "Creates a point at the specified coordinates",
+      "inputs": [
+        {"name": "X", "type": "Number", "description": "X coordinate"},
+        {"name": "Y", "type": "Number", "description": "Y coordinate"},
+        {"name": "Z", "type": "Number", "description": "Z coordinate"}
+      ],
+      "outputs": [
+        {"name": "Pt", "type": "Point", "description": "Point"}
+      ]
+    },
+    {
+      "name": "XY Plane",
+      "category": "Vector",
+      "subcategory": "Plane",
+      "description": "Creates an XY plane at the world origin or at a specified point",
+      "inputs": [
+        {"name": "Origin", "type": "Point", "description": "Origin point", "optional": true}
+      ],
+      "outputs": [
+        {"name": "Plane", "type": "Plane", "description": "XY plane"}
+      ]
+    },
+    {
+      "name": "Box",
+      "category": "Surface",
+      "subcategory": "Primitive",
+      "description": "Creates a box from a base plane and dimensions",
+      "inputs": [
+        {"name": "Base", "type": "Plane", "description": "Base plane"},
+        {"name": "X Size", "type": "Number", "description": "Size in X direction"},
+        {"name": "Y Size", "type": "Number", "description": "Size in Y direction"},
+        {"name": "Z Size", "type": "Number", "description": "Size in Z direction"}
+      ],
+      "outputs": [
+        {"name": "Box", "type": "Brep", "description": "Box geometry"}
+      ]
+    },
+    {
+      "name": "Circle",
+      "category": "Curve",
+      "subcategory": "Primitive",
+      "description": "Creates a circle from a plane and radius",
+      "inputs": [
+        {"name": "Plane", "type": "Plane", "description": "Circle plane"},
+        {"name": "Radius", "type": "Number", "description": "Circle radius"}
+      ],
+      "outputs": [
+        {"name": "Circle", "type": "Curve", "description": "Circle curve"}
+      ]
+    },
+    {
+      "name": "Number Slider",
+      "category": "Params",
+      "subcategory": "Input",
+      "description": "Slider for numeric input",
+      "inputs": [],
+      "outputs": [
+        {"name": "Number", "type": "Number", "description": "Slider value"}
+      ],
+      "defaultSettings": {
+        "min": 0,
+        "max": 10,
+        "value": 5
+      }
+    },
+    {
+      "name": "Panel",
+      "category": "Params",
+      "subcategory": "Input",
+      "description": "Text panel for input or output",
+      "inputs": [
+        {"name": "Input", "type": "Any", "description": "Any input", "optional": true}
+      ],
+      "outputs": [
+        {"name": "Output", "type": "Text", "description": "Panel text"}
+      ]
+    },
+    {
+      "name": "Voronoi",
+      "category": "Surface",
+      "subcategory": "Triangulation",
+      "description": "Creates a Voronoi diagram from points",
+      "inputs": [
+        {"name": "Points", "type": "Point", "description": "Input points"},
+        {"name": "Radius", "type": "Number", "description": "Cell radius", "optional": true},
+        {"name": "Plane", "type": "Plane", "description": "Base plane", "optional": true}
+      ],
+      "outputs": [
+        {"name": "Cells", "type": "Curve", "description": "Voronoi cells"},
+        {"name": "Vertices", "type": "Point", "description": "Voronoi vertices"}
+      ]
+    },
+    {
+      "name": "Populate 3D",
+      "category": "Vector",
+      "subcategory": "Grid",
+      "description": "Creates a 3D grid of points",
+      "inputs": [
+        {"name": "Base", "type": "Plane", "description": "Base plane"},
+        {"name": "Size X", "type": "Number", "description": "Size in X direction"},
+        {"name": "Size Y", "type": "Number", "description": "Size in Y direction"},
+        {"name": "Size Z", "type": "Number", "description": "Size in Z direction"},
+        {"name": "Count X", "type": "Integer", "description": "Count in X direction"},
+        {"name": "Count Y", "type": "Integer", "description": "Count in Y direction"},
+        {"name": "Count Z", "type": "Integer", "description": "Count in Z direction"}
+      ],
+      "outputs": [
+        {"name": "Points", "type": "Point", "description": "3D grid of points"}
+      ]
+    },
+    {
+      "name": "Boundary Surfaces",
+      "category": "Surface",
+      "subcategory": "Freeform",
+      "description": "Creates boundary surfaces from curves",
+      "inputs": [
+        {"name": "Curves", "type": "Curve", "description": "Input curves"}
+      ],
+      "outputs": [
+        {"name": "Surfaces", "type": "Surface", "description": "Boundary surfaces"}
+      ]
+    },
+    {
+      "name": "Extrude",
+      "category": "Surface",
+      "subcategory": "Freeform",
+      "description": "Extrudes curves or surfaces",
+      "inputs": [
+        {"name": "Base", "type": "Geometry", "description": "Base geometry"},
+        {"name": "Direction", "type": "Vector", "description": "Extrusion direction"},
+        {"name": "Distance", "type": "Number", "description": "Extrusion distance"}
+      ],
+      "outputs": [
+        {"name": "Result", "type": "Brep", "description": "Extruded geometry"}
+      ]
+    }
+  ],
+  "patterns": [
+    {
+      "name": "3D Box",
+      "description": "Creates a simple 3D box",
+      "components": [
+        {"type": "XY Plane", "x": 100, "y": 100, "id": "plane"},
+        {"type": "Number Slider", "x": 100, "y": 200, "id": "sliderX", "settings": {"min": 0, "max": 50, "value": 20}},
+        {"type": "Number Slider", "x": 100, "y": 250, "id": "sliderY", "settings": {"min": 0, "max": 50, "value": 20}},
+        {"type": "Number Slider", "x": 100, "y": 300, "id": "sliderZ", "settings": {"min": 0, "max": 50, "value": 20}},
+        {"type": "Box", "x": 400, "y": 200, "id": "box"}
+      ],
+      "connections": [
+        {"source": "plane", "sourceParam": "Plane", "target": "box", "targetParam": "Base"},
+        {"source": "sliderX", "sourceParam": "Number", "target": "box", "targetParam": "X Size"},
+        {"source": "sliderY", "sourceParam": "Number", "target": "box", "targetParam": "Y Size"},
+        {"source": "sliderZ", "sourceParam": "Number", "target": "box", "targetParam": "Z Size"}
+      ]
+    },
+    {
+      "name": "3D Voronoi",
+      "description": "Creates a 3D Voronoi pattern within a box",
+      "components": [
+        {"type": "XY Plane", "x": 100, "y": 100, "id": "plane"},
+        {"type": "Number Slider", "x": 100, "y": 200, "id": "sizeX", "settings": {"min": 0, "max": 100, "value": 50}},
+        {"type": "Number Slider", "x": 100, "y": 250, "id": "sizeY", "settings": {"min": 0, "max": 100, "value": 50}},
+        {"type": "Number Slider", "x": 100, "y": 300, "id": "sizeZ", "settings": {"min": 0, "max": 100, "value": 50}},
+        {"type": "Number Slider", "x": 100, "y": 350, "id": "countX", "settings": {"min": 1, "max": 20, "value": 10}},
+        {"type": "Number Slider", "x": 100, "y": 400, "id": "countY", "settings": {"min": 1, "max": 20, "value": 10}},
+        {"type": "Number Slider", "x": 100, "y": 450, "id": "countZ", "settings": {"min": 1, "max": 20, "value": 10}},
+        {"type": "Populate 3D", "x": 400, "y": 250, "id": "populate"},
+        {"type": "Voronoi", "x": 600, "y": 250, "id": "voronoi"}
+      ],
+      "connections": [
+        {"source": "plane", "sourceParam": "Plane", "target": "populate", "targetParam": "Base"},
+        {"source": "sizeX", "sourceParam": "Number", "target": "populate", "targetParam": "Size X"},
+        {"source": "sizeY", "sourceParam": "Number", "target": "populate", "targetParam": "Size Y"},
+        {"source": "sizeZ", "sourceParam": "Number", "target": "populate", "targetParam": "Size Z"},
+        {"source": "countX", "sourceParam": "Number", "target": "populate", "targetParam": "Count X"},
+        {"source": "countY", "sourceParam": "Number", "target": "populate", "targetParam": "Count Y"},
+        {"source": "countZ", "sourceParam": "Number", "target": "populate", "targetParam": "Count Z"},
+        {"source": "populate", "sourceParam": "Points", "target": "voronoi", "targetParam": "Points"}
+      ]
+    },
+    {
+      "name": "Circle",
+      "description": "Creates a simple circle",
+      "components": [
+        {"type": "XY Plane", "x": 100, "y": 100, "id": "plane"},
+        {"type": "Number Slider", "x": 100, "y": 200, "id": "radius", "settings": {"min": 0, "max": 50, "value": 10}},
+        {"type": "Circle", "x": 400, "y": 150, "id": "circle"}
+      ],
+      "connections": [
+        {"source": "plane", "sourceParam": "Plane", "target": "circle", "targetParam": "Plane"},
+        {"source": "radius", "sourceParam": "Number", "target": "circle", "targetParam": "Radius"}
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "keywords": ["box", "cube", "rectangular", "prism"],
+      "pattern": "3D Box"
+    },
+    {
+      "keywords": ["voronoi", "cell", "diagram", "3d", "cellular"],
+      "pattern": "3D Voronoi"
+    },
+    {
+      "keywords": ["circle", "round", "disc"],
+      "pattern": "Circle"
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+---
+name: New Component Proposal
+description: >-
+  Propose a new plugin, agent, skill, or command for the marketplace
+title: "[NEW] "
+labels: ["new-component"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for proposing a new component! Quality components require
+        careful design, clear specialization, and cross-harness portability.
+
+        Read [docs/authoring.md](https://github.com/wshobson/agents/blob/main/docs/authoring.md)
+        before submitting — it covers the portable-content style guide that
+        keeps your component working across Claude Code, Codex CLI, Cursor,
+        OpenCode, the Antigravity CLI, and Pi.
+
+        **Important**: Only propose components for legitimate, constructive
+        use cases. Proposals for malicious or harmful capabilities will be
+        rejected and may result in moderation action.
+
+        Please wait for a maintainer to reply on this issue before you open a
+        pull request, so that we can agree on scope first.
+
+  - type: checkboxes
+    id: preliminary-checks
+    attributes:
+      label: Preliminary Checks
+      description: Please confirm you have completed these steps
+      options:
+        - label: >-
+            I have read the [Code of
+            Conduct](https://github.com/wshobson/agents/blob/main/.github/CODE_OF_CONDUCT.md)
+          required: true
+        - label: >-
+            I have read
+            [docs/authoring.md](https://github.com/wshobson/agents/blob/main/docs/authoring.md)
+          required: true
+        - label: >-
+            I have reviewed
+            [docs/plugins.md](https://github.com/wshobson/agents/blob/main/docs/plugins.md)
+            to ensure this isn't a duplicate
+          required: true
+        - label: This proposal is for legitimate, constructive use cases only
+          required: true
+        - label: I have domain expertise in the proposed area
+          required: true
+
+  - type: dropdown
+    id: component-type
+    attributes:
+      label: Component type
+      description: What kind of component are you proposing?
+      options:
+        - New plugin (bundles multiple agents / skills / commands)
+        - New agent (under an existing plugin)
+        - New skill (under an existing plugin)
+        - New command (under an existing plugin)
+        - New harness adapter (for an additional CLI / IDE)
+    validations:
+      required: true
+
+  - type: input
+    id: component-name
+    attributes:
+      label: Proposed name
+      description: lowercase, hyphen-separated; no `__` (adapter namespace separator)
+      placeholder: e.g., devops-security, llm-quantization, k8s-architect
+    validations:
+      required: true
+
+  - type: input
+    id: parent-plugin
+    attributes:
+      label: Parent plugin (if adding an agent / skill / command)
+      description: >-
+        Existing plugin directory name. Leave blank if proposing a new plugin
+        or harness adapter.
+      placeholder: e.g., python-development, security-scanning
+    validations:
+      required: false
+
+  - type: textarea
+    id: domain-expertise
+    attributes:
+      label: Domain & expertise
+      description: What domain does this component specialize in?
+      placeholder: This component specializes in...
+    validations:
+      required: true
+
+  - type: textarea
+    id: unique-value
+    attributes:
+      label: Unique value proposition
+      description: >-
+        How is this different from existing components? What gap does it fill?
+      placeholder: Unlike existing components, this one would...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Primary use cases
+      description: Concrete tasks this component handles.
+      placeholder: |
+        1. Design and implement...
+        2. Optimize performance for...
+        3. Debug issues related to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: portability-notes
+    attributes:
+      label: Cross-harness portability notes
+      description: >-
+        Are there features unique to one harness this component relies on
+        (e.g., TodoWrite, MCP, parallel Task tool)? How does it degrade
+        gracefully on harnesses without those features?
+      placeholder: |
+        - Works on all 6 harnesses; uses only file ops and shell commands.
+        - OR: uses `Task` (Claude/Cursor/OpenCode/Antigravity), degrades to
+          sequential execution on Codex and needs an extension on Pi.
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example interactions
+      description: 2-3 example user prompts → agent / skill behavior
+      placeholder: |
+        **Example 1:**
+        User: "Implement a smart contract for..."
+        Response: "I'll create a secure smart contract with..."
+
+        **Example 2:**
+        User: "Optimize this blockchain query..."
+        Response: "Let me analyze the query..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: commercial-disclosure
+    attributes:
+      label: Commercial relationship and external services
+      description: >-
+        List every external service, API, or package the component calls or
+        recommends. Say whether you own, maintain, work for, or earn money
+        from any of them, and whether any of them has a paid tier. Write
+        "None" if the component calls or recommends no external service.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expertise-evidence
+    attributes:
+      label: Your expertise
+      description: Experience or credentials in this domain.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: >-
+        Links to docs, similar tools, potential portability challenges.

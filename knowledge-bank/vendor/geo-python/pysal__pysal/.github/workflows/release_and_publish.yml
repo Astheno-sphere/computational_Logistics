@@ -1,0 +1,68 @@
+name: Release & Publish
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+  workflow_dispatch:  # Enables manual triggering from GH UI
+    inputs:
+      version:
+        description: Manual Release & Publish
+        default: release+publish
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Create release & publish to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # MANDATORY for trusted publishing to PyPI
+      contents: write  # MANDATORY for the Github release action
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Set up python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine jupyter urllib3 pandas pyyaml
+          python -m build
+          twine check --strict dist/*
+
+
+      - name: Determine draft status
+        id: draft_status
+        run: |
+          if [[ "${GITHUB_REF}" == *"rc"* ]]; then
+            echo "draft=true" >> $GITHUB_ENV
+          else
+            echo "draft=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: ${{ env.draft }}
+          prerelease: ${{ env.draft }}
+          body_path: tools/changelog.md
+
+      - name: Create github release
+        uses: softprops/action-gh-release@v2
+
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

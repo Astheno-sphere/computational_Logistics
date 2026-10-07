@@ -1,0 +1,70 @@
+{
+  "description": "Shows the Claude Security banner when the /claude-security menu opens, reports usage counts after the plugin's helper scripts run, closes the yes/no question asked before a scan starts if it is left unanswered for 60 seconds, and suggests a scan of the changes after a branch is pushed or a pull request opened.",
+  "hooks": {
+    "UserPromptExpansion": [
+      {
+        "matcher": "^claude-security:claude-security$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hooks.sh\" banner"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hooks.sh\" metrics || true",
+            "if": "Bash(py* *claude-security*scripts/*.py *)",
+            "async": true,
+            "asyncRewake": true,
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hooks.sh\" tip push || true",
+            "if": "Bash(git push *)",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hooks.sh\" tip pr || true",
+            "if": "Bash(gh pr create *)",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hooks.sh\" metrics || true",
+            "if": "Bash(py* *claude-security*scripts/*.py *)",
+            "async": true,
+            "asyncRewake": true,
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hooks.sh\" unanswered || true",
+            "timeout": 90
+          }
+        ]
+      }
+    ]
+  }
+}

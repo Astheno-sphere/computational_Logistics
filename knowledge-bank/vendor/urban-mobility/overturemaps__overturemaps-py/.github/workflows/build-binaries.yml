@@ -1,0 +1,102 @@
+---
+# Builds standalone binaries for Linux, macOS (arm64 + x86_64), and Windows.
+# On release: attaches binaries directly to the GitHub Release as assets.
+# On workflow_dispatch: uploads binaries as workflow artifacts for inspection.
+name: Build Binaries
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read # default; job overrides to write for release asset upload
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write # required to upload release assets via gh release upload
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x86_64
+            ext: ""
+          - os: macos-latest
+            target: macos-arm64
+            ext: ""
+          - os: macos-26-intel
+            target: macos-x86_64
+            ext: ""
+          - os: windows-latest
+            target: windows-x86_64
+            ext: ".exe"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+
+      - name: Install dependencies
+        run: uv sync --group binary
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(uv run python -c "from importlib.metadata import version; print(version('overturemaps'))")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build binary
+        run: >-
+          uv run pyinstaller
+          --onefile
+          --name overturemaps
+          --collect-all pyarrow
+          --collect-all shapely
+          --collect-data pyfiglet
+          overturemaps/__main__.py
+
+      - name: Rename binary
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TARGET: ${{ matrix.target }}
+          EXT: ${{ matrix.ext }}
+        run: |
+          SRC="dist/overturemaps${EXT}"
+          DST="dist/overturemaps-${VERSION}-${TARGET}${EXT}"
+          mv "$SRC" "$DST"
+          echo "BINARY_PATH=${DST}" >> "$GITHUB_ENV"
+
+      - name: Smoke test binary
+        shell: bash
+        run: |
+          "$BINARY_PATH" --help
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release upload "$TAG" "$BINARY_PATH" --clobber
+
+      - name: Upload artifact (dry run)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: overturemaps-${{ matrix.target }}
+          path: ${{ env.BINARY_PATH }}
+          if-no-files-found: error

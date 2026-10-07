@@ -1,0 +1,1021 @@
+import { describe, it, expect, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import type {
+  ClientCapabilities,
+  InitializeResult,
+} from "@modelcontextprotocol/client";
+import { renderWithMantine, screen } from "../../../test/renderWithMantine";
+import type { ConnectionDiagnostics } from "@inspector/core/mcp/connectionDiagnostics.js";
+import {
+  NO_NOTIFICATION_STREAM_LABEL,
+  NO_OUTSTANDING_REQUESTS_LABEL,
+  NO_RESPONSE_YET_LABEL,
+  NO_STREAM_ON_STDIO_LABEL,
+} from "../../../utils/connectionActivity";
+import {
+  CLEAR_OAUTH_STATE_AND_DISCONNECT_LABEL,
+  ConnectionInfoContent,
+  SERVER_INFO_NOT_REPORTED_LABEL,
+} from "./ConnectionInfoContent";
+
+const fullResult: InitializeResult = {
+  protocolVersion: "2025-03-26",
+  serverInfo: { name: "Everything Server", version: "2.1.0" },
+  capabilities: {
+    tools: { listChanged: true },
+    resources: { subscribe: true },
+    prompts: { listChanged: true },
+    logging: {},
+    completions: {},
+  },
+  instructions: "Use tools/list first.",
+};
+
+const fullClientCaps: ClientCapabilities = {
+  roots: { listChanged: true },
+  sampling: {},
+  elicitation: {},
+  experimental: {},
+};
+
+// The glyphs `CapabilityItem` renders beside each capability label.
+const SUPPORTED_MARK = "✓";
+const UNSUPPORTED_MARK = "✗";
+
+/**
+ * Read the ✓/✗ a capability row is showing. The mark is the label's preceding
+ * sibling inside the row `Group`, so asserting on it — rather than on the
+ * label's mere presence — is what distinguishes "supported" from "listed".
+ */
+function capabilityMark(label: string): string | undefined {
+  return (
+    screen.getByText(label).previousElementSibling?.textContent ?? undefined
+  );
+}
+
+describe("ConnectionInfoContent", () => {
+  it("renders server implementation fields under the heading", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    expect(screen.getByText("Server Implementation")).toBeInTheDocument();
+    expect(screen.getByText("Everything Server")).toBeInTheDocument();
+    expect(screen.getByText("2.1.0")).toBeInTheDocument();
+    expect(screen.getByText("2025-03-26")).toBeInTheDocument();
+    expect(screen.getByText("stdio")).toBeInTheDocument();
+  });
+
+  it("renders an em-dash when server version is missing", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          serverInfo: { name: "No Version Server" } as never,
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    // Exactly three em dashes: the missing server version, plus the two
+    // extension sections (the fixtures advertise none on either side).
+    expect(screen.getAllByText("—")).toHaveLength(3);
+  });
+
+  it("renders an em-dash when the reported version is an empty string", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          serverInfo: { name: "Empty Version Server", version: "" },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    // An empty version reads as unknown ("—"), not a blank row (#1772).
+    expect(screen.getByText("Empty Version Server")).toBeInTheDocument();
+    expect(screen.getAllByText("—")).toHaveLength(3);
+  });
+
+  it("renders an em-dash when the reported name is an empty string", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          serverInfo: { name: "", version: "1.0.0" },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    // `initialize` mandates the name field, not a non-empty value, so an empty
+    // reported name also reads as unknown ("—") — symmetric with version.
+    expect(screen.getByText("1.0.0")).toBeInTheDocument();
+    expect(screen.getAllByText("—")).toHaveLength(3);
+  });
+
+  it("renders an em-dash when the reported name is missing", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          // Non-conforming server: `name` is runtime-absent (the field is typed
+          // non-null). Pins the `?.trim()` tolerance — symmetric with the
+          // "version is missing" test above — so it reads "—", not a crash.
+          serverInfo: { version: "1.0.0" } as never,
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    expect(screen.getByText("1.0.0")).toBeInTheDocument();
+    expect(screen.getAllByText("—")).toHaveLength(3);
+  });
+
+  it("renders an em-dash when the reported name is whitespace-only", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          serverInfo: { name: "   ", version: "1.0.0" },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    // A whitespace-only reported name is the same non-conforming class as an
+    // empty one (#1774): it must read as unknown ("—"), not a visually blank
+    // row. Stays faithful — never borrows the catalog name.
+    expect(screen.getByText("1.0.0")).toBeInTheDocument();
+    expect(screen.getAllByText("—")).toHaveLength(3);
+  });
+
+  it("shows 'not reported' for name and version when serverInfo was not reported", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          // App synthesizes a catalog-name fallback here when a modern server
+          // omits serverInfo; the modal must not present it as server-reported.
+          serverInfo: { name: "my-catalog-name", version: "" },
+        }}
+        serverInfoReported={false}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+      />,
+    );
+    // The inferred catalog name is NOT shown as the server's reported name...
+    expect(screen.queryByText("my-catalog-name")).not.toBeInTheDocument();
+    // ...both Name and Version read as not reported instead.
+    expect(screen.getAllByText(SERVER_INFO_NOT_REPORTED_LABEL)).toHaveLength(2);
+  });
+
+  it("renders an em-dash when the protocol version is empty", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{ ...fullResult, protocolVersion: "" }}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    // App supplies `protocolVersion ?? ""`; an empty one reads as unknown ("—"),
+    // symmetric with Name/Version (#1772).
+    expect(screen.getAllByText("—")).toHaveLength(3);
+  });
+
+  it("renders server and client capability sections", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    expect(screen.getByText("Server Capabilities")).toBeInTheDocument();
+    expect(screen.getByText("Client Capabilities")).toBeInTheDocument();
+    expect(screen.getByText("Tools")).toBeInTheDocument();
+    expect(screen.getByText("Resources")).toBeInTheDocument();
+    expect(screen.getByText("Roots")).toBeInTheDocument();
+    expect(screen.getByText("Sampling")).toBeInTheDocument();
+  });
+
+  it("marks Tasks supported on a modern connection that advertises the tasks extension (#1887)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          capabilities: {
+            ...fullResult.capabilities,
+            // SEP-2663: no top-level `tasks` key — support is the extension.
+            extensions: { "io.modelcontextprotocol/tasks": {} },
+          },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="modern"
+      />,
+    );
+    expect(capabilityMark("Tasks")).toBe(SUPPORTED_MARK);
+  });
+
+  it("still marks Tasks unsupported on a modern connection without the extension (#1887)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="modern"
+      />,
+    );
+    expect(capabilityMark("Tasks")).toBe(UNSUPPORTED_MARK);
+  });
+
+  it("does not read the tasks extension on a legacy connection (#1887)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          capabilities: {
+            ...fullResult.capabilities,
+            extensions: { "io.modelcontextprotocol/tasks": {} },
+          },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    // Legacy tasks support is `capabilities.tasks`, which this server omits —
+    // an extension key alone must not turn the row green.
+    expect(capabilityMark("Tasks")).toBe(UNSUPPORTED_MARK);
+  });
+
+  it("marks Tasks supported on a legacy connection from capabilities.tasks", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          capabilities: {
+            ...fullResult.capabilities,
+            // `ServerTasksCapability`'s sub-capabilities are objects, not
+            // booleans — `{}` is the "supported, no sub-options" shape.
+            tasks: { list: {}, cancel: {} },
+          },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    expect(capabilityMark("Tasks")).toBe(SUPPORTED_MARK);
+  });
+
+  it("does not extension-promote a capability other than tasks (#1887)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          capabilities: {
+            tools: { listChanged: true },
+            extensions: { "io.modelcontextprotocol/ui": {} },
+          },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="modern"
+      />,
+    );
+    expect(capabilityMark("Prompts")).toBe(UNSUPPORTED_MARK);
+    expect(capabilityMark("Tasks")).toBe(UNSUPPORTED_MARK);
+  });
+
+  it("renders instructions when present", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    expect(screen.getByText("Server Instructions")).toBeInTheDocument();
+    expect(screen.getByText("Use tools/list first.")).toBeInTheDocument();
+  });
+
+  it("omits the instructions section when not present", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{ ...fullResult, instructions: undefined }}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    expect(screen.queryByText("Server Instructions")).not.toBeInTheDocument();
+  });
+
+  it("defaults to the Legacy era, and marks the session N/A for stdio", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    expect(screen.getByText("Era")).toBeInTheDocument();
+    expect(screen.getByText("Legacy")).toBeInTheDocument();
+    // stdio has no HTTP session concept.
+    expect(screen.getByText("N/A (stdio)")).toBeInTheDocument();
+    // No discover result → no Discovery section.
+    expect(screen.queryByText("Discovery")).not.toBeInTheDocument();
+  });
+
+  it("marks a legacy HTTP connection as session-based", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    expect(screen.getByText("Legacy")).toBeInTheDocument();
+    expect(screen.getByText("Session-based")).toBeInTheDocument();
+  });
+
+  it("shows the Modern era as sessionless and renders the discovery section", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="modern"
+        discoverResult={{
+          supportedVersions: ["2026-07-28", "2025-11-25"],
+          serverInfo: { name: "Everything Server", version: "2.1.0" },
+          capabilities: {
+            tools: {},
+            extensions: {
+              "io.modelcontextprotocol/tasks": {},
+            },
+          },
+        }}
+      />,
+    );
+    expect(screen.getByText("Modern")).toBeInTheDocument();
+    expect(screen.getByText("Sessionless")).toBeInTheDocument();
+    expect(screen.getByText("Discovery")).toBeInTheDocument();
+    expect(screen.getByText("2026-07-28, 2025-11-25")).toBeInTheDocument();
+  });
+
+  it("renders an em-dash for empty supported versions in Discovery", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="modern"
+        discoverResult={{
+          supportedVersions: [],
+          serverInfo: { name: "Everything Server", version: "2.1.0" },
+          capabilities: { tools: {} },
+        }}
+      />,
+    );
+    expect(screen.getByText("Supported versions")).toBeInTheDocument();
+    // Extensions moved out of Discovery into their own era-transparent section.
+    expect(screen.queryByText("Discovery")).toBeInTheDocument();
+    // Exactly three em dashes: empty supported versions, plus the two extension
+    // sections (the fixtures advertise none).
+    expect(screen.getAllByText("—")).toHaveLength(3);
+  });
+
+  it("shows server extensions on a LEGACY connection (no discovery), from server capabilities (#1740)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          capabilities: {
+            ...fullResult.capabilities,
+            extensions: { "io.modelcontextprotocol/tasks": {} },
+          },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    // No discoverResult (legacy) but the server's extension still renders,
+    // sourced from the negotiated server capabilities rather than discovery.
+    expect(screen.queryByText("Discovery")).not.toBeInTheDocument();
+    expect(screen.getByText("Server Extensions")).toBeInTheDocument();
+    expect(
+      screen.getByText("io.modelcontextprotocol/tasks"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the Inspector's own advertised extensions (#1740)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={{
+          ...fullClientCaps,
+          extensions: {
+            "io.modelcontextprotocol/tasks": {},
+            "io.modelcontextprotocol/ui": { mimeTypes: ["text/html"] },
+          },
+        }}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    expect(
+      screen.getByText("Client Advertised Extensions"),
+    ).toBeInTheDocument();
+    // One row per identifier, not a comma-joined string: two ~30-character
+    // ids wrap mid-name in a half-width column.
+    expect(
+      screen.getByText("io.modelcontextprotocol/tasks"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("io.modelcontextprotocol/ui")).toBeInTheDocument();
+  });
+
+  it("renders em-dashes for the extensions sections when neither side advertises any (#1740)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    expect(screen.getByText("Server Extensions")).toBeInTheDocument();
+    expect(
+      screen.getByText("Client Advertised Extensions"),
+    ).toBeInTheDocument();
+    // Exactly two em dashes: the two extension sections (the server version is
+    // present in the fixture, so it does not em-dash).
+    expect(screen.getAllByText("—")).toHaveLength(2);
+  });
+
+  it("hides the Skills section when the server declares no skills extension (#2234)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    expect(
+      screen.queryByText("Skills Extension Options"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the Skills extension and its directoryRead sub-flag (#2234)", () => {
+    // The generic "Server Extensions" row lists the identifier; the sub-flag
+    // that gates `resources/directory/read` is what this section adds, and it
+    // is the fact a server author opens the modal to confirm.
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          capabilities: {
+            ...fullResult.capabilities,
+            extensions: {
+              "io.modelcontextprotocol/skills": { directoryRead: true },
+            },
+          },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    expect(screen.getByText("Skills Extension Options")).toBeInTheDocument();
+    // Asserted on the attribute, not the copy: "Not supported" contains
+    // "Supported", so a text check would pass for either answer.
+    expect(screen.getByTestId("skills-directory-read")).toHaveAttribute(
+      "data-supported",
+      "true",
+    );
+    // The section states the sub-option, not the identifier — that is already
+    // in "Server Extensions" and repeating it would add nothing.
+    expect(screen.getByText("resources/directory/read")).toBeInTheDocument();
+  });
+
+  it("reports directory read as unsupported for a bare skills declaration (#2234)", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={{
+          ...fullResult,
+          capabilities: {
+            ...fullResult.capabilities,
+            extensions: { "io.modelcontextprotocol/skills": {} },
+          },
+        }}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        protocolEra="legacy"
+      />,
+    );
+    expect(screen.getByTestId("skills-directory-read")).toHaveAttribute(
+      "data-supported",
+      "false",
+    );
+  });
+
+  it("renders client registration kind when provided", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          clientId:
+            "https://www.mcpjam.com/.well-known/oauth/client-metadata.json",
+          clientRegistrationKind: "cimd",
+        }}
+      />,
+    );
+    expect(screen.getByText("Client registration")).toBeInTheDocument();
+    expect(screen.getByText("Client ID Metadata (CIMD)")).toBeInTheDocument();
+  });
+
+  it("renders OAuth details when provided", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          clientId: "client-abc",
+          authUrl: "https://auth.example.com/authorize",
+          scopes: ["read", "write"],
+          accessToken: "token-123",
+        }}
+      />,
+    );
+    expect(screen.getByText("OAuth Details")).toBeInTheDocument();
+    expect(screen.getByText("Standard")).toBeInTheDocument();
+    expect(screen.getByText("Authorized")).toBeInTheDocument();
+    expect(screen.getByText("client-abc")).toBeInTheDocument();
+    expect(screen.getByText("Auth URL")).toBeInTheDocument();
+    expect(
+      screen.getByText("https://auth.example.com/authorize"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("read, write")).toBeInTheDocument();
+    expect(screen.getByText("token-123")).toBeInTheDocument();
+  });
+
+  it("weights labels bold and values normal, in both halves of the modal", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          clientId: "client-abc",
+          scopes: ["read"],
+        }}
+      />,
+    );
+
+    // The convention is the whole point of #2328: the label is the fixed
+    // scaffolding a reader scans down, the value is what differs. Asserted in
+    // Server Implementation *and* OAuth Details, because the defect being
+    // guarded against is the two halves disagreeing — checking one alone would
+    // pass on a modal that is internally inconsistent.
+    for (const label of ["Name", "Protocol", "Client ID", "Scopes"]) {
+      expect(screen.getAllByText(label)[0]).toHaveStyle({ fontWeight: "600" });
+    }
+    // `getByText`, not `queryByText` + `?? ""`: an absent value would make the
+    // optional form pass vacuously (undefined → "" → not "600"), so the test
+    // would go green on a row that had stopped rendering at all.
+    for (const value of ["Everything Server", "read"]) {
+      expect(screen.getByText(value).style.fontWeight).not.toBe("600");
+    }
+
+    // Badge values count too. `ThemeBadge` defaults to `fw: 600`, so Status,
+    // Transport and Era read bold-label/bold-value unless overridden — the
+    // whole-modal claim is false without this.
+    for (const badge of ["streamable-http", "Legacy", "Authorized"]) {
+      // `getByText` lands on the Badge's inner label span; `fw` is applied to
+      // the root, so walk up to it or the assertion reads an empty string and
+      // passes against anything.
+      const root = screen.getByText(badge).closest('[class*="Badge-root"]');
+      expect((root as HTMLElement | null)?.style.fontWeight).toBe("400");
+    }
+  });
+
+  it("gives Client ID and Auth URL the full width, with no inset surface", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          clientId:
+            "http://127.0.0.1:8093/client-metadata.json?profile=long-enough-to-wrap",
+          authUrl: "https://auth.example.com/authorize",
+        }}
+      />,
+    );
+
+    // A CIMD client id IS a URL, so it is long by construction. In the
+    // two-column grid it got half the modal and broke mid-token
+    // (`…/client-metadata.` / `json`), which reads as a rendering fault rather
+    // than as one value.
+    for (const value of [
+      "http://127.0.0.1:8093/client-metadata.json?profile=long-enough-to-wrap",
+      "https://auth.example.com/authorize",
+    ]) {
+      expect(screen.getByText(value)).toHaveStyle({
+        backgroundColor: "transparent",
+      });
+    }
+
+    // The background alone does not pin the *layout*: swapping FullWidthField
+    // back for the two-column SimpleGrid would keep it transparent and still
+    // pass. Assert the structure that makes the value full width — label and
+    // value are siblings in a column, and neither sits in a SimpleGrid.
+    for (const [label, value] of [
+      [
+        "Client ID",
+        "http://127.0.0.1:8093/client-metadata.json?profile=long-enough-to-wrap",
+      ],
+      ["Auth URL", "https://auth.example.com/authorize"],
+    ]) {
+      const labelNode = screen.getByText(label);
+      const valueNode = screen.getByText(value);
+      expect(valueNode.parentElement).toBe(labelNode.parentElement);
+      expect(valueNode.closest('[class*="SimpleGrid"]')).toBeNull();
+    }
+  });
+
+  it("bolds the token captions, which are field labels in the same list", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          accessToken: "token-123",
+          idToken: "id-token-456",
+        }}
+      />,
+    );
+
+    // OAuthTokenField renders its own caption, so the weight convention has to
+    // be asserted through it — the other weight test renders no token at all.
+    for (const caption of ["Access Token", "ID Token"]) {
+      expect(screen.getByText(caption).style.fontWeight).toBe("600");
+    }
+  });
+
+  it("groups the full-width fields at the end, Client ID directly above Access Token", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          clientId: "http://127.0.0.1:8093/client-metadata.json",
+          clientRegistrationKind: "cimd",
+          authUrl: "https://auth.example.com/authorize",
+          scopes: ["mcp"],
+          accessToken: "token-123",
+        }}
+      />,
+    );
+
+    // Order is the assertion, so read the labels off the DOM rather than
+    // checking each is merely present: the inline two-column rows come first,
+    // then every label-over-value field together. Interleaving them is what
+    // this guards against — it broke the scan down the label column, and the
+    // tokens already used the full-width layout at the bottom.
+    const order = [
+      "Client registration",
+      "Scopes",
+      "Auth URL",
+      "Client ID",
+      "Access Token",
+    ];
+    const positions = order.map((label) => {
+      const node = screen.getAllByText(label)[0];
+      expect(node).toBeInTheDocument();
+      return (
+        node.compareDocumentPosition(screen.getAllByText("Protocol")[0]) &
+        Node.DOCUMENT_POSITION_PRECEDING
+      );
+    });
+    expect(positions.every(Boolean)).toBe(true);
+
+    const labelNode = (label: string) => screen.getAllByText(label)[0];
+    for (let i = 0; i < order.length - 1; i++) {
+      const earlier = labelNode(order[i]);
+      const later = labelNode(order[i + 1]);
+      expect(
+        earlier.compareDocumentPosition(later) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+
+  it("renders EMA idp session when provided", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "ema",
+          authorized: true,
+          idpSession: "logged_in",
+        }}
+      />,
+    );
+    expect(screen.getByText("Enterprise-managed")).toBeInTheDocument();
+    expect(screen.getByText("IdP session")).toBeInTheDocument();
+    expect(screen.getByText("Signed in")).toBeInTheDocument();
+  });
+
+  it("renders the EMA idp session as Session expired", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "ema",
+          authorized: false,
+          idpSession: "expired",
+        }}
+      />,
+    );
+    expect(screen.getByText("IdP session")).toBeInTheDocument();
+    expect(screen.getByText("Session expired")).toBeInTheDocument();
+  });
+
+  it("renders the EMA idp session as Not signed in for the none state", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "ema",
+          authorized: false,
+          idpSession: "none",
+        }}
+      />,
+    );
+    expect(screen.getByText("IdP session")).toBeInTheDocument();
+    expect(screen.getByText("Not signed in")).toBeInTheDocument();
+  });
+
+  it("omits the IdP session row when EMA oauth has no idpSession", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{ protocol: "ema", authorized: true }}
+      />,
+    );
+    expect(screen.getByText("Enterprise-managed")).toBeInTheDocument();
+    expect(screen.queryByText("IdP session")).not.toBeInTheDocument();
+  });
+
+  it("hides optional OAuth fields that are not provided", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+        oauth={{ protocol: "standard", authorized: false }}
+      />,
+    );
+    expect(screen.getByText("OAuth Details")).toBeInTheDocument();
+    expect(screen.getByText("Not authorized")).toBeInTheDocument();
+    expect(screen.queryByText("Auth URL")).not.toBeInTheDocument();
+    expect(screen.queryByText("Scopes")).not.toBeInTheDocument();
+    expect(screen.queryByText("Access Token")).not.toBeInTheDocument();
+    expect(screen.queryByText("ID Token")).not.toBeInTheDocument();
+  });
+
+  it("renders the ID Token row when the token set carries one", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          accessToken: "token-123",
+          idToken: "id-token-456",
+        }}
+      />,
+    );
+    expect(screen.getByText("Access Token")).toBeInTheDocument();
+    expect(screen.getByText("ID Token")).toBeInTheDocument();
+    expect(screen.getByText("id-token-456")).toBeInTheDocument();
+  });
+
+  it("gives the two token rows' controls distinct accessible names", () => {
+    // Both rows carry a copy control, and both tokens here are JWTs so both
+    // carry a decode toggle. Screen-reader button navigation has only the
+    // accessible name to go on, so the four must not collide (#2019 review).
+    const jwt = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJ1c2VyIn0.";
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          accessToken: jwt,
+          idToken: jwt,
+        }}
+      />,
+    );
+
+    const names = screen
+      .getAllByRole("button")
+      .map((button) => button.getAttribute("aria-label") ?? button.textContent)
+      .filter((name): name is string => Boolean(name));
+    expect(new Set(names).size).toBe(names.length);
+
+    for (const name of [
+      "Copy Access Token",
+      "Copy ID Token",
+      "Decode JWT for Access Token",
+      "Decode JWT for ID Token",
+    ]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+  });
+
+  it("renders the ID Token row on its own when there is no access token", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          idToken: "id-token-456",
+        }}
+      />,
+    );
+    expect(screen.queryByText("Access Token")).not.toBeInTheDocument();
+    expect(screen.getByText("ID Token")).toBeInTheDocument();
+  });
+
+  it("omits the ID Token row when only an access token is present", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          accessToken: "token-123",
+        }}
+      />,
+    );
+    expect(screen.getByText("Access Token")).toBeInTheDocument();
+    expect(screen.queryByText("ID Token")).not.toBeInTheDocument();
+  });
+
+  it("does not render OAuth section when oauth prop is omitted", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+      />,
+    );
+    expect(screen.queryByText("OAuth Details")).not.toBeInTheDocument();
+  });
+
+  it("calls onClearOAuth from the OAuth section", async () => {
+    const user = userEvent.setup();
+    const onClearOAuth = vi.fn();
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        oauth={{
+          protocol: "standard",
+          authorized: true,
+          clientId: "client-abc",
+        }}
+        onClearOAuth={onClearOAuth}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: CLEAR_OAUTH_STATE_AND_DISCONNECT_LABEL,
+      }),
+    );
+    expect(onClearOAuth).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ConnectionInfoContent connection activity (#2318)", () => {
+  const NOW = 1_000_000;
+  const seconds = (n: number) => n * 1000;
+
+  it("omits the section when no diagnostics are supplied", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+      />,
+    );
+    expect(screen.queryByText("Connection Activity")).not.toBeInTheDocument();
+  });
+
+  it("renders the idle state: nothing unanswered, nothing received, stream not opened", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        diagnostics={{ capturedAt: NOW, outstandingRequests: [] }}
+      />,
+    );
+    expect(screen.getByText("Connection Activity")).toBeInTheDocument();
+    expect(screen.getByText(NO_OUTSTANDING_REQUESTS_LABEL)).toBeInTheDocument();
+    expect(screen.getByText(NO_RESPONSE_YET_LABEL)).toBeInTheDocument();
+    expect(screen.getByText(NO_NOTIFICATION_STREAM_LABEL)).toBeInTheDocument();
+  });
+
+  it("lists each unanswered request on its own line, with the last response and the open stream", () => {
+    const diagnostics: ConnectionDiagnostics = {
+      capturedAt: NOW,
+      outstandingRequests: [
+        { id: 2, method: "tools/list", sentAt: NOW - seconds(60) },
+        { id: 3, method: "ping", sentAt: NOW - seconds(12) },
+      ],
+      lastResponse: { method: "initialize", receivedAt: NOW - seconds(61) },
+      notificationStream: {
+        url: "http://127.0.0.1:9779/mcp",
+        openedAt: NOW - seconds(252),
+        eventCount: 0,
+      },
+    };
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="streamable-http"
+        diagnostics={diagnostics}
+      />,
+    );
+    const outstanding = screen.getByTestId("connection-activity-outstanding");
+    expect(outstanding.children).toHaveLength(2);
+    expect(outstanding.children[0]?.textContent).toBe(
+      "tools/list — sent 1m00s ago",
+    );
+    expect(outstanding.children[1]?.textContent).toBe("ping — sent 12s ago");
+    expect(screen.getByText("initialize — 1m01s ago")).toBeInTheDocument();
+    expect(
+      screen.getByText("GET /mcp — open for 4m12s, 0 events delivered"),
+    ).toBeInTheDocument();
+  });
+
+  it("reports the stream row as not applicable on stdio", () => {
+    renderWithMantine(
+      <ConnectionInfoContent
+        initializeResult={fullResult}
+        clientCapabilities={fullClientCaps}
+        transport="stdio"
+        diagnostics={{ capturedAt: NOW, outstandingRequests: [] }}
+      />,
+    );
+    // Both the Session row and the Notification stream row read N/A (stdio).
+    expect(screen.getAllByText(NO_STREAM_ON_STDIO_LABEL)).toHaveLength(2);
+  });
+});

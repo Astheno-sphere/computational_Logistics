@@ -1,0 +1,836 @@
+# PuLP : Python LP Modeler
+# Version 1.4.2
+
+# Copyright (c) 2002-2005, Jean-Sebastien Roy (js@jeannot.org)
+# Modifications Copyright (c) 2007- Stuart Anthony Mitchell (s.mitchell@auckland.ac.nz)
+# $Id:solvers.py 1791 2008-04-23 22:54:34Z smit023 $
+
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."""
+
+from __future__ import annotations
+
+import math
+import re
+import sys
+import warnings
+from typing import TYPE_CHECKING, Any
+
+from .. import constants
+from .core import (
+    LpSolver,
+    LpSolver_CMD,
+    PulpSolverError,
+    clocks,
+    import_optional,
+    requires,
+    subprocess,
+)
+
+if TYPE_CHECKING:
+    from ..core.lp_problem import LpProblem
+    from ..core.lp_stats import LpSolveStats
+
+
+def _ismip(lp: LpProblem) -> bool:
+    """Check whether lp is a MIP.
+
+    From an XPRESS point of view, a problem is also a MIP if it contains
+    SOS constraints."""
+    return bool(lp.isMIP() or lp.has_sos())
+
+
+class XPRESS(LpSolver_CMD):
+    """The XPRESS LP solver that uses the XPRESS command line tool
+    in a subprocess"""
+
+    name = "XPRESS"
+
+    def __init__(
+        self,
+        mip=True,
+        msg=True,
+        timeLimit=None,
+        gapRel=None,
+        options=None,
+        keepFiles=False,
+        path=None,
+        heurFreq=None,
+        heurStra=None,
+        coverCuts=None,
+        preSolve=None,
+        warmStart=False,
+    ):
+        """
+        Initializes the Xpress solver.
+
+        :param bool mip: if False, assume LP even if integer variables
+        :param bool msg: if False, no log is shown
+        :param float timeLimit: maximum time for solver (in seconds)
+        :param float gapRel: relative gap tolerance for the solver to stop (in fraction)
+        :param heurFreq: the frequency at which heuristics are used in the tree search
+        :param heurStra: heuristic strategy
+        :param coverCuts: the number of rounds of lifted cover inequalities at the top node
+        :param preSolve: whether presolving should be performed before the main algorithm
+        :param options: Adding more options, e.g. options = ["NODESELECTION=1", "HEURDEPTH=5"]
+                        More about Xpress options and control parameters please see
+                        https://www.fico.com/fico-xpress-optimization/docs/latest/solver/optimizer/HTML/chapter7.html
+        :param bool warmStart: if True, then use current variable values as start
+        """
+        LpSolver_CMD.__init__(
+            self,
+            gapRel=gapRel,
+            mip=mip,
+            msg=msg,
+            timeLimit=timeLimit,
+            options=options,
+            path=path,
+            keepFiles=keepFiles,
+            heurFreq=heurFreq,
+            heurStra=heurStra,
+            coverCuts=coverCuts,
+            preSolve=preSolve,
+            warmStart=warmStart,
+        )
+
+    def defaultPath(self):
+        return self.executableExtension("optimizer")
+
+    def available(self):
+        """True if the solver is available"""
+        if self.executable(self.path):
+            return True
+        if self.msg:
+            warnings.warn(
+                "Xpress optimizer binary not found. "
+                "Consider using XPRESS_PY instead: pip install xpress",
+                UserWarning,
+                stacklevel=2,
+            )
+        return False
+
+    def actualSolve(self, lp: LpProblem, **kwargs: Any) -> LpSolveStats:
+        """Solve a well formulated lp problem."""
+        start = clocks()
+        if not self.executable(self.path):
+            raise PulpSolverError("PuLP: cannot execute " + self.path)
+        tmpLp, tmpSol, tmpCmd, tmpAttr, tmpStart = self.create_tmp_files(
+            lp.name, "lp", "prt", "cmd", "attr", "slx"
+        )
+        variables = lp.writeLP(tmpLp, writeSOS=1, mip=self.mip)
+        if self.optionsDict.get("warmStart", False):
+            start = [(v.name, v.value()) for v in variables if v.value() is not None]
+            self.writeslxsol(tmpStart, start)
+        # Explicitly capture some attributes so that we can easily get
+        # information about the solution.
+        attrNames = []
+        S = constants.LpSolveStatus
+        if _ismip(lp) and self.mip:
+            attrNames.extend(["mipobjval", "bestbound", "mipstatus"])
+            statusmap = {
+                0: S.Undefined,  # XPRS_MIP_NOT_LOADED
+                1: S.Undefined,  # XPRS_MIP_LP_NOT_OPTIMAL
+                2: S.Undefined,  # XPRS_MIP_LP_OPTIMAL
+                3: S.Stopped,  # XPRS_MIP_NO_SOL_FOUND
+                4: S.Stopped,  # XPRS_MIP_SOLUTION
+                5: S.Infeasible,  # XPRS_MIP_INFEAS
+                6: S.Optimal,  # XPRS_MIP_OPTIMAL
+                7: S.Unbounded,  # XPRS_MIP_UNBOUNDED
+            }
+            with_solution = {4, 6}
+            statuskey = "mipstatus"
+        else:
+            attrNames.extend(["lpobjval", "lpstatus"])
+            statusmap = {
+                0: S.NotSolved,  # XPRS_LP_UNSTARTED
+                1: S.Optimal,  # XPRS_LP_OPTIMAL
+                2: S.Infeasible,  # XPRS_LP_INFEAS
+                3: S.GapLimit,  # XPRS_LP_CUTOFF
+                4: S.Stopped,  # XPRS_LP_UNFINISHED
+                5: S.Unbounded,  # XPRS_LP_UNBOUNDED
+                6: S.GapLimit,  # XPRS_LP_CUTOFF_IN_DUAL
+                7: S.NotSolved,  # XPRS_LP_UNSOLVED
+                8: S.Undefined,  # XPRS_LP_NONCONVEX
+            }
+            with_solution = {1}
+            statuskey = "lpstatus"
+        with open(tmpCmd, "w") as cmd:
+            if not self.msg:
+                cmd.write("OUTPUTLOG=0\n")
+            # The readprob command must be in lower case for correct filename handling
+            cmd.write("readprob " + self.quote_path(tmpLp) + "\n")
+            if self.timeLimit is not None:
+                cmd.write("MAXTIME=%d\n" % self.timeLimit)
+            targetGap = self.optionsDict.get("gapRel")
+            if targetGap is not None:
+                cmd.write(f"MIPRELSTOP={targetGap:f}\n")
+            heurFreq = self.optionsDict.get("heurFreq")
+            if heurFreq is not None:
+                cmd.write("HEURFREQ=%d\n" % heurFreq)
+            heurStra = self.optionsDict.get("heurStra")
+            if heurStra is not None:
+                cmd.write("HEURSTRATEGY=%d\n" % heurStra)
+            coverCuts = self.optionsDict.get("coverCuts")
+            if coverCuts is not None:
+                cmd.write("COVERCUTS=%d\n" % coverCuts)
+            preSolve = self.optionsDict.get("preSolve")
+            if preSolve is not None:
+                cmd.write("PRESOLVE=%d\n" % preSolve)
+            if self.optionsDict.get("warmStart", False):
+                cmd.write("readslxsol " + self.quote_path(tmpStart) + "\n")
+            for option in self.options:
+                cmd.write(option + "\n")
+            if _ismip(lp) and self.mip:
+                cmd.write("mipoptimize\n")
+            else:
+                cmd.write("lpoptimize\n")
+            # The writeprtsol command must be in lower case for correct filename handling
+            cmd.write("writeprtsol " + self.quote_path(tmpSol) + "\n")
+            cmd.write(
+                f"set fh [open {self.quote_path(tmpAttr)} w]; list\n"
+            )  # `list` to suppress output
+
+            for attr in attrNames:
+                cmd.write(f'puts $fh "{attr}=${attr}"\n')
+            cmd.write("close $fh\n")
+            cmd.write("QUIT\n")
+        with open(tmpCmd) as cmd:
+            consume = False
+            subout = None
+            suberr = None
+            if not self.msg:
+                # Xpress writes a banner before we can disable output. So
+                # we have to explicitly consume the banner.
+                if sys.hexversion >= 0x03030000:
+                    subout = subprocess.DEVNULL
+                    suberr = subprocess.DEVNULL
+                else:
+                    # We could also use open(os.devnull, 'w') but then we
+                    # would be responsible for closing the file.
+                    subout = subprocess.PIPE
+                    suberr = subprocess.STDOUT
+                    consume = True
+            xpress = subprocess.Popen(
+                [self.path, lp.name],
+                shell=True,
+                stdin=cmd,
+                stdout=subout,
+                stderr=suberr,
+                universal_newlines=True,
+            )
+            if consume and xpress.stdout is not None:
+                # Special case in which messages are disabled and we have
+                # to consume any output
+                for _ in xpress.stdout:
+                    pass
+
+            if xpress.wait() != 0:
+                raise PulpSolverError("PuLP: Error while executing " + self.path)
+        values, redcost, slacks, duals, attrs = self.readsol(tmpSol, tmpAttr)
+        self.delete_tmp_files(tmpLp, tmpSol, tmpCmd, tmpAttr)
+        code = attrs.get(statuskey, -1)
+        status = statusmap.get(code, S.Undefined)
+        lp.assignVarsVals(values)
+        lp.assignVarsDj(redcost)
+        lp.assignConsSlack(slacks)
+        lp.assignConsPi(duals)
+        return self.buildStats(lp, status, code in with_solution, start=start)
+
+    @staticmethod
+    def readsol(filename, attrfile):
+        """Read an XPRESS solution file"""
+        values = {}
+        redcost = {}
+        slacks = {}
+        duals = {}
+        with open(filename) as f:
+            for lineno, _line in enumerate(f):
+                # The first 6 lines are status information
+                if lineno < 6:
+                    continue
+                elif lineno == 6:
+                    # Line with status information
+                    _line = _line.split()
+                    int(_line[2])
+                    int(_line[5])
+                elif lineno < 10:
+                    # Empty line, "Solution Statistics", objective direction
+                    pass
+                elif lineno == 10:
+                    # Solution status
+                    pass
+                else:
+                    # There is some more stuff and then follows the "Rows" and
+                    # "Columns" section. That other stuff does not match the
+                    # format of the rows/columns lines, so we can keep the
+                    # parser simple
+                    line = _line.split()
+                    if len(line) > 1:
+                        if line[0] == "C":
+                            # A column
+                            # (C, Number, Name, At, Value, Input Cost, Reduced Cost)
+                            name = line[2]
+                            values[name] = float(line[4])
+                            redcost[name] = float(line[6])
+                        elif len(line[0]) == 1 and line[0] in "LGRE":
+                            # A row
+                            # ([LGRE], Number, Name, At, Value, Slack, Dual, RHS)
+                            name = line[2]
+                            slacks[name] = float(line[5])
+                            duals[name] = float(line[6])
+        # Read the attributes that we wrote explicitly
+        attrs = dict()
+        with open(attrfile) as f:
+            for line in f:
+                fields = line.strip().split("=")
+                if len(fields) == 2 and fields[0].lower() == fields[0]:
+                    value = fields[1].strip()
+                    try:
+                        value = int(fields[1].strip())
+                    except ValueError:
+                        try:
+                            value = float(fields[1].strip())
+                        except ValueError:
+                            pass
+                    attrs[fields[0].strip()] = value
+        return values, redcost, slacks, duals, attrs
+
+    def writeslxsol(self, name, *values):
+        """
+        Write a solution file in SLX format.
+        The function can write multiple solutions to the same file, each
+        solution must be passed as a list of (name,value) pairs. Solutions
+        are written in the order specified and are given names "solutionN"
+        where N is the index of the solution in the list.
+
+        :param string name: file name
+        :param list values: list of lists of (name,value) pairs
+        """
+        with open(name, "w") as slx:
+            for i, sol in enumerate(values):
+                slx.write("NAME solution%d\n" % i)
+                for name, value in sol:
+                    slx.write(f" C      {name} {value:.16f}\n")
+            slx.write("ENDATA\n")
+
+    @staticmethod
+    def quote_path(path):
+        r"""
+        Quotes a path for the Xpress optimizer console, by wrapping it in
+        double quotes and escaping the following characters, which would
+        otherwise be interpreted by the Tcl shell: \ $ " [
+        """
+        return '"' + re.sub(r'([\\$"[])', r"\\\1", path) + '"'
+
+
+XPRESS_CMD = XPRESS
+
+xpress_mod = import_optional("xpress")
+if xpress_mod is not None:
+    # Always disable the global output. We only want output if
+    # we install callbacks explicitly
+    try:
+        xpress_mod.setOutputEnabled(False)
+    except Exception:
+        pass
+
+
+class XPRESS_PY(LpSolver):
+    """The XPRESS LP solver that uses XPRESS Python API"""
+
+    name = "XPRESS_PY"
+
+    def __init__(
+        self,
+        mip=True,
+        msg=True,
+        timeLimit=None,
+        gapRel=None,
+        heurFreq=None,
+        heurStra=None,
+        coverCuts=None,
+        preSolve=None,
+        warmStart=None,
+        export=None,
+        options=None,
+    ):
+        """
+        Initializes the Xpress solver.
+
+        :param bool mip: if False, assume LP even if integer variables
+        :param bool msg: if False, no log is shown
+        :param float timeLimit: maximum time for solver (in seconds)
+        :param float gapRel: relative gap tolerance for the solver to stop (in fraction)
+        :param heurFreq: the frequency at which heuristics are used in the tree search
+        :param heurStra: heuristic strategy
+        :param coverCuts: the number of rounds of lifted cover inequalities at the top node
+        :param preSolve: whether presolving should be performed before the main algorithm
+        :param bool warmStart: if set then use current variable values as warm start
+        :param string export: if set then the model will be exported to this file before solving
+        :param options: Adding more options. This is a list the elements of which
+                        are either (name,value) pairs or strings "name=value".
+                        More about Xpress options and control parameters please see
+                        https://www.fico.com/fico-xpress-optimization/docs/latest/solver/optimizer/HTML/chapter7.html
+        """
+        if timeLimit is not None:
+            # The Xpress time limit has this interpretation:
+            # timelimit <0: Stop after -timelimit, no matter what
+            # timelimit >0: Stop after timelimit only if a feasible solution
+            #               exists. We overwrite this meaning here since it is
+            #               somewhat counterintuitive when compared to other
+            #               solvers. You can always pass a positive timlimit
+            #               via `options` to get that behavior.
+            timeLimit = -abs(timeLimit)
+        LpSolver.__init__(
+            self,
+            gapRel=gapRel,
+            mip=mip,
+            msg=msg,
+            timeLimit=timeLimit,
+            options=options,
+            heurFreq=heurFreq,
+            heurStra=heurStra,
+            coverCuts=coverCuts,
+            preSolve=preSolve,
+            warmStart=warmStart,
+        )
+        self._export = export
+
+    def available(self):
+        """True if the solver is available"""
+        return xpress_mod is not None
+
+    def callSolver(self, lp, prepare=None):
+        """Run the low-level XPRESS solve (used from :meth:`actualSolve`).
+
+        :param prepare:  a function that is called with `lp` as argument
+                         and allows final tweaks to `lp.solverModel` before
+                         the low level solve is started.
+        """
+        try:
+            model = lp.solverModel
+            if self._export is not None:
+                if self._export.lower().endswith(".lp"):
+                    try:  # New API first
+                        model.writeProb(self._export, "l")
+                    except AttributeError:  # Fallback to deprecated API
+                        model.write(self._export, "l")
+                else:
+                    try:  # New API first
+                        model.writeProb(self._export)
+                    except AttributeError:  # Fallback to deprecated API
+                        model.write(self._export)
+            if prepare is not None:
+                prepare(lp)
+            if _ismip(lp) and not self.mip:
+                # Solve only the LP relaxation
+                try:  # New API first
+                    model.lpOptimize()
+                except AttributeError:  # Fallback to deprecated API
+                    model.lpoptimize()
+            else:
+                # In all other cases, optimize() does the correct thing
+                try:  # New API first
+                    model.optimize()
+                except AttributeError:  # Fallback to deprecated API
+                    model.solve()
+        except (
+            xpress_mod.ModelError,
+            xpress_mod.InterfaceError,
+            xpress_mod.SolverError,
+        ) as err:
+            raise PulpSolverError(str(err))
+
+    def findSolutionValues(self, lp):
+        try:
+            model = lp.solverModel
+            if model is None:
+                raise PulpSolverError(
+                    "XPRESS_PY: no solver model; call buildSolverModel first"
+                )
+            var_handles = list(model.getVariable())
+            constr_handles = list(model.getConstraint())
+
+            exported_vars = lp.exported_variables()
+            id_to_col = {v.id: j for j, v in enumerate(exported_vars)}
+            xpress_vars = [(v, var_handles[id_to_col[v.id]]) for v in exported_vars]
+            xpress_cons = [
+                (
+                    c.name,
+                    c,
+                    constr_handles[c.id],
+                )
+                for c in lp.constraints()
+            ]
+
+            vals = slacks = duals = djs = None
+
+            # Resolve solstatus enum constants with integer fallbacks for older versions
+            _SS = getattr(xpress_mod, "SolStatus", None)
+            _SS_NOTFOUND = getattr(_SS, "NOTFOUND", 0) if _SS else 0
+            _SS_OPTIMAL = getattr(_SS, "OPTIMAL", 1) if _SS else 1
+            _SS_FEASIBLE = getattr(_SS, "FEASIBLE", 2) if _SS else 2
+            _SS_INFEASIBLE = getattr(_SS, "INFEASIBLE", 3) if _SS else 3
+            _SS_UNBOUNDED = getattr(_SS, "UNBOUNDED", 4) if _SS else 4
+
+            S = constants.LpSolveStatus
+            statusmap = {
+                _SS_NOTFOUND: S.NotSolved,
+                _SS_OPTIMAL: S.Optimal,
+                _SS_FEASIBLE: S.Stopped,
+                _SS_INFEASIBLE: S.Infeasible,
+                _SS_UNBOUNDED: S.Unbounded,
+            }
+            # why the solve stopped early, with integer fallbacks for older versions
+            _ST = getattr(xpress_mod, "StopStatus", None)
+            stop_names = {
+                "TIMELIMIT": (1, S.TimeLimit),
+                "CTRLC": (2, S.Interrupted),
+                "NODELIMIT": (3, S.NodeLimit),
+                "ITERLIMIT": (4, S.IterationLimit),
+                "MIPGAP": (5, S.GapLimit),
+                "SOLLIMIT": (6, S.SolutionLimit),
+                "MEMORYERROR": (8, S.MemoryLimit),
+                "USER": (9, S.Interrupted),
+                "NUMERICALERROR": (13, S.NumericalError),
+                "WORKLIMIT": (14, S.TimeLimit),
+            }
+            stopmap = {
+                (getattr(_ST, name, code) if _ST else code): status
+                for name, (code, status) in stop_names.items()
+            }
+
+            solstatus = model.attributes.solstatus
+
+            # Check if we have a solution (optimal or feasible)
+            if solstatus in [_SS_OPTIMAL, _SS_FEASIBLE]:
+                vals = model.getSolution([h for _, h in xpress_vars])
+                if xpress_cons:
+                    try:  # Try plural version first (Xpress 9.8+)
+                        slacks = model.getSlacks([h for _, _, h in xpress_cons])
+                    except AttributeError:  # Fall back to Xpress 9.7 and earlier
+                        slacks = [model.getSlack(h) for _, _, h in xpress_cons]
+                else:
+                    slacks = None
+
+                # Get dual solution only for LP (not for MIP)
+                if not (_ismip(lp) and self.mip):
+                    if xpress_cons:
+                        try:  # Try plural version first (Xpress 9.8+)
+                            duals = model.getDuals([h for _, _, h in xpress_cons])
+                        except AttributeError:  # Fall back to Xpress 9.7 and earlier
+                            duals = [model.getDual(h) for _, _, h in xpress_cons]
+                    else:
+                        duals = None
+
+                    try:  # Try plural version first (Xpress 9.8+)
+                        djs = model.getRedCosts([h for _, h in xpress_vars])
+                    except AttributeError:  # Fall back to Xpress 9.7 and earlier
+                        djs = [model.getRedCost(h) for _, h in xpress_vars]
+
+            # ---- write back into PuLP structures ----
+            if vals is not None:
+                lp.assignVarsVals(
+                    {v.name: val for (v, _), val in zip(xpress_vars, vals)}
+                )
+
+            if djs is not None:
+                lp.assignVarsDj({v.name: rc for (v, _), rc in zip(xpress_vars, djs)})
+
+            if duals is not None:
+                # constraints dict preserves insertion order in Python 3.7+
+                lp.assignConsPi({n: pi for (n, c, _), pi in zip(xpress_cons, duals)})
+
+            if slacks is not None:
+                lp.assignConsSlack({n: s for (n, c, _), s in zip(xpress_cons, slacks)})
+
+            status = statusmap.get(solstatus, S.Undefined)
+            if status in (S.NotSolved, S.Stopped):
+                try:
+                    status = stopmap.get(model.attributes.stopstatus, status)
+                except AttributeError:
+                    pass
+            return status, solstatus in (_SS_OPTIMAL, _SS_FEASIBLE)
+
+        except (
+            xpress_mod.ModelError,
+            xpress_mod.InterfaceError,
+            xpress_mod.SolverError,
+        ) as err:
+            raise PulpSolverError(str(err))
+
+    @requires("xpress")
+    def actualSolve(self, lp: LpProblem, **kwargs: Any) -> LpSolveStats:
+        """Solve a well formulated lp problem."""
+        start = clocks()
+        prepare = kwargs.get("prepare")
+        self.buildSolverModel(lp)
+        self.callSolver(lp, prepare)
+        status, has_solution = self.findSolutionValues(lp)
+        return self.buildStats(lp, status, has_solution, start=start)
+
+    @requires("xpress")
+    def buildSolverModel(self, lp):
+        """
+        Takes the pulp lp model and translates it into an xpress model
+        """
+        self._extract(lp)
+        try:
+            # Apply controls, warmstart etc. We do this here rather than in
+            # callSolver() so that the caller has a chance to overwrite things
+            # either using the `prepare` argument to callSolver() or by
+            # explicitly calling
+            #   self.buildSolverModel()
+            #   self.callSolver()
+            #   self.findSolutionValues()
+            # This also avoids unintended warmstart side effects when callers
+            # build and solve in separate steps.
+            model = lp.solverModel
+            # Apply controls that were passed to the constructor
+            for key, name in [
+                ("gapRel", "MIPRELSTOP"),
+                ("timeLimit", "MAXTIME"),
+                ("heurFreq", "HEURFREQ"),
+                ("heurStra", "HEURSTRATEGY"),
+                ("coverCuts", "COVERCUTS"),
+                ("preSolve", "PRESOLVE"),
+            ]:
+                value = self.optionsDict.get(key, None)
+                if value is not None:
+                    model.setControl(name, value)
+
+            # Apply any other controls. These overwrite controls that were
+            # passed explicitly into the constructor.
+            for option in self.options:
+                if isinstance(option, tuple):
+                    name = option[0]
+                    value = option[1]
+                else:
+                    fields = option.split("=", 1)
+                    if len(fields) != 2:
+                        raise PulpSolverError("Invalid option " + str(option))
+                    name = fields[0].strip()
+                    value = fields[1].strip()
+                try:
+                    model.setControl(name, int(value))
+                    continue
+                except ValueError:
+                    pass
+                try:
+                    model.setControl(name, float(value))
+                    continue
+                except ValueError:
+                    pass
+                model.setControl(name, value)
+            # Setup warmstart information
+            if self.optionsDict.get("warmStart", False):
+                solval = list()
+                colind = list()
+                exported_vars = lp.exported_variables()
+                id_to_col = {v.id: j for j, v in enumerate(exported_vars)}
+                for v in exported_vars:
+                    if v.value() is not None:
+                        solval.append(v.value())
+                        colind.append(id_to_col[v.id])
+                if _ismip(lp) and self.mip:
+                    # If we have a value for every variable then use
+                    # loadMipSol(), which requires a dense solution. Otherwise
+                    # use addMipSol() which allows sparse vectors.
+                    if len(solval) == model.attributes.cols:
+                        try:  # New API first
+                            model.loadMipSol(solval)
+                        except AttributeError:  # Fallback to deprecated API
+                            model.loadmipsol(solval)
+                    else:
+                        try:  # New API first
+                            model.addMipSol(solval, colind, "warmstart")
+                        except AttributeError:  # Fallback to deprecated API
+                            model.addmipsol(solval, colind, "warmstart")
+                else:
+                    try:  # New API first
+                        model.loadLPSol(solval, None, None, None)
+                    except AttributeError:  # Fallback to deprecated API
+                        model.loadlpsol(solval, None, None, None)
+            # Setup message callback if output is requested
+            if self.msg:
+
+                def message(prob, data, msg, msgtype):
+                    if msgtype > 0:
+                        print(msg)
+
+                try:  # New API first
+                    model.addMessageCallback(message)
+                except AttributeError:  # Fallback to deprecated API
+                    model.addcbmessage(message)
+        except (
+            xpress_mod.ModelError,
+            xpress_mod.InterfaceError,
+            xpress_mod.SolverError,
+        ) as err:
+            raise PulpSolverError(str(err))
+
+    def _reset(self, lp):
+        """Reset any XPRESS specific information in lp."""
+        if hasattr(lp, "solverModel"):
+            delattr(lp, "solverModel")
+
+    def _extract(self, lp):
+        """Extract a given model to an XPRESS Python API instance.
+
+        The function stores XPRESS specific information in the `solverModel` property
+        of `lp` and each variable and constraint. These information can be
+        removed by calling `_reset`.
+        """
+        self._reset(lp)
+        try:
+            # Map PuLP senses -> XPRESS tokens (prefer xp.leq/geq/eq if present; else fall back to 'L','G','E')
+            try:
+                _XP_LEQ = xpress_mod.leq
+            except AttributeError:
+                _XP_LEQ = "L"
+            try:
+                _XP_GEQ = xpress_mod.geq
+            except AttributeError:
+                _XP_GEQ = "G"
+            try:
+                _XP_EQ = xpress_mod.eq
+            except AttributeError:
+                _XP_EQ = "E"
+
+            _SENSE_MAP = {
+                constants.LpConstraintLE: _XP_LEQ,
+                constants.LpConstraintGE: _XP_GEQ,
+                constants.LpConstraintEQ: _XP_EQ,
+            }
+
+            def _xp_make_constraint(lhs, rhs, xp_sense, name=None):
+                """
+                Create an XPRESS constraint in a way that works with both APIs:
+                new: xpress.constraint(body=..., type=..., rhs=..., name=...)
+                old: xpress.constraint(body=..., sense=..., rhs=..., name=...)
+                """
+                # Prefer the new keyword first
+                try:
+                    return xpress_mod.constraint(
+                        body=lhs, type=xp_sense, rhs=rhs, name=name
+                    )
+                except TypeError:
+                    # Fallback to old keyword
+                    try:
+                        return xpress_mod.constraint(
+                            body=lhs, sense=xp_sense, rhs=rhs, name=name
+                        )
+                    except TypeError as e:
+                        raise PulpSolverError(
+                            f"XPRESS constraint constructor is incompatible: {e}"
+                        )
+
+            model = xpress_mod.problem()
+            if lp.sense == constants.LpMaximize:
+                try:  # New API first
+                    model.chgObjSense(xpress_mod.maximize)
+                except AttributeError:  # Fallback to deprecated API
+                    model.chgobjsense(xpress_mod.maximize)
+
+            var_handles = []
+
+            # Create variables (id = position in lp.variables()).
+            obj = list()
+            lb = list()
+            ub = list()
+            ctype = list()
+            names = list()
+            exported_vars = lp.exported_variables()
+            id_to_col = {v.id: j for j, v in enumerate(exported_vars)}
+            for v in exported_vars:
+                lb.append(
+                    -xpress_mod.infinity
+                    if not math.isfinite(v.lowBound)
+                    else v.lowBound
+                )
+                ub.append(
+                    xpress_mod.infinity if not math.isfinite(v.upBound) else v.upBound
+                )
+                obj.append(lp.objective.get(v, 0.0))
+                if v.cat == constants.LpInteger:
+                    ctype.append("I")
+                elif v.cat == constants.LpBinary:
+                    ctype.append("B")
+                else:
+                    ctype.append("C")
+                names.append(v.name)
+            try:  # New API first
+                model.addCols(obj, [0] * (len(obj) + 1), [], [], lb, ub)
+                model.addNames(xpress_mod.Namespaces.COLUMN, names, 0, len(names) - 1)
+                model.chgColType(range(len(ctype)), ctype)
+            except AttributeError:  # Fallback to deprecated API
+                model.addcols(obj, [0] * (len(obj) + 1), [], [], lb, ub, names, ctype)
+            for v, x in zip(exported_vars, model.getVariable()):
+                var_handles.append(x)
+
+            # Generate constraints in model order (same as lp.constraints() list).
+            cons = list()
+            for con in lp.constraints():
+                lhs = xpress_mod.Sum(
+                    a * var_handles[id_to_col[x.id]]
+                    for x, a in sorted(con.items(), key=lambda item: item[0].name)
+                )
+                rhs = -con.constant
+
+                xp_sense = _SENSE_MAP.get(con.sense)
+                if xp_sense is None:
+                    raise PulpSolverError(f"Unsupported constraint type {con.sense}")
+
+                c = _xp_make_constraint(
+                    lhs=lhs, rhs=rhs, xp_sense=xp_sense, name=con.name
+                )
+                cons.append(c)
+                if len(cons) >= 100:
+                    model.addConstraint(cons)
+                    cons = list()
+            if len(cons) > 0:
+                model.addConstraint(cons)
+
+            def addsos(m, sosdict, sostype):
+                soslist = []
+                for name in sorted(sosdict):
+                    indices = [id_to_col[v.id] for v, _ in sosdict[name].items()]
+                    weights = [val for _, val in sosdict[name].items()]
+                    soslist.append(xpress_mod.sos(indices, weights, sostype, str(name)))
+                if len(soslist):
+                    m.addSOS(soslist)
+
+            sos1, sos2 = lp._sos_dicts_for_xpress()
+            addsos(model, sos1, 1)
+            addsos(model, sos2, 2)
+
+            lp.solverModel = model
+        except (
+            xpress_mod.ModelError,
+            xpress_mod.InterfaceError,
+            xpress_mod.SolverError,
+        ) as err:
+            # Undo everything
+            self._reset(lp)
+            raise PulpSolverError(str(err))
+
+    def getAttribute(self, lp, which):
+        """Get an arbitrary attribute for the model that was previously
+        solved using actualSolve()."""
+        return lp.solverModel.getAttrib(which)

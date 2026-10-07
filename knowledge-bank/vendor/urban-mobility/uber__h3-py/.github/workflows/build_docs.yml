@@ -1,0 +1,41 @@
+name: build_docs
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: ['*']
+
+permissions:
+  contents: write
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          submodules: recursive
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.11'
+
+      - uses: extractions/setup-just@v2
+
+      - name: Build the book
+        run: just docs
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: html
+          path: docs/_build/html
+
+      - name: Upload to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: github.ref == 'refs/heads/master'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build/html

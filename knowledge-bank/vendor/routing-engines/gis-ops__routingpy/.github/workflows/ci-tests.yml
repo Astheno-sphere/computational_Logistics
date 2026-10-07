@@ -1,0 +1,87 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.gitignore'
+      - '**.md'
+      - '**.rst'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - '.gitignore'
+      - '**.md'
+      - '**.rst'
+        
+# Cancel CI runs on a branch when new commits were pushed
+# See https://stackoverflow.com/a/72408109/2582935
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python_version: [
+            '3.10',
+            '3.11',
+            '3.12',
+            '3.13',
+            '3.14',
+            'pypy3.10',
+        ]
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v8.2.0
+      with:
+        python-version: ${{ matrix.python_version }}
+        enable-cache: true
+
+    - uses: actions/cache@v6
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+    - name: Install dependencies
+      run: |
+        uv sync --group dev
+
+    - name: Style & lint checks
+      run: |
+        uv run pre-commit run --all-files --color=always
+
+    - name: pytest and coverage
+      run: |
+        uv run coverage run --source=routingpy --module pytest
+        uv run coverage lcov --include "routingpy/*"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload coverage artifact
+      if: matrix.python_version == '3.12'
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-lcov
+        path: coverage.lcov
+
+  coveralls:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-lcov
+      - name: Send coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: coverage.lcov

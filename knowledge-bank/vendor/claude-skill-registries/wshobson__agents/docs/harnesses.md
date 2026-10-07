@@ -1,0 +1,272 @@
+# Cross-harness capability matrix
+
+The repository supports seven coding tools from shared source files under `plugins/`. The
+source uses the Claude Code Markdown format. Adapters under `tools/adapters/` provide the
+formats used by other tools.
+
+> Adapter capabilities and model mappings are defined in `tools/adapters/capabilities.py`.
+> Installation procedures and tool-specific limits are documented below.
+
+## Supported harnesses
+
+| Harness | Status | Generated paths |
+|---|---|---|
+| **Claude Code** | source-of-truth | `plugins/`, `.claude-plugin/marketplace.json` |
+| **OpenAI Codex CLI** | supported | committed: `.agents/plugins/marketplace.json`, `plugins/*/.codex-plugin/plugin.json`; gitignored: `.codex/skills/`, `.codex/agents/` |
+| **Cursor** (2.5+) | supported | committed: `.cursor-plugin/`, `.cursor/rules/` (curated) — points at source `plugins/` |
+| **OpenCode** (`sst/opencode`) | supported | gitignored: `.opencode/agents/`, `.opencode/commands/`, `.opencode/skills/`, `opencode.json` |
+| **Google Antigravity CLI** (`agy`) | supported | gitignored: `.antigravity/plugins/<name>/{skills/,agents/,commands/}` |
+| **GitHub Copilot** | supported | gitignored: `.copilot/agents/`, `.copilot/skills/`, `.copilot/commands/` |
+| **Pi** (`pi`, `@earendil-works/pi-coding-agent`) | supported | gitignored: `.pi/{skills/<plugin>/<skill>/,prompts/,agents/}` |
+| **Agent Skills installers** (`gh skill` 2.90+, `npx skills`) | supported, skills only | nothing generated; both read `plugins/*/skills/` from GitHub directly, see [Skills-only installers](#skills-only-installers) |
+
+## Capability matrix
+
+| Capability | Claude Code | Codex | Cursor | OpenCode | Antigravity | Copilot | Pi |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Skills (SKILL.md native) | ✅ | ✅ | ✅ via `.claude/` | ✅ via `.opencode/skills/` | ✅ (native, self-contained per plugin) | ✅ via `.copilot/skills/` | ✅ (recursive discovery) |
+| Subagents (markdown native) | ✅ | TOML format | ✅ via `.claude/` | ✅ (different frontmatter) | ✅ (`agents/<name>.md` + `invoke_subagent`/`define_subagent`) | ✅ (`.agent.md` profiles) | via the reference `subagent` extension (`agents/<plugin>__<agent>.md`) |
+| Slash commands | ✅ | converted to skills | ✅ | ✅ | TOML at `commands/<p>/<cmd>.toml` (agy reports these as "converted to skills") | converted to user-invocable skills | prompt templates at `prompts/<plugin>__<cmd>.md` |
+| Plugin marketplace | ✅ | ✅ (`codex plugin marketplace`) | ✅ (2.5+) | — | ✅ (`agy plugin install <name>@marketplace` / `agy plugin link`) | none | — (packages via npm, git, or a local path) |
+| Parallel subagents | ✅ | ✅ | ✅ | ✅ | ✅ | not declared | ✅ (extension) |
+| Per-agent tool allowlist | ✅ (`tools:`) | only `sandbox_mode` | only `readonly:` | ✅ (`permission:` block) | ✅ (`tools:`, agy-native names) | ✅ (`tools:`, translated names) | ✅ (`tools:`, extension) |
+| `TodoWrite` tool | ✅ | — | — | ✅ | — | not declared | — |
+| `Task`/`Agent` spawn tool | ✅ | name in prose | ✅ | ✅ (`task`) | ✅ (`invoke_subagent`/`define_subagent`) | ✅ (`agent`) | `subagent` (extension) |
+| MCP servers | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | via extension |
+| Lifecycle hooks | ✅ | — | — | ✅ (TS plugins) | ✅ | none emitted | ✅ (TypeScript extensions) |
+| Context file | `CLAUDE.md` | `AGENTS.md` (32 KiB cap) | `AGENTS.md` | `AGENTS.md` / `~/.claude/CLAUDE.md` | `AGENTS.md` (read natively) | `AGENTS.md` | `AGENTS.md` |
+| Context file recommended cap | 150 lines / 500 tokens | 150 lines / 500 tokens | 150 lines / 500 tokens | 150 lines / 500 tokens | 150 lines / 500 tokens | 150 lines / 500 tokens | 150 lines / 500 tokens |
+| Skill body hard cap | none | **8 KB** | none | none | none | none | none |
+| Tool name case | CamelCase (`Read`) | action verbs (no tool vocab) | lowercase | lowercase (strict) | lowercase (agy-native names) | lowercase (`read`, `execute`) | lowercase (`read`, `bash`) |
+| Bare model aliases | ✅ (`fable`/`opus`/`sonnet`/`haiku`) | mapped to GPT-5.x family | use `inherit` | full provider/model-id | mapped to tier alias (`pro`/`flash`/`inherit`) | mapped to full Claude model IDs | full provider/model-id |
+
+Copilot entries describe the adapter output and declared capabilities. The adapter rewrites
+`TodoWrite` references to `todo` without declaring a native equivalent. Claude model aliases
+map to `claude-fable-5`, `claude-opus-4.8`, `claude-sonnet-5`, and `claude-haiku-4.5`.
+The `inherit` alias maps to `claude-sonnet-5`.
+
+## Claude Code native features
+
+Claude Code reads the shared source format directly and uses `CLAUDE.md`, a symlink to
+`AGENTS.md`, for repository context. The following features have different support in other
+tools, as shown in the capability matrix:
+
+- **Per-agent tool allowlist** — `tools:` frontmatter honored verbatim (Cursor / Codex are coarser; the OpenCode adapter translates this into a `permission:` block).
+- **`Task` / `Agent` spawn tool** — fan-out parallel subagent execution. (Codex requires naming an agent in prose to delegate.)
+- **`TodoWrite`** — native progress tracking. (Not available in Codex / Cursor / Antigravity / Pi.)
+- **Slash-command marketplace** — full `/plugin install`, `/plugin marketplace` workflow.
+
+Claude-Code-only paths:
+
+- `.claude-plugin/marketplace.json` — plugin registry (source of truth)
+- `plugins/<name>/.claude-plugin/plugin.json` — per-plugin manifest
+
+## Graceful degradation
+
+Each adapter handles incompatibilities mechanically — authors don't need to know the per-harness
+rules to write portable content.
+
+| Source pattern | Codex | Cursor | OpenCode | Antigravity | Copilot | Pi |
+| --- | --- | --- | --- | --- | --- | --- |
+| `tools: Read, Grep` (agent allowlist) | dropped; `sandbox_mode = "read-only"` heuristic | dropped (Cursor doesn't honor) | converted to `permission:` deny block | rewritten to agy-native tool names | rewritten to `tools: read, search` | rewritten to Pi built-in names; `tools: []` becomes `read, grep, find, ls` |
+| `color: blue` (agent) | dropped | dropped | dropped | dropped | dropped | dropped |
+| `model: opus` (agent) | mapped to `gpt-5.5` | rewritten to `inherit` | rewritten to `anthropic/claude-opus-4-8` | mapped to `pro` | mapped to `claude-opus-4.8` | rewritten to `anthropic/claude-opus-4-8` |
+| `model: fable` (agent) | mapped to `gpt-5.5` | rewritten to `inherit` | rewritten to `anthropic/claude-fable-5` | mapped to `pro` | mapped to `claude-fable-5` | rewritten to `anthropic/claude-fable-5` |
+| `TodoWrite` in body | no equivalent — leave as-is | no equivalent — leave as-is | works as-is | no equivalent | rewritten to `todo` | no equivalent |
+| Skill body > 8 KB | split into `references/details.md` | passed through | passed through | passed through | passed through | passed through |
+| Agent named `worker` | namespaced to `<plugin>__worker` | passed through | passed through | passed through (no `<plugin>__` namespacing — the plugin dir already scopes it) | namespaced to `<plugin>__worker.agent.md` | namespaced to `<plugin>__worker.md` (the agents directory is flat) |
+| Slash command (`commands/<x>.md`) | converted to skill | passed through | rewritten to `.opencode/commands/` | TOML at `commands/<plugin>/<x>.toml`, body always inlined (never `@{path}`-injected) | user-invocable skill at `.copilot/skills/<plugin>-<x>/SKILL.md`; legacy command files also emitted | prompt template at `prompts/<plugin>__<x>.md`, the body is copied as written once Claude tool references are rewritten to Pi names, `$ARGUMENTS` is left in place for Pi to substitute, and no wrapper text is added |
+
+## Output paths (committed vs gitignored)
+
+Native install is **lean**: only small JSON registries (pointing at the source `plugins/`) are
+committed. The large transformed skill/agent trees stay gitignored — regenerate them locally.
+
+**Committed:**
+
+```
+.claude-plugin/marketplace.json        # SOURCE OF TRUTH
+plugins/                               # SOURCE OF TRUTH
+AGENTS.md                              # canonical context file
+.agents/plugins/marketplace.json       # Codex marketplace registry (source.path: ./plugins/<name>)
+plugins/*/.codex-plugin/plugin.json    # per-plugin Codex manifest (skills: ./skills/)
+.cursor-plugin/, .cursor/rules/        # Cursor marketplace + curated rules (point at source)
+```
+
+**Gitignored (regenerate with `make generate`):**
+
+```
+.codex/skills/, .codex/agents/         # transformed Codex trees (for ~/.codex/skills symlink recipe)
+.opencode/agents/, .opencode/commands/, .opencode/skills/, opencode.json
+.antigravity/plugins/<name>/           # self-contained agy plugins (skills/, agents/, commands/)
+.copilot/agents/, .copilot/skills/, .copilot/commands/
+.pi/skills/, .pi/prompts/, .pi/agents/   # transformed Pi trees (skills are nested per plugin)
+```
+
+`.pi/` is also Pi's project-local config directory, so you may keep your own files there such
+as `.pi/settings.json` or `.pi/extensions/*.ts`. The adapter owns only `.pi/skills`,
+`.pi/prompts` and `.pi/agents`. Cleaning and pruning stay inside those three subdirectories and
+leave everything else under `.pi/` alone.
+
+## Native install
+
+- **Codex**. Run `codex plugin marketplace add wshobson/agents`, then
+  `codex plugin add python-development@claude-code-workflows` (or choose another plugin
+  with source skills). The native registry includes only local plugins with a
+  `skills/<name>/SKILL.md` source file; agent-only and command-only plugins use the generated
+  setup linked below.
+  The native manifests expose source skills from `plugins/<name>/skills/`, and skill bodies over
+  the 8 KB cap are truncated by Codex at load. Generated TOML agents and command-derived skills
+  use a separate adapter route. The gitignored `.codex/skills/` copies split oversized bodies
+  into reference files. Follow the [generated Codex setup](round-trip-results.md#codex-round-trip)
+  to generate and link skills into `~/.codex/skills/` and TOML agents into `~/.codex/agents/`.
+  Native manifests preserve explicit plugin metadata. Missing values use the repository owner,
+  repository URL, plugin source URL, root MIT license, and source skill names as keywords.
+  Regeneration removes the native manifest and registry entry when a plugin loses its last
+  source skill; generated agents and command-derived skills remain available.
+- **Cursor** — add the marketplace, then `/plugin install <name>`. Entries point at source
+  `./plugins/<name>`; Cursor reads `SKILL.md` + `.md` agents from source directly.
+- **Antigravity** — no one-step-from-URL install (the lean tradeoff). Clone the repo, then
+  `make generate HARNESS=antigravity` and either `agy plugin install .antigravity/plugins/<name>`
+  per plugin, or `make install-antigravity` to symlink every generated plugin into
+  `~/.gemini/config/plugins/` (agy's config dir) at once. Installs made before this
+  change linked into `~/.gemini/antigravity-cli/plugins/`, and both `make install-antigravity`
+  and `make uninstall-antigravity` remove this repo's links from that old directory.
+- **OpenCode** — no one-step-from-URL install. Clone the repo, then `make install-opencode`
+  (runs generate + symlinks `.opencode/` → `~/.config/opencode/`).
+- **Pi** — no one-step-from-URL install. Clone the repo, then `make install-pi` symlinks every
+  generated skill directory, prompt template, and agent into `~/.pi/agent/` (override with
+  `PI_CODING_AGENT_DIR`). Skills and prompts can also be installed as a package with
+  `pi install /path/to/agents/.pi`; agents need the symlink route because Pi packages have no
+  agents resource, and they only work with the reference `subagent` extension or a compatible
+  package. Running `pi` inside the clone also works. Pi asks to trust the project and then reads
+  `.pi/` directly. Pick one route. If you install globally with `make install-pi` and also run
+  `pi` inside the clone, Pi sees every skill twice and warns on each name.
+
+## Skills-only installers
+
+`gh skill` (GitHub CLI 2.90+) and `npx skills` ([vercel-labs/skills](https://github.com/vercel-labs/skills))
+install Agent Skills into any supported agent straight from GitHub. Both discover every
+`plugins/<plugin>/skills/<skill>/` directory in this repo without a clone, a marketplace, or a
+generate step. They carry skills only: no agents, commands, or hooks.
+
+```bash
+# gh skill: lists as `[plugins] <plugin>/<skill>`, selects by bare skill name or exact path
+gh skill install wshobson/agents                                     # interactive browse
+gh skill install wshobson/agents python-testing-patterns
+gh skill install wshobson/agents plugins/python-development/skills/python-testing-patterns  # exact path skips the tree walk
+gh skill install wshobson/agents --all --agent claude-code --scope user
+gh skill install wshobson/agents python-testing-patterns --pin <sha>
+
+# npx skills: lists and selects by bare skill name
+npx skills add wshobson/agents --list
+npx skills add wshobson/agents --skill python-testing-patterns -a claude-code
+npx skills add wshobson/agents --all -g
+```
+
+Gotchas:
+
+- **Both install under the bare skill name** (`<agent>/skills/<skill>/`). The `<plugin>/` prefix
+  in `gh skill` listings is display only; `python-development/python-testing-patterns` is not a
+  valid selector, `python-testing-patterns` and the exact `plugins/...` path are. Skill directory
+  names are unique across plugins and `make smoke-test` keeps them that way; a duplicate would
+  collide on install.
+- **`gh skill` installs from the latest GitHub release when one exists**, and from `main` only
+  when the repo has none. This repo publishes no releases, so installs track `main`. Creating a
+  release would freeze `gh skill` installs at that tag until the next one.
+- **Local checkouts.** After `make generate-all`, `npx skills add ./agents` also walks the
+  gitignored `.codex/`, `.opencode/`, `.copilot/`, `.antigravity/` and `.pi/` trees and lists
+  their copies. Install from the GitHub source instead, or use `gh skill install . --from-local`,
+  which skips hidden directories.
+- **Spec gate.** `gh skill publish --dry-run` validates every SKILL.md against the
+  [agentskills.io spec](https://agentskills.io/specification): name pattern, name equal to the
+  directory name, required frontmatter. `make smoke-test` runs it, plus discovery through both
+  CLIs, against the real binaries.
+
+## Regenerating
+
+The committed registries point at source; the transformed trees are regenerated on demand.
+Contributors must run `make generate-all` before committing source changes — CI fails on drift
+of the committed registries.
+
+```bash
+make generate HARNESS=codex
+make generate HARNESS=cursor
+make generate HARNESS=opencode
+make generate HARNESS=antigravity
+make generate HARNESS=pi
+# Or all at once (run before committing source changes):
+make generate-all
+
+# Optional global installs:
+make install-opencode
+make uninstall-opencode
+make install-antigravity
+make uninstall-antigravity
+make install-pi
+make uninstall-pi
+```
+
+## External Pensyve integrations
+
+The Claude Code marketplace includes Pensyve as an optional external `git-subdir` plugin.
+[Pensyve Cloud closed on October 1, 2026](https://pensyve.com/), including its hosted API and MCP
+endpoints. The open-source runtime remains available. Configure a local or self-hosted runtime
+using the [self-hosting guide](https://github.com/major7apps/pensyve/blob/main/docs/self-host.md)
+before using an upstream integration:
+
+| Harness | Upstream integration |
+|---|---|
+| Claude Code | `https://github.com/major7apps/pensyve.git`, path `integrations/claude-code` |
+| Codex CLI | `integrations/codex-plugin` |
+| Cursor | `integrations/cursor` |
+| OpenCode | `integrations/opencode-plugin` |
+| Antigravity CLI | `integrations/antigravity-plugin` |
+| Copilot | `.copilot/` (repo-level) or `~/.copilot/` (global install via `make install-copilot`) |
+
+## External HOL Guard entry
+
+The Claude Code marketplace lists HOL Guard as an external `git-subdir` entry from
+`hashgraph-online/hol-guard-plugin`, path `distributions/wshobson-agents`, pinned to a reviewed
+commit on upstream's `main` branch. The payload is two Markdown skills, and they install the
+`hol-guard` and `plugin-scanner` CLIs only after the user approves. When a user asks for
+protection, the `hol-guard` CLI edits that harness's hook and settings files. The entry is not
+generated for any other harness.
+
+To update the entry, review the payload at a newer upstream `main` commit, then change the
+marketplace `sha`, and change `version` too if the payload's `plugin.json` version changed.
+The review checks that the payload adds no hooks, `.mcp.json`, scripts, or hosted endpoints,
+that the default path needs no account or paid service, and that each CLI install is pinned to
+an exact version.
+
+## Global install
+
+OpenCode, Copilot, Antigravity, and Pi support installing generated artifacts globally for
+user-level discovery:
+
+```bash
+make install-opencode    # symlink .opencode/ → ~/.config/opencode/
+make uninstall-opencode
+
+make install-copilot     # symlink .copilot/ → ~/.copilot/
+make uninstall-copilot
+
+make install-antigravity    # symlink each .antigravity/plugins/<p>/ → ~/.gemini/config/plugins/<p>/
+make uninstall-antigravity
+
+make install-pi          # symlink each .pi/ skill, prompt, and agent → ~/.pi/agent/
+make uninstall-pi
+
+# Force-replace conflicting symlinks:
+make install-copilot FORCE=1
+make install-antigravity FORCE=1
+make install-pi FORCE=1
+```
+
+> Copilot discovers agents from `.copilot/agents/` and skills from `.copilot/skills/` at the repo level, and from `~/.copilot/agents/` and `~/.copilot/skills/` at the user level. The adapter emits to `.copilot/`; use `make install-copilot` for user-level discovery.
+
+## See also
+
+- [`authoring.md`](authoring.md) — portable-content style guide for plugin authors
+- [`architecture.md`](architecture.md) — overall design principles
+- [`plugin-eval.md`](plugin-eval.md) — the `harness_portability` scoring dimension

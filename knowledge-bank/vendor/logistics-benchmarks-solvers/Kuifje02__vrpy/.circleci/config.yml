@@ -1,0 +1,81 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2.0
+
+orbs:
+  codecov: codecov/codecov@1.0.0
+jobs:
+  "python-3.8":
+    docker:
+      - image: circleci/python:3.8
+    working_directory: ~/vrpy
+    steps:
+      - checkout
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+            pip install pytest-cov
+            pip install codecov
+      - run:
+          name: run tests
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            python3 -m pytest tests/ --cov
+            codecov
+            bash <(curl -s https://codecov.io/bash)
+      - store_artifacts:
+          path: test-reports
+          destination: test-reports
+
+  "python-3.7":
+    docker:
+      - image: circleci/python:3.7
+    working_directory: ~/vrpy
+    steps:
+      - checkout
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      - run:
+          name: run tests
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            python3 -m pytest tests/
+
+  "python-3.6":
+    docker:
+      - image: circleci/python:3.6
+    working_directory: ~/vrpy
+    steps:
+      - checkout
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+      - run:
+          name: run tests
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            python3 -m pytest tests/
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - "python-3.8"
+      - "python-3.7"
+      - "python-3.6"

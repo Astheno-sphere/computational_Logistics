@@ -1,0 +1,402 @@
+import pytest
+from numpy.testing import assert_, assert_allclose, assert_equal, assert_raises
+from pytest import mark
+
+from pyvrp import (
+    IteratedLocalSearch,
+    IteratedLocalSearchCallbacks,
+    IteratedLocalSearchParams,
+    PenaltyManager,
+    RandomNumberGenerator,
+    Result,
+    Solution,
+)
+from pyvrp.search import (
+    LocalSearch,
+    PerturbationManager,
+    PerturbationParams,
+    Relocate1,
+    compute_neighbours,
+)
+from pyvrp.stop import MaxIterations
+from tests.helpers import read_solution
+
+
+@mark.parametrize(
+    "num_iters_no_improvement, history_length",
+    [
+        (-1, 1),  # num_iters_no_improvement < 0
+        (0, 0),  # history_length < 1
+    ],
+)
+def test_params_constructor_raises_when_arguments_invalid(
+    num_iters_no_improvement: int,
+    history_length: int,
+):
+    """
+    Tests that invalid configurations are not accepted.
+    """
+    with assert_raises(ValueError):
+        IteratedLocalSearchParams(
+            num_iters_no_improvement=num_iters_no_improvement,
+            history_length=history_length,
+        )
+
+
+@mark.parametrize(
+    "num_iters_no_improvement, history_length",
+    [
+        (0, 1),  # num_iters_no_improvement == 0
+        (0, 1),  # history_length == 1
+    ],
+)
+def test_params_constructor_does_not_raise_when_arguments_valid(
+    num_iters_no_improvement: int,
+    history_length: int,
+):
+    """
+    Tests valid boundary cases.
+    """
+    IteratedLocalSearchParams(
+        num_iters_no_improvement,
+        history_length=history_length,
+    )
+
+
+def test_best_solution_improves_with_more_iterations(rc208):
+    """
+    Tests that additional iterations result in better solutions. This is a
+    smoke test that checks at least something's improving during the ILS's
+    execution.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    pm = PenaltyManager(initial_penalties=([20], 6, 6))
+    ls = LocalSearch(rc208, rng, compute_neighbours(rc208))
+    ls.add_operator(Relocate1(rc208))
+    init = Solution.make_random(rc208, rng)
+    algo = IteratedLocalSearch(rc208, pm, ls, init)
+
+    initial_best = algo.run(MaxIterations(0)).best
+    new_best = algo.run(MaxIterations(25)).best
+
+    cost_evaluator = pm.cost_evaluator()
+    new_best_cost = cost_evaluator.penalised_cost(new_best)
+    initial_best_cost = cost_evaluator.penalised_cost(initial_best)
+    assert_(new_best_cost < initial_best_cost)
+    assert_(new_best.is_feasible())  # best must be feasible
+
+
+def test_best_initial_solution(rc208):
+    """
+    Tests that ILS uses the initial solution to initialise the best found
+    solution.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    pm = PenaltyManager(initial_penalties=([20], 6, 6))
+    ls = LocalSearch(rc208, rng, compute_neighbours(rc208))
+    bks = read_solution("data/RC208.sol", rc208)
+    algo = IteratedLocalSearch(rc208, pm, ls, bks)
+
+    result = algo.run(MaxIterations(0))
+
+    # The best known solution is the initial solution. Since we don't run any
+    # iterations, this should be returned as best solution.
+    assert_equal(result.best, bks)
+
+
+def test_ils_result_has_correct_stats(ok_small):
+    """
+    Tests that ILS correctly collects search statistics.
+    """
+    params = PerturbationParams(0, 0)  # disable perturbation
+    perturbation = PerturbationManager(ok_small, params)
+
+    pm = PenaltyManager(initial_penalties=([20], 6, 6))
+    rng = RandomNumberGenerator(42)
+    neighbours = compute_neighbours(ok_small)
+    ls = LocalSearch(ok_small, rng, neighbours, perturbation)
+    init = Solution.make_random(ok_small, rng)
+    ils = IteratedLocalSearch(ok_small, pm, ls, init)
+
+    # Search is a no-op, so we should return the initial solution after 10
+    # iterations.
+    result = ils.run(MaxIterations(10), collect_stats=True)
+    assert_equal(result.best, init)
+    assert_equal(result.num_iterations, 10)
+    assert_equal(result.stats.num_iterations, 10)
+
+    datum = result.stats.data[0]
+    assert_allclose(
+        datum.current_cost, pm.cost_evaluator().penalised_cost(init)
+    )
+    assert_equal(datum.current_feas, init.is_feasible())
+
+
+def test_ils_acceptance_behaviour(ok_small):
+    """
+    Tests ILS acceptance behaviour over a fixed trajectory.
+    """
+    sols = [
+        Solution(ok_small, [[0, 2], [1, 3]]),  # 22065 (infeas)
+        Solution(ok_small, [[0, 1], [2, 3]]),  # 9725
+        Solution(ok_small, [[0, 1], [3, 2]]),  # 9868
+        Solution(ok_small, [[0, 3], [1, 2]]),  # 9240
+        Solution(ok_small, [[0, 1], [2, 3]]),  # 9725
+    ]
+
+    ils = IteratedLocalSearch(
+        ok_small,
+        PenaltyManager(initial_penalties=([20], 6, 6)),
+        lambda *_, **kws: sols.pop(0),  # returns from sols one at a time
+        sols[0],
+        IteratedLocalSearchParams(history_length=2, exhaustive_on_best=False),
+    )
+
+    res = ils.run(stop=MaxIterations(len(sols)))
+    data = res.stats.data
+
+    # First solution is also the initial solution, so nothing should have
+    # changed.
+    assert_allclose(data[0].current_cost, 22_065)
+    assert_allclose(data[0].candidate_cost, 22_065)
+    assert_allclose(data[0].best_cost, 22_065)
+
+    # The second iteration has a solution that is *much* better. This new
+    # solution should become both the current and best.
+    assert_allclose(data[1].current_cost, 9_725)
+    assert_allclose(data[1].candidate_cost, 9_725)
+    assert_allclose(data[1].best_cost, 9_725)
+
+    # We now get a candidate solution that is a little worse than the previous
+    # iteration, but better than the solution from two iterations ago. It is
+    # thus accepted.
+    assert_allclose(data[2].current_cost, 9_868)
+    assert_allclose(data[2].candidate_cost, 9_868)
+    assert_allclose(data[2].best_cost, 9_725)
+
+    # We now find a new best solution that should also be accepted.
+    assert_allclose(data[3].current_cost, 9_240)
+    assert_allclose(data[3].candidate_cost, 9_240)
+    assert_allclose(data[3].best_cost, 9_240)
+
+    # In the last iteration we again find a solution we found earlier. This
+    # solution improves over the solution from two iterations ago, and should
+    # thus be accepted.
+    assert_allclose(data[4].current_cost, 9_725)
+    assert_allclose(data[4].candidate_cost, 9_725)
+    assert_allclose(data[4].best_cost, 9_240)
+
+
+def test_restart(ok_small):
+    """
+    Tests that restarting clears the history of recent solutions and starts
+    over from scratch.
+    """
+    Params = IteratedLocalSearchParams
+
+    sols = [
+        Solution(ok_small, [[0, 2], [1, 3]]),  # 22065 (infeas)
+        Solution(ok_small, [[0, 1], [2, 3]]),  # 9725
+        Solution(ok_small, [[0, 1], [2, 3]]),  # 9725
+        Solution(ok_small, [[0, 1], [3, 2]]),  # 9868
+    ]
+
+    def run(params: IteratedLocalSearchParams):  # run with given params
+        idx = iter(range(len(sols)))
+        ils = IteratedLocalSearch(
+            ok_small,
+            PenaltyManager(initial_penalties=([20], 6, 6)),
+            lambda *_, **kw: sols[next(idx)],  # returns sols one at a time
+            sols[0],
+            params,
+        )
+
+        res = ils.run(MaxIterations(len(sols)))
+        return res.stats.data
+
+    # First run without a restart. We look back to the current solution from
+    # last iteration, which means that we only accept improving solutions.
+    curr_costs = [22065, 9725, 9725, 9725]
+    params = Params(history_length=1, exhaustive_on_best=False)
+    assert_allclose([datum.current_cost for datum in run(params)], curr_costs)
+
+    # But here a restart occurs in the third iteration, and that should clear
+    # the history. We now accept the worsening solution in the last iteration.
+    params = Params(
+        num_iters_no_improvement=1,
+        history_length=1,
+        exhaustive_on_best=False,
+    )
+    curr_costs = [22065, 9725, 9725, 9868]
+    assert_allclose([datum.current_cost for datum in run(params)], curr_costs)
+
+
+def test_exhaustive_search_on_new_best_solution(ok_small):
+    """
+    Tests that ILS calls the search method for an exhaustive evaluation on
+    newfound best solutions.
+    """
+    sols = [
+        Solution(ok_small, [[0, 1], [3, 2]]),  # 9868
+        Solution(ok_small, [[0, 1], [2, 3]]),  # 9725 - new best
+        Solution(ok_small, [[0, 3], [1, 2]]),  # 9240 - after exhaustive search
+    ]
+
+    def search(*_, exhaustive: bool):
+        assert_(exhaustive if len(sols) == 1 else not exhaustive)
+        return sols.pop(0)
+
+    ils = IteratedLocalSearch(
+        ok_small,
+        PenaltyManager(initial_penalties=([20], 6, 6)),
+        search,
+        sols[0],
+    )
+
+    # Just two iterations, but we should pop all three solutions, because the
+    # second iteration again calls into the search method, but this time for
+    # an exhaustive search that returns the final solution.
+    res = ils.run(MaxIterations(2))
+    assert_equal(len(sols), 0)
+    assert_allclose(res.cost(), 9_240)
+
+
+def test_callback_on_start_and_end(ok_small):
+    """
+    Tests that ILS calls the provided callbacks at search start and end.
+    """
+
+    class Callbacks(IteratedLocalSearchCallbacks):
+        def __init__(self):
+            self.start_cnt = 0
+            self.end_cnt = 0
+
+            self.ils: IteratedLocalSearch | None = None
+            self.res: Result | None = None
+
+        def on_start(self, ils):
+            self.start_cnt += 1
+            self.ils = ils
+
+        def on_end(self, result):
+            self.end_cnt += 1
+            self.res = result
+
+    rng = RandomNumberGenerator(seed=42)
+    init = Solution.make_random(ok_small, rng)
+    callbacks = Callbacks()
+    ils = IteratedLocalSearch(
+        ok_small,
+        PenaltyManager(initial_penalties=([20], 6, 6)),
+        lambda sol, *args, **kwargs: sol,
+        init,
+        IteratedLocalSearchParams(callbacks=callbacks),
+    )
+
+    # Run the ILS and test that the start and end callbacks were each called
+    # once, with the proper arguments.
+    res = ils.run(stop=MaxIterations(10))
+    assert_equal(callbacks.start_cnt, 1)
+    assert_equal(callbacks.end_cnt, 1)
+    assert_(callbacks.ils is ils)
+    assert_(callbacks.res is res)
+
+
+@pytest.mark.parametrize("max_iterations", (1, 10, 100))
+def test_callback_on_iteration_and_restart(ok_small, max_iterations):
+    """
+    Tests that ILS calls the provided callback at the end of each iteration,
+    and when restarting the search.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    init = Solution.make_random(ok_small, rng)
+
+    class Callbacks(IteratedLocalSearchCallbacks):
+        def __init__(self):
+            self.iter_cnt = 0
+            self.restart_cnt = 0
+
+        def on_iteration(self, current, candidate, best, cost_evaluator):
+            assert_equal(current, init)
+            assert_equal(candidate, init)
+            assert_equal(best, init)
+            self.iter_cnt += 1
+
+        def on_restart(self, best):
+            assert_equal(best, init)
+            self.restart_cnt += 1
+
+    callbacks = Callbacks()
+    ils = IteratedLocalSearch(
+        ok_small,
+        PenaltyManager(initial_penalties=([20], 6, 6)),
+        lambda sol, *args, **kwargs: sol,
+        init,
+        IteratedLocalSearchParams(
+            # Restart after every iteration without improvement.
+            num_iters_no_improvement=1,
+            callbacks=callbacks,
+        ),
+    )
+
+    # The ILS should call our callback at the end of every iteration, and every
+    # time a restart occurs. Restarting happens every iteration, except in the
+    # very first.
+    ils.run(stop=MaxIterations(max_iterations))
+    assert_equal(callbacks.iter_cnt, max_iterations)
+    assert_equal(callbacks.restart_cnt, max_iterations - 1)
+
+
+def test_callback_on_best(ok_small):
+    """
+    Tests that ILS calls the provided callback whenever a new best solution is
+    obtained.
+    """
+    sols = [
+        Solution(ok_small, [[0, 1], [3, 2]]),  # 9868, init
+        Solution(ok_small, [[0, 1], [2, 3]]),  # 9725 - new best
+        Solution(ok_small, [[0, 3], [1, 2]]),  # 9240 - after exhaustive search
+    ]
+
+    class Callbacks(IteratedLocalSearchCallbacks):
+        def __init__(self):
+            self.best_cnt = 0
+
+        def on_best(self, best):
+            assert_equal(best, sols[-1])
+            self.best_cnt += 1
+
+    callbacks = Callbacks()
+    idx = iter(range(len(sols)))
+    ils = IteratedLocalSearch(
+        ok_small,
+        PenaltyManager(initial_penalties=([20], 6, 6)),
+        lambda *args, **kwargs: sols[next(idx)],
+        sols[0],
+        IteratedLocalSearchParams(callbacks=callbacks),
+    )
+
+    # The first solution in sols is the initial solution, so not a new best.
+    # The second solution is a new best, that gets improved via an exhaustive
+    # search. The callback is called once with the improved solution.
+    ils.run(MaxIterations(2))
+    assert_equal(callbacks.best_cnt, 1)
+
+
+def test_properties(ok_small):
+    """
+    Tests accessing ILS properties.
+    """
+    pm = PenaltyManager(initial_penalties=([20], 6, 6))
+    init_sol = Solution(ok_small, [[0, 3], [1, 2]])
+    params = IteratedLocalSearchParams()
+
+    def search(sol, *args, **kwargs):
+        return sol
+
+    # Properties should reference the arguments.
+    ils = IteratedLocalSearch(ok_small, pm, search, init_sol, params)
+    assert_(ils.penalty_manager is pm)
+    assert_(ils.search is search)
+    assert_(ils.initial_solution is init_sol)
+    assert_(ils.params is params)

@@ -1,0 +1,94 @@
+# [Parallelism](@id parallelism)
+
+## Generally
+
+HiGHS currently has limited opportunities for exploiting parallel
+computing. When using a CPU, these are currently restricted to the
+dual simplex solver for LP, the factorisation-based interior point solver,
+and the MIP solver. Details of these and future plans are set out below.
+HiGHS has an implementation of a first order method (PDLP) for solving LPs
+that can exploit the availability of a [GPU](@ref gpu).
+
+The value of the [threads](@ref option-threads) option determines the 
+number of threads used by HiGHS. By default it is zero, in which case 
+HiGHS will use half the available threads on a machine. 
+If it is set to one, then HiGHS will never use more than one thread. 
+The maximum value that is advantageous is machine-dependent, 
+but it is unlikely to be more than eight due to most computation in 
+HiGHS being memory-bound.
+
+## Dual simplex
+
+By default, the HiGHS dual simplex solver runs in serial. However, it
+has a variant allowing concurrent processing. This variant is used
+when the [parallel](@ref option-parallel) option is set "on", by
+specifying `--parallel` when running the [executable](@ref executable)
+via the command line, or by setting it via a library call in an
+application.
+
+The concurrency used will be the value of
+[simplex\_max\_concurrency](@ref option-simplex-max-concurrency). If
+this is fewer than the number of threads available, parallel
+performance may be less than anticipated.
+
+The speed-up achieved using the dual simplex solver is normally
+bounded by the number of memory channels in the architecture, and
+typically less than the values achieved by [Huangfu and
+Hall](https://link.springer.com/article/10.1007/s12532-017-0130-5). This
+is because enhancements to the serial dual simplex solver in recent
+years have not been propagated to the parallel solver.
+
+Unless an LP has significantly more variables than constraints, the
+parallel dual simplex solver is unlikely to be worth using.
+
+## IPM
+
+The interior point solver HiPO uses multiple threads to process the 
+elimination tree during the multifrontal factorisation (_tree level_)
+and to perform the dense factorisation of the frontal matrices 
+(_node level_).
+
+If the [parallel](@ref option-parallel) option is set "on", the level of parallelism is 
+determined by the [hipo\_parallel\_type](@ref option-hipo-parallel-type) option, 
+which can be "tree" for tree level only, "node" for node level only, or 
+"both" for both levels.
+
+If the [parallel](@ref option-parallel) option is set "choose", the solver selects which 
+level to use based on a heuristic. When the [parallel](@ref option-parallel) option is set 
+"choose" or "off", the value of the hipo\_parallel\_type option is ignored.
+
+If the [parallel](@ref option-parallel) option is set to "on" or "choose", HiPO uses 
+multiple threads to run multiple orderings and Newton system approaches in parallel, in 
+order to select the best one.
+
+The extent to which parallelism is used in HiPO depends on the value of the
+[threads](@ref option-threads) option (see above).
+
+## MIP
+
+If the [parallel](@ref option-parallel) option is set to "on", the MIP solver
+will explore the branch-and-bound tree using multiple threads.
+This exploration includes cuts and heuristics that are not run from the root node.
+
+In addition, the MIP solver utilises parallelism when performing 
+symmetry detection on the model, when querying
+clique tables, and when the interior point solver is used to compute
+the analytic centre. This parallelism is always advantageous, so is
+performed regardless of the value of the [parallel](@ref option-parallel) option.
+
+The extent to which parallelism is used in the MIP solver depends on the value of the 
+[threads](@ref option-threads) option (see above).
+
+## Future plans
+
+First-order solvers for LP are still very much in their infancy, and
+are not robust. Hence the availability of a PDLP solver for LP is
+unlikely to be used to enhance other solvers in HiGHS in the short or
+medium term.
+
+## Alternative
+
+Given the limited scope for parallelisation in HiGHS, if you have
+multiple independent instances to solve, then assign one instance per
+worker (cpu core, thread or machine) so that multiple instances are
+solved concurrently.

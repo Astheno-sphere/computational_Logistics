@@ -1,0 +1,222 @@
+name: wheels
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: ['*']
+    types:
+      # Opened, synchronize, and reopened are the default types
+      # We add ready_for_review to additionally trigger when converting from draft to non-draft
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  release:
+    types:
+      - published
+
+jobs:
+  make_sdist:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          submodules: recursive
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.11'
+
+
+      - name: Make sdist
+        run: uv build --sdist
+
+      # Test the sdist, NOT the local checkout.
+      # Use a fresh venv + uv pip install (not uv sync, which would build from source).
+      - name: Install from sdist
+        run: |
+          uv venv
+          cp dist/h3-*.tar.gz h3.tar.gz
+          uv pip install h3.tar.gz[numpy] pytest pytest-cov
+
+      - name: Test sdist
+        # run pytest directly from the venv to avoid `uv run` syncing from the local checkout
+        run: .venv/bin/pytest
+
+      - name: Upload artifacts to GitHub
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: temp_result_sdist
+          path: ./dist
+
+  make_wheels:
+    name: 'cibw: ${{ matrix.name }}'
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-15
+            build: 'cp*-macosx_arm64'
+            name: macOS15
+
+          - os: windows-latest
+            build: 'cp3*-win_amd64'
+            name: Windows 64-bit
+
+          - os: windows-11-arm
+            build: 'cp311-win_arm64'
+            name: Windows ARM64 3.11
+          - os: windows-11-arm
+            build: 'cp312-win_arm64'
+            name: Windows ARM64 3.12
+          - os: windows-11-arm
+            build: 'cp313-win_arm64'
+            name: Windows ARM64 3.13
+          - os: windows-11-arm
+            build: 'cp314-win_arm64'
+            name: Windows ARM64 3.14
+          - os: windows-11-arm
+            build: 'cp314t-win_arm64'
+            name: Windows ARM64 3.14t
+
+          - os: ubuntu-22.04
+            build: 'cp*-manylinux_x86_64'
+            name: Linux Intel glibc 64-bit
+
+          - os: ubuntu-22.04
+            build: 'cp310-musllinux_x86_64'
+            name: Linux Intel musl 64-bit 3.10
+          - os: ubuntu-22.04
+            build: 'cp311-musllinux_x86_64'
+            name: Linux Intel musl 64-bit 3.11
+          - os: ubuntu-22.04
+            build: 'cp312-musllinux_x86_64'
+            name: Linux Intel musl 64-bit 3.12
+          - os: ubuntu-22.04
+            build: 'cp313-musllinux_x86_64'
+            name: Linux Intel musl 64-bit 3.13
+          - os: ubuntu-22.04
+            build: 'cp314-musllinux_x86_64'
+            name: Linux Intel musl 64-bit 3.14
+          - os: ubuntu-22.04
+            build: 'cp314t-musllinux_x86_64'
+            name: Linux Intel musl 64-bit 3.14t
+
+          - os: ubuntu-22.04
+            build: 'cp310-manylinux_aarch64'
+            name: Linux Aarch64 3.10
+          - os: ubuntu-22.04
+            build: 'cp311-manylinux_aarch64'
+            name: Linux Aarch64 3.11
+          - os: ubuntu-22.04
+            build: 'cp312-manylinux_aarch64'
+            name: Linux Aarch64 3.12
+          - os: ubuntu-22.04
+            build: 'cp313-manylinux_aarch64'
+            name: Linux Aarch64 3.13
+          - os: ubuntu-22.04
+            build: 'cp314-manylinux_aarch64'
+            name: Linux Aarch64 3.14
+          - os: ubuntu-22.04
+            build: 'cp314t-manylinux_aarch64'
+            name: Linux Aarch64 3.14t
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          submodules: recursive
+
+      - uses: astral-sh/setup-uv@v7
+
+      - name: Set MSVC for Windows-x64
+        uses: microsoft/setup-msbuild@v2
+        if: matrix.os == 'windows-latest'
+        with:
+          msbuild-architecture: x64
+
+      - name: Set MSVC for Windows-ARM64
+        uses: microsoft/setup-msbuild@v2
+        if: matrix.os == 'windows-11-arm'
+        with:
+          msbuild-architecture: arm64
+
+      - name: Set Windows variables
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "CC=cl.exe" >> $GITHUB_ENV
+          echo "CXX=cl.exe" >> $GITHUB_ENV
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3.7.0
+        with:
+          platforms: aarch64
+
+      - uses: pypa/cibuildwheel@v3.3.1
+        env:
+          CIBW_BUILD_FRONTEND: 'build[uv]'
+          CIBW_TEST_REQUIRES: pytest pytest-cov numpy
+          CIBW_TEST_COMMAND: pytest {project}/tests
+          CIBW_ARCHS_LINUX: auto aarch64
+          CIBW_BUILD: ${{ matrix.build }}
+
+      - name: Check with Twine
+        run: uvx twine check wheelhouse/*
+
+      - name: Upload artifacts to GitHub
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: temp_result_${{ matrix.os }}-${{ strategy.job-index }}
+          path: wheelhouse/*.whl
+
+  merge:
+    needs: [make_sdist, make_wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge Artifacts
+        uses: actions/upload-artifact/merge@v6
+        with:
+          name: wheels_and_sdist
+          pattern: temp_result_*
+          delete-merged: true
+          retention-days: 7
+          compression-level: 9
+
+  check_merged:
+    needs: [merge]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: false
+          ignore-empty-workdir: true
+
+      - name: Download merged artifacts
+        uses: actions/download-artifact@v7.0.0
+        with:
+          name: wheels_and_sdist
+          path: dist
+
+      - name: Check all wheels and sdist with Twine
+        run: uvx twine check dist/*
+
+  to_pypi:
+    needs: [check_merged]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v7.0.0
+        with:
+          name: wheels_and_sdist
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@v1.13.0
+        with:
+          password: ${{ secrets.pypi_password }}

@@ -1,0 +1,455 @@
+## Unreleased
+
+### Security
+
+- **Temporary resource ownership is now keyed on the caller's token, not on the unverified username claim inside it.** `TemporaryDataResource.read()` gated access to cached large tool responses (route geometry, isochrone GeoJSON, static-map images, `render_map_tool` payload refs) by comparing the resource's recorded owner to `getUserNameFromToken(callerToken)`. That helper base64-decodes the JWT payload and returns the `u` field with no signature verification — and none is possible here, since Mapbox signs its tokens with a secret this server does not hold. The entire authorization decision therefore rested on a claim the caller controls: anyone who knew a resource URI and the owner's Mapbox username could fabricate a token asserting that username and read the cached data. Unlike a tool invocation, which hands the token to a live Mapbox API call that rejects a fake, the resource read never made that call, so nothing downstream caught it.
+
+  Ownership is now a SHA-256 fingerprint of the token bytes (`getOwnerKeyFromToken`), compared in constant time (`ownerKeyMatches`). Forging the check now requires already holding the victim's real token — at which point the attacker can call the Mapbox API directly and gains nothing from this path. This deliberately avoids the two obvious alternatives: local signature verification is impossible, and token introspection against Mapbox's auth backend would add a network round-trip to every resource read, which is the exact latency the temporary-resource cache exists to avoid, plus a new failure mode when that endpoint is unavailable. The check also no longer assumes anything about the transport — a deployer wiring a caller-supplied bearer token into `extra.authInfo.token`, the pattern the MCP TypeScript SDK documents (where signature verification is the deployer's opt-in responsibility), is protected regardless.
+
+  The same fix is applied to `resolveMapPayloadRef()`, which carries its own copy of the ownership check because it reads the resource manager directly rather than going through `resources/read`.
+
+  **Behavior change:** ownership is now per-token rather than per-account. A caller that rotates to a different access token mid-session can no longer read temporary resources it created under the previous token; those reads fail closed and surface as the normal "not found or expired" response. With a 30-minute TTL this window is narrow, and failing closed is the correct direction for an authorization check. Callers persisting a `TemporaryResource.owner` value across versions should treat it as an opaque key — it is no longer a username, and a username must never be stored or compared there.
+
+  The account scoping this replaces was added in #205; its regression tests built every token — including the legitimate owner's — with the same hardcoded placeholder signature, so the suite could not distinguish a real token from a forged one and never exercised same-username forgery. Added regression tests covering forged-username reads on the JSON path, the image-blob path, and the map-payload-ref path, plus assertions that two tokens claiming the same username yield different ownership keys and that a username is never stored as an ownership key.
+
+- **Map app CSP now names exact hosts instead of allowing all of `*.mapbox.com` (#265).** `MapAppUIResource` and `render_map_tool` declared `connectDomains: ['https://*.mapbox.com', 'https://events.mapbox.com']`, a wildcard over every Mapbox subdomain (which also made the `events.mapbox.com` entry redundant). MCP Apps hosts compare the declared CSP against what the UI actually loads, and OpenAI's app guidelines ask for "the exact domains" and allowlists "as narrow as possible". Both now come from one `mapAppCsp(apiEndpoint)` helper, so the resource and the tool can't drift apart: `api.mapbox.com` and `events.mapbox.com` for connections, plus the origin of `MAPBOX_API_ENDPOINT` when it points somewhere else (the page's Directions, Isochrone, Search Box and other calls go there); `api.mapbox.com` for resources; `blob:` workers. `BaseTool`'s `meta.ui.csp` type gains `workerDomains` so the tool can declare the same policy as the resource.
+
+  Checked in headless Chrome with the new policy enforced as a `Content-Security-Policy` header: the map loaded on `standard`, rendered a payload with a line layer, a circle layer, markers and `lightPreset: "dusk"`, then switched to `standard-satellite`. Every request went to `api.mapbox.com` (103 requests, including tiles, 3D models and imagery) or `events.mapbox.com`, with no CSP violations or page errors. Added tests for the helper, the resource's and the tool's declared CSP, and a custom endpoint.
+
+### Fixed
+
+- **`render_map_tool`: `baseStyle` (e.g. `"standard-satellite"`) was silently ignored on every real call.** `baseStyle` was only ever applied at map-construction time in `mapAppHtml.ts`'s `initMap()`, seeded from a server-embedded `#initial-data` script tag — but `MapAppUIResource` never actually passes `initialData` when serving that HTML, so the tag is always empty and the map always constructs with the default `"standard"` style. The real payload (with `baseStyle`) arrives afterward via the `ui/notifications/tool-result` → `render(payload)` path, which only ever handled `baseMapConfig` (color/theme properties via `setConfigProperty`), never `baseStyle` itself. Caught live: asking for a `"standard-satellite"` render produced a map correctly labeled "satellite view" that was actually still the standard vector style. `render()` now detects a `baseStyle` change from what the map is currently on and switches via `map.setStyle(...)`, deferring the rest of the render until `style.load` fires (matching how a style is normally swapped in GL JS, since it replaces sources/layers). Added regression tests reproducing the original silent-ignore bug (confirmed to fail without the fix) and covering the no-op case when a render repeats the already-active style.
+
+### New Features
+
+- **`ground_location_tool` now returns `mapbox_id` and `external_ids` on each nearby POI.** The tool runs a category search internally, but its POI mapper hand-picked six properties (`name`, `address`, `longitude`, `latitude`, `category`, `distance_meters`) and dropped the rest, and its local `CategorySearchFeature` interface didn't declare the others either — even though `CategorySearchTool.output.schema.ts` has always modelled `mapbox_id` (required) and `external_ids` (optional) on the same API response. Two consequences, both for the model reading the tool result: there was no way to follow up with `place_details_tool` (which takes a `mapbox_id`) to get ratings, popularity, opening hours, or a phone number for a place `ground_location_tool` had just surfaced — the documented enrichment path was a dead end from this tool's output — and no way to attribute a record to the upstream supplier behind it (`dataplor`, `tripadvisor`). Both fields now thread through to `nearby_pois`, with `.describe()` text pointing at the `place_details_tool` follow-up so the model knows what the id is for.
+
+  Both stay optional in `PoiSchema`, since a feature can come back without either, and neither is added to the human-readable text output — they are identifiers, not prose. Note that a returned `mapbox_id` is not guaranteed to work against the Places `/details/retrieve` endpoint: some ids decode to the OpenStreetMap-sourced `urn:mbxpoi-osm:` scheme, which that endpoint rejects.
+
+- **`search_and_geocode_tool`: description now mentions Search Box API's natural-language query support.** Mapbox is rolling out NL understanding on the underlying `/forward` endpoint (category + place + attribute phrasing, e.g. "quiet coffee shops with wifi near downtown"), verified working well in our own testing. The tool's description and `q` field now mention this so callers know richer free-text phrasing is worth trying, with a caveat that big-box retail brand + address queries (Costco, Walmart, Target) are currently unreliable and return unrelated results — verified via a 202-query test set against the live API, after first ruling out a CDN-caching artifact in our own test methodology that had produced misleading results.
+
+### Fixed
+
+- **`search_and_geocode_tool`: `q`'s max length corrected from 256 to 200 characters.** The Search Box API docs state a 256-character limit, but the live API actually rejects anything over 200 with `{"message":"Query exceeded character limit of 200"}` (confirmed directly against the API: 200 chars succeeds, 201 fails). Our schema previously allowed up to 256, so a caller sending 201-256 characters would pass our validation and then fail with an opaque 400 from the API. `q`'s `.max()` and description updated to match actual API behavior.
+
+- **`render_map_tool`: support Mapbox Standard Satellite as a base style.** New `baseStyle: "standard" | "standard-satellite"` field (defaults to `"standard"`, preserving prior behavior) switches the base map to [Mapbox Standard Satellite](https://docs.mapbox.com/map-styles/reference/standard-satellite/) — the same Standard style family (dynamic labels, `bottom`/`middle`/`top` slots, most `baseMapConfig` properties) rendered over global satellite imagery instead of a vector basemap. Requested via Slack. Applied at map-construction time, same as `baseStyle`'s sibling `baseMapConfig`, and validated against an allowlist client-side so an unrecognized value can never reach the style URL. Verified live in a real browser against the Mapbox API. See `docs/render-map-tool.md` for the property-compatibility notes and an example.
+- **The server now identifies which MCP client connected to it.** `server.server.getClientVersion()` (populated from the `clientInfo` sent in the client's `initialize` request) is now logged on connect, e.g. `Client identified as: claude-ai v1.0.0` — useful for support/debugging when behavior differs across Claude Desktop, Cursor, VS Code, etc. Reading it required moving the read to a `server.server.oninitialized` callback rather than right after `server.connect()`, since `getClientVersion()`/`getClientCapabilities()` are only populated once the client's `initialize` request has actually been processed, which is not guaranteed by the time `connect()`'s promise resolves (it only waits for the transport to start). Confirmed live that reading capabilities immediately after `connect()` reliably returned `undefined` even for a client that declared them; moving both reads into `oninitialized` fixed the same-shaped bug in the existing capability-gated tool registration (currently dormant, since no tool is registered through that path yet, but was silently broken for whenever one is added). The client name/version is also recorded as `mcp.client.name`/`mcp.client.version` on every subsequent tool-execution trace span, so OTel-backed traces can be filtered or grouped by client.
+- **`render_map_tool`: restyle the base map itself via `baseMapConfig`, and place custom layers with `slot`.** Previously `MapAppPayload`/`RenderMapInputSchema` only supported adding new GeoJSON layers on top of a fixed base map. `baseMapConfig` exposes Mapbox Standard's config-property system (`map.setConfigProperty('basemap', ...)`) — e.g. `{ "colorWater": "#ff0000" }` turns the water red, or `{ "lightPreset": "night" }` switches to night lighting — covering colors, `theme`, `lightPreset`, and label/3D-object visibility toggles. Applied at map-construction time (via the `config` option, when present in the initial payload) to avoid a flash of default colors, and via `setConfigProperty` on later re-renders. `layers[].slot` (`"bottom" | "middle" | "top"`) places a custom layer relative to Standard's own layers instead of always rendering above everything, including labels (still the default when `slot` is omitted). Both verified live in a real browser against the Mapbox API. See `docs/render-map-tool.md` for the full property list and an example. Filed as #249 after a user asked whether `render_map_tool` could turn the water red on the fly.
+
+### Breaking Changes
+
+- **`place_details_tool` now calls the Mapbox Places API instead of the older Details API.** The tool previously called `search/details/v1/retrieve` (`docs.mapbox.com/api/search/details/`); it now calls `places/v1/details/retrieve` (`docs.mapbox.com/api/search/places/`), a separate, newer product built around a larger POI dataset. This is not a compatible upgrade:
+  - **Input**: `attribute_sets`, `language`, and `worldview` are removed from the primary input schema — the Places API's Details endpoint takes only a `mapbox_id` and has no equivalent parameters. They're added back as fallback-only parameters (see below), so existing callers still validate, but they now only take effect for boundary/administrative lookups.
+  - **Output**: the response is no longer a GeoJSON `Feature`. It's a flat object (`name`, `full_address`, `phone`, `website`, `categories`, `opening_hours` as a plain OSM-format string, `coordinates: { latitude, longitude }`, `score: { popularity, reality, closed }`, `address`, `attributes`, `photos`, `building`) — see `PlaceDetailsTool.output.schema.ts`. Callers reading `properties.*` or `geometry.coordinates` from the old shape need to update to the new field names.
+  - **Lost fields**: the old API's `rating`/`review_count`/`price` (user rating and review count) have no equivalent in the new API for POI lookups. `score.popularity`/`score.reality` are data-quality/confidence signals, not user ratings, and are preserved in the formatted text output as "Popularity: N%".
+  - The Places API is **Public Preview**: its default quota is 1,000 records/month per account and 100 records/sec, and its response contract may change without notice. The output schema is deliberately permissive (`.passthrough()` throughout, most fields optional) to avoid the class of output-validation failure fixed in 0.14.0 if the API adds or omits fields. The tool's description now surfaces the 1,000/month quota so callers know to contact Mapbox for higher volume.
+  - **Boundary/administrative lookups fall back to the legacy Details API.** The Places API only covers points of interest and rejects `mapbox_id`s for neighborhoods, cities, or other administrative boundaries with a `422 Invalid mapbox_id format` error (confirmed live against the API). Per Places team feedback, that's a real capability gap — the legacy API remains the only way to resolve those IDs, and the only source of enhanced Japan data — so rather than losing it, `place_details_tool` now retries against the legacy Details API on that specific 422 and normalizes its response onto the same flat output shape (adding `feature_type`, `bbox`, `context`, and `metadata` fields, populated only via this fallback). `attribute_sets`/`language`/`worldview` are forwarded to the fallback request when provided. POI lookups are unaffected — they resolve via the Places API in a single request, same as before.
+
+### Changed
+
+- **Tool calls are now bound to the MCP server that received them.** `BaseTool` tracked its target server in a single mutable instance field set by `installTo()`, and the callback it registered read that field at call time rather than capturing the server it was registered on. Because the pre-configured instances exported from `@mapbox/mcp-server/tools` are module-level singletons, an application that installed one instance into more than one `McpServer` would have the later `installTo()` silently redirect the earlier server's callbacks: logging, sampling (`ground_location_tool`), and elicitations (`search_and_geocode_tool`, `directions_tool`) would all be sent to whichever server was installed last. Each invocation now resolves the server that registered its callback, via `AsyncLocalStorage`, so concurrent calls arriving through different servers stay on their own. Single-server applications — including the server shipped by this package — behave exactly as before. Calling `run()` directly, outside a registered callback, still falls back to the most recently installed server.
+
+  `BaseResource` carried the same pattern and got the same treatment. Its only reader was `log()`, so the practical effect there was misdirected log messages rather than misdirected client interaction, but the resource instances exported from `@mapbox/mcp-server/resources` are module-level singletons for the same reason and the shared field was the same hazard.
+
+- **`render_map_tool`'s base map style switched from `streets-v12` to Mapbox Standard.** `streets-v12` was never a deliberate choice — it was inherited from `StaticMapImageTool`'s pre-existing default when the interactive GL JS map app was built, and never revisited. Mapbox's own docs now default new GL JS maps to Standard ("a versatile and visually appealing map style suitable for many applications"), and this org's own agent-skills guidance has moved the same direction for new integrations. `MapAppPayload`'s custom layers/markers are unaffected: they're added without a `slot`, which (per the Style Spec) places them above all imported layers, matching their prior position under `streets-v12`. Verified visually against a route line, a filled polygon, and markers rendered together on the new style. `StaticMapImageTool` (the separate Static Images API tool) is untouched — that API can't render Standard.
+
+### Dependencies
+
+- Bumped `@modelcontextprotocol/sdk` to `1.30.0`. Not adopting the `2026-07-28` spec revision this release covers (stateless request/response model, elicitation replaced by Multi Round-Trip Requests, Sampling deprecated) — that's a separate migration tracked in #245, since `directions_tool`/`search_and_geocode_tool`'s elicitation-based selection and `ground_location_tool`'s sampling-based strategy detection all depend on the mechanisms being replaced. Regenerated `patches/@modelcontextprotocol+sdk+1.30.0.patch` (previously pinned to `1.29.0`) — same patch content, applies cleanly to the new version, verified live against the built server.
+
+## 0.14.0 - 2026-07-30
+
+### New Features
+
+- **`directions_tool` — route selection elicitation.** When the Directions API returns two or more route alternatives, the tool now asks the user to pick one via `server.elicitInput(...)` (MCP elicitations), presenting each option's duration, distance, primary roads, traffic conditions, and incident count. Only the selected route is returned, and the choice is threaded through to the map preview's self-fetch so re-rendering shows the same route rather than defaulting back to the first one. If the client doesn't support elicitations, the user declines, or the call errors, the tool falls back to returning all route alternatives, matching prior behavior.
+- Corrected `docs/elicitations.md`, which had described a two-stage `directions_tool` elicitation flow (routing preferences before the API call, plus automatic client-capability detection) that was never implemented. The doc now accurately describes the single-stage route-selection elicitation and the actual fallback mechanism (a `try`/`catch` around each `elicitInput` call, with no capability pre-check).
+
+### Fixed
+
+- **`place_details_tool`: fixed output validation failure when `attribute_sets` omitted `"basic"`.** The tool's output schema requires `properties.name` and `properties.feature_type`, both of which are only populated by the Details API's `basic` attribute set — so a call like `attribute_sets: ["visit"]` was accepted at the input stage but then failed with an opaque `Output validation error` once the API's response came back without those fields. `"basic"` is now always merged into the outgoing `attribute_sets` request regardless of what the caller passes, matching what the tool's own description already claimed ("always included").
+
+### Changed
+
+- **Removed dead MCP-UI code.** `--disable-mcp-ui` no longer appears in `--help` (it stopped doing anything once MCP-UI support was removed) but is still silently accepted so an existing launch config that passes it doesn't hard-fail on "Unknown option". Deleted the orphaned `StaticMapUIResource` (`ui://mapbox/static-map/index.html`) — it was registered but no tool had referenced it since `static_map_image_tool` stopped declaring an MCP Apps UI resource. No behavior change: MCP-UI support was already fully gone from the codebase; this just removes the code that referenced it.
+
+### Documentation
+
+- **README and `render_map_tool` docs refreshed.** The README's "Rich Map Previews" section and `docs/mcp-ui.md` described MCP-UI support (`@mcp-ui/server`, `ENABLE_MCP_UI`, `StaticMapUIResource` wired to `static_map_image_tool`) that was fully removed when `render_map_tool` shipped — `@mcp-ui/server` is no longer a dependency and nothing in `src/` reads `ENABLE_MCP_UI` anymore. `docs/mcp-ui.md` now explains what changed and points to the new **[`docs/render-map-tool.md`](./docs/render-map-tool.md)**, a comprehensive guide covering the full payload schema and, in particular, how to call `render_map_tool` standalone with your own GeoJSON — no other Mapbox tool required. Also added the ~12 tools missing from the README's tool inventory (`render_map_tool`, `ground_location_tool`, `place_details_tool`, `destination_tool`, `union_tool`/`intersect_tool`/`difference_tool`, `convex_tool`, `nearest_point_tool`/`nearest_point_on_line_tool`, `length_tool`) and replaced the entry for the removed `point_in_polygon_tool` with its actual replacement, `points_within_polygon_tool`.
+
+## 0.13.0 - 2026-07-30
+
+### Security
+
+- **directions_tool: fixed query parameter injection via the `exclude` parameter.** A `point(<lng> <lat>)` exclude entry was validated by splitting on spaces and reading only the first two tokens — any extra content after them (e.g. `point(0 0 &injected=evil)`) was never inspected or rejected. That value then reached the outbound Mapbox Directions API request through a hand-rolled encoder that escaped `,`/`(`/`)`/space but not `&`/`=`, concatenated directly onto the query string rather than through `URLSearchParams`. Together these let a caller-supplied `exclude` value add or override arbitrary query parameters on the authenticated Directions API request. Fixed by (1) requiring a `point(...)` entry's interior to be exactly two numbers and nothing else, and (2) building the `exclude` parameter through `URLSearchParams` like every other parameter, so it's always correctly percent-encoded regardless of content. Applied to both the server-side request builder and its hand-ported client-side twin in the map preview iframe.
+
+### New Features
+
+- **`render_map_tool` — single visualization primitive** for Mapbox MCP. Takes
+  a `MapAppPayload` and displays a live Mapbox GL JS map. All other geo
+  tools (directions, isochrone, optimization, search, map-matching,
+  ground-location, polygon-ops) return a ready-to-render `_mapApp` payload
+  on their `structuredContent`; the LLM passes it to `render_map_tool` to
+  show a map. This is the only tool that declares `_meta.ui.resourceUri`,
+  so MCP App hosts (which only fully render the iframe for the last tool
+  in a chained sequence) always render successfully — the visualization
+  step is terminal by design.
+- **`MapAppPayload` schema** (`src/utils/mapAppPayload.ts`) — the wire
+  format between data tools and `render_map_tool`. Thin pass-through over
+  Mapbox Style spec `paint`/`layout` objects so any layer/marker/legend
+  combination expressible in GL JS is expressible in the payload.
+- **Per-tool payload builders** — `buildPolygonOpsMapPayload` (still used
+  server-side; see below for the tools that moved their payload building
+  to the iframe instead). Each is a pure function over its tool's
+  response: ~20-80 lines, no HTML, no iframe wiring.
+- **Shared `renderMapAppHtml`** (`src/resources/ui-apps/mapAppHtml.ts`) —
+  one iframe template that consumes any `MapAppPayload`. Used by both the
+  MCP Apps resource (`MapAppUIResource`) and any client that wants to
+  bake initial data in.
+- **Polyline decoding moves tool-side** via `decodePolyline` /
+  `decodePolylineWithFallback` so the iframe only ever receives GeoJSON.
+
+### Fixed
+
+- **Tracing**: Access tokens are no longer included in exported spans. Mapbox APIs take the access token as a URL query parameter, and OpenTelemetry's HTTP/undici auto-instrumentation records the full request URL on client spans (`url.full`, `url.query`), so operators who configured `OTEL_EXPORTER_OTLP_ENDPOINT` had tokens copied verbatim into their telemetry backend. The trace exporter is now wrapped in a `RedactingSpanExporter` that strips the token signature from all string span attributes before export. Redaction keeps the token prefix and account name — `pk.eyJ1...xyz.signature` becomes `pk.your-account.redacted` — so spans still distinguish public from secret tokens and show which account a request billed to, without carrying a usable credential. Values that do not parse as a Mapbox token fall back to `access_token=***`.
+
+- **urlSafety**: `isSafeExternalUrl()` (used to validate `static_map_image_tool` custom-marker overlay URLs) now uses `ipaddr.js` to parse IPv6 literals and correctly identify IPv4 addresses embedded via any standard encoding (IPv4-mapped, IPv4-compatible, 6to4, NAT64, IPv4-translated/SIIT), instead of pattern-matching a subset of string forms. The previous regex-based check missed the bare IPv4-compatible form and the 6to4/NAT64/SIIT forms, letting blocked IPv4 ranges (loopback, private, link-local, etc.) through when expressed as one of those encodings. The embedded address is now detected from the parsed address's raw bytes rather than by enumerating each encoding's string shape.
+- **map_matching_tool**: When the Map Matching API can't match a trace (e.g. `code: "NoMatch"` for distant/unmatchable coordinates), the tool now returns a clear `isError` text result instead of crashing with `MCP error -32602: Output validation error` — the API omits `tracepoints`/`matchings` in this case, which previously violated the tool's output schema and was returned as `structuredContent` anyway, triggering the MCP SDK's output validation. The same schema-violating `structuredContent` could also be returned for a `code: "Ok"` response that otherwise failed schema validation (e.g. a `confidence` out of range); that fallback now also returns a graceful `isError` result instead of the raw invalid payload. `tracepoints` and `matchings` are also now `.optional()` in the output schema as a defensive measure. (AGI-1021)
+- **render_map_tool: map previews no longer break after a server restart or when reopening an old conversation.** Rendering previously depended entirely on in-memory server state (a 30-minute-TTL `Map`) that doesn't survive a process restart — including `render_map_tool`'s own merged-output ref, the one every MCP App host actually re-fetches when a map card is redisplayed. That ref is now self-describing (the whole small payload is encoded directly into the ref) instead of pointing at that ephemeral store, whenever the payload is small enough to inline.
+- **directions_tool, isochrone_tool, map_matching_tool, optimization_tool (v1), search_and_geocode_tool, category_search_tool, ground_location_tool: map previews now fetch their own data directly from the relevant Mapbox API**, client-side in the iframe, using the same public token already used for map tiles, instead of depending on geometry computed and cached server-side. This also means these previews always reflect fresh data on every render (e.g. current traffic for directions) and no longer depend on the caller's own request options (e.g. `geometries`/`overview` choices) to have geometry to draw. For `ground_location_tool`, the sampling-derived grounding strategy (which decides the geocode types and whether a POI lookup is needed) is resolved once server-side and threaded through the ref, since the iframe can't invoke MCP sampling itself.
+- **union_tool, intersect_tool, difference_tool: map previews are now recomputed from the original input polygons on every render** instead of being cached behind a server-side ref that could expire or vanish on a restart.
+- **render_map_tool: clearer recovery when a `payload_ref` can't be resolved.** Instead of silently dropping the data or returning a bare "nothing to render" error, the LLM is now told to re-run the upstream tool to get a fresh ref. The map preview itself now also shows the server's actual explanation (e.g. "expired") instead of a generic "malformed payload" message.
+
+### Testing
+
+- **New integration test: process-restart survival** (`test/integration/processRestart.test.ts`). Spawns the actual built server (`dist/esm/index.js`) as a real child process, gets a ref back over real stdio/MCP protocol, kills that process, spawns an independent one, and resolves the same ref against it — the only test in the suite that crosses a real process boundary, which is what the restart-survival fixes above actually need proven. Runs offline (`union_tool`/`render_map_tool` do no network I/O) in ~5s; skips itself with a clear message if `dist/esm/index.js` hasn't been built yet (CI already builds before testing).
+
+## 0.12.7 - 2026-07-20
+
+### Fixed
+
+- **directions_tool**: The map preview UI (both the MCP Apps resource and the legacy MCP-UI inline UI) now fetches its own route directly from the Directions API using the tool call's input parameters, instead of depending on the tool response carrying `geometries="geojson"`. Previously, the map showed an error whenever the default `geometries="none"` was used because no route data was returned to draw. The map now works regardless of the `geometries` value, so text/data responses can stay compact by default without ever breaking the preview.
+- **directions_tool map preview**: Replaced the one-shot render latch with per-call render cycles, so a host that reuses the same iframe across sequential `directions_tool` calls gets the new route instead of the first one forever, and hardened the iframe's postMessage handling — messages are only accepted from the embedding host (sender pinning), and untrusted input that gets interpolated into the Directions request URL (`coordinates`, `routing_profile`, `exclude`) is validated before the self-fetch runs, mirroring the server-side zod guarantees.
+
+### Documentation
+
+- **CONTRIBUTING**: Clarify that unsolicited PRs adding third-party directory/discovery listings (e.g. README badges, `beacon.json`-style manifests) are out of scope and will be closed without review (#225).
+
+## 0.12.6 - 2026-07-13
+
+### Fixed
+
+- **Public token resolution**: `resolveMapboxPublicToken` now also resolves a public token for `tk.*` (OAuth-issued temporary) bearers, not just `sk.*` bearers. Previously, granting the `tokens:read` scope to an OAuth client had no effect because the Tokens API lookup was skipped for `tk.*` tokens, causing GL JS preview tools (e.g. Directions) to fail with "No Mapbox public token available" even when `tokens:read` was granted.
+- **Public token cache is now per-user**: the resolved public token cache was previously a single global slot shared by every request. It's now keyed by the token's account, so concurrent requests from different accounts can no longer receive each other's cached public token.
+
+## 0.12.5 - 2026-06-15
+
+### Changed
+
+- **Docker**: Remove `libgnutls30` from the runtime image via `dpkg --remove --force-depends`. The package is only depended on by `apt`, which is not needed at runtime. `libgnutls30` is not called by Node.js (which uses OpenSSL for TLS) and was present solely as a transitive system dependency of the Debian slim base.
+
+## 0.12.3 - 2026-06-11
+
+### Changed
+
+- **Temporary resources** (`mapbox://temp/...`) are now scoped to the account that created them: a read by a different account returns the standard not-found response. Token resolution mirrors the tools (request auth, then the env token for stdio/single-user), so local reads are unaffected. Adds regression tests.
+
+### Dependencies
+
+- **Normalize line endings to LF**: Added `.gitattributes` (`* text=auto eol=lf`) and `"endOfLine": "lf"` to the Prettier config so Windows contributors no longer hit CRLF/Prettier failures when running `npm run lint`.
+
+## 0.12.2-dev - 2026-06-10
+
+### Security
+
+- **static_map_image_tool**: Stop embedding the Mapbox access token in tool results. Previously the tool returned a `createUIResource({ iframeUrl })` whose URL carried the caller's `?access_token=` query param, leaking the secret token via the MCP-UI resource item. The credentialed URL is now only used server-side to fetch the image, which is returned inline as base64. The tool's `meta.ui.resourceUri` declaration is removed (the iframe path required the credentialed URL to function and cannot be reinstated without leaking). A regression test asserts the access token does not appear in any content item.
+- chore: upgrade @opentelemetry/\* packages to latest (fixes protobufjs GHSA-xq3m-2v4x-88gg critical CVE) (#183)
+- **CVE-2026-33750**: Added `overrides` for `brace-expansion` to `^2.0.3` — eliminates vulnerable `1.1.14` installs nested under `@eslint/config-array`, `@eslint/eslintrc`, and `eslint` via `minimatch@3.1.5`
+- **CVE-2026-33750 (Docker)**: Upgrade npm to `11.16.0` in Dockerfile — `node:22-slim` ships with npm 10.9.8 which bundles `brace-expansion` 2.0.2 internally; upgrading npm replaces it with 5.0.6 (patched)
+
+### Breaking Changes
+
+- **Remove `point_in_polygon_tool`** — `points_within_polygon_tool` fully covers the single-point case; pass a one-element `points` array instead. Updated `points_within_polygon_tool` description to make clear it handles single points as well as batches.
+
+### Dependencies
+
+- **Upgrade `tshy` to `^4.1.1`, `vitest`/`@vitest/coverage-istanbul` to `^4.1.4`, `typescript` to `^6.0.2`** — removed deprecated `baseUrl` from `tsconfig.base.json` (TS6), updated `paths` entry to use relative `./` prefix
+- **Upgrade OpenTelemetry to 2.x** — upgraded `@opentelemetry/resources` and `@opentelemetry/sdk-trace-base` from `^1.30.1` to `^2.6.1`; upgraded experimental packages (`sdk-node`, `instrumentation`, `exporter-trace-otlp-http`) from `^0.56.0` to `^0.214.0`; upgraded `auto-instrumentations-node` to `^0.72.0` and `semantic-conventions` to `^1.40.0`; migrated `new Resource()` to `resourceFromAttributes()` following the 2.x API change
+- **Upgrade `zod` from `^3.25.42` to `^4.3.6`** — migrated `z.record()` calls to require explicit key schema (`z.string()`), updated `.shape` access (no longer a function in v4), and fixed `denoise` default handling in `IsochroneTool` input schema
+
+### New Features
+
+- **`directions_tool` now renders as a live Mapbox GL JS map** for both the MCP Apps spec and legacy MCP-UI clients:
+  - **MCP Apps**: the tool declares `_meta.ui.resourceUri` pointing to a new `DirectionsAppUIResource` (`ui://mapbox/directions-app/index.html`). MCP App–capable hosts (Claude Desktop, VS Code, Cursor) render the route via postMessage handoff.
+  - **MCP-UI**: when `geometries=geojson` is requested and the response carries a renderable LineString, an inline `rawHtml` UIResource is added to the tool's `content[]` (gated by the existing `ENABLE_MCP_UI`/`--disable-mcp-ui` flag, like `static_map_image_tool`).
+  - **One source of truth**: both pathways render the same HTML produced by `renderDirectionsAppHtml` — for MCP Apps the resource serves a generic version and the iframe receives the tool result via postMessage; for MCP-UI the tool bakes the route geometry into the HTML before returning. No more "GL JS map for one client, static image for the other."
+  - **Public token**: resolved server-side via `GET /tokens/v2/{user}?default=true` (requires `tokens:read` on the `sk.*` token) with `MAPBOX_PUBLIC_TOKEN` env var fallback. Non-MCP-App hosts that also have MCP-UI disabled ignore both UI hints and consume the existing text/structuredContent payload unchanged.
+  - **Graceful degradation**: responses without renderable geometry (>50KB temporary-resource path, `geometries=none`, `geometries=polyline*`) skip the inline rawHtml block and show a "no geometry to render" message in the MCP App iframe.
+  - **CSP**: `_meta.ui.csp.workerDomains: ['blob:']` so MCP App hosts grant Mapbox GL JS the iframe sandbox permissions it needs.
+- **MCP Completions capability**: Add auto-completion support for prompt arguments per MCP spec (2025-11-25). Clients can now suggest values when users fill in prompt parameters (#176)
+  - `category` argument on `find-places-nearby` — 482 Mapbox Search API categories
+  - `mode` argument on `get-directions`, `search-along-route`, `show-reachable-areas` — driving, driving-traffic, walking, cycling
+- **ground_location_tool MCP sampling**: Use MCP sampling to classify the grounding strategy (`routing` / `neighborhood` / `poi` / `region`) and shape downstream Geocoding, Search, and Isochrone calls accordingly. Falls back to `neighborhood` when the client doesn't support sampling.
+
+### Security
+
+- **static_map_image_tool**: Validate custom-marker URLs to reject loopback, private, link-local, and cloud-metadata IP addresses, preventing SSRF via the Mapbox Static Images API (CWE-918)
+
+### Fixes
+
+- **CLI metadata flags**: Handle `--help` and `--version` before server startup so users can inspect usage and version information without requiring Mapbox environment configuration.
+- **Prompt descriptions**: Add missing `driving-traffic` transport mode to `get-directions`, `search-along-route`, and `show-reachable-areas` prompt descriptions
+- **ground_location_tool**: Use `mapbox/` prefix for isochrone profiles and add `driving-traffic` support
+- **ground_location_tool**: Reverse geocode now returns neighborhood/locality/place name instead of street address by default
+- **ground_location_tool**: Strengthened tool description to prefer it over `reverse_geocode_tool` for location context queries
+
+## 0.11.0 - 2026-04-01
+
+### Security
+
+- **CVE-2026-4926**: Upgraded `@modelcontextprotocol/sdk` to `^1.29.0`, resolving `path-to-regexp` to `8.4.1` and fixing the ReDoS vulnerability [GHSA-j3q9-mxjg-w52f](https://github.com/advisories/GHSA-j3q9-mxjg-w52f); regenerated output-validation patch for the new version
+- **static_map_image_tool**: Validate `style` parameter against `username/style-id` format to prevent path traversal attacks where a crafted style value (e.g., `../../tokens/v2`) could escape the `/styles/v1/` URL path and access arbitrary Mapbox API endpoints using the server operator's token
+- **static_map_image_tool**: Remove access token from URL returned in text content — the token is only used internally for the HTTP fetch and the MCP Apps iframe URL, not exposed to the model context
+
+### New Features
+
+- **9 new offline Turf.js geometry tools** (no API key required, instant results):
+  - **`points_within_polygon_tool`**: Batch-test multiple points against a polygon in one call — replaces N `point_in_polygon_tool` calls for delivery zone validation, fleet geofencing, etc.
+  - **`union_tool`**: Merge two or more polygons into a single unified geometry; useful for combining service areas, isochrones, or delivery zones
+  - **`nearest_point_tool`**: Find the nearest point in a collection to a target — replaces calling `distance_tool` for each candidate
+  - **`intersect_tool`**: Find the intersection geometry of two polygons (area they share in common)
+  - **`difference_tool`**: Subtract one polygon from another ("what is in zone A but not zone B?")
+  - **`destination_tool`**: Calculate a destination point given origin, bearing, and distance
+  - **`length_tool`**: Measure the total length of a line/route without a routing API call
+  - **`nearest_point_on_line_tool`**: Snap a point to the nearest position on a line or route
+  - **`convex_tool`**: Compute the convex hull of a set of points
+
+### Exports
+
+- Added `getAllTools` to `@mapbox/mcp-server/tools` subpath export for batch access to all registered tools
+- Added `getVersionInfo` and `VersionInfo` type to `@mapbox/mcp-server/utils` subpath export
+
+### Removed
+
+- **version_tool**: Removed from the tool list — version info is now available as a resource at `mapbox://version` with zero token overhead
+
+### New Features
+
+- **mapbox://version resource**: Server version, git SHA, tag, and branch accessible via `readResource('mapbox://version')`
+
+### Bug Fixes
+
+- **static_map_image_tool**: Large images (>700KB raw) are now stored as temporary resources instead of being inlined as base64, preventing the 1MB tool result limit from being exceeded in Claude Desktop
+  - Image stored at `mapbox://temp/static-map-{id}`, retrievable via `resources/read` with a 30-minute TTL
+  - `TemporaryResourceManager` now enforces a 50MB byte cap with oldest-first eviction to prevent unbounded memory growth
+  - `TemporaryDataResource` now serves image mime types as blob content
+
+## 0.10.0 - 2026-03-04
+
+### New Features
+
+- **IsochroneTool large-response handling**: Isochrone responses exceeding 50KB are now stored as temporary resources, consistent with DirectionsTool (#131)
+  - Returns a compact summary with contour count and resource URI instead of the full GeoJSON
+  - Full GeoJSON retrievable via `readResource('mapbox://temp/isochrone-{id}')` with 30-minute TTL
+  - Normal-sized responses are unaffected
+
+### Bug Fixes
+
+- **static_map_image_tool**: Return a proper error when the Mapbox Static Images API returns a non-2xx response instead of silently encoding the error JSON as a fake base64 image (#130)
+- **BaseResource URI template registration**: Fixed `TemporaryDataResource` (and any resource with `{` in its URI) never matching `readResource` calls (#133)
+  - `server.registerResource()` with a plain string registers an exact-match static resource; template URIs like `mapbox://temp/{id}` require a `ResourceTemplate` object
+  - `BaseResource.installTo()` now detects `{` in the URI and wraps it with `ResourceTemplate` automatically
+
+### Dependencies
+
+- Upgrade `@mcp-ui/server` from `^5.13.1` to `^6.1.0` (security advisory on older versions)
+- Upgrade `@modelcontextprotocol/sdk` from `^1.26.0` to `^1.27.1` (security advisory on older versions); regenerated output-validation patch for new version
+
+### Documentation
+
+- Updated README: Goose added to MCP Apps supported clients; MCP-UI noted as legacy protocol
+
+## 0.9.0 - 2026-02-24
+
+### New Features
+
+- **place_details_tool**: New tool to retrieve detailed information about a specific place by Mapbox ID
+  - Accepts a `mapbox_id` from search results (`search_and_geocode_tool`, `category_search_tool`, `reverse_geocode_tool`)
+  - Optional `attribute_sets` parameter: `basic`, `photos`, `visit` (hours, rating, price), `venue` (phone, website, social media)
+  - Optional `language` and `worldview` parameters
+  - Returns formatted text summary plus structured GeoJSON Feature content
+  - Opening hours formatted as readable per-day text (e.g. "Monday: 9 AM – 9 PM") rather than raw JSON
+
+- **Large Response Handling**: DirectionsTool now creates temporary resources for responses >50KB
+  - Prevents context window overflow on long-distance routes
+  - Returns summary with distance, duration, and resource URI
+  - Full route geometry available via MCP resource API
+  - Temporary resources expire after 30 minutes
+  - Resource URI format: `mapbox://temp/directions-{id}`
+  - Updated tool description to guide LLMs: use geometries="none" for planning, geometries="geojson" only for visualization
+  - Returns lightweight structured content for large responses (summary data without geometry) to satisfy output schema validation
+  - Updated `search-along-route` prompt to use `geometries="none"` and linear interpolation for route sampling instead of extracting coordinates from geometry
+
+### Bug Fixes
+
+- **search_and_geocode_tool**, **category_search_tool**: Include `mapbox_id` in formatted text output so models can chain directly to `place_details_tool` without re-fetching results as JSON
+- **category_search_tool**: Fix schema validation failures on Japanese and other international place data
+  - Added `.passthrough()` to all context sub-schemas to allow extra fields returned by the API
+  - Made `country_code`, `country_code_alpha_3`, `region_code`, and `region_code_full` optional to match real API responses
+  - Fixed `BaseTool` to pass the full Zod schema (not just `.shape`) to the MCP SDK so `.passthrough()` settings are preserved during structured-content validation
+
+### Registry
+
+- Added hosted MCP endpoint (`https://mcp.mapbox.com/mcp`) to `server.json` `remotes` for registry discoverability
+
+### Dependencies
+
+- Upgrade `@modelcontextprotocol/ext-apps` from `^1.1.0` to `^1.1.1`
+- Upgrade `@modelcontextprotocol/sdk` from 1.25.3 to 1.26.0
+- Regenerated SDK patch for version 1.26.0
+
+### Documentation
+
+- **PR Guidelines**: Added CHANGELOG requirement to CLAUDE.md (#112)
+  - All pull requests must now update CHANGELOG.md
+  - Document what changed, why, and any breaking changes
+  - Add entry under "Unreleased" section with PR number
+
+### Developer Experience
+
+- **Release Process**: Added automated CHANGELOG preparation script (#112)
+  - New `npm run changelog:prepare-release <version>` command
+  - Automatically replaces "Unreleased" with version and date
+  - Adds new empty "Unreleased" section for next changes
+  - Includes validation for version format and CHANGELOG structure
+
+## 0.8.3
+
+### Features Added
+
+- **MCP Apps Support for StaticMapImageTool** (#109)
+  - Added interactive map preview in compatible MCP clients (VS Code, Claude Code, Goose)
+  - Implemented `StaticMapUIResource` serving interactive HTML with inline MCP Apps SDK
+  - Added `@modelcontextprotocol/ext-apps@^1.0.1` dependency
+  - Enhanced `BaseTool` with `meta` property for MCP Apps metadata
+  - Configured CSP for `api.mapbox.com` domains
+  - Sends `ui/notifications/size-changed` to fit panel to rendered image height
+  - Fullscreen toggle using `ui/request-display-mode`
+  - Uses proper `RESOURCE_MIME_TYPE` ("text/html;profile=mcp-app") per MCP Apps specification
+  - Tool response now includes: URL text (first, for MCP Apps), base64 image (for non-MCP-Apps clients), and optional UIResource (when MCP-UI enabled)
+
+### Security
+
+- **CVE-2026-0621**: Updated `@modelcontextprotocol/sdk` to 1.25.3 to fix ReDoS vulnerability in UriTemplate regex patterns
+- Regenerated SDK patch for version 1.25.3
+
+### Dependencies
+
+- Added `@modelcontextprotocol/ext-apps@^1.0.1`
+- Updated `@modelcontextprotocol/sdk` from 1.17.5 to 1.25.3
+
+## 0.8.2
+
+### Bug Fixes
+
+- **StaticMapImageTool**: Added text content to response for better MCP client compatibility (#103)
+  - Tool now returns structured content array with text description, image, and optional MCP-UI resource
+  - Text content includes map metadata (center, zoom, size, style, overlay count)
+  - Follows MCP specification for tool results with multiple content items
+
+## 0.8.0
+
+### Bug Fixes
+
+- Removed an invalid option in input schema of `search_and_geocode_tool`. The `navigation_profile` used to have invalid `driving-traffic` option.
+
+## 0.7.0
+
+### Features Added
+
+- **MCP Resources Support**: Added native MCP resource API support
+  - Introduced `CategoryListResource` exposing category lists as `mapbox://categories` resource
+  - Supports localized category lists via URI pattern `mapbox://categories/{language}` (e.g., `mapbox://categories/ja` for Japanese)
+  - Created base resource infrastructure (`BaseResource`, `MapboxApiBasedResource`) for future resource implementations
+  - Added `ResourceReaderTool` as fallback for clients without native resource support
+  - Enables more efficient access to static reference data without tool calls
+
+- **MCP-UI Support**: Added rich UI embedding for compatible MCP clients
+  - `StaticMapImageTool` now returns both image data and an embeddable iframe URL
+  - Enables inline map visualization in compatible clients (e.g., Goose)
+  - Fully backwards compatible - clients without MCP-UI support continue working unchanged
+  - Enabled by default, can be disabled via `ENABLE_MCP_UI=false` env var or `--disable-mcp-ui` flag
+  - Added `@mcp-ui/server@^5.13.1` dependency
+  - Configuration helper functions in `toolConfig.ts`
+
+### Deprecations
+
+- **CategoryListTool**: Marked as deprecated in favor of the new `mapbox://categories` resource
+  - Tool remains functional for backward compatibility
+  - Users are encouraged to migrate to either the native resource API or `resource_reader_tool`
+
+## 0.6.1
+
+### Other
+
+- Update to MCP registry schema version 2025-10-17
+
+## 0.6.0 (Unreleased)
+
+### Features Added
+
+- Support for `structuredContent` for all applicable tools
+- Registers output schemas with the MCP server and validates schemas
+- Adds OpenTelemetry Instrumentation for all HTTP calls
+
+### Bug Fixes
+
+- Fixed the version tool to properly emit the git version and branch
+
+### Other Features
+
+- Refactored `fetchClient` to be generic `httpRequest`.
+
+## 0.5.5
+
+- Add server.json for MCP registry
+
+## 0.5.0
+
+- Introduce new tool: SearchAndGeocodeTool
+- Remove former tools: ForwardGeocodeTool, PoiSearchTool; their
+  capabilities are combined in the new tool
+
+## 0.4.1
+
+- Minor changes to tool descriptions for clarity
+
+## 0.4.0 (Unreleased)
+
+### Features Added
+
+- New fetch pipeline with automatic retry behavior
+
+### Bug Fixes
+
+- Dual emits ESM and CommonJS bundles with types per target
+
+### Other Features
+
+- Migrated from Jest to vitest
+
+## v0.2.0 (2025-06-25)
+
+- **Format Options**: Add `format` parameter to all geocoding and search tools
+  - CategorySearchTool, ForwardGeocodeTool, PoiSearchTool, and ReverseGeocodeTool now support both `json_string` and `formatted_text` output formats
+  - `json_string` returns raw GeoJSON data as parseable JSON string
+  - `formatted_text` returns human-readable text with place names, addresses, and coordinates
+  - Default to `formatted_text` for backward compatibility
+  - Comprehensive test coverage for both output formats
+
+## v0.1.0 (2025-06-12)
+
+- **Support-NPM-Package**: Introduce the NPM package of this mcp-server
+
+## v0.0.1 (2025-06-11)
+
+- First tag release

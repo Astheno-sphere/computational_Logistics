@@ -1,0 +1,112 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, 0.**]
+  pull_request:
+    branches: [main, 0.**]
+  schedule:
+    - cron: "0 0 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  Test:
+    name: ${{ matrix.os }}, ${{ matrix.env }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+    # skip scheduled runs on forks
+    if: (github.event_name == 'schedule' && github.repository == 'geopandas/geopandas') || (github.event_name != 'schedule')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        postgis: [false]
+        dev: [false]
+        doctest: [false]
+        env:
+          - ci/envs/311-latest.yaml
+          - ci/envs/311-minimal.yaml
+#          - ci/envs/311-pd23.yaml -> in postgis env below
+#          - ci/envs/312-latest.yaml -> in postgis env below
+          - ci/envs/313-latest-no-pyogrio.yaml
+          - ci/envs/313-latest-no-pyproj.yaml
+#          - ci/envs/313-latest.yaml -> in doctest env below
+          - ci/envs/313-no-optional-deps.yaml
+          - ci/envs/314-latest.yaml
+#          - ci/envs/313-dev.yaml -> in dev env below
+        include:
+          # PostGIS envs
+          - env: ci/envs/311-pd23.yaml
+            postgis: true
+            os: ubuntu-latest
+          - env: ci/envs/312-latest.yaml
+            postgis: true
+            os: ubuntu-latest
+          # doctest env
+          - env: ci/envs/313-latest.yaml
+            doctest: true
+            os: ubuntu-latest
+          # MacOS & Windows envs
+          - env: ci/envs/313-latest-no-pyogrio.yaml
+            os: macos-latest
+          - env: ci/envs/313-latest.yaml
+            os: macos-latest
+          - env: ci/envs/313-latest-no-pyogrio.yaml
+            os: windows-latest
+          - env: ci/envs/313-latest.yaml
+            os: windows-latest
+
+          # Dev env
+          - env: ci/envs/313-dev.yaml
+            os: ubuntu-latest
+            dev: true
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: ${{ matrix.env }}
+
+      - name: Install package
+        # install without deps to avoid installing default but optional pyproj/pyogrio
+        run: pip install -e . --no-deps
+
+      - name: Check and Log Environment
+        run: |
+          python -V
+          python -c "import geopandas; geopandas.show_versions();"
+          micromamba info
+          micromamba list
+
+      - name: Test
+        env:
+          PYTHONWARNINGS: ${{ matrix.dev && 'error' || 'default' }}
+        run: |
+          pytest -v -r a -n auto --color=yes --cov=geopandas --cov-append --cov-report term-missing --cov-report xml geopandas/
+
+      - name: Test with PostGIS
+        if: ${{ matrix.postgis }}
+        env:
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGHOST: "127.0.0.1"
+          PGPORT: 5432
+        run: |
+          conda install postgis -c conda-forge
+          sh ci/scripts/setup_postgres.sh
+          set -o pipefail
+          pytest -v -r a --color=yes --cov=geopandas --cov-append --cov-report term-missing --cov-report xml geopandas/io/tests/test_sql.py | tee /dev/stderr | if grep SKIPPED >/dev/null;then echo "TESTS SKIPPED, FAILING" && exit 1;fi
+
+      - name: Test docstrings
+        if: ${{ matrix.doctest }}
+        run: |
+          pytest -v --color=yes --doctest-only geopandas --ignore=geopandas/datasets
+
+      - uses: codecov/codecov-action@v7

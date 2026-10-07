@@ -1,0 +1,23 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2018-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT plan(5);
+
+SELECT has_function('pgr_extractvertices');
+SELECT has_function('pgr_extractvertices',    ARRAY['text', 'boolean']);
+SELECT function_returns('pgr_extractvertices', ARRAY['text', 'boolean'], 'setof record');
+
+SELECT function_args_eq('pgr_extractvertices',
+    $$SELECT  '{"","dryrun","id","in_edges","out_edges","x","y","geom"}'::TEXT[] $$
+);
+
+SELECT function_types_eq('pgr_extractvertices',
+    $$VALUES ('{text,bool,int8,_int8,_int8,float8,float8,geometry}'::TEXT[]) $$);
+
+
+SELECT  finish();
+ROLLBACK;

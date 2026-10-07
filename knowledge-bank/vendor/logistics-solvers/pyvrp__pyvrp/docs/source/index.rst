@@ -1,0 +1,88 @@
+.. figure:: assets/images/logo.svg
+   :alt: PyVRP logo
+   :figwidth: 100%
+
+PyVRP is an open-source, state-of-the-art vehicle routing problem (VRP) solver developed by `Applied Routing <https://appliedrouting.com>`_.
+It currently supports VRPs with:
+
+* Pickups and deliveries (capacitated VRP, VRP with simultaneous pickup and delivery, VRP with backhaul, pickup and delivery VRP);
+* Vehicles of different capacities, costs, shift durations, routing profiles, and maximum distance and duration constraints (heterogeneous fleet VRP, site-dependent VRP);
+* Time windows, client service durations, and release times (VRP with time windows and release times);
+* Multiple depots (multi-depot VRP);
+* Reloading along routes at different reload depots (multi-trip VRP);
+* Optional clients with prizes for visiting (prize collecting, team orienteering problem);
+* Client groups imposing additional restrictions on multiple clients jointly (generalised VRP, VRP with multiple time windows);
+* **[Enterprise]** Automatic break planning for EU and US hours-of-service regulations;
+* **[Enterprise]** Vehicle-client and client-client compatibility constraints and sequencing relations;
+* **[Enterprise]** Fairness constraints like load and duration balancing;
+* **[Enterprise]** Soft clustering to encourage geographically compact routes.
+
+The PyVRP package comes with pre-compiled binaries for Windows, Mac OS and Linux, and can thus be easily installed without requiring local compilation.
+It can be installed through *pip* via
+
+.. code-block:: shell
+
+   pip install pyvrp
+
+.. tip::
+
+   Using or evaluating PyVRP at your company? `Applied Routing <https://appliedrouting.com>`_ provides consulting, custom development, and PyVRP Enterprise, an extended and production-ready version of PyVRP.
+   Get in touch at `info@appliedrouting.com <mailto:info@appliedrouting.com>`_ to join a private Slack channel with our team and discuss your use case, PyVRP features, or the roadmap.
+
+Contents
+--------
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Getting started
+
+   notebooks/quick_start
+   setup/why_pyvrp
+   setup/installation
+   setup/getting_help
+   setup/faq
+   setup/concepts
+   setup/benchmarks
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorials
+
+   notebooks/load
+   notebooks/duration_constraints
+   notebooks/profiles
+   notebooks/optional_clients
+   notebooks/mutually_exclusive_groups
+   notebooks/reloading
+   notebooks/shipments
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API reference
+
+   api/pyvrp
+   api/search
+   api/plotting
+   api/stop
+
+.. toctree::
+   :maxdepth: 1
+   :caption: About us
+
+   about/about
+   about/funding
+   about/citing
+   about/licenses
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Developing PyVRP
+
+   dev/algorithm
+   notebooks/pyvrp_implementation
+   dev/benchmarking
+   dev/contributing
+   dev/releasing
+   dev/supported_vrplib_fields
+   dev/new_vrp_variants
+   dev/glossary

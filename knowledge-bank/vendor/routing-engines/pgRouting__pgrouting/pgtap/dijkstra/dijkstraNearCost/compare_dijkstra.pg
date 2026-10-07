@@ -1,0 +1,167 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2020-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT CASE WHEN NOT min_version('3.2.0') THEN plan(1) ELSE plan(142) END;
+
+UPDATE edges SET cost = sign(cost) + 0.001 * id * id, reverse_cost = sign(reverse_cost) + 0.001 * id * id;
+
+
+CREATE TABLE expected AS
+WITH
+a AS (SELECT start_vid, d_w_1, u_w_1, d_n_1, u_n_1, d_w_2, u_w_2, d_n_2, u_n_2
+  FROM (VALUES
+    (5::BIGINT,
+        ARRAY[6]::BIGINT[],   ARRAY[6]::BIGINT[],    ARRAY[6]::BIGINT[],   ARRAY[6]::BIGINT[],
+        ARRAY[6,7]::BIGINT[], ARRAY[6,10]::BIGINT[],  ARRAY[6,7]::BIGINT[], ARRAY[6, 7]::BIGINT[]),
+    (6, ARRAY[ 5], ARRAY[ 5], ARRAY[ 7], ARRAY[ 5], ARRAY[5,7],  ARRAY[5,10], ARRAY[7,11], ARRAY[5,7]),
+    (10,ARRAY[ 6], ARRAY[ 6], ARRAY[11], ARRAY[11], ARRAY[6,11], ARRAY[6,15], ARRAY[11,16],ARRAY[7,11]),
+    (15,ARRAY[10], ARRAY[10], ARRAY[16], ARRAY[16], ARRAY[10,16],ARRAY[10,16],ARRAY[16,17],ARRAY[11,16]),
+    (7, ARRAY[ 6], ARRAY[ 6], ARRAY[11], ARRAY[ 6], ARRAY[6,3],  ARRAY[6,3],  ARRAY[11,8], ARRAY[6,3]),
+    (11,ARRAY[ 7], ARRAY[10], ARRAY[16], ARRAY[10], ARRAY[7,16], ARRAY[10,7], ARRAY[16,12],ARRAY[10,7]),
+    (1, ARRAY[ 3], ARRAY[ 3], ARRAY[ 3], ARRAY[ 3], ARRAY[7,3],  ARRAY[7,3],  ARRAY[7,3],  ARRAY[7,3]),
+    (3, ARRAY[ 1], ARRAY[ 1], ARRAY[ 7], ARRAY[ 1], ARRAY[7,1],  ARRAY[7,1],  ARRAY[7,11], ARRAY[7,1]),
+    (16,ARRAY[11], ARRAY[11], ARRAY[17], ARRAY[11], ARRAY[11,17],ARRAY[11,17],ARRAY[17],   ARRAY[11,17]),
+    (8, ARRAY[ 7], ARRAY[ 7], ARRAY[12], ARRAY[ 7], ARRAY[7,12], ARRAY[7,12], ARRAY[12,9], ARRAY[7,12]),
+    (12,ARRAY[17], ARRAY[11], ARRAY[17], ARRAY[11], ARRAY[16,17],ARRAY[11,8], ARRAY[17],   ARRAY[11,8]),
+    (17,ARRAY[16], ARRAY[12], NULL,      ARRAY[12], ARRAY[11,16],ARRAY[16,12],NULL,        ARRAY[16,12]),
+    (9, ARRAY[8],  ARRAY[8],  NULL,      ARRAY[ 8], ARRAY[7,8],  ARRAY[7,8],  NULL,        ARRAY[7,8]),
+    (2, ARRAY[4],  ARRAY[4],  ARRAY[4],  ARRAY[ 4], ARRAY[4],    ARRAY[4],    ARRAY[4],    ARRAY[4]),
+    (4, ARRAY[2],  ARRAY[2],  NULL,      ARRAY[ 2], ARRAY[2],    ARRAY[2],    NULL,        ARRAY[2]),
+    (13,ARRAY[14], ARRAY[14], ARRAY[14], ARRAY[14], ARRAY[14],   ARRAY[14],   ARRAY[14],   ARRAY[14]),
+    (14,ARRAY[13], ARRAY[13], NULL,      ARRAY[13], ARRAY[13],   ARRAY[13],   NULL,        ARRAY[13])
+  ) t(start_vid, d_w_1, u_w_1, d_n_1, u_n_1, d_w_2, u_w_2, d_n_2, u_n_2))
+SELECT * from a;
+
+
+CREATE OR REPLACE FUNCTION check_compare(edges_q TEXT, expected_q TEXT, optionals_n TEXT, optionals_d TEXT)
+RETURNS SETOF TEXT AS
+$BODY$
+DECLARE
+dijkstraNear_query TEXT;
+dijkstra_query TEXT;
+BEGIN
+    FOR id IN 1..17 LOOP
+        dijkstraNear_query := format($$
+            SELECT *
+            FROM pgr_dijkstraNearCost(
+                %1$L,
+                %2$s,
+                (SELECT array_agg(id) FROM vertices where id != %2$s),
+                %3$s);
+            $$, edges_q, id, optionals_n);
+        dijkstra_query := format($$
+            SELECT *
+            FROM pgr_dijkstraCost(
+                %1$L,
+                ARRAY[%2$s]::BIGINT[],
+                (SELECT scnd FROM (%3$s) a  WHERE frst = %2$s),
+                %4$s
+                );
+            $$, edges_q, id, expected_q, optionals_d);
+
+        -- raise notice '%', dijkstraNear_query;
+        -- raise notice '%', dijkstra_query;
+        RETURN QUERY
+        SELECT set_eq(dijkstraNear_query, dijkstra_query, id::TEXT || ' ' || optionals_d);
+    END LOOP;
+
+END
+$BODY$
+LANGUAGE plpgsql VOLATILE;
+
+CREATE OR REPLACE FUNCTION compare()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+
+IF NOT min_version('3.2.0') THEN
+  RETURN QUERY
+  SELECT skip(1, 'Function is new on 3.2.0');
+  RETURN;
+END IF;
+
+-- Initial tables are good to work
+
+RETURN QUERY
+SELECT isnt_empty($$SELECT id, source, target, cost, reverse_cost FROM edges$$);
+RETURN QUERY
+SELECT isnt_empty($$SELECT id FROM vertices$$);
+
+-- vertex id values that dont exist
+RETURN QUERY
+SELECT is_empty($$SELECT id FROM vertices WHERE id > 18$$);
+RETURN QUERY
+SELECT is_empty($$SELECT id, source, target, cost, reverse_cost FROM edges WHERE source > 18$$);
+RETURN QUERY
+SELECT is_empty($$SELECT id, source, target, cost, reverse_cost FROM edges WHERE target > 18$$);
+RETURN QUERY
+SELECT is_empty($$SELECT id FROM edges WHERE id > 18$$);
+
+RETURN QUERY
+SELECT * from check_compare(
+    $$SELECT id, source, target, cost, reverse_cost FROM edges$$,
+    $$SELECT start_vid AS frst, d_w_1 AS scnd FROM expected$$,
+    'directed => true, cap => 1', 'directed => true'
+);
+
+RETURN QUERY
+SELECT * from check_compare(
+    $$SELECT id, source, target, cost, reverse_cost FROM edges$$,
+    $$SELECT start_vid AS frst, u_w_1 AS scnd FROM expected$$,
+    'directed => false, cap => 1', 'directed => false'
+);
+
+RETURN QUERY
+SELECT * from check_compare(
+    $$SELECT id, source, target, cost  FROM edges$$,
+    $$SELECT start_vid AS frst, d_n_1 AS scnd FROM expected$$,
+    'directed => true, cap => 1', 'directed => true'
+);
+
+RETURN QUERY
+SELECT * from check_compare(
+    $$SELECT id, source, target, cost  FROM edges$$,
+    $$SELECT start_vid AS frst, u_n_1 AS scnd FROM expected$$,
+    'directed => false, cap => 1', 'directed => false'
+);
+
+
+RETURN QUERY
+SELECT * from check_compare(
+    $$SELECT id, source, target, cost, reverse_cost  FROM edges$$,
+    $$SELECT start_vid AS frst, d_w_2 AS scnd FROM expected$$,
+    'directed => true, cap => 2', 'directed => true'
+);
+
+RETURN QUERY
+SELECT * from check_compare(
+    $$SELECT id, source, target, cost, reverse_cost  FROM edges$$,
+    $$SELECT start_vid AS frst, u_w_2 AS scnd FROM expected$$,
+    'directed => false, cap => 2', 'directed => false'
+);
+
+RETURN QUERY
+SELECT * from check_compare(
+    $$SELECT id, source, target, cost  FROM edges$$,
+    $$SELECT start_vid AS frst, d_n_2 AS scnd FROM expected$$,
+    'directed => true, cap => 2', 'directed => true'
+);
+
+RETURN QUERY
+SELECT * from check_compare(
+    $$SELECT id, source, target, cost  FROM edges$$,
+    $$SELECT start_vid AS frst, u_n_2 AS scnd FROM expected$$,
+    'directed => false, cap => 2', 'directed => false'
+);
+
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+SELECT compare();
+SELECT finish();
+ROLLBACK;

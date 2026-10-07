@@ -1,0 +1,395 @@
+/*PGR-GNU*****************************************************************
+File: to_postgres.cpp
+
+Copyright (c) 2025-2026 pgRouting developers
+Mail: project@pgrouting.org
+
+------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+ ********************************************************************PGR-GNU*/
+
+#include "cpp_common/to_postgres.hpp"
+
+#include <cstddef>
+#include <deque>
+#include <map>
+#include <vector>
+#include <limits>
+#include <cmath>
+#include <algorithm>
+
+#include "c_types/routes_t.h"
+#include "c_types/path_rt.h"
+#include "c_types/mst_rt.h"
+#include "c_types/flow_t.h"
+
+#include "cpp_common/path.hpp"
+#include "cpp_common/alloc.hpp"
+#include "cpp_common/assert.hpp"
+
+namespace {
+
+double
+to_inf(double value) {
+    return std::fabs(value - (std::numeric_limits<double>::max)()) < 1?
+        std::numeric_limits<double>::infinity() : value;
+}
+
+void
+get_path(
+        int route_id,
+        int path_id,
+        const pgrouting::Path &path,
+        Routes_t **tuples,
+        double &route_agg_cost,
+        size_t &sequence) {
+    int path_seq = 0;
+    for (const auto e : path) {
+        (*tuples)[sequence] = {
+            route_id,
+            path_id,
+            path_seq,
+            path.start_id(),
+            path.end_id(),
+            e.node,
+            e.edge,
+            e.cost,
+            e.agg_cost,
+            route_agg_cost};
+        route_agg_cost += path[static_cast<uint32_t>(path_seq)].cost;
+        path_seq++;
+        ++sequence;
+    }
+}
+
+void get_path(
+        const pgrouting::Path &path,
+        Path_rt* &tuples,
+        size_t &sequence) {
+    double prev_cost = 0;
+    double aggcost = path.size() == 1? path[0].agg_cost : 0;
+    for (const auto e : path) {
+        aggcost += prev_cost;
+        tuples[sequence] = {
+            path.start_id(),
+            path.end_id(),
+            e.node,
+            e.edge,
+            to_inf(e.cost),
+            to_inf(aggcost)
+        };
+        prev_cost = e.cost;
+        sequence++;
+    }
+}
+
+void get_path(
+        const pgrouting::Path &path,
+        MST_rt* &tuples,
+        size_t &sequence) {
+    for (const auto &e : path) {
+        tuples[sequence] = {
+            path.start_id(),
+            0,
+            e.pred,
+            e.node,
+            e.edge,
+            to_inf(e.cost),
+            to_inf(e.agg_cost)};
+        ++sequence;
+    }
+}
+
+
+}  // namespace
+
+namespace pgrouting {
+namespace to_postgres {
+namespace detail {
+
+/**
+ * @param[in] matrix matrix[i,j] -> the i,j element contains result
+ * @returns total number of valid results
+ *
+ * a result is not valid when:
+ * - is in the diagonal: matrix[i,i]
+ * - has "infinity" as value
+ */
+size_t
+count_rows(const std::vector<std::vector<double>> &matrix) {
+    int64_t count = 0;
+    for (size_t i = 0; i < matrix.size(); i++) {
+        count += std::count_if(
+                matrix[i].begin(), matrix[i].end(),
+                [](double value) {
+                return value != (std::numeric_limits<double>::max)();
+                });
+    }
+    return static_cast<size_t>(count) - matrix.size();
+}
+
+}  // namespace detail
+
+/**
+ * @param[in] paths  The set of Paths
+ * @param[out] tuples The C array of Route_t
+ * @returns number of tuples on the C array
+ *
+ * Currently works for
+ * - pgr_dijkstraVia
+ * - pgr_trspVia
+ * - pgr_trspVia_withPoints
+ * - pgr_withPointsVia
+ */
+size_t
+get_viaRoute(
+        std::deque<pgrouting::Path> &paths,
+        Routes_t **tuples) {
+    pgassert(!(*tuples));
+
+    auto count = count_tuples(paths);
+    if (count == 0) return 0;
+
+    (*tuples) = pgr_alloc(count, (*tuples));
+
+    size_t sequence = 0;
+    int path_id = 1;
+    int route_id = 1;
+    double route_agg_cost = 0;
+    for (auto &p : paths) {
+        p.recalculate_agg_cost();
+    }
+    for (const auto &path : paths) {
+        if (path.size() > 0) {
+            ::get_path(route_id, path_id, path, tuples, route_agg_cost, sequence);
+        }
+        ++path_id;
+    }
+    (*tuples)[count - 1].edge = -2;
+
+    pgassert(count == sequence);
+
+    return sequence;
+}
+
+size_t
+get_tuples(
+        const std::deque<pgrouting::Path> &paths,
+        Path_rt* &tuples) {
+    pgassert(!tuples);
+
+    auto count = count_tuples(paths);
+    if (count == 0) return 0;
+
+    tuples = pgr_alloc(count, tuples);
+
+    size_t sequence = 0;
+    for (const auto &path : paths) {
+        if (path.size() > 0) {
+            ::get_path(path, tuples, sequence);
+        }
+    }
+    return sequence;
+}
+
+
+size_t
+get_tuples(
+        const std::deque<pgrouting::Path> &paths,
+        MST_rt* &tuples) {
+    pgassert(!tuples);
+
+    auto count = count_tuples(paths);
+    if (count == 0) return 0;
+
+    tuples = pgr_alloc(count, tuples);
+
+    size_t sequence = 0;
+    for (const Path &path : paths) {
+        if (path.size() > 0) {
+            ::get_path(path, tuples, sequence);
+        }
+    }
+    return sequence;
+}
+
+size_t
+get_tuples(const std::vector<II_t_rt> &data, II_t_rt* &tuples) {
+    pgassert(!tuples);
+
+    auto count = data.size();
+    if (count == 0) return 0;
+
+    tuples = pgrouting::pgr_alloc(count, tuples);
+
+    size_t i = 0;
+    for (const auto &d : data) {
+        tuples[i++] = d;
+    }
+
+    return count;
+}
+
+size_t
+get_tuples(std::vector<std::vector<int64_t>> &components, II_t_rt* &tuples) {
+    size_t count = 0;
+    for (auto &component : components) {
+        count += component.size();
+        std::sort(component.begin(), component.end());
+    }
+
+    std::sort(components.begin(), components.end());
+
+    tuples = pgrouting::pgr_alloc(count, tuples);
+
+    size_t i = 0;
+    for (const auto& component : components) {
+        auto component_id = component[0];
+        for (const auto edge_id : component) {
+            tuples[i++]= {edge_id, component_id};
+        }
+    }
+    return count;
+}
+
+
+size_t
+get_tuples(
+        const std::vector<IID_t_rt> &results,
+        IID_t_rt* &tuples) {
+    pgassert(!tuples);
+
+    auto count = results.size();
+    if (count == 0) return 0;
+
+    tuples = pgr_alloc(count, tuples);
+
+    for (size_t i = 0; i < count; i++) {
+        tuples[i] = results[i];
+    }
+    return count;
+}
+
+size_t
+get_tuples(
+        const std::vector<MST_rt> &results,
+        MST_rt* &tuples) {
+    pgassert(!tuples);
+
+    auto count = results.size();
+    if (count == 0) return 0;
+
+    tuples = pgr_alloc(count, tuples);
+
+    for (size_t i = 0; i < count; i++) {
+        tuples[i] = results[i];
+    }
+    return count;
+}
+
+size_t
+get_tuples(
+        const std::vector<Flow_t> &results,
+        Flow_t* &tuples) {
+    pgassert(!tuples);
+
+    auto count = results.size();
+    if (count == 0) return 0;
+
+    tuples = pgr_alloc(count, tuples);
+
+    for (size_t i = 0; i < count; i++) {
+        tuples[i] = results[i];
+    }
+    return count;
+}
+
+
+size_t
+get_tuples(
+        const std::vector<MST_rt> &results,
+        const std::deque<pgrouting::Path> &paths,
+        const std::vector<std::map<int64_t, int64_t>>& depths,
+        MST_rt* &tuples) {
+    pgassert(!tuples);
+
+    if (!results.empty()) {
+        /*
+         * These are not driving distance results
+         */
+        return get_tuples(results, tuples);
+    }
+
+    /*
+     * This are the driving distance results
+     */
+    auto count = get_tuples(paths, tuples);
+    if (count == 0) return 0;
+
+    for (size_t i = 0; i < count; i++) {
+        const auto& row = tuples[i];
+        /* given the depth assign the correct depth */
+        int64_t depth = -1;
+        for (const auto &d : depths) {
+            /* look for the correct path */
+            auto itr = d.find(row.from_v);
+            if (itr == d.end() || !(itr->second == 0)) continue;
+            auto node_itr = d.find(row.node);
+            if (node_itr != d.end()) {
+                depth = node_itr->second;
+            }
+            break;
+        }
+        tuples[i].depth = depth;
+    }
+
+    return count;
+}
+
+size_t
+get_tuples(
+        std::vector<Path_rt> &paths,
+        const std::vector<Edge_t> &edges,
+        Path_rt* &tuples) {
+    pgassert(!tuples);
+
+    if (paths.empty()) return 0;
+
+    /*
+     * Calculating the cost
+     */
+    auto found = paths.size();
+    for (const auto &e : edges) {
+        for (auto &r : paths) {
+            if (r.edge == e.id) {
+                r.cost = (r.node == e.source) ?  e.cost : e.reverse_cost;
+                --found;
+            }
+        }
+        if (found == 0) break;
+    }
+
+    tuples = pgr_alloc(paths.size(), tuples);
+
+    for (size_t i = 0; i < paths.size(); ++i) {
+        tuples[i] = paths[i];
+    }
+    return paths.size();
+}
+
+}  // namespace to_postgres
+}  // namespace pgrouting

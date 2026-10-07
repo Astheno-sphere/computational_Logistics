@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chapter 7. Grading Your Own Work | S-Tier, the builder's book</title>
+    <meta name="description" content="Seven scored lanes, instant-F triggers, grade caps on auth and payment surfaces, and the actual skill: predicting the grade before you run it.">
+    <meta name="keywords" content="code grading rubric, A-F ship grade, code review lanes, S-Tier builder's book">
+    <meta name="author" content="Jason Colapietro">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+    <link rel="canonical" href="https://skills.suedeai.ai/book/grading-your-own-work.html">
+    <link rel="icon" href="../assets/favicon-64.png" type="image/png">
+    <link rel="preload" href="../assets/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="stylesheet" href="../assets/prose.css">
+    <link rel="stylesheet" href="../assets/book.css">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Chapter 7. Grading Your Own Work | S-Tier, the builder's book">
+    <meta property="og:description" content="Seven scored lanes, instant-F triggers, grade caps on auth and payment surfaces, and the actual skill: predicting the grade before you run it.">
+    <meta property="og:url" content="https://skills.suedeai.ai/book/grading-your-own-work.html">
+    <meta property="og:image" content="https://skills.suedeai.ai/assets/og-image-v2.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Chapter 7. Grading Your Own Work | S-Tier, the builder's book">
+    <meta name="twitter:description" content="Seven scored lanes, instant-F triggers, grade caps on auth and payment surfaces, and the actual skill: predicting the grade before you run it.">
+    <meta name="twitter:image" content="https://skills.suedeai.ai/assets/og-image-v2.png">
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Chapter",
+  "@id": "https://skills.suedeai.ai/book/grading-your-own-work.html#chapter",
+  "name": "Chapter 7. Grading Your Own Work",
+  "headline": "Grading Your Own Work",
+  "description": "Seven scored lanes, instant-F triggers, grade caps on auth and payment surfaces, and the actual skill: predicting the grade before you run it.",
+  "keywords": "code grading rubric, A-F ship grade, code review lanes, S-Tier builder's book",
+  "url": "https://skills.suedeai.ai/book/grading-your-own-work.html",
+  "position": 8,
+  "wordCount": 1664,
+  "datePublished": "2026-08-10",
+  "dateModified": "2026-09-30",
+  "inLanguage": "en",
+  "isPartOf": {
+    "@type": "Book",
+    "@id": "https://skills.suedeai.ai/book/#book",
+    "name": "S-Tier: The Builder's Book Behind the Suede Skills"
+  },
+  "author": {
+    "@type": "Person",
+    "@id": "https://suedeai.ai/founder#person",
+    "name": "Jason Colapietro"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Suede AI",
+    "url": "https://suedeai.ai"
+  },
+  "mainEntityOfPage": "https://skills.suedeai.ai/book/grading-your-own-work.html"
+}
+    </script>
+  </head>
+  <body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <nav class="nav-inner" aria-label="Main navigation">
+        <a href="../" class="nav-logo" aria-label="Suede Creator Skills home">
+          <img src="../assets/suede-ai-logo-transparent.webp" alt="Suede AI" width="28" height="28" onerror="this.style.display='none'">
+          <span class="nav-logo-wordmark">Suede <span>Creator Skills</span></span>
+        </a>
+        <details class="nav-disclosure" open>
+          <summary class="nav-hamburger" aria-label="Open navigation menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </summary>
+          <div class="nav-links">
+          <a href="../">Home</a>
+          <a href="../skills/">Skills</a>
+          <a href="../guide.html">Guide</a>
+          <a href="./" aria-current="page">Book</a>
+          <a href="../blog/">Blog</a>
+          <a href="../copy.html">Copy Bank</a>
+          <a href="../cracked.html" class="nav-cracked">Cracked Devs</a>
+          <a href="../plugins.html" class="nav-cta">Install</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+    <main id="main" tabindex="-1" class="shell">
+      <p class="eyebrow">Part III &middot; Chapter 7</p>
+      <h1>Grading Your Own Work</h1>
+      <p class="post-meta">Seven scored lanes, instant-F triggers, grade caps on auth and payment surfaces, and the actual skill: predicting the grade before you run it.</p>
+      <div class="book-meta"><span>1,664 words</span><span>7 min read</span><span><a href="./">S-Tier: contents</a></span></div>
+
+      <p>A findings list is easy to ignore. You ask an agent to review a diff, it comes back with fourteen items ranked P0 through P3, you read the P0, decide it is really more of a P2, and merge. Nothing in the output stopped you, because nothing in the output was a decision. It was a menu.</p>
+      <p>A letter grade is harder to ignore. <code>suede-code-grader</code> ends with one character and a gate that follows it mechanically: A maps to <code>ship</code>, B maps to <code>ship-with-caveats</code>, and C, D, and F all map to <code>hold</code>. There is no arithmetic left to do at the end and no room to negotiate with yourself about severity. You either accept a C and hold, or you say out loud that you are shipping a C.</p>
+      <p>That is the whole trick. The grade does not add information the findings lacked. It removes the option of reading the findings and doing nothing.</p>
+      <h2 id="seven-lanes-scored-separately">Seven lanes, scored separately</h2>
+      <p>The grader scores each of these A through F, then gives one overall:</p>
+      <ol><li><strong>Correctness.</strong> Intended behavior, edge cases, error paths, async behavior, routing, data flow, regression risk.</li><li><strong>Security and permissions.</strong> Auth, secrets, payment, wallet, injection, path traversal, SSRF, permission and data exposure risks fail closed.</li><li><strong>Data and state.</strong> Schemas, migrations, caches, jobs, queues, webhooks, retries, idempotency, state transitions.</li><li><strong>Suede truth.</strong> Public copy, rights, provenance, royalty routing, licensing, product claims match the implementation. Grading work outside Suede, you substitute domain truth: API contract truth, published-statement accuracy, data model truth.</li><li><strong>UX and release behavior.</strong> Loading, empty, error, and success states, mobile and native surfaces, metadata, routes.</li><li><strong>Tests and verification.</strong> Changed behavior has meaningful tests, builds, screenshots, simulator runs, live readbacks, or named caveats.</li><li><strong>Deploy readiness.</strong> Env vars, feature flags, configs, migrations, rollback notes, install paths, docs, release sequencing.</li></ol>
+      <p>Separate lanes matter because a single number hides the shape of the risk. A change can be flawless on correctness and blind on deploy readiness, and those two failures need different responses from you. One needs a rewrite. The other needs a paragraph in the PR body and an env var pushed to production before the merge.</p>
+      <p>Notice what lane 6 does. "Tests and verification" is a graded lane, not a footnote, which means an agent that wrote perfect code and verified none of it cannot reach an A. Evidence or it did not ship, expressed as a score.</p>
+      <h2 id="the-f-you-cannot-argue-with">The F you cannot argue with</h2>
+      <p>Before any lane is scored, the grader runs a fixed list of instant-F triggers. Six categories: secrets and credentials, injection, auth bypass, payment and wallet, data destruction, plaintext sensitive data. Two concrete examples the repo uses, because concrete is the point:</p>
+      <p>A hardcoded API key, secret, token, or password in committed source. Not in <code>.env</code>, not in a config the deploy pipeline injects, but in the actual file that went into git history. That is an F.</p>
+      <p>A role or permission check that can be bypassed by manipulating a request parameter. Someone sends <code>?role=admin</code> and the middleware believes them. That is an F.</p>
+      <p>The rule attached to those triggers is the part builders resist: <strong>no other lane can raise a locked F.</strong> Not a beautiful migration plan, not full test coverage everywhere else, not the fact that the key is for a staging account. The instruction to the agent is explicit: stop, report the file and line, mark the grade F, and do not grade the remaining lanes. Scoring the rest would imply those scores could matter. They cannot.</p>
+      <p>This list lives in two places, <code>suede-code</code> Step 1 and <code>suede-code-grader</code>, and both copies carry the same note: change both together. Duplicated rules drift. Saying so in the file is cheaper than discovering the drift during a review that mattered.</p>
+      <h2 id="caps-so-a-happy-path-cannot-buy-an-a">Caps, so a happy path cannot buy an A</h2>
+      <p>Some surfaces cannot earn a top grade on passing CI alone, because CI on those surfaces usually exercises the path that was never in danger.</p>
+      <p><strong>Auth changes</strong> (login, session, token validation, middleware, role assignment). An A requires explicit coverage of the bypass or escalation path, named: "tested with expired token returns 401", "role escalation attempt returns 403." A B requires the happy path tested plus named caveats about what is not. Meet neither and the change caps at C no matter how the other six lanes scored.</p>
+      <p><strong>Payment and wallet flows</strong> (checkout, subscription, refund, payout, transfer, webhook). An A requires error paths tested (failed charge, declined card, webhook replay), amount and recipient validated server-side, and no silent error swallowing. Otherwise, cap at C.</p>
+      <p><strong>Data migrations</strong> carry the harshest cap. A documented rollback plan with an untested restore gets you a B. No rollback plan at all caps the change at D, which routes to <code>hold</code> and, because data loss is one of the extreme-risk categories, puts the ship choice explicitly to you rather than letting anything proceed quietly.</p>
+      <p><strong>Public API changes</strong> that break a contract with no migration path cap at C.</p>
+      <p>The caps exist for one reason, stated bluntly in the skill's red-flag list: "Happy path works, call it an A" is wrong because happy paths are never where the risk lives.</p>
+      <h2 id="grade-the-diff-not-the-story-about-the-diff">Grade the diff, not the story about the diff</h2>
+      <p>The Source Truth section reads like a list of places to look, and it is, but the operative sentence is the first one: do not grade from the PR description or commit message alone. A PR description is a claim about a diff, written by the person or agent least able to see what the diff missed.</p>
+      <p>So the grader reads the repo, branch, remote, and dirty state; the diff, changed files, generated files, and touched routes; the imports, callers, schemas, configs, env requirements, jobs, webhooks, scripts, tests, and docs that move with the change; and whatever build, test, lint, typecheck, browser, simulator, or live evidence directly exercises the changed behavior. When live or runtime checks are not practical, it grades the source and marks those lanes unverified. Unverified is a real result. Assumed-passing is not.</p>
+      <p>The red flags that precede a fake grade are worth memorizing, because you will think all of them at some point:</p>
+      <ul><li>"CI passed, round up." CI that never exercised the changed behavior raises nothing.</li><li>"The work was clearly hard." Effort never moves a grade. Evidence does.</li><li>"It's just a refactor." Instant-F triggers run on every grade, every time.</li><li>"The PR description is clear enough." Grade the diff and its evidence, or mark the lane unverified.</li></ul>
+      <h2 id="the-gate-is-advice-and-that-is-deliberate">The gate is advice, and that is deliberate</h2>
+      <p>Every one of these skills opens with the same policy block: the checks, the verdicts, the letter grades are recommendations to the user, not controls on the agent. A failed gate changes what the agent reports, never what it does. If you ask for a merge and the grade comes back C, you get the merge and the C, clearly labeled, side by side.</p>
+      <p>This looks like a weakness until you have used a tool that had it the other way. An agent that refuses your instruction because its own quality check disagreed has quietly promoted itself from advisor to gatekeeper, and the first thing you learn is how to phrase requests that dodge it. Then the gate is worth nothing, because it only ever fires on the honest path.</p>
+      <p>There is one exception, and it is narrow: extreme risk. Data loss, credential exposure, legal or rights violations, payment mistakes, irreversible public damage. On those the agent pauses, names the risk and the options, and hands the choice back. Your choice is final. The pause exists so that the decision is conscious, not so that it is blocked.</p>
+      <p>If you want a gate that actually blocks, that is a different skill and a different layer. <code>suede-ci-gate</code> writes the workflow and hands you the branch protection settings, and it makes the same distinction explicitly: it generates, it does not enforce. Real blocking belongs to CI and to GitHub, not to an agent in your terminal. The grader tells you the truth. Branch protection makes the truth binding.</p>
+      <h2 id="predict-the-grade-before-you-run-it">Predict the grade before you run it</h2>
+      <p>Here is the part that turns a tool into a skill.</p>
+      <p>Run the grader on your own work before anyone else does. That is the beginner version, and it is already better than most practice, because the cheapest review is the one that happens before a human's attention is spent. Ship a C knowingly if you want, but ship it knowing.</p>
+      <p>The advanced version: before you run it, write down the grade you expect. All seven lanes, plus the overall, plus which cap you think applies. Then run it and compare.</p>
+      <p>The gap between your prediction and the output is the only real measurement of your judgment. When you guess A and the grader returns C because tests and verification was thin, you learned something durable about your own blind spot. When you guess C and it returns C for exactly the reason you named, you did not need the grader for that change, which is its own useful result.</p>
+      <p>Track this for a month and the prediction converges. That convergence is the skill. The grader stops being an oracle you consult and starts being a check on a judgment you already have, which is the difference between an A-tier builder who produces verified output and an S-tier builder whose verification runs mostly in their own head, with the tool confirming rather than discovering.</p>
+      <p>A builder who cannot predict their own grade is outsourcing taste. A builder who predicts it correctly, and runs the grader anyway because prediction is not evidence, has the thing worth having.</p>
+      <div class="panel move"><p class="move-label">The move</p>
+      <p>Before you run the grader on your next change, write your predicted overall grade and the one lane you think will be weakest in a scratch file. Run it, and keep a running log of where your prediction missed.</p>
+      </div>
+
+      <nav class="pager" aria-label="Chapter navigation">
+        <a class="prev" href="evidence-or-it-did-not-ship.html"><span class="dir">Previous</span><span class="to">Chapter 6. Evidence or It Did Not Ship</span></a>
+        <a class="next" href="design-and-copy-are-engineering.html"><span class="dir">Next</span><span class="to">Chapter 8. Design and Copy Are Engineering</span></a>
+      </nav>
+    </main>
+    <section class="ship-strip" aria-label="Install the pack">
+      <div class="ship-strip-shell">
+        <p class="ship-strip-head">Proof is part of the release.</p>
+        <p class="ship-strip-sub">First install takes two commands. After the marketplace is added, install is one. Every skill is plain Markdown.</p>
+        <div class="ship-strip-row">
+          <code><span class="prompt">$</span> /plugin marketplace add JasonColapietro/suede-creator-skills &rarr; /plugin install suede-skills@suede</code>
+          <a href="../plugins.html">All install paths</a>
+        </div>
+      </div>
+    </section>
+    <footer>
+      <div class="footer-shell">
+        <p class="footer-note">Suede Creator Skills is a 76-skill, open-source pack for Claude Code and OpenAI Codex: outcome-bound orchestration, code review with an A-F ship grade, AI evals, design and copy, SEO/AEO/AI EO, iOS and Android app shipping, and a creator toolkit for music rights and release prep. Original work is MIT licensed; adapted components retain their upstream notices.</p>
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <img src="../assets/suede-ai-logo-transparent.webp" alt="Suede AI" onerror="this.style.display='none'">
+            <span>Built by <strong>Jason Colapietro</strong> / Suede AI</span>
+          </div>
+          <div class="footer-links">
+            <a href="https://x.com/johnnysuede" target="_blank" rel="noopener">@johnnysuede</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai" target="_blank" rel="noopener">suedeai.ai</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://github.com/JasonColapietro/suede-creator-skills" target="_blank" rel="noopener">GitHub</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai/privacy" target="_blank" rel="noopener">Privacy</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai/contact" target="_blank" rel="noopener">Contact</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <script>
+      // Mobile nav disclosure. The markup ships <details open> so a no-JS
+      // visit still reaches every link; this collapses it at mobile widths
+      // only and keeps the summary label in sync with the state.
+      (function () {
+        var box = document.querySelector('.nav-disclosure');
+        if (!box) return;
+        var summary = box.querySelector('summary');
+        var mq = window.matchMedia('(max-width: 768px)');
+        function collapseForViewport() { box.open = !mq.matches; }
+        function syncLabel() {
+          if (summary) summary.setAttribute('aria-label', box.open ? 'Close navigation menu' : 'Open navigation menu');
+        }
+        collapseForViewport();
+        syncLabel();
+        box.addEventListener('toggle', syncLabel);
+        if (mq.addEventListener) mq.addEventListener('change', collapseForViewport);
+        else if (mq.addListener) mq.addListener(collapseForViewport);
+        box.querySelectorAll('.nav-links a').forEach(function (link) {
+          link.addEventListener('click', function () { if (mq.matches) box.open = false; });
+        });
+      })();
+    </script>
+  </body>
+</html>

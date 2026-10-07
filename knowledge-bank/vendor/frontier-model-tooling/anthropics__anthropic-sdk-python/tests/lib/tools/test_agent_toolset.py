@@ -1,0 +1,1004 @@
+from __future__ import annotations
+
+import os
+import re
+import sys
+import time
+import base64
+from typing import Any, cast
+from pathlib import Path
+from typing_extensions import Required, get_args, get_origin, get_type_hints
+
+import anyio
+import pytest
+
+from anthropic._compat import PYDANTIC_V1
+from anthropic.lib.tools import ToolError
+from anthropic.lib.tools.agent_toolset import (
+    _BINARY_MEDIA_TYPES,
+    DEFAULT_MAX_IMAGE_BASE64_BYTES,
+    BashSession,
+    AgentToolContext,
+    resolve_path,
+    beta_edit_tool,
+    beta_glob_tool,
+    beta_grep_tool,
+    beta_read_tool,
+    beta_write_tool,
+    _reject_read_only,
+    beta_agent_toolset_20260401,
+)
+from anthropic.types.beta.beta_base64_pdf_source_param import BetaBase64PDFSourceParam
+from anthropic.types.beta.beta_base64_image_source_param import BetaBase64ImageSourceParam
+
+needs_pydantic_v2 = pytest.mark.skipif(PYDANTIC_V1, reason="tool functions are only supported with pydantic v2")
+
+
+@pytest.mark.parametrize(
+    ("description", "p", "expect_error"),
+    [
+        ("relative path inside workdir resolves", "a/b.txt", False),
+        ("dot-dot that stays inside workdir resolves", "a/../b.txt", False),
+        ("dot-dot that escapes workdir is rejected", "../etc/passwd", True),
+        ("absolute path outside workdir is rejected", "/etc/passwd", True),
+    ],
+)
+def test_resolve_path(tmp_path: Path, description: str, p: str, expect_error: bool) -> None:
+    env = AgentToolContext(workdir=str(tmp_path))
+    if expect_error:
+        with pytest.raises(ValueError):
+            resolve_path(env, p)
+    else:
+        assert resolve_path(env, p), description
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_unrestricted_paths_is_rejected_with_guidance(tmp_path: Path, value: bool) -> None:
+    with pytest.raises(TypeError, match="unrestricted_paths is no longer supported.*allowed_roots"):
+        AgentToolContext(workdir=str(tmp_path), unrestricted_paths=value)
+
+
+def test_resolve_path_absolute_inside_workdir(tmp_path: Path) -> None:
+    """An absolute path that canonicalises inside the workdir is permitted in
+    confined mode — the containment check is what guards the jail, not the
+    absolute/relative spelling. Regression for anthropics/anthropic-sdk-go#368.
+    """
+    env = AgentToolContext(workdir=str(tmp_path))
+    (tmp_path / "a.txt").write_text("x")
+    assert resolve_path(env, str(tmp_path / "a.txt")) == tmp_path / "a.txt"
+    assert resolve_path(env, str(tmp_path)) == tmp_path
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    assert resolve_path(env, str(sub / "b.txt")) == sub / "b.txt"
+    # Still rejected: absolute outside, and absolute-that-symlinks-outside.
+    with pytest.raises(ValueError, match="outside the session's working directory"):
+        resolve_path(env, "/etc/passwd")
+    if sys.platform != "win32":
+        (tmp_path / "out").symlink_to("/etc/passwd")
+        with pytest.raises(ValueError, match="outside the session's working directory"):
+            resolve_path(env, str(tmp_path / "out"))
+
+
+needs_symlinks = pytest.mark.skipif(sys.platform == "win32", reason="symlink fixtures need a POSIX filesystem")
+
+
+def _symlink_fixture(tmp_path: Path) -> Path:
+    """Workdir with two symlink cycles, a link that escapes, and a link whose
+    target spells its way through a cycle to the escaping link."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("SECRET")
+    work = tmp_path / "work"
+    work.mkdir()
+    (work / "loop_a").symlink_to("loop_b")
+    (work / "loop_b").symlink_to("loop_a")
+    (work / "self").symlink_to("self")
+    (work / "evil_link").symlink_to(outside / "secret.txt")
+    (work / "L").symlink_to("loop_a/../evil_link")
+    return work
+
+
+_LOOP_INPUTS = ["loop_a", "loop_a/child.txt", "self", "self/x"]
+
+
+@needs_symlinks
+@pytest.mark.parametrize("p", _LOOP_INPUTS)
+def test_resolve_path_rejects_symlink_loop(tmp_path: Path, p: str) -> None:
+    work = _symlink_fixture(tmp_path)
+    env = AgentToolContext(workdir=str(work))
+    started = time.monotonic()
+    with pytest.raises(
+        ValueError, match=rf"^path {re.escape(repr(p))}: too many levels of symbolic links$"
+    ) as exc_info:
+        resolve_path(env, p)
+    assert time.monotonic() - started < 2
+    assert str(tmp_path) not in str(exc_info.value)
+
+
+@needs_symlinks
+def test_resolve_path_dotdot_is_lexical_before_symlinks(tmp_path: Path) -> None:
+    """`a/../b` never touches `a`, so a cycle at `a` cannot carry `b`
+    past the containment check on any interpreter."""
+    work = _symlink_fixture(tmp_path)
+    env = AgentToolContext(workdir=str(work))
+    for p in ("loop_a/../evil_link", "self/../evil_link"):
+        with pytest.raises(ValueError, match="outside the session's working directory"):
+            resolve_path(env, p)
+    with pytest.raises(ValueError, match="too many levels of symbolic links|outside the session's working directory"):
+        resolve_path(env, "L")
+    (work / "ok.txt").write_text("ok")
+    assert resolve_path(env, "loop_a/../ok.txt") == work / "ok.txt"
+
+
+@needs_symlinks
+def test_resolve_path_rejects_symlink_escape_live_and_dangling(tmp_path: Path) -> None:
+    work = _symlink_fixture(tmp_path)
+    (work / "dangle_out").symlink_to(tmp_path / "outside" / "nope")
+    env = AgentToolContext(workdir=str(work))
+    for p in ("evil_link", "dangle_out"):
+        with pytest.raises(ValueError, match="outside the session's working directory"):
+            resolve_path(env, p)
+
+
+def test_resolve_path_allowed_roots(tmp_path: Path) -> None:
+    """A path inside an allowed root resolves; one outside the workdir and
+    every allowed root is refused, and the refusal names no internal options."""
+    work = tmp_path / "work"
+    work.mkdir()
+    mount = tmp_path / "mount"
+    mount.mkdir()
+    env = AgentToolContext(workdir=str(work), allowed_roots=[mount])
+    assert resolve_path(env, str(mount / "note.md")) == mount / "note.md"
+    assert resolve_path(env, "inside.txt") == work / "inside.txt"
+    with pytest.raises(ValueError, match="outside the session's working directory and its other permitted directories"):
+        resolve_path(env, str(tmp_path / "elsewhere" / "x"))
+    with pytest.raises(ValueError, match="outside the session's working directory and its other permitted directories"):
+        resolve_path(env, "../elsewhere/x")
+
+
+def test_resolve_path_symlink_out_of_allowed_root_is_rejected(tmp_path: Path) -> None:
+    """Symlinks are canonicalised before the containment check, so a link
+    inside an allowed root cannot reach outside it."""
+    if sys.platform == "win32":
+        pytest.skip("symlinks need privileges on windows")
+    work = tmp_path / "work"
+    work.mkdir()
+    mount = tmp_path / "mount"
+    mount.mkdir()
+    (mount / "leak").symlink_to("/etc/passwd")
+    env = AgentToolContext(workdir=str(work), allowed_roots=[mount])
+    with pytest.raises(ValueError, match="outside the session's working directory and its other permitted directories"):
+        resolve_path(env, str(mount / "leak"))
+
+
+def test_resolve_path_segment_aware_sibling(tmp_path: Path) -> None:
+    """A sibling directory sharing a prefix (workdir vs workdir2) must not satisfy the jail."""
+    root = tmp_path / "work"
+    root.mkdir()
+    env = AgentToolContext(workdir=str(root))
+    with pytest.raises(ValueError):
+        resolve_path(env, "../work2/file")
+
+
+@needs_pydantic_v2
+def test_agent_toolset_names_and_type(tmp_path: Path) -> None:
+    env = AgentToolContext(workdir=str(tmp_path))
+    names = [t.name for t in beta_agent_toolset_20260401(env)]
+    assert names == ["bash", "read", "write", "edit", "glob", "grep"]
+
+
+@needs_pydantic_v2
+async def test_agent_toolset_filter_and_extend(tmp_path: Path) -> None:
+    """The list returned by beta_agent_toolset_20260401 is a plain list that callers can filter or extend."""
+    env = AgentToolContext(workdir=str(tmp_path))
+    subset = [t for t in beta_agent_toolset_20260401(env) if t.name not in ("bash", "grep")]
+    assert [t.name for t in subset] == ["read", "write", "edit", "glob"]
+    extended = [*subset, beta_read_tool(env)]
+    assert extended[-1].name == "read"
+
+
+@needs_pydantic_v2
+async def test_read_write_edit_roundtrip(tmp_path: Path) -> None:
+    env = AgentToolContext(workdir=str(tmp_path))
+
+    msg = await beta_write_tool(env).call({"file_path": "f.txt", "content": "hello world"})
+    assert isinstance(msg, str)
+    assert "wrote" in msg
+
+    text = await beta_read_tool(env).call({"file_path": "f.txt"})
+    assert text == "hello world"
+
+    await beta_edit_tool(env).call({"file_path": "f.txt", "old_string": "world", "new_string": "there"})
+    assert (tmp_path / "f.txt").read_text() == "hello there"
+
+
+@needs_pydantic_v2
+async def test_read_view_range(tmp_path: Path) -> None:
+    (tmp_path / "f.txt").write_bytes(b"a\nb\nc\nd\n")
+    env = AgentToolContext(workdir=str(tmp_path))
+    out = await beta_read_tool(env).call({"file_path": "f.txt", "view_range": [2, 3]})
+    assert out == "b\nc"
+
+
+@needs_pydantic_v2
+@pytest.mark.parametrize(
+    ("view_range", "want"),
+    [
+        ([2, 2], "line2"),
+        ([2, 0], "line2\nline3"),
+        ([10, 12], ""),
+        ([3, 1], ""),
+        ([], "line1\nline2\nline3"),
+    ],
+)
+async def test_read_view_range_edges(tmp_path: Path, view_range: list[int], want: str) -> None:
+    (tmp_path / "a.txt").write_bytes(b"line1\nline2\nline3")
+    env = AgentToolContext(workdir=str(tmp_path))
+    assert await beta_read_tool(env).call({"file_path": "a.txt", "view_range": view_range}) == want
+
+
+@needs_pydantic_v2
+async def test_read_view_range_wrong_arity_is_rejected(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_text("line1\nline2\nline3")
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError) as exc_info:
+        await beta_read_tool(env).call({"file_path": "a.txt", "view_range": [2]})
+    assert str(exc_info.value) == "read: view_range must be [start_line, end_line]"
+
+
+@needs_pydantic_v2
+async def test_read_preserves_crlf_line_endings(tmp_path: Path) -> None:
+    (tmp_path / "crlf.txt").write_bytes(b"line1\r\nline2\r\nline3\r\n")
+    env = AgentToolContext(workdir=str(tmp_path))
+    assert await beta_read_tool(env).call({"file_path": "crlf.txt"}) == "line1\r\nline2\r\nline3\r\n"
+    out = await beta_read_tool(env).call({"file_path": "crlf.txt", "view_range": [1, 2]})
+    assert out == "line1\r\nline2\r"
+
+
+@needs_pydantic_v2
+async def test_read_preserves_lone_cr(tmp_path: Path) -> None:
+    (tmp_path / "cr.txt").write_bytes(b"a\rb\rc\r")
+    env = AgentToolContext(workdir=str(tmp_path))
+    assert await beta_read_tool(env).call({"file_path": "cr.txt"}) == "a\rb\rc\r"
+    assert await beta_read_tool(env).call({"file_path": "cr.txt", "view_range": [1, 1]}) == "a\rb\rc\r"
+    assert await beta_read_tool(env).call({"file_path": "cr.txt", "view_range": [2, 2]}) == ""
+
+
+@needs_pydantic_v2
+async def test_edit_preserves_crlf_line_endings(tmp_path: Path) -> None:
+    path = tmp_path / "crlf.txt"
+    path.write_bytes(b"line1\r\nline2\r\nline3\r\n")
+    env = AgentToolContext(workdir=str(tmp_path))
+    await beta_edit_tool(env).call({"file_path": "crlf.txt", "old_string": "line2", "new_string": "LINE2"})
+    assert path.read_bytes() == b"line1\r\nLINE2\r\nline3\r\n"
+
+
+@needs_pydantic_v2
+async def test_write_preserves_content_bytes(tmp_path: Path) -> None:
+    env = AgentToolContext(workdir=str(tmp_path))
+    await beta_write_tool(env).call({"file_path": "w.txt", "content": "a\r\nb\nc\r"})
+    assert (tmp_path / "w.txt").read_bytes() == b"a\r\nb\nc\r"
+
+
+@needs_pydantic_v2
+async def test_read_rejects_oversized_file(tmp_path: Path) -> None:
+    (tmp_path / "big.txt").write_bytes(b"a" * (257 * 1024))
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError, match="exceeds") as exc_info:
+        await beta_read_tool(env).call({"file_path": "big.txt"})
+    assert "view_range" in str(exc_info.value)
+    assert "bash" not in str(exc_info.value)
+
+
+@needs_pydantic_v2
+async def test_read_oversized_file_view_range_wrong_arity_is_rejected(tmp_path: Path) -> None:
+    (tmp_path / "big.txt").write_bytes(b"a" * (257 * 1024))
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError) as exc_info:
+        await beta_read_tool(env).call({"file_path": "big.txt", "view_range": [2]})
+    assert str(exc_info.value) == "read: view_range must be [start_line, end_line]"
+
+
+@needs_pydantic_v2
+@pytest.mark.parametrize(
+    ("view_range", "want"),
+    [
+        ([2, 2], "line2"),
+        ([2, 0], "line2\nline3\n"),
+        ([10, 12], ""),
+        ([3, 1], ""),
+    ],
+)
+async def test_read_view_range_streams_file_over_cap(tmp_path: Path, view_range: list[int], want: str) -> None:
+    (tmp_path / "a.txt").write_bytes(b"line1\nline2\nline3\n")
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=16)
+    assert await beta_read_tool(env).call({"file_path": "a.txt", "view_range": view_range}) == want
+
+
+@needs_pydantic_v2
+async def test_read_view_range_over_cap_rejects_oversized_slice(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_bytes(b"line1\nline2\nline3\n")
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=16)
+    with pytest.raises(ToolError, match="exceeds") as exc_info:
+        await beta_read_tool(env).call({"file_path": "a.txt", "view_range": [1, 3]})
+    assert "Narrow the view_range" in str(exc_info.value)
+    assert "bash" not in str(exc_info.value)
+
+
+@needs_pydantic_v2
+async def test_read_view_range_over_cap_single_long_line(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_bytes(b"x" * 100 + b"\nok\n")
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=16)
+    with pytest.raises(ToolError, match="cannot return part of a line"):
+        await beta_read_tool(env).call({"file_path": "a.txt", "view_range": [1, 1]})
+    assert await beta_read_tool(env).call({"file_path": "a.txt", "view_range": [2, 2]}) == "ok"
+
+
+@needs_pydantic_v2
+async def test_read_view_range_over_cap_preserves_crlf_line_endings(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_bytes(b"line1\r\nline2\r\nline3\r\n")
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=16)
+    assert await beta_read_tool(env).call({"file_path": "a.txt", "view_range": [1, 2]}) == "line1\r\nline2\r"
+
+
+@needs_pydantic_v2
+async def test_read_view_range_over_cap_preserves_lone_cr(tmp_path: Path) -> None:
+    (tmp_path / "a.txt").write_bytes(b"a\rb\rc\r")
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=4)
+    with pytest.raises(ToolError, match="cannot return part of a line"):
+        await beta_read_tool(env).call({"file_path": "a.txt", "view_range": [1, 1]})
+    assert await beta_read_tool(env).call({"file_path": "a.txt", "view_range": [2, 2]}) == ""
+
+    (tmp_path / "b.txt").write_bytes(b"a\rb\rc\r\n0123456789\n")
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=16)
+    assert await beta_read_tool(env).call({"file_path": "b.txt", "view_range": [1, 1]}) == "a\rb\rc\r"
+    assert await beta_read_tool(env).call({"file_path": "b.txt", "view_range": [3, 3]}) == ""
+
+
+@needs_pydantic_v2
+async def test_read_view_range_over_cap_crosses_chunk_boundaries(tmp_path: Path) -> None:
+    rows = [f"row{i:04d}" + "." * 90 for i in range(1, 5001)]
+    (tmp_path / "big.txt").write_bytes("".join(row + "\n" for row in rows).encode())
+    env = AgentToolContext(workdir=str(tmp_path))
+    out = await beta_read_tool(env).call({"file_path": "big.txt", "view_range": [1000, 1002]})
+    assert out == "\n".join(rows[999:1002])
+
+
+@needs_pydantic_v2
+async def test_read_rejects_directory(tmp_path: Path) -> None:
+    (tmp_path / "sub").mkdir()
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError, match="not a regular file"):
+        await beta_read_tool(env).call({"file_path": "sub"})
+
+
+@needs_pydantic_v2
+async def test_edit_rejects_oversized_file(tmp_path: Path) -> None:
+    (tmp_path / "big.txt").write_bytes(b"a" * (257 * 1024))
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError, match="exceeds") as exc_info:
+        await beta_edit_tool(env).call({"file_path": "big.txt", "old_string": "a", "new_string": "b"})
+    assert "bash" not in str(exc_info.value)
+
+
+@needs_pydantic_v2
+async def test_edit_rejects_directory(tmp_path: Path) -> None:
+    (tmp_path / "sub").mkdir()
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError, match="not a regular file"):
+        await beta_edit_tool(env).call({"file_path": "sub", "old_string": "a", "new_string": "b"})
+
+
+@needs_pydantic_v2
+async def test_edit_normal_within_limit(tmp_path: Path) -> None:
+    (tmp_path / "f.txt").write_text("hello world")
+    env = AgentToolContext(workdir=str(tmp_path))
+    await beta_edit_tool(env).call({"file_path": "f.txt", "old_string": "world", "new_string": "there"})
+    assert (tmp_path / "f.txt").read_text() == "hello there"
+
+
+@needs_pydantic_v2
+async def test_edit_custom_max_bytes_rejects_below_cap(tmp_path: Path) -> None:
+    (tmp_path / "f.txt").write_bytes(b"OLD" + b"\x00" * 2000)
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=1024)
+    with pytest.raises(ToolError, match="exceeds") as exc_info:
+        await beta_edit_tool(env).call({"file_path": "f.txt", "old_string": "OLD", "new_string": "NEW"})
+    assert "bash" not in str(exc_info.value)
+
+
+@needs_pydantic_v2
+async def test_edit_custom_max_bytes_allows_above_default(tmp_path: Path) -> None:
+    (tmp_path / "f.txt").write_bytes(b"OLD" + b"\x00" * (257 * 1024))
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=512 * 1024)
+    await beta_edit_tool(env).call({"file_path": "f.txt", "old_string": "OLD", "new_string": "NEW"})
+    assert (tmp_path / "f.txt").read_bytes()[:3] == b"NEW"
+
+
+@needs_pydantic_v2
+async def test_edit_uncapped_allows_oversized(tmp_path: Path) -> None:
+    (tmp_path / "f.txt").write_bytes(b"OLD" + b"\x00" * (257 * 1024))
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=None)
+    await beta_edit_tool(env).call({"file_path": "f.txt", "old_string": "OLD", "new_string": "NEW"})
+
+
+@needs_pydantic_v2
+async def test_edit_rejects_directory_even_when_uncapped(tmp_path: Path) -> None:
+    (tmp_path / "sub").mkdir()
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=None)
+    with pytest.raises(ToolError, match="not a regular file"):
+        await beta_edit_tool(env).call({"file_path": "sub", "old_string": "a", "new_string": "b"})
+
+
+@needs_pydantic_v2
+async def test_read_custom_max_bytes_rejects_below_cap(tmp_path: Path) -> None:
+    (tmp_path / "f.txt").write_bytes(b"a" * 2000)
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=1024)
+    with pytest.raises(ToolError, match="exceeds") as exc_info:
+        await beta_read_tool(env).call({"file_path": "f.txt"})
+    assert "view_range" in str(exc_info.value)
+    assert "bash" not in str(exc_info.value)
+
+
+@needs_pydantic_v2
+async def test_read_uncapped_allows_oversized(tmp_path: Path) -> None:
+    (tmp_path / "big.txt").write_bytes(b"a" * (257 * 1024))
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=None)
+    await beta_read_tool(env).call({"file_path": "big.txt"})
+
+
+@needs_pydantic_v2
+async def test_read_rejects_directory_even_when_uncapped(tmp_path: Path) -> None:
+    (tmp_path / "sub").mkdir()
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=None)
+    with pytest.raises(ToolError, match="not a regular file"):
+        await beta_read_tool(env).call({"file_path": "sub"})
+
+
+def _media_type_literal_values(typed_dict: type, key: str) -> set[str]:
+    """Extract the values of a `Required[Literal[...]]` TypedDict field."""
+    hint = get_type_hints(typed_dict, include_extras=True)[key]
+    if get_origin(hint) is Required:
+        (hint,) = get_args(hint)
+    values = get_args(hint)
+    assert values, f"expected a Literal for {typed_dict.__name__}.{key}"
+    return set(values)
+
+
+def test_binary_media_types_track_generated_api_types() -> None:
+    """Pin the read tool's extension map to the codegen'd media-type literals.
+
+    When a spec change adds or removes a supported image/document media type,
+    this fails to force the extension map (and its size caps) to be revisited.
+    """
+    supported = _media_type_literal_values(BetaBase64ImageSourceParam, "media_type") | _media_type_literal_values(
+        BetaBase64PDFSourceParam, "media_type"
+    )
+    assert set(_BINARY_MEDIA_TYPES.values()) == supported
+
+
+# Real magic bytes so the round-trip assertion exercises non-UTF-8 data; the
+# tool itself only sniffs the extension.
+_JPEG_BYTES = b"\xff\xd8\xff\xe0" + b"\x00" * 32
+_PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+_PDF_BYTES = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
+
+
+@needs_pydantic_v2
+@pytest.mark.parametrize(
+    ("filename", "data", "kind", "media_type"),
+    [
+        ("slide.jpg", _JPEG_BYTES, "image", "image/jpeg"),
+        ("slide.JPEG", _JPEG_BYTES, "image", "image/jpeg"),
+        ("chart.png", _PNG_BYTES, "image", "image/png"),
+        ("doc.pdf", _PDF_BYTES, "document", "application/pdf"),
+    ],
+)
+async def test_read_binary_returns_content_block(
+    tmp_path: Path, filename: str, data: bytes, kind: str, media_type: str
+) -> None:
+    """Images/PDFs come back as base64 content blocks, not UnicodeDecodeError."""
+    (tmp_path / filename).write_bytes(data)
+    env = AgentToolContext(workdir=str(tmp_path))
+    result = await beta_read_tool(env).call({"file_path": filename})
+    assert not isinstance(result, str)
+    (block,) = [cast("dict[str, Any]", b) for b in result]
+    assert block["type"] == kind
+    source = block["source"]
+    assert source["type"] == "base64"
+    assert source["media_type"] == media_type
+    assert base64.standard_b64decode(source["data"]) == data
+
+
+@needs_pydantic_v2
+async def test_read_binary_not_subject_to_text_cap(tmp_path: Path) -> None:
+    """An image over the 256 KiB text default still reads (the API media caps govern)."""
+    (tmp_path / "big.png").write_bytes(_PNG_BYTES + b"\x00" * (300 * 1024))
+    env = AgentToolContext(workdir=str(tmp_path))
+    result = await beta_read_tool(env).call({"file_path": "big.png"})
+    assert not isinstance(result, str)
+    (block,) = [cast("dict[str, Any]", b) for b in result]
+    assert block["type"] == "image"
+
+
+@needs_pydantic_v2
+async def test_read_binary_honors_explicit_cap(tmp_path: Path) -> None:
+    (tmp_path / "big.png").write_bytes(_PNG_BYTES + b"\x00" * 2048)
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=1024)
+    with pytest.raises(ToolError, match="exceeds"):
+        await beta_read_tool(env).call({"file_path": "big.png"})
+
+
+@needs_pydantic_v2
+async def test_read_binary_rejects_over_media_cap(tmp_path: Path) -> None:
+    """An image whose base64 form would exceed the default per-image cap is rejected up front."""
+    raw_cap = (DEFAULT_MAX_IMAGE_BASE64_BYTES // 4) * 3
+    (tmp_path / "huge.png").write_bytes(b"\x00" * (raw_cap + 1))
+    env = AgentToolContext(workdir=str(tmp_path), max_file_bytes=None)
+    with pytest.raises(ToolError, match="exceeds"):
+        await beta_read_tool(env).call({"file_path": "huge.png"})
+
+
+@needs_pydantic_v2
+async def test_read_binary_custom_media_caps(tmp_path: Path) -> None:
+    """The media caps are configurable: a small custom cap rejects, a larger/disabled one permits."""
+    (tmp_path / "img.png").write_bytes(_PNG_BYTES + b"\x00" * 2048)  # ~2 KiB raw
+    (tmp_path / "doc.pdf").write_bytes(_PDF_BYTES + b"\x00" * 2048)
+
+    # The image cap is on the base64 form (4/3 of raw), so 1 KiB rejects ~2 KiB raw.
+    tight = AgentToolContext(workdir=str(tmp_path), max_image_base64_bytes=1024, max_pdf_bytes=1024)
+    with pytest.raises(ToolError, match="exceeds"):
+        await beta_read_tool(tight).call({"file_path": "img.png"})
+    with pytest.raises(ToolError, match="exceeds"):
+        await beta_read_tool(tight).call({"file_path": "doc.pdf"})
+
+    # A larger cap (or `None` to disable) admits the same files.
+    loose = AgentToolContext(workdir=str(tmp_path), max_image_base64_bytes=1024 * 1024, max_pdf_bytes=None)
+    for name, kind in (("img.png", "image"), ("doc.pdf", "document")):
+        result = await beta_read_tool(loose).call({"file_path": name})
+        assert not isinstance(result, str)
+        (block,) = [cast("dict[str, Any]", b) for b in result]
+        assert block["type"] == kind
+
+
+@needs_pydantic_v2
+async def test_read_binary_rejects_view_range(tmp_path: Path) -> None:
+    (tmp_path / "slide.jpg").write_bytes(_JPEG_BYTES)
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError, match="view_range is not supported"):
+        await beta_read_tool(env).call({"file_path": "slide.jpg", "view_range": [1, 2]})
+
+
+@needs_pydantic_v2
+async def test_read_undecodable_binary_raises_tool_error(tmp_path: Path) -> None:
+    """Non-image/PDF binary surfaces a clean ToolError, not a raw UnicodeDecodeError."""
+    (tmp_path / "blob.bin").write_bytes(b"\xff\xfe\x00\x01")
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError, match="not valid UTF-8"):
+        await beta_read_tool(env).call({"file_path": "blob.bin"})
+
+
+@needs_pydantic_v2
+async def test_edit_binary_raises_tool_error(tmp_path: Path) -> None:
+    (tmp_path / "blob.bin").write_bytes(b"\xff\xfe\x00\x01")
+    env = AgentToolContext(workdir=str(tmp_path))
+    with pytest.raises(ToolError, match="not valid UTF-8"):
+        await beta_edit_tool(env).call({"file_path": "blob.bin", "old_string": "a", "new_string": "b"})
+
+
+@needs_pydantic_v2
+def test_text_io_is_utf8_under_ascii_locale(tmp_path: Path) -> None:
+    """Text I/O is explicitly UTF-8: an ASCII-locale host (LANG=C) must not
+    mislabel valid UTF-8 as binary. Runs in a subprocess because the locale
+    default is fixed at interpreter startup."""
+    import subprocess
+
+    (tmp_path / "notes.txt").write_bytes("café — naïve\n".encode("utf-8"))
+    script = "\n".join(
+        [
+            "import sys, anyio",
+            "from anthropic.lib.tools.agent_toolset import (",
+            "    AgentToolContext, beta_edit_tool, beta_read_tool)",
+            f"ctx = AgentToolContext(workdir={str(tmp_path)!r})",
+            "async def main():",
+            "    text = await beta_read_tool(ctx).call({'file_path': 'notes.txt'})",
+            "    sys.stdout.buffer.write(text.encode('utf-8'))",
+            "    await beta_edit_tool(ctx).call(",
+            "        {'file_path': 'notes.txt', 'old_string': 'caf\\u00e9', 'new_string': 'th\\u00e9'})",
+            "anyio.run(main)",
+        ]
+    )
+    proc = subprocess.run(
+        [sys.executable, "-c", script],
+        env={**os.environ, "LC_ALL": "C", "LANG": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
+        capture_output=True,
+    )
+    assert proc.returncode == 0, proc.stderr.decode("utf-8", errors="replace")
+    assert proc.stdout.decode("utf-8") == "café — naïve\n"
+    assert (tmp_path / "notes.txt").read_text(encoding="utf-8") == "thé — naïve\n"
+
+
+@pytest.mark.parametrize(
+    ("description", "args", "want_error"),
+    [
+        (
+            "edit fails when old_string is absent from the file",
+            {"file_path": "f.txt", "old_string": "nope", "new_string": "x"},
+            True,
+        ),
+        (
+            "edit fails when old_string is non-unique and replace_all is false",
+            {"file_path": "f.txt", "old_string": "ab", "new_string": "x"},
+            True,
+        ),
+        (
+            "edit succeeds on non-unique old_string when replace_all is true",
+            {"file_path": "f.txt", "old_string": "ab", "new_string": "x", "replace_all": True},
+            False,
+        ),
+    ],
+)
+@needs_pydantic_v2
+async def test_edit_uniqueness(tmp_path: Path, description: str, args: dict[str, object], want_error: bool) -> None:
+    (tmp_path / "f.txt").write_text("ab ab")
+    env = AgentToolContext(workdir=str(tmp_path))
+    tool = beta_edit_tool(env)
+    if want_error:
+        with pytest.raises(ToolError):
+            await tool.call(args)
+    else:
+        assert await tool.call(args), description
+
+
+@needs_pydantic_v2
+async def test_glob_mtime_order(tmp_path: Path) -> None:
+    a = tmp_path / "a.txt"
+    b = tmp_path / "b.txt"
+    a.write_text("a")
+    b.write_text("b")
+    os.utime(a, (1, 1))
+    os.utime(b, (2, 2))
+    env = AgentToolContext(workdir=str(tmp_path))
+    res = await beta_glob_tool(env).call({"pattern": "*.txt"})
+    assert isinstance(res, str)
+    lines = res.splitlines()
+    assert lines[0].endswith("b.txt") and lines[1].endswith("a.txt")
+
+
+@needs_pydantic_v2
+async def test_glob_with_path(tmp_path: Path) -> None:
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "a.txt").write_text("a")
+    (tmp_path / "b.txt").write_text("b")
+    env = AgentToolContext(workdir=str(tmp_path))
+    res = await beta_glob_tool(env).call({"pattern": "*.txt", "path": "sub"})
+    assert isinstance(res, str)
+    assert res.endswith("a.txt")
+    assert "b.txt" not in res
+
+
+@needs_pydantic_v2
+async def test_grep_finds_match(tmp_path: Path) -> None:
+    (tmp_path / "x.txt").write_text("foo\nbar\nbaz\n")
+    env = AgentToolContext(workdir=str(tmp_path))
+    res = await beta_grep_tool(env).call({"pattern": "ba.", "path": "."})
+    assert isinstance(res, str)
+    assert "bar" in res and "baz" in res
+
+
+@needs_pydantic_v2
+async def test_grep_single_file_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fallback walker must handle a file path, not just directories."""
+    (tmp_path / "x.txt").write_text("alpha\nbeta\n")
+    env = AgentToolContext(workdir=str(tmp_path))
+    monkeypatch.setattr("shutil.which", lambda _name: None)  # type: ignore[arg-type]
+    res = await beta_grep_tool(env).call({"pattern": "beta", "path": "x.txt"})
+    assert isinstance(res, str)
+    assert "beta" in res
+    assert res != "no matches"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash session requires /bin/bash")
+async def test_bash_session_persistence(tmp_path: Path) -> None:
+    s = await BashSession.start(str(tmp_path))
+    try:
+        out, code = await s.exec("export FOO=bar; echo set")
+        assert (out, code) == ("set", 0)
+        out, code = await s.exec("echo $FOO")
+        assert (out, code) == ("bar", 0)
+    finally:
+        await s.close()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash session requires /bin/bash")
+async def test_bash_timeout(tmp_path: Path) -> None:
+    s = await BashSession.start(str(tmp_path))
+    with pytest.raises(TimeoutError):
+        await s.exec("sleep 5", timeout=0.2)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash session requires /bin/bash")
+async def test_bash_sentinel_not_spoofable(tmp_path: Path) -> None:
+    """A command that prints a hardcoded marker can't truncate output or spoof the exit code."""
+    s = await BashSession.start(str(tmp_path))
+    try:
+        out, code = await s.exec("printf '__ANT_CMD_DONE__7\\nafter\\n'; (exit 3)")
+        assert "__ANT_CMD_DONE__7" in out
+        assert "after" in out
+        assert code == 3
+    finally:
+        await s.close()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash session requires /bin/bash")
+async def test_bash_stdin_redirect(tmp_path: Path) -> None:
+    """A stdin-reading command gets immediate EOF instead of hanging until timeout."""
+    s = await BashSession.start(str(tmp_path))
+    try:
+        out, code = await s.exec("cat; echo done", timeout=2.0)
+        assert out == "done"
+        assert code == 0
+    finally:
+        await s.close()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash session requires /bin/bash")
+async def test_bash_session_closed_property(tmp_path: Path) -> None:
+    """`closed` is the inverse of the old `alive` (TS parity) and there is
+    no `alive` attribute any more."""
+    s = await BashSession.start(str(tmp_path))
+    assert s.closed is False
+    assert not hasattr(s, "alive")
+    await s.close()
+    assert s.closed is True
+    # A closed session refuses further commands rather than silently hanging.
+    with pytest.raises(RuntimeError, match="terminated"):
+        await s.exec("echo nope")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash session requires /bin/bash")
+async def test_bash_outer_cancel_closes_subprocess_no_stale_state(tmp_path: Path) -> None:
+    """Regression: a cancellation from an *outer* scope (e.g. the session
+    runner's `TOOL_TIMEOUT`) during a bash exec must tear the subprocess down,
+    so the next call can't read the cancelled command's stale output/sentinel.
+
+    anyio raises an outer-scope cancel as a plain `Cancelled` (not
+    `TimeoutError`), so the `except TimeoutError` cleanup never runs — only
+    the new `except get_cancelled_exc_class()` path saves us here.
+    """
+    s = await BashSession.start(str(tmp_path))
+    try:
+        # The inner per-call timeout is huge; an OUTER scope cancels first,
+        # mid-command, while `sleep` is producing no output.
+        with anyio.move_on_after(0.3):
+            await s.exec("sleep 5; echo STALE_MARKER", timeout=120.0)
+
+        # The outer cancel fired mid-exec. The subprocess must have been closed
+        # (not left alive with `sleep 5; echo STALE_MARKER` still queued).
+        assert s.closed is True
+        # And because it's closed, the next exec refuses outright — it can NOT
+        # hand back the previous command's STALE_MARKER output + old sentinel.
+        with pytest.raises(RuntimeError, match="terminated"):
+            await s.exec("echo NEXT")
+    finally:
+        await s.close()
+
+
+@needs_pydantic_v2
+async def test_read_through_symlink_escape_is_rejected(tmp_path: Path) -> None:
+    """resolve_path realpaths, so a symlink that escapes the workdir is caught."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("secret")
+    work = tmp_path / "work"
+    work.mkdir()
+    (work / "escape").symlink_to(outside)
+    env = AgentToolContext(workdir=str(work))
+    with pytest.raises(ToolError, match="outside the session's working directory"):
+        await beta_read_tool(env).call({"file_path": "escape/secret.txt"})
+
+
+@needs_pydantic_v2
+@needs_symlinks
+async def test_read_symlink_loop_is_rejected(tmp_path: Path) -> None:
+    work = _symlink_fixture(tmp_path)
+    env = AgentToolContext(workdir=str(work))
+    with pytest.raises(ToolError) as exc_info:
+        await beta_read_tool(env).call({"file_path": "loop_a"})
+    assert str(exc_info.value) == "read: path 'loop_a': too many levels of symbolic links"
+    for p in ("loop_a/../evil_link", "L"):
+        with pytest.raises(ToolError) as exc_info:
+            await beta_read_tool(env).call({"file_path": p})
+        assert "SECRET" not in str(exc_info.value)
+
+
+@needs_pydantic_v2
+@needs_symlinks
+async def test_write_under_symlink_loop_creates_nothing(tmp_path: Path) -> None:
+    work = _symlink_fixture(tmp_path)
+    before = sorted(os.listdir(work))
+    env = AgentToolContext(workdir=str(work))
+    with pytest.raises(ToolError, match="too many levels of symbolic links"):
+        await beta_write_tool(env).call({"file_path": "loop_a/child.txt", "content": "x"})
+    assert sorted(os.listdir(work)) == before
+
+
+@needs_pydantic_v2
+@needs_symlinks
+async def test_write_through_dangling_symlink_inside_workdir(tmp_path: Path) -> None:
+    """A dangling link whose target is inside the workdir is followed: the
+    target and its missing parent directory are created."""
+    env = AgentToolContext(workdir=str(tmp_path))
+    (tmp_path / "d").symlink_to(tmp_path / "newdir" / "f.txt")
+    await beta_write_tool(env).call({"file_path": "d", "content": "via link"})
+    assert (tmp_path / "newdir" / "f.txt").read_text() == "via link"
+
+
+@needs_pydantic_v2
+@needs_symlinks
+async def test_read_follows_symlink_chain_inside_workdir(tmp_path: Path) -> None:
+    (tmp_path / "real.txt").write_text("payload")
+    (tmp_path / "c2").symlink_to("real.txt")
+    (tmp_path / "c1").symlink_to("c2")
+    (tmp_path / "c0").symlink_to("c1")
+    env = AgentToolContext(workdir=str(tmp_path))
+    assert await beta_read_tool(env).call({"file_path": "c0"}) == "payload"
+
+
+@needs_pydantic_v2
+async def test_write_creates_deeply_nested_missing_directories(tmp_path: Path) -> None:
+    """Missing path components are not symlink hops, so any depth is allowed."""
+    env = AgentToolContext(workdir=str(tmp_path))
+    rel = "/".join(f"d{i}" for i in range(50)) + "/f.txt"
+    await beta_write_tool(env).call({"file_path": rel, "content": "deep"})
+    assert (tmp_path / rel).read_text() == "deep"
+
+
+@needs_pydantic_v2
+async def test_read_under_unreadable_directory_reports_permission_denied(tmp_path: Path) -> None:
+    if os.name != "posix":
+        pytest.skip("chmod semantics only apply on POSIX")
+    if os.geteuid() == 0:
+        pytest.skip("root bypasses POSIX mode bits")
+    noperm = tmp_path / "noperm"
+    noperm.mkdir()
+    noperm.chmod(0)
+    env = AgentToolContext(workdir=str(tmp_path))
+    try:
+        with pytest.raises(ToolError) as exc_info:
+            await beta_read_tool(env).call({"file_path": "noperm/x"})
+    finally:
+        noperm.chmod(0o700)
+    assert str(exc_info.value) == "read: path 'noperm/x': permission denied"
+
+
+@needs_pydantic_v2
+async def test_glob_rejects_dotdot_pattern(tmp_path: Path) -> None:
+    """`Path.glob` honours literal `..` segments — the tool must reject a
+    pattern that would walk out of the workdir before it ever runs."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("secret")
+    work = tmp_path / "work"
+    work.mkdir()
+    env = AgentToolContext(workdir=str(work))
+    with pytest.raises(ToolError, match=r"\.\."):
+        await beta_glob_tool(env).call({"pattern": "../outside/*.txt"})
+
+
+@needs_pydantic_v2
+async def test_glob_post_filters_symlink_escape(tmp_path: Path) -> None:
+    """A symlink traversed mid-pattern must not let a glob result escape the workdir."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("secret")
+    work = tmp_path / "work"
+    work.mkdir()
+    (work / "escape").symlink_to(outside)
+    env = AgentToolContext(workdir=str(work))
+    res = await beta_glob_tool(env).call({"pattern": "escape/*.txt"})
+    assert res == "no matches"
+
+
+@needs_pydantic_v2
+@needs_symlinks
+async def test_glob_drops_matches_that_cannot_be_canonicalised(tmp_path: Path) -> None:
+    work = _symlink_fixture(tmp_path)
+    (work / "ok.txt").write_text("ok")
+    env = AgentToolContext(workdir=str(work))
+    res = await beta_glob_tool(env).call({"pattern": "*"})
+    assert isinstance(res, str)
+    assert [Path(line).name for line in res.splitlines()] == ["ok.txt"]
+
+
+@needs_pydantic_v2
+async def test_grep_skips_symlinked_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The fallback walker must not read through a symlink that escapes the workdir."""
+    secret = tmp_path / "secret.txt"
+    secret.write_text("TOPSECRET")
+    work = tmp_path / "work"
+    work.mkdir()
+    (work / "leak").symlink_to(secret)
+    (work / "real.txt").write_text("ordinary\n")
+    env = AgentToolContext(workdir=str(work))
+    monkeypatch.setattr("shutil.which", lambda _name: None)  # type: ignore[arg-type]
+    res = await beta_grep_tool(env).call({"pattern": "TOPSECRET"})
+    assert res == "no matches"
+
+
+@needs_pydantic_v2
+async def test_file_tools_confinement_matrix(tmp_path: Path) -> None:
+    """The full path policy through the real tools: the workdir works, a memory
+    folder mounted outside it works, a read-only memory folder reads but
+    refuses writes, and everywhere else is refused."""
+    work = tmp_path / "work"
+    work.mkdir()
+    mount = tmp_path / "mnt" / "notes"
+    mount.mkdir(parents=True)
+    ro = tmp_path / "mnt" / "facts"
+    ro.mkdir(parents=True)
+    (ro / "facts.md").write_text("immutable")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("secret")
+
+    env = AgentToolContext(workdir=str(work), allowed_roots=[mount, ro], read_only_roots=[ro.resolve()])
+    read = beta_read_tool(env)
+    write = beta_write_tool(env)
+    edit = beta_edit_tool(env)
+
+    await write.call({"file_path": "w.txt", "content": "in workdir"})
+    assert (work / "w.txt").read_text() == "in workdir"
+
+    await write.call({"file_path": str(mount / "note.md"), "content": "remembered"})
+    assert await read.call({"file_path": str(mount / "note.md")}) == "remembered"
+    await edit.call({"file_path": str(mount / "note.md"), "old_string": "remembered", "new_string": "edited"})
+    assert (mount / "note.md").read_text() == "edited"
+
+    assert await read.call({"file_path": str(ro / "facts.md")}) == "immutable"
+    with pytest.raises(ToolError, match="read-only"):
+        await write.call({"file_path": str(ro / "facts.md"), "content": "x"})
+    assert (ro / "facts.md").read_text() == "immutable"
+
+    with pytest.raises(ToolError, match="outside the session's working directory and its other permitted directories"):
+        await read.call({"file_path": str(outside / "secret.txt")})
+    with pytest.raises(ToolError, match="outside the session's working directory and its other permitted directories"):
+        await write.call({"file_path": str(outside / "new.txt"), "content": "x"})
+    assert not (outside / "new.txt").exists()
+
+
+@needs_pydantic_v2
+async def test_glob_and_grep_reach_an_allowed_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    work = tmp_path / "work"
+    work.mkdir()
+    mount = tmp_path / "mnt" / "notes"
+    mount.mkdir(parents=True)
+    (mount / "note.md").write_text("remembered fact")
+    env = AgentToolContext(workdir=str(work), allowed_roots=[mount])
+
+    res = await beta_glob_tool(env).call({"pattern": "*.md", "path": str(mount)})
+    assert res == str(mount / "note.md")
+
+    monkeypatch.setattr("shutil.which", lambda _name: None)  # type: ignore[arg-type]
+    res = await beta_grep_tool(env).call({"pattern": "remembered", "path": str(mount)})
+    assert isinstance(res, str)
+    assert "note.md" in res
+
+
+def test_a_symlinked_read_only_root_still_refuses_writes(tmp_path: Path) -> None:
+    """allowed_roots entries resolve at check time, so read_only_roots must
+    too — the same symlinked path must not grant access on one side while
+    its write protection misses on the other."""
+    if sys.platform == "win32":
+        pytest.skip("symlinks need privileges on windows")
+    work = tmp_path / "work"
+    work.mkdir()
+    real = tmp_path / "real-store"
+    real.mkdir()
+    link = tmp_path / "link-store"
+    link.symlink_to(real)
+    env = AgentToolContext(workdir=str(work), allowed_roots=[link], read_only_roots=[link])
+
+    target = resolve_path(env, str(link / "note.md"))
+    assert target == real / "note.md"
+    with pytest.raises(ToolError, match="read-only"):
+        _reject_read_only(env, target, op="write", file_path=str(link / "note.md"))

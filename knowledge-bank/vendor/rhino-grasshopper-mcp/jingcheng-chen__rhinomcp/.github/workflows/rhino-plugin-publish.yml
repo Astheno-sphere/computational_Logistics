@@ -1,0 +1,131 @@
+name: Build and Publish Rhino Plugin
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  release-build:
+    runs-on: ubuntu-latest
+    env:
+      SOLUTION_PATH: ${{ github.workspace }}/plugin/rhinomcp.sln
+      PROJECT_PATH: ${{ github.workspace }}/plugin/rhinomcp.csproj
+      ARTIFACT_NAME: rhinomcp
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore NuGet packages
+        run: |
+          dotnet restore ${{ env.SOLUTION_PATH }}
+
+      - name: Build solution with MSBuild
+        run: |
+          dotnet msbuild ${{ env.SOLUTION_PATH }} /p:Configuration=Release /p:Platform="Any CPU"
+
+      - name: Prepare artifacts
+        run: |
+          mkdir -p dist/net8.0
+          # Copy DLL, RHP, and any other necessary files to the dist folder
+          cp ${{ github.workspace }}/plugin/bin/Release/net8.0/*.dll dist/net8.0/
+          cp ${{ github.workspace }}/plugin/bin/Release/net8.0/*.rhp dist/net8.0/
+          cp ${{ github.workspace }}/plugin/manifest.yml dist/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: dist/
+
+  publish:
+    name: Publish to Yak and GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - release-build
+    permissions:
+      contents: write
+    env:
+      ARTIFACT_NAME: rhinomcp
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: dist
+
+      - name: Setup Yak
+        run: |
+          # Create a directory for yak
+          mkdir -p ${{ github.workspace }}/yakfolder
+
+          # Download Linux version of yak
+          curl -L "https://files.mcneel.com/yak/tools/0.13.0/linux-x64/yak" -o ${{ github.workspace }}/yakfolder/yak
+
+          # Make it executable
+          chmod +x ${{ github.workspace }}/yakfolder/yak
+
+          # Add to path and verify
+          echo "${{ github.workspace }}/yakfolder" >> $GITHUB_PATH
+          echo "PATH is now: $PATH:${{ github.workspace }}/yakfolder"
+
+      - name: Pack and Push to Yak
+        run: |
+          cd dist
+
+          export YAK_TOKEN=${{ secrets.YAK_API_KEY }}
+
+          # Build yak package
+          yak build
+
+          # List files to verify the .yak file was created
+          ls -la
+
+          # Find the .yak package
+          # Use -maxdepth 1 to avoid finding .yak files in subdirectories if any
+          yakPackageFile=$(find . -maxdepth 1 -name "*.yak" -type f | head -1)
+
+          if [ -z "$yakPackageFile" ]; then
+            echo "Error: No .yak package was created in the 'dist' directory."
+            exit 1
+          fi
+
+          echo "Found package: $yakPackageFile"
+
+          # Get just the filename for the release asset name and GITHUB_ENV
+          yakPackageBasename=$(basename "$yakPackageFile")
+          echo "YAK_PACKAGE_BASENAME=$yakPackageBasename" >> $GITHUB_ENV
+
+          # Push to yak server. If this release was retried after a successful
+          # Yak publish, treat the duplicate-version response as success so the
+          # GitHub release asset upload can still run.
+          set +e
+          yakPushOutput=$(yak push "$yakPackageFile" 2>&1)
+          yakPushStatus=$?
+          set -e
+
+          echo "$yakPushOutput"
+
+          if [ "$yakPushStatus" -ne 0 ]; then
+            if [[ "$yakPushOutput" == *"already exists"* ]]; then
+              echo "Yak package already exists; continuing to upload the GitHub release asset."
+            else
+              exit "$yakPushStatus"
+            fi
+          fi
+
+      - name: Upload .yak package to GitHub Release
+        run: gh release upload "${{ github.event.release.tag_name }}" "dist/${{ env.YAK_PACKAGE_BASENAME }}" --clobber --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ github.token }}

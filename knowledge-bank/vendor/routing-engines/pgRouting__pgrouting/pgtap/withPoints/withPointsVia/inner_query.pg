@@ -1,0 +1,30 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2022-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT CASE WHEN min_version('4.0.0') THEN plan(84) ELSE plan(1) END;
+
+CREATE OR REPLACE FUNCTION inner_query()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+  IF NOT min_version('4.0.0') THEN
+    RETURN QUERY SELECT skip(1, 'pgr_withPoints: New signatures on 4.0.0');
+    RETURN;
+  END IF;
+
+  RETURN QUERY SELECT style_dijkstra('pgr_withPointsVia(', ', $$SELECT * FROM pointsOfInterest$$, ARRAY[2,9,12], $$r$$)');
+  RETURN QUERY SELECT innerquery_points('pgr_withPointsVia($$SELECT * FROM edges$$,', ', ARRAY[2,9,12], $$r$$)');
+
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+SELECT inner_query();
+
+SELECT finish();
+ROLLBACK;

@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gtfs-kit"
+version = "12.0.3"
+description = "A Python library for analyzing GTFS feeds."
+readme = "README.rst"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "Alexander Raichev", email = "alexander@raichev.net" },
+]
+dependencies = [
+    "shapely>=1.8",
+    "json2html>=1",
+    "geopandas>=1",
+    "rtree>=0",
+    "folium>=0",
+    "requests>=2",
+    "pandas>=2.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=6",
+    "sphinx>=3",
+    "pre-commit-uv>=0",
+    "matplotlib>=1",
+    "pytest-socket>=0",
+    "ruff>=0.0.257",
+    "marimo>=0.13.2",
+    "mapclassify>=2.8.1",
+    "plotly>=6.1.2",
+    "sphinx-rtd-theme>=3.0.2",
+    "nbformat>=5.10.4",
+    "ghp-import>=2.1.0",
+]
+
+[project.urls]
+Repository = "https://github.com/araichev/gtfs_kit"
+Documentation = "https://araichev.github.io/gtfs_kit_docs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gtfs_kit"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "serial",
+]
+
+[tool.ruff]
+line-length = 90
+exclude = ["notebooks/*.py", "notebooks/*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E501", "E731", "F401", "F403"]

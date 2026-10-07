@@ -1,0 +1,102 @@
+# VS Code Setup
+
+This guide explains how to configure VS Code for use with the Mapbox MCP Server.
+
+## Requirements
+
+- VS Code installed and configured with copilot
+- Mapbox MCP Server built locally
+
+```sh
+# from repository root:
+# using node
+npm install
+npm run build
+
+# note your absolute path to node, you will need it for MCP config
+# For Mac/Linux
+which node
+# For Windows
+where node
+
+# or alternatively, using docker
+docker build -t mapbox-mcp-server .
+```
+
+## Setup Instructions
+
+### Configure VS Code to use Mapbox MCP Server
+
+1. Go to your `settings.json`
+1. At the top level add MCP config, for example:
+   - NPM version
+     ```json
+         "mcp": {
+             "servers": {
+                 "MapboxServer": {
+                     "type": "stdio",
+                     "command": <PATH_TO_YOUR_NPX>,
+                     "args": ["-y", "@mapbox/mcp-server"],
+                     "env": {
+                         "MAPBOX_ACCESS_TOKEN": <YOUR_TOKEN>
+                     }
+                 }
+             },
+         },
+     ```
+   - Docker version
+     ```json
+         "mcp": {
+             "servers": {
+                 "MapboxServer": {
+                     "type": "stdio",
+                     "command": "docker",
+                     "args": [
+                         "run",
+                         "-i",
+                         "--rm",
+                         "mapbox-mcp-server"
+                     ],
+                     "env": {
+                         "MAPBOX_ACCESS_TOKEN": "YOUR_TOKEN"
+                     }
+                 }
+             },
+         },
+     ```
+   - Node version
+     ```json
+         "mcp": {
+             "servers": {
+                 "MapboxServer": {
+                     "type": "stdio",
+                     "command": <PATH_TO_YOUR_NODE>,
+                     "args": [
+                         "/YOUR_PATH_TO_GIT_REPOSITORY/dist/esm/index.js"
+                     ],
+                     "env": {
+                         "MAPBOX_ACCESS_TOKEN": "YOUR_TOKEN"
+                     }
+                 }
+             },
+         },
+     ```
+
+You might need to restart VS Code. You should see Mapbox Server appear in tools menu.
+
+![Mapbox Server appears in tools menu](images/vscode-tools-menu.png)
+
+#### Example of working tools
+
+![Example prompt](images/vscode-tool-example-usage.png)
+
+Note, the results can vary based on current traffic conditions and exact values of parameters used.
+
+## MCP-UI Support
+
+VS Code does not currently support the MCP-UI specification for embedded interactive elements. When you use tools like `static_map_image_tool`, you'll receive:
+
+- ✅ **Base64-encoded map images** that VS Code can display
+- ❌ **Interactive iframe embeds** (not supported by VS Code)
+
+The server is fully backwards compatible - all tools work normally, you just won't see interactive map embeds. For more information about MCP-UI support in this server, see the [MCP-UI documentation](mcp-ui.md).

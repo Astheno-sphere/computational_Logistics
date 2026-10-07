@@ -1,0 +1,154 @@
+import json
+import re
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def read(path: str) -> str:
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+def public_repo_text() -> str:
+    paths = [
+        ROOT / "README.md",
+        ROOT / "mcp" / "catalog.json",
+        *sorted((ROOT / "docs").rglob("*.html")),
+        *sorted((ROOT / "docs").rglob("*.txt")),
+        *sorted((ROOT / "skills").glob("*/SKILL.md")),
+        *sorted((ROOT / "skills").glob("*/agents/openai.yaml")),
+    ]
+    return "\n".join(path.read_text(encoding="utf-8") for path in paths).lower()
+
+
+class NeutralOssPositioningTests(unittest.TestCase):
+    def test_primary_public_surfaces_present_neutral_open_source_tooling(self) -> None:
+        public_copy = "\n".join(
+            [
+                read("README.md"),
+                read("docs/index.html"),
+                json.dumps(json.loads(read("mcp/catalog.json")), sort_keys=True),
+            ]
+        ).lower()
+
+        required_phrases = [
+            "open-source",
+            "mit",
+            "public install",
+            "installable",
+            "bring your own company",
+            "do not upload files",
+            "broadly reusable",
+        ]
+        for phrase in required_phrases:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, public_copy)
+
+    def test_rejection_trigger_phrases_stay_out_of_public_repo_surfaces(self) -> None:
+        public_copy = public_repo_text()
+
+        rejected_phrases = [
+            "passport stamp",
+            "stampable",
+            "points-ready",
+            "future rewards",
+            "token airdrop",
+            "airdrop eligibility",
+            "suede holder",
+            "patented signing device",
+            "join discord",
+            "follow on x",
+            "telegram",
+            "suede ambassador",
+            "suede-ready",
+            "suede intake",
+            "suede transfer",
+            "stamping api",
+            "passport signal",
+        ]
+        for phrase in rejected_phrases:
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(phrase, public_copy)
+
+    def test_creator_utility_metadata_is_reusable_not_suede_intake_only(self) -> None:
+        metadata_paths = [
+            "skills/suede-release-linter/SKILL.md",
+            "skills/suede-release-linter/agents/openai.yaml",
+            "skills/suede-rights-passport/SKILL.md",
+            "skills/suede-rights-passport/agents/openai.yaml",
+            "docs/skills/suede-release-linter.html",
+            "docs/skills/suede-rights-passport.html",
+        ]
+        forbidden = [
+            "suede-ready",
+            "suede intake",
+            "suede transfer",
+            "stamping api",
+            "passport signal",
+            "passport stamp",
+            "suede holder",
+        ]
+        for metadata_path in metadata_paths:
+            text = read(metadata_path).lower()
+            with self.subTest(path=metadata_path):
+                for phrase in forbidden:
+                    self.assertNotIn(phrase, text)
+                self.assertRegex(text, r"(downstream|local|broadly reusable|creator)")
+
+    def test_skill_count_copy_matches_catalog_and_folders(self) -> None:
+        catalog = json.loads(read("mcp/catalog.json"))
+        skill_dirs = sorted(path for path in (ROOT / "skills").iterdir() if path.is_dir())
+        count = len(skill_dirs)
+        self.assertEqual(count, len(catalog["skills"]))
+        # The pack size is no longer restated in prose. It survives only on the
+        # surfaces where the number is the point, and those are what this test
+        # pins: the README badge (URL value and alt text, because the rendered
+        # number lives in the URL). The homepage title stopped printing the
+        # count when it was rewritten around the phrases the page is searched
+        # for, so it is pinned here as an exact string, not as a number.
+        readme = read("README.md")
+        self.assertIn(f"skills-{count}-c8a96e", readme)
+        self.assertIn(f"![Skills: {count}]", readme)
+        self.assertIn(
+            "<title>Claude Code Skills &amp; Codex Skills: Suede Creator Skills</title>",
+            read("docs/index.html"),
+        )
+        stale_counts = [f"{n} skills" for n in range(20, 40) if n != count]
+        stale_counts += [f"{n}-skill" for n in range(20, 40) if n != count]
+        # A focused subset plugin advertises how many skills *it* bundles, which
+        # is legitimately smaller than the pack total. Only counts tied to a
+        # named "<plugin>@suede" install are exempt; a bare number in prose is
+        # still a stale pack-size claim. The bundle sizes themselves are checked
+        # against the marketplace manifest by scripts/validate-skill-pack.mjs.
+        # The surfaces span HTML and Markdown, so the plugin name may be closed
+        # by </code> or by a backtick. Matching only the HTML form silently
+        # stopped exempting llms.txt the moment a subset was documented there.
+        subset_claim = re.compile(
+            r"suede-[a-z-]+@suede(?:</code>|`)\s*\((?:\d+)[^)]*\bskills\b[^)]*\)"
+        )
+        # Homepage lane counts are per-lane sizes, not pack-size claims: the
+        # marketing lane legitimately holds 39 skills. They are exempt only in
+        # their structured form (class="lane-count" / "catalog-lane-count"),
+        # because scripts/validate-skill-pack.mjs independently requires each
+        # set of lane counts to sum to the actual pack total. A bare number in
+        # prose is still treated as a stale pack-size claim.
+        lane_count_claim = re.compile(r'class="(?:catalog-)?lane-count">\d+ skills<')
+        for surface in ["README.md", "docs/index.html", "docs/guide.html", "docs/plugins.html", "docs/copy.html", "docs/skills/index.html", "docs/llms.txt"]:
+            text = lane_count_claim.sub("", subset_claim.sub("", read(surface)))
+            for stale in stale_counts:
+                with self.subTest(surface=surface, stale=stale):
+                    self.assertNotIn(stale, text)
+
+    def test_docs_index_references_existing_local_assets(self) -> None:
+        page = read("docs/index.html")
+        asset_paths = sorted(set(re.findall(r'(?:src|href)="\./(assets/[^"]+)"', page)))
+        self.assertTrue(asset_paths)
+        for asset_path in asset_paths:
+            with self.subTest(asset=asset_path):
+                self.assertTrue((ROOT / "docs" / asset_path).exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

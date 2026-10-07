@@ -1,0 +1,63 @@
+name: HOL Plugin Scanner
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: HOL Plugin Scanner
+        uses: hashgraph-online/ai-plugin-scanner-action@bbcc6382e7ef9904286b8d6ad3115cf7318a9738 # v1.2.640
+        # This bundle pins plugin-scanner 3.0.30 by version and SHA256, but the
+        # wheel leaves cisco-ai-skill-scanner as an open ~=2.0.12 range, so the
+        # deep skill scan silently tracked PyPI. PIP_CONSTRAINT pins it to the
+        # release this tree was reviewed against; see the constraints file and
+        # SECURITY.md. When bumping the action, re-run the scan locally first:
+        # newer bundles install the Cisco scanner only with install_cisco: true,
+        # carry their own hash lock, and ignore the repository's
+        # .plugin-scanner.toml exceptions unless trust_repository_policy: true.
+        env:
+          PIP_CONSTRAINT: ${{ github.workspace }}/.github/hol-scanner-constraints.txt
+        with:
+          plugin_dir: "."
+          mode: scan
+          min_score: 80
+          fail_on_severity: high
+          format: sarif
+          upload_sarif: true
+
+      - name: Show scanner finding locations after failure
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path("ai-plugin-scanner.sarif")
+          if report.is_file():
+              for run in json.loads(report.read_text()).get("runs", []):
+                  for result in run.get("results", []):
+                      print(json.dumps({
+                          "rule": result.get("ruleId"),
+                          "level": result.get("level"),
+                          "locations": [{
+                              "file": location.get("physicalLocation", {}).get("artifactLocation", {}).get("uri"),
+                              "line": location.get("physicalLocation", {}).get("region", {}).get("startLine"),
+                          } for location in result.get("locations", [])],
+                      }))
+          PY

@@ -1,0 +1,445 @@
+[#quarkusQuickStart]
+= Quarkus Quick Start Guide
+:doctype: book
+:imagesdir: ../..
+:sectnums:
+:icons: font
+include::../../_attributes.adoc[]
+
+:wiringannotation: @Inject
+:wiringannotationfq: jakarta.inject.Inject
+:testannotation: @QuarkusTest
+:testannotationfq: io.quarkus.test.junit.QuarkusTest
+:framework-quickstart-url: {quarkus-quickstart-url}
+
+// Keep this in sync with the quarkus repo's copy
+// https://github.com/quarkusio/quarkus/blob/main/docs/src/main/asciidoc/timefold.adoc
+// Keep this also in sync with spring-boot-quickstart.adoc where applicable
+
+This guide walks you through the process of creating a https://quarkus.io/[Quarkus] application
+with https://timefold.ai[Timefold]'s constraint solving Artificial Intelligence (AI).
+
+include::../shared/_whatyoubuild.adoc[]
+
+include::../shared/_solutionsourcecode.adoc[]
+
+== Prerequisites
+
+To complete this guide, you need:
+
+include::../shared/_java-prerequisites.adoc[]
+
+== The build file and the dependencies
+
+Use https://code.quarkus.io/?a=timefold-solver-quickstart&j=21&e=rest&e=rest-jackson&e=ai.timefold.solver%3Atimefold-solver-quarkus-jackson&e=ai.timefold.solver%3Atimefold-solver-quarkus[code.quarkus.io] to generate an application
+with the following extensions, for Maven or Gradle:
+
+[NOTE]
+====
+Clicking the link above will automatically select the dependencies for you on *code.quarkus.io*.
+====
+
+* Quarkus REST JAX-RS (`quarkus-rest`)
+* Quarkus REST Jackson (`quarkus-rest-jackson`)
+* Timefold Solver (`timefold-solver-quarkus`)
+* Timefold Solver Jackson (`timefold-solver-quarkus-jackson`)
+
+include::../shared/school-timetabling/_school-timetabling-model.adoc[leveloffset=+1]
+include::../shared/school-timetabling/_school-timetabling-constraints.adoc[leveloffset=+1]
+include::../shared/school-timetabling/_school-timetabling-solution.adoc[leveloffset=+1]
+
+== Create the solver service
+
+Now you are ready to put everything together and create a REST service.
+But solving planning problems on REST threads causes HTTP timeout issues.
+Therefore, the Quarkus extension injects a `SolverManager` instance,
+which runs solvers in a separate thread pool
+and can solve multiple datasets in parallel.
+
+[tabs]
+====
+Java::
++
+--
+Create the `src/main/java/org/acme/schooltimetabling/rest/TimetableResource.java` class:
+
+[source,java]
+----
+package org.acme.schooltimetabling.rest;
+
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+
+import org.acme.schooltimetabling.domain.Timetable;
+import ai.timefold.solver.core.api.solver.SolverJob;
+import ai.timefold.solver.core.api.solver.SolverManager;
+
+@Path("/timetables")
+public class TimetableResource {
+
+    @Inject
+    SolverManager<Timetable, UUID> solverManager;
+
+    @POST
+    public Timetable solve(Timetable problem) {
+        UUID problemId = UUID.randomUUID();
+        // Submit the problem to start solving
+        SolverJob<Timetable, UUID> solverJob = solverManager.solve(problemId, problem);
+        Timetable solution;
+        try {
+            // Wait until the solving ends
+            solution = solverJob.getFinalBestSolution();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new IllegalStateException("Solving failed.", e);
+        }
+        return solution;
+    }
+
+}
+----
+--
+Kotlin::
++
+--
+Create the `src/main/kotlin/org/acme/schooltimetabling/rest/TimetableResource.kt` class:
+
+[source,kotlin]
+----
+package org.acme.schooltimetabling.rest
+
+import ai.timefold.solver.core.api.score.analysis.ScoreAnalysis
+import ai.timefold.solver.core.api.score.HardSoftScore
+import ai.timefold.solver.core.api.solver.ScoreAnalysisFetchPolicy
+import ai.timefold.solver.core.api.solver.SolutionManager
+import ai.timefold.solver.core.api.solver.SolverManager
+import jakarta.inject.Inject
+import jakarta.ws.rs.Consumes
+import jakarta.ws.rs.DELETE
+import jakarta.ws.rs.GET
+import jakarta.ws.rs.POST
+import jakarta.ws.rs.PUT
+import jakarta.ws.rs.Path
+import jakarta.ws.rs.PathParam
+import jakarta.ws.rs.Produces
+import jakarta.ws.rs.QueryParam
+import jakarta.ws.rs.core.MediaType
+import jakarta.ws.rs.core.Response
+import org.acme.schooltimetabling.domain.Timetable
+import org.acme.schooltimetabling.rest.exception.ErrorInfo
+import org.acme.schooltimetabling.rest.exception.TimetableSolverException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.util.*
+
+@Path("timetables")
+class TimetableResource {
+
+    @Inject
+    private final var solverManager: SolverManager<Timetable, String>?
+
+    @POST
+    fun solve(problem: Timetable?): Timetable {
+        val problemId = UUID.randomUUID()
+        // Submit the problem to start solving
+        val solverJob = solverManager!!.solve(problemId, problem)
+        val solution: Timetable
+        try {
+            // Wait until the solving ends
+            solution = solverJob.finalBestSolution
+        } catch (e: InterruptedException) {
+            throw IllegalStateException("Solving failed.", e)
+        } catch (e: ExecutionException) {
+            throw IllegalStateException("Solving failed.", e)
+        }
+        return solution
+    }
+}
+----
+--
+====
+
+For simplicity's sake, this initial implementation waits for the solver to finish,
+which can still cause an HTTP timeout.
+The _complete_ implementation avoids HTTP timeouts much more elegantly.
+
+== Set the termination time
+
+Without a termination setting or a `terminationEarly()` event, the solver runs forever.
+To avoid that, limit the solving time to five seconds.
+That is short enough to avoid the HTTP timeout.
+
+Create the `src/main/resources/application.properties` file:
+
+[source,properties]
+----
+# The solver runs only for 5 seconds to avoid a HTTP timeout in this simple implementation.
+# It's recommended to run for at least 5 minutes ("5m") otherwise.
+quarkus.timefold.solver.termination.spent-limit=5s
+----
+
+Timefold Solver returns _the best solution_ found in the available termination time.
+Due to xref:optimization-algorithms/overview.adoc#doesTimefoldFindTheOptimalSolution[the nature of NP-hard problems],
+the best solution might not be optimal, especially for larger datasets.
+Increase the termination time to potentially find a better solution.
+
+== Run the application
+
+First start the application in dev mode:
+
+[tabs]
+====
+Maven::
++
+[source,shell]
+----
+$ mvn compile quarkus:dev
+----
+
+Gradle::
++
+[source,shell]
+----
+$ gradle --console=plain quarkusDev
+----
+
+====
+
+include::../shared/_try-the-application.adoc[]
+
+include::../shared/_quarkus-dev-mode-note.adoc[]
+
+=== Test the application
+
+A good application includes test coverage.
+
+==== Test the constraints
+
+To test each constraint in isolation, use a `ConstraintVerifier` in unit tests.
+It tests each constraint's corner cases in isolation from the other tests,
+which lowers maintenance when adding a new constraint with proper test coverage.
+
+First update your build tool configuration:
+
+[tabs]
+====
+Maven::
++
+--
+Add the subsequent dependency in your `pom.xml`:
+[source,xml,subs=attributes+]
+----
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+----
+--
+Gradle::
++
+--
+Add the subsequent dependency to your `build.gradle`:
+[source,groovy,subs=attributes+]
+----
+    testImplementation "io.quarkus:quarkus-junit"
+----
+--
+====
+
+include::../shared/_constrainttests.adoc[]
+
+==== Test the solver
+
+In a JUnit test, generate a test dataset and send it to the `TimetableResource` to solve.
+
+[tabs]
+====
+Java::
++
+--
+Create the `src/test/java/org/acme/schooltimetabling/rest/TimetableResourceTest.java` class:
+
+[source,java]
+----
+package org.acme.schooltimetabling.rest;
+
+import static io.restassured.RestAssured.get;
+import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import jakarta.inject.Singleton;
+
+import ai.timefold.solver.core.api.score.analysis.ScoreAnalysis;
+import ai.timefold.solver.core.api.score.HardSoftScore;
+import ai.timefold.solver.core.api.score.constraint.ConstraintRef;
+import ai.timefold.solver.core.api.score.stream.ConstraintJustification;
+import ai.timefold.solver.core.api.solver.SolverStatus;
+import ai.timefold.solver.jackson.api.score.analysis.AbstractScoreAnalysisJacksonDeserializer;
+
+import org.acme.schooltimetabling.domain.Timetable;
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
+import io.quarkus.jackson.ObjectMapperCustomizer;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
+
+import java.io.IOException;
+import java.io.File;
+
+@QuarkusTest
+class TimetableResourceTest {
+
+    @Test
+    void solveDemoDataUntilFeasible() throws IOException {
+        // Provide the same input data shown in the text above.
+        ObjectMapper objectMapper = JsonMapper.builder()
+            .findAndAddModules()
+            .build();
+        Timetable testTimetable = objectMapper
+.readValue(
+            new File("src/test/resources/testing-timetable.json"),
+            Timetable.class);
+
+        Timetable solution = given()
+                .contentType(ContentType.JSON)
+                .body(testTimetable)
+                .expect().contentType(ContentType.JSON)
+                .when().post("/timetables")
+                .then()
+                .statusCode(200)
+                .extract()
+                .as(Timetable.class);
+
+        assertNotNull(solution.getLessons());
+        assertNotNull(solution.getTimeslots());
+        assertNotNull(solution.getRooms());
+        assertNotNull(solution.getLessons().get(0).getRoom());
+        assertNotNull(solution.getLessons().get(0).getTimeslot());
+        assertTrue(solution.getScore().isFeasible());
+    }
+
+}
+----
+--
+Kotlin::
++
+--
+Create the `src/test/kotlin/org/acme/schooltimetabling/rest/TimetableResourceTest.kt` class:
+
+[source,kotlin]
+----
+package org.acme.schooltimetabling.rest
+
+import ai.timefold.solver.core.api.solver.SolverStatus
+import io.quarkus.test.junit.QuarkusTest
+import io.restassured.RestAssured.get
+import io.restassured.RestAssured.given
+import io.restassured.http.ContentType
+import org.acme.schooltimetabling.domain.Room
+import org.acme.schooltimetabling.domain.Timeslot
+import org.acme.schooltimetabling.domain.Timetable
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import java.time.Duration
+
+@QuarkusTest
+class TimetableResourceTest {
+
+    @Test
+    fun solveDemoDataUntilFeasible() {
+        val testTimetable: Timetable = // setup test data
+
+        val solution: Timetable = given()
+            .contentType(ContentType.JSON)
+            .body(testTimetable)
+            .expect().contentType(ContentType.TEXT)
+            .`when`().post("/timetables")
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(Timetable.class);
+
+        assertNotNull(solution.lessons)
+        assertNotNull(solution.timeslots)
+        assertNotNull(solution.rooms)
+        assertNotNull(solution.lessons.get(0).room)
+        assertNotNull(solution.lessons.get(0).timeslot)
+        assertTrue(solution.score?.isFeasible!!)
+    }
+
+}
+----
+--
+====
+
+This test verifies that after solving, all lessons are assigned to a time slot and a room.
+It also verifies that it found a feasible solution (no hard constraints broken).
+
+Add test properties to the `src/main/resources/application.properties` file:
+
+[source,properties]
+----
+quarkus.timefold.solver.termination.spent-limit=5s
+
+# Effectively disable spent-time termination in favor of the best-score-limit
+%test.quarkus.timefold.solver.termination.spent-limit=1h
+%test.quarkus.timefold.solver.termination.best-score-limit=0hard/*soft
+----
+
+Normally, the solver finds a feasible solution in less than 200 milliseconds.
+Notice how the `application.properties` overwrites the solver termination during tests
+to terminate as soon as a feasible solution (`0hard/*soft`) is found.
+This avoids hard coding a solver time, because the unit test might run on arbitrary hardware.
+This approach ensures that the test runs long enough to find a feasible solution, even on slow machines.
+But it does not run a millisecond longer than it strictly must, even on fast machines.
+
+=== Logging
+
+When adding constraints in your `ConstraintProvider`,
+keep an eye on the _move evaluation speed_ in the `info` log,
+after solving for the same amount of time, to assess the performance impact:
+
+[source]
+----
+... Solving ended: ..., move evaluation speed (29455/sec), ...
+----
+
+To understand how Timefold Solver is solving your problem internally,
+change the logging in the `application.properties` file or with a `-D` system property:
+
+[source,properties]
+----
+quarkus.log.category."ai.timefold.solver".level=debug
+----
+
+Use `debug` logging to show every _step_:
+
+[source,options="nowrap"]
+----
+... Solving started: time spent (67), best score (0hard/0soft), environment mode (PHASE_ASSERT), random (JDK with seed 0).
+...     CH step (0), time spent (128), score (0hard/0soft), selected move count (15), picked move ([Math(101) {null -> Room A}, Math(101) {null -> MONDAY 08:30}]).
+...     CH step (1), time spent (145), score (0hard/0soft), selected move count (15), picked move ([Physics(102) {null -> Room A}, Physics(102) {null -> MONDAY 09:30}]).
+...
+----
+
+Use `trace` logging to show every _step_ and every _move_ per step.
+
+== Summary
+
+Congratulations!
+You have just developed a Quarkus application with https://timefold.ai[Timefold]!
+
+Next Steps:
+
+- For a full implementation with a web UI and in-memory storage, check out {quarkus-quickstart-url}[the Quarkus quickstart source code].
+- Check out more information about Timefold's integration with Quarkus in our xref:running-timefold-solver/library/quarkus.adoc#integrationWithQuarkus[Integration documentation].

@@ -1,0 +1,137 @@
+name: Skill pack CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skill-pack-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    # 25, not 10. `npm run ci` is ~6 minutes of wall clock on an M-series Mac and
+    # roughly twice that on a hosted runner, so the old budget killed the job
+    # mid-run at ~10m and reported it as a failure. Measured 2026-09-03:
+    #
+    #   npm run ci                     355 s total, exit 0
+    #   of which test:validator-runtime 261 s  (32 tests, all passing)
+    #
+    # The cost is inherent, not a leak: each of those 32 tests spawns
+    # validate-skill-pack.mjs against a packaged copy of the repo, and one
+    # validator run alone is ~4.9 s. Building the fixture is only ~0.4 s, so
+    # there is nothing to win by caching it.
+    #
+    # If this starts timing out again, the fix is concurrency - the tests are
+    # independent, each in its own temp dir - not another bump.
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          package-manager-cache: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Guard copy-bank wording and clipboard parity
+        run: python3 -m unittest discover -s tests -p 'test_public_copy.py' -v
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate and test the public pack
+        run: npm run ci
+
+      - name: Install PDF text extractor for privacy checks
+        run: |
+          if ! command -v pdftotext >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends poppler-utils
+          fi
+
+      - name: Check public source, PDF, and generated package privacy
+        run: python3 scripts/check-public-privacy.py --package dist-npm
+
+      - name: Audit production dependencies
+        run: npm run audit:dependencies
+
+      - name: Reject whitespace errors
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            git diff --check "$PR_BASE_SHA...$PR_HEAD_SHA"
+          elif [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            git diff --check "$PUSH_BEFORE_SHA" "$GITHUB_SHA"
+          else
+            git show --check --format= --no-renames "$GITHUB_SHA"
+          fi
+
+  # `build` is a required status check on main. It existed in branch protection
+  # but no job produced it, so every pull request was permanently blocked and
+  # merges only landed via admin bypass. Rather than drop the requirement, this
+  # job makes it real: it exercises install.sh — the documented user-facing
+  # install path — which nothing else in CI covered.
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the pack into a sandboxed HOME
+        run: |
+          set -euo pipefail
+          SANDBOX="$(mktemp -d)"
+          HOME="$SANDBOX" bash install.sh
+          installed="$(find "$SANDBOX/.claude/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+          expected="$(find skills -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+          manifests="$(find "$SANDBOX/.claude/skills" -name SKILL.md | wc -l | tr -d ' ')"
+          agents="$(find "$SANDBOX/.claude/agents" -mindepth 1 -maxdepth 1 -name 'suede-graph-flo-xr-*.md' | wc -l | tr -d ' ')"
+          expected_agents="$(find skills/suede-graph-flo-xr/agents -mindepth 1 -maxdepth 1 -name 'suede-graph-flo-xr-*.md' | wc -l | tr -d ' ')"
+          echo "installed=$installed expected=$expected SKILL.md=$manifests agents=$agents expected_agents=$expected_agents"
+          if [ "$installed" != "$expected" ]; then
+            echo "::error::install.sh installed $installed skills, repository has $expected"
+            exit 1
+          fi
+          if [ "$manifests" != "$expected" ]; then
+            echo "::error::install.sh landed $manifests SKILL.md files, expected $expected"
+            exit 1
+          fi
+          if [ "$agents" != "$expected_agents" ]; then
+            echo "::error::install.sh landed $agents Suede Graph Flo XR agents, expected $expected_agents"
+            exit 1
+          fi
+
+      - name: Verify plugin manifests parse
+        run: |
+          set -euo pipefail
+          for manifest in .claude-plugin/marketplace.json .claude-plugin/plugin.json \
+                          .codex-plugin/plugin.json .agents/plugins/marketplace.json \
+                          mcp/catalog.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$manifest','utf8'))" \
+              || { echo "::error::$manifest is not valid JSON"; exit 1; }
+          done
+          echo "all plugin manifests parse"

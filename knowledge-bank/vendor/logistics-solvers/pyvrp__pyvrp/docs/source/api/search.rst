@@ -1,0 +1,129 @@
+.. module:: pyvrp.search
+   :synopsis: Search
+
+
+Search methods
+==============
+
+The :mod:`pyvrp.search` module contains classes and search methods responsible for modifying or improving solutions.
+PyVRP currently provides a :class:`LocalSearch` method.
+
+All search methods implement the :class:`SearchMethod` protocol.
+
+.. automodule:: pyvrp.search.SearchMethod
+
+   .. autoclass:: SearchMethod
+      :members:
+      :special-members: __call___
+
+.. automodule:: pyvrp.search.LocalSearch
+
+   .. autoclass:: LocalSearch
+      :members:
+      :special-members: __call___
+
+.. automodule:: pyvrp.search._search
+
+   .. autoclass:: LocalSearchStatistics
+
+   .. autoclass:: PerturbationParams
+      :members:
+
+   .. autoclass:: PerturbationManager
+      :members:
+      :exclude-members: perturb
+   
+   .. autoclass:: NeighbourhoodParams
+      :members:
+
+.. automodule:: pyvrp.search.neighbourhood
+   :members:
+
+
+Operators
+---------
+
+Instances of these operators can be added to the :class:`~pyvrp.search.LocalSearch.LocalSearch` object via the :meth:`~pyvrp.search.LocalSearch.LocalSearch.add_operator` method.
+Each operator inherits from :class:`~pyvrp.search._search.BinaryOperator` or :class:`~pyvrp.search._search.UnaryOperator`.
+As a convenience, the :mod:`pyvrp.search` module makes most relevant operators available as ``OPERATORS``:
+
+.. code-block:: python
+
+   from pyvrp.search import OPERATORS
+
+
+.. automodule:: pyvrp.search._search
+   :noindex:
+
+   .. autoclass:: BinaryOperator
+
+   .. autoclass:: UnaryOperator
+
+   .. autoclass:: Relocate1
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: Relocate2
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: Relocate3
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+   
+   .. autoclass:: Swap11
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: Swap21
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: Swap31
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+   
+   .. autoclass:: Swap22
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: Swap32
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+   
+   .. autoclass:: Swap33
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: RelocateAlternative
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: RelocatePickup
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: RelocateDelivery
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: RelocateShipment
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: RelocateWithDepot
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: RemoveAdjacentDepot
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: RemoveOptionalClient
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: InsertOptionalClient
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: ReplaceGroup
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: ReplaceOptionalClient
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: InsertOptionalShipment
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: RemoveOptionalShipment
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: ReplaceOptionalShipment
+      :exclude-members: evaluate, apply, statistics, supports, init, name
+
+   .. autoclass:: SwapTails
+      :exclude-members: evaluate, apply, statistics, supports, init, name

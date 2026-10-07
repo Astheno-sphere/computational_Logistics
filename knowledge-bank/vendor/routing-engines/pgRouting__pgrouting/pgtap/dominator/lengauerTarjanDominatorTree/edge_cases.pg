@@ -1,0 +1,164 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2020-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT CASE WHEN NOT min_version('3.2.0') THEN plan(1) ELSE plan(12) END;
+
+CREATE OR REPLACE FUNCTION edge_cases()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+
+IF NOT min_version('3.2.0') THEN
+  RETURN QUERY
+  SELECT skip(1, 'Function is new on 3.2.0');
+  RETURN;
+END IF;
+
+-- 0 edge 0 vertex test
+
+PREPARE q1 AS
+SELECT id, source, target, cost, reverse_cost
+FROM edges
+WHERE id > 18;
+RETURN QUERY
+SELECT is_empty('q1', 'q1: Graph with 0 edge and 0 vertex');
+
+
+PREPARE ltd_test1 AS
+SELECT *
+FROM pgr_lengauerTarjanDominatorTree(
+'q1',1
+);
+
+RETURN QUERY
+SELECT is_empty('ltd_test1', 'test1: Graph with 0 edge and 0 vertex');
+
+
+
+-- single vertex test
+
+PREPARE q2 AS
+SELECT id, source, source AS target, cost, reverse_cost
+FROM edges
+WHERE id = 1;
+
+RETURN QUERY
+SELECT set_eq('q2', $$VALUES (1, 5, 5, 1, 1)$$, 'graph2: u<->u');
+
+IF min_version('3.5.1') THEN
+
+PREPARE ltd_test2_1 AS
+SELECT *
+FROM pgr_lengauerTarjanDominatorTree(
+'q2',6
+);
+RETURN QUERY
+SELECT lives_ok('ltd_test2_1', 'test2: Triggers an assertion');
+
+ELSE
+
+  RETURN QUERY
+  SELECT skip(1, 'triggers an assertion when the vertex does not exist');
+
+END IF;
+
+PREPARE ltd_test2 AS
+SELECT *
+FROM pgr_lengauerTarjanDominatorTree(
+'q2',5
+);
+RETURN QUERY
+SELECT set_eq('ltd_test2', $$VALUES (1, 5, 0)$$, 'test2: u<->u');
+
+
+
+-- 2 vertices test (connected)
+
+PREPARE q3 AS
+SELECT id, source, target, cost, reverse_cost
+FROM edges
+WHERE id = 1;
+
+RETURN QUERY
+SELECT set_eq('q3', $$VALUES (1, 5, 6, 1, 1)$$, 'q3: u<->v');
+
+PREPARE ltd_test3 AS
+SELECT *
+FROM pgr_lengauerTarjanDominatorTree(
+    'q3',5
+);
+
+RETURN QUERY
+SELECT set_eq('ltd_test3', $$VALUES (1, 5, 0),(2, 6, 1)$$, 'test3:  u<->v');
+
+
+
+-- 3 vertices test
+
+PREPARE q4 AS
+SELECT id, source, target, cost, reverse_cost
+FROM edges
+WHERE id <= 2;
+
+RETURN QUERY
+SELECT set_eq('q4', $$VALUES (1, 5, 6, 1, 1), (2, 6, 10, -1, 1)$$, 'graph4: u<->v<-w');
+
+
+PREPARE ltd_test4 AS
+SELECT *
+FROM pgr_lengauerTarjanDominatorTree(
+'q4',5
+);
+
+RETURN QUERY
+SELECT set_eq('ltd_test4', $$VALUES (1, 5, 0),(2, 6, 1),(3, 10, 0)$$, 'test3:  u<->v<-w');
+
+
+-- 4 vertices test
+
+PREPARE q5 AS
+SELECT id, source, target, cost, reverse_cost
+FROM edges
+WHERE id <= 3 ORDER BY id;
+
+RETURN QUERY
+SELECT set_eq('q5',
+    $$VALUES
+        (1, 5, 6, 1, 1),
+        (2, 6, 10, -1, 1),
+        (3, 10, 15, -1, 1)
+    $$,
+    'graph5: u<->v<-w<-z'
+);
+
+PREPARE ltd_test5 AS
+SELECT *
+FROM pgr_lengauerTarjanDominatorTree(
+'q5',5
+);
+
+RETURN QUERY
+SELECT set_eq('ltd_test5', $$VALUES (3, 10, 0),(4, 15, 0),(1, 5, 0), (2, 6, 1)$$, 'test5: u<->v<-w<-z root 5');
+
+
+PREPARE ltd_test6 AS
+SELECT *
+FROM pgr_lengauerTarjanDominatorTree(
+'q5',15
+);
+
+RETURN QUERY
+SELECT set_eq('ltd_test6', $$VALUES (3, 10, 4),(4,15,0),(1, 5, 2),(2, 6, 3)$$, 'test6: u<->v<-w<-z root 15');
+
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+SELECT edge_cases();
+
+SELECT * FROM finish();
+ROLLBACK;

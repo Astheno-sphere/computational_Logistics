@@ -1,0 +1,62 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2016-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT plan(1);
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+
+CREATE OR REPLACE FUNCTION foo( sql_TestFunction TEXT, lim INTEGER default 18 )
+RETURNS SETOF TEXT AS
+$BODY$
+DECLARE
+sql_Combinations TEXT;
+sql_Many TEXT;
+BEGIN
+  IF NOT min_version('3.2.0') THEN
+    RETURN QUERY
+    SELECT skip(1, 'Combinations signature added on 3.2.0');
+    RETURN;
+  END IF;
+
+
+    sql_Combinations := '';
+    sql_Many := '';
+    FOR i IN 1.. lim LOOP
+        IF (i > 1) THEN
+            sql_Many := sql_Many ||', ';
+        END IF;
+        sql_Many := sql_Many || i ;
+    END LOOP;
+
+    FOR i IN 1.. lim LOOP
+        FOR j IN 1..lim LOOP
+            IF NOT (i =  j) THEN
+                sql_Combinations := sql_Combinations || '(' || i || ',' || j || '),' ;
+            END IF;
+        END LOOP;
+    END LOOP;
+    sql_Combinations := trim(trailing ',' from sql_Combinations);
+
+    sql_Many := ( sql_TestFunction || '(
+        ''SELECT id, source, target, cost, reverse_cost FROM edges'',
+        ARRAY[' || sql_Many  ||'], ARRAY[' || sql_Many || '] ) ');
+
+    sql_Combinations := ( sql_TestFunction || '(
+        ''SELECT id, source, target, cost, reverse_cost FROM edges'',
+        ''SELECT * FROM (VALUES' || sql_Combinations  ||') AS combinations (source, target)'' ) ');
+
+    RETURN query SELECT set_eq( sql_Many, sql_Combinations );
+    RETURN;
+END
+$BODY$
+language plpgsql;
+
+SELECT * FROM foo('SELECT path_seq, start_vid, end_vid, node, edge, cost, agg_cost FROM pgr_binaryBreadthFirstSearch');
+
+-- Finish the tests and clean up.
+SELECT * FROM finish();
+ROLLBACK;

@@ -1,0 +1,139 @@
+name: Boost supported versions
+# This file is part of the pgRouting project.
+# Copyright (c) 2020-2026 pgRouting developers
+# License: GPL-2 See https://github.com/pgRouting/pgrouting/blob/main/LICENSE
+
+# Test is done on:
+# - ubuntu-latest
+# - the preinstalled postgres version
+# - postgis 3
+# - Release
+#
+# The boost version tested are when changes that affect pgRouting on
+# - boost::graph
+# - boost::geometry
+# See https://www.boost.org/users/history/
+# Currently
+# - boost::geometry has not changed anything we use
+#
+# boost
+# - 1.92 Latest version at time of release (tested on ubuntu.yml)
+# - 1.86 does not support C++11 (Aug 2024)
+# - 1.84 is failing its own tests (Jul 2022)
+# - 1.83 transitive closure & stoer wagner changed on 83 (Jul 2022)
+# - 1.80 changed on 1.80 (Aug 2022)
+# - 1.75 requires C++14 (Dec 2020)
+# - 1.74 Min requirement, works on 22.04 (tested on ubuntu.yml)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/boost_version.yml'
+      - 'src/**'
+      - 'include/**'
+      - 'pgtap/**'
+      - 'tools/testers/**'
+      - 'CMakeLists.txt'
+
+    branches-ignore:
+      - 'gh-pages'
+
+  pull_request:
+    paths:
+      - '.github/workflows/boost_version.yml'
+      - 'src/**'
+      - 'include/**'
+      - 'pgtap/**'
+      - 'tools/testers/**'
+      - 'CMakeLists.txt'
+
+    branches-ignore:
+      - 'gh-pages'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Ubuntu Boost
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+        fail-fast: false
+        matrix:
+          boost_minor: [75, 76, 77, 78, 79, 80, 83, 84, 86, 91]
+          os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get postgres version
+        run: |
+          sudo service postgresql start
+          pgver=$(psql --version | grep -Po '(?<=psql \(PostgreSQL\) )[^;]+(?=\.\d+ \()')
+          echo "PGVER=${pgver}" >> $GITHUB_ENV
+          echo "PGIS=3" >> $GITHUB_ENV
+          PG_USER=$(whoami)
+          echo "PG_RUNNER_USER=${PG_USER}" >> $GITHUB_ENV
+          PG_PORT=5432
+          echo "PGPORT=${PG_PORT}" >> $GITHUB_ENV
+          sudo -u postgres psql -p "${PG_PORT}" -c "DROP ROLE IF EXISTS \"${PG_USER}\";"
+          sudo -u postgres psql -p "${PG_PORT}" -c "CREATE ROLE \"${PG_USER}\" WITH LOGIN SUPERUSER;"
+          sudo -u postgres psql -p "${PG_PORT}" -c "CREATE DATABASE \"${PG_USER}\";"
+
+      - name: 'Raise Priority for apt.postgresql.org'
+        run: |
+          cat << EOF >> ./pgdg.pref
+          Package: *
+          Pin: release o=apt.postgresql.org
+          Pin-Priority: 600
+          EOF
+          sudo mv ./pgdg.pref /etc/apt/preferences.d/
+          sudo apt update
+
+      - name: Add PostgreSQL APT repository
+        run: |
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg-testing main ${PGVER}" > /etc/apt/sources.list.d/pgdg.list'
+          curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libtap-parser-sourcehandler-pgtap-perl \
+            postgresql-${PGVER} \
+            postgresql-${PGVER}-pgtap \
+            postgresql-${PGVER}-postgis-${PGIS} \
+            postgresql-${PGVER}-postgis-${PGIS}-scripts \
+            postgresql-server-dev-${PGVER}
+
+          wget https://sourceforge.net/projects/boost/files/boost/1.${{ matrix.boost_minor }}.0/boost_1_${{ matrix.boost_minor }}_0.tar.bz2
+          sudo tar --bzip2 -xf  boost_1_${{ matrix.boost_minor }}_0.tar.bz2
+          sudo mv boost_1_${{ matrix.boost_minor }}_0/boost /usr/include/
+
+      - name: Configure
+        run: |
+          export PATH=/usr/lib/postgresql/${PGVER}/bin:$PATH
+          mkdir build
+          cd build
+          cmake -DPOSTGRESQL_VERSION=${PGVER} -DBoost_DIR=/usr/include/boost \
+             -DCMAKE_BUILD_TYPE=Release ..
+
+      - name: Build
+        run: |
+          cd build
+          make -j 4
+          sudo make install
+
+      - name: Test
+        run: |
+          sudo service postgresql start
+          psql -c "CREATE DATABASE ___pgr___test___;"
+          DIR=$(git rev-parse --show-toplevel)
+          bash "${DIR}/tools/testers/setup_db.sh" "${PGPORT}" ___pgr___test___ "${PG_RUNNER_USER}" "4.1.0"
+          pg_prove  -Q -f --normalize --directives --recurse -U "${PG_RUNNER_USER}" -d ___pgr___test___ "pgtap"

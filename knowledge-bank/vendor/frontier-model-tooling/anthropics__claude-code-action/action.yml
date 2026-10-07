@@ -1,0 +1,459 @@
+name: "Claude Code Action v1.0"
+description: "Flexible GitHub automation platform with Claude. Auto-detects mode based on event type: PR reviews, @claude mentions, or custom automation."
+branding:
+  icon: "at-sign"
+  color: "orange"
+
+inputs:
+  trigger_phrase:
+    description: "The trigger phrase to look for in comments or issue body"
+    required: false
+    default: "@claude"
+  assignee_trigger:
+    description: "The assignee username that triggers the action (e.g. @claude)"
+    required: false
+  label_trigger:
+    description: "The label that triggers the action (e.g. claude)"
+    required: false
+    default: "claude"
+  base_branch:
+    description: "The branch to use as the base/source when creating new branches (defaults to repository default branch)"
+    required: false
+  branch_prefix:
+    description: "The prefix to use for Claude branches (defaults to 'claude/', use 'claude-' for dash format)"
+    required: false
+    default: "claude/"
+  branch_name_template:
+    description: "Template for branch naming. Available variables: {{prefix}}, {{entityType}}, {{entityNumber}}, {{timestamp}}, {{sha}}, {{label}}, {{description}}. {{label}} will be first label from the issue/PR, or {{entityType}} as a fallback. {{description}} will be the first 5 words of the issue/PR title in kebab-case. Default: '{{prefix}}{{entityType}}-{{entityNumber}}-{{timestamp}}'"
+    required: false
+    default: ""
+  allowed_bots:
+    description: "Comma-separated list of allowed bot usernames, or '*' to allow all bots. Empty string (default) allows no bots. WARNING: On public repos with '*', external Apps may be able to invoke this action with prompts they control. See docs/security.md."
+    required: false
+    default: ""
+  allowed_non_write_users:
+    description: |
+      Comma-separated list of usernames to allow without write permissions, or '*' to allow all users.
+      Only works when github_token input is provided. WARNING: Use with extreme caution - this
+      bypasses security checks and should only be used for workflows with very limited permissions
+      (e.g., issue labeling).
+
+      SECURITY: Processing untrusted content exposes the workflow to prompt injection. When this
+      input is set, Claude does a best-effort scrub of Anthropic, cloud, and GitHub Actions secrets
+      from subprocess environments. This reduces but does not eliminate prompt injection risk -
+      only use for workflows with very limited permissions and validate all outputs.
+    required: false
+    default: ""
+  include_comments_by_actor:
+    description: "Comma-separated list of actor usernames to INCLUDE in comments. Supports wildcards: '*[bot]' matches all bots, 'dependabot[bot]' matches specific bot. Empty (default) includes all actors."
+    required: false
+    default: ""
+  exclude_comments_by_actor:
+    description: "Comma-separated list of actor usernames to EXCLUDE from comments. Supports wildcards: '*[bot]' matches all bots, 'renovate[bot]' matches specific bot. Empty (default) excludes none. If actor is in both lists, exclusion takes priority."
+    required: false
+    default: ""
+
+  # Claude Code configuration
+  prompt:
+    description: "Instructions for Claude. Can be a direct prompt or custom template."
+    required: false
+    default: ""
+  settings:
+    description: "Claude Code settings as JSON string or path to settings JSON file"
+    required: false
+    default: ""
+
+  # Auth configuration
+  anthropic_api_key:
+    description: "Anthropic API key (required for direct API, not needed for Bedrock/Vertex/Foundry)"
+    required: false
+  claude_code_oauth_token:
+    description: "Claude Code OAuth token (alternative to anthropic_api_key)"
+    required: false
+  anthropic_federation_rule_id:
+    description: "Workload identity federation rule ID (fdrl_...). When set with anthropic_organization_id, the action authenticates to the Claude API by exchanging the workflow's GitHub OIDC token instead of using a static API key. Requires `id-token: write` permission."
+    required: false
+  anthropic_organization_id:
+    description: "Anthropic organization UUID used for workload identity federation"
+    required: false
+  anthropic_service_account_id:
+    description: "Service account ID (svac_...) the federated token acts as (optional, used with workload identity federation)"
+    required: false
+  anthropic_workspace_id:
+    description: "Workspace ID (wrkspc_...) for workload identity federation. Optional when the federation rule targets a single workspace."
+    required: false
+  anthropic_oidc_audience:
+    description: "Audience to request on the GitHub OIDC token used for workload identity federation. Defaults to https://api.anthropic.com."
+    required: false
+  github_token:
+    description: "GitHub token with repo and pull request permissions (optional if using GitHub App)"
+    required: false
+  use_bedrock:
+    description: "Use Amazon Bedrock with OIDC authentication instead of direct Anthropic API"
+    required: false
+    default: "false"
+  use_vertex:
+    description: "Use Google Vertex AI with OIDC authentication instead of direct Anthropic API"
+    required: false
+    default: "false"
+  use_foundry:
+    description: "Use Microsoft Foundry with OIDC authentication instead of direct Anthropic API"
+    required: false
+    default: "false"
+
+  claude_args:
+    description: "Additional arguments to pass directly to Claude CLI"
+    required: false
+    default: ""
+  additional_permissions:
+    description: "Additional GitHub permissions to request (e.g., 'actions: read')"
+    required: false
+    default: ""
+  use_sticky_comment:
+    description: "Use just one comment to deliver issue/PR comments"
+    required: false
+    default: "false"
+  classify_inline_comments:
+    description: "Buffer inline comments without confirmed=true and classify them (real review vs test/probe) before posting after the session ends. Set to 'false' to post all inline comments immediately (pre-buffering behavior)."
+    required: false
+    default: "true"
+  use_commit_signing:
+    description: "Enable commit signing using GitHub's commit signature verification. When false, Claude uses standard git commands"
+    required: false
+    default: "false"
+  ssh_signing_key:
+    description: "SSH private key for signing commits. When provided, git will be configured to use SSH signing. Takes precedence over use_commit_signing."
+    required: false
+    default: ""
+  bot_id:
+    description: "GitHub user ID to use for git operations (defaults to Claude's bot ID)"
+    required: false
+    default: "41898282" # Claude's bot ID - see src/github/constants.ts
+  bot_name:
+    description: "GitHub username to use for git operations (defaults to Claude's bot name)"
+    required: false
+    default: "claude[bot]"
+  track_progress:
+    description: "Force tag mode with tracking comments for pull_request and issue events. Only applicable to pull_request (opened, synchronize, ready_for_review, reopened, labeled) and issue (opened, edited, labeled, assigned) events."
+    required: false
+    default: "false"
+  include_fix_links:
+    description: "Include 'Fix this' links in PR code review feedback that open Claude Code with context to fix the identified issue"
+    required: false
+    default: "true"
+  path_to_claude_code_executable:
+    description: "Optional path to a custom Claude Code executable. If provided, skips automatic installation and uses this executable instead. WARNING: Using an older version may cause problems if the action begins taking advantage of new Claude Code features. This input is typically not needed unless you're debugging something specific or have unique needs in your environment."
+    required: false
+    default: ""
+  path_to_bun_executable:
+    description: "Optional path to a custom Bun executable. If provided, skips automatic Bun installation and uses this executable instead. WARNING: Using an incompatible version may cause problems if the action requires specific Bun features. This input is typically not needed unless you're debugging something specific or have unique needs in your environment."
+    required: false
+    default: ""
+  display_report:
+    description: "Whether to display the Claude Code Report in GitHub Step Summary. Set to 'false' to disable when using custom formatting solutions. WARNING: This outputs Claude-authored content in the GitHub Step Summary. This should only be used in cases where the action is used solely with trusted input."
+    required: false
+    default: "false"
+  show_full_output:
+    description: "Show full JSON output from Claude Code. WARNING: This outputs ALL Claude messages including tool execution results which may contain secrets, API keys, or other sensitive information. These logs are publicly visible in GitHub Actions. Only enable for debugging in non-sensitive environments."
+    required: false
+    default: "false"
+  plugins:
+    description: "Newline-separated list of Claude Code plugin names to install (e.g., 'code-review@claude-code-plugins\nfeature-dev@claude-code-plugins')"
+    required: false
+    default: ""
+  plugin_marketplaces:
+    description: "Newline-separated list of Claude Code plugin marketplace Git URLs to install from (e.g., 'https://github.com/user/marketplace1.git\nhttps://github.com/user/marketplace2.git')"
+    required: false
+    default: ""
+
+outputs:
+  conclusion:
+    description: "Execution status of Claude Code ('success' or 'failure')"
+    value: ${{ steps.run.outputs.conclusion }}
+  execution_file:
+    description: "Path to the Claude Code execution output file"
+    value: ${{ steps.run.outputs.execution_file }}
+  branch_name:
+    description: "The branch created by Claude Code for this execution"
+    value: ${{ steps.run.outputs.branch_name }}
+  github_token:
+    description: "The GitHub token used by the action (Claude App token if available)"
+    value: ${{ steps.run.outputs.github_token }}
+  structured_output:
+    description: "JSON string containing all structured output fields when --json-schema is provided in claude_args. Use fromJSON() to parse: fromJSON(steps.id.outputs.structured_output).field_name"
+    value: ${{ steps.run.outputs.structured_output }}
+  session_id:
+    description: "The Claude Code session ID that can be used with --resume to continue this conversation"
+    value: ${{ steps.run.outputs.session_id }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Bun
+      id: setup-bun
+      if: inputs.path_to_bun_executable == ''
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # https://github.com/oven-sh/setup-bun/releases/tag/v2.2.0
+      with:
+        bun-version: 1.3.14
+        token: ${{ inputs.github_token || github.token }}
+        # Disable setup-bun's cache. The upstream save step uses a deterministic
+        # key (Bun version) and isn't ref-aware: on every second-and-subsequent
+        # run against the same PR ref the GitHub cache API rejects the duplicate
+        # key+ref with a 409 (HTML body), and @actions/cache treats the unparsable
+        # response as transient and burns ~20-30s on 5 retries before warning.
+        # The 35 MB Bun binary downloads in 2-3s, so disabling the cache is a net
+        # wallclock win and removes the noisy warning. See issue #1252.
+        no-cache: true
+
+    - name: Setup Custom Bun Path
+      if: inputs.path_to_bun_executable != ''
+      shell: bash
+      env:
+        PATH_TO_BUN_EXECUTABLE: ${{ inputs.path_to_bun_executable }}
+      run: |
+        echo "Using custom Bun executable: $PATH_TO_BUN_EXECUTABLE"
+        # Add the directory containing the custom executable to PATH
+        BUN_DIR=$(dirname "$PATH_TO_BUN_EXECUTABLE")
+        echo "$BUN_DIR" >> "$GITHUB_PATH"
+
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        cd ${GITHUB_ACTION_PATH}
+        bun install --production
+
+    - name: Install subprocess isolation dependencies
+      # Install subprocess isolation dependencies when processing content from non-write users.
+      # Best-effort: skips on non-Linux or when sudo/apt unavailable (self-hosted runners).
+      if: ${{ inputs.allowed_non_write_users != '' && runner.os == 'Linux' }}
+      continue-on-error: true
+      shell: bash
+      run: |
+        if [ "${CLAUDE_CODE_SUBPROCESS_ENV_SCRUB:-}" = "0" ]; then
+          echo "Subprocess isolation opted out via CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=0"
+          exit 0
+        fi
+        if command -v apt-get >/dev/null && command -v sudo >/dev/null; then
+          for i in 1 2 3; do
+            sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends bubblewrap socat && break
+            echo "apt-get attempt $i failed, retrying..."
+            sleep 5
+          done
+        fi
+        # Ubuntu 24.04+ restricts unprivileged user namespaces via AppArmor.
+        # The sysctl doesn't exist on older kernels — that's fine.
+        if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ] && command -v sudo >/dev/null; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+
+    - name: Pin bun binary for post-steps
+      if: ${{ inputs.allowed_non_write_users != '' }}
+      continue-on-error: true
+      shell: bash
+      env:
+        PATH_TO_BUN_EXECUTABLE: ${{ inputs.path_to_bun_executable }}
+        SETUP_BUN_PATH: ${{ steps.setup-bun.outputs.bun-path }}
+      run: |
+        # Keep a copy of the bun binary alongside the action's own files so
+        # post-steps use the same version the action installed or was given.
+        mkdir -p "$GITHUB_ACTION_PATH/bin"
+        for bun_path in "$PATH_TO_BUN_EXECUTABLE" "$SETUP_BUN_PATH" "$(command -v bun || true)"; do
+          if [ -n "$bun_path" ] && [ -x "$bun_path" ]; then
+            cp "$bun_path" "$GITHUB_ACTION_PATH/bin/bun"
+            break
+          fi
+        done
+        test -x "$GITHUB_ACTION_PATH/bin/bun"
+
+    - name: Prepend system bin dirs to PATH
+      if: ${{ inputs.allowed_non_write_users != '' && runner.os != 'Windows' }}
+      continue-on-error: true
+      shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+      run: |
+        echo "/usr/bin" >> "$GITHUB_PATH"
+        echo "/bin" >> "$GITHUB_PATH"
+
+    - name: Run Claude Code Action
+      id: run
+      shell: bash
+      run: |
+        # Do NOT pass --tsconfig-override here. It triggers a Bun runtime bug
+        # ("Internal error: directory mismatch for directory .../tsconfig.json")
+        # that aborts the run with exit code 1. Bun already auto-discovers the
+        # action's own tsconfig.json by walking up from the entry file, so the
+        # override is redundant. See oven-sh/bun#25730.
+        bun --no-env-file \
+          --config="${GITHUB_ACTION_PATH}/bunfig.toml" \
+          run ${GITHUB_ACTION_PATH}/src/entrypoints/run.ts
+      env:
+        # Prepare inputs
+        MODE: ${{ inputs.mode }}
+        PROMPT: ${{ inputs.prompt }}
+        TRIGGER_PHRASE: ${{ inputs.trigger_phrase }}
+        ASSIGNEE_TRIGGER: ${{ inputs.assignee_trigger }}
+        LABEL_TRIGGER: ${{ inputs.label_trigger }}
+        BASE_BRANCH: ${{ inputs.base_branch }}
+        BRANCH_PREFIX: ${{ inputs.branch_prefix }}
+        BRANCH_NAME_TEMPLATE: ${{ inputs.branch_name_template }}
+        OVERRIDE_GITHUB_TOKEN: ${{ inputs.github_token }}
+        ALLOWED_BOTS: ${{ inputs.allowed_bots }}
+        ALLOWED_NON_WRITE_USERS: ${{ inputs.allowed_non_write_users }}
+        CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: ${{ env.CLAUDE_CODE_SUBPROCESS_ENV_SCRUB || (inputs.allowed_non_write_users != '' && '1') || '' }}
+        CLAUDE_CODE_SCRIPT_CAPS: ${{ env.CLAUDE_CODE_SCRIPT_CAPS || '' }}
+        INCLUDE_COMMENTS_BY_ACTOR: ${{ inputs.include_comments_by_actor }}
+        EXCLUDE_COMMENTS_BY_ACTOR: ${{ inputs.exclude_comments_by_actor }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        USE_STICKY_COMMENT: ${{ inputs.use_sticky_comment }}
+        CLASSIFY_INLINE_COMMENTS: ${{ inputs.classify_inline_comments }}
+        DEFAULT_WORKFLOW_TOKEN: ${{ github.token }}
+        USE_COMMIT_SIGNING: ${{ inputs.use_commit_signing }}
+        SSH_SIGNING_KEY: ${{ inputs.ssh_signing_key }}
+        BOT_ID: ${{ inputs.bot_id }}
+        BOT_NAME: ${{ inputs.bot_name }}
+        TRACK_PROGRESS: ${{ inputs.track_progress }}
+        INCLUDE_FIX_LINKS: ${{ inputs.include_fix_links }}
+        ADDITIONAL_PERMISSIONS: ${{ inputs.additional_permissions }}
+        CLAUDE_ARGS: ${{ inputs.claude_args }}
+        ALL_INPUTS: ${{ toJson(inputs) }}
+
+        # Base-action inputs
+        INPUT_PROMPT_FILE: ${{ runner.temp }}/claude-prompts/claude-prompt.txt
+        INPUT_SETTINGS: ${{ inputs.settings }}
+        INPUT_EXPERIMENTAL_SLASH_COMMANDS_DIR: ${{ github.action_path }}/slash-commands
+        INPUT_PATH_TO_CLAUDE_CODE_EXECUTABLE: ${{ inputs.path_to_claude_code_executable }}
+        INPUT_PATH_TO_BUN_EXECUTABLE: ${{ inputs.path_to_bun_executable }}
+        INPUT_SHOW_FULL_OUTPUT: ${{ inputs.show_full_output }}
+        DISPLAY_REPORT: ${{ inputs.display_report }}
+        INPUT_PLUGINS: ${{ inputs.plugins }}
+        INPUT_PLUGIN_MARKETPLACES: ${{ inputs.plugin_marketplaces }}
+        PATH_TO_CLAUDE_CODE_EXECUTABLE: ${{ inputs.path_to_claude_code_executable }}
+
+        # Model configuration
+        NODE_VERSION: ${{ env.NODE_VERSION }}
+
+        # Provider configuration
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key || env.ANTHROPIC_API_KEY }}
+        CLAUDE_CODE_OAUTH_TOKEN: ${{ inputs.claude_code_oauth_token || env.CLAUDE_CODE_OAUTH_TOKEN }}
+        ANTHROPIC_FEDERATION_RULE_ID: ${{ inputs.anthropic_federation_rule_id }}
+        ANTHROPIC_ORGANIZATION_ID: ${{ inputs.anthropic_organization_id }}
+        ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ inputs.anthropic_service_account_id }}
+        ANTHROPIC_WORKSPACE_ID: ${{ inputs.anthropic_workspace_id }}
+        ANTHROPIC_OIDC_AUDIENCE: ${{ inputs.anthropic_oidc_audience }}
+        ANTHROPIC_BASE_URL: ${{ env.ANTHROPIC_BASE_URL }}
+        ANTHROPIC_CUSTOM_HEADERS: ${{ env.ANTHROPIC_CUSTOM_HEADERS }}
+        CLAUDE_CODE_USE_BEDROCK: ${{ inputs.use_bedrock == 'true' && '1' || '' }}
+        CLAUDE_CODE_USE_VERTEX: ${{ inputs.use_vertex == 'true' && '1' || '' }}
+        CLAUDE_CODE_USE_FOUNDRY: ${{ inputs.use_foundry == 'true' && '1' || '' }}
+
+        # AWS configuration
+        AWS_REGION: ${{ env.AWS_REGION }}
+        AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        AWS_SESSION_TOKEN: ${{ env.AWS_SESSION_TOKEN }}
+        AWS_BEARER_TOKEN_BEDROCK: ${{ env.AWS_BEARER_TOKEN_BEDROCK }}
+        ANTHROPIC_BEDROCK_BASE_URL: ${{ env.ANTHROPIC_BEDROCK_BASE_URL || (env.AWS_REGION && format('https://bedrock-runtime.{0}.amazonaws.com', env.AWS_REGION)) }}
+
+        # GCP configuration
+        ANTHROPIC_VERTEX_PROJECT_ID: ${{ env.ANTHROPIC_VERTEX_PROJECT_ID }}
+        CLOUD_ML_REGION: ${{ env.CLOUD_ML_REGION }}
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+        ANTHROPIC_VERTEX_BASE_URL: ${{ env.ANTHROPIC_VERTEX_BASE_URL }}
+
+        # Model-specific regions for Vertex
+        VERTEX_REGION_CLAUDE_3_5_HAIKU: ${{ env.VERTEX_REGION_CLAUDE_3_5_HAIKU }}
+        VERTEX_REGION_CLAUDE_3_5_SONNET: ${{ env.VERTEX_REGION_CLAUDE_3_5_SONNET }}
+        VERTEX_REGION_CLAUDE_3_7_SONNET: ${{ env.VERTEX_REGION_CLAUDE_3_7_SONNET }}
+
+        # Microsoft Foundry configuration
+        ANTHROPIC_FOUNDRY_RESOURCE: ${{ env.ANTHROPIC_FOUNDRY_RESOURCE }}
+        ANTHROPIC_FOUNDRY_BASE_URL: ${{ env.ANTHROPIC_FOUNDRY_BASE_URL }}
+        ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ env.ANTHROPIC_DEFAULT_SONNET_MODEL }}
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ env.ANTHROPIC_DEFAULT_HAIKU_MODEL }}
+        ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ env.ANTHROPIC_DEFAULT_OPUS_MODEL }}
+
+        # MCP configuration — these env vars are read directly from process.env by the
+        # Claude CLI subprocess. They must be listed explicitly here because this step's
+        # env: block shadows the calling workflow's job-level env vars (GitHub Actions
+        # composite action behavior). Set these in your workflow's job-level env: or via
+        # a prior step that writes to $GITHUB_ENV.
+        MCP_TIMEOUT: ${{ env.MCP_TIMEOUT }}
+        MCP_TOOL_TIMEOUT: ${{ env.MCP_TOOL_TIMEOUT }}
+        MAX_MCP_OUTPUT_TOKENS: ${{ env.MAX_MCP_OUTPUT_TOKENS }}
+
+        # Telemetry configuration
+        CLAUDE_CODE_ENABLE_TELEMETRY: ${{ env.CLAUDE_CODE_ENABLE_TELEMETRY }}
+        OTEL_METRICS_EXPORTER: ${{ env.OTEL_METRICS_EXPORTER }}
+        OTEL_LOGS_EXPORTER: ${{ env.OTEL_LOGS_EXPORTER }}
+        OTEL_EXPORTER_OTLP_PROTOCOL: ${{ env.OTEL_EXPORTER_OTLP_PROTOCOL }}
+        OTEL_EXPORTER_OTLP_ENDPOINT: ${{ env.OTEL_EXPORTER_OTLP_ENDPOINT }}
+        OTEL_EXPORTER_OTLP_HEADERS: ${{ env.OTEL_EXPORTER_OTLP_HEADERS }}
+        OTEL_METRIC_EXPORT_INTERVAL: ${{ env.OTEL_METRIC_EXPORT_INTERVAL }}
+        OTEL_LOGS_EXPORT_INTERVAL: ${{ env.OTEL_LOGS_EXPORT_INTERVAL }}
+        OTEL_RESOURCE_ATTRIBUTES: ${{ env.OTEL_RESOURCE_ATTRIBUTES }}
+
+    - name: Re-prepend system bin dirs to PATH
+      if: ${{ always() && inputs.allowed_non_write_users != '' && runner.os != 'Windows' }}
+      continue-on-error: true
+      shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+      env:
+        BASH_ENV: ""
+        LD_PRELOAD: ""
+        LD_LIBRARY_PATH: ""
+        NODE_OPTIONS: ""
+        DYLD_INSERT_LIBRARIES: ""
+        DYLD_PRELOAD: ""
+        DYLD_LIBRARY_PATH: ""
+        DYLD_FRAMEWORK_PATH: ""
+      run: |
+        echo "/usr/bin" >> "$GITHUB_PATH"
+        echo "/bin" >> "$GITHUB_PATH"
+        {
+          echo "BASH_ENV="
+          echo "LD_PRELOAD="
+          echo "LD_LIBRARY_PATH="
+          echo "DYLD_INSERT_LIBRARIES="
+          echo "DYLD_PRELOAD="
+          echo "DYLD_LIBRARY_PATH="
+          echo "DYLD_FRAMEWORK_PATH="
+        } >> "$GITHUB_ENV"
+
+    - name: Cleanup SSH signing key
+      if: always() && inputs.ssh_signing_key != ''
+      shell: bash
+      run: |
+        BUN_BIN="${GITHUB_ACTION_PATH}/bin/bun"
+        [ -x "$BUN_BIN" ] || BUN_BIN="bun"
+        # No --tsconfig-override: see the "Run Claude Code Action" step above.
+        "$BUN_BIN" --no-env-file \
+          --config="${GITHUB_ACTION_PATH}/bunfig.toml" \
+          run ${GITHUB_ACTION_PATH}/src/entrypoints/cleanup-ssh-signing.ts
+
+    - name: Post buffered inline comments
+      if: always() && inputs.classify_inline_comments != 'false'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ steps.run.outputs.github_token || inputs.github_token || github.token }}
+        REPO_OWNER: ${{ github.event.repository.owner.login }}
+        REPO_NAME: ${{ github.event.repository.name }}
+        PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+      run: |
+        BUN_BIN="${GITHUB_ACTION_PATH}/bin/bun"
+        [ -x "$BUN_BIN" ] || BUN_BIN="bun"
+        # No --tsconfig-override: see the "Run Claude Code Action" step above.
+        "$BUN_BIN" --no-env-file \
+          --config="${GITHUB_ACTION_PATH}/bunfig.toml" \
+          run ${GITHUB_ACTION_PATH}/src/entrypoints/post-buffered-inline-comments.ts
+
+    - name: Revoke app token
+      if: always() && inputs.github_token == '' && steps.run.outputs.github_token != '' && steps.run.outputs.skipped_due_to_workflow_validation_mismatch != 'true'
+      shell: bash
+      run: |
+        curl -L \
+          --connect-timeout 5 \
+          --max-time 10 \
+          -X DELETE \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ steps.run.outputs.github_token }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          ${GITHUB_API_URL:-https://api.github.com}/installation/token || true

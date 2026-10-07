@@ -1,0 +1,164 @@
+#ifndef PYVRP_BINDINGS_H
+#define PYVRP_BINDINGS_H
+
+#include "Matrix.h"
+#include "Measure.h"
+
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <spdlog/sinks/base_sink.h>
+#include <spdlog/spdlog.h>
+
+#include <memory>
+#include <mutex>
+
+namespace pybind11::detail
+{
+// Type caster for matrices of measures.
+template <pyvrp::MeasureType T>
+struct type_caster<pyvrp::Matrix<pyvrp::Measure<T>>>
+{
+    PYBIND11_TYPE_CASTER(pyvrp::Matrix<pyvrp::Measure<T>>,
+                         _("numpy.ndarray[float64]"));
+
+    bool load(pybind11::handle src, bool convert)  // Python -> C++
+    {
+        if (!convert && !pybind11::array_t<double>::check_(src))
+            return false;
+
+        auto const style
+            = pybind11::array::c_style | pybind11::array::forcecast;
+        auto const buf = pybind11::array_t<double, style>::ensure(src);
+
+        if (!buf || buf.ndim() != 2)
+            throw pybind11::value_error("Expected 2D np.ndarray argument!");
+
+        if (buf.size() == 0)  // then the default constructed object is already
+            return true;      // OK, and we have nothing to do.
+
+        std::vector<pyvrp::Measure<T>> data
+            = {buf.data(), buf.data() + buf.size()};
+
+        value = pyvrp::Matrix<pyvrp::Measure<T>>(
+            std::move(data), buf.shape(0), buf.shape(1));
+
+        return true;
+    }
+
+    static pybind11::handle
+    cast(pyvrp::Matrix<pyvrp::Measure<T>> const &src,  // C++ -> Python
+         [[maybe_unused]] pybind11::return_value_policy policy,
+         pybind11::handle parent)
+    {
+        auto constexpr elemSize = sizeof(double);
+
+        pybind11::array_t<double> array
+            = {{src.numRows(), src.numCols()},                // shape
+               {elemSize * src.numCols(), elemSize},          // strides
+               reinterpret_cast<double const *>(src.data()),  // data
+               parent};                                       // base
+
+        // This is not pretty, but it makes the matrix non-writeable on the
+        // Python side. That's needed because src is const, and we should
+        // preserve that to avoid issues.
+        pybind11::detail::array_proxy(array.ptr())->flags
+            &= ~pybind11::detail::npy_api::NPY_ARRAY_WRITEABLE_;
+
+        return array.release();
+    }
+};
+
+// Caster for measures.
+template <pyvrp::MeasureType T> struct type_caster<pyvrp::Measure<T>>
+{
+    PYBIND11_TYPE_CASTER(pyvrp::Measure<T>, _("float"));
+
+    bool load(pybind11::handle src, bool convert)  // Python -> C++
+    {
+        if (!convert && !PyFloat_Check(src.ptr()))  // accept only float if no
+            return false;                           // conversion is allowed.
+
+        PyObject *tmp = PyNumber_Float(src.ptr());  // any argument for which
+        if (!tmp)                                   // float() succeeds.
+            throw pybind11::error_already_set();
+
+        auto const raw = PyFloat_AsDouble(tmp);
+        Py_DECREF(tmp);
+
+        // See https://docs.python.org/3/c-api/float.html#c.PyFloat_AsDouble:
+        // on error, returns -1.0 and sets PyErr_Occurred.
+        if (raw == -1.0 && PyErr_Occurred())
+            throw pybind11::error_already_set();
+
+        value = pyvrp::Measure<T>(raw);
+        return !PyErr_Occurred();
+    }
+
+    static pybind11::handle
+    cast(pyvrp::Measure<T> const &src,  // C++ -> Python
+         [[maybe_unused]] pybind11::return_value_policy policy,
+         [[maybe_unused]] pybind11::handle parent)
+    {
+        return PyFloat_FromDouble(src.get());
+    }
+};
+}  // namespace pybind11::detail
+
+namespace pyvrp
+{
+// A spdlog sink that forwards messages to a Python logger.
+class LogSink : public spdlog::sinks::base_sink<std::mutex>
+{
+    std::string const name_;
+
+protected:
+    void sink_it_(spdlog::details::log_msg const &msg) override
+    {
+        // Need the GIL to interact with Python logging.
+        pybind11::gil_scoped_acquire gil;
+
+        pybind11::object logger  // get or create the named logger
+            = pybind11::module_::import("logging").attr("getLogger")(name_);
+
+        // Map spdlog level to Python's logging level. spdlog conveniently
+        // uses 1, 2, 3, ... where Python uses 10, 20, 30, ... so we can just
+        // multiply by 10 to get the equivalent Python level.
+        int const level = 10 * msg.level;
+        if (!logger.attr("isEnabledFor")(level).cast<bool>())
+            return;
+
+        auto const funcname = msg.source.funcname ? msg.source.funcname : "";
+        auto const filename = msg.source.filename ? msg.source.filename : "";
+        auto const record
+            = logger.attr("makeRecord")(name_,               // name
+                                        level,               // level
+                                        filename,            // pathname
+                                        msg.source.line,     // lineno
+                                        msg.payload.data(),  // msg
+                                        pybind11::none(),    // args
+                                        pybind11::none(),    // exc_info
+                                        funcname);           // func
+
+        logger.attr("handle")(record);
+    }
+
+    void flush_() override {}
+
+public:
+    explicit LogSink(std::string name) : name_(std::move(name)) {}
+};
+
+// Creates and registers a spdlog logger that forwards to Python.
+inline void registerLogger(std::string const &name)
+{
+    if (spdlog::get(name) != nullptr)  // already registered
+        return;
+
+    auto sink = std::make_shared<LogSink>(name);
+    auto logger = std::make_shared<spdlog::logger>(name, std::move(sink));
+    logger->set_level(spdlog::level::trace);  // Python does the filtering
+    spdlog::register_logger(std::move(logger));
+}
+}  // namespace pyvrp
+
+#endif  // PYVRP_BINDINGS_H

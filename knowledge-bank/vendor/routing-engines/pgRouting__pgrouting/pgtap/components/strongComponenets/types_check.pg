@@ -1,0 +1,24 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2021-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT plan(5);
+
+SELECT has_function('pgr_strongcomponents');
+SELECT has_function('pgr_strongcomponents',    ARRAY['text']);
+SELECT function_returns('pgr_strongcomponents', ARRAY['text'], 'setof record');
+
+SELECT function_args_eq('pgr_strongcomponents',
+  $$SELECT '{"", "seq","component","node"}'::TEXT[] $$
+);
+
+SELECT function_types_eq('pgr_strongcomponents',
+  $$VALUES ('{text,int8,int8,int8}'::TEXT[])$$
+);
+
+SELECT * FROM finish();
+ROLLBACK;

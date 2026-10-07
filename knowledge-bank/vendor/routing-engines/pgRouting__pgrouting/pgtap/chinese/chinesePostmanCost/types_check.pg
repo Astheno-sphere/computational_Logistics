@@ -1,0 +1,25 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2019-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT plan(5);
+
+SELECT has_function('pgr_chinesepostmancost');
+SELECT has_function('pgr_chinesepostmancost',    ARRAY['text']);
+SELECT function_returns('pgr_chinesepostmancost', ARRAY['text'], 'double precision');
+
+SELECT function_args_eq('pgr_chinesepostmancost',
+  $$SELECT  NULL::TEXT[] $$
+);
+
+SELECT function_types_eq('pgr_chinesepostmancost',
+  $$SELECT  '{text}'::TEXT[] $$
+);
+
+
+SELECT * FROM finish();
+ROLLBACK;

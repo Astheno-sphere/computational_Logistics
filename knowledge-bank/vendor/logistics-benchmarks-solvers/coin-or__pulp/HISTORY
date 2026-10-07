@@ -1,0 +1,223 @@
+# PuLP, Copyright J.S. Roy (js@jeannot.org), 2002-2005
+#       Copyright S.A.Mitchell (s.mitchell@auckland.ac.nz), 2007-
+#       Copyright F.Peschiera (pchtsp@gmail.com), 2019-
+# See the LICENSE file for copyright information.
+4.0.0a11 2026-06-19
+    HiGHS API accepts warmstarts
+4.0.0a10 2026-06-01
+    CPSAT has msg=True
+    silenced XPRESS warning at startup
+4.0.0a9 2026-05-27
+    new solver: CPSAT
+    refactor unit tests
+4.0.0a8 2026-05-22
+    much faster MPS write in the Rust path (large models, order-of-magnitude speedup)
+    HiGHS API: ``kSolutionLimit`` and ``kMemoryLimit`` statuses; best MIP solution returned
+        when status is not optimal
+    ``LpStatusUndefined`` for infeasible or unbounded problems
+    cuOpt handles UnboundedOrInfeasible status; variable category mapping via Rust helper
+    ``XPRESS_PY`` updated for Xpress 9.8 with backward compatibility
+    MPS round-trip tests and fixtures; CI and solver documentation updates
+4.0.0a6 2026-04-29
+    Rust core uses ``Arc``/``Mutex`` instead of ``Rc``/``Weak`` so Python debuggers do not
+        crash the extension
+4.0.0a5 2026-04-15
+    solvers receive only variables used in the model; SOS constraints moved to ModelCore in
+        Rust
+4.0.0a4 2026-04-14
+    removed bundled CBC binaries and the ``PULP_CBC_CMD`` solver; CBC is used via
+        ``COIN_CMD`` with optional ``pip install pulp[cbc]`` (cbcbox) or a ``cbc``
+        executable on PATH
+4.0.0a3 2026-04-13
+    modelling API split into ``pulp/core/``; faster ``lpSum`` for variables
+    type stubs for ``_rustcore``; solvers use direct Rust model access without Python-side
+        handles
+4.0.0a1 2026-04-05
+    first alpha of the 4.x line; Rust-backed core (PyO3 0.28) is now used for
+        much of MPS and LP import/export and related model logic
+    LpVariable and modelling API adjustments (variables without requiring a
+        model up front); examples, tests, and solver glue updated accordingly
+    simplified structure returned from MPS reading; clearer errors from the
+        native layer
+    typing and internal cleanups; direct access paths for Rust-backed model data
+    work around highspy / Rust extension interaction (RTLD_GLOBAL preload) and
+        HiGHS_CMD fixes; GLPK API fixes alongside the Rust paths
+    CI uses maturin-action for multi-platform wheels and PyPI publishing
+    compatible with Python 3.10 and up
+3.3.2 2026-05-25
+    ``PULP_CBC_CMD`` deprecated (removed in PuLP 4.0); use ``pip install pulp[cbc]`` and ``COIN_CMD`` instead
+    default solver prefers ``COIN_CMD`` when CBC is available on ``PATH``
+    ``set_v4_migration_warnings(False)`` silences migration warnings
+    compatible with Python 3.10 and up
+3.3.1 2026-04-30
+    PuLP 4.0 migration helpers: ``LpProblem.add_variable*``, ``constraints()`` as list, ``get_constraint_by_name``
+    deprecations for legacy ``LpVariable`` construction, dict-like ``prob.constraints``, ``addVariable`` / ``addVariables``, ``LpConstraintVar``
+3.3.0 2025-09-18
+    fixed some docs
+    changes to unit tests
+    mypy fixes
+    fixes to GUROBI API
+    callbacks in CPLEX_PY API
+    fixes to CUOPT API
+    compatibility with new XPRESS_PY API
+    allow joint installation of python-based APIs
+    initial experimental Rust core (crate pulp-rust-core) and optional
+        pulp._rustcore extension exposed via LpProblem.toRustModel
+3.2.0 2025-05-29
+    Callbacks in HiGHS solver
+    Added CuOpt solver
+3.1.0 2025-03-24
+    cleaned old configuration files and functions
+    moved to pyproject.toml instead of setup.py
+    migrate to uv packaging
+    support python >= 3.9
+    add incomplete CyLP solver API
+3.0.0 2025-02-19
+    Improved performance for large models
+    new solvers: SAS SAS94 and SASCAS
+    improvements to HiGHS API
+    some typing added
+    Add support for bound type `MI` in MPS reading
+    minor fixes
+2.9.0 2024-07-12
+    HiGHS available as solver
+    added HiGHS_CMD to github actions
+    deactivated warnings on msg=False
+    minor fixes
+2.8.0 2024-01-12
+    mip start in HiGHS_CMD and SCIP_PY
+    GUROBI solver with environment handling
+    added COPT solver
+    added gurobi, highs, xpress, copt to github actions
+    cbc arm binary
+    fixes to SCIPS
+    took out deprecations in arguments
+2.7.0
+    added HiGHS solver
+    added XPRESS_PY solver
+    fixed bugs
+    updated docs
+2.6.0 2021-12-04
+    dropped packaged choco
+    fixed bugs
+    deprecated 'indexs' parameter LpVariable dicts and matrix
+2.5.1 2021-09-28
+    updated docs
+    fixed minor issues
+    cbc now uses wall-time for timeLimit
+2.5.0 2021-08-11
+    measuring wall time and cpu time
+    unittests of timeLimit
+    black formatting
+    refactored tests per solver
+    dropped support for CPLEX_DLL
+2.4 2020-12-22
+    added mps reading support
+    updated docs
+    fix bug with no objective in prob.toDict()
+2.3.1 2020-10-22
+    change naming of solver utility functions to camelcase
+    fixed gurobi license detection
+    fixed scip options and added timeLimit argument
+    changed docs
+2.3 2020-08-04
+    Added plugin page in docs
+    Standardize arguments of solvers to appear in docs
+    Fixes to import and export of LpProblem and solver
+    Added warm start to GUROBI
+2.2 2020-04-06
+    Contribution files
+    Standard arguments: logPath, gapRel, gapAbs
+    Import and export solver objects
+    Import and export LpProblem
+    Took out amply to its own package
+    Standard tmp file handling in _CMD solvers
+    Refactored writeMPS    
+2.1 2020-04-06
+    Added MOSEK solver
+    New documentation
+    Put tests inside package
+    Added warm start to CPLEX_PY
+2.0 2019-11-23
+    Restructured solvers code
+    Added unittests package
+    Added CHOCO solver
+    Added warm start for CBC_CMD, GUROBI_CMD, CPLEX_CMD
+    Automated deploy
+1.6.1, 2015-12-25
+    Fix for dummy variables
+1.5.4, 2013-03-18
+    Added cbc support for osx (hopefully)
+1.4.9, 2011-03-30
+    Added support for cplex runtime licenses
+    Made PULP_CBC_CMD the default LP solver for linux
+    Included 32 and 64 bit versions of cbc
+1.4.8, 2011-03-30
+    Overdue fix for zero coeff issue
+    bugfix for default cat for LpVariable.dicts
+    moved tests to a different file
+1.4.6, 2010-01-25
+    Bugfix
+1.4.4, 2010-01-24
+    CBC 2.4 cmd line solver added
+    CoinMP dll 1.4.0 uses trunk version
+    CoinMP library object now accessed through COINMP_DLL.lib
+    Config files now include a %(here)s syntax to identify paths
+    Included solvers now moved to solvers directory
+1.4.2, 2009-12-31
+    Fixes before coin Announcement
+1.4.0, 2009-10-16
+    Added Elastic Constraints
+    Added Fractional Constraints (tests yet to be added)
+    Added limited resolve for gurobi
+    Changed version numbers for coin import
+    Fixed COIN_CMD
+    Changed code to be compatible with python 2.4
+1.3.08, 2009-08-08
+    Bugfix COINMP_DLL
+1.3.07, 2009/06/26
+    Changes for pypi
+1.3.01, 2009/06/25
+    Made constraints ordered dictionaries
+    Small changes to parameters of COIN_DLL solver
+    Removed string exceptions
+    added the constraints from other LpProblems to LpProblem.extend()
+1.3.00, 2009/06/21
+    Added GUROBI Solver
+1.23, 2009/05/25
+    Removed old style MEM solvers
+    Cleaned up CPLEX_DLL interface
+    Added Sequential solve function
+1.22, 2009/04/03
+    Added Cplex IntegerOptimalTolerence setMemoryEmphsis, and clarified linux
+    installation instructions
+1.21.02, 2008/07/29
+    Added epagap, and logfile in CPLEX_DLL
+1.21, 2008/07/28
+    Added Combination and Permutation functions
+    Bugfix for configsolvers
+    Updated setup.py to start to compile everything
+1.20, 2008/06/08
+    Certified for inclusion in Coin-Or
+    Spilt the solver and constant definitions into separate files
+    Unit Tests make more explicit
+    Included external definitions for CoinMP.dll
+    No Makefile
+1.11, 2008/03/01
+    Contributed by Stuart Mitchell s.mitchell@auckland.ac.nz.
+    Contains dll solvers that are accessed with the ctypes library.
+    Can use the CoinMP.dll solver from the coin-or project.
+    Added column-wise modelling and resolve capabilities.
+    Wiki added with plenty of examples  aphi038@ec.auckland.ac.nz
+1.9, 2007/08/06:
+    Stuart Mitchell
+    Added support for cplex 10.1.0 using ctypes library
+    Added support for the CoinMP.dll using ctypes library
+    Added distutils setup
+    Added a configuaration file pulp.cfg
+1.1, 2005/05/03:
+    Fix an strange interpretation of unbounded integer variables by COIN and CPLEX
+    LP return codes are simplified.
+    C interface modules for GLPK, COIN and CPLEX
+    Windows compatibility
+1.0, 2004/02/29: First release

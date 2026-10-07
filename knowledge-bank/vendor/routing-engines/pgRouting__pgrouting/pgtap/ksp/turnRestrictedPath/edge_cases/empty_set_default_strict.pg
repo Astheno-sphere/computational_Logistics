@@ -1,0 +1,277 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2013-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT CASE WHEN min_version('4.0.0') THEN plan(20) ELSE plan(1) END;
+
+----------------------------------------------------------------------------------------------------------------
+-- testing from an existing starting vertex to a non-existing destination
+----------------------------------------------------------------------------------------------------------------
+
+CREATE or REPLACE FUNCTION custom_tap()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+
+  IF NOT min_version('4.0.0') THEN
+    RETURN QUERY SELECT skip(1, 'pgr_turnrestrictedpath: testing only signatures standardaized in v4.0.0.');
+    RETURN;
+  END IF;
+
+-- in directed graph
+-- with restrictions
+PREPARE q1 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    6, 10,
+    3
+);
+
+-- in undirected graph
+-- with restrictions
+PREPARE q2 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    6, 10,
+    3,
+    FALSE
+);
+
+-- in directed graph
+-- without restrictions
+PREPARE q3 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions where id > 10',
+    6, 10,
+    3
+);
+
+-- in undirected graph
+-- without restrictions
+PREPARE q4 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions where id > 10',
+    6, 10,
+    3,
+    FALSE
+);
+
+RETURN QUERY SELECT is_empty('q1');
+RETURN QUERY SELECT is_empty('q2');
+RETURN QUERY SELECT is_empty('q3');
+RETURN QUERY SELECT is_empty('q4');
+----------------------------------------------------------------------------------------------------------------
+-- testing from an non-existing starting vertex to an existing destination
+----------------------------------------------------------------------------------------------------------------
+
+-- in directed graph
+-- with restrictions
+PREPARE q5 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    6, 8,
+    3
+);
+
+-- in undirected graph
+-- with restrictions
+PREPARE q6 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    6, 8,
+    3,
+    FALSE
+);
+
+-- in directed graph
+-- without restrictions
+PREPARE q7 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions where id > 10',
+    6, 8,
+    3
+);
+
+-- in undirected graph
+-- without restrictions
+PREPARE q8 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions where id > 10',
+    6, 8,
+    3,
+    FALSE
+);
+
+RETURN QUERY SELECT is_empty('q5');
+RETURN QUERY SELECT is_empty('q6');
+RETURN QUERY SELECT is_empty('q7');
+RETURN QUERY SELECT is_empty('q8');
+----------------------------------------------------------------------------------------------------------------
+-- testing from a non-existing starting vertex to a non-existing destination
+----------------------------------------------------------------------------------------------------------------
+
+-- in directed graph
+-- with restrictions
+PREPARE q9 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    5, 14,
+    3
+);
+
+-- in undirected graph
+-- with restrictions
+PREPARE q10 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    5, 14,
+    3,
+    FALSE
+);
+
+-- in directed graph
+-- without restrictions
+PREPARE q11 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions where id > 10',
+    5, 14,
+    3
+);
+
+-- in undirected graph
+-- without restrictions
+PREPARE q12 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions where id > 10',
+    5, 14,
+    3,
+    FALSE
+);
+
+RETURN QUERY SELECT is_empty('q9');
+RETURN QUERY SELECT is_empty('q10');
+RETURN QUERY SELECT is_empty('q11');
+RETURN QUERY SELECT is_empty('q12');
+----------------------------------------------------------------------------------------------------------------
+-- testing from an existing starting vertex to the same destination
+----------------------------------------------------------------------------------------------------------------
+
+-- in directed graph
+-- with restrictions
+PREPARE q13 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    6, 6,
+    3
+);
+
+-- in undirected graph
+-- with restrictions
+PREPARE q14 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    6, 6,
+    3,
+    FALSE
+);
+
+-- in directed graph
+-- without restrictions
+PREPARE q15 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions where id > 10',
+    6, 6,
+    3
+);
+
+-- in undirected graph
+-- without restrictions
+PREPARE q16 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id = 4 OR id = 7',
+    'SELECT * FROM restrictions where id > 10',
+    6, 6,
+    3,
+    FALSE
+);
+
+RETURN QUERY SELECT is_empty('q13');
+RETURN QUERY SELECT is_empty('q14');
+RETURN QUERY SELECT is_empty('q15');
+RETURN QUERY SELECT is_empty('q16');
+----------------------------------------------------------------------------------------------------------------
+-- testing from an existing starting vertex in one component to an existing destination in another component
+----------------------------------------------------------------------------------------------------------------
+-- in directed graph
+-- with restrictions
+PREPARE q17 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id IN (4, 7, 17)',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    6, 2,
+    3
+);
+
+-- in undirected graph
+-- with restrictions
+PREPARE q18 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id IN (4, 7, 17)',
+    'SELECT * FROM restrictions WHERE id IN (1)',
+    6, 2,
+    3,
+    FALSE
+);
+
+-- in directed graph
+-- without restrictions
+PREPARE q19 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id IN (4, 7, 17)',
+    'SELECT * FROM restrictions where id > 10',
+    6, 2,
+    3
+);
+
+-- in undirected graph
+-- without restrictions
+PREPARE q20 AS
+SELECT * FROM pgr_turnRestrictedPath(
+    'SELECT id, source, target, cost, reverse_cost FROM edges WHERE id IN (4, 7, 17)',
+    'SELECT * FROM restrictions where id > 10',
+    6, 2,
+    3,
+    FALSE
+);
+
+RETURN QUERY SELECT is_empty('q17');
+RETURN QUERY SELECT is_empty('q18');
+RETURN QUERY SELECT is_empty('q19');
+RETURN QUERY SELECT is_empty('q20');
+
+END;
+$BODY$
+language plpgsql;
+
+SELECT custom_tap();
+SELECT finish();
+ROLLBACK;

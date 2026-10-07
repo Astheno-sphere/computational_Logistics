@@ -1,0 +1,76 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2022-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT CASE WHEN min_version('4.0.0') THEN plan(1156) ELSE plan(1) END;
+SET extra_float_digits = -3;
+UPDATE edges SET cost = sign(cost) + 0.001 * id * id, reverse_cost = sign(reverse_cost) + 0.001 * id * id;
+
+PREPARE empty_points AS
+SELECT * FROM pointsofinterest WHERE pid IN (-1);
+
+PREPARE empty_restrictions AS
+SELECT * FROM restrictions WHERE id > 10;
+
+PREPARE with_reverse AS
+SELECT id, source, target, cost, reverse_cost FROM edges;
+
+PREPARE no_reverse AS
+SELECT id, source, target, cost FROM edges;
+
+CREATE or REPLACE FUNCTION compareDijkstra(INTEGER default 17)
+RETURNS SETOF TEXT AS
+$BODY$
+DECLARE
+other_sql TEXT;
+trsp_sql TEXT;
+result_columns TEXT := 'seq, path_seq, start_vid, end_vid, node, edge, cost, agg_cost';
+drv_right TEXT := $$, 'r'$$;
+drv_both TEXT := $$, 'b'$$;
+BEGIN
+  IF NOT min_version('4.0.0') THEN
+    RETURN QUERY SELECT skip(1, 'pgr_trsp_withPoints: official signatures on 4.0.0');
+    RETURN;
+  END IF;
+
+  FOR i IN 1.. $1 LOOP
+  FOR j IN 1.. $1 LOOP
+
+    other_sql := 'SELECT ' || result_columns || ' FROM pgr_dijkstra($$with_reverse$$, '
+      || i || ', ' || j || ', directed => true)';
+    trsp_sql := 'SELECT ' || result_columns || ' FROM pgr_trsp_withPoints($$with_reverse$$, $$empty_restrictions$$, $$empty_points$$, '
+      || i || ', ' || j || drv_right || ', directed => true)';
+    RETURN query SELECT set_eq(trsp_sql, other_sql, trsp_sql);
+
+    other_sql := 'SELECT ' || result_columns || ' FROM pgr_dijkstra($$with_reverse$$, '
+      || i || ', ' || j || ', directed => false)';
+    trsp_sql := 'SELECT ' || result_columns || ' FROM pgr_trsp_withPoints($$with_reverse$$, $$empty_restrictions$$, $$empty_points$$, '
+      || i || ', ' || j || drv_both || ', directed => false)';
+    RETURN query SELECT set_eq(trsp_sql, other_sql, trsp_sql);
+
+    other_sql := 'SELECT ' || result_columns || ' FROM pgr_dijkstra($$no_reverse$$, '
+      || i || ', ' || j || ', directed => true)';
+    trsp_sql := 'SELECT ' || result_columns || ' FROM pgr_trsp_withPoints($$no_reverse$$, $$empty_restrictions$$, $$empty_points$$, '
+      || i || ', ' || j || drv_right || ', directed => true)';
+    RETURN query SELECT set_eq(trsp_sql, other_sql, trsp_sql);
+
+    other_sql := 'SELECT ' || result_columns || ' FROM pgr_dijkstra($$no_reverse$$, '
+      || i || ', ' || j || ', directed => false)';
+    trsp_sql := 'SELECT ' || result_columns || ' FROM pgr_trsp_withPoints($$no_reverse$$, $$empty_restrictions$$, $$empty_points$$, '
+      || i || ', ' || j || drv_both || ', directed => false)';
+    RETURN query SELECT set_eq(trsp_sql, other_sql, trsp_sql);
+
+  END LOOP;
+  END LOOP;
+
+RETURN;
+END
+$BODY$
+language plpgsql;
+
+SELECT * from compareDijkstra();
+SELECT * FROM finish();
+ROLLBACK;

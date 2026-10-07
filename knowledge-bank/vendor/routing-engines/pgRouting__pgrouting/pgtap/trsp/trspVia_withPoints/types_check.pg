@@ -1,0 +1,13 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2022-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT CASE WHEN min_version('4.0.0') THEN plan(7) ELSE plan(1) END;
+
+SELECT types_check_via('pgr_trspvia_withpoints');
+
+SELECT * FROM finish();
+ROLLBACK;

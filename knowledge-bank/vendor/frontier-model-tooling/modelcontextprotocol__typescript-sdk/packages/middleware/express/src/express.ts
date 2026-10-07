@@ -1,0 +1,118 @@
+import type { Express } from 'express';
+import express from 'express';
+
+import { hostHeaderValidation, localhostHostValidation } from './middleware/hostHeaderValidation';
+import { localhostOriginValidation, originValidation } from './middleware/originValidation';
+
+/**
+ * Options for creating an MCP Express application.
+ */
+export interface CreateMcpExpressAppOptions {
+    /**
+     * The hostname to bind to. Defaults to `'127.0.0.1'`.
+     * When set to `'127.0.0.1'`, `'localhost'`, or `'::1'`, DNS rebinding protection is automatically enabled.
+     */
+    host?: string;
+
+    /**
+     * List of allowed hostnames for DNS rebinding protection.
+     * If provided, host header validation will be applied using this list.
+     * For IPv6, provide addresses with brackets (e.g., `'[::1]'`).
+     *
+     * This is useful when binding to `'0.0.0.0'` or `'::'` but still wanting
+     * to restrict which hostnames are allowed.
+     */
+    allowedHosts?: string[];
+
+    /**
+     * List of allowed origin hostnames for Origin header validation.
+     * If provided, Origin validation will be applied using this list (port-agnostic,
+     * hostnames only — the same convention as `allowedHosts`).
+     *
+     * When omitted, Origin validation is automatically enabled for localhost-class
+     * binds (the same condition as host validation): requests without an `Origin`
+     * header pass, while a present `Origin` whose hostname is not localhost-class
+     * is rejected with `403`.
+     *
+     * A client that runs as a browser extension sends its extension ID as the origin
+     * hostname: list that ID to admit one extension. A lowercase entry of the form
+     * `<scheme>://*` (e.g. `'moz-extension://*'`) admits every extension of that browser.
+     * `http://*` and `https://*` are not honoured.
+     */
+    allowedOrigins?: string[];
+
+    /**
+     * Controls the maximum request body size for the JSON body parser.
+     * Passed directly to Express's `express.json({ limit })` option.
+     * Defaults to Express's built-in default of `'100kb'`.
+     *
+     * @example '1mb', '500kb', '10mb'
+     */
+    jsonLimit?: string;
+}
+
+/**
+ * Creates an Express application pre-configured for MCP servers.
+ *
+ * When the host is `'127.0.0.1'`, `'localhost'`, or `'::1'` (the default is `'127.0.0.1'`),
+ * DNS rebinding protection middleware is automatically applied to protect against
+ * DNS rebinding attacks on localhost servers.
+ *
+ * @param options - Configuration options
+ * @returns A configured Express application
+ *
+ * @example Basic usage - defaults to 127.0.0.1 with DNS rebinding protection
+ * ```ts source="./express.examples.ts#createMcpExpressApp_default"
+ * const app = createMcpExpressApp();
+ * ```
+ *
+ * @example Custom host - DNS rebinding protection only applied for localhost hosts
+ * ```ts source="./express.examples.ts#createMcpExpressApp_customHost"
+ * const appOpen = createMcpExpressApp({ host: '0.0.0.0' }); // No automatic DNS rebinding protection
+ * const appLocal = createMcpExpressApp({ host: 'localhost' }); // DNS rebinding protection enabled
+ * ```
+ *
+ * @example Custom allowed hosts for non-localhost binding
+ * ```ts source="./express.examples.ts#createMcpExpressApp_allowedHosts"
+ * const app = createMcpExpressApp({ host: '0.0.0.0', allowedHosts: ['myapp.local', 'localhost'] });
+ * ```
+ */
+export function createMcpExpressApp(options: CreateMcpExpressAppOptions = {}): Express {
+    const { host = '127.0.0.1', allowedHosts, allowedOrigins, jsonLimit } = options;
+
+    const app = express();
+
+    // If allowedHosts is explicitly provided, use that for validation
+    if (allowedHosts) {
+        app.use(hostHeaderValidation(allowedHosts));
+    } else {
+        // Apply DNS rebinding protection automatically for localhost hosts
+        const localhostHosts = ['127.0.0.1', 'localhost', '::1'];
+        if (localhostHosts.includes(host)) {
+            app.use(localhostHostValidation());
+        } else if (host === '0.0.0.0' || host === '::') {
+            // Warn when binding to all interfaces without DNS rebinding protection
+            // eslint-disable-next-line no-console
+            console.warn(
+                `Warning: Server is binding to ${host} without DNS rebinding protection. ` +
+                    'Consider using the allowedHosts option to restrict allowed hosts, ' +
+                    'or use authentication to protect your server.'
+            );
+        }
+    }
+
+    // Origin validation follows the same arming ladder as host validation:
+    // an explicit allowlist wins; otherwise localhost-class binds are protected
+    // by default. Requests without an Origin header always pass.
+    if (allowedOrigins) {
+        app.use(originValidation(allowedOrigins));
+    } else if (['127.0.0.1', 'localhost', '::1'].includes(host)) {
+        app.use(localhostOriginValidation());
+    }
+
+    // The JSON body parser runs after the Host/Origin validation, so a request
+    // from a disallowed origin is answered 403 without its body being read.
+    app.use(express.json(jsonLimit ? { limit: jsonLimit } : undefined));
+
+    return app;
+}

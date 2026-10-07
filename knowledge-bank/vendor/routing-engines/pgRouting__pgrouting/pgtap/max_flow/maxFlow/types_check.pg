@@ -1,0 +1,60 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2017-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT plan(13);
+
+SELECT has_function('pgr_maxflow');
+
+SELECT has_function('pgr_maxflow', ARRAY[ 'text', 'bigint', 'bigint' ]);
+SELECT has_function('pgr_maxflow', ARRAY[ 'text', 'anyarray', 'bigint' ]);
+SELECT has_function('pgr_maxflow', ARRAY[ 'text', 'bigint', 'anyarray' ]);
+SELECT has_function('pgr_maxflow', ARRAY[ 'text', 'anyarray', 'anyarray' ]);
+
+SELECT function_returns('pgr_maxflow', ARRAY[ 'text', 'bigint', 'bigint' ], 'bigint');
+SELECT function_returns('pgr_maxflow', ARRAY[ 'text', 'bigint', 'anyarray' ], 'bigint');
+SELECT function_returns('pgr_maxflow', ARRAY[ 'text', 'anyarray', 'bigint' ], 'bigint');
+SELECT function_returns('pgr_maxflow', ARRAY[ 'text', 'anyarray', 'anyarray' ], 'bigint');
+
+SELECT CASE
+WHEN min_version('3.2.0') THEN
+  collect_tap(
+    has_function('pgr_maxflow', ARRAY['text','text']),
+    function_returns('pgr_maxflow', ARRAY['text','text'],'bigint')
+  )
+ELSE
+  skip(2, 'Combinations signature added on 3.1.0')
+END;
+
+SELECT function_args_eq('pgr_maxflow',
+  $$SELECT  NULL::TEXT[] $$);
+
+SELECT CASE
+  WHEN min_version('3.2.0') THEN
+
+    function_types_eq('pgr_maxflow',
+      $$VALUES
+      ('{text,text}'::TEXT[]),
+      ('{text,int8,int8}'),
+      ('{text,int8,anyarray}'),
+      ('{text,anyarray,int8}'),
+      ('{text,anyarray,anyarray}')
+      $$)
+
+  ELSE
+
+    function_types_eq('pgr_maxflow',
+      $$VALUES
+      ('{text,int8,int8}'::TEXT[]),
+      ('{text,int8,anyarray}'),
+      ('{text,anyarray,int8}'),
+      ('{text,anyarray,anyarray}')
+      $$)
+  END;
+
+SELECT finish();
+ROLLBACK;

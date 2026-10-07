@@ -1,0 +1,179 @@
+// Copyright (c) Mapbox, Inc.
+// Licensed under the MIT License.
+
+import { randomUUID, randomBytes } from 'node:crypto';
+import type { z } from 'zod';
+import { MapboxApiBasedTool } from '../MapboxApiBasedTool.js';
+import type { HttpRequest } from '../../utils/types.js';
+import { StaticMapImageInputSchema } from './StaticMapImageTool.input.schema.js';
+import type { OverlaySchema } from './StaticMapImageTool.input.schema.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { temporaryResourceManager } from '../../utils/temporaryResourceManager.js';
+import { getOwnerKeyFromToken } from '../../utils/jwtUtils.js';
+
+// Images larger than this threshold are stored as temporary resources instead
+// of being inlined as base64, to avoid exceeding Claude Desktop's 1MB tool
+// result limit. base64 adds ~33% overhead, so 700KB raw ≈ 933KB encoded.
+const IMAGE_INLINE_THRESHOLD = 700 * 1024; // 700KB
+
+// encodeURIComponent leaves (, ), !, ', and * unescaped (they're valid in a
+// URI component per RFC 3986's "unreserved" carve-out from the older
+// escape() behaviour). Every overlay value below is embedded inside a
+// path segment delimited by literal parentheses (e.g. `url-<value>(lon,lat)`,
+// `geojson(<value>)`), so a raw `)` in the value can terminate that segment
+// early from the Static Images API's own overlay-syntax parser's point of
+// view, even though this value already passed URL/JSON validation on our
+// side. Escape those characters explicitly so both parsers agree on where
+// the value actually ends.
+function encodeOverlayComponent(value: string): string {
+  return encodeURIComponent(value).replace(
+    /[()!'*]/g,
+    (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()
+  );
+}
+
+export class StaticMapImageTool extends MapboxApiBasedTool<
+  typeof StaticMapImageInputSchema
+> {
+  name = 'static_map_image_tool';
+  description =
+    'Generates a static map image from Mapbox Static Images API. Supports center coordinates, zoom level (0-22), image size (up to 1280x1280), various Mapbox styles, and overlays (markers, paths, GeoJSON). Returns PNG for vector styles, JPEG for raster-only styles.';
+  annotations = {
+    title: 'Static Map Image Tool',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true
+  };
+
+  constructor(params: { httpRequest: HttpRequest }) {
+    super({
+      inputSchema: StaticMapImageInputSchema,
+      httpRequest: params.httpRequest
+    });
+  }
+
+  private encodeOverlay(overlay: z.infer<typeof OverlaySchema>): string {
+    switch (overlay.type) {
+      case 'marker': {
+        const size = overlay.size === 'large' ? 'pin-l' : 'pin-s';
+        let marker = size;
+
+        if (overlay.label) {
+          marker += `-${overlay.label}`;
+        }
+
+        if (overlay.color) {
+          marker += `+${overlay.color}`;
+        }
+
+        return `${marker}(${overlay.longitude},${overlay.latitude})`;
+      }
+
+      case 'custom-marker': {
+        const encodedUrl = encodeOverlayComponent(overlay.url);
+        return `url-${encodedUrl}(${overlay.longitude},${overlay.latitude})`;
+      }
+
+      case 'path': {
+        let path = `path-${overlay.strokeWidth}`;
+
+        if (overlay.strokeColor) {
+          path += `+${overlay.strokeColor}`;
+          if (overlay.strokeOpacity !== undefined) {
+            path += `-${overlay.strokeOpacity}`;
+          }
+        }
+
+        if (overlay.fillColor) {
+          path += `+${overlay.fillColor}`;
+          if (overlay.fillOpacity !== undefined) {
+            path += `-${overlay.fillOpacity}`;
+          }
+        }
+
+        // URL encode the polyline to handle special characters
+        return `${path}(${encodeOverlayComponent(overlay.encodedPolyline)})`;
+      }
+
+      case 'geojson': {
+        const geojsonString = JSON.stringify(overlay.data);
+        return `geojson(${encodeOverlayComponent(geojsonString)})`;
+      }
+    }
+  }
+
+  protected async execute(
+    input: z.infer<typeof StaticMapImageInputSchema>,
+    accessToken: string
+  ): Promise<CallToolResult> {
+    const { longitude: lng, latitude: lat } = input.center;
+    const { width, height } = input.size;
+
+    // Build overlay string
+    let overlayString = '';
+    if (input.overlays && input.overlays.length > 0) {
+      const encodedOverlays = input.overlays.map((overlay) => {
+        return this.encodeOverlay(overlay);
+      });
+      overlayString = encodedOverlays.join(',') + '/';
+    }
+
+    const density = input.highDensity ? '@2x' : '';
+    const encodedStyle = input.style
+      .split('/')
+      .map(encodeURIComponent)
+      .join('/');
+    const publicUrl = `${MapboxApiBasedTool.mapboxApiEndpoint}styles/v1/${encodedStyle}/static/${overlayString}${lng},${lat},${input.zoom}/${width}x${height}${density}`;
+    const url = `${publicUrl}?access_token=${accessToken}`;
+
+    // Fetch image
+    const response = await this.httpRequest(url);
+    if (!response.ok) {
+      const errorMessage = await this.getErrorMessage(response);
+      return {
+        content: [{ type: 'text', text: errorMessage }],
+        isError: true
+      };
+    }
+    const buffer = await response.arrayBuffer();
+    const isRasterStyle = input.style.includes('satellite');
+    const mimeType = isRasterStyle ? 'image/jpeg' : 'image/png';
+
+    // Use public URL (without credentials) to avoid leaking the access token
+    const content: CallToolResult['content'] = [
+      { type: 'text', text: publicUrl }
+    ];
+
+    if (buffer.byteLength > IMAGE_INLINE_THRESHOLD) {
+      // Image is too large to inline safely — store as temporary resource
+      const resourceId = randomBytes(16).toString('hex');
+      const resourceUri = `mapbox://temp/static-map-${resourceId}`;
+      const base64Data = Buffer.from(buffer).toString('base64');
+      temporaryResourceManager.create({
+        id: resourceId,
+        uri: resourceUri,
+        data: base64Data,
+        metadata: { toolName: this.name, size: buffer.byteLength },
+        mimeType,
+        owner: getOwnerKeyFromToken(accessToken)
+      });
+      content.push({
+        type: 'text',
+        text: `⚠️ Image (${Math.round(buffer.byteLength / 1024)}KB) stored as temporary resource.\nResource URI: ${resourceUri}\nTTL: 30 minutes`
+      });
+    } else {
+      // Image is small enough to inline as base64
+      const base64Data = Buffer.from(buffer).toString('base64');
+      content.push({ type: 'image', data: base64Data, mimeType });
+    }
+
+    return {
+      content,
+      isError: false,
+      _meta: {
+        viewUUID: randomUUID()
+      }
+    };
+  }
+}

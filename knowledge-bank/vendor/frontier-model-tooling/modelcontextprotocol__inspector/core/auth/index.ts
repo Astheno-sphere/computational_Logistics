@@ -1,0 +1,177 @@
+// Types
+export type {
+  OAuthStep,
+  AuthProtocol,
+  OAuthClientRegistrationKind,
+  MessageType,
+  StatusMessage,
+  OAuthFlowState,
+  OAuthConnectionState,
+  CallbackParams,
+} from "./types.js";
+export {
+  EMPTY_OAUTH_FLOW_STATE,
+  authProtocolFromEnterpriseManaged,
+} from "./types.js";
+
+export {
+  buildOAuthConnectionState,
+  hasPersistedOAuthServerState,
+  isServerOAuthConfigured,
+  protocolFromOAuthConfig,
+} from "./connection-state.js";
+export type { BuildOAuthConnectionStateParams } from "./connection-state.js";
+
+export { ensureCimdClientRegistration } from "./cimd.js";
+
+export { mcpAuth, type McpAuthOptions, type McpAuthResult } from "./mcpAuth.js";
+export { computeScopeUnion, isStrictScopeSuperset } from "./scopes.js";
+
+// Custom authorization-request parameters (#2018)
+export {
+  RESERVED_AUTHORIZATION_PARAMS,
+  isReservedAuthorizationParam,
+  authorizationParamKeyError,
+  applyAuthorizationParams,
+} from "./authorizationParams.js";
+export type { ReservedAuthorizationParam } from "./authorizationParams.js";
+
+// Authorization/token endpoint overrides (#1906)
+export {
+  oauthEndpointUrlError,
+  normalizeOAuthEndpointOverrides,
+  isAuthorizationServerMetadata,
+  applyOAuthEndpointOverrides,
+  withOAuthEndpointOverrides,
+} from "./endpointOverrides.js";
+export type { OAuthEndpointOverrides } from "./endpointOverrides.js";
+export {
+  oidcDiscoveryCandidates,
+  isRfc8414OnlyMetadata,
+  withRfc8414OidcCompat,
+} from "./oidcDiscoveryCompat.js";
+
+// OAuth-path request deadline (#2319)
+export {
+  DEFAULT_OAUTH_REQUEST_TIMEOUT_MS,
+  OAUTH_TIMEOUT_WIRE_CODE,
+  OAuthRequestTimeoutError,
+  deadlineForRequestInit,
+  exemptMcpEndpoint,
+  isOAuthRequestTimeoutWire,
+  withOAuthRequestTimeout,
+} from "./requestTimeout.js";
+export type { OAuthRequestTimeoutWire } from "./requestTimeout.js";
+
+// Storage
+export type {
+  OAuthStorage,
+  IdpSessionState,
+  SaveClientInformationOptions,
+} from "./storage.js";
+export { getServerSpecificKey, OAUTH_STORAGE_KEYS } from "./storage.js";
+
+// Providers
+export type {
+  OAuthProviderConfig,
+  RedirectUrlProvider,
+  OAuthNavigation,
+  OAuthNavigationCallback,
+} from "./providers.js";
+export {
+  MutableRedirectUrlProvider,
+  ConsoleNavigation,
+  CallbackNavigation,
+  BaseOAuthClientProvider,
+} from "./providers.js";
+
+// Utilities
+export {
+  parseHttpUrl,
+  parseOAuthCallbackParams,
+  generateOAuthState,
+  parseOAuthState,
+  generateOAuthErrorDescription,
+  formatOAuthFailureDetail,
+  isUnauthorizedError,
+} from "./utils.js";
+
+export type {
+  AuthChallenge,
+  AuthChallengeReason,
+  AuthChallengeOutcome,
+  HandleAuthChallengeOptions,
+  ParseAuthChallengeContext,
+  WwwAuthenticateBearerParams,
+} from "./challenge.js";
+export {
+  AuthChallengeError,
+  AuthRecoveryRequiredError,
+  parseAuthChallengeFromError,
+  parseAuthChallengeFromResponse,
+  parseScopeString,
+  parseWwwAuthenticateBearer,
+  unionAuthorizationScopes,
+  isAuthChallengeError,
+  isConnectAuthRecoveryError,
+  findNestedAuthError,
+  EMA_STEP_UP_PENDING_URL,
+} from "./challenge.js";
+
+export {
+  isStandardOAuthStepUp,
+  isEmaStepUp,
+  isStepUpConfirmation,
+  stepUpConfirmMessage,
+  stepUpFollowUpMessage,
+  stepUpModalTitle,
+  stepUpAuthorizeActionLabel,
+  emaStepUpInProgressMessage,
+  emaStepUpSuccessMessage,
+  emaStepUpFailureMessage,
+  stepUpAdditionalScopes,
+  stepUpInsufficientScopeMessage,
+  oauthPreRedirectToastCopy,
+  isReAuthBannerReason,
+  reAuthBannerMessage,
+  lostAuthorizationStateTitle,
+  lostAuthorizationStateMessage,
+  lostAuthorizationStateActionLabel,
+  issuerMismatchTitle,
+  issuerMismatchMessage,
+  issuerBindingFailureCopy,
+  type OAuthInteractiveAuthKind,
+} from "./oauthUx.js";
+
+export {
+  findIssuerBindingFailure,
+  type IssuerBindingFailure,
+} from "./issuerBinding.js";
+
+// Discovery
+export { discoverScopes } from "./discovery.js";
+
+// RFC 7009 token revocation (#2144)
+export {
+  DEFAULT_REVOCATION_TIMEOUT_MS,
+  MIN_REVOCATION_REQUEST_BUDGET_MS,
+  aggregateOutcomes,
+  buildRevocationRequest,
+  revocationAuthMethods,
+  clearAndPlanRevocation,
+  executeOAuthRevocation,
+  revokeToken,
+  selectRevocableToken,
+} from "./revocation.js";
+export type {
+  ExecuteOAuthRevocationParams,
+  OAuthRevocationPlan,
+  PlanOAuthRevocationParams,
+  RevocationRequestParams,
+  RevokeTokenParams,
+  TokenRevocationOutcome,
+  TokenRevocationSkipReason,
+} from "./revocation.js";
+
+// Logging (re-exported from core/logging)
+export { silentLogger } from "../logging/index.js";

@@ -1,0 +1,60 @@
+BEGIN;
+BEGIN
+SET client_min_messages TO NOTICE;
+SET
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2013-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+/* --q1 */
+SELECT * FROM pgr_lengauertarjandominatortree(
+  $$SELECT id,source,target,cost,reverse_cost FROM edges$$,
+  5) ORDER BY vertex_id;
+ seq | vertex_id | idom
+-----+-----------+------
+   1 |         1 |    2
+   9 |         2 |    0
+   2 |         3 |    3
+  10 |         4 |    0
+  17 |         5 |    0
+   4 |         6 |   17
+   3 |         7 |    4
+   7 |         8 |    3
+  11 |         9 |    7
+   5 |        10 |   16
+   6 |        11 |    3
+   8 |        12 |    3
+  12 |        13 |    0
+  13 |        14 |    0
+  16 |        15 |   15
+  15 |        16 |    3
+  14 |        17 |    3
+(17 rows)
+
+/* --q2 */
+SELECT * FROM pgr_lengauertarjandominatortree(
+  $$SELECT id,source,target,cost,reverse_cost FROM edges$$,
+  13) ORDER BY vertex_id;
+ seq | vertex_id | idom
+-----+-----------+------
+   1 |         1 |    0
+   9 |         2 |    0
+   2 |         3 |    0
+  10 |         4 |    0
+  17 |         5 |    0
+   4 |         6 |    0
+   3 |         7 |    0
+   7 |         8 |    0
+  11 |         9 |    0
+   5 |        10 |    0
+   6 |        11 |    0
+   8 |        12 |    0
+  12 |        13 |    0
+  13 |        14 |   12
+  16 |        15 |    0
+  15 |        16 |    0
+  14 |        17 |    0
+(17 rows)
+
+/* --q3 */
+ROLLBACK;
+ROLLBACK

@@ -1,0 +1,368 @@
+from __future__ import annotations
+
+import os
+import re
+import runpy
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+MAKEFILE = ROOT / "Makefile"
+TESTS_WORKFLOW = ROOT / ".github" / "workflows" / "tests.yml"
+PUBLISH_WORKFLOW = ROOT / ".github" / "workflows" / "publish.yml"
+DAPR_REDIS_TEST = ROOT / "integration_tests" / "containers" / "test_dapr_redis.py"
+EXAMPLE_RUNNER = ROOT / ".github" / "scripts" / "run_examples.sh"
+EXAMPLE_SUITE = ROOT / "examples" / "run_examples.py"
+SKILLS = ROOT / ".agents" / "skills"
+
+
+def _make_recipes() -> dict[str, str]:
+    recipes: dict[str, str] = {}
+    current_target: str | None = None
+    for line in MAKEFILE.read_text(encoding="utf-8").splitlines():
+        target_match = re.fullmatch(r"([A-Za-z0-9][A-Za-z0-9_-]*):(?:\s.*)?", line)
+        if target_match:
+            current_target = target_match.group(1)
+            recipes[current_target] = ""
+        elif current_target is not None and line.startswith("\t"):
+            recipes[current_target] += line.removeprefix("\t") + "\n"
+        elif line and not line.startswith((" ", "\t")):
+            current_target = None
+    return recipes
+
+
+def _workflow_job(name: str, path: Path = TESTS_WORKFLOW) -> str:
+    workflow = path.read_text(encoding="utf-8")
+    job_pattern = rf"(?ms)^  {re.escape(name)}:\n(?P<body>.*?)(?=^  [a-z0-9-]+:\n|\Z)"
+    match = re.search(job_pattern, workflow)
+    assert match is not None
+    return match.group("body")
+
+
+def test_examples_run_analysis_skill_has_no_execution_path() -> None:
+    analysis_skill = SKILLS / "examples-run-analysis"
+    assert not (SKILLS / "examples-auto-run").exists()
+    assert not (SKILLS / "integration-tests").exists()
+    assert sorted(
+        path.relative_to(analysis_skill).as_posix()
+        for path in analysis_skill.rglob("*")
+        if path.is_file()
+    ) == ["SKILL.md", "agents/openai.yaml"]
+
+    instructions = (analysis_skill / "SKILL.md").read_text(encoding="utf-8")
+    prompt = (analysis_skill / "agents" / "openai.yaml").read_text(encoding="utf-8")
+    assert "This skill is read-only and analysis-only." in instructions
+    assert (
+        "Never invoke an examples Make target or `.github/scripts/run_examples.sh`." in instructions
+    )
+    assert "Inspect the process table and `.tmp/examples-auto-run.pid`" in instructions
+    assert "including foreground and background runs" in instructions
+    assert "an absent or stale pid file does not prove that no run is active" in instructions
+    assert ".tmp/examples-run.pid" not in instructions
+    assert "Do not execute any of these commands as part of this skill." in instructions
+    assert "without executing or controlling any process" in prompt
+
+
+def test_makefile_exposes_every_preserved_example_operation() -> None:
+    recipes = _make_recipes()
+    expected_commands = {
+        "examples-run": "$(EXAMPLES_RUNNER) start $(EXAMPLES_ARGS)",
+        "examples-run-background": "$(EXAMPLES_RUNNER) start --background $(EXAMPLES_ARGS)",
+        "examples-status": "$(EXAMPLES_RUNNER) status",
+        "examples-stop": "$(EXAMPLES_RUNNER) stop",
+        "examples-logs": "$(EXAMPLES_RUNNER) logs",
+        "examples-tail": "$(EXAMPLES_RUNNER) tail $(EXAMPLES_LOG)",
+    }
+
+    assert EXAMPLE_RUNNER.is_file()
+    assert "EXAMPLES_RUNNER := bash .github/scripts/run_examples.sh" in MAKEFILE.read_text(
+        encoding="utf-8"
+    )
+    for target, command in expected_commands.items():
+        assert recipes[target].strip() == command
+    assert "examples-rerun" not in recipes
+    assert "examples-collect-rerun" not in recipes
+
+
+def test_repository_example_script_preserves_runner_contract() -> None:
+    runner = EXAMPLE_RUNNER.read_text(encoding="utf-8")
+
+    assert 'PID_FILE="$ROOT/.tmp/examples-auto-run.pid"' in runner
+    assert 'LOG_DIR="$ROOT/.tmp/examples-start-logs"' in runner
+    assert (
+        'DEFAULT_UV_EXTRAS="litellm any-llm sqlalchemy redis blaxel modal runloop temporal"'
+        in runner
+    )
+    for required_argument in ("--auto-mode", "--main-log", "--logs-dir"):
+        assert required_argument in runner
+    for optional_mode in (
+        "EXAMPLES_INCLUDE_INTERACTIVE",
+        "EXAMPLES_INCLUDE_SERVER",
+        "EXAMPLES_INCLUDE_AUDIO",
+        "EXAMPLES_INCLUDE_EXTERNAL",
+    ):
+        assert optional_mode in runner
+    for operation in ("start", "status", "stop", "logs", "tail"):
+        assert re.search(rf"(?:^|\n)  {operation}\)", runner)
+    assert 'rm -f "$PID_FILE"' in runner
+
+
+def test_examples_rerun_mechanism_is_removed() -> None:
+    sources = [
+        MAKEFILE.read_text(encoding="utf-8"),
+        EXAMPLE_RUNNER.read_text(encoding="utf-8"),
+        EXAMPLE_SUITE.read_text(encoding="utf-8"),
+        (ROOT / "examples" / "README.md").read_text(encoding="utf-8"),
+        (SKILLS / "examples-run-analysis" / "SKILL.md").read_text(encoding="utf-8"),
+    ]
+
+    assert all("rerun" not in source.lower() for source in sources)
+
+
+def test_all_make_integration_entry_points_use_classified_profiles() -> None:
+    namespace = runpy.run_path(str(ROOT / ".github" / "scripts" / "run_integration_tests.py"))
+    classified_profiles = set(namespace["PROFILE_CREDENTIAL_CLASSES"])
+
+    recipes = _make_recipes()
+    integration_recipes = {
+        target: recipe
+        for target, recipe in recipes.items()
+        if target == "integration-tests" or target.startswith("integration-tests-")
+    }
+    assert integration_recipes
+    for target, recipe in integration_recipes.items():
+        profile = re.search(r"--profile ([a-z0-9-]+)", recipe)
+        assert profile is not None, target
+        assert profile.group(1) in classified_profiles
+
+
+def test_container_integration_has_one_non_matrix_workflow_job() -> None:
+    containers_job = _workflow_job("containers")
+    tests_job = _workflow_job("tests")
+
+    assert "matrix:" not in containers_job
+    assert 'python-version: "3.14"' in containers_job
+    assert 'TESTCONTAINERS_RYUK_DISABLED: "true"' in containers_job
+    assert containers_job.count("make integration-tests-containers") == 1
+    assert "integration-tests-containers" not in tests_job
+
+
+def test_container_integration_pins_dapr_runtime_image() -> None:
+    source = DAPR_REDIS_TEST.read_text(encoding="utf-8")
+
+    assert (
+        '"daprio/daprd:1.16.2@sha256:'
+        '3ae30141b9775b5bc03d073185abf1101fbad1e1941c1c3075527bc4865454e3"' in source
+    )
+    assert "daprio/daprd:latest" not in source
+
+
+def test_container_integration_does_not_require_docker_cli() -> None:
+    source = DAPR_REDIS_TEST.read_text(encoding="utf-8")
+
+    assert 'shutil.which("docker")' not in source
+    assert "client.ping()" in source
+
+
+def test_prospective_contract_preparation_removes_api_key_before_uv() -> None:
+    recipe = _make_recipes()["prepare-prospective-released-api-contract"]
+
+    assert recipe.startswith("@unset OPENAI_API_KEY; \\\n")
+    assert recipe.index("unset OPENAI_API_KEY") < recipe.index("uv run")
+
+
+@pytest.mark.parametrize("job_name", ["checks", "build"])
+def test_release_build_validates_before_executing_candidate_code(job_name: str) -> None:
+    build = _workflow_job(job_name, PUBLISH_WORKFLOW)
+
+    assert "contents: read" in build
+    assert "id-token:" not in build
+    assert "environment:" not in build
+    assert "ref: refs/heads/main\n          path: control" in build
+    assert "ref: ${{ github.sha }}\n          path: release-source" in build
+    assert build.count("persist-credentials: false") == 2
+    assert "fetch-depth: 0" in build
+    validation = build.index("python -I control/.github/scripts/verify_release.py")
+    candidate_command = (
+        'UV_PYTHON="$python_version" make sync tests' if job_name == "checks" else "run: uv build"
+    )
+    assert validation < build.index(candidate_command)
+    assert ' --tag "$RELEASE_TAG" --expected-sha "$RELEASE_SHA"' in build
+    assert "enable-cache: false" in build
+
+
+@pytest.mark.parametrize("failed_check", [None, "3.12:sync tests", ":typecheck"])
+def test_release_checks_fail_closed(tmp_path: Path, failed_check: str | None) -> None:
+    bash = shutil.which("bash")
+    if bash is None:
+        pytest.skip("The publish workflow requires Bash.")
+    workflow = yaml.safe_load(PUBLISH_WORKFLOW.read_text(encoding="utf-8"))
+    jobs = workflow["jobs"]
+    checks = jobs["checks"]
+    build = jobs["build"]
+    steps = checks["steps"]
+    check_index = next(i for i, step in enumerate(steps) if step["name"] == "Check release source")
+    check = steps[check_index]
+    package = next(step for step in build["steps"] if step.get("run") == "uv build")
+    assert check["working-directory"] == package["working-directory"] == "release-source"
+    assert build["needs"] == "checks"
+    assert check["shell"] == "bash"
+    assert check["env"] == {"OPENAI_API_KEY": "fake-for-tests", "UV_LOCKED": "1"}
+    for job in (checks, build, jobs["publish"]):
+        assert "if" not in job and "continue-on-error" not in job
+        for step in job["steps"]:
+            assert "continue-on-error" not in step
+            if step.get("name") in {
+                "Verify human-reviewed release candidate",
+                "Checkout approval validator from main",
+                "Revalidate human approval before upload",
+            }:
+                assert step["if"] == "vars.RELEASE_AUTOMATION_ENABLED == 'true'"
+            else:
+                assert "if" not in step
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    make = bin_dir / "make"
+    make.write_text(
+        "#!/bin/sh\n"
+        'check="${UV_PYTHON:-}:$*"\n'
+        'printf "%s\\n" "$check" >> "$CHECK_LOG"\n'
+        '[ "$check" != "$FAILED_CHECK" ]\n',
+        encoding="utf-8",
+    )
+    make.chmod(0o755)
+    log = tmp_path / "checks.log"
+    result = subprocess.run(
+        [bash, "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", check["run"]],
+        cwd=tmp_path,
+        env={
+            "PATH": f"{bin_dir}{os.pathsep}{os.defpath}",
+            "CHECK_LOG": str(log),
+            "FAILED_CHECK": failed_check or "",
+            **check["env"],
+        },
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    expected = [f"3.{minor}:sync tests" for minor in range(10, 15)] + [":typecheck"]
+    if failed_check is None:
+        assert result.returncode == 0, result.stderr
+        assert log.read_text(encoding="utf-8").splitlines() == expected
+    else:
+        assert result.returncode != 0
+        assert (
+            log.read_text(encoding="utf-8").splitlines()
+            == expected[: expected.index(failed_check) + 1]
+        )
+
+
+def test_release_checks_reject_stale_lockfile(tmp_path: Path) -> None:
+    uv = shutil.which("uv")
+    if uv is None:
+        pytest.skip("The publish workflow requires uv.")
+    workflow = yaml.safe_load(PUBLISH_WORKFLOW.read_text(encoding="utf-8"))
+    check = next(
+        step
+        for step in workflow["jobs"]["checks"]["steps"]
+        if step["name"] == "Check release source"
+    )
+    dependency = tmp_path / "dependency"
+    dependency.mkdir()
+    (dependency / "pyproject.toml").write_text(
+        '[project]\nname = "fixture-dependency"\nversion = "0.1.0"\n', encoding="utf-8"
+    )
+    project = (
+        '[project]\nname = "release-fixture"\nversion = "0.1.0"\n'
+        'requires-python = ">=3.10"\ndependencies = []\n'
+        '[tool.uv.sources]\nfixture-dependency = { path = "dependency" }\n'
+    )
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(project, encoding="utf-8")
+    env = {
+        "PATH": os.defpath,
+        "UV_PYTHON": sys.executable,
+        "UV_CACHE_DIR": str(tmp_path / "cache"),
+    }
+    if "SYSTEMROOT" in os.environ:
+        env["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
+    command = [uv, "--offline", "--no-config"]
+    subprocess.run(command + ["lock"], cwd=tmp_path, env=env, check=True, timeout=15)
+    lockfile = tmp_path / "uv.lock"
+    original_lock = lockfile.read_bytes()
+    # Exercise synchronization without building or installing either fixture package.
+    sync = command + ["sync", "--no-install-project", "--no-install-package", "fixture-dependency"]
+    env.update(check["env"])
+    subprocess.run(sync, cwd=tmp_path, env=env, check=True, timeout=15)
+    pyproject.write_text(
+        project.replace("dependencies = []", 'dependencies = ["fixture-dependency"]'),
+        encoding="utf-8",
+    )
+    result = subprocess.run(sync, cwd=tmp_path, env=env, capture_output=True, text=True, timeout=15)
+    assert result.returncode != 0
+    assert "lockfile" in result.stderr and "needs to be updated" in result.stderr
+    assert lockfile.read_bytes() == original_lock
+
+
+def test_release_build_is_isolated_from_test_execution() -> None:
+    workflow = yaml.safe_load(PUBLISH_WORKFLOW.read_text(encoding="utf-8"))
+    checks = workflow["jobs"]["checks"]
+    build = workflow["jobs"]["build"]
+    # Separate GitHub-hosted jobs provide fresh runners, not just new directories.
+    assert checks["runs-on"] == build["runs-on"] == "ubuntu-latest"
+    assert build["permissions"] == {"contents": "read"}
+    assert checks["permissions"] == {
+        "contents": "read",
+        "pull-requests": "read",
+    }
+    assert "outputs" not in checks
+    assert build["needs"] == "checks"
+    for job in (checks, build):
+        assert "env" not in job and "container" not in job
+        for step in job["steps"]:
+            action = step.get("uses", "")
+            assert not action.startswith(("actions/cache@", "actions/download-artifact@"))
+            if action.startswith("astral-sh/setup-uv@"):
+                assert step["with"]["enable-cache"] is False
+            if job is checks:
+                assert not action.startswith("actions/upload-artifact@")
+    build_commands = [step["run"] for step in build["steps"] if "run" in step]
+    assert len(build_commands) == 2  # Provenance validation, then packaging; no test execution.
+    assert build_commands[-1] == "uv build"
+
+
+def test_pypi_job_only_publishes_the_build_artifact() -> None:
+    workflow = PUBLISH_WORKFLOW.read_text(encoding="utf-8")
+    publish = _workflow_job("publish", PUBLISH_WORKFLOW)
+
+    assert "permissions: {}" in workflow
+    assert workflow.count("id-token: write") == 1
+    assert "needs: build" in publish
+    assert "name: pypi" in publish
+    assert "id-token: write" in publish
+    assert (
+        "run: python3 -I control/.github/scripts/release_automation.py verify-publication"
+        in publish
+    )
+    actions = re.findall(r"uses: ([^\s]+)", publish)
+    assert len(actions) == 3
+    assert actions[0].startswith("actions/download-artifact@")
+    assert actions[1].startswith("actions/checkout@")
+    assert actions[2].startswith("pypa/gh-action-pypi-publish@")
+    assert all(re.fullmatch(r"[^@]+@[0-9a-f]{40}", action) for action in actions)
+    assert "artifact-ids: ${{ needs.build.outputs.artifact-id }}" in publish
+    assert "artifact-id: ${{ steps.upload.outputs.artifact-id }}" in _workflow_job(
+        "build", PUBLISH_WORKFLOW
+    )
+    assert "path: dist/" in publish
+    assert "merge-multiple: true" in publish
+
+
+def test_release_tagging_is_manual() -> None:
+    assert not (ROOT / ".github/workflows/release-tag.yml").exists()

@@ -1,0 +1,74 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2013-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT plan(2);
+
+UPDATE edges SET cost = sign(cost) + 0.001 * id * id, reverse_cost = sign(reverse_cost) + 0.001 * id * id;
+SET extra_float_digits=-3;
+
+CREATE OR REPLACE FUNCTION test_function(sql_TestFunction TEXT, INTEGER default 18)
+RETURNS SETOF TEXT AS
+$BODY$
+DECLARE
+sql_Combinations TEXT;
+sql_Many TEXT;
+drv_side TEXT = $$, driving_side => 'r'$$;
+BEGIN
+  IF NOT min_version('3.2.0') THEN
+    RETURN QUERY
+    SELECT skip(1, 'Combinations signature is new on 3.2.0');
+    RETURN;
+  END IF;
+
+  IF min_version('4.0.0') THEN
+    sql_TestFunction = replace(sql_TestFunction, 'pid', 'vid');
+    drv_side = replace(drv_side, 'driving_side =>', '');
+  END IF;
+
+    sql_Combinations := '';
+    sql_Many := '';
+    FOR i IN 1.. $2 LOOP
+        IF (i > 1) THEN
+            sql_Many := sql_Many ||', ';
+        END IF;
+        sql_Many := sql_Many || i ;
+    END LOOP;
+
+    FOR i IN 1.. $2 LOOP
+        FOR j IN 1.. $2 LOOP
+            IF NOT (i =  j) THEN
+                sql_Combinations := sql_Combinations || '(' || i || ',' || j || '),' ;
+            END IF;
+        END LOOP;
+    END LOOP;
+    sql_Combinations := trim(trailing ',' from sql_Combinations);
+
+    sql_Many := ( sql_TestFunction || '(
+        ''SELECT id, source, target, cost, reverse_cost FROM edges''::text,
+        ''SELECT pid, edge_id, fraction, side from pointsOfInterest'',
+        ARRAY[' || sql_Many  ||'], ARRAY[' || sql_Many || '] ' || drv_side || ' ) ');
+
+    sql_Combinations := ( sql_TestFunction || '(
+        ''SELECT id, source, target, cost, reverse_cost FROM edges''::text,
+        ''SELECT pid, edge_id, fraction, side from pointsOfInterest'',
+        ''SELECT * FROM (VALUES' || sql_Combinations  ||') AS combinations (source, target)'' '  || drv_side || ' ) ');
+
+    RETURN query SELECT set_eq( sql_Many, sql_Combinations );
+    RETURN;
+END
+$BODY$
+language plpgsql;
+
+-- test pgr_withPoints
+select * from test_function('SELECT path_seq,  start_pid,  end_pid, node, edge, cost, agg_cost FROM pgr_withPoints');
+
+-- test pgr_withPointsCost
+select * from test_function('SELECT start_pid, end_pid, agg_cost FROM pgr_withPointsCost');
+
+-- Finish the tests and clean up.
+SELECT * FROM finish();
+ROLLBACK;

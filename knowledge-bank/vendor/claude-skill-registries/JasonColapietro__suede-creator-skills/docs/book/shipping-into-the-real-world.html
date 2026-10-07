@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chapter 10. Shipping Into the Real World | S-Tier, the builder's book</title>
+    <meta name="description" content="The last mile: App Store and Play Store gauntlets, release evidence gates, and an account-review procedure that runs outside a repo.">
+    <meta name="keywords" content="app store release, release evidence gates, S-Tier builder's book">
+    <meta name="author" content="Jason Colapietro">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+    <link rel="canonical" href="https://skills.suedeai.ai/book/shipping-into-the-real-world.html">
+    <link rel="icon" href="../assets/favicon-64.png" type="image/png">
+    <link rel="preload" href="../assets/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="stylesheet" href="../assets/prose.css">
+    <link rel="stylesheet" href="../assets/book.css">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Chapter 10. Shipping Into the Real World | S-Tier, the builder's book">
+    <meta property="og:description" content="The last mile: App Store and Play Store gauntlets, release evidence gates, and an account-review procedure that runs outside a repo.">
+    <meta property="og:url" content="https://skills.suedeai.ai/book/shipping-into-the-real-world.html">
+    <meta property="og:image" content="https://skills.suedeai.ai/assets/og-image-v2.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Chapter 10. Shipping Into the Real World | S-Tier, the builder's book">
+    <meta name="twitter:description" content="The last mile: App Store and Play Store gauntlets, release evidence gates, and an account-review procedure that runs outside a repo.">
+    <meta name="twitter:image" content="https://skills.suedeai.ai/assets/og-image-v2.png">
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Chapter",
+  "@id": "https://skills.suedeai.ai/book/shipping-into-the-real-world.html#chapter",
+  "name": "Chapter 10. Shipping Into the Real World",
+  "headline": "Shipping Into the Real World",
+  "description": "The last mile: App Store and Play Store gauntlets, release evidence gates, and an account-review procedure that runs outside a repo.",
+  "keywords": "app store release, release evidence gates, S-Tier builder's book",
+  "url": "https://skills.suedeai.ai/book/shipping-into-the-real-world.html",
+  "position": 11,
+  "wordCount": 1759,
+  "datePublished": "2026-08-10",
+  "dateModified": "2026-10-04",
+  "inLanguage": "en",
+  "isPartOf": {
+    "@type": "Book",
+    "@id": "https://skills.suedeai.ai/book/#book",
+    "name": "S-Tier: The Builder's Book Behind the Suede Skills"
+  },
+  "author": {
+    "@type": "Person",
+    "@id": "https://suedeai.ai/founder#person",
+    "name": "Jason Colapietro"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Suede AI",
+    "url": "https://suedeai.ai"
+  },
+  "mainEntityOfPage": "https://skills.suedeai.ai/book/shipping-into-the-real-world.html"
+}
+    </script>
+  </head>
+  <body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <nav class="nav-inner" aria-label="Main navigation">
+        <a href="../" class="nav-logo" aria-label="Suede Creator Skills home">
+          <img src="../assets/suede-ai-logo-transparent.webp" alt="Suede AI" width="28" height="28" onerror="this.style.display='none'">
+          <span class="nav-logo-wordmark">Suede <span>Creator Skills</span></span>
+        </a>
+        <details class="nav-disclosure" open>
+          <summary class="nav-hamburger" aria-label="Open navigation menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </summary>
+          <div class="nav-links">
+          <a href="../">Home</a>
+          <a href="../skills/">Skills</a>
+          <a href="../guide.html">Guide</a>
+          <a href="./" aria-current="page">Book</a>
+          <a href="../blog/">Blog</a>
+          <a href="../copy.html">Copy Bank</a>
+          <a href="../cracked.html" class="nav-cracked">Cracked Devs</a>
+          <a href="../plugins.html" class="nav-cta">Install</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+    <main id="main" tabindex="-1" class="shell">
+      <p class="eyebrow">Part III &middot; Chapter 10</p>
+      <h1>Shipping Into the Real World</h1>
+      <p class="post-meta">The last mile: App Store and Play Store gauntlets, release evidence gates, and an account-review procedure that runs outside a repo.</p>
+      <div class="book-meta"><span>1,759 words</span><span>8 min read</span><span><a href="./">S-Tier: contents</a></span></div>
+
+      <p>The last mile is where builders stall, and it is almost never for lack of skill. It stalls because the last mile is the first place your assumptions meet an institution that does not care about them. A compiler tells you immediately. App Review tells you in four days. Google Play tells you after the staged rollout has already reached 5% of users. The feedback loop stretches from seconds to days, and every unverified assumption you carried through the build gets billed at the new exchange rate.</p>
+      <p>You can feel this the first time you wrap a website in a shell and submit it. The build works. The app runs. Rejection arrives citing guideline 4.2, minimum functionality, and now you are two weeks out from a launch date because the thing you shipped was a bookmark with an icon.</p>
+      <h2 id="the-wrapper-gate">The wrapper gate</h2>
+      <p><code>site-to-ios-app</code> puts that failure at the front instead of the end. Its principle is stated before any command: turn a site into an iOS app only when the app has native value, stable iOS behavior, and a release surface that is truthful. A raw web page in a frame is not enough for an App Store-quality product.</p>
+      <p>The workflow begins with an artifact, not a scaffold. You write <code>SITE_TO_IOS_AUDIT.md</code> capturing the site URL, target user, primary routes, login requirements, iPhone responsive behavior, PWA signals, legal/support/account-deletion links, payments and sensitive flows, session behavior, mobile performance risks, native value opportunities, and the 4.2 wrapper risk. Only then <code>SITE_TO_IOS_PLAN.md</code>, with the chosen strategy, the native value to add before release, scaffold and build commands, bundle ID and signing notes, QA matrix, screenshots and metadata and privacy work, blockers, and the explicit release gate.</p>
+      <p>The strategy decision is four options and a requirement to write down why. Capacitor remote shell keeps the live site as the product surface, so web deploys update most behavior. Capacitor bundled shell packages static assets into the binary, which means updates need an App Store release unless paired with live APIs. A native SwiftUI shell wraps a web view in real navigation, settings, auth, push, share, and error surfaces. Full native rebuild is for sites that are mostly content, have weak mobile UX, or carry high wrapper rejection risk.</p>
+      <p>The 4.2 gate itself is the honest part. Block or redesign the app when it is only a bookmark, content mirror, or unmodified website. The remedies are specific: iOS-native onboarding, empty states, errors, offline, and retry. Native settings with support, privacy, terms, account deletion, restore, and notification controls. Universal links. Share sheet, widgets, push, media pickers, StoreKit, but only when they serve the app. Safe-area, keyboard, navigation, dark and light mode, and dynamic type handling.</p>
+      <p>Then a completion bar that does not let you round up. The project builds on a named simulator, device, or CI target. Every plugin and entitlement is justified by actual behavior. The 4.2 risk has a mitigation. Screenshots and metadata match implemented features. Privacy answers match the actual SDKs, cookies, analytics, and account flows. No secrets or signing material are committed. Submission itself requires the user to explicitly delegate public release and confirm the exact app, bundle ID, version, build, and account.</p>
+      <h2 id="the-android-version-of-the-same-lesson">The Android version of the same lesson</h2>
+      <p><code>android-app-factory</code> runs the same discipline against a platform with more moving policy. Its principle: build the product, policy evidence, and Play listing together, because a successful release is an installable app whose claims, disclosures, entitlements, privacy behavior, and store configuration agree with each other.</p>
+      <p>It refuses to answer policy from memory. Every release-oriented run identifies the repo, application ID, branch, Play app, target track, and whether the checkout is dirty, reads a dated policy baseline, then re-opens the linked official Google sources for anything submission-sensitive and records the URL, observed requirement, and check time. The baseline is treated as a baseline, not as permanent law. The skill even states its own dates carefully: as of 2026-07-19 the default is <code>compileSdk</code> and <code>targetSdk</code> 36, with Play's announced enforcement for new apps and updates moving to API 36 on 2026-08-31 and API 35 enforced until then, plus an instruction not to misstate an announced deadline as an enforced one.</p>
+      <p>The pipeline is ten phases. Validate the product. Verify policy. Design architecture and risk with the smallest maintainable shape that preserves unidirectional state, lifecycle safety, offline and error and loading states, and test seams. Scaffold native Kotlin and Jetpack Compose by default, resolving current stable versions from official sources into a version catalog, and prove a debug build before feature work. Build one complete core loop. Prove quality across unit, repository, ViewModel, Compose UI, accessibility, and end-to-end tests, plus static analysis, release build, device and API matrix, baseline profile, and Macrobenchmark. Add Play Billing for covered digital goods, processing pending purchases, verifying and acknowledging after entitlement handling, restoring ownership, and keeping server verification off the device. Complete trust surfaces: privacy policy, Data Safety, permission rationale, in-app and web account deletion when accounts exist, content rating, ads declarations, app access instructions. Build store artifacts. Release through evidence gates.</p>
+      <p>The release gate is a template you copy into the app repo and complete with links or command output. It blocks on a list that reads like a catalog of things people assume: policy not checked live, a build targeting the wrong API, an Android 15+ release not verified for 16 KB page-size compatibility including transitive native SDKs, failing tests or lint or <code>bundleRelease</code>, a core loop that fails on the declared matrix or offline path, launch-critical accessibility failures under TalkBack or large text, missing performance evidence, disagreement between Data Safety and actual behavior, unproven billing restore or acknowledgement, committed secrets, listing screenshots showing behavior the release build does not have, or a rollout without explicit user confirmation.</p>
+      <p>One line in there is the whole chapter compressed: a caveat must have an owner, a risk, and a next action, and policy, security, privacy, billing, crash, and core-task blockers cannot be downgraded to cosmetic caveats. That is the sentence that stops a release checklist from becoming a formality.</p>
+      <h2 id="packaging-is-an-artifact">Packaging is an artifact</h2>
+      <p><code>suede-launch-packaging</code> handles the surface between finished work and a stranger. Its core principle: a release nobody can install is not a launch. Nothing is live until you fetched it yourself, and no install path ships until the exact command ran from a clean temporary directory.</p>
+      <p>That second clause is the one that catches people. Your install command works because your local checkout has files you never pushed. The skill's failure table names it directly: "works locally, fails for a public user" usually means the command references a local plugin alias, and "install command 404s" usually means the skill folder was never pushed to <code>main</code>. The fix is not to read the command more carefully. It is to run it somewhere that has none of your context.</p>
+      <p>The skill starts with an inventory, because one launch is usually several surfaces. A skill launch is a repo plus a README plus an install command plus social copy, and each row needs its own proof artifact: repo URL and commit hash, live URL and screenshot, install command transcript, MCP <code>tools/list</code> output, live route readback, link sweep results. Its hard gates are ordering rules. No launch copy until the live surface is verified. No install doc until the command ran from a clean temp dir after pushing. Ship gate set before any announcement, including a soft one.</p>
+      <h2 id="the-lane-that-proves-the-point">The lane that proves the point</h2>
+      <p>The sharpest example in the pack does not touch a repo at all.</p>
+      <p><code>amazon-returns-recovery</code> applies a contract-negotiation procedure to account reviews: gather refund evidence, confirm the requested action with the account owner, and report the support response without treating a promise as a posted refund. Its public reference uses synthetic scenarios. Personal transaction details and support transcripts stay in the account owner's private session.</p>
+      <p>Notice what carried over. Not domain knowledge about Amazon. The procedure knew nothing about restocking fees before it went looking. What carried over was the shape: read the evidence first, itemize before arguing, build the case from facts you can point at, ask for one specific outcome, confirm the result in writing. That is the same shape as a code review, a release gate, and an SEO audit. A procedure that works outside its home domain is evidence that the procedure, not the domain knowledge, was doing the work.</p>
+      <p><code>subscription-recovery</code> is the generalization, pointed at App Store, Google Play, PayPal, bank statements, and direct-bill services. It exists because somebody noticed the discipline had nothing to do with Amazon.</p>
+      <h2 id="safety-stated-plainly">Safety, stated plainly</h2>
+      <p>Both recovery skills draw the same line, and it is worth reading as written rather than paraphrased. Read-only discovery first. Report the findings as a plain list. Stop. Do not open the dispute chat yet. Confirmation before any cancellation or refund contact, one item at a time. The skill describes itself as a metal detector, not an autopilot.</p>
+      <p>Truthfulness is a hard constraint, not a preference. State only true facts: order number, item, price, fee amount. Do not invent a prior contact attempt or a return reason that did not happen, because the ask is reasonable on its own and does not need embellishment to land. Accept one polite counteroffer round at most, then report back rather than escalating with anything untrue. Some fees are legitimate, some subscriptions are still wanted, and the skill instructs you to say so when a finding looks earned rather than mistaken.</p>
+      <p>Credentials are never handled. The stretch goal for automated statement parsing is explicitly deferred because no validated path exists that avoids touching credentials, which conflicts with the skill's own rules. A capability was left unbuilt rather than built unsafely, and that decision is written down in the skill where the next person will read it.</p>
+      <h2 id="the-reframe">The reframe</h2>
+      <p>Shipping is not the phase after building. It is a separate skill with its own gates, its own evidence requirements, and its own failure modes, and you get better at it the same way you got better at everything else: by doing it enough times that the checklist stops surprising you. The builders who stall at the last mile are not worse engineers. They have just practiced the first mile a thousand times and the last mile twice.</p>
+      <div class="panel move"><p class="move-label">The move</p>
+      <p>Take the thing you shipped most recently and run its install command from a fresh temporary directory on a machine that has never seen the project. Whatever breaks is what your users have been hitting.</p>
+      </div>
+
+      <nav class="pager" aria-label="Chapter navigation">
+        <a class="prev" href="getting-found.html"><span class="dir">Previous</span><span class="to">Chapter 9. Getting Found</span></a>
+        <a class="next" href="the-s-tier-ladder.html"><span class="dir">Next</span><span class="to">Chapter 11. The S-Tier Ladder</span></a>
+      </nav>
+    </main>
+    <section class="ship-strip" aria-label="Install the pack">
+      <div class="ship-strip-shell">
+        <p class="ship-strip-head">Proof is part of the release.</p>
+        <p class="ship-strip-sub">First install takes two commands. After the marketplace is added, install is one. Every skill is plain Markdown.</p>
+        <div class="ship-strip-row">
+          <code><span class="prompt">$</span> /plugin marketplace add JasonColapietro/suede-creator-skills &rarr; /plugin install suede-skills@suede</code>
+          <a href="../plugins.html">All install paths</a>
+        </div>
+      </div>
+    </section>
+    <footer>
+      <div class="footer-shell">
+        <p class="footer-note">Suede Creator Skills is a 76-skill, open-source pack for Claude Code and OpenAI Codex: outcome-bound orchestration, code review with an A-F ship grade, AI evals, design and copy, SEO/AEO/AI EO, iOS and Android app shipping, and a creator toolkit for music rights and release prep. Original work is MIT licensed; adapted components retain their upstream notices.</p>
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <img src="../assets/suede-ai-logo-transparent.webp" alt="Suede AI" onerror="this.style.display='none'">
+            <span>Built by <strong>Jason Colapietro</strong> / Suede AI</span>
+          </div>
+          <div class="footer-links">
+            <a href="https://x.com/johnnysuede" target="_blank" rel="noopener">@johnnysuede</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai" target="_blank" rel="noopener">suedeai.ai</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://github.com/JasonColapietro/suede-creator-skills" target="_blank" rel="noopener">GitHub</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai/privacy" target="_blank" rel="noopener">Privacy</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai/contact" target="_blank" rel="noopener">Contact</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <script>
+      // Mobile nav disclosure. The markup ships <details open> so a no-JS
+      // visit still reaches every link; this collapses it at mobile widths
+      // only and keeps the summary label in sync with the state.
+      (function () {
+        var box = document.querySelector('.nav-disclosure');
+        if (!box) return;
+        var summary = box.querySelector('summary');
+        var mq = window.matchMedia('(max-width: 768px)');
+        function collapseForViewport() { box.open = !mq.matches; }
+        function syncLabel() {
+          if (summary) summary.setAttribute('aria-label', box.open ? 'Close navigation menu' : 'Open navigation menu');
+        }
+        collapseForViewport();
+        syncLabel();
+        box.addEventListener('toggle', syncLabel);
+        if (mq.addEventListener) mq.addEventListener('change', collapseForViewport);
+        else if (mq.addListener) mq.addListener(collapseForViewport);
+        box.querySelectorAll('.nav-links a').forEach(function (link) {
+          link.addEventListener('click', function () { if (mq.matches) box.open = false; });
+        });
+      })();
+    </script>
+  </body>
+</html>

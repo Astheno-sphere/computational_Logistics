@@ -1,0 +1,122 @@
+---
+name: Report a bug
+description: Report a bug in OSMnx's code
+labels: bug
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for using OSMnx!
+
+  - type: checkboxes
+    id: contributing
+    attributes:
+      label: Contributing guidelines
+      description: |
+        Before you proceed, read the
+        [contributing guidelines](../blob/main/CONTRIBUTING.md)
+        regarding where to ask usage questions and how to file a bug report.
+      options:
+        - label: I understand the contributing guidelines
+          required: true
+
+  - type: checkboxes
+    id: documentation_examples
+    attributes:
+      label: Documentation
+      description: |
+        Before you proceed, review the [documentation](https://osmnx.readthedocs.io/)
+        and [examples gallery](https://github.com/gboeing/osmnx-examples), which
+        cover key concepts, installation, and package usage.
+      options:
+        - label: My problem is not addressed by the documentation or examples
+          required: true
+
+  - type: checkboxes
+    id: existing_issue
+    attributes:
+      label: Existing issues
+      description: |
+        Before you proceed, search the open and closed issues to see if the
+        problem has already been reported.
+      options:
+        - label: My problem does not appear in an existing issue
+          required: true
+
+  - type: input
+    id: os_python
+    attributes:
+      label: What operating system and Python version are you using?
+      placeholder: e.g., Windows 11/Python 3.13
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: What OSMnx version are you using?
+      description: Ensure you are using the latest release.
+      placeholder: e.g., v0.0.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment packages and versions
+      description: |
+        Paste the complete output of `conda list` or `pip list` here.
+        Auto-rendered as code, no need for backticks.
+      render: shell
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: How did you install OSMnx?
+      description: |
+        Ensure you followed the
+        [installation](https://osmnx.readthedocs.io/en/stable/installation.html)
+        instructions.
+      multiple: false
+      options:
+        - conda or mamba (via conda-forge)
+        - pip or uv (via PyPI)
+        - OSMnx Docker image
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem description
+      description: |
+        What did you do? What did you expect to happen? What actually happened
+        instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: mwe
+    attributes:
+      label: Minimal standalone reproducible example
+      description: |
+        We need a minimal standalone example code snippet to be able to reproduce
+        and in turn troubleshoot your problem (also provide the resulting complete
+        error traceback if your code generates an error). This code snippet must
+        be _minimal_: the absolute fewest lines of code necessary to reproduce your
+        problem without any extraneous code or data unrelated to your specific
+        problem. This usually requires reworking your code and data down to just a
+        few lines necessary to generate the error. And it must be _standalone_: all
+        imports, data, and variables must be completely defined within the snippet
+        itself so others can independently run it from top to bottom by
+        copying/pasting it into a Python interpreter. Do not link to or load
+        external files and do not provide screenshots of code or error messages:
+        provide all code, data, and tracebacks inline as text. If you're unsure how
+        to create a good reproducible example, read
+        [this guide](https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports).
+        Auto-rendered as code, no need for backticks.
+      render: python
+    validations:
+      required: true

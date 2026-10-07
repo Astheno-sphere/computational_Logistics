@@ -1,0 +1,1160 @@
+from __future__ import annotations
+
+import os
+from typing import Any, cast
+
+import pytest
+
+from anthropic import Anthropic, AsyncAnthropic
+from tests.utils import assert_matches_type
+from anthropic.types.beta import (
+    BetaMessage,
+    BetaMessageTokensCount,
+)
+
+base_url = os.environ.get("TEST_API_BASE_URL", "http://127.0.0.1:4010")
+
+
+class TestMessages:
+    parametrize = pytest.mark.parametrize("client", [False, True], indirect=True, ids=["loose", "strict"])
+
+    @parametrize
+    def test_method_create_overload_1(self, client: Anthropic) -> None:
+        message = client.beta.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        )
+        assert_matches_type(BetaMessage, message, path=["response"])
+
+    @parametrize
+    def test_method_create_with_all_params_overload_1(self, client: Anthropic) -> None:
+        message = client.beta.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                    "clear_at": "next_user_message",
+                    "output_config": {"effort": "low"},
+                }
+            ],
+            model="claude-opus-5",
+            cache_control={
+                "type": "ephemeral",
+                "ttl": "5m",
+            },
+            compaction={
+                "type": "summarize",
+                "instructions": "instructions",
+            },
+            container={
+                "id": "id",
+                "skills": [
+                    {
+                        "skill_id": "pdf",
+                        "type": "anthropic",
+                        "version": "latest",
+                    }
+                ],
+            },
+            context_management={
+                "edits": [
+                    {
+                        "type": "clear_tool_uses_20250919",
+                        "clear_at_least": {
+                            "type": "input_tokens",
+                            "value": 0,
+                        },
+                        "clear_tool_inputs": True,
+                        "exclude_tools": ["string"],
+                        "keep": {
+                            "type": "tool_uses",
+                            "value": 0,
+                        },
+                        "trigger": {
+                            "type": "input_tokens",
+                            "value": 1,
+                        },
+                    }
+                ]
+            },
+            diagnostics={"previous_message_id": "previous_message_id"},
+            fallback_credit_token="x",
+            fallbacks="default",
+            inference_geo="inference_geo",
+            mcp_servers=[
+                {
+                    "name": "name",
+                    "type": "url",
+                    "url": "url",
+                    "authorization_token": "authorization_token",
+                    "tool_configuration": {
+                        "allowed_tools": ["string"],
+                        "enabled": True,
+                    },
+                }
+            ],
+            metadata={"user_id": "13803d75-b4b5-4c3e-b2a2-6f21399b021b"},
+            output_config={
+                "effort": "low",
+                "format": {
+                    "schema": {"foo": "bar"},
+                    "type": "json_schema",
+                },
+                "task_budget": {
+                    "total": 1024,
+                    "type": "tokens",
+                    "remaining": 0,
+                },
+            },
+            service_tier="auto",
+            speed="standard",
+            stop_sequences=["string"],
+            stream=False,
+            system=[
+                {
+                    "text": "Today's date is 2024-06-01.",
+                    "type": "text",
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "citations": [
+                        {
+                            "cited_text": "The grass is green. The sky is blue.",
+                            "document_index": 0,
+                            "document_title": "x",
+                            "end_char_index": 0,
+                            "start_char_index": 0,
+                            "type": "char_location",
+                        }
+                    ],
+                }
+            ],
+            thinking={
+                "type": "adaptive",
+                "block_binding": {"prefix_mismatch_behavior": "error"},
+                "display": "summarized",
+            },
+            tool_choice={
+                "type": "auto",
+                "disable_parallel_tool_use": True,
+            },
+            tools=[
+                {
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "location": "bar",
+                            "unit": "bar",
+                        },
+                        "required": ["location"],
+                    },
+                    "name": "name",
+                    "allowed_callers": ["direct"],
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "defer_loading": True,
+                    "description": "Get the current weather in a given location",
+                    "eager_input_streaming": True,
+                    "input_examples": [{"foo": "bar"}],
+                    "strict": True,
+                    "type": "custom",
+                }
+            ],
+            betas=["message-batches-2024-09-24"],
+            user_profile_id="anthropic-user-profile-id",
+            workspace_id="wrkspc_011CZkZaBF1tNoB5wlCeusgy",
+        )
+        assert_matches_type(BetaMessage, message, path=["response"])
+
+    @parametrize
+    def test_raw_response_create_overload_1(self, client: Anthropic) -> None:
+        response = client.beta.messages.with_raw_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        )
+
+        assert response.is_closed is True
+        assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+        message = response.parse()
+        assert_matches_type(BetaMessage, message, path=["response"])
+
+    @parametrize
+    def test_streaming_response_create_overload_1(self, client: Anthropic) -> None:
+        with client.beta.messages.with_streaming_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        ) as response:
+            assert not response.is_closed
+            assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+
+            message = response.parse()
+            assert_matches_type(BetaMessage, message, path=["response"])
+
+        assert cast(Any, response.is_closed) is True
+
+    @parametrize
+    def test_method_create_overload_2(self, client: Anthropic) -> None:
+        message_stream = client.beta.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+            stream=True,
+        )
+        message_stream.response.close()
+
+    @parametrize
+    def test_method_create_with_all_params_overload_2(self, client: Anthropic) -> None:
+        message_stream = client.beta.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                    "clear_at": "next_user_message",
+                    "output_config": {"effort": "low"},
+                }
+            ],
+            model="claude-opus-5",
+            stream=True,
+            cache_control={
+                "type": "ephemeral",
+                "ttl": "5m",
+            },
+            compaction={
+                "type": "summarize",
+                "instructions": "instructions",
+            },
+            container={
+                "id": "id",
+                "skills": [
+                    {
+                        "skill_id": "pdf",
+                        "type": "anthropic",
+                        "version": "latest",
+                    }
+                ],
+            },
+            context_management={
+                "edits": [
+                    {
+                        "type": "clear_tool_uses_20250919",
+                        "clear_at_least": {
+                            "type": "input_tokens",
+                            "value": 0,
+                        },
+                        "clear_tool_inputs": True,
+                        "exclude_tools": ["string"],
+                        "keep": {
+                            "type": "tool_uses",
+                            "value": 0,
+                        },
+                        "trigger": {
+                            "type": "input_tokens",
+                            "value": 1,
+                        },
+                    }
+                ]
+            },
+            diagnostics={"previous_message_id": "previous_message_id"},
+            fallback_credit_token="x",
+            fallbacks="default",
+            inference_geo="inference_geo",
+            mcp_servers=[
+                {
+                    "name": "name",
+                    "type": "url",
+                    "url": "url",
+                    "authorization_token": "authorization_token",
+                    "tool_configuration": {
+                        "allowed_tools": ["string"],
+                        "enabled": True,
+                    },
+                }
+            ],
+            metadata={"user_id": "13803d75-b4b5-4c3e-b2a2-6f21399b021b"},
+            output_config={
+                "effort": "low",
+                "format": {
+                    "schema": {"foo": "bar"},
+                    "type": "json_schema",
+                },
+                "task_budget": {
+                    "total": 1024,
+                    "type": "tokens",
+                    "remaining": 0,
+                },
+            },
+            service_tier="auto",
+            speed="standard",
+            stop_sequences=["string"],
+            system=[
+                {
+                    "text": "Today's date is 2024-06-01.",
+                    "type": "text",
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "citations": [
+                        {
+                            "cited_text": "The grass is green. The sky is blue.",
+                            "document_index": 0,
+                            "document_title": "x",
+                            "end_char_index": 0,
+                            "start_char_index": 0,
+                            "type": "char_location",
+                        }
+                    ],
+                }
+            ],
+            thinking={
+                "type": "adaptive",
+                "block_binding": {"prefix_mismatch_behavior": "error"},
+                "display": "summarized",
+            },
+            tool_choice={
+                "type": "auto",
+                "disable_parallel_tool_use": True,
+            },
+            tools=[
+                {
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "location": "bar",
+                            "unit": "bar",
+                        },
+                        "required": ["location"],
+                    },
+                    "name": "name",
+                    "allowed_callers": ["direct"],
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "defer_loading": True,
+                    "description": "Get the current weather in a given location",
+                    "eager_input_streaming": True,
+                    "input_examples": [{"foo": "bar"}],
+                    "strict": True,
+                    "type": "custom",
+                }
+            ],
+            betas=["message-batches-2024-09-24"],
+            user_profile_id="anthropic-user-profile-id",
+            workspace_id="wrkspc_011CZkZaBF1tNoB5wlCeusgy",
+        )
+        message_stream.response.close()
+
+    @parametrize
+    def test_raw_response_create_overload_2(self, client: Anthropic) -> None:
+        response = client.beta.messages.with_raw_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+            stream=True,
+        )
+
+        assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+        stream = response.parse()
+        stream.close()
+
+    @parametrize
+    def test_streaming_response_create_overload_2(self, client: Anthropic) -> None:
+        with client.beta.messages.with_streaming_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+            stream=True,
+        ) as response:
+            assert not response.is_closed
+            assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+
+            stream = response.parse()
+            stream.close()
+
+        assert cast(Any, response.is_closed) is True
+
+    @parametrize
+    def test_method_count_tokens(self, client: Anthropic) -> None:
+        message = client.beta.messages.count_tokens(
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        )
+        assert_matches_type(BetaMessageTokensCount, message, path=["response"])
+
+    @parametrize
+    def test_method_count_tokens_with_all_params(self, client: Anthropic) -> None:
+        message = client.beta.messages.count_tokens(
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                    "clear_at": "next_user_message",
+                    "output_config": {"effort": "low"},
+                }
+            ],
+            model="claude-opus-5",
+            cache_control={
+                "type": "ephemeral",
+                "ttl": "5m",
+            },
+            compaction={
+                "type": "summarize",
+                "instructions": "instructions",
+            },
+            context_management={
+                "edits": [
+                    {
+                        "type": "clear_tool_uses_20250919",
+                        "clear_at_least": {
+                            "type": "input_tokens",
+                            "value": 0,
+                        },
+                        "clear_tool_inputs": True,
+                        "exclude_tools": ["string"],
+                        "keep": {
+                            "type": "tool_uses",
+                            "value": 0,
+                        },
+                        "trigger": {
+                            "type": "input_tokens",
+                            "value": 1,
+                        },
+                    }
+                ]
+            },
+            mcp_servers=[
+                {
+                    "name": "name",
+                    "type": "url",
+                    "url": "url",
+                    "authorization_token": "authorization_token",
+                    "tool_configuration": {
+                        "allowed_tools": ["string"],
+                        "enabled": True,
+                    },
+                }
+            ],
+            output_config={
+                "effort": "low",
+                "format": {
+                    "schema": {"foo": "bar"},
+                    "type": "json_schema",
+                },
+                "task_budget": {
+                    "total": 1024,
+                    "type": "tokens",
+                    "remaining": 0,
+                },
+            },
+            speed="fast",
+            system=[
+                {
+                    "text": "Today's date is 2024-06-01.",
+                    "type": "text",
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "citations": [
+                        {
+                            "cited_text": "The grass is green. The sky is blue.",
+                            "document_index": 0,
+                            "document_title": "x",
+                            "end_char_index": 0,
+                            "start_char_index": 0,
+                            "type": "char_location",
+                        }
+                    ],
+                }
+            ],
+            thinking={
+                "type": "adaptive",
+                "block_binding": {"prefix_mismatch_behavior": "error"},
+                "display": "summarized",
+            },
+            tool_choice={
+                "type": "auto",
+                "disable_parallel_tool_use": True,
+            },
+            tools=[
+                {
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "location": "bar",
+                            "unit": "bar",
+                        },
+                        "required": ["location"],
+                    },
+                    "name": "name",
+                    "allowed_callers": ["direct"],
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "defer_loading": True,
+                    "description": "Get the current weather in a given location",
+                    "eager_input_streaming": True,
+                    "input_examples": [{"foo": "bar"}],
+                    "strict": True,
+                    "type": "custom",
+                }
+            ],
+            betas=["string"],
+            workspace_id="wrkspc_011CZkZaBF1tNoB5wlCeusgy",
+        )
+        assert_matches_type(BetaMessageTokensCount, message, path=["response"])
+
+    @parametrize
+    def test_raw_response_count_tokens(self, client: Anthropic) -> None:
+        response = client.beta.messages.with_raw_response.count_tokens(
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        )
+
+        assert response.is_closed is True
+        assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+        message = response.parse()
+        assert_matches_type(BetaMessageTokensCount, message, path=["response"])
+
+    @parametrize
+    def test_streaming_response_count_tokens(self, client: Anthropic) -> None:
+        with client.beta.messages.with_streaming_response.count_tokens(
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        ) as response:
+            assert not response.is_closed
+            assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+
+            message = response.parse()
+            assert_matches_type(BetaMessageTokensCount, message, path=["response"])
+
+        assert cast(Any, response.is_closed) is True
+
+
+class TestAsyncMessages:
+    parametrize = pytest.mark.parametrize(
+        "async_client", [False, True, {"http_client": "aiohttp"}], indirect=True, ids=["loose", "strict", "aiohttp"]
+    )
+
+    @parametrize
+    async def test_method_create_overload_1(self, async_client: AsyncAnthropic) -> None:
+        message = await async_client.beta.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        )
+        assert_matches_type(BetaMessage, message, path=["response"])
+
+    @parametrize
+    async def test_method_create_with_all_params_overload_1(self, async_client: AsyncAnthropic) -> None:
+        message = await async_client.beta.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                    "clear_at": "next_user_message",
+                    "output_config": {"effort": "low"},
+                }
+            ],
+            model="claude-opus-5",
+            cache_control={
+                "type": "ephemeral",
+                "ttl": "5m",
+            },
+            compaction={
+                "type": "summarize",
+                "instructions": "instructions",
+            },
+            container={
+                "id": "id",
+                "skills": [
+                    {
+                        "skill_id": "pdf",
+                        "type": "anthropic",
+                        "version": "latest",
+                    }
+                ],
+            },
+            context_management={
+                "edits": [
+                    {
+                        "type": "clear_tool_uses_20250919",
+                        "clear_at_least": {
+                            "type": "input_tokens",
+                            "value": 0,
+                        },
+                        "clear_tool_inputs": True,
+                        "exclude_tools": ["string"],
+                        "keep": {
+                            "type": "tool_uses",
+                            "value": 0,
+                        },
+                        "trigger": {
+                            "type": "input_tokens",
+                            "value": 1,
+                        },
+                    }
+                ]
+            },
+            diagnostics={"previous_message_id": "previous_message_id"},
+            fallback_credit_token="x",
+            fallbacks="default",
+            inference_geo="inference_geo",
+            mcp_servers=[
+                {
+                    "name": "name",
+                    "type": "url",
+                    "url": "url",
+                    "authorization_token": "authorization_token",
+                    "tool_configuration": {
+                        "allowed_tools": ["string"],
+                        "enabled": True,
+                    },
+                }
+            ],
+            metadata={"user_id": "13803d75-b4b5-4c3e-b2a2-6f21399b021b"},
+            output_config={
+                "effort": "low",
+                "format": {
+                    "schema": {"foo": "bar"},
+                    "type": "json_schema",
+                },
+                "task_budget": {
+                    "total": 1024,
+                    "type": "tokens",
+                    "remaining": 0,
+                },
+            },
+            service_tier="auto",
+            speed="standard",
+            stop_sequences=["string"],
+            stream=False,
+            system=[
+                {
+                    "text": "Today's date is 2024-06-01.",
+                    "type": "text",
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "citations": [
+                        {
+                            "cited_text": "The grass is green. The sky is blue.",
+                            "document_index": 0,
+                            "document_title": "x",
+                            "end_char_index": 0,
+                            "start_char_index": 0,
+                            "type": "char_location",
+                        }
+                    ],
+                }
+            ],
+            thinking={
+                "type": "adaptive",
+                "block_binding": {"prefix_mismatch_behavior": "error"},
+                "display": "summarized",
+            },
+            tool_choice={
+                "type": "auto",
+                "disable_parallel_tool_use": True,
+            },
+            tools=[
+                {
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "location": "bar",
+                            "unit": "bar",
+                        },
+                        "required": ["location"],
+                    },
+                    "name": "name",
+                    "allowed_callers": ["direct"],
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "defer_loading": True,
+                    "description": "Get the current weather in a given location",
+                    "eager_input_streaming": True,
+                    "input_examples": [{"foo": "bar"}],
+                    "strict": True,
+                    "type": "custom",
+                }
+            ],
+            betas=["message-batches-2024-09-24"],
+            user_profile_id="anthropic-user-profile-id",
+            workspace_id="wrkspc_011CZkZaBF1tNoB5wlCeusgy",
+        )
+        assert_matches_type(BetaMessage, message, path=["response"])
+
+    @parametrize
+    async def test_raw_response_create_overload_1(self, async_client: AsyncAnthropic) -> None:
+        response = await async_client.beta.messages.with_raw_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        )
+
+        assert response.is_closed is True
+        assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+        message = await response.parse()
+        assert_matches_type(BetaMessage, message, path=["response"])
+
+    @parametrize
+    async def test_streaming_response_create_overload_1(self, async_client: AsyncAnthropic) -> None:
+        async with async_client.beta.messages.with_streaming_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        ) as response:
+            assert not response.is_closed
+            assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+
+            message = await response.parse()
+            assert_matches_type(BetaMessage, message, path=["response"])
+
+        assert cast(Any, response.is_closed) is True
+
+    @parametrize
+    async def test_method_create_overload_2(self, async_client: AsyncAnthropic) -> None:
+        message_stream = await async_client.beta.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+            stream=True,
+        )
+        await message_stream.response.aclose()
+
+    @parametrize
+    async def test_method_create_with_all_params_overload_2(self, async_client: AsyncAnthropic) -> None:
+        message_stream = await async_client.beta.messages.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                    "clear_at": "next_user_message",
+                    "output_config": {"effort": "low"},
+                }
+            ],
+            model="claude-opus-5",
+            stream=True,
+            cache_control={
+                "type": "ephemeral",
+                "ttl": "5m",
+            },
+            compaction={
+                "type": "summarize",
+                "instructions": "instructions",
+            },
+            container={
+                "id": "id",
+                "skills": [
+                    {
+                        "skill_id": "pdf",
+                        "type": "anthropic",
+                        "version": "latest",
+                    }
+                ],
+            },
+            context_management={
+                "edits": [
+                    {
+                        "type": "clear_tool_uses_20250919",
+                        "clear_at_least": {
+                            "type": "input_tokens",
+                            "value": 0,
+                        },
+                        "clear_tool_inputs": True,
+                        "exclude_tools": ["string"],
+                        "keep": {
+                            "type": "tool_uses",
+                            "value": 0,
+                        },
+                        "trigger": {
+                            "type": "input_tokens",
+                            "value": 1,
+                        },
+                    }
+                ]
+            },
+            diagnostics={"previous_message_id": "previous_message_id"},
+            fallback_credit_token="x",
+            fallbacks="default",
+            inference_geo="inference_geo",
+            mcp_servers=[
+                {
+                    "name": "name",
+                    "type": "url",
+                    "url": "url",
+                    "authorization_token": "authorization_token",
+                    "tool_configuration": {
+                        "allowed_tools": ["string"],
+                        "enabled": True,
+                    },
+                }
+            ],
+            metadata={"user_id": "13803d75-b4b5-4c3e-b2a2-6f21399b021b"},
+            output_config={
+                "effort": "low",
+                "format": {
+                    "schema": {"foo": "bar"},
+                    "type": "json_schema",
+                },
+                "task_budget": {
+                    "total": 1024,
+                    "type": "tokens",
+                    "remaining": 0,
+                },
+            },
+            service_tier="auto",
+            speed="standard",
+            stop_sequences=["string"],
+            system=[
+                {
+                    "text": "Today's date is 2024-06-01.",
+                    "type": "text",
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "citations": [
+                        {
+                            "cited_text": "The grass is green. The sky is blue.",
+                            "document_index": 0,
+                            "document_title": "x",
+                            "end_char_index": 0,
+                            "start_char_index": 0,
+                            "type": "char_location",
+                        }
+                    ],
+                }
+            ],
+            thinking={
+                "type": "adaptive",
+                "block_binding": {"prefix_mismatch_behavior": "error"},
+                "display": "summarized",
+            },
+            tool_choice={
+                "type": "auto",
+                "disable_parallel_tool_use": True,
+            },
+            tools=[
+                {
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "location": "bar",
+                            "unit": "bar",
+                        },
+                        "required": ["location"],
+                    },
+                    "name": "name",
+                    "allowed_callers": ["direct"],
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "defer_loading": True,
+                    "description": "Get the current weather in a given location",
+                    "eager_input_streaming": True,
+                    "input_examples": [{"foo": "bar"}],
+                    "strict": True,
+                    "type": "custom",
+                }
+            ],
+            betas=["message-batches-2024-09-24"],
+            user_profile_id="anthropic-user-profile-id",
+            workspace_id="wrkspc_011CZkZaBF1tNoB5wlCeusgy",
+        )
+        await message_stream.response.aclose()
+
+    @parametrize
+    async def test_raw_response_create_overload_2(self, async_client: AsyncAnthropic) -> None:
+        response = await async_client.beta.messages.with_raw_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+            stream=True,
+        )
+
+        assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+        stream = await response.parse()
+        await stream.close()
+
+    @parametrize
+    async def test_streaming_response_create_overload_2(self, async_client: AsyncAnthropic) -> None:
+        async with async_client.beta.messages.with_streaming_response.create(
+            max_tokens=1024,
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+            stream=True,
+        ) as response:
+            assert not response.is_closed
+            assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+
+            stream = await response.parse()
+            await stream.close()
+
+        assert cast(Any, response.is_closed) is True
+
+    @parametrize
+    async def test_method_count_tokens(self, async_client: AsyncAnthropic) -> None:
+        message = await async_client.beta.messages.count_tokens(
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        )
+        assert_matches_type(BetaMessageTokensCount, message, path=["response"])
+
+    @parametrize
+    async def test_method_count_tokens_with_all_params(self, async_client: AsyncAnthropic) -> None:
+        message = await async_client.beta.messages.count_tokens(
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                    "clear_at": "next_user_message",
+                    "output_config": {"effort": "low"},
+                }
+            ],
+            model="claude-opus-5",
+            cache_control={
+                "type": "ephemeral",
+                "ttl": "5m",
+            },
+            compaction={
+                "type": "summarize",
+                "instructions": "instructions",
+            },
+            context_management={
+                "edits": [
+                    {
+                        "type": "clear_tool_uses_20250919",
+                        "clear_at_least": {
+                            "type": "input_tokens",
+                            "value": 0,
+                        },
+                        "clear_tool_inputs": True,
+                        "exclude_tools": ["string"],
+                        "keep": {
+                            "type": "tool_uses",
+                            "value": 0,
+                        },
+                        "trigger": {
+                            "type": "input_tokens",
+                            "value": 1,
+                        },
+                    }
+                ]
+            },
+            mcp_servers=[
+                {
+                    "name": "name",
+                    "type": "url",
+                    "url": "url",
+                    "authorization_token": "authorization_token",
+                    "tool_configuration": {
+                        "allowed_tools": ["string"],
+                        "enabled": True,
+                    },
+                }
+            ],
+            output_config={
+                "effort": "low",
+                "format": {
+                    "schema": {"foo": "bar"},
+                    "type": "json_schema",
+                },
+                "task_budget": {
+                    "total": 1024,
+                    "type": "tokens",
+                    "remaining": 0,
+                },
+            },
+            speed="fast",
+            system=[
+                {
+                    "text": "Today's date is 2024-06-01.",
+                    "type": "text",
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "citations": [
+                        {
+                            "cited_text": "The grass is green. The sky is blue.",
+                            "document_index": 0,
+                            "document_title": "x",
+                            "end_char_index": 0,
+                            "start_char_index": 0,
+                            "type": "char_location",
+                        }
+                    ],
+                }
+            ],
+            thinking={
+                "type": "adaptive",
+                "block_binding": {"prefix_mismatch_behavior": "error"},
+                "display": "summarized",
+            },
+            tool_choice={
+                "type": "auto",
+                "disable_parallel_tool_use": True,
+            },
+            tools=[
+                {
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "location": "bar",
+                            "unit": "bar",
+                        },
+                        "required": ["location"],
+                    },
+                    "name": "name",
+                    "allowed_callers": ["direct"],
+                    "cache_control": {
+                        "type": "ephemeral",
+                        "ttl": "5m",
+                    },
+                    "defer_loading": True,
+                    "description": "Get the current weather in a given location",
+                    "eager_input_streaming": True,
+                    "input_examples": [{"foo": "bar"}],
+                    "strict": True,
+                    "type": "custom",
+                }
+            ],
+            betas=["string"],
+            user_profile_id="anthropic-user-profile-id",
+            workspace_id="wrkspc_011CZkZaBF1tNoB5wlCeusgy",
+        )
+        assert_matches_type(BetaMessageTokensCount, message, path=["response"])
+
+    @parametrize
+    async def test_raw_response_count_tokens(self, async_client: AsyncAnthropic) -> None:
+        response = await async_client.beta.messages.with_raw_response.count_tokens(
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        )
+
+        assert response.is_closed is True
+        assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+        message = await response.parse()
+        assert_matches_type(BetaMessageTokensCount, message, path=["response"])
+
+    @parametrize
+    async def test_streaming_response_count_tokens(self, async_client: AsyncAnthropic) -> None:
+        async with async_client.beta.messages.with_streaming_response.count_tokens(
+            messages=[
+                {
+                    "content": "Hello, world",
+                    "role": "user",
+                }
+            ],
+            model="claude-opus-5",
+        ) as response:
+            assert not response.is_closed
+            assert response.http_request.headers.get("X-Stainless-Lang") == "python"
+
+            message = await response.parse()
+            assert_matches_type(BetaMessageTokensCount, message, path=["response"])
+
+        assert cast(Any, response.is_closed) is True

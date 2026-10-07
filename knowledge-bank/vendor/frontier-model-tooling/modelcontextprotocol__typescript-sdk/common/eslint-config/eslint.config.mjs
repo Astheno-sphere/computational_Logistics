@@ -1,0 +1,126 @@
+// @ts-check
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import importPlugin from 'eslint-plugin-import';
+import nodePlugin from 'eslint-plugin-n';
+import simpleImportSortPlugin from 'eslint-plugin-simple-import-sort';
+import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+import { configs } from 'typescript-eslint';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig(
+    eslint.configs.recommended,
+    ...configs.recommended,
+    importPlugin.flatConfigs.recommended,
+    importPlugin.flatConfigs.typescript,
+    eslintPluginUnicorn.configs.recommended,
+    {
+        languageOptions: {
+            parserOptions: {
+                // Ensure consumers of this shared config get a stable tsconfig root
+                tsconfigRootDir: __dirname
+            }
+        },
+        linterOptions: {
+            reportUnusedDisableDirectives: false
+        },
+        plugins: {
+            n: nodePlugin,
+            'simple-import-sort': simpleImportSortPlugin
+        },
+        settings: {
+            'import/resolver': {
+                typescript: {
+                    // Resolve extensionless relative imports (moduleResolution: bundler) to their TS sources
+                    extensions: ['.js', '.jsx', '.ts', '.tsx', '.d.ts'],
+                    // Use the tsconfig in each package root (when running ESLint from that package)
+                    project: 'tsconfig.json'
+                }
+            }
+        },
+        rules: {
+            'unicorn/prevent-abbreviations': 'off',
+            'unicorn/no-null': 'off',
+            'unicorn/prefer-add-event-listener': 'off',
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector:
+                        ":matches(CallExpression[callee.property.name='includes'], CallExpression[callee.property.name='indexOf'], " +
+                        "CallExpression[callee.property.name='startsWith'])[arguments.0.value='application/json']",
+                    message:
+                        "Substring-matching 'application/json' misclassifies Content-Type values whose media type is different " +
+                        "(e.g. 'text/plain; a=application/json') and mishandles parameters and case. " +
+                        'Parse the media type instead: isJsonContentType() from core-internal.'
+                }
+            ],
+            'unicorn/no-useless-undefined': ['error', { checkArguments: false }],
+            '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+            'n/prefer-node-protocol': 'error',
+            '@typescript-eslint/consistent-type-imports': ['error', { disallowTypeAnnotations: false }],
+            'simple-import-sort/imports': 'warn',
+            'simple-import-sort/exports': 'warn',
+            'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
+            'import/no-extraneous-dependencies': [
+                'error',
+                {
+                    devDependencies: [
+                        '**/test/**',
+                        '**/*.test.ts',
+                        '**/*.test.tsx',
+                        '**/scripts/**',
+                        '**/vitest.config.*',
+                        '**/tsdown.config.*',
+                        '**/eslint.config.*',
+                        '**/vitest.setup.*'
+                    ],
+                    optionalDependencies: false,
+                    peerDependencies: true
+                }
+            ],
+            'unicorn/filename-case': [
+                'error',
+                {
+                    case: 'camelCase'
+                }
+            ]
+        }
+    },
+    {
+        // Disable consistent-function-scoping in test files where helper functions are common
+        files: ['**/*.test.ts', '**/*.test.tsx', '**/test/**'],
+        rules: {
+            'unicorn/consistent-function-scoping': 'off'
+        }
+    },
+    {
+        // Example files contain intentionally unused functions (one per region)
+        files: ['**/*.examples.ts'],
+        rules: {
+            '@typescript-eslint/no-unused-vars': 'off',
+            'no-console': 'off'
+        }
+    },
+    {
+        // Ignore build artifacts everywhere (mirrors .prettierignore). A flat-config
+        // object with only `ignores` is a global ignore; ESLint does not skip dist by default.
+        ignores: ['**/dist/**', '**/build/**', '**/coverage/**']
+    },
+    {
+        // Ignore generated protocol types everywhere
+        ignores: ['**/spec.types.2025-11-25.ts', '**/spec.types.2026-07-28.ts']
+    },
+    {
+        files: ['packages/client/**/*.ts', 'packages/server/**/*.ts'],
+        ignores: ['**/*.test.ts'],
+        rules: {
+            'no-console': 'error'
+        }
+    },
+    eslintConfigPrettier
+);

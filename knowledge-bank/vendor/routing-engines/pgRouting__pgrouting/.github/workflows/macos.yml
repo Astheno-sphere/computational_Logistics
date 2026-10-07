@@ -1,0 +1,88 @@
+name: Build for macOS
+# This file is part of the pgRouting project.
+# Copyright (c) 2020-2026 pgRouting developers
+# License: GPL-2 See https://github.com/pgRouting/pgrouting/blob/main/LICENSE
+
+# manually triggered workflow
+# - macOS test takes too much time
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/macos.yml'
+      - 'src/**'
+      - 'include/**'
+      - 'pgtap/**'
+      - 'tools/testers/**'
+      - 'CMakeLists.txt'
+
+    branches-ignore:
+      - 'gh-pages'
+
+  pull_request:
+    paths:
+      - '.github/workflows/macos.yml'
+      - 'src/**'
+      - 'include/**'
+      - 'pgtap/**'
+      - 'tools/testers/**'
+      - 'CMakeLists.txt'
+
+    branches-ignore:
+      - 'gh-pages'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: macos
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-14]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: install deps
+        run: |
+          brew install postgresql@17 postgis boost
+          brew link postgresql@17
+
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_SHARED_MODULE_SUFFIX_CXX=.dylib -DWITH_DOC=OFF ..
+
+      - name: Build
+        run: |
+          cd build
+          make -j
+          make install
+
+      - name: Install pgTAP
+        run: |
+          git clone https://github.com/theory/pgtap.git pgTapExtension
+          cd pgTapExtension
+          make -j
+          make install
+          cpan TAP::Parser::SourceHandler::pgTAP
+          ln -s $(find `brew --prefix` -name pg_prove) symlink it into $(brew --prefix)/bin
+
+      - name: Test
+        run: |
+          export PATH=$(brew --prefix)/Cellar/perl/$(perl -e 'print substr($^V, 1)')/bin:$PATH
+          pg_ctl -D $(brew --prefix)/var/postgresql@17 start
+          createuser -s postgres
+          createdb ___pgr___test___
+          bash ./tools/testers/pg_prove_tests.sh postgres 5432 Release

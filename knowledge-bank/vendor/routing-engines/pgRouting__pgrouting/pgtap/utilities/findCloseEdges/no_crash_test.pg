@@ -1,0 +1,57 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2022-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT CASE WHEN min_version('3.8.0') THEN plan(32) ELSE plan(1) END;
+
+PREPARE edges AS
+SELECT id, geom FROM edges;
+
+CREATE OR REPLACE FUNCTION no_crash()
+RETURNS SETOF TEXT AS
+$BODY$
+DECLARE
+params TEXT[];
+subs TEXT[];
+BEGIN
+
+  IF NOT min_version('3.8.0') THEN
+    RETURN QUERY SELECT skip(1, 'pgr_findcloseedges testing only valid signatures from 4.0.0');
+    RETURN;
+  END IF;
+
+  params = ARRAY[
+  '$$SELECT id, geom AS geom FROM edges$$',
+  '(SELECT geom FROM pointsOfInterest WHERE pid = 5)',
+  '0.5'
+  ]::TEXT[];
+
+  subs = ARRAY[
+  'NULL',
+  'NULL::geometry',
+  'NULL'
+  ]::TEXT[];
+
+  RETURN query SELECT * FROM no_crash_test('pgr_findCloseEdges', params, subs);
+
+  params[1] := '$$edges$$';
+  RETURN query SELECT * FROM no_crash_test('pgr_findCloseEdges', params, subs);
+
+  params[2] := '(SELECT array_agg(geom) FROM pointsOfInterest)';
+  subs[2] := 'NULL::geometry[]';
+  RETURN query SELECT * FROM no_crash_test('pgr_findCloseEdges', params, subs);
+
+  params[1] := '$$SELECT id, geom FROM edges$$';
+  RETURN query SELECT * FROM no_crash_test('pgr_findCloseEdges', params, subs);
+
+END
+$BODY$
+LANGUAGE plpgsql VOLATILE;
+
+SELECT * FROM no_crash();
+
+SELECT finish();
+ROLLBACK;

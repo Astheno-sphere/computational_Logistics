@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+*******************************************************************************
+
+Rhino.Cpp.x64.Debug.props
+Copyright (C) 2014, Robert McNeel & Associates
+
+Adds the MSBuild property:
+
+  RhinoLibDir = $(RhinoSdkDir)Lib\Release
+    The full path to the folder where Rhino component .lib files are located.
+
+Adds C++ preprocessor define:
+
+  RHINO_LIB_DIR = $(RhinoLibDir)
+	RHINO_DEBUG_PLUGIN
+	
+*******************************************************************************
+-->
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(RhinoPropertySheetDir)\Rhino.Cpp.Common.props" />
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <RhinoLibDir>$(RhinoSdkDir)Lib\Release</RhinoLibDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>;RHINO_LIB_DIR="$(RhinoLibDir.Replace('\','/'))";RHINO_DEBUG_PLUGIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>
+

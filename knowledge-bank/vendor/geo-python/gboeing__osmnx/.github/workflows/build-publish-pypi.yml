@@ -1,0 +1,48 @@
+---
+# This workflow builds the Python package distribution and uploads it to PyPI
+# if the triggering event was a tag push. When it's a scheduled run, it just
+# builds the distribution as a test, but does not upload it. The upload uses
+# PyPI trusted publishing, so don't change this workflow's filename.
+name: Build and publish to PyPI
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    tags:
+      - v*
+  schedule:
+    - cron: 10 4 * * 1  # every monday at 04:10 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_publish_pypi:
+    if: ${{ github.repository == 'gboeing/osmnx' }}
+    name: Build/publish package to PyPI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      id-token: write
+
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish package to PyPI
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+        uses: pypa/gh-action-pypi-publish@release/v1

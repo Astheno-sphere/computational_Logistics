@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+if [[ -n "$1" && "$1" != '--'* ]]; then
+  URL="$1"
+  shift
+elif [ -n "$STAINLESS_OPENAPI_SPEC_URL" ]; then
+  URL="$STAINLESS_OPENAPI_SPEC_URL"
+else
+  # The generator writes the gzip'd spec next to this script; the
+  # cd at the top of scripts/mock puts CWD at the SDK root.
+  SPEC_TMPFILE="$(mktemp)"
+  trap 'rm -f "$SPEC_TMPFILE"' EXIT
+  gunzip -c scripts/mock-spec.json.gz > "$SPEC_TMPFILE"
+  URL="$SPEC_TMPFILE"
+fi
+
+echo "==> Starting mock server with URL ${URL}"
+
+# Run steady mock on the given spec
+if [ "$1" == "--daemon" ]; then
+  # Pre-install the package so the download doesn't eat into the startup timeout
+  npm exec --package=@stdy/cli@0.22.2 -- steady --version
+
+  npm exec --package=@stdy/cli@0.22.2 -- steady --host 127.0.0.1 -p 4010 --validator-query-array-format=brackets --validator-form-array-format=brackets --validator-query-object-format=brackets --validator-form-object-format=brackets "$URL" &> .stdy.log &
+
+  # Wait for server to come online via health endpoint (max 30s)
+  echo -n "Waiting for server"
+  attempts=0
+  while ! curl --silent --fail "http://127.0.0.1:4010/_x-steady/health" >/dev/null 2>&1; do
+    if ! kill -0 $! 2>/dev/null; then
+      echo
+      cat .stdy.log
+      exit 1
+    fi
+    attempts=$((attempts + 1))
+    if [ "$attempts" -ge 300 ]; then
+      echo
+      echo "Timed out waiting for Steady server to start"
+      cat .stdy.log
+      exit 1
+    fi
+    echo -n "."
+    sleep 0.1
+  done
+
+  echo
+else
+  npm exec --package=@stdy/cli@0.22.2 -- steady --host 127.0.0.1 -p 4010 --validator-query-array-format=brackets --validator-form-array-format=brackets --validator-query-object-format=brackets --validator-form-object-format=brackets "$URL"
+fi
