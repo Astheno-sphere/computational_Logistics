@@ -386,13 +386,16 @@ Agent-based transport and urban simulation platforms.
 - **UDST__synthpop** [BSD-3-Clause, vendored]: synthpop: synthetic population synthesis. `vendor/abm-platforms/UDST__synthpop`
 - **eqasim-org__ile-de-france** [GPL, vendored, copyleft]: eqasim Ile-de-France: reproducible synthetic population + MATSim scenario pipeline. `vendor/abm-platforms/eqasim-org__ile-de-france`
 
-## llm-agents (5 vendored, 3 link-only)
+## llm-agents (8 vendored, 3 link-only)
 LLM-driven generative agents for mobility and urban simulation (frontier).
 
 - **AgentTorch__AgentTorch** [AGPL, vendored, copyleft]: AgentTorch: large population models with LLM-guided agents. `vendor/llm-agents/AgentTorch__AgentTorch`
 - **Wangjw6__LLMob** [NONE, LINK-ONLY]: LLMob: LLM agents for personal activity/mobility generation from real data. https://github.com/Wangjw6/LLMob.git
+- **camel-ai__oasis** [Apache-2.0, vendored]: OASIS: open agent social interaction simulation up to one million agents. `vendor/llm-agents/camel-ai__oasis`
 - **dungzvu__llm-agents-gama** [Apache-2.0, vendored]: Generative LLM agents in a multimodal transport system on GAMA (Toulouse); arXiv 2510.19497. `vendor/llm-agents/dungzvu__llm-agents-gama`
+- **google-deepmind__concordia** [Apache-2.0, vendored]: Concordia: library for generative agent-based models (Google DeepMind). `vendor/llm-agents/google-deepmind__concordia`
 - **joonspk-research__generative_agents** [Apache-2.0, vendored]: Generative Agents (Park et al.): memory, reflection, planning architecture. `vendor/llm-agents/joonspk-research__generative_agents`
+- **projectmesa__mesa-llm** [Apache-2.0, vendored]: Mesa-LLM: LLM reasoning inside Mesa ABM agents. `vendor/llm-agents/projectmesa__mesa-llm`
 - **qiliuchn__gatsim** [Apache-2.0, vendored]: GATSim: generative-agent transport simulation with hierarchical memory. `vendor/llm-agents/qiliuchn__gatsim`
 - **tsinghua-fib-lab__agentsociety** [Apache-2.0, vendored]: AgentSociety: LLM-native large-scale social/urban agent simulation. `vendor/llm-agents/tsinghua-fib-lab__agentsociety`
 - **ucla-mobility__MobiVerse** [UNKNOWN, LINK-ONLY]: MobiVerse: hybrid lightweight generator + LLM agents, coupled to SUMO (arXiv 2506.21784). https://github.com/ucla-mobility/MobiVerse.git

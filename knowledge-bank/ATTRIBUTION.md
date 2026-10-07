@@ -41,6 +41,10 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/computational-design/ladybug-tools__lbt-grasshopper`: https://github.com/ladybug-tools/lbt-grasshopper.git, AGPL, commit fe51025
 - `vendor/computational-design/speckleworks__SpeckleCore`: https://github.com/speckleworks/SpeckleCore.git, MIT, commit d29e36a
 - `vendor/computational-design/visgl__deck.gl`: https://github.com/visgl/deck.gl.git, MIT, commit b04c8f2
+- `vendor/decision-models/Wangyu0529__LLM2Jev`: https://github.com/Wangyu0529/LLM2Jev, Apache-2.0, commit 6fbbf74
+- `vendor/decision-models/Zefan-Cai__Open-Jev`: https://github.com/Zefan-Cai/Open-Jev, MIT, commit bd41188
+- `vendor/decision-models/nokia-applied-research__AnyJev`: https://github.com/nokia-applied-research/AnyJev, Apache-2.0, commit f82fe03
+- `vendor/decision-models/tic-top__llm2jev`: https://github.com/tic-top/llm2jev, MIT, commit 2b252d5
 - `vendor/dmdu/Project-Platypus__Platypus`: https://github.com/Project-Platypus/Platypus.git, GPL, commit c1baaa2
 - `vendor/dmdu/Project-Platypus__Rhodium`: https://github.com/Project-Platypus/Rhodium.git, GPL, commit 1c09159
 - `vendor/dmdu/SALib__SALib`: https://github.com/SALib/SALib.git, MIT, commit c8b2be5
@@ -164,8 +168,11 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/harvested-real-estate/pedra-ai__pedra-mcp`: https://github.com/pedra-ai/pedra-mcp.git, MIT, commit 79bbe8b
 - `vendor/harvested-real-estate/zornade__zornade-mcp`: https://github.com/zornade/zornade-mcp.git, MIT, commit ac1e6b1
 - `vendor/llm-agents/AgentTorch__AgentTorch`: https://github.com/AgentTorch/AgentTorch.git, AGPL, commit 86bb57e
+- `vendor/llm-agents/camel-ai__oasis`: https://github.com/camel-ai/oasis, Apache-2.0, commit dded86a
 - `vendor/llm-agents/dungzvu__llm-agents-gama`: https://github.com/dungzvu/llm-agents-gama.git, Apache-2.0, commit 1005169
+- `vendor/llm-agents/google-deepmind__concordia`: https://github.com/google-deepmind/concordia, Apache-2.0, commit e5b3707
 - `vendor/llm-agents/joonspk-research__generative_agents`: https://github.com/joonspk-research/generative_agents.git, Apache-2.0, commit fe05a71
+- `vendor/llm-agents/projectmesa__mesa-llm`: https://github.com/projectmesa/mesa-llm, Apache-2.0, commit c1a91ca
 - `vendor/llm-agents/qiliuchn__gatsim`: https://github.com/qiliuchn/gatsim.git, Apache-2.0, commit fca3064
 - `vendor/llm-agents/tsinghua-fib-lab__agentsociety`: https://github.com/tsinghua-fib-lab/agentsociety.git, Apache-2.0, commit 8cc5bb9
 - `vendor/logistics-benchmarks-solvers/ERGO-Code__HiGHS`: https://github.com/ERGO-Code/HiGHS.git, MIT, commit 73cac48

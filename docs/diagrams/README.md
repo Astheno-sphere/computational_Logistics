@@ -7,7 +7,11 @@ schema, layout (no crossing or ambiguous routes, readable labels) and a real-bro
 
 | Diagram | Static view | Interactive | Source |
 |---|---|---|---|
-| ABM system and thesis flow | [`abm-thesis-system.png`](abm-thesis-system.png) | [`abm-thesis-system.html`](workflow-abm-thesis-system-20261007-0450/abm-thesis-system.html) (download and open; GitHub shows HTML as source) | [`candidate.json`](workflow-abm-thesis-system-20261007-0450/candidate.json) |
+| ABM system and thesis flow | [`abm-thesis-system.png`](abm-thesis-system.png) | [`abm-thesis-system.html`](workflow-abm-thesis-system-20261007-0450/abm-thesis-system.html)  | [`candidate.json`](workflow-abm-thesis-system-20261007-0450/candidate.json) |
+| Hybrid agent tiers | [`agent-tiers.png`](agent-tiers.png) | [`agent-tiers.html`](workflow-agent-tiers-20261007/agent-tiers.html) | [`candidate.json`](workflow-agent-tiers-20261007/candidate.json) |
+| Theory funnel | [`theory-funnel.png`](theory-funnel.png) | [`theory-funnel.html`](workflow-theory-funnel-20261007/theory-funnel.html) | [`candidate.json`](workflow-theory-funnel-20261007/candidate.json) |
+
+Interactive versions are served on the [research atlas](https://astheno-sphere.github.io/computational_Logistics/) (GitHub Pages from `docs/`).
 
 ## How to improve a diagram
 

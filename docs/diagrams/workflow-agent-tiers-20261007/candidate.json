@@ -1,0 +1,295 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Asthenosphere: hybrid agent tiers",
+    "output": "docs/diagrams/workflow-agent-tiers-20261007/agent-tiers.html",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "t1",
+      "label": "Tier 1: estimated choice"
+    },
+    {
+      "id": "t2",
+      "label": "Tier 2: decision models"
+    },
+    {
+      "id": "t3",
+      "label": "Tier 3: LLM agents"
+    },
+    {
+      "id": "sim",
+      "label": "Simulation and test"
+    }
+  ],
+  "phases": [
+    {
+      "id": "in",
+      "label": "Inputs",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "mod",
+      "label": "Models and repositories",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "out",
+      "label": "Outputs",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "use",
+      "label": "Benchmark and use",
+      "fromCol": 4,
+      "toCol": 4,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [],
+  "mainPath": [
+    "survey",
+    "mnl",
+    "probs1",
+    "bench",
+    "abm"
+  ],
+  "nodes": [
+    {
+      "id": "survey",
+      "lane": "t1",
+      "col": 0,
+      "type": "database",
+      "label": "Survey choices",
+      "sublabel": "RVU, stated choice",
+      "tag": "proposed data",
+      "width": 140
+    },
+    {
+      "id": "mnl",
+      "lane": "t1",
+      "col": 1,
+      "type": "backend",
+      "label": "Logit models",
+      "sublabel": "Biogeme, xlogit",
+      "tag": "in repo",
+      "width": 140
+    },
+    {
+      "id": "probs1",
+      "lane": "t1",
+      "col": 3,
+      "type": "backend",
+      "label": "Choice probabilities",
+      "sublabel": "with covariance",
+      "tag": "in repo",
+      "width": 140
+    },
+    {
+      "id": "question",
+      "lane": "t2",
+      "col": 0,
+      "type": "database",
+      "label": "Choice questions",
+      "sublabel": "policies not surveyed",
+      "tag": "proposed",
+      "width": 140
+    },
+    {
+      "id": "jev",
+      "lane": "t2",
+      "col": 1,
+      "type": "cloud",
+      "label": "Jev decision model",
+      "sublabel": "hosted, TypeSafe AI",
+      "tag": "hosted",
+      "width": 140
+    },
+    {
+      "id": "open2",
+      "lane": "t2",
+      "col": 2,
+      "type": "backend",
+      "label": "Open decision models",
+      "sublabel": "llm2jev, AnyJev",
+      "tag": "in bank",
+      "width": 140
+    },
+    {
+      "id": "probs2",
+      "lane": "t2",
+      "col": 3,
+      "type": "backend",
+      "label": "Choice distributions",
+      "sublabel": "per option",
+      "tag": "proposed",
+      "width": 140
+    },
+    {
+      "id": "bench",
+      "lane": "t2",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Benchmark harness",
+      "sublabel": "all tiers, same cases",
+      "tag": "proposed",
+      "width": 140
+    },
+    {
+      "id": "persona",
+      "lane": "t3",
+      "col": 0,
+      "type": "database",
+      "label": "Personas and memory",
+      "sublabel": "synthetic population",
+      "tag": "proposed",
+      "width": 140
+    },
+    {
+      "id": "gabm",
+      "lane": "t3",
+      "col": 1,
+      "type": "backend",
+      "label": "Generative ABM",
+      "sublabel": "AgentSociety, Concordia",
+      "tag": "in bank",
+      "width": 140
+    },
+    {
+      "id": "trllm",
+      "lane": "t3",
+      "col": 2,
+      "type": "backend",
+      "label": "Transport LLM agents",
+      "sublabel": "GATSim, GAMA, Mesa-LLM",
+      "tag": "in bank",
+      "width": 140
+    },
+    {
+      "id": "traj",
+      "lane": "t3",
+      "col": 3,
+      "type": "backend",
+      "label": "Adaptive behaviour",
+      "sublabel": "over years",
+      "tag": "proposed",
+      "width": 140
+    },
+    {
+      "id": "abm",
+      "lane": "sim",
+      "col": 4,
+      "type": "backend",
+      "label": "Agent-based model",
+      "sublabel": "abm-transport, MATSim",
+      "tag": "in repo",
+      "width": 140
+    }
+  ],
+  "edges": [
+    {
+      "id": "survey-mnl",
+      "from": "survey",
+      "to": "mnl",
+      "label": "estimate"
+    },
+    {
+      "id": "mnl-probs1",
+      "from": "mnl",
+      "to": "probs1",
+      "label": "predict",
+      "variant": "emphasis"
+    },
+    {
+      "id": "question-jev",
+      "from": "question",
+      "to": "jev",
+      "label": "ask"
+    },
+    {
+      "id": "jev-open2",
+      "from": "jev",
+      "to": "open2",
+      "label": "reproduce",
+      "variant": "dashed"
+    },
+    {
+      "id": "open2-probs2",
+      "from": "open2",
+      "to": "probs2",
+      "label": "prefill only"
+    },
+    {
+      "id": "persona-gabm",
+      "from": "persona",
+      "to": "gabm",
+      "label": "seed"
+    },
+    {
+      "id": "gabm-trllm",
+      "from": "gabm",
+      "to": "trllm",
+      "label": "adapt to transport"
+    },
+    {
+      "id": "trllm-traj",
+      "from": "trllm",
+      "to": "traj",
+      "label": "simulate"
+    },
+    {
+      "id": "probs1-bench",
+      "from": "probs1",
+      "to": "bench",
+      "label": "reference",
+      "variant": "emphasis"
+    },
+    {
+      "id": "probs2-bench",
+      "from": "probs2",
+      "to": "bench",
+      "label": "compare"
+    },
+    {
+      "id": "traj-bench",
+      "from": "traj",
+      "to": "bench",
+      "label": "compare"
+    },
+    {
+      "id": "bench-abm",
+      "from": "bench",
+      "to": "abm",
+      "label": "validated rules",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "How the tiers divide the work",
+      "items": [
+        "Tier 1 drives most agents: estimated, cheap, uncertainty known",
+        "Tier 2 answers choices the survey never asked, as probabilities comparable with logit",
+        "Tier 3 probes adaptation over years with memory and reflection",
+        "Tiers 2 and 3 are stress tests, benchmarked against tier 1"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Repositories in the bank",
+      "items": [
+        "Decision models: tic-top/llm2jev (MIT), Wangyu0529/LLM2Jev, nokia-applied-research/AnyJev (Apache-2.0), Zefan-Cai/Open-Jev (MIT)",
+        "Generative ABM: AgentSociety, Concordia, OASIS (Apache-2.0)",
+        "Transport LLM agents: GATSim, LLM agents in GAMA, Mesa-LLM (Apache-2.0)",
+        "Link only (no license): LLMTraveler, LLMob, MobiVerse"
+      ]
+    }
+  ]
+}

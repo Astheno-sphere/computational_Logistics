@@ -150,11 +150,19 @@ def copy_tree(src, dst, include, exclude=()):
                 if size > MAX_FILE:
                     skipped.append("%s (%.1f MB > cap)" % (rel, size / 1e6))
                     continue
-                if has_secret(s):
-                    skipped.append("%s (token-shaped string)" % rel)
-                    continue
                 d = dst / rel
                 d.parent.mkdir(parents=True, exist_ok=True)
+                if has_secret(s):
+                    # keep the file, replace only the token (push protection blocks the raw string)
+                    text = SECRET_RE.sub("REDACTED_TOKEN", s.read_text(errors="ignore"))
+                    d.write_text("Asthenosphere knowledge bank: token-shaped strings replaced with REDACTED_TOKEN.\n"
+                                 if d.suffix.lower() in (".txt", ".md") else "", errors="ignore")
+                    with open(d, "a", errors="ignore") as fh:
+                        fh.write(text)
+                    skipped.append("%s (token redacted, file kept)" % rel)
+                    n += 1
+                    bytes_ += size
+                    continue
                 shutil.copy2(s, d)
                 n += 1
                 bytes_ += size

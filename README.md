@@ -10,6 +10,11 @@ design and visual storytelling.**
 > the flows of people, vehicles and goods beneath their visible form. This framework models that layer
 > and makes it visible.
 
+**Browse:** [Research atlas](https://astheno-sphere.github.io/computational_Logistics/) (interactive diagrams) ·
+[System](#the-system-and-the-thesis) · [Agent tiers](#hybrid-agent-tiers) · [Theory funnel](#theory-funnel) ·
+[Toolkit](#toolkit) · [Framework](docs/FRAMEWORK.md) · [References](docs/REFERENCES.md) ·
+[Knowledge bank](knowledge-bank/README.md)
+
 ---
 
 ## What this is
@@ -24,7 +29,7 @@ Asthenosphere assembles the pieces a transport and logistics planner needs into 
 - **Design and storytelling**: connections to Rhino, Grasshopper and GIS, following the parametric and
   environmental toolkit used in computational design practice, so results become drawings, maps and
   narratives.
-- **Knowledge bank**: about 290 license-checked open-source references (code, books, MCP servers)
+- **Knowledge bank**: about 300 license-checked open-source references (code, books, MCP servers)
   catalogued so new skills are built on real, current APIs.
 
 It works for any city or region: networks are built from OpenStreetMap by place name or file, in the
@@ -40,9 +45,27 @@ A4 backcasting). Estimated choice models drive the agents. Decision models (Jev)
 Network ABMs (MATSim, eqasim, BEAM, SUMO, GAMA) train surrogates, so thousands of futures stay
 affordable. Results reach agencies as dashboards and as Grasshopper data trees. The diagram is typed
 JSON checked by [Archify](https://github.com/tt-a1i/archify); anyone can edit it and re-run the
-checks ([how](docs/diagrams/README.md)). Download the
-[interactive version](docs/diagrams/workflow-abm-thesis-system-20261007-0450/abm-thesis-system.html)
-to pan, zoom and trace paths.
+checks ([how](docs/diagrams/README.md)). The interactive version (pan, zoom, trace paths) is on the
+[research atlas](https://astheno-sphere.github.io/computational_Logistics/).
+
+## Hybrid agent tiers
+
+<p align="center"><img src="docs/diagrams/agent-tiers.png" alt="Three agent tiers (estimated logit, decision models, LLM agents) feeding a benchmark harness and the agent-based model" width="900"></p>
+
+Tier 1, estimated logit, drives most agents. Tier 2 decision models (Jev; open versions llm2jev,
+AnyJev, Open-Jev) answer choices the survey never asked, as probabilities that can be compared with
+the logit. Tier 3 LLM agents (AgentSociety, Concordia, OASIS, GATSim, LLM agents in GAMA, Mesa-LLM)
+probe how behaviour adapts over years. All of these repositories are cloned into the knowledge bank.
+[Interactive version](docs/diagrams/workflow-agent-tiers-20261007/agent-tiers.html).
+
+## Theory funnel
+
+<p align="center"><img src="docs/diagrams/theory-funnel.png" alt="Theory funnel: paradigm, deep uncertainty, behaviour, simulation and frontier theories feeding articles A1 to A4" width="900"></p>
+
+Paradigms (sustainable mobility, backcasting) narrow through decision theory under deep uncertainty,
+random utility and new-mobility research (Tirachini and co-authors on crowding, ride-hailing and
+automated transit), agent-based simulation, and the LLM frontier, to the four articles. Entries with
+what each gives the thesis: [`docs/THEORY.md`](docs/THEORY.md); BibTeX: [`docs/references.bib`](docs/references.bib).
 
 ## Toolchain and protocols
 

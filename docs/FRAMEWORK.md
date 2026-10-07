@@ -135,7 +135,7 @@ a pathway explorer (slider over futures, coloured by success), and an agent-flow
 | Tool access for any agent | MCP server (in repo) | the same skills from Claude Desktop or other hosts |
 | Open-model harness | Hermes Agent (in bank) | run the MCP tools with open-weight models, e.g. for reproducibility or offline work |
 | Live model control | Rhino MCP servers (in bank) | agents drive Grasshopper/Rhino for visual outputs |
-| Agents inside the model | AgentSociety, GATSim, LLM agents in GAMA, AgentTorch (in bank); Jev (hosted) | the hybrid-agent tiers above, kept separate from research assistance |
+| Agents inside the model | AgentSociety, Concordia, OASIS, GATSim, LLM agents in GAMA, Mesa-LLM, AgentTorch; llm2jev, AnyJev, Open-Jev (in bank); Jev (hosted) | the hybrid-agent tiers above, kept separate from research assistance |
 | Diagrams that stay current | Archify (in bank) | the system diagram is typed JSON checked by layout and browser gates; edit and re-run, see `diagrams/README.md` |
 
 Keep the two uses of "agent" apart in writing: AI agents that help do the research, and simulated
@@ -180,8 +180,8 @@ agents that are part of the model.
 |---|---|---|
 | POLARIS (Argonne), SimMobility (MIT/SMART) | large-scale activity-based ABMs named in the simulator overview | to check licenses |
 | MATSim core (`matsim-libs`) in full | the platform eqasim and BEAM build on | link now; GPL, can be cloned |
-| Mesa-LLM, Concordia (Google DeepMind) | LLM agents in Python ABM frameworks | to check |
-| Open-weight decision models | a reproducible alternative to hosted Jev for tier (b) | watch LLM2Jev follow-ups |
+| Mesa-LLM, Concordia (Google DeepMind), OASIS | LLM agents in Python ABM frameworks | cloned |
+| Open-weight decision models | a reproducible alternative to hosted Jev for tier (b) | cloned: llm2jev, LLM2Jev, AnyJev, Open-Jev |
 | CityBehavEx and similar urban-behaviour benchmarks | validation sets for LLM travel behaviour | to find |
 
 **Missing pieces in the framework itself:**
