@@ -1,0 +1,86 @@
+Surrogate modeling methods
+==========================
+
+SMT contains the surrogate modeling methods listed below.
+
+.. toctree::
+   :maxdepth: 3
+   :titlesonly:
+
+   surrogate_models/ls
+   surrogate_models/qp
+   surrogate_models/gpr
+   surrogate_models/rbf
+   surrogate_models/idw
+   surrogate_models/rmts
+   surrogate_models/genn
+   surrogate_models/rbfgen
+
+
+Usage
+-----
+
+.. embed-test-print-plot :: smt.surrogate_models.tests.test_surrogate_model_examples , Test , test_rbf , 80
+
+SurrogateModel class API
+------------------------
+
+All surrogate modeling methods implement the following API, though some of the functions in the API are not supported by all methods.
+
+.. autoclass:: smt.surrogate_models.surrogate_model.SurrogateModel
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.__init__
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.set_training_values
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.set_training_derivatives
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.train
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_values
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_derivatives
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_output_derivatives
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variances
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variance_derivatives
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.predict_variance_gradient
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.save
+
+  .. automethod:: smt.surrogate_models.surrogate_model.SurrogateModel.load
+
+
+How to save and load trained surrogate models
+---------------------------------------------
+
+As of SMT 2.9, the surrogate API offers save/load methods which can be used as below.
+
+Saving the model
+""""""""""""""""
+
+The instance method ``save()`` is used to save the trained model (here ``KRG``)
+in a binary file named ``kriging.bin``.
+
+.. code-block:: python
+   
+   sm = KRG()
+   sm.set_training_values(xtrain, ytrain)
+   sm.train()
+
+   sm.save("kriging.bin ")
+
+Loading the model
+"""""""""""""""""
+
+The previous model can be reloaded knowing the type of surrogate being saved (ie. ``KRG``)
+from the binary file with:
+
+.. code-block:: python
+
+   sm2 = KRG.load("kriging.bin")
+   ytest = sm2.predict_values(xtest)
+

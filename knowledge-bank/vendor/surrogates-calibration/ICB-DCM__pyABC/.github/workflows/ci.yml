@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  schedule:
+    - cron: "18 15 * * MON"
+
+jobs:
+  tests:
+    name: ${{ matrix.toxenv }} (${{ matrix.python }} • ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Fast PR matrix
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.13"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.12"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: visualization
+
+          # macOS sanity
+          - os: macos-latest
+            python: "3.14"
+            toxenv: mac
+
+          # Quality
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: quality
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: project
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: doc
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: migrate
+
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: external-R
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: external-other-simulators
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: petab
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: base-notebooks
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: external-notebooks
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install Julia
+        if: ${{ startsWith(matrix.toxenv, 'external-') }}
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"  # Use the latest stable Julia version
+
+      - name: Install Julia dependencies
+        if: ${{ startsWith(matrix.toxenv, 'external-') }}
+        env:
+          # make Julia/PyCall bind to the same Python used by the job
+          PYTHON: ${{ env.pythonLocation }}/bin/python
+        run: |
+          julia -e 'using Pkg; Pkg.add("PyCall")'
+
+      - name: Install R
+        if: ${{ startsWith(matrix.toxenv, 'external-') }}
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - name: Install dependencies
+        run: |
+          case "${{ matrix.toxenv }}" in
+            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base ;;
+            petab) .github/workflows/install_deps.sh amici ;;
+            external-*) .github/workflows/install_deps.sh base amici ;;
+            lint|project|doc|migrate) .github/workflows/install_deps.sh doc ;;
+          esac
+          python -m pip install -U pip tox
+
+      - name: Run tox
+        run: tox -e ${{ matrix.toxenv }}
+
+      # If each tox env generates coverage.xml, include flags; otherwise combine explicitly
+      - name: Upload coverage
+        if: ${{ always() && matrix.os == 'ubuntu-latest' }}
+        uses: codecov/codecov-action@v6
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: ${{ matrix.toxenv }}
