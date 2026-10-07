@@ -49,7 +49,9 @@ def load(osm=None, place=None):
         G = ox.graph_from_xml(osm, simplify=False, retain_all=False)
     else:
         G = ox.graph_from_place(place, network_type="drive", simplify=False)
-    drop = [(u, v, k) for u, v, k, d in G.edges(keys=True, data=True) if _hwy(d) in NOT_DRIVABLE]
+    # graph_from_xml turns every way into edges (buildings, coastline, fences): keep highways only
+    drop = [(u, v, k) for u, v, k, d in G.edges(keys=True, data=True)
+            if _hwy(d) is None or _hwy(d) in NOT_DRIVABLE]
     G.remove_edges_from(drop)
     G.remove_nodes_from([n for n in list(G.nodes) if G.degree(n) == 0])
     if len(G) and not nx.is_strongly_connected(G):

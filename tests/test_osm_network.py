@@ -28,6 +28,17 @@ def test_footway_removed(flat):
     assert all(on._hwy(d) != "footway" for *_, d in flat.edges(data=True))
 
 
+def test_non_highway_ways_are_not_roads(tmp_path):
+    # real OSM extracts carry buildings and coastline as ways; none of them may become a road
+    xml = GRID.read_text() if hasattr(GRID, "read_text") else open(GRID).read()
+    building = ('<way id="990001"><nd ref="1"/><nd ref="9"/><nd ref="2"/><nd ref="1"/>'
+                '<tag k="building" v="yes"/></way>\n</osm>')
+    f = tmp_path / "with_building.osm"
+    f.write_text(xml.replace("</osm>", building))
+    G = on.load(osm=str(f))
+    assert all(on._hwy(d) is not None for *_, d in G.edges(data=True))
+
+
 def test_oneway_has_no_reverse_edge(flat):
     oneway = [(u, v) for u, v, d in flat.edges(data=True) if d.get("oneway")]
     assert oneway, "the grid has a one-way street"
