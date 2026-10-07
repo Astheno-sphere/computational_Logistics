@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "repair-rounds-v1",
+  "purpose": "feedback-efficiency",
+  "evidence_eligible": false,
+  "fixtures": {
+    "architecture": "../../archify/examples/web-app.architecture.json",
+    "workflow": "../../archify/examples/agent-tool-call.workflow.json",
+    "sequence": "../../archify/examples/cache-miss-request.sequence.json",
+    "dataflow": "../../archify/examples/product-analytics.dataflow.json",
+    "lifecycle": "../../archify/examples/deployment-release.lifecycle.json"
+  },
+  "cases": [
+    { "id": "arch-missing-output", "type": "architecture", "defects": [{ "class": "meta-missing-output" }] },
+    { "id": "flow-missing-output", "type": "workflow", "defects": [{ "class": "meta-missing-output" }] },
+    { "id": "seq-missing-output", "type": "sequence", "defects": [{ "class": "meta-missing-output" }] },
+    { "id": "df-missing-output", "type": "dataflow", "defects": [{ "class": "meta-missing-output" }] },
+    { "id": "lc-missing-output", "type": "lifecycle", "defects": [{ "class": "meta-missing-output" }] },
+
+    { "id": "arch-invalid-type", "type": "architecture", "defects": [{ "class": "node-invalid-type" }] },
+    { "id": "flow-invalid-type", "type": "workflow", "defects": [{ "class": "node-invalid-type" }] },
+    { "id": "seq-invalid-type", "type": "sequence", "defects": [{ "class": "node-invalid-type" }] },
+    { "id": "df-invalid-type", "type": "dataflow", "defects": [{ "class": "node-invalid-type" }] },
+    { "id": "lc-invalid-type", "type": "lifecycle", "defects": [{ "class": "node-invalid-type" }] },
+
+    { "id": "arch-long-label", "type": "architecture", "defects": [{ "class": "node-long-label" }] },
+    { "id": "flow-long-label", "type": "workflow", "defects": [{ "class": "node-long-label" }] },
+    { "id": "seq-long-label", "type": "sequence", "defects": [{ "class": "node-long-label" }] },
+    { "id": "df-long-label", "type": "dataflow", "defects": [{ "class": "node-long-label" }] },
+    { "id": "lc-long-label", "type": "lifecycle", "defects": [{ "class": "node-long-label" }] },
+
+    { "id": "arch-duplicate-id", "type": "architecture", "defects": [{ "class": "node-duplicate-id" }] },
+    { "id": "flow-duplicate-id", "type": "workflow", "defects": [{ "class": "node-duplicate-id" }] },
+    { "id": "seq-duplicate-id", "type": "sequence", "defects": [{ "class": "node-duplicate-id" }] },
+    { "id": "df-duplicate-id", "type": "dataflow", "defects": [{ "class": "node-duplicate-id" }] },
+    { "id": "lc-duplicate-id", "type": "lifecycle", "defects": [{ "class": "node-duplicate-id" }] },
+
+    { "id": "arch-dangling-edge", "type": "architecture", "defects": [{ "class": "edge-dangling-target" }] },
+    { "id": "flow-dangling-edge", "type": "workflow", "defects": [{ "class": "edge-dangling-target" }] },
+    { "id": "seq-dangling-edge", "type": "sequence", "defects": [{ "class": "edge-dangling-target" }] },
+    { "id": "df-dangling-edge", "type": "dataflow", "defects": [{ "class": "edge-dangling-target" }] },
+    { "id": "lc-dangling-edge", "type": "lifecycle", "defects": [{ "class": "edge-dangling-target" }] },
+
+    { "id": "arch-viewbox-oversized", "type": "architecture", "defects": [{ "class": "viewbox-oversized" }] },
+
+    { "id": "arch-title-overflow", "type": "architecture", "defects": [{ "class": "title-overflow" }] },
+    { "id": "flow-title-overflow", "type": "workflow", "defects": [{ "class": "title-overflow" }] },
+    { "id": "seq-title-overflow", "type": "sequence", "defects": [{ "class": "title-overflow" }] },
+    { "id": "df-title-overflow", "type": "dataflow", "defects": [{ "class": "title-overflow" }] },
+    { "id": "lc-title-overflow", "type": "lifecycle", "defects": [{ "class": "title-overflow" }] },
+
+    { "id": "arch-subtitle-overflow", "type": "architecture", "defects": [{ "class": "subtitle-overflow" }] },
+    { "id": "flow-subtitle-overflow", "type": "workflow", "defects": [{ "class": "subtitle-overflow" }] },
+    { "id": "seq-subtitle-overflow", "type": "sequence", "defects": [{ "class": "subtitle-overflow" }] },
+    { "id": "df-subtitle-overflow", "type": "dataflow", "defects": [{ "class": "subtitle-overflow" }] },
+    { "id": "lc-subtitle-overflow", "type": "lifecycle", "defects": [{ "class": "subtitle-overflow" }] },
+
+    {
+      "id": "arch-mixed-staged",
+      "type": "architecture",
+      "defects": [
+        { "class": "meta-missing-output" },
+        { "class": "node-long-label" },
+        { "class": "title-overflow" }
+      ]
+    },
+    {
+      "id": "flow-mixed-staged",
+      "type": "workflow",
+      "defects": [
+        { "class": "node-invalid-type" },
+        { "class": "edge-dangling-target" },
+        { "class": "subtitle-overflow" }
+      ]
+    },
+    {
+      "id": "seq-mixed-staged",
+      "type": "sequence",
+      "defects": [
+        { "class": "node-invalid-type" },
+        { "class": "node-long-label" },
+        { "class": "title-overflow" }
+      ]
+    },
+    {
+      "id": "df-mixed-staged",
+      "type": "dataflow",
+      "defects": [
+        { "class": "node-duplicate-id" },
+        { "class": "edge-dangling-target" },
+        { "class": "title-overflow" }
+      ]
+    },
+    {
+      "id": "lc-mixed-staged",
+      "type": "lifecycle",
+      "defects": [
+        { "class": "meta-missing-output" },
+        { "class": "node-invalid-type" },
+        { "class": "subtitle-overflow" }
+      ]
+    }
+  ]
+}
