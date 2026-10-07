@@ -1,0 +1,145 @@
+= Define the constraints and calculate the score
+:imagesdir: ../..
+
+A _score_ represents the quality of a specific solution.
+The higher the better.
+Timefold Solver looks for the best solution, which is the solution with the highest score found in the available time.
+It might be the _optimal_ solution.
+
+Because this use case has hard and soft constraints,
+use the `HardSoftScore` class to represent the score:
+
+* Hard constraints must not be broken.
+For example: _The vehicle capacity must not be exceeded._
+* Soft constraints should not be broken.
+For example: _The sum total of travel time._
+
+Hard constraints are weighted against other hard constraints.
+Soft constraints are weighted too, against other soft constraints.
+*Hard constraints always outweigh soft constraints*, regardless of their respective weights.
+
+To calculate the score, create a `VehicleRoutingConstraintProvider` class
+to perform incremental score calculation.
+It uses Timefold Solver's xref:constraints-and-score/score-calculation.adoc[Constraint Streams API]
+which is inspired by Java Streams and SQL:
+
+[tabs]
+====
+Java::
++
+--
+Create a `src/main/java/org/acme/vehiclerouting/solver/VehicleRoutingConstraintProvider.java` class:
+
+[source,java]
+----
+package org.acme.vehiclerouting.solver;
+
+import ai.timefold.solver.core.api.score.HardSoftScore;
+import ai.timefold.solver.core.api.score.stream.Constraint;
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
+import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
+
+import org.acme.vehiclerouting.domain.Visit;
+import org.acme.vehiclerouting.domain.Vehicle;
+
+public class VehicleRoutingConstraintProvider implements ConstraintProvider {
+
+    public static final String VEHICLE_CAPACITY = "vehicleCapacity";
+    public static final String SERVICE_FINISHED_AFTER_MAX_END_TIME = "serviceFinishedAfterMaxEndTime";
+    public static final String MINIMIZE_TRAVEL_TIME = "minimizeTravelTime";
+
+    @Override
+    public Constraint[] defineConstraints(ConstraintFactory factory) {
+        return new Constraint[] {
+                vehicleCapacity(factory),
+                serviceFinishedAfterMaxEndTime(factory),
+                minimizeTravelTime(factory)
+        };
+    }
+
+    protected Constraint vehicleCapacity(ConstraintFactory factory) {
+        return factory.forEach(Vehicle.class)
+                .filter(vehicle -> vehicle.getTotalDemand() > vehicle.getCapacity())
+                .penalizeLong(HardSoftScore.ONE_HARD,
+                        vehicle -> vehicle.getTotalDemand() - vehicle.getCapacity())
+                .asConstraint(VEHICLE_CAPACITY);
+    }
+
+    protected Constraint serviceFinishedAfterMaxEndTime(ConstraintFactory factory) {
+        return factory.forEach(Visit.class)
+                .filter(Visit::isServiceFinishedAfterMaxEndTime)
+                .penalizeLong(HardSoftScore.ONE_HARD,
+                        Visit::getServiceFinishedDelayInMinutes)
+                .asConstraint(SERVICE_FINISHED_AFTER_MAX_END_TIME);
+    }
+
+    protected Constraint minimizeTravelTime(ConstraintFactory factory) {
+        return factory.forEach(Vehicle.class)
+                .penalizeLong(HardSoftScore.ONE_SOFT,
+                        Vehicle::getTotalDrivingTimeSeconds)
+                .asConstraint(MINIMIZE_TRAVEL_TIME);
+    }
+}
+
+----
+--
+
+Kotlin::
++
+--
+Create a `src/main/kotlin/org/acme/vehiclerouting/solver/VehicleRoutingConstraintProvider.kt` class:
+
+[source,kotlin]
+----
+package org.acme.vehiclerouting.solver
+
+import ai.timefold.solver.core.api.score.HardSoftScore
+import ai.timefold.solver.core.api.score.stream.Constraint
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory
+import ai.timefold.solver.core.api.score.stream.ConstraintProvider
+
+import org.acme.vehiclerouting.domain.Visit
+import org.acme.vehiclerouting.domain.Vehicle
+
+class VehicleRoutingConstraintProvider : ConstraintProvider {
+    override fun defineConstraints(factory: ConstraintFactory): Array<Constraint> {
+        return arrayOf(
+            vehicleCapacity(factory),
+            serviceFinishedAfterMaxEndTime(factory),
+            minimizeTravelTime(factory)
+        )
+    }
+
+    protected fun vehicleCapacity(factory: ConstraintFactory): Constraint {
+        return factory.forEach(Vehicle::class.java)
+            .filter({ vehicle: Vehicle -> vehicle.totalDemand > vehicle.capacity })
+            .penalizeLong(
+                HardSoftScore.ONE_HARD
+            ) { vehicle: Vehicle -> vehicle.totalDemand - vehicle.capacity }
+            .asConstraint(VEHICLE_CAPACITY)
+    }
+
+    protected fun serviceFinishedAfterMaxEndTime(factory: ConstraintFactory): Constraint {
+        return factory.forEach(Visit::class.java)
+            .filter({ obj: Visit -> obj.isServiceFinishedAfterMaxEndTime })
+            .penalizeLong(HardSoftScore.ONE_HARD,
+                { obj: Visit -> obj.serviceFinishedDelayInMinutes })
+            .asConstraint(SERVICE_FINISHED_AFTER_MAX_END_TIME)
+    }
+
+    protected fun minimizeTravelTime(factory: ConstraintFactory): Constraint {
+        return factory.forEach(Vehicle::class.java)
+            .penalizeLong(HardSoftScore.ONE_SOFT,
+                { obj: Vehicle -> obj.totalDrivingTimeSeconds })
+            .asConstraint(MINIMIZE_TRAVEL_TIME)
+    }
+
+    companion object {
+        const val VEHICLE_CAPACITY: String = "vehicleCapacity"
+        const val SERVICE_FINISHED_AFTER_MAX_END_TIME: String = "serviceFinishedAfterMaxEndTime"
+        const val MINIMIZE_TRAVEL_TIME: String = "minimizeTravelTime"
+    }
+}
+----
+--
+====

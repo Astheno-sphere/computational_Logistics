@@ -1,0 +1,60 @@
+[#introduction]
+:page-aliases: ../index.adoc, planning-ai-concepts.adoc
+:doctype: book
+:sectnums:
+:icons: font
+
+[#whatIsTimefold]
+= Introduction
+
+Every organization faces planning problems: providing products or services with a limited set of _constrained_ resources (employees, assets, time, and money).
+https://timefold.ai[Timefold Solver] is a lightweight, embeddable constraint satisfaction engine that optimizes these problems to do more business with fewer resources.
+
+[TIP]
+====
+This documentation provides guidance on using our open-source solver to build custom models from scratch.
+For common planning problems, we also offer ready-made models that can be seamlessly integrated via our REST API.
+
+Explore our documentation and available models https://docs.timefold.ai/[here]
+====
+
+.Timefold Solver's use cases include vehicle routing, employee scheduling, rostering, bin packing, and equipment scheduling.
+image::introduction/useCaseOverview.png[align="center"]
+
+== Planning problems
+
+A planning problem arises from a need to achieve a *goal* by organizing available *resources* under a set of *constraints*:
+
+* Building a house, where workers and materials are the resources, and construction order and site hours are the constraints.
+* Staffing a hospital shift, where qualified personnel are the resources, and working hour rules and required specializations are the constraints.
+* Routing delivery vehicles, where vehicles and drivers are the resources, and time windows, capacity, and distance are the constraints.
+
+Planning problems grow combinatorially as resources and constraints are added.
+Even a small field service problem with 4 vehicles and 8 visits produces over 19 million possible assignments for a brute-force algorithm to consider.
+Timefold Solver evaluates this space efficiently, finding good solutions in a fraction of the time it would take to do manually.
+
+== Constraints
+
+Constraints can be classified as *hard*, *medium*, or *soft*:
+
+* **Hard constraints** are rules that must not be broken — for example, an employee can only be in one place at a time, or dependent tasks must complete in order.
+  Violating a hard constraint produces an infeasible plan.
+* **Medium constraints** apply when resources are scarce — for instance, assign as many customer visits as possible when there aren't enough technicians to cover all of them.
+* **Soft constraints** express business preferences — minimize travel time, assign employees to preferred shifts, and similar goals.
+
+Solutions are scored to reflect how well they satisfy these constraints.
+For example: `0hard/-257medium/-6119520soft`.
+A solution with zero hard constraint violations is always considered better than one that breaks even a single hard constraint, regardless of the soft score.
+
+== Technology
+
+Timefold Solver is 100% pure Java^TM^ and runs on Java {java-version} or higher, on any JVM platform.
+It integrates natively with xref:running-timefold-solver/library/quarkus.adoc[Quarkus] and xref:running-timefold-solver/library/spring-boot.adoc[Spring Boot], and supports Kotlin.
+
+You can use it to build an xref:quickstart/overview.adoc#runAsAService[optimization service],
+or embed it into your software as a xref:quickstart/overview.adoc#embedAsALibrary[library].
+
+:!sectnums:
+== Next
+
+* Follow the xref:quickstart/overview.adoc[Quickstart] to tackle your first planning problem.
