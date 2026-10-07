@@ -22,11 +22,27 @@ MAX_FILE = 1 * 1024 * 1024           # skip single files larger than this
 SKIP_EXT = {".gif", ".mov", ".mp4", ".avi", ".mkv", ".zip", ".gz", ".tgz", ".7z", ".tar", ".3dm",
             ".dll", ".exe", ".so", ".dylib", ".pyd", ".whl", ".jar", ".bin", ".pbf", ".parquet", ".h5",
             ".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".psd", ".ico", ".mp3", ".wav",
-            ".pt", ".pth", ".pkl", ".npy", ".npz", ".ckpt", ".safetensors", ".onnx", ".gguf", ".woff", ".woff2", ".ttf"}
+            ".pt", ".pth", ".pkl", ".npy", ".npz", ".ckpt", ".safetensors", ".onnx", ".gguf", ".woff", ".woff2", ".ttf", ".pyc", ".pyo", ".class"}
 MAX_REPO = 80 * 1024 * 1024          # refuse to vendor more than this per source
 PERMISSIVE = {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC",
               "Unlicense", "CC0-1.0", "BSL-1.0", "Zlib", "CC-BY-4.0"}
 OPEN_COPYLEFT = {"GPL", "LGPL", "AGPL", "MPL", "EPL", "LLGPL", "CC-BY-SA-4.0"}  # open source: copy verbatim, keep isolated
+SECRET_RE = re.compile(
+    r"gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}"
+    r"|sk-ant-[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xox[abprs]-[0-9A-Za-z-]{20,}|AIza[0-9A-Za-z_-]{35}"
+    r"|[sr]k_live_[0-9A-Za-z]{20,}|npm_[A-Za-z0-9]{36}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}"
+    r"|-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY")
+
+
+def has_secret(path):
+    """Token-shaped strings, even fake test fixtures: GitHub push protection rejects them, and we
+    cannot tell a fixture from a leak, so such files are skipped."""
+    try:
+        return bool(SECRET_RE.search(path.read_text(errors="ignore")))
+    except OSError:
+        return False
+
+
 GIT_CONTROL = {".gitignore", ".gitattributes", ".gitmodules"}   # would alter how git treats our repo
 LICENSE_FILE = re.compile(r"^(LICEN[SC]E|COPYING|NOTICE|UNLICENSE)([._-].*)?$", re.I)
 
@@ -121,7 +137,7 @@ def copy_tree(src, dst, include, exclude=()):
             skipped.append("missing include path: %s" % top.relative_to(src))
             continue
         for dirpath, dirs, files in os.walk(top):
-            dirs[:] = [d for d in dirs if d != ".git"]
+            dirs[:] = [d for d in dirs if d not in (".git", "__pycache__")]
             for f in files:
                 s = Path(dirpath) / f
                 if s.is_symlink() or f in GIT_CONTROL:
@@ -133,6 +149,9 @@ def copy_tree(src, dst, include, exclude=()):
                     continue
                 if size > MAX_FILE:
                     skipped.append("%s (%.1f MB > cap)" % (rel, size / 1e6))
+                    continue
+                if has_secret(s):
+                    skipped.append("%s (token-shaped string)" % rel)
                     continue
                 d = dst / rel
                 d.parent.mkdir(parents=True, exist_ok=True)
