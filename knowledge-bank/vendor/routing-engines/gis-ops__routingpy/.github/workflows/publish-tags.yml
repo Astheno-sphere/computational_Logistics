@@ -1,0 +1,42 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build_wheels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          python-version: "3.12"
+
+      - name: Build Wheels
+        run: |
+          uv build
+
+      - name: Upload distributions (wheels and sdist)
+        uses: actions/upload-artifact@v7
+        with:
+          name: distributions
+          path: dist/*
+
+  upload_all:
+    needs: [build_wheels]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: distributions
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@v1.14.0
+        with:
+          password: ${{ secrets.PYPI_PASS }}

@@ -1,0 +1,17 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2020-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+
+BEGIN;
+
+SELECT CASE WHEN min_version('3.2.0') THEN plan(11) ELSE PLAN(1) END;
+
+SELECT cost_types_check(
+  'pgr_dijkstranearcost',
+  '{directed,cap,global}'::TEXT[], '{bool,int8,bool}'::TEXT[],
+   created_v => '3.2.0');
+
+SELECT finish();
+ROLLBACK;

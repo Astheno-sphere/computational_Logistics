@@ -1,0 +1,17 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2016-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT CASE WHEN min_version('3.4.0') THEN
+  CASE WHEN version() LIKE '%SQL 10%' OR version() LIKE '%SQL 11%' THEN plan(1024) ELSE plan(2048) END ELSE plan(1) END;
+SET extra_float_digits = -3;
+UPDATE edges SET cost = sign(cost) + 0.001 * id * id, reverse_cost = sign(reverse_cost) + 0.001 * id * id;
+
+SELECT trspVia_withPoints_VS_withPointsVia(16, true);
+
+SELECT * FROM finish();
+ROLLBACK;
+

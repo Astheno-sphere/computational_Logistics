@@ -1,0 +1,42 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2018-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT CASE WHEN min_version('3.8.0') THEN plan(3) ELSE plan(1) END;
+
+CREATE TABLE i280 (id INTEGER, the_geom geometry(linestring) );
+INSERT INTO i280 VALUES
+(1, 'linestring(0 0, 10 10)'::geometry),
+(2, 'linestring(2 0, 8 10)'::geometry);
+
+CREATE OR REPLACE FUNCTION issue_test()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+
+  IF NOT min_version('3.8.0') THEN
+    RETURN QUERY SELECT skip(1, 'pgr_separateCrossing new on 3.8.0');
+    RETURN;
+  END IF;
+
+  CREATE TABLE i280_r AS
+  SELECT *
+  FROM pgr_separateCrossing('SELECT id, the_geom AS geom FROM i280', 0.001);
+
+  RETURN QUERY
+  SELECT has_total_edges_vertices('i280_r', 4, 5);
+
+  RETURN QUERY
+  SELECT set_has(
+    $$SELECT ST_AsText(geom) FROM tmp_rv$$,
+    $$VALUES ('POINT(5 5)')$$, 'Have (5,5) vertex');
+
+END;
+$BODY$ LANGUAGE plpgsql;
+
+SELECT issue_test();
+SELECT finish();
+ROLLBACK;

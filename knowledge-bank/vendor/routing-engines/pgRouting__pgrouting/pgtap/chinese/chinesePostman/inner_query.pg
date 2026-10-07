@@ -1,0 +1,34 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2019-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+
+SELECT CASE WHEN NOT min_lib_version('3.1.1') THEN plan(1) ELSE plan(54) END;
+
+DELETE FROM edges WHERE id > 16;
+
+CREATE OR REPLACE FUNCTION inner_query()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+
+IF NOT min_lib_version('3.1.1') THEN
+  RETURN QUERY
+  SELECT skip(1, 'Server crash fixed on 3.1.1');
+  RETURN;
+END IF;
+
+RETURN QUERY SELECT style_dijkstra('pgr_chinesepostman(', ')');
+
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+SELECT inner_query();
+
+SELECT finish();
+ROLLBACK;

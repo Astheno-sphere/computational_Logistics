@@ -1,0 +1,118 @@
+:file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2018-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0
+
+.. index::
+   single: Components Family ; pgr_makeConnected - Experimental
+   single: makeConnected - Experimental on v3.2
+
+
+|
+
+``pgr_makeConnected`` - Experimental
+===============================================================================
+
+``pgr_makeConnected`` — Set of edges that will connect the graph.
+
+.. include:: experimental.rst
+   :start-after: warning-begin
+   :end-before: end-warning
+
+.. rubric:: Availability
+
+* Version 3.2.0
+
+  * New experimental function.
+
+
+Description
+-------------------------------------------------------------------------------
+
+Adds the minimum number of edges needed to make the input graph connected. The
+algorithm first identifies
+all of the connected components in the graph, then adds edges to connect those
+components together in a path.
+For example, if a graph contains three connected components A, B, and C,
+make_connected will add two edges.
+The two edges added might consist of one connecting a vertex in A with a vertex
+in B and one connecting a vertex in B with a vertex in C.
+
+The main characteristics are:
+
+- Works for **undirected** graphs.
+- It will give a minimum list of all edges which are needed in the graph to
+  make connect it.
+- The algorithm does not considers traversal costs in the calculations.
+- The algorithm does not considers geometric topology in the calculations.
+- Running time: :math:`O(V + E)`
+
+|Boost| Boost Graph Inside
+
+Signatures
+-------------------------------------------------------------------------------
+
+.. admonition:: \ \
+   :class: signatures
+
+   | pgr_makeConnected(`Edges SQL`_)
+
+   | Returns set of |result-component-make|
+   | OR EMPTY SET
+
+:Example: List of edges that are needed to connect the graph.
+
+.. literalinclude:: makeConnected.queries
+   :start-after: -- q1
+   :end-before: -- q2
+
+Parameters
+-------------------------------------------------------------------------------
+
+.. include:: pgRouting-concepts.rst
+   :start-after: only_edge_param_start
+   :end-before: only_edge_param_end
+
+Inner Queries
+-------------------------------------------------------------------------------
+
+Edges SQL
+...............................................................................
+
+.. include:: pgRouting-concepts.rst
+    :start-after: basic_edges_sql_start
+    :end-before: basic_edges_sql_end
+
+Result columns
+-------------------------------------------------------------------------------
+
+Returns set of |result-component-make|
+
+.. list-table::
+   :width: 81
+   :widths: auto
+   :header-rows: 1
+
+   * - Column
+     - Type
+     - Description
+   * - ``seq``
+     - ``BIGINT``
+     - Sequential value starting from **1**.
+   * - ``start_vid``
+     - ``BIGINT``
+     - Identifier of the first end point vertex of the edge.
+   * - ``end_vid``
+     - ``BIGINT``
+     - Identifier of the second end point vertex of the edge.
+
+See Also
+-------------------------------------------------------------------------------
+
+* `Boost: make connected
+  <https://www.boost.org/libs/graph/doc/make_connected.html>`__
+* :doc:`sampledata`
+
+.. rubric:: Indices and tables
+
+* :ref:`genindex`
+* :ref:`search`

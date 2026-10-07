@@ -1,0 +1,72 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2022-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT CASE WHEN min_lib_version('4.0.0') AND min_version('3.6.0') THEN plan(5)
+            WHEN NOT min_lib_version('4.0.0') AND min_version('3.4.0') THEN plan(5)
+            ELSE plan(1) END;
+
+CREATE OR REPLACE FUNCTION edge_cases()
+RETURNS SETOF TEXT AS
+$BODY$
+DECLARE
+  restriction TEXT;
+  unrelated_restriction TEXT;
+  empty_restriction TEXT;
+BEGIN
+
+  IF NOT min_version('3.4.0') THEN
+    RETURN QUERY SELECT skip(1, 'New signatures added on 3.4.0');
+    RETURN;
+  END IF;
+
+  IF min_lib_version('4.0.0') and NOT min_version('3.6.0') THEN
+    RETURN QUERY SELECT skip(1, 'Internal function _v4trsp deprecated on 3.6.0 deleted on 4.0.0');
+    RETURN;
+  END IF;
+
+  RETURN QUERY SELECT lives_ok($q$
+  SELECT * FROM pgr_trsp(
+  $$SELECT * FROM edges order by id$$,
+  $$SELECT 100::FLOAT AS cost, ARRAY[]::BIGINT[] AS path$$,
+  6,10)$q$, $q$empty restriction path lives$q$);
+
+  RETURN QUERY SELECT isnt_empty($q$
+  SELECT * FROM pgr_trsp(
+  $$SELECT * FROM edges order by id$$,
+  $$SELECT 100::FLOAT AS cost, ARRAY[]::BIGINT[] AS path$$,
+  6,10)$q$, $q$empty restriction path gives non empty result$q$);
+
+  RETURN QUERY SELECT lives_ok($q$
+  SELECT * FROM pgr_trsp(
+  $$SELECT * FROM edges order by id$$,
+  $$SELECT 100::FLOAT AS cost, NULL::BIGINT[] AS path$$,
+  6,10)$q$, $q$null restriction path lives$q$);
+
+  RETURN QUERY SELECT isnt_empty($q$
+  SELECT * FROM pgr_trsp(
+  $$SELECT * FROM edges order by id$$,
+  $$SELECT 100::FLOAT AS cost, NULL::BIGINT[] AS path$$,
+  6,10)$q$, $q$null restriction path gives non empty result$q$);
+
+  RETURN QUERY SELECT throws_ok($q$
+  SELECT * FROM pgr_trsp(
+  $$SELECT * FROM edges order by id$$,
+  $$SELECT 100::FLOAT AS cost, ARRAY[NULL]::BIGINT[] AS path$$,
+  6,10)$q$,
+  $$XX000$$,$$NULL value found in Array!$$,
+$q$array containing a null path throws$q$);
+
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+SELECT edge_cases();
+
+
+SELECT finish();
+ROLLBACK;

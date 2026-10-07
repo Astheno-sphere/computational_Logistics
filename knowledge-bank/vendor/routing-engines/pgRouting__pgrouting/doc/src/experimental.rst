@@ -1,0 +1,159 @@
+:file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2016-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0
+
+|
+
+Experimental Functions
+===============================================================================
+
+.. warning-begin
+
+.. admonition:: Experimental
+
+   .. warning:: Possible server crash
+
+     - These functions might create a server crash
+
+   .. warning:: Experimental functions
+
+     - They are not officially of the current release.
+     - They likely will not be officially be part of the next release:
+
+       - The functions might not make use of ANY-INTEGER and ANY-NUMERICAL
+       - Name might change.
+       - Signature might change.
+       - Functionality might change.
+       - pgTap tests might be missing.
+       - Might need c/c++ review.
+       - Documentation if any might need to be rewritten.
+       - Might need a lot of feedback from the community.
+
+.. end-warning
+
+.. rubric:: Families
+
+:doc:`flow-family`
+
+.. include:: flow-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`chinesePostmanProblem-family`
+
+.. include:: chinesePostmanProblem-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`coloring-family`
+
+.. include:: coloring-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`contraction-family`
+
+.. include:: contraction-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`transformation-family`
+
+.. include:: transformation-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`traversal-family`
+
+.. include:: traversal-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`components-family`
+
+.. include:: components-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`ordering-family`
+
+.. include:: ordering-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`metrics-family`
+
+.. include:: metrics-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`TRSP-family`
+
+.. include:: TRSP-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+:doc:`planar-family`
+
+.. include:: planar-family.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+.. toctree::
+   :hidden:
+
+   chinesePostmanProblem-family
+   transformation-family
+   components-family
+   ordering-family
+   planar-family
+
+.. rubric:: categories
+
+:doc:`VRP-category`
+
+.. include:: VRP-category.rst
+   :start-after: experimental-start
+   :end-before: experimental-end
+
+.. toctree::
+  :hidden:
+
+  VRP-category
+
+.. rubric:: Shortest Path Category
+
+- :doc:`pgr_bellmanFord`
+- :doc:`pgr_dagShortestPath`
+- :doc:`pgr_edwardMoore`
+
+.. toctree::
+  :hidden:
+
+  pgr_bellmanFord
+  pgr_dagShortestPath
+  pgr_edwardMoore
+
+.. rubric:: Miscellaneous Algorithms
+
+- :doc:`pgr_lengauerTarjanDominatorTree`
+- :doc:`pgr_stoerWagner`
+- :doc:`pgr_transitiveClosure`
+- :doc:`pgr_hawickCircuits`
+
+.. toctree::
+  :hidden:
+
+  pgr_lengauerTarjanDominatorTree
+  pgr_stoerWagner
+  pgr_transitiveClosure
+  pgr_hawickCircuits
+
+
+See Also
+-------------------------------------------------------------------------------
+
+.. rubric:: Indices and tables
+
+* :ref:`genindex`
+* :ref:`search`

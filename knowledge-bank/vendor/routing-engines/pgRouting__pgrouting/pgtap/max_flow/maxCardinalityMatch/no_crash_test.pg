@@ -1,0 +1,67 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2018-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT CASE WHEN min_lib_version('3.4.0') THEN plan(32) ELSE PLAN(1) END;
+
+PREPARE edges1 AS
+SELECT id, source, target, cost FROM edges;
+PREPARE edges2 AS
+SELECT id, source, target, cost, reverse_cost FROM edges;
+
+PREPARE edges_1 AS
+SELECT id, source, target, cost AS going FROM edges;
+PREPARE edges_2 AS
+SELECT id, source, target, cost AS going, reverse_cost AS coming FROM edges;
+
+
+CREATE OR REPLACE FUNCTION test_function()
+RETURNS SETOF TEXT AS
+$BODY$
+DECLARE
+params TEXT[];
+subs TEXT[];
+BEGIN
+  subs = ARRAY[
+  'NULL'
+  ]::TEXT[];
+
+  IF min_lib_version('3.4.0') THEN
+    params = ARRAY[
+        '$$SELECT id, source, target, cost, reverse_cost FROM edges$$'
+        ]::TEXT[];
+    RETURN query SELECT * FROM no_crash_test('pgr_maxCardinalityMatch', params, subs);
+
+    params[1] := '$$SELECT id, source, target, cost FROM edges$$';
+    RETURN query SELECT * FROM no_crash_test('pgr_maxCardinalityMatch', params, subs);
+
+    params[1] := '$$edges1$$';
+    RETURN query SELECT * FROM no_crash_test('pgr_maxCardinalityMatch', params, subs);
+    params[1] := '$$edges2$$';
+    RETURN query SELECT * FROM no_crash_test('pgr_maxCardinalityMatch', params, subs);
+  ELSE
+    RETURN QUERY SELECT skip(1, 'cost & reverse cost used on 3.4');
+    RETURN;
+  END IF;
+
+    params[1] := '$$SELECT id, source, target, cost AS going, reverse_cost AS coming FROM edges$$';
+    RETURN query SELECT * FROM no_crash_test('pgr_maxCardinalityMatch', params, subs);
+    params[1] := '$$SELECT id, source, target, cost AS going FROM edges$$';
+    RETURN query SELECT * FROM no_crash_test('pgr_maxCardinalityMatch', params, subs);
+    params[1] := '$$edges_1$$';
+    RETURN query SELECT * FROM no_crash_test('pgr_maxCardinalityMatch', params, subs);
+    params[1] := '$$edges_2$$';
+    RETURN query SELECT * FROM no_crash_test('pgr_maxCardinalityMatch', params, subs);
+
+END
+$BODY$
+LANGUAGE plpgsql VOLATILE;
+
+
+SELECT * FROM test_function();
+
+SELECT finish();
+ROLLBACK;

@@ -1,0 +1,38 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2022-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT CASE WHEN min_version('3.6.0') THEN PLAN(168) ELSE plan(1) END;
+
+CREATE OR REPLACE FUNCTION test_innerquery()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+
+    IF NOT min_version('3.6.0') THEN
+      RETURN QUERY SELECT skip(1, 'pgr_withPointsDD testing only valid signatures on 4.0.0');
+      RETURN;
+    END IF;
+
+    -- SINGLE VERTEX
+    RETURN QUERY
+    SELECT style_dijkstra('pgr_withPointsDD(', ', $$SELECT * from pointsOfInterest$$, 5, 3.8, $$r$$, true)');
+    RETURN QUERY
+    SELECT innerquery_points('pgr_withPointsDD($$SELECT * FROM edges$$,', ', 5, 3.8, $$l$$,true)');
+    -- MULTIPLE VERTEX
+    RETURN QUERY
+    SELECT style_dijkstra('pgr_withPointsDD(', ', $$SELECT * from pointsOfInterest$$, ARRAY[5,10], 3.8, $$l$$,true)');
+    RETURN QUERY
+    SELECT innerquery_points('pgr_withPointsDD($$SELECT * FROM edges$$,', ', ARRAY[5,10], 3.8, $$r$$,true)');
+
+END;
+$BODY$
+language plpgsql;
+
+SELECT test_innerquery();
+SELECT finish();
+ROLLBACK;

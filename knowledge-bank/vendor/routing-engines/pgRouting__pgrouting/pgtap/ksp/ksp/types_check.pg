@@ -1,0 +1,74 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2021-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+BEGIN;
+
+SELECT CASE WHEN min_version('3.6.0') THEN plan(13) ELSE plan(2) END;
+
+SELECT has_function('pgr_ksp');
+
+CREATE FUNCTION KSP_types_check()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+
+    IF NOT min_version('3.6.0') THEN
+      RETURN QUERY SELECT skip(1, 'pgr_KSP testing only valid signatures on 4.0.0');
+      RETURN;
+    END IF;
+
+    RETURN QUERY SELECT has_function('pgr_ksp',ARRAY['text','bigint','bigint','integer','boolean','boolean']);
+    RETURN QUERY SELECT has_function('pgr_ksp',ARRAY['text','bigint','anyarray','integer','boolean','boolean']);
+    RETURN QUERY SELECT has_function('pgr_ksp',ARRAY['text','anyarray','bigint','integer','boolean','boolean']);
+    RETURN QUERY SELECT has_function('pgr_ksp',ARRAY['text','anyarray','anyarray','integer','boolean','boolean']);
+    RETURN QUERY SELECT has_function('pgr_ksp',ARRAY['text','text','integer','boolean','boolean']);
+
+    RETURN QUERY SELECT function_returns('pgr_ksp',ARRAY['text','bigint','bigint','integer','boolean','boolean'],'setof record');
+    RETURN QUERY SELECT function_returns('pgr_ksp',ARRAY['text','bigint','anyarray','integer','boolean','boolean'],'setof record');
+    RETURN QUERY SELECT function_returns('pgr_ksp',ARRAY['text','anyarray','bigint','integer','boolean','boolean'],'setof record');
+    RETURN QUERY SELECT function_returns('pgr_ksp',ARRAY['text','anyarray','anyarray','integer','boolean','boolean'],'setof record');
+    RETURN QUERY SELECT function_returns('pgr_ksp',ARRAY['text','text','integer','boolean','boolean'],'setof record');
+
+    IF min_version('4.0.0') THEN
+
+      RETURN QUERY SELECT function_args_eq('pgr_ksp',
+          $$VALUES
+          ('{"","","",directed,heap_paths,seq,path_id,path_seq,start_vid,end_vid,node,edge,cost,agg_cost}'::TEXT[]),
+          ('{"","","","",directed,heap_paths,seq,path_id,path_seq,start_vid,end_vid,node,edge,cost,agg_cost}'::TEXT[])
+          $$);
+
+      RETURN QUERY SELECT function_types_eq('pgr_ksp',
+          $$VALUES
+          ('{text,text,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+          ('{text,int8,int8,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+          ('{text,int8,anyarray,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+          ('{text,anyarray,int8,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+          ('{text,anyarray,anyarray,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[])
+          $$);
+
+    ELSE
+
+      RETURN QUERY SELECT function_args_has('pgr_ksp',
+          $$VALUES
+          ('{"","","",directed,heap_paths,seq,path_id,path_seq,start_vid,end_vid,node,edge,cost,agg_cost}'::TEXT[]),
+          ('{"","","","",directed,heap_paths,seq,path_id,path_seq,start_vid,end_vid,node,edge,cost,agg_cost}'::TEXT[])
+          $$);
+
+      RETURN QUERY SELECT function_types_has('pgr_ksp',
+          $$VALUES
+          ('{text,text,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+          ('{text,int8,int8,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+          ('{text,int8,anyarray,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+          ('{text,anyarray,int8,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+          ('{text,anyarray,anyarray,int4,bool,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[])
+          $$);
+
+    END IF;
+END
+$BODY$
+LANGUAGE plpgsql VOLATILE;
+
+SELECT KSP_types_check();
+SELECT finish();
+ROLLBACK;

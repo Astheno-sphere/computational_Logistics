@@ -1,0 +1,22 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2025-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+BEGIN;
+
+SELECT CASE WHEN min_version('3.8.0') THEN plan(654) ELSE plan(4) END;
+UPDATE edges SET cost = sign(cost) + 0.001 * id * id, reverse_cost = sign(reverse_cost) + 0.001 * id * id;
+
+ALTER TABLE edges ADD is_new BOOLEAN DEFAULT false, ADD contracted_vertices integer[];
+ALTER TABLE vertices ADD is_contracted BOOLEAN DEFAULT false, ADD contracted_vertices integer[];
+
+CALL create_contracted_graph(false,'pgr_contractionLinear');
+SELECT check_contracted_graph_linear(false);
+SELECT compare_dijkstra_contraction(false);
+
+CALL create_contracted_graph(true,'pgr_contractionLinear');
+SELECT check_contracted_graph_linear(true);
+SELECT compare_dijkstra_contraction(true);
+
+SELECT finish();
+ROLLBACK;

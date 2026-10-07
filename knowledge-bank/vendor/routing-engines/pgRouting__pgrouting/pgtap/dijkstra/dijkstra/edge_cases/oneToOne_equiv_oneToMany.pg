@@ -1,0 +1,62 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2016-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT plan(36);
+
+UPDATE edges SET cost = sign(cost) + 0.001 * id * id, reverse_cost = sign(reverse_cost) + 0.001 * id * id;
+
+
+create or REPLACE FUNCTION foo(lim INTEGER default 18, flag boolean default true )
+RETURNS SETOF TEXT AS
+$BODY$
+DECLARE
+sql_OneToOne TEXT;
+sql_OneToMany TEXT;
+BEGIN
+
+    sql_OneToMany := '';
+    FOR i IN 1.. lim LOOP
+        sql_OneToOne := '';
+        sql_OneToMany := '';
+        FOR j IN 1..lim LOOP
+
+            IF j > 1 THEN
+                sql_OneToOne := sql_OneToOne
+                ||' UNION ALL';
+                sql_OneToMany := sql_OneToMany ||', ';
+    END IF;
+    sql_OneToOne := sql_OneToOne ||
+    '( SELECT seq, ' || i || ' as start_vid, ' || j || ' as end_vid, node, edge, cost, agg_cost  FROM pgr_dijkstra(
+            ''SELECT id, source, target, cost, reverse_cost FROM edges'', '
+            || i || ', ' || j ||
+            ', ' || flag || ' ) )';
+    sql_OneToMany := sql_OneToMany || j ;
+END LOOP;
+sql_OneToMany :=
+' SELECT path_seq, ' || i || ' as start_vid,  end_vid, node, edge, cost, agg_cost FROM pgr_dijkstra(
+    ''SELECT id, source, target, cost, reverse_cost FROM edges'', '
+    || i || ', ARRAY[' || sql_OneToMany ||
+    '], ' || flag || ' ) ';
+
+sql_OneToOne := 'select * from ( ' || sql_OneToOne ||') AS a';
+
+RETURN query SELECT set_eq( sql_OneToOne, sql_OneToMany);
+
+END LOOP;
+RETURN;
+END
+$BODY$
+language plpgsql;
+
+select * from foo(18, true);
+select * from foo(18, false);
+
+
+-- Finish the tests and clean up.
+SELECT * FROM finish();
+ROLLBACK;
+

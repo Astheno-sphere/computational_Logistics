@@ -1,0 +1,18 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2021-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+
+BEGIN;
+
+SELECT CASE WHEN min_version('4.0.0') THEN plan(14) WHEN min_version('3.4.0') THEN plan(13) ELSE plan(2) END;
+
+SELECT has_function('pgr_trsp');
+
+SELECT single_path_types_check(
+  'pgr_trsp',
+  created_v => '3.4.0', standard_v => '4.0.0');
+
+SELECT finish();
+ROLLBACK;

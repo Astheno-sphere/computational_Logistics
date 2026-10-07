@@ -1,0 +1,60 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2017-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+BEGIN;
+
+SELECT CASE WHEN min_version('4.0.0') THEN plan(13) ELSE plan(12) END;
+
+CREATE or REPLACE FUNCTION types_check()
+RETURNS SETOF TEXT AS
+$BODY$
+BEGIN
+
+  RETURN QUERY SELECT has_function('pgr_edgedisjointpaths');
+
+  RETURN QUERY SELECT has_function('pgr_edgedisjointpaths', ARRAY['text','bigint','bigint','boolean']);
+  RETURN QUERY SELECT has_function('pgr_edgedisjointpaths', ARRAY['text','bigint','anyarray','boolean']);
+  RETURN QUERY SELECT has_function('pgr_edgedisjointpaths', ARRAY['text','anyarray','bigint','boolean']);
+  RETURN QUERY SELECT has_function('pgr_edgedisjointpaths', ARRAY['text','anyarray','anyarray','boolean']);
+
+  RETURN QUERY SELECT function_returns('pgr_edgedisjointpaths', ARRAY['text','bigint','bigint','boolean'],'setof record');
+  RETURN QUERY SELECT function_returns('pgr_edgedisjointpaths', ARRAY['text','bigint','anyarray','boolean'],'setof record');
+  RETURN QUERY SELECT function_returns('pgr_edgedisjointpaths', ARRAY['text','anyarray','bigint','boolean'],'setof record');
+  RETURN QUERY SELECT function_returns('pgr_edgedisjointpaths', ARRAY['text','anyarray','anyarray','boolean'],'setof record');
+
+  IF min_version('3.2.0') THEN
+    RETURN QUERY SELECT has_function('pgr_edgedisjointpaths', ARRAY['text','text','boolean']);
+    RETURN QUERY SELECT function_returns('pgr_edgedisjointpaths', ARRAY['text','text','boolean'],'setof record');
+  ELSE
+    RETURN QUERY SELECT skip(2, 'Combinations signature added on 3.2.0');
+  END IF;
+
+  IF NOT min_version('4.0.0') THEN
+    RETURN QUERY SELECT skip(1, 'pgr_edgedisjointpaths: testing only signatures standardaized in v4.0.0.');
+    RETURN;
+  END IF;
+
+  RETURN QUERY SELECT function_args_eq('pgr_edgedisjointpaths',
+    $$VALUES
+    ('{"","","",directed,seq,path_id,path_seq,start_vid,end_vid,node,edge,cost,agg_cost}'::TEXT[]),
+    ('{"","",   directed,seq,path_id,path_seq,start_vid,end_vid,node,edge,cost,agg_cost}'::TEXT[])
+    $$);
+
+  RETURN QUERY SELECT function_types_eq('pgr_edgedisjointpaths',
+    $$VALUES
+      ('{text,text,             bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+      ('{text,int8,int8,        bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+      ('{text,int8,anyarray,    bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+      ('{text,anyarray,int8,    bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[]),
+      ('{text,anyarray,anyarray,bool,int4,int4,int4,int8,int8,int8,int8,float8,float8}'::TEXT[])
+    $$);
+
+END;
+$BODY$
+language plpgsql;
+
+SELECT types_check();
+SELECT finish();
+ROLLBACK;

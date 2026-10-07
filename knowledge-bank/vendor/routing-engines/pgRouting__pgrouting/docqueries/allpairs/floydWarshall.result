@@ -1,0 +1,32 @@
+BEGIN;
+BEGIN
+SET client_min_messages TO NOTICE;
+SET
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2015-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+/* -- q1 */
+SELECT * FROM pgr_floydWarshall(
+  'SELECT id, source, target, cost, reverse_cost
+  FROM edges where id < 5'
+) ORDER BY start_vid, end_vid;
+ start_vid | end_vid | agg_cost
+-----------+---------+----------
+         5 |       6 |        1
+         5 |       7 |        2
+         6 |       5 |        1
+         6 |       7 |        1
+         7 |       5 |        2
+         7 |       6 |        1
+        10 |       5 |        2
+        10 |       6 |        1
+        10 |       7 |        2
+        15 |       5 |        3
+        15 |       6 |        2
+        15 |       7 |        3
+        15 |      10 |        1
+(13 rows)
+
+/* -- q2 */
+ROLLBACK;
+ROLLBACK

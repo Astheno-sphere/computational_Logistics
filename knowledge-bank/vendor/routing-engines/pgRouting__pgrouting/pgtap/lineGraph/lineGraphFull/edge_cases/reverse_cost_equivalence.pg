@@ -1,0 +1,19 @@
+/* :file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2017-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0 */
+
+
+
+BEGIN;
+UPDATE edges SET cost = sign(cost), reverse_cost = sign(reverse_cost);
+SELECT plan(1);
+
+SELECT bag_has(
+  $$SELECT * FROM pgr_lineGraphFull('select id, source, target, cost, reverse_cost from edges where id =1')$$,
+  $$SELECT * FROM pgr_lineGraphFull(
+    'select id, source, target, cost from edges where id = 1
+     UNION ALL
+     select -1*id, target AS source, source AS target, reverse_cost AS cost from edges where id = 1')$$
+);
+SELECT finish();
+ROLLBACK;

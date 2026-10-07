@@ -1,0 +1,130 @@
+:file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2021-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0
+
+.. index::
+   single: Coloring Family ; pgr_edgeColoring - Experimental
+   single: edgeColoring - Experimental on v3.3
+
+|
+
+``pgr_edgeColoring`` - Experimental
+===============================================================================
+
+``pgr_edgeColoring`` — Returns the edge coloring of undirected and loop-free
+graphs
+
+.. include:: experimental.rst
+   :start-after: warning-begin
+   :end-before: end-warning
+
+.. rubric:: Availability
+
+.. rubric:: Version 4.1.0
+
+* Fix the way it builds the graph
+
+.. rubric:: Version 4.0.0
+
+* Output columns standardized to |result_edge_color|
+
+.. rubric:: Version 3.3.0
+
+* New experimental function.
+
+Description
+-------------------------------------------------------------------------------
+
+Edge Coloring is an algorithm used for coloring of the edges for the vertices
+in the graph. It is an assignment of colors to the edges of the graph so that
+no two adjacent edges have the same color.
+
+**The main Characteristics are:**
+
+- The implementation is for **undirected** and **loop-free** graphs
+
+  - :loop free: no self-loops and no parallel edges.
+
+- Provides the color to be assigned to all the edges present in the graph.
+
+- At most :math:`\Delta + 1` colors are used, where :math:`\Delta` is the degree
+  of the graph.
+
+  - This is optimal for some graphs, and by Vizing's theorem it uses at most one
+    color more than the optimal for all others.
+  - When the graph is bipartite
+
+    - the chromatic number :math:`x'(G)` (minimum number of
+      colors needed for proper edge coloring of graph) is equal to the degree
+      :math:`\Delta + 1` of the graph, (:math:`x'(G) = \Delta`)
+
+- The algorithm tries to assign the least possible color to every edge.
+
+  - Does not always produce optimal coloring.
+
+- The returned rows are ordered in ascending order of the edge identifier.
+- Efficient graph coloring is an NP-Hard problem, and therefore:
+
+  - In this implelentation the running time: :math:`O(|E|*|V|)`
+
+    - where :math:`|E|` is the number of edges in the graph,
+    - :math:`|V|` is the number of vertices in the graph.
+
+|Boost| Boost Graph Inside
+
+Signatures
+------------------------------------------------------------------------------
+
+.. admonition:: \ \
+   :class: signatures
+
+   | pgr_edgeColoring(`Edges SQL`_)
+
+   | Returns set of |result_edge_color|
+   | OR EMPTY SET
+
+:Example: Graph coloring of pgRouting :doc:`sampledata`
+
+.. literalinclude:: edgeColoring.queries
+   :start-after: -- q1
+   :end-before: -- q2
+
+.. Parameters, Inner Queries & result columns
+
+Parameters
+-------------------------------------------------------------------------------
+
+.. include:: pgRouting-concepts.rst
+   :start-after: only_edge_param_start
+   :end-before: only_edge_param_end
+
+Inner Queries
+-------------------------------------------------------------------------------
+
+Edges SQL
+...............................................................................
+
+.. include:: pgRouting-concepts.rst
+   :start-after: basic_edges_sql_start
+   :end-before: basic_edges_sql_end
+
+Result columns
+-------------------------------------------------------------------------------
+
+.. include:: coloring-family.rst
+    :start-after: result-edge-color-start
+    :end-before: result-edge-color-end
+
+
+See Also
+-------------------------------------------------------------------------------
+
+* :doc:`sampledata`
+* `Boost: Edge Coloring
+  <https://www.boost.org/libs/graph/doc/edge_coloring.html>`__
+* `Wikipedia: Graph coloring <https://en.wikipedia.org/wiki/Graph_coloring>`__
+
+.. rubric:: Indices and tables
+
+* :ref:`genindex`
+* :ref:`search`

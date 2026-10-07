@@ -1,0 +1,119 @@
+:file: This file is part of the pgRouting project.
+:copyright: Copyright (c) 2016-2026 pgRouting developers
+:license: Creative Commons Attribution-Share Alike 3.0 https://creativecommons.org/licenses/by-sa/3.0
+
+
+.. index::
+   single: Components Family ; pgr_articulationPoints
+   single: articulationPoints
+
+|
+
+``pgr_articulationPoints``
+===============================================================================
+
+``pgr_articulationPoints`` - Return the articulation points of an undirected
+graph.
+
+.. rubric:: Availability
+
+* Version 3.0.0
+
+  * Result columns change: ``seq`` is removed
+  * Function promoted to official.
+
+* Version 2.5.0
+
+  * New experimental function.
+
+Description
+-------------------------------------------------------------------------------
+
+Those vertices that belong to more than one biconnected component are called
+articulation points or, equivalently, cut vertices.
+Articulation points are vertices whose removal would increase the number of
+connected components in the graph.
+This implementation can only be used with an undirected graph.
+
+**The main characteristics are:**
+
+- Works for **undirected** graphs.
+- The returned values are ordered:
+
+  - ``node`` ascending
+
+- Running time: :math:`O(V + E)`
+
+|Boost| Boost Graph Inside
+
+Signatures
+-------------------------------------------------------------------------------
+
+.. admonition:: \ \
+   :class: signatures
+
+   | pgr_articulationPoints(`Edges SQL`_)
+
+   | Returns set of |result-node|
+   | OR EMPTY SET
+
+:Example: The articulation points of the graph
+
+.. literalinclude:: articulationPoints.queries
+   :start-after: -- q1
+   :end-before: -- q2
+
+Nodes in red are the articulation points.
+
+.. figure:: /images/ap_sampledata.png
+   :scale: 25%
+
+Parameters
+-------------------------------------------------------------------------------
+
+.. include:: pgRouting-concepts.rst
+   :start-after: only_edge_param_start
+   :end-before: only_edge_param_end
+
+Inner Queries
+-------------------------------------------------------------------------------
+
+Edges SQL
+...............................................................................
+
+.. include:: pgRouting-concepts.rst
+    :start-after: basic_edges_sql_start
+    :end-before: basic_edges_sql_end
+
+Result columns
+-------------------------------------------------------------------------------
+
+Returns set of |result-node|
+
+.. list-table::
+   :width: 81
+   :widths: auto
+   :header-rows: 1
+
+   * - Column
+     - Type
+     - Description
+   * - ``node``
+     - ``BIGINT``
+     - Identifier of the vertex.
+
+See Also
+-------------------------------------------------------------------------------
+
+* :doc:`components-family`
+* :doc:`sampledata`
+* `Boost: Biconnected components & articulation points
+  <https://www.boost.org/libs/graph/doc/biconnected_components.html>`__
+* wikipedia: `Biconnected component
+  <https://en.wikipedia.org/wiki/Biconnected_component>`__
+
+.. rubric:: Indices and tables
+
+* :ref:`genindex`
+* :ref:`search`
+
