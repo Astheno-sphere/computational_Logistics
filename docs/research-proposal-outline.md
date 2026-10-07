@@ -74,7 +74,7 @@ analysis. Practical: decision support that identifies robust policy packages and
 a single forecast.
 
 ## 9. Evidence of readiness (what to point the committee to)
-- Working, tested prototypes of each step (`python -m pytest tests`, 74 tests).
+- Working, tested prototypes of each step (`python -m pytest tests`, 79 tests).
 - System, agent-tier and theory-funnel diagrams on the research atlas (`docs/index.html`).
 - `examples/transplan_study.py`: estimation → ABM → 1,500-run ensemble → robustness, PRIM, backcasting.
 - Clear statement of limits: synthetic data, illustrative parameters, compact ABM.

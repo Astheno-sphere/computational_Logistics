@@ -28,7 +28,7 @@ def payload(res):
 def test_mcp_lists_all_tools_and_routes():
     tools, res = mcp_call("route", {"source": GRID, "origin_lon": 7.1592, "origin_lat": 62.7375,
                                      "dest_lon": 7.1826, "dest_lat": 62.7483, "weight": "length"})
-    assert {"network_summary", "route", "solve_vrp", "solve_model", "diagnose_tree"} <= tools
+    assert {"network_summary", "route", "solve_vrp", "solve_model", "diagnose_tree", "pathways"} <= tools
     r = payload(res)
     assert r["length_m"] > 2000 and len(r["points"]) == len(r["nodes"])
 

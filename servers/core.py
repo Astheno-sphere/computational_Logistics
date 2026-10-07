@@ -10,7 +10,7 @@ from functools import lru_cache
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for p in ("skills/osm-network/scripts", "skills/vrp-solve/scripts", "skills/opt-model/scripts",
-          "skills/gh-datatree/scripts"):
+          "skills/gh-datatree/scripts", "skills/viz-story/scripts"):
     sys.path.insert(0, os.path.join(ROOT, p))
 
 import osm_network as on  # noqa: E402
@@ -66,3 +66,23 @@ def diagnose_tree(probe):
     import tree_diagnose as td
     findings = td.diagnose(json.loads(probe) if isinstance(probe, str) else probe)
     return {"findings": findings, "report": td.report(findings)}
+
+
+def pathways(package="best", n_futures=20, target=0.2, n_agents=400, seed=0):
+    """CO2 pathways of one policy package across sampled futures, as a data tree {future} -> CO2
+    relative to 2025 per year, with a success flag per future. package: "best" (most robust of the
+    study's top packages), "no_policy", or a study package id such as "P12"."""
+    import story
+    pk = story.packages()
+    futs = story.futures(n_futures, seed)
+    names = list(pk) if package == "best" else [package]
+    if any(n not in pk for n in names):
+        raise ValueError("unknown package %r; choose from %s" % (package, ", ".join(["best"] + list(pk))))
+    df = story.run_pathways({n: pk[n] for n in names}, futs, n_agents, target=target, seed=seed)
+    if package == "best":
+        last = df[df.year == df.year.max()].groupby("package")["meets_target"].mean()
+        package = last.idxmax()
+    out = story.pathway_tree(df, package)
+    out["target"] = target
+    out["robustness"] = float(sum(out["success"]) / len(out["success"]))
+    return out

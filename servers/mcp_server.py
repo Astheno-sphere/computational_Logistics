@@ -55,5 +55,13 @@ def diagnose_tree(probe: str) -> dict:
     return core.diagnose_tree(probe)
 
 
+
+@mcp.tool()
+def pathways(package: str = "best", n_futures: int = 20, target: float = 0.2) -> dict:
+    """CO2 pathways of a policy package across sampled futures (abm-transport ensemble). Returns years,
+    a tree {future} -> CO2 relative to 2025 per year, success flags against the 2050 target, and the
+    package's robustness. package: best, no_policy or a study package id such as P12."""
+    return core.pathways(package, n_futures, target)
+
 if __name__ == "__main__":
     mcp.run()

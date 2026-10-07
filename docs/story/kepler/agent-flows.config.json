@@ -1,0 +1,149 @@
+{
+ "version": "v1",
+ "config": {
+  "visState": {
+   "filters": [
+    {
+     "dataId": [
+      "flows"
+     ],
+     "id": "year_filter",
+     "name": [
+      "year"
+     ],
+     "type": "range",
+     "value": [
+      2050,
+      2050
+     ]
+    }
+   ],
+   "layers": [
+    {
+     "id": "commutes",
+     "type": "arc",
+     "config": {
+      "dataId": "flows",
+      "label": "Commutes by mode",
+      "isVisible": true,
+      "columns": {
+       "lat0": "home_lat",
+       "lng0": "home_lng",
+       "lat1": "work_lat",
+       "lng1": "work_lng"
+      },
+      "visConfig": {
+       "opacity": 0.55,
+       "thickness": 1.2,
+       "colorRange": {
+        "name": "mode",
+        "type": "ordinal",
+        "category": "Custom",
+        "colors": [
+         "#7570b3",
+         "#1b9e77",
+         "#d95f02"
+        ]
+       },
+       "targetColorRange": {
+        "name": "mode",
+        "type": "ordinal",
+        "category": "Custom",
+        "colors": [
+         "#7570b3",
+         "#1b9e77",
+         "#d95f02"
+        ]
+       }
+      }
+     },
+     "visualChannels": {
+      "colorField": {
+       "name": "mode",
+       "type": "string"
+      },
+      "colorScale": "ordinal",
+      "sourceColorField": {
+       "name": "mode",
+       "type": "string"
+      },
+      "sourceColorScale": "ordinal"
+     }
+    },
+    {
+     "id": "homes",
+     "type": "point",
+     "config": {
+      "dataId": "flows",
+      "label": "Homes (EV owners highlighted)",
+      "isVisible": true,
+      "columns": {
+       "lat": "home_lat",
+       "lng": "home_lng"
+      },
+      "visConfig": {
+       "radius": 3,
+       "opacity": 0.8,
+       "colorRange": {
+        "name": "ev",
+        "type": "ordinal",
+        "category": "Custom",
+        "colors": [
+         "#9aa6b2",
+         "#00a3e0"
+        ]
+       }
+      }
+     },
+     "visualChannels": {
+      "colorField": {
+       "name": "ev",
+       "type": "boolean"
+      },
+      "colorScale": "ordinal"
+     }
+    }
+   ],
+   "interactionConfig": {
+    "tooltip": {
+     "enabled": true,
+     "fieldsToShow": {
+      "flows": [
+       {
+        "name": "zone",
+        "format": null
+       },
+       {
+        "name": "mode",
+        "format": null
+       },
+       {
+        "name": "ev",
+        "format": null
+       },
+       {
+        "name": "dist_km",
+        "format": null
+       },
+       {
+        "name": "year",
+        "format": null
+       }
+      ]
+     }
+    }
+   }
+  },
+  "mapState": {
+   "latitude": 62.93,
+   "longitude": 7.45,
+   "zoom": 8.6,
+   "pitch": 40,
+   "bearing": 0,
+   "dragRotate": true
+  },
+  "mapStyle": {
+   "styleType": "dark-matter"
+  }
+ }
+}

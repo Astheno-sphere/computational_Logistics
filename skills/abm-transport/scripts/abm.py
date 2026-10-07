@@ -79,7 +79,8 @@ def ramp(year):
     return min(1.0, max(0.0, (year - POLICY_START + 1) / (POLICY_FULL - POLICY_START + 1)))
 
 
-def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6, calibrate_to=TARGET_SHARES_2025):
+def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6, calibrate_to=TARGET_SHARES_2025,
+        trace_years=()):
     L = {**defaults(LEVERS), **(levers or {})}
     U = {**defaults(UNCERTAINTIES), **(uncertainties or {})}
     b = dict(beta or BETA_DEFAULT)
@@ -97,6 +98,8 @@ def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6,
     shift = {"car": 0.0, "bus": 0.0, "bike": 0.0}
     calib_iters = 30 if calibrate_to else 0
     series = {k: [] for k in ("car_share", "bus_share", "bike_share", "ev_fleet_share", "car_km", "co2_t", "cs_nok")}
+    # per-agent trace for maps: a separate random stream, so tracing never changes the results
+    trng, trace = np.random.default_rng(seed + 7919), {}
     for t, year in enumerate(YEARS):
         # ---- 1. fleet turnover and EV adoption -------------------------------------------------------
         replace = owns & (rng.uniform(size=n) < 1.0 / U["vehicle_lifetime"])
@@ -127,6 +130,10 @@ def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6,
                 for j, m in enumerate(("car", "bus", "bike")):
                     shift[m] += np.log(calibrate_to[m] / max(sh[j], 1e-9))
         shares = Pm.mean(axis=0)
+        if year in trace_years:   # one realised mode per agent, drawn from its choice probabilities
+            u = trng.uniform(size=n)[:, None]
+            trace[int(year)] = {"mode": (u > Pm.cumsum(axis=1)).sum(axis=1).clip(0, 2).tolist(),
+                                "ev": (ev & owns).tolist()}
         car_km = float((Pm[:, 0] * dist * 2 * commute).sum() * 220 * (6000.0 / n))   # 2 trips, 220 days, scaled
         ice_km = float((Pm[:, 0] * dist * 2 * commute * ~ev).sum() * 220 * (6000.0 / n))
         bus_pkm = float((Pm[:, 1] * dist * 2 * commute).sum() * 220 * (6000.0 / n))
@@ -146,6 +153,8 @@ def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6,
         "cs_2050_nok": float(s["cs_nok"][-1]),
         "calibration_shift": shift,
         "levers": L, "uncertainties": U,
+        **({"trace": {"modes": ["car", "bus", "bike"], "zone": [P["zone_names"][z] for z in zone],
+                      "dist_km": dist.round(2).tolist(), "years": trace}} if trace_years else {}),
     }
 
 

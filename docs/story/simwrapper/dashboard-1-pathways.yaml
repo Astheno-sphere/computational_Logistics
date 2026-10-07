@@ -1,0 +1,49 @@
+header:
+  tab: Pathways
+  title: 'Asthenosphere: CO2 pathways to 2050'
+  description: 'Synthetic data, illustrative parameters. 30 futures x 4 packages;
+    target: 2050 commute CO2 at or below 20% of 2025.'
+layout:
+  row1:
+  - type: line
+    title: Median CO2 relative to 2025, by policy package
+    description: Each line is the median over all futures; 0.2 is the target
+    dataset: co2_by_package.csv
+    x: year
+    columns:
+    - median
+    groupBy: package
+    xAxisTitle: Year
+    yAxisTitle: CO2 / CO2 in 2025
+  row2:
+  - type: bar
+    title: Share of futures meeting the 2050 target
+    dataset: robustness.csv
+    x: package
+    columns:
+    - share_meeting_target
+    xAxisTitle: Package
+    yAxisTitle: Share of futures
+  - type: area
+    title: Mode shares under P12 (median future)
+    dataset: mode_shares_best.csv
+    x: year
+    columns:
+    - car
+    - bus
+    - bike
+    xAxisTitle: Year
+    yAxisTitle: Share of commutes
+  row3:
+  - type: line
+    title: Uncertainty band for P12 (10th to 90th percentile)
+    dataset: co2_by_package.csv
+    x: year
+    columns:
+    - p10
+    - median
+    - p90
+    filters:
+      package: P12
+    xAxisTitle: Year
+    yAxisTitle: CO2 / CO2 in 2025
