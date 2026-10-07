@@ -1,0 +1,77 @@
+{
+  "actions": {
+    "GPU_actions": 0,
+    "SSH_calls": 0,
+    "Torch_imports": 0,
+    "frozen_scientific_source_edits": 0,
+    "live_process_launches": 0,
+    "model_calls": 0,
+    "source_edits": 0,
+    "test_suites_run": 1
+  },
+  "artifact_files_sha256": {
+    "scripts/frontier_v8_owned_process.py": "2d9edb599d48aa2c9e1e5971ce95ae833022622a9de3c8d1a1ca81f0f70debc2",
+    "tests/test_frontier_v8_owned_process.py": "e9ba334b8b0f79a04a3bc80620739b1ffbe7f1fa76e69f9938826f77ec754468"
+  },
+  "check_count": 23,
+  "checks": {
+    "atomic_json_existing_final_and_interrupted_partial_write_preserved": true,
+    "atomic_json_fsync_completed_temp_then_nooverwrite_link": true,
+    "cleanup_discovers_stops_rediscovers_and_kills_only_owned_tree": true,
+    "controller_death_channel_loss_deadline_interrupt_fail_closed": true,
+    "controller_receipt_matches_nonce_controller_guard_and_success_conditions": true,
+    "credentials_loader_overrides_and_gpu_visibility_removed_from_cpu_environment": true,
+    "escaped_and_orphaned_owned_descendants_remain_in_subreaper_scope": true,
+    "final_process_source_and_tests_exact_hashes_stable": true,
+    "fresh_exclusive_attempt_reuse_and_symlink_ancestors_refused": true,
+    "fresh_session_worker_and_subreaper_ancestry_exclude_unrelated_tasks": true,
+    "guard_sigkill_host_loss_privilege_or_unreadable_tree_cleanup_limits_disclosed": true,
+    "identity_binds_boot_pid_uid_birth_and_ancestry": true,
+    "independent_guard_bound_before_start_channel_arms_worker": true,
+    "linux_live_tests_separate_from_mocked_cpu_results": true,
+    "linux_pidfd_capability_and_unchanged_controller_uid_required": true,
+    "nonce_mismatch_fails_success_without_widening_control_scope": true,
+    "pidfd_acquisition_checks_identity_before_and_after": true,
+    "popen_signal_handlers_defer_until_new_child_registration": true,
+    "process_containment_does_not_claim_gpu_lease_or_queue_restoration": true,
+    "quiescence_requires_all_pidfd_exits_then_empty_guard_child_list": true,
+    "signals_use_bound_pidfds_without_numeric_pid_or_group_fallback": true,
+    "stdlib_only_module_no_model_or_gpu_dependencies": true,
+    "worker_parent_death_backstop_checks_actual_guard_parent": true
+  },
+  "failed_checks": [],
+  "historical_finding": {
+    "current_resolution": "Complete same-directory temporary bytes are flushed/fsynced before atomic exclusive hard link publication; existing final bytes remain intact.",
+    "finding": "Existence of the old directly-written receipt could expose partial JSON.",
+    "path": "runs/frontier-v8-native-runtime-20261003/owned-process-finding-r1.json",
+    "sha256": "24417eb7c3f67932a568adf5eab2d77aea27bc63dc0354b6ccf53aaad9c155a9"
+  },
+  "limits": [
+    "This review covers fresh trusted CPU workers and current static code plus mocked process tests. Four live Linux pidfd fixtures were skipped on Darwin; no live Linux process containment is attested.",
+    "Guard SIGKILL, host/kernel loss, privilege changes or unreadable ownership trees can prevent proven cleanup; failed or absent evidence cannot become successful proof.",
+    "The process-only guard does not acquire a GPU lease or capture/restore any original queue, checkpoint, optimizer, ranks, coordinator or services. A separate live resource/restoration protocol remains required.",
+    "No controller/model stage/native runtime launch, retry/resume/promotion or frozen scientific change is authorized or performed by this receipt."
+  ],
+  "local_verification": {
+    "actual_platform": "darwin",
+    "atomic_publication_tests": "Actual temporary file writes, flush/fsync and hard-link publication on local filesystem; process/kernel ownership fixtures are mocked.",
+    "command": "python3 -m unittest tests.test_frontier_v8_owned_process -v",
+    "errors": 0,
+    "failures": 0,
+    "kernel_live_Linux_skips": [
+      "live_cpu_worker_completion",
+      "live_cpu_timeout",
+      "live_forked_escaped_session_is_contained",
+      "live_controller_sigkill_leaves_independent_quiescence_receipt"
+    ],
+    "kernel_live_Linux_tests_run": 0,
+    "passed": 24,
+    "skipped": 4,
+    "tests_run": 28
+  },
+  "observed_at_utc": "2026-10-03T12:01:46.989413+00:00",
+  "passed_count": 23,
+  "reviewer": "train_diagnostic_design",
+  "schema_version": 1,
+  "status": "independent_process_cross_review_passed_CPU_scope_only"
+}

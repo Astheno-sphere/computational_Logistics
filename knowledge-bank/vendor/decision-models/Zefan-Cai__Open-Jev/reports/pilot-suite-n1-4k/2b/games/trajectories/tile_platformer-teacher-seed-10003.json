@@ -1,0 +1,4576 @@
+{
+  "game": {
+    "name": "tile_platformer",
+    "length": 48,
+    "physics": "open-jev-tile-platformer-v1"
+  },
+  "seed": 10003,
+  "policy": "tile_platformer_bfs_baseline",
+  "is_model": false,
+  "max_steps": 40,
+  "steps": [
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 2,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 6,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 4,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 4,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 1.0497216135263443,
+      "environment_latency_ms": 0.007441267371177673
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 4,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 4,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 6,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 2,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 1.0205674916505814,
+      "environment_latency_ms": 0.006604939699172974
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 6,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 2,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 8,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": true
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": null,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.9792540222406387,
+      "environment_latency_ms": 0.006211921572685242
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 8,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "falling"
+          },
+          "trajectory": {
+            "jump_tick": 2,
+            "launch_height": 0,
+            "crossing_known_gap": true
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": null,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 10,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 8,
+          "obstacle_distance_tiles": 3
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.9665880352258682,
+      "environment_latency_ms": 0.007327646017074585
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 10,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 8,
+            "obstacle_distance_tiles": 3
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 1.0,
+          "right_run_jump": 0.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 12,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 6,
+          "obstacle_distance_tiles": 1
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.9598303586244583,
+      "environment_latency_ms": 0.0065248459577560425
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 12,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 6,
+            "obstacle_distance_tiles": 1
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 14,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 4,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.9600203484296799,
+      "environment_latency_ms": 0.006023794412612915
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 14,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 4,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 16,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 2,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.939859077334404,
+      "environment_latency_ms": 0.005712732672691345
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 16,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 2,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 18,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": true
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 1,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.8747559040784836,
+      "environment_latency_ms": 0.006454065442085266
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 18,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "falling"
+          },
+          "trajectory": {
+            "jump_tick": 2,
+            "launch_height": 0,
+            "crossing_known_gap": true
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 1,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 20,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 8,
+          "obstacle_distance_tiles": 3
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.8072145283222198,
+      "environment_latency_ms": 0.006660819053649902
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 20,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 8,
+            "obstacle_distance_tiles": 3
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 1.0,
+          "right_run_jump": 0.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 22,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 6,
+          "obstacle_distance_tiles": 1
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.6853006780147552,
+      "environment_latency_ms": 0.006124377250671387
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 22,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 6,
+            "obstacle_distance_tiles": 1
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 24,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 4,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.6331466138362885,
+      "environment_latency_ms": 0.005790963768959045
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 24,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 4,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 26,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 2,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.5732644349336624,
+      "environment_latency_ms": 0.005589798092842102
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 26,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 2,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 28,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": true
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 1,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.49657002091407776,
+      "environment_latency_ms": 0.005902722477912903
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 28,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "falling"
+          },
+          "trajectory": {
+            "jump_tick": 2,
+            "launch_height": 0,
+            "crossing_known_gap": true
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 1,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 30,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 8,
+          "obstacle_distance_tiles": 3
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.4277210682630539,
+      "environment_latency_ms": 0.006776303052902222
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 30,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 8,
+            "obstacle_distance_tiles": 3
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 1.0,
+          "right_run_jump": 0.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 32,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 6,
+          "obstacle_distance_tiles": 1
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.3583468496799469,
+      "environment_latency_ms": 0.006366521120071411
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 32,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 6,
+            "obstacle_distance_tiles": 1
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 34,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 4,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.23133307695388794,
+      "environment_latency_ms": 0.005690380930900574
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 34,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 4,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 36,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 2,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.19149482250213623,
+      "environment_latency_ms": 0.005668029189109802
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 36,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 2,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 38,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": true
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 1,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.1081954687833786,
+      "environment_latency_ms": 0.006517395377159119
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 38,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "falling"
+          },
+          "trajectory": {
+            "jump_tick": 2,
+            "launch_height": 0,
+            "crossing_known_gap": true
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 1,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 40,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": null,
+          "obstacle_distance_tiles": 3
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.06470829248428345,
+      "environment_latency_ms": 0.007024034857749939
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 40,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": null,
+            "obstacle_distance_tiles": 3
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 42,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": null,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.03684498369693756,
+      "environment_latency_ms": 0.005556270480155945
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 42,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": null,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 44,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": null,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 0.012097880244255066,
+      "environment_latency_ms": 0.004932284355163574
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 44,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": null,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_run_jump",
+        "probabilities": {
+          "noop": 0.0,
+          "right": 0.0,
+          "right_jump": 0.0,
+          "right_run": 0.0,
+          "right_run_jump": 1.0,
+          "jump": 0.0,
+          "left": 0.0
+        }
+      },
+      "action": "right_run_jump",
+      "reward": 2.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 46,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": null,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": true
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": true,
+      "latency_ms": 0.006647780537605286,
+      "environment_latency_ms": 0.00525452196598053
+    }
+  ],
+  "initial_state": {
+    "objective": "Reach the flag without falling into a gap.",
+    "player": {
+      "x": 2,
+      "y": 0,
+      "grounded": true,
+      "jump_phase": "grounded"
+    },
+    "trajectory": {
+      "jump_tick": -1,
+      "launch_height": 0,
+      "crossing_known_gap": false
+    },
+    "terrain": {
+      "observation_reliability": "exact_local_engine",
+      "columns": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "null_means": "gap",
+      "flag_x": 46,
+      "gap_distance_tiles": 6,
+      "obstacle_distance_tiles": null
+    },
+    "hazard": {
+      "jump_must_start_this_decision": false
+    },
+    "reaction_timing": {
+      "action_horizon_ticks": 1,
+      "inference_delay_ticks": 0
+    },
+    "episode": {
+      "dead": false,
+      "stage_clear": false
+    },
+    "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+  },
+  "metrics": {
+    "steps": 22,
+    "stop_reason": "terminal",
+    "total_reward": 44.0,
+    "mean_decision_latency_ms": 0.5628856068307703,
+    "success": true,
+    "dead": false,
+    "progress_tiles": 44
+  },
+  "evaluation_policy": "teacher",
+  "evaluation_game": "tile_platformer",
+  "evaluation_seed": 10003,
+  "valid": true,
+  "service_identity": null
+}

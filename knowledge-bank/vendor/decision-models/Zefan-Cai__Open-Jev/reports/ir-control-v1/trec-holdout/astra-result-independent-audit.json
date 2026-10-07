@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "provider": "gpt-6-astra",
+  "reasoning_effort": "low",
+  "new_api_calls": 0,
+  "new_gpu_inference": false,
+  "independence": "Standard-library parsing independently verifies the full request/schema and raw integer output, sorts adaptive windows with stable ties, and computes direct-grade DCG with math.fsum. No runner, provider adapter, reranker or scorer is imported.",
+  "requests_checked": 873,
+  "integer_score_heads_checked": 17460,
+  "query_count": 97,
+  "collection_counts": {
+    "http_200": 873,
+    "transport_errors": 0,
+    "strict_valid_requests": 873,
+    "strict_validation_failures": 0,
+    "scalar_usable_requests": 873,
+    "strict_complete_queries": 97,
+    "scalar_complete_queries": 97
+  },
+  "query_status_counts": {
+    "complete": 97
+  },
+  "failed_requests": [],
+  "benchmarks": {
+    "dl19": {
+      "qrel_query_denominator": 43,
+      "qrel_rows": 9260,
+      "strict_complete_queries": 43,
+      "primary_strict": 0.7366099323007737,
+      "downloaded_bm25_baseline": 0.5058310024399073
+    },
+    "dl20": {
+      "qrel_query_denominator": 54,
+      "qrel_rows": 11386,
+      "strict_complete_queries": 54,
+      "primary_strict": 0.7144837978397526,
+      "downloaded_bm25_baseline": 0.4796366724252675
+    }
+  },
+  "combined_query_weighted": {
+    "primary_strict_ndcg_at_10": 0.7242922904358753,
+    "downloaded_bm25_ndcg_at_10": 0.4912485919162934
+  },
+  "maximum_per_query_ndcg_difference": 0.0,
+  "ndcg_audit_absolute_tolerance": 1e-12,
+  "token_usage": {
+    "input_tokens": 3204672,
+    "output_tokens": 151590,
+    "total_tokens": 3356262,
+    "cached_input_tokens": 0,
+    "reasoning_output_tokens": 18174
+  },
+  "known_estimated_cost_usd": 39.62622,
+  "known_estimated_cost_decimal_usd": "39.62622",
+  "unknown_cost_requests": 0,
+  "cost_kind": "observed_usage_standard_list_estimate_not_invoice",
+  "cost_rates_per_million": {
+    "input": "10",
+    "cached": "1",
+    "output": "50"
+  },
+  "cost_audit_absolute_tolerance_usd": 1e-12,
+  "summary_sha256": "b14bdc66ccc1a940de1a942fa07ca61134fab3f11718a942394d1522a93937f8",
+  "collection_sha256": "bc5ea91dc39cb0b7703fe5986c04defe4d9a2bcbbe1172b1198440c94c4c466d",
+  "auditor_sha256": "39d9d582f0c01ed37abdc6a8e8906925c7a9e1c1b37962f38c9e3bec81e3ab37",
+  "input_and_raw_sha256": {
+    "input.json": "cc7bc949dbc269dacb61bdb61fc8982db14bc4df3698f9d32f5f1c8b6795eb83",
+    "report.json": "8bec8033228a472c421f4235c77dee6a5f951b73809b69850879e679a67e3e65",
+    "requests.jsonl": "4ae4620a763a3b11d935bff93bee2b3e26ddec555f0ba8f15a13fd1adc598243",
+    "samples.jsonl": "099d76fb665a3d4ec30190befa7320841ce0ae9a9537c23f403540c57e19ec23",
+    "dl19/manifest.json": "84c7cc23ce0f7309a48432c449e7856aeff96f9e2571f1f18cdb405703a6c297",
+    "dl19/candidates.jsonl": "865a4158341f4a20163910214484c42e10889955d07e3bd255944dc04b4b29a3",
+    "dl19/qrels.txt": "8a1f10d550732e4cd91d7fc49846a3784de4040972f583e69285a88f3c5fee92",
+    "dl20/manifest.json": "494d6f39537b65981ea6707c7ba232e890460ad8f51e86628d2c2a5547288ea4",
+    "dl20/candidates.jsonl": "e3dd06cf93e0bf07c56f096066fd39237770f23c8342ae636e76b55a57c2747e",
+    "dl20/qrels.txt": "60d4c34561f9687f8f73e0a752ba80ab80159b3e9c1bedd0a351f747ed6f5684"
+  },
+  "limitations": [
+    "All 43/54 official qrel queries remain in their denominators. Failed queries, if any, contribute zero; no partial ranking is invented.",
+    "OpenAI integer levels are categorical outputs, not calibrated probabilities. No probability vectors or supplemental probability scores were fabricated.",
+    "Cost is an estimate from returned token usage and recorded standard list rates, not an invoice or account charge.",
+    "This confirms the saved run and full-qrel arithmetic; it does not establish overall provider superiority or exact reproduction of community prompts.",
+    "Raw query/passages, provider response IDs and credentials are omitted from this public audit."
+  ]
+}

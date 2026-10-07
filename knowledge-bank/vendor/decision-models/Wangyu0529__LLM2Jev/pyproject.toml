@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm2jev"
+version = "0.1.0"
+description = "Adapt language models to Jev-style structured questions."
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=2.6.1",
+]
+
+[project.scripts]
+llm2jev-serve = "llm2jev.sglang_server:main"
+
+[project.optional-dependencies]
+transformers = [
+    "torch>=2.0",
+    "transformers>=4.51",
+    "pillow>=10",
+]
+sglang = [
+    "sglang; sys_platform == 'linux'",
+]
+
+[tool.uv]
+constraint-dependencies = [
+    # SGLang 0.5.20 pins this prerelease; the constraint keeps uv's
+    # prerelease allowance local to that transitive dependency.
+    "cuda-tile==1.6.0rc5; sys_platform == 'linux'",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

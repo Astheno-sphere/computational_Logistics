@@ -1,0 +1,27 @@
+{
+  "GPU_actions": 0,
+  "author": "v8_isolation_review",
+  "created_at_utc": "2026-10-03T11:57:02.436166+00:00",
+  "current_source_sha256": "57ae4595600d753597f126853a8a24ebc858509d73565a9e74a0390e050a5458",
+  "current_tests_sha256": "74e0ed97eea8d196191c4b2169e066ef45e0d4a0006980ecde7c6ebdf88d851f",
+  "finding": "Root independent review found _exclusive_json opens the final exclusive path before JSON writing/flush completes; existence-only controller-loss readers could observe empty/partial JSON.",
+  "live_Linux_runs": 0,
+  "model_calls": 0,
+  "original_scientific_source_edits": 0,
+  "planned_fix": "Fully write/flush/fsync a same-directory temporary regular file; publish with atomic no-overwrite hard link; remove temporary name and fsync directory. Existing final files remain untouched.",
+  "prior_local_validation": {
+    "errors": 0,
+    "failures": 0,
+    "live_Linux_skipped": 4,
+    "passed": 21,
+    "tests": 25
+  },
+  "reviewer": "root",
+  "schema_version": 1,
+  "status": "author_fix_pending_atomic_exclusive_receipt_publication",
+  "tests_to_add": [
+    "Interrupted partial write does not expose final path and removes temporary file",
+    "Link publication sees complete flushed JSON",
+    "Existing target is not overwritten"
+  ]
+}

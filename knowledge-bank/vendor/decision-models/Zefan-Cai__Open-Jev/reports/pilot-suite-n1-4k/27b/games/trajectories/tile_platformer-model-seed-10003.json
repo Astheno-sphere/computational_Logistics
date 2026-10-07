@@ -1,0 +1,4479 @@
+{
+  "game": {
+    "name": "tile_platformer",
+    "length": 48,
+    "physics": "open-jev-tile-platformer-v1"
+  },
+  "seed": 10003,
+  "policy": "model_http",
+  "is_model": true,
+  "max_steps": 40,
+  "steps": [
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 2,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 6,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.0021435121361205512,
+          "right": 0.9268100120145193,
+          "right_jump": 0.004325096526582832,
+          "right_run": 0.06068555280868644,
+          "right_run_jump": 0.0034116775967526517,
+          "jump": 0.0012959690476703604,
+          "left": 0.0013281798696678844
+        },
+        "confidence": 0.9146116806836059
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 3,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 5,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 367.249621078372,
+      "environment_latency_ms": 0.02759508788585663,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3649595119059086
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 3,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 5,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.0030549609906705562,
+          "right": 0.9089998891584165,
+          "right_jump": 0.0034690151400306535,
+          "right_run": 0.0779012726461091,
+          "right_run_jump": 0.0037873468623136203,
+          "jump": 0.0012746069322694161,
+          "left": 0.0015129082701901323
+        },
+        "confidence": 0.8938332040181524
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 4,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 4,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 371.1814936250448,
+      "environment_latency_ms": 0.02789124846458435,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.369154741987586
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 4,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 4,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.0033823977201507963,
+          "right": 0.9068376773638805,
+          "right_jump": 0.003916933598076356,
+          "right_run": 0.07651304749254388,
+          "right_run_jump": 0.006075451276524898,
+          "jump": 0.001678792004430953,
+          "left": 0.0015957005443926239
+        },
+        "confidence": 0.8913106235911938
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 5,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 3,
+          "obstacle_distance_tiles": 8
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 375.86170621216297,
+      "environment_latency_ms": 0.02109818160533905,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3738911021500826
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 5,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 3,
+            "obstacle_distance_tiles": 8
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right_jump",
+        "probabilities": {
+          "noop": 0.013914744907271192,
+          "right": 0.22426245164561132,
+          "right_jump": 0.3721190758055767,
+          "right_run": 0.09738721511443353,
+          "right_run_jump": 0.042281162440150635,
+          "jump": 0.24215019322930084,
+          "left": 0.007885156857655869
+        },
+        "confidence": 0.26747225510650613
+      },
+      "action": "right_jump",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 6,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 2,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 370.16191706061363,
+      "environment_latency_ms": 0.0252407044172287,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3683529160916805
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 6,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 2,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.08820677135582208,
+          "right": 0.45709803928549875,
+          "right_jump": 0.15750060962599488,
+          "right_run": 0.05045855692531059,
+          "right_run_jump": 0.04021035419677999,
+          "jump": 0.186741966843822,
+          "left": 0.019783701766771692
+        },
+        "confidence": 0.3666143791664152
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 7,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 1,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 370.06785720586777,
+      "environment_latency_ms": 0.025892630219459534,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.36803730577230453
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 7,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 1,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.0959824078944691,
+          "right": 0.43747679016019253,
+          "right_jump": 0.2183298982285485,
+          "right_run": 0.06286276915891903,
+          "right_run_jump": 0.049081961423451226,
+          "jump": 0.11402918513774621,
+          "left": 0.022236987996673566
+        },
+        "confidence": 0.3437229218535578
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 8,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": true
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": null,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 373.1698505580425,
+      "environment_latency_ms": 0.025317072868347168,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.37112459912896156
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 8,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "falling"
+          },
+          "trajectory": {
+            "jump_tick": 2,
+            "launch_height": 0,
+            "crossing_known_gap": true
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": null,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.0933364023579597,
+          "right": 0.4237540505025255,
+          "right_jump": 0.1480205107567842,
+          "right_run": 0.12043084197039418,
+          "right_run_jump": 0.11246617964953246,
+          "jump": 0.05102581282576152,
+          "left": 0.05096620193704265
+        },
+        "confidence": 0.32771305891961294
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 9,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": null,
+          "obstacle_distance_tiles": 4
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 370.0330164283514,
+      "environment_latency_ms": 0.020928680896759033,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.36807653307914734
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 9,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": null,
+            "obstacle_distance_tiles": 4
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.0065888075514043114,
+          "right": 0.9414720629062662,
+          "right_jump": 0.002048685734975014,
+          "right_run": 0.0410038392589042,
+          "right_run_jump": 0.005166733010716776,
+          "jump": 0.0025969904417409233,
+          "left": 0.001122881095992637
+        },
+        "confidence": 0.9317174067239771
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 10,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 8,
+          "obstacle_distance_tiles": 3
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 370.94647623598576,
+      "environment_latency_ms": 0.02660416066646576,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.36883120983839035
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 10,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 8,
+            "obstacle_distance_tiles": 3
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump",
+        "probabilities": {
+          "noop": 0.0180407811777252,
+          "right": 0.08994008549900791,
+          "right_jump": 0.21911298381908617,
+          "right_run": 0.04177616453376077,
+          "right_run_jump": 0.031676989431001584,
+          "jump": 0.5899065898700632,
+          "left": 0.009546405669355225
+        },
+        "confidence": 0.5215576881817403
+      },
+      "action": "jump",
+      "reward": 0.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 10,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 8,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 377.3676175624132,
+      "environment_latency_ms": 0.024899840354919434,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3755616135895252
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 10,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 8,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.11546239788569397,
+          "right": 0.3973036062839093,
+          "right_jump": 0.12968508132361434,
+          "right_run": 0.08315848673989287,
+          "right_run_jump": 0.047035517735296385,
+          "jump": 0.19809270430741652,
+          "left": 0.02926220572417666
+        },
+        "confidence": 0.2968542073312275
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 11,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 7,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 371.75462022423744,
+      "environment_latency_ms": 0.025909394025802612,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3696313723921776
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 11,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 7,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.11916394221535072,
+          "right": 0.45485682206637396,
+          "right_jump": 0.14335304141752747,
+          "right_run": 0.09461856130098753,
+          "right_run_jump": 0.05652239217237974,
+          "jump": 0.10946201158614596,
+          "left": 0.022023229241234614
+        },
+        "confidence": 0.36399962574410294
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 12,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 6,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 370.24237401783466,
+      "environment_latency_ms": 0.023089349269866943,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.36812781170010567
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 12,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "falling"
+          },
+          "trajectory": {
+            "jump_tick": 2,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 6,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.15099870884153452,
+          "right": 0.3615051555002611,
+          "right_jump": 0.13117121532028314,
+          "right_run": 0.09960089379005442,
+          "right_run_jump": 0.0738696859130006,
+          "jump": 0.09063626247364197,
+          "left": 0.09221807816122428
+        },
+        "confidence": 0.2550893480836379
+      },
+      "action": "right",
+      "reward": 0.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 12,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 6,
+          "obstacle_distance_tiles": 1
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 378.51177528500557,
+      "environment_latency_ms": 0.021107494831085205,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3763265460729599
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 12,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 6,
+            "obstacle_distance_tiles": 1
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump",
+        "probabilities": {
+          "noop": 0.01135596324214237,
+          "right": 0.045843568756038615,
+          "right_jump": 0.07537505186156812,
+          "right_run": 0.013881482314804497,
+          "right_run_jump": 0.02233519539131384,
+          "jump": 0.8250279614773979,
+          "left": 0.006180776956734749
+        },
+        "confidence": 0.7958659550569642
+      },
+      "action": "jump",
+      "reward": 0.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 12,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 6,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 372.7555125951767,
+      "environment_latency_ms": 0.02545863389968872,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.37099661864340305
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 12,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 6,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.08309312370421813,
+          "right": 0.4485625023851881,
+          "right_jump": 0.1299270398498886,
+          "right_run": 0.08159389480177617,
+          "right_run_jump": 0.04770433610165147,
+          "jump": 0.17940429837256408,
+          "left": 0.02971480478471342
+        },
+        "confidence": 0.3566562527827194
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 13,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 5,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 370.68709544837475,
+      "environment_latency_ms": 0.025779008865356445,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3686723690479994
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 13,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 5,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.10621294275682254,
+          "right": 0.4670880709320437,
+          "right_jump": 0.14094897259427036,
+          "right_run": 0.08853819830463755,
+          "right_run_jump": 0.04803524268462976,
+          "jump": 0.12089801160746552,
+          "left": 0.028278561120130694
+        },
+        "confidence": 0.3782694160873841
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 14,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 4,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 371.8590419739485,
+      "environment_latency_ms": 0.026280060410499573,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3698211833834648
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 14,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "falling"
+          },
+          "trajectory": {
+            "jump_tick": 2,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 4,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.16409899015259624,
+          "right": 0.3274457848708284,
+          "right_jump": 0.15046735508133918,
+          "right_run": 0.09579017842708182,
+          "right_run_jump": 0.08260687782406806,
+          "jump": 0.10065140345212732,
+          "left": 0.07893941019195895
+        },
+        "confidence": 0.21535341568263316
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 15,
+          "y": 0,
+          "grounded": true,
+          "jump_phase": "grounded"
+        },
+        "trajectory": {
+          "jump_tick": -1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 3,
+          "obstacle_distance_tiles": 8
+        },
+        "hazard": {
+          "jump_must_start_this_decision": true
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 375.4098005592823,
+      "environment_latency_ms": 0.020951032638549805,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.37351844646036625
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 15,
+            "y": 0,
+            "grounded": true,
+            "jump_phase": "grounded"
+          },
+          "trajectory": {
+            "jump_tick": -1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 3,
+            "obstacle_distance_tiles": 8
+          },
+          "hazard": {
+            "jump_must_start_this_decision": true
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "jump",
+        "probabilities": {
+          "noop": 0.020843267787436323,
+          "right": 0.24853967718521974,
+          "right_jump": 0.27415092078824277,
+          "right_run": 0.07983723822560856,
+          "right_run_jump": 0.050037446645793446,
+          "jump": 0.3152924484752233,
+          "left": 0.011299000892475942
+        },
+        "confidence": 0.20117452322109386
+      },
+      "action": "jump",
+      "reward": 0.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 15,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 0,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 3,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 369.5634249597788,
+      "environment_latency_ms": 0.02045370638370514,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.36784331128001213
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 15,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 0,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 3,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.09216416752170176,
+          "right": 0.4446787553224343,
+          "right_jump": 0.12096055708315528,
+          "right_run": 0.07221292169424111,
+          "right_run_jump": 0.046248386797448145,
+          "jump": 0.19649325100002468,
+          "left": 0.027241960580994797
+        },
+        "confidence": 0.35212521454283996
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 16,
+          "y": 3,
+          "grounded": false,
+          "jump_phase": "rising"
+        },
+        "trajectory": {
+          "jump_tick": 1,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 2,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 370.7594573497772,
+      "environment_latency_ms": 0.025248154997825623,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.3688784949481487
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 16,
+            "y": 3,
+            "grounded": false,
+            "jump_phase": "rising"
+          },
+          "trajectory": {
+            "jump_tick": 1,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 2,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.10644310502430848,
+          "right": 0.4191566545106788,
+          "right_jump": 0.2080724738065526,
+          "right_run": 0.06162751495792754,
+          "right_run_jump": 0.054843253033570155,
+          "jump": 0.12345190826104736,
+          "left": 0.026405090405915117
+        },
+        "confidence": 0.3223494302624586
+      },
+      "action": "right",
+      "reward": 1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 17,
+          "y": 2,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 2,
+          "launch_height": 0,
+          "crossing_known_gap": false
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 1,
+          "obstacle_distance_tiles": null
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": false,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": false,
+      "latency_ms": 372.02933244407177,
+      "environment_latency_ms": 0.026522204279899597,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.36966665647923946
+      }
+    },
+    {
+      "request": {
+        "state": {
+          "objective": "Reach the flag without falling into a gap.",
+          "player": {
+            "x": 17,
+            "y": 2,
+            "grounded": false,
+            "jump_phase": "falling"
+          },
+          "trajectory": {
+            "jump_tick": 2,
+            "launch_height": 0,
+            "crossing_known_gap": false
+          },
+          "terrain": {
+            "observation_reliability": "exact_local_engine",
+            "columns": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              null,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              null,
+              null,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "null_means": "gap",
+            "flag_x": 46,
+            "gap_distance_tiles": 1,
+            "obstacle_distance_tiles": null
+          },
+          "hazard": {
+            "jump_must_start_this_decision": false
+          },
+          "reaction_timing": {
+            "action_horizon_ticks": 1,
+            "inference_delay_ticks": 0
+          },
+          "episode": {
+            "dead": false,
+            "stage_clear": false
+          },
+          "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose a controller macro to reach the right-hand flag without falling into a gap. Walking moves one tile; running moves two. A jump from the ground follows the four-tick heights 2, 3, 2, 0 above its starting height; airborne jump requests do not restart it. Solid columns block horizontal movement below their top. Read the terrain and trajectory.",
+            "criteria": {
+              "noop": null,
+              "right": null,
+              "right_jump": null,
+              "right_run": null,
+              "right_run_jump": null,
+              "jump": null,
+              "left": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "right",
+        "probabilities": {
+          "noop": 0.17506964065050196,
+          "right": 0.35561864878189625,
+          "right_jump": 0.1264564819374005,
+          "right_run": 0.05800921967582192,
+          "right_run_jump": 0.09100438059688903,
+          "jump": 0.0994671730140941,
+          "left": 0.09437445534339631
+        },
+        "confidence": 0.2482217569122123
+      },
+      "action": "right",
+      "reward": -1.0,
+      "next_state": {
+        "objective": "Reach the flag without falling into a gap.",
+        "player": {
+          "x": 18,
+          "y": 0,
+          "grounded": false,
+          "jump_phase": "falling"
+        },
+        "trajectory": {
+          "jump_tick": 3,
+          "launch_height": 0,
+          "crossing_known_gap": true
+        },
+        "terrain": {
+          "observation_reliability": "exact_local_engine",
+          "columns": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            null,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0,
+            null,
+            null,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "null_means": "gap",
+          "flag_x": 46,
+          "gap_distance_tiles": 1,
+          "obstacle_distance_tiles": 5
+        },
+        "hazard": {
+          "jump_must_start_this_decision": false
+        },
+        "reaction_timing": {
+          "action_horizon_ticks": 1,
+          "inference_delay_ticks": 0
+        },
+        "episode": {
+          "dead": true,
+          "stage_clear": false
+        },
+        "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+      },
+      "terminal": true,
+      "latency_ms": 372.45089188218117,
+      "environment_latency_ms": 0.024374574422836304,
+      "backend": {
+        "model": "Qwen/Qwen3.8-27B",
+        "method": "lora_decision_head",
+        "temperature": 1.4870151221815284,
+        "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+        "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "code_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+        "candidate_sequences": 7,
+        "inference_seconds": 0.37045849673449993
+      }
+    }
+  ],
+  "initial_state": {
+    "objective": "Reach the flag without falling into a gap.",
+    "player": {
+      "x": 2,
+      "y": 0,
+      "grounded": true,
+      "jump_phase": "grounded"
+    },
+    "trajectory": {
+      "jump_tick": -1,
+      "launch_height": 0,
+      "crossing_known_gap": false
+    },
+    "terrain": {
+      "observation_reliability": "exact_local_engine",
+      "columns": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "null_means": "gap",
+      "flag_x": 46,
+      "gap_distance_tiles": 6,
+      "obstacle_distance_tiles": null
+    },
+    "hazard": {
+      "jump_must_start_this_decision": false
+    },
+    "reaction_timing": {
+      "action_horizon_ticks": 1,
+      "inference_delay_ticks": 0
+    },
+    "episode": {
+      "dead": false,
+      "stage_clear": false
+    },
+    "physics": "Original discrete tile simulator; no emulator, enemies, momentum or sprites. Full terrain is visible."
+  },
+  "metrics": {
+    "steps": 20,
+    "stop_reason": "terminal",
+    "total_reward": 14.0,
+    "mean_decision_latency_ms": 372.10314413532615,
+    "success": false,
+    "dead": true,
+    "progress_tiles": 16
+  },
+  "evaluation_policy": "model",
+  "evaluation_game": "tile_platformer",
+  "evaluation_seed": 10003,
+  "valid": true,
+  "service_identity": {
+    "model": "Qwen/Qwen3.8-27B",
+    "method": "lora_decision_head",
+    "temperature": 1.4870151221815284,
+    "checkpoint_sha256": "68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2",
+    "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "code_commit": "99e881108c6cacadafd364088505e84975ca43fc"
+  },
+  "http_responses": [
+    {
+      "request_sha256": "91f35c1f0978ca9652cd0c236a9868be859a002f61bbf1e0a164982f0714eba9",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.0021435121361205512, \"right\": 0.9268100120145193, \"right_jump\": 0.004325096526582832, \"right_run\": 0.06068555280868644, \"right_run_jump\": 0.0034116775967526517, \"jump\": 0.0012959690476703604, \"left\": 0.0013281798696678844}, \"confidence\": 0.9146116806836059}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3649595119059086, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "5f90732040c8cb7b04644459ef2d5d5dd3619b6f91e2ac9e4d509395d8561efb",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.0030549609906705562, \"right\": 0.9089998891584165, \"right_jump\": 0.0034690151400306535, \"right_run\": 0.0779012726461091, \"right_run_jump\": 0.0037873468623136203, \"jump\": 0.0012746069322694161, \"left\": 0.0015129082701901323}, \"confidence\": 0.8938332040181524}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.369154741987586, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "0026e50b739f27d1108a81f49f415ff27ac32b58f62b9bc3b8e5222759981334",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.0033823977201507963, \"right\": 0.9068376773638805, \"right_jump\": 0.003916933598076356, \"right_run\": 0.07651304749254388, \"right_run_jump\": 0.006075451276524898, \"jump\": 0.001678792004430953, \"left\": 0.0015957005443926239}, \"confidence\": 0.8913106235911938}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3738911021500826, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "f6f5c7436bff46f992dac4f51105a8400331dcf46424f995349b0f1f1b7d110e",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right_jump\", \"probabilities\": {\"noop\": 0.013914744907271192, \"right\": 0.22426245164561132, \"right_jump\": 0.3721190758055767, \"right_run\": 0.09738721511443353, \"right_run_jump\": 0.042281162440150635, \"jump\": 0.24215019322930084, \"left\": 0.007885156857655869}, \"confidence\": 0.26747225510650613}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3063, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3683529160916805, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "addac6b5f19190dbe07fb25aecca458d08abc383af9e68208e9c0ff6342bec16",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.08820677135582208, \"right\": 0.45709803928549875, \"right_jump\": 0.15750060962599488, \"right_run\": 0.05045855692531059, \"right_run_jump\": 0.04021035419677999, \"jump\": 0.186741966843822, \"left\": 0.019783701766771692}, \"confidence\": 0.3666143791664152}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3049, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.36803730577230453, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "20300df0810b5dc7026525e0e6388ef45ebb37c8983825af6cdaec8fe5013356",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.0959824078944691, \"right\": 0.43747679016019253, \"right_jump\": 0.2183298982285485, \"right_run\": 0.06286276915891903, \"right_run_jump\": 0.049081961423451226, \"jump\": 0.11402918513774621, \"left\": 0.022236987996673566}, \"confidence\": 0.3437229218535578}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3049, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.37112459912896156, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "666e1b92b3296f6d070e183452abf099ca8f1a653fa623f4d1ed5a89914b8c59",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.0933364023579597, \"right\": 0.4237540505025255, \"right_jump\": 0.1480205107567842, \"right_run\": 0.12043084197039418, \"right_run_jump\": 0.11246617964953246, \"jump\": 0.05102581282576152, \"left\": 0.05096620193704265}, \"confidence\": 0.32771305891961294}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3049, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.36807653307914734, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "f864db1c1f054d3dd6ee7e8ce0756e26a6c1ae12eab84affbf55dfb14cefc8ab",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.0065888075514043114, \"right\": 0.9414720629062662, \"right_jump\": 0.002048685734975014, \"right_run\": 0.0410038392589042, \"right_run_jump\": 0.005166733010716776, \"jump\": 0.0025969904417409233, \"left\": 0.001122881095992637}, \"confidence\": 0.9317174067239771}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.36883120983839035, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "d780e66464aaaaed66bd13bb4a3407c0b71e698eabcf9e064bd97c1235833e8e",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump\", \"probabilities\": {\"noop\": 0.0180407811777252, \"right\": 0.08994008549900791, \"right_jump\": 0.21911298381908617, \"right_run\": 0.04177616453376077, \"right_run_jump\": 0.031676989431001584, \"jump\": 0.5899065898700632, \"left\": 0.009546405669355225}, \"confidence\": 0.5215576881817403}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3070, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3755616135895252, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "e391d3aa04aab6e2d967be12f0c28bcf2c449772c436e7c87ff094981a6ed6e8",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.11546239788569397, \"right\": 0.3973036062839093, \"right_jump\": 0.12968508132361434, \"right_run\": 0.08315848673989287, \"right_run_jump\": 0.047035517735296385, \"jump\": 0.19809270430741652, \"left\": 0.02926220572417666}, \"confidence\": 0.2968542073312275}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3696313723921776, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "ff037e2193b68ef19595d26ac9997c737e4e9977e3eade0177916b706ab85ecb",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.11916394221535072, \"right\": 0.45485682206637396, \"right_jump\": 0.14335304141752747, \"right_run\": 0.09461856130098753, \"right_run_jump\": 0.05652239217237974, \"jump\": 0.10946201158614596, \"left\": 0.022023229241234614}, \"confidence\": 0.36399962574410294}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.36812781170010567, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "c2ac5f7c0a2f111e0df0a1f798a32f0b8844081136ae6ad8ab79ee9125eb34be",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.15099870884153452, \"right\": 0.3615051555002611, \"right_jump\": 0.13117121532028314, \"right_run\": 0.09960089379005442, \"right_run_jump\": 0.0738696859130006, \"jump\": 0.09063626247364197, \"left\": 0.09221807816122428}, \"confidence\": 0.2550893480836379}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3063, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3763265460729599, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "9a44e586463596a4f833bdf0d524d2f8374c56963953b3a2daaad5d025447eea",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump\", \"probabilities\": {\"noop\": 0.01135596324214237, \"right\": 0.045843568756038615, \"right_jump\": 0.07537505186156812, \"right_run\": 0.013881482314804497, \"right_run_jump\": 0.02233519539131384, \"jump\": 0.8250279614773979, \"left\": 0.006180776956734749}, \"confidence\": 0.7958659550569642}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3070, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.37099661864340305, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "9c48118970db5789c1a8bd39252663f3a4b16d603c3430c4a9dd3cdb4709ecce",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.08309312370421813, \"right\": 0.4485625023851881, \"right_jump\": 0.1299270398498886, \"right_run\": 0.08159389480177617, \"right_run_jump\": 0.04770433610165147, \"jump\": 0.17940429837256408, \"left\": 0.02971480478471342}, \"confidence\": 0.3566562527827194}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3686723690479994, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "fda35be98c3928ad14eb5f056a5388627cfb82f945db83794491feaadc7f8d04",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.10621294275682254, \"right\": 0.4670880709320437, \"right_jump\": 0.14094897259427036, \"right_run\": 0.08853819830463755, \"right_run_jump\": 0.04803524268462976, \"jump\": 0.12089801160746552, \"left\": 0.028278561120130694}, \"confidence\": 0.3782694160873841}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3698211833834648, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "2a40be7a21e37ccd1d3bf40872545a5f22ec082b8be649d072deb1044d42ada4",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.16409899015259624, \"right\": 0.3274457848708284, \"right_jump\": 0.15046735508133918, \"right_run\": 0.09579017842708182, \"right_run_jump\": 0.08260687782406806, \"jump\": 0.10065140345212732, \"left\": 0.07893941019195895}, \"confidence\": 0.21535341568263316}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3063, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.37351844646036625, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "26c78b459300077c62b36e5d5f13b9ef087310787f6e4f9e088f61db358bd96f",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"jump\", \"probabilities\": {\"noop\": 0.020843267787436323, \"right\": 0.24853967718521974, \"right_jump\": 0.27415092078824277, \"right_run\": 0.07983723822560856, \"right_run_jump\": 0.050037446645793446, \"jump\": 0.3152924484752233, \"left\": 0.011299000892475942}, \"confidence\": 0.20117452322109386}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3070, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.36784331128001213, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "6916e5f6d71fe25770582fa143aed3052f1d710383a48a403b9b86b39172df50",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.09216416752170176, \"right\": 0.4446787553224343, \"right_jump\": 0.12096055708315528, \"right_run\": 0.07221292169424111, \"right_run_jump\": 0.046248386797448145, \"jump\": 0.19649325100002468, \"left\": 0.027241960580994797}, \"confidence\": 0.35212521454283996}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.3688784949481487, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "73c582c81cf669bd909c25d0e0834df97484305afc8c3eecb3d11b30ae959885",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.10644310502430848, \"right\": 0.4191566545106788, \"right_jump\": 0.2080724738065526, \"right_run\": 0.06162751495792754, \"right_run_jump\": 0.054843253033570155, \"jump\": 0.12345190826104736, \"left\": 0.026405090405915117}, \"confidence\": 0.3223494302624586}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3056, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.36966665647923946, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    },
+    {
+      "request_sha256": "920736baf55ab02dd865fed2c6595fda231bf3b266530ea3b56fd1187de9d724",
+      "response_json": "{\"answers\": {\"action\": {\"type\": \"choice\", \"choice\": \"right\", \"probabilities\": {\"noop\": 0.17506964065050196, \"right\": 0.35561864878189625, \"right_jump\": 0.1264564819374005, \"right_run\": 0.05800921967582192, \"right_run_jump\": 0.09100438059688903, \"jump\": 0.0994671730140941, \"left\": 0.09437445534339631}, \"confidence\": 0.2482217569122123}}, \"model\": \"Qwen/Qwen3.8-27B\", \"usage\": {\"input_tokens\": 3063, \"output_tokens\": 0}, \"metadata\": {\"method\": \"lora_decision_head\", \"temperature\": 1.4870151221815284, \"candidate_sequences\": 7, \"inference_seconds\": 0.37045849673449993, \"checkpoint_sha256\": \"68ff078d7a83a92f3a4b6458d4c349b81bf533baf373d0361135f53e684357a2\", \"base_revision\": \"1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0\", \"max_length\": 4096, \"code_commit\": \"99e881108c6cacadafd364088505e84975ca43fc\"}}"
+    }
+  ]
+}

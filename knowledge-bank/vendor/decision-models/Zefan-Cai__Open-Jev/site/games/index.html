@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Play a decision, then compare with Open-Jev-27B-v1.1. Sixteen recorded decisions across Snake, tic-tac-toe, a box runner and a tile platformer, with original inputs and every probability.">
+  <meta name="theme-color" content="#132d35">
+  <meta property="og:title" content="Your move. · The Open-Jev Arcade">
+  <meta property="og:description" content="Four games. Sixteen saved situations. Pick a move and reveal a real Open-Jev-27B-v1.1 decision.">
+  <title>Your move. · Open-Jev Arcade</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#arcade">Skip to the games</a>
+  <header class="site-header wrap">
+    <a class="brand" href="../"><span class="brand-mark" aria-hidden="true">J</span>Open-Jev <span class="brand-divider">/</span> <span class="arcade-word">Arcade</span></a>
+    <nav aria-label="Site navigation"><a href="../v1-1/">27B v1.1 release <span aria-hidden="true">↗</span></a><a href="https://github.com/Zefan-Cai/Open-Jev">GitHub <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main class="wrap">
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <div class="eyebrow"><span class="status-dot" aria-hidden="true"></span>Recorded 27B v1.1 decisions</div>
+        <h1 id="page-title">Your move<span>.</span></h1>
+        <p class="hero-copy">Play a decision, then compare with the model.</p>
+      </div>
+      <div class="hero-aside"><span class="pixel-cross" aria-hidden="true">✚</span><p>Four games. Sixteen saved situations.<br>Choose an action. See every probability.</p></div>
+    </section>
+    <div class="load-error" id="load-error" role="alert" hidden>The recorded decisions could not be loaded. Please reload, or <a href="./evidence.json">download the evidence</a>.</div>
+    <p id="loading" role="status">Loading recorded decisions…</p>
+    <section id="arcade" aria-label="Game decision challenges" hidden>
+      <div class="game-picker" id="game-picker" role="group" aria-label="Choose a game"></div>
+      <div class="arena">
+        <section class="playground" aria-labelledby="game-title">
+          <div class="stage-head"><div><span class="section-kicker" id="game-kicker"></span><h2 id="game-title"></h2></div><div class="case-counter" id="case-counter"></div></div>
+          <div class="scene-shell"><div class="scene-hud"><span id="scene-title"></span><span class="snapshot-label"><i aria-hidden="true"></i>Saved state</span></div><div id="scene" class="scene"></div><div id="scene-legend" class="scene-legend"></div></div>
+          <div class="facts" id="facts"></div>
+          <p class="scene-caption" id="scene-caption"></p>
+          <div class="challenge-navigation"><button type="button" class="text-button" id="reset">Reset choice <span aria-hidden="true">↺</span></button><div class="case-dots" id="case-dots" role="group" aria-label="Choose a saved situation"></div><button type="button" class="next-button" id="next">Next situation <span aria-hidden="true">→</span></button></div>
+        </section>
+        <section class="decision" aria-labelledby="decision-title">
+          <div class="decision-head"><span class="section-kicker">Make the call</span><h2 id="decision-title">What would you do?</h2><p id="decision-instruction">Select a move to reveal the model’s choice.</p></div>
+          <div id="choices" class="choices" role="group" aria-label="Available moves"></div>
+          <button type="button" class="reveal-button" id="reveal" disabled>Choose your move first <span aria-hidden="true">↗</span></button>
+          <div id="comparison" class="comparison" role="status" aria-live="polite" hidden></div>
+          <p class="probability-note" id="probability-note">Your choice stays in this browser. This page reads saved outputs; it does not call a model.</p>
+        </section>
+      </div>
+      <section class="below-arena" aria-label="Rules and source evidence">
+        <div class="rule-card"><div class="section-kicker">The rulebook</div><h2>The same input the model saw.</h2><p id="question"></p><div class="case-note" id="case-note" hidden></div></div>
+        <div class="evidence-card"><div class="section-kicker">Show your work</div><h2>Real outputs. Open evidence.</h2><p>These illustrations reconstruct synthetic game states from the audited v1.1 evaluation. Each situation is an independent recorded decision.</p><div class="evidence-actions"><a href="./evidence.json" download>All decisions + probabilities <span aria-hidden="true">↓</span></a><a href="./source-records.jsonl" download>Original source records <span aria-hidden="true">↓</span></a></div><details><summary>This situation: exact input and output</summary><pre id="source-record"></pre></details></div>
+      </section>
+      <details class="method-details"><summary>How to read this arcade</summary><div class="method-body"><p>Choose one of the original action options, then compare it with the highest-probability action in the saved Open-Jev-27B-v1.1 output. Bars show the complete distribution in the original option order. They are probabilities over actions, not chances of winning.</p><p>The displayed boards are illustrations of supplied text states, not captured game viewports. No action is executed, and the situations do not form a continuous game. The selection includes disagreements with the supplied reference policies.</p><p>Snake uses a heuristic reference policy; tic-tac-toe uses exact minimax. The runner uses original box physics, and the platformer uses an original discrete tile simulator. Neither is a replay of a commercial game.</p><p>These sixteen examples do not establish a win rate or overall gameplay ability. The hosted <a href="../workbench/">classification workbench</a> separately runs Open-Jev-2B on CPU.</p><ul id="evidence-limitations"></ul><p><a href="../v1-1/">Model, full evaluation and release details ↗</a></p></div></details>
+    </section>
+    <noscript><p>This arcade needs JavaScript to let you choose moves. You can still <a href="./evidence.json">read every original input and recorded output</a>.</p></noscript>
+    <section class="build-cta"><div><span class="section-kicker">From a choice to a project</span><h2>What would you build?</h2><p>Give Open-Jev a state, a question and a set of options.</p></div><a href="https://huggingface.co/ZefanCai/Open-Jev-27B-v1.1">Get Open-Jev-27B-v1.1 <span aria-hidden="true">↗</span></a></section>
+  </main>
+  <footer class="wrap"><a href="../">Open-Jev</a><span>Game states: CC0 · Recorded model outputs · No live inference</span><a href="../v1-1/">Explore v1.1 ↗</a></footer>
+</body>
+</html>

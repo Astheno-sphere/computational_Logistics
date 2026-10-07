@@ -1,0 +1,72 @@
+{
+  "sources": [
+    {
+      "url": "https://docs.typesafe.ai/llms.txt",
+      "resolved_url": "https://docs.typesafe.ai/llms.txt",
+      "checked_at_utc": "2026-09-21T06:47:29.477147+00:00",
+      "status": "read",
+      "content_type": "text/plain; charset=utf-8",
+      "bytes": 16369,
+      "sha256": "9bb713532b8b5b836d48bf19733a6649525aff8353e22c5cbebf5524a498ff24",
+      "text_excerpt": "# TypeSafe AI\n\n> How to use TypeSafe's System One API\n\n- [Introduction](https://docs.typesafe.ai/introduction.md): Jev is TypeSafe's flagship model and the first System One model. Send state and typed questions; get structured answers your code can use directly.\n- [Quick start](https://docs.typesafe.ai/introduction/quickstart.md): Prefer to just dive in? Here's everything you need to get started immediately.\n- [System One](https://docs.typesafe.ai/concepts/system-one.md): System One models make fast, structured decisions for software. Jev is TypeSafe's flagship model and the first System One model.\n- [State](https://docs.typesafe.ai/concepts/state.md): What state is, how to structure it, and how to give a System One model the context it needs.\n- [Primitives (Questions)](https://docs.typesafe.ai/primitives.md): The three TypeSafe question types (Choice, Score, Noul), the typed answers they return, how to choose between them, and how to ask several at once.\n- [Choice](https://docs.typesafe.ai/primitives/choice.md): A Choice is a System One question type for selecting one option from a defined set. The answer includes the selected option, a probability for each option, and confidence.\n- [Score](https://docs.typesafe.ai/primitives/score.md): A Score is a System One question type for rating content against ordered, descriptive levels. The answer includes a score, a probability for each level, and confidence.\n- [Noul](https://docs.typesafe.ai/primitives/noul.md): A Noul question asks the TypeSafe model to evaluate a yes/no question and return the probability that the answer is yes.\n- [Advanced: structure](https://docs.typesafe.ai/primitives/advanced.md): Instructions, Choice options, Score levels, and Noul criteria all accept JSON structure.\n- [AI primer](https://docs.typesafe.ai/introduction/machine-learning-primer.md): Why TypeSafe trains decision models with calibrated probabilities instead of optimizing for generated text.\n- [Confidence](https://docs.typesafe.ai/confidence.md): How TypeSafe reports certainty, how it differs from probability, and how to use it to control system behavior.\n- [How to build with TypeSafe](https://docs.typesafe.ai/concepts/how-to-build-with-system-one.md): Design AI-powered software by keeping code in control and giving System One nar"
+    },
+    {
+      "url": "https://docs.typesafe.ai/cookbooks/skill_suggestion.md",
+      "resolved_url": "https://docs.typesafe.ai/cookbooks/skill_suggestion.md",
+      "checked_at_utc": "2026-09-21T06:47:29.540744+00:00",
+      "status": "read",
+      "content_type": "text/markdown; charset=utf-8",
+      "bytes": 40087,
+      "sha256": "62728bba4a38dd0e61ae4118524941904a2a687a53e2dd0e08ad3bf63e5198f8",
+      "text_excerpt": "> ## Documentation Index\n> Fetch the complete documentation index at: https://docs.typesafe.ai/llms.txt\n> Use this file to discover all available pages before exploring further.\n\n# Skill suggestion\n\n> Picks at most one skill for an agent turn out of the 182 in Nous Research's Hermes catalog: one TypeSafe request ranks every skill and asks whether the turn needs one at all, a second reads the top three properly and can reject all of them. The winner's name goes into a single line of the agent's system prompt, and both the wrong skills it loads and the ones it loads when nothing fits drop by more than half.\n\n*Agents choose skills by truncating and loading them all into the system message, which\nincreases costs, degrades skill selection performance, and induces context rot for the rest\nof the session. We address this by using two TypeSafe requests per turn, one to rank skills\nand one to verify the choice, and reduce incorrect skill loads by more than half.*\n\nAn agent with a large skill roster makes its choice on almost no information. The roster\nreaches it as an index: one line per skill, with the description truncated so the full text\ndoesn't crowd out the conversation. Hermes, the agent harness used here, cuts it to 60\ncharacters by default. For example, at that width the skill that *edits* `.pptx` files\nreads nearly the same as the one that *authors* them. Ask for a pitch deck and the agent\nmay load the wrong one. On a turn where no skill fits at all, it may still load\none anyway, because a list of names invites a guess.\n\nThis cookbook leaves the descriptions alone and uses progressive disclosure instead,\nreading all 182 skills cheaply and then reading three of them in detail. Two TypeSafe\nrequests go in front of the decision on which skill to load, if any. The first ranks every\nskill in the roster against the user's turn and answers whether the turn needs a skill at\nall. The second re-reads only the top three, now with each skill's full description and the\nopening of its instructions, and is free to reject all of them.\n\nThe winner's name goes into one extra line of the agent's system prompt for that turn:\n\n```\n<skill_relevance>\nRelevant to the current request: pptx-author. Ignore this if it does not fit what the user\nactually asked for.\n</skill_relevance>\n```"
+    },
+    {
+      "url": "https://docs.typesafe.ai/cookbooks/entity_alignment.md",
+      "checked_at_utc": "2026-09-21T06:48:03.730892+00:00",
+      "status": "read",
+      "bytes": 16856,
+      "sha256": "c8808786d3e4205c05ad2a65e7b880cee229537d0df16004c71523848950206c",
+      "text_excerpt": "> ## Documentation Index\n> Fetch the complete documentation index at: https://docs.typesafe.ai/llms.txt\n> Use this file to discover all available pages before exploring further.\n\n# Knowledge graph entity alignment\n\n> Decides which of 450 candidate pairs from two beer catalogues describe the same product. One TypeSafe Score question carries the whole decision, because its three levels are the three things you can do with a pair: merge it, leave it unlinked, or hand it to a curator. There is no threshold to fit, and three Noul questions ride along in the same request to tell the curator which field the two sources disagree on.\n\n*A key problem in knowledge graphs is deciding whether an incoming entity duplicates an\nexisting one, especially when natural language from disparate sources is all that's\navailable. Given potential duplicate pairs, a single TypeSafe `Score` decides\nwhether each pair is a duplicate, or whether it deserves a closer look from a curator.*\n\nSuppose two data sources de"
+    },
+    {
+      "url": "https://docs.typesafe.ai/cookbooks/hierarchical_classification.md",
+      "checked_at_utc": "2026-09-21T06:48:03.732745+00:00",
+      "status": "read",
+      "bytes": 36445,
+      "sha256": "5525161d2b5597a29bd315a58aa817fe00e6bc2470cb31ece0530dbb8221dbfe",
+      "text_excerpt": "> ## Documentation Index\n> Fetch the complete documentation index at: https://docs.typesafe.ai/llms.txt\n> Use this file to discover all available pages before exploring further.\n\n# Hierarchical classification\n\n> Classifies documents through deep patent, retail product, biomedical, and source-code hierarchies using parallel beam search over TypeSafe Choice probabilities.\n\nA lot of data exists as structured hierarchies, such as a taxonomies, filesystem\nhierarchies, website structures, codebases, org charts, biological ontologies, LLM skills,\nmoderation policies, etc. The goal of Hierarchical Classification is to traverse the\nhierarchy to the correct leaf node, which is the final classification. This is a perfect\nfit for typesafe's `Choice` primitive. We find the most probable leaf by classifying the\ndocument at each node (starting at the root), and then iteratively proceeding to the next\nmost-probable node until we end at a leaf (**Greedy Search**).\n\nThe parallel nature of the API also l"
+    },
+    {
+      "url": "https://docs.typesafe.ai/cookbooks/date_extraction_cookbook.md",
+      "checked_at_utc": "2026-09-21T06:48:03.740416+00:00",
+      "status": "read",
+      "bytes": 19899,
+      "sha256": "3fdf1a1cef1970feb4d2c1629c73f2ca00a487f47c7eff0b1dc303868d6ee630",
+      "text_excerpt": "> ## Documentation Index\n> Fetch the complete documentation index at: https://docs.typesafe.ai/llms.txt\n> Use this file to discover all available pages before exploring further.\n\n# Date extraction\n\n> Extracts absolute and relative dates by asking TypeSafe for the parts named in a document, then resolving and validating them in code with confidence-based review.\n\n*Read a date's parts off the text with TypeSafe, then resolve them to a `date` in code.*\n\nThe function you build here, `extract_date(document, role)`, takes a document and a\nphrase naming the date you want, such as \"the deadline to return the form\", and hands\nback a `date` with a confidence. It flags a low-confidence read, and one whose parts do\nnot add up to a date at all, including a date the document never states. The date can be\nspelled out (\"August 14, 2027\") or written relative to today (\"tomorrow\", \"next\nThursday\").\n\nTypeSafe answers `Choice` questions about the date in one call: what kind of date it is,\nand\nwhich month,"
+    },
+    {
+      "url": "https://docs.typesafe.ai/cookbooks/pre_parsed_value_extraction_cookbook.md",
+      "checked_at_utc": "2026-09-21T06:48:03.820269+00:00",
+      "status": "read",
+      "bytes": 12589,
+      "sha256": "5a2026433afc618ab1ed16994d8c07281399e527482006a92e7e343ddcd96a2d",
+      "text_excerpt": "> ## Documentation Index\n> Fetch the complete documentation index at: https://docs.typesafe.ai/llms.txt\n> Use this file to discover all available pages before exploring further.\n\n# Pre-parsed value extraction\n\n> Uses regexes to find candidate emails, phone numbers, and amounts, then has TypeSafe select the requested span so code can normalize a verbatim value.\n\n*A regex finds the candidate values, TypeSafe picks the one the question asks for,\nand code copies it verbatim.*\n\nThe `find` and `pick` pair here is one you can point at your own documents, and three\nworked cases show it in use: the address a sender wants their receipt sent to, a phone\nnumber as `+14155550177`, and an invoice total as `1315.50 USD` flagged as a charge.\n\nTypeSafe picks one of the options you hand it, so the candidates have to be found\nfirst. A regex finds them, TypeSafe picks one, and code copies the pick, in three steps:\n\n1. A regex finds the candidate values in the text. Tune it to over-find.\n2. TypeSafe picks "
+    },
+    {
+      "url": "https://docs.typesafe.ai/cookbooks/autoformat.md",
+      "checked_at_utc": "2026-09-21T06:48:03.768803+00:00",
+      "status": "read",
+      "bytes": 41005,
+      "sha256": "e0be526400d0afc5d865c8db5ab46b89bc9d8e1a9f7f3df22f7e0d0a15919297",
+      "text_excerpt": "> ## Documentation Index\n> Fetch the complete documentation index at: https://docs.typesafe.ai/llms.txt\n> Use this file to discover all available pages before exploring further.\n\n# Structure recovery\n\n> Reconstructs Markdown from plain text that lost its formatting in two requests: one stitches hard-wrapped lines back together, one classifies every block (heading, list, code, callout) with companion questions read only when relevant.\n\nThis cookbook takes plain text whose markup has been stripped (lines hard-wrapped\nmid-sentence, no heading markers, no list bullets) and reconstructs the structure as\nMarkdown: headings, paragraphs, lists, quotes, code, callouts. The input is a team memo\nin exactly that state.\n\nA text-generation model could rewrite the text into Markdown, but a rewrite can also\nchange the words. Here the model never generates text: it answers narrow questions about\nthe document (*does this line pick up mid-sentence? what kind of content is this\nblock?*), and code does the"
+    },
+    {
+      "url": "https://docs.typesafe.ai/cookbooks/parallel_questions.md",
+      "checked_at_utc": "2026-09-21T06:48:03.736654+00:00",
+      "status": "read",
+      "bytes": 48529,
+      "sha256": "e142ddb58aeb69796358851910e856dc089335db10f6bcecc801e95ff5e28808",
+      "text_excerpt": "> ## Documentation Index\n> Fetch the complete documentation index at: https://docs.typesafe.ai/llms.txt\n> Use this file to discover all available pages before exploring further.\n\n# Parallel questions\n\n> Runs a 13-question regulatory briefing over the GDPR Wikipedia article, showing that batching every question into one TypeSafe call is 12.2x cheaper and 10.0x faster with no change in answers.\n\nYou have one document and N questions about it. You can send one request with all N\nquestions, or N requests with one question each. With TypeSafe the answers come out the\nsame either way: each question is scored on its own against the document, so its answer\ndoesn't depend on what else is in the request.\n\nTo check that, the cookbook asks each question several times both ways - all N in one\nrequest, and one question per request - and compares the run-to-run std dev: how far an\nanswer moves from one repeat to the next. Whatever noise a question has, it has under\nboth batching strategies. Batching "
+    }
+  ]
+}

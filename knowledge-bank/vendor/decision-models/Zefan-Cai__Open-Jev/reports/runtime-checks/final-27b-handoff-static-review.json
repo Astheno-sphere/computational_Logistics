@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-20T14:15:52.497014+00:00",
+  "status": "no_concrete_handoff_blocker_found_by_static_review",
+  "pinned_sources_sha256": {
+    "0b6e4fcca3306b9fe98b96a08074e78b4674fd16": {
+      "scripts/evaluate_checkpoints_parallel.py": "6a271eae0d1382aa2619b2ec547866db3c16b34cbaa6d43a7a15824410ecf493"
+    },
+    "ceb1ea85d7905d18972afb39da0f5f0baef2097a": {
+      "scripts/evaluate_checkpoints_parallel.py": "ad861b17e6ad7674120a7239dc6aebdcef7a88bd9d7997ff4e6dc0886ec0dde4",
+      "scripts/run_service_suite.py": "58bacf0ffa79946cee3ecf376fb8379008dd09796df3c20ac5289a27aba9b356"
+    },
+    "99c5361d83edd5f9dbd11cb3f4bd9f9c54b5973e": {
+      "jev/train_distributed.py": "b1f77bbfa39d1e4c0ec93645415bf44c284e23cc67952513d248bf707ac5507a",
+      "scripts/run_four_gpu_handoff.py": "8294e8e0f1556ac6b590dfd3d8989db36fd20ea5ddf40e09e07a2a932ab316b0"
+    },
+    "e8cb57b1c9a993b6bda1644abef06bc7a305745f": {
+      "reports/full-data-eval-expansion-n1-v1/capture.py": "2e6b519b03bea4cc60700df5d05ccdf25d34c0952be2efaad1a1faca5761b610",
+      "reports/full-data-eval-expansion-n1-v1/verify.py": "302dc4493b4d88b3529b1a1837bf92de5ba87f01c035ddb65a5a2e41df02c829",
+      "reports/full-data-eval-expansion-n1-v1/expansion_contract.py": "7c22723b42542e03a62d0e6ad3a35124a30997b0d80fba7e9ae25611667e7c79"
+    }
+  },
+  "local_sources_sha256": {
+    "docs/final-checkpoint-evaluation.md": "735484dbd285b785de393e3cbab4daf3d405109f4f76d74f37ad969b1f1fa928",
+    "docs/checkpoint-package.md": "8b0468437e5311ec5a03a2f3f20fb1f912ec46092915aa2e82697765c8ac91a7",
+    "scripts/package_checkpoint.py": "80cccf7e05ecf542073b401edfcc93bffe6527ae3d93754738beb3b7094861de"
+  },
+  "reviewed_contracts": [
+    "27B expansion profile: 27581 training steps, 110324 train rows, 40281 held-out evaluation rows, fixed saved calibration",
+    "Old release-v2 identity branch applies only to 2B/9B; 27B readiness binds to expansion evaluation run/log/calibration/checkpoint hashes",
+    "Documented CLI flags, output paths and separate checkpoint templates exist at the pinned evaluator/service revisions",
+    "Training supervisor retains common/per-card leases until children exit and GPUs clear; expansion evaluation reaps workers before cleanup; serial service suite owns physical GPU3",
+    "Offline package, local capture and independent auditor input paths and identities align"
+  ],
+  "nonblocking_note": "The documented local auditor checkout is not commit-pinned; reviewed e8cb57b1c9a993b6bda1644abef06bc7a305745f contains these tools. Capture/verify sources are absent from the two remote evaluator checkouts. Local auditor uses separate source hashes.",
+  "execution": {
+    "tests_run": false,
+    "remote_access": false,
+    "gpu_or_model_used": false,
+    "actual_final_27b_artifacts_verified": false
+  },
+  "scope": "Static review of source and Git objects only. Final training, package, evaluation, capture and real independent audit remain pending."
+}

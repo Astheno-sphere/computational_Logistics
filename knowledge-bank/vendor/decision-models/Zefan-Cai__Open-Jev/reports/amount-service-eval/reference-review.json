@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "kind": "independent_amount_heldout_reference_review",
+  "verified": true,
+  "is_model_quality_evidence": false,
+  "scope": {
+    "CPU_local_only": true,
+    "model_or_HTTP_or_remote_work": false,
+    "producer_module_imported": false,
+    "full_corpus_verify_called": false,
+    "nonheldout_case_or_family_payloads_json_decoded": false,
+    "nonheldout_split_files_hashed_without_parsing": [
+      "train.jsonl",
+      "calibration.jsonl",
+      "validation.jsonl"
+    ],
+    "reads": "Frozen manifest and prior audit/report/source code; byte-prefix-filtered test/OOD case/family sidecars and test/OOD typed records only.",
+    "purpose": "Document task structure, fixed reference populations and future scoring boundaries. No predictions, model performance or evaluator behavior are measured."
+  },
+  "reusable_independent_helpers": {
+    "path": "reports/amount-extraction-control-v1/verify.py",
+    "sha256": "dc4727e62791af8b8ac2776358868c2f1f6ed810387ecae00e6d5087e39aef24",
+    "functions_used": [
+      "selection(state)",
+      "attributes(state)",
+      "normalized(state, currency, direction_known, is_credit)"
+    ],
+    "arithmetic": "Independent exact integer cents, not producer Decimal normalization.",
+    "warning": "Do not invoke verify(directory) for heldout-only work: that function reads every split's targets."
+  },
+  "prior_frozen_audit": {
+    "path": "reports/amount-extraction-control-v1/independent-audit.json",
+    "sha256": "ed9f0aaf9f1c40fde1379d4655f40b1199b621ea204cc853b00fec2581fd2e22",
+    "scope": "Previously completed full-corpus audit; reused as frozen evidence without rerunning it.",
+    "previous_tests": "reports/amount-extraction-control-v1/test-verification.json records 21 passed tests from the earlier authorized audit. They were not rerun in this review."
+  },
+  "task_contract": {
+    "A": {
+      "state": [
+        "text",
+        "requested_role",
+        "policy",
+        "candidates"
+      ],
+      "heads": {
+        "span": "Choice over every actual regex candidate plus none",
+        "target_present": "Noul; populated requested-role field presence independent of recall"
+      },
+      "expected": "A unique requested-role field must exactly match candidate text and both Python character offsets. none can mean absent, ambiguous or candidate miss."
+    },
+    "B": {
+      "state": [
+        "text",
+        "policy",
+        "selected_id",
+        "selected"
+      ],
+      "heads": {
+        "currency": "Choice: USD, EUR, GBP, review",
+        "direction_known": "Noul",
+        "is_credit": "Noul with conditional semantic definition"
+      },
+      "availability": "A B request exists for every actual regex candidate, including wrong-role, repeated-value and partial candidates. Runtime B must be constructed from the actual A selection; none/A failure sends no B.",
+      "is_credit": "The wire request always contains all three heads. is_credit reference is a boolean only when reference direction_known is true; otherwise it is null and its typed supervision row is absent."
+    },
+    "normalization": {
+      "statuses": [
+        "ready",
+        "review"
+      ],
+      "ready_output": [
+        "selected",
+        "currency",
+        "amount"
+      ],
+      "exactness": "amount is an exact decimal string with two fractional digits. Copy sign once according to credit flow; do not convert to float, round, or use finite-context arithmetic to compare long exact amounts.",
+      "refusal": "Partial/unbound source span, invalid grammar, unsupported/mismatched currency, unknown/conflicting direction or mismatched credit decision returns review with currency=null and amount=null. These nulls never establish extraction success."
+    }
+  },
+  "scoring_boundaries": [
+    "Use all unique-present targets for exact raw-span, final currency/amount and complete-output denominators: test 168, OOD 480, total 648. Candidate misses, unknown attributes and failed/skipped stages remain in these populations.",
+    "The fixed reference-ready subset is the requested unique target actually recalled as a B candidate whose independently reconstructed normalized_reference is ready: test 84, OOD 240, total 324. A/B failures, wrong A selections and missing outputs remain zero in that fixed subset. Do not construct an oracle B on an unrecalled target to enlarge availability.",
+    "A candidate miss with reference none may earn raw span Choice credit, but actual extraction is zero. Returning none with high target_present is permitted on a miss.",
+    "A wrong-role or wrong-offset complete candidate may normalize to ready and may receive correct B attribute scores, but requested-target end-to-end success stays zero. Match original text, start and end, currency, and exact signed amount.",
+    "Score B currency and direction_known against the reference for the actual A-selected candidate. Do not use the requested target's reference to repair A or replace the B input.",
+    "For raw conditional is_credit accuracy, include actual A-selected candidates whose reference direction_known is true, including failed B responses. Never use predicted direction_known, predicted is_credit, currency readiness or guard acceptance to shrink this denominator.",
+    "When actual-candidate reference direction_known is false, is_credit is semantically undefined. Do not coerce null to false, add false supervision, award free correctness, or penalize a particular valid credit probability. Direction-known and any explicit joint-decision metric handle the known/unknown decision separately.",
+    "Undefined semantic is_credit does not waive the declared HTTP schema: B still requests all three typed heads, so their response probabilities must remain valid if strict response validation is used. Ignoring a semantic target is distinct from accepting malformed responses.",
+    "Currency review does not imply unknown direction: heldout data includes 54 actual candidates (test 14, OOD 40), all also requested recalled targets, with currency review but defined is_credit. Keep them in reference-known credit scoring even though they cannot become ready amounts.",
+    "Presence is an independent A metric and should not gate a valid actual non-none B. A complete-output metric can additionally require positive presence; final-value success alone should not silently inherit that gate.",
+    "Correct review of an unknown/conflicting/partial candidate is a guard or decision result, not amount extraction success. Never allow amount=None and expected amount=None to count as a match.",
+    "All-candidate B counts are useful frozen coverage evidence, not the runtime B denominator: a model invokes B only for its actual valid non-none A choices."
+  ],
+  "heldout_observations": {
+    "dataset_files_sha256": {
+      "calibration.jsonl": "4db65ea37fc9569f3666d87762aec37c6786dfa7e7caee9dc70ef6e1420d6e6b",
+      "cases.jsonl": "cdd75692ee62722ca90080bc47e381da41aaaad9bc3f2e420201094713aa56b7",
+      "families.jsonl": "b5c255040c98ae9b680dd16c8ea78a48e29059b45ec54773b7925b111b9be788",
+      "ood.jsonl": "11f3348654087a561fc3ec934144712e38decf6cfb43c21efb5b96099e0f3e93",
+      "test.jsonl": "f8500ef9dbd65280b2c58edcfc579dd175ddde52bc2b19b6b97c5cd84bff8bd8",
+      "train.jsonl": "68a34ca1371b60dc9b49c7d26882893758c16bc1dbb85a636cf0643ed7f5047d",
+      "validation.jsonl": "b9bc54dd4c39eb1ab40313bf0ce1339c48b579077000b5de1c0a9ffaba802e76"
+    },
+    "decode_logs": {
+      "cases": {
+        "full_payload_decode_counts": {
+          "calibration": 0,
+          "ood": 640,
+          "test": 224,
+          "train": 0,
+          "validation": 0
+        },
+        "prefix_counts": {
+          "calibration": 144,
+          "ood": 640,
+          "test": 224,
+          "train": 2128,
+          "validation": 64
+        }
+      },
+      "families": {
+        "full_payload_decode_counts": {
+          "calibration": 0,
+          "ood": 40,
+          "test": 14,
+          "train": 0,
+          "validation": 0
+        },
+        "prefix_counts": {
+          "calibration": 9,
+          "ood": 40,
+          "test": 14,
+          "train": 133,
+          "validation": 4
+        }
+      }
+    },
+    "full_corpus_verify_called": false,
+    "heldout": {
+      "ood": {
+        "counts": {
+          "a_ambiguous_target": 40,
+          "a_candidate_miss": 80,
+          "a_recalled": 400,
+          "a_target_absent": 120,
+          "all_B_candidates": 2960,
+          "all_B_currency_EUR": 1098,
+          "all_B_currency_GBP": 871,
+          "all_B_currency_USD": 871,
+          "all_B_currency_review": 120,
+          "all_B_currency_review_but_credit_defined": 40,
+          "all_B_direction_known": 2760,
+          "all_B_direction_unknown": 200,
+          "all_B_normalization_ready": 2720,
+          "all_B_normalization_review": 240,
+          "unique_recalled_currency_review_but_credit_defined": 40,
+          "unique_recalled_direction_known": 280,
+          "unique_recalled_direction_unknown": 120,
+          "unique_recalled_reference_ready": 240,
+          "unique_recalled_reference_review": 160
+        },
+        "documents": 640,
+        "groups": 40,
+        "head_counts": {
+          "attributes/currency": 2960,
+          "attributes/direction_known": 2960,
+          "attributes/is_credit": 2760,
+          "selection/span": 600,
+          "selection/target_present": 640
+        },
+        "omitted_supervision": {
+          "forced_single_candidate": 40,
+          "undefined_direction": 200
+        },
+        "reference_ready_on_unique_actual_recalled_target": 240,
+        "schema": {
+          "A_heads": [
+            "span",
+            "target_present"
+          ],
+          "A_state_keys": [
+            "text",
+            "requested_role",
+            "policy",
+            "candidates"
+          ],
+          "B_heads": [
+            "currency",
+            "direction_known",
+            "is_credit"
+          ],
+          "B_sidecar_keys": [
+            "candidate_id",
+            "request",
+            "reference",
+            "normalized_reference"
+          ],
+          "B_state_keys": [
+            "text",
+            "policy",
+            "selected_id",
+            "selected"
+          ],
+          "case_keys": [
+            "id",
+            "family_id",
+            "group_id",
+            "split",
+            "template_id",
+            "variant",
+            "selection_request",
+            "selection_reference",
+            "attributes",
+            "omitted_supervision"
+          ],
+          "typed_record_keys": [
+            "group_id",
+            "id",
+            "kind",
+            "metadata",
+            "options",
+            "question",
+            "source",
+            "split",
+            "state",
+            "target"
+          ]
+        },
+        "typed_records": 9920,
+        "unique_present": 480,
+        "unique_recalled_review_reasons": {
+          "currency_requires_review": 40,
+          "direction_requires_review": 120
+        }
+      },
+      "test": {
+        "counts": {
+          "a_ambiguous_target": 14,
+          "a_candidate_miss": 28,
+          "a_recalled": 140,
+          "a_target_absent": 42,
+          "all_B_candidates": 1036,
+          "all_B_currency_EUR": 190,
+          "all_B_currency_GBP": 335,
+          "all_B_currency_USD": 469,
+          "all_B_currency_review": 42,
+          "all_B_currency_review_but_credit_defined": 14,
+          "all_B_direction_known": 966,
+          "all_B_direction_unknown": 70,
+          "all_B_normalization_ready": 952,
+          "all_B_normalization_review": 84,
+          "unique_recalled_currency_review_but_credit_defined": 14,
+          "unique_recalled_direction_known": 98,
+          "unique_recalled_direction_unknown": 42,
+          "unique_recalled_reference_ready": 84,
+          "unique_recalled_reference_review": 56
+        },
+        "documents": 224,
+        "groups": 14,
+        "head_counts": {
+          "attributes/currency": 1036,
+          "attributes/direction_known": 1036,
+          "attributes/is_credit": 966,
+          "selection/span": 210,
+          "selection/target_present": 224
+        },
+        "omitted_supervision": {
+          "forced_single_candidate": 14,
+          "undefined_direction": 70
+        },
+        "reference_ready_on_unique_actual_recalled_target": 84,
+        "schema": {
+          "A_heads": [
+            "span",
+            "target_present"
+          ],
+          "A_state_keys": [
+            "text",
+            "requested_role",
+            "policy",
+            "candidates"
+          ],
+          "B_heads": [
+            "currency",
+            "direction_known",
+            "is_credit"
+          ],
+          "B_sidecar_keys": [
+            "candidate_id",
+            "request",
+            "reference",
+            "normalized_reference"
+          ],
+          "B_state_keys": [
+            "text",
+            "policy",
+            "selected_id",
+            "selected"
+          ],
+          "case_keys": [
+            "id",
+            "family_id",
+            "group_id",
+            "split",
+            "template_id",
+            "variant",
+            "selection_request",
+            "selection_reference",
+            "attributes",
+            "omitted_supervision"
+          ],
+          "typed_record_keys": [
+            "group_id",
+            "id",
+            "kind",
+            "metadata",
+            "options",
+            "question",
+            "source",
+            "split",
+            "state",
+            "target"
+          ]
+        },
+        "typed_records": 3472,
+        "unique_present": 168,
+        "unique_recalled_review_reasons": {
+          "currency_requires_review": 14,
+          "direction_requires_review": 42
+        }
+      }
+    },
+    "model_or_http_performed": false,
+    "nonheldout_split_files_hashed_without_parsing": [
+      "train.jsonl",
+      "calibration.jsonl",
+      "validation.jsonl"
+    ],
+    "pins": {
+      "data/amount-extraction-control-v1/manifest.json": "6f89f81336ac36505c563193da27fca2155fa566175451854f0ac410979ea80b",
+      "reports/amount-extraction-control-v1/independent-audit.json": "ed9f0aaf9f1c40fde1379d4655f40b1199b621ea204cc853b00fec2581fd2e22",
+      "reports/amount-extraction-control-v1/verify.py": "dc4727e62791af8b8ac2776358868c2f1f6ed810387ecae00e6d5087e39aef24"
+    },
+    "producer_imported": false,
+    "source_files_sha256": {
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "case_amount_extraction.py": "d87466f66b0c07d1c6df6e65579db3e0494317c57578695fffa52536307100fd",
+      "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e",
+      "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5"
+    }
+  },
+  "aggregate_denominators": {
+    "documents": 864,
+    "groups": 54,
+    "typed_records": 13392,
+    "unique_present": 648,
+    "unique_recalled": 540,
+    "unique_missed": 108,
+    "absent": 162,
+    "ambiguous": 54,
+    "unique_actual_recalled_reference_ready": 324,
+    "unique_actual_recalled_reference_review": 216,
+    "unique_actual_recalled_credit_defined": 378,
+    "unique_actual_recalled_credit_undefined": 162,
+    "all_actual_B_candidates": 3996,
+    "all_actual_B_credit_defined": 3726,
+    "all_actual_B_credit_undefined": 270,
+    "all_actual_B_ready": 3672,
+    "all_actual_B_review": 324,
+    "currency_review_but_credit_defined": 54
+  },
+  "verification_limits": [
+    "Heldout A/B sidecar semantics and normalized references were reconstructed using the previously audited independent helper.",
+    "Typed heldout checks verify exact row-ID coverage for defined references, head counts, omission of undefined is_credit, and normalized target-vector shape. This review did not recompile and compare every typed target bit; the pinned prior full audit already covers that and the parent is implementing a dedicated heldout preflight.",
+    "No family sampling or example filtering was performed for these aggregate counts.",
+    "No draft amount corpus was read or used."
+  ],
+  "execution": {
+    "command": "runs/phone-extraction-control-v1-venv/bin/python - <<'PY'\nfrom collections import Counter\nimport hashlib\nimport importlib.util\nimport json\nfrom pathlib import Path\nimport re\nimport sys\n\nroot = Path.cwd()\ndata = root / \"data/amount-extraction-control-v1\"\naudit_path = root / \"reports/amount-extraction-control-v1/independent-audit.json\"\nhelper_path = root / \"reports/amount-extraction-control-v1/verify.py\"\ndef sha(path):\n    digest = hashlib.sha256()\n    with path.open(\"rb\") as stream:\n        for chunk in iter(lambda: stream.read(1048576), b\"\"):\n            digest.update(chunk)\n    return digest.hexdigest()\npins = {\n    \"data/amount-extraction-control-v1/manifest.json\": \"6f89f81336ac36505c563193da27fca2155fa566175451854f0ac410979ea80b\",\n    \"reports/amount-extraction-control-v1/independent-audit.json\": \"ed9f0aaf9f1c40fde1379d4655f40b1199b621ea204cc853b00fec2581fd2e22\",\n    \"reports/amount-extraction-control-v1/verify.py\": \"dc4727e62791af8b8ac2776358868c2f1f6ed810387ecae00e6d5087e39aef24\",\n}\nassert all(sha(root / name) == digest for name, digest in pins.items())\nmanifest = json.loads((data / \"manifest.json\").read_bytes())\nassert all(sha(data / name) == digest for name, digest in manifest[\"files_sha256\"].items())\nassert all(sha(root / \"jev\" / name) == digest for name, digest in manifest[\"configuration\"][\"source_files_sha256\"].items())\nspec = importlib.util.spec_from_file_location(\"reviewed_amount_reference_helpers\", helper_path)\nhelper = importlib.util.module_from_spec(spec)\nspec.loader.exec_module(helper)\nidentifier = rb\"[A-Za-z0-9:_-]+\"\nprefixes = {\n    \"cases\": re.compile(rb'\\A\\{\"id\":\"(?P<id>' + identifier + rb')\",\"family_id\":\"(?P<family_id>' + identifier + rb')\",\"group_id\":\"(?P<group_id>' + identifier + rb')\",\"split\":\"(?P<split>train|calibration|validation|test|ood)\",'),\n    \"families\": re.compile(rb'\\A\\{\"id\":\"(?P<id>' + identifier + rb')\",\"group_id\":\"(?P<group_id>' + identifier + rb')\",\"split\":\"(?P<split>train|calibration|validation|test|ood)\",'),\n}\ndecode_logs = {}\ndef heldout(kind):\n    selected, prefix_counts, decoded_counts = [], Counter(), Counter()\n    with (data / (kind + \".jsonl\")).open(\"rb\") as stream:\n        for raw in stream:\n            if not raw.strip():\n                continue\n            match = prefixes[kind].match(raw[:512])\n            assert match is not None, \"Unexpected metadata prefix; no fallback to JSON decoding\"\n            meta = {key: value.decode(\"ascii\") for key, value in match.groupdict().items()}\n            split = meta[\"split\"]\n            prefix_counts[split] += 1\n            if split not in (\"test\", \"ood\"):\n                continue\n            record = json.loads(raw)\n            decoded_counts[split] += 1\n            assert all(record[key] == value for key, value in meta.items())\n            selected.append(record)\n    decode_logs[kind] = {\n        \"prefix_counts\": {split: prefix_counts[split] for split in helper.SPLITS},\n        \"full_payload_decode_counts\": {split: decoded_counts[split] for split in helper.SPLITS},\n    }\n    return selected\n\ncases = heldout(\"cases\")\nfamilies = heldout(\"families\")\nfamily_by_id = {family[\"id\"]: family for family in families}\nstats = {}\nfor split in (\"test\", \"ood\"):\n    selected = [case for case in cases if case[\"split\"] == split]\n    count, heads, normalized_reasons, omits = Counter(), Counter(), Counter(), Counter()\n    expected_rows = {}\n    for case in selected:\n        family = family_by_id[case[\"family_id\"]]\n        assert case[\"id\"] in family[\"case_ids\"]\n        assert all(case[key] == family[key] for key in (\"group_id\", \"split\", \"template_id\"))\n        request = case[\"selection_request\"]\n        reference = helper.selection(request[\"state\"])\n        assert reference == case[\"selection_reference\"]\n        count[\"a_\" + reference[\"reason\"]] += 1\n        candidates = request[\"state\"][\"candidates\"]\n        assert [item[\"candidate_id\"] for item in case[\"attributes\"]] == list(candidates)\n        for head in (\"span\", \"target_present\"):\n            if head == \"span\" and not candidates:\n                continue\n            expected_rows[case[\"id\"] + \":selection:request:\" + head] = reference[head]\n        attr_by_id = {}\n        for item in case[\"attributes\"]:\n            state = item[\"request\"][\"state\"]\n            assert state == {\"text\": request[\"state\"][\"text\"], \"policy\": request[\"state\"][\"policy\"],\n                             \"selected_id\": item[\"candidate_id\"], \"selected\": candidates[item[\"candidate_id\"]]}\n            attr = helper.attributes(state)\n            assert attr == item[\"reference\"]\n            normal = helper.normalized(state, **{key: attr[key] for key in (\"currency\", \"direction_known\", \"is_credit\")})\n            assert normal == item[\"normalized_reference\"]\n            attr_by_id[item[\"candidate_id\"]] = (attr, normal)\n            count[\"all_B_candidates\"] += 1\n            count[\"all_B_direction_known\" if attr[\"direction_known\"] else \"all_B_direction_unknown\"] += 1\n            count[\"all_B_normalization_\" + normal[\"status\"]] += 1\n            count[\"all_B_currency_\" + attr[\"currency\"]] += 1\n            if attr[\"currency\"] == \"review\" and attr[\"direction_known\"]:\n                count[\"all_B_currency_review_but_credit_defined\"] += 1\n            if attr[\"direction_known\"]:\n                assert type(attr[\"is_credit\"]) is bool\n            else:\n                assert attr[\"is_credit\"] is None\n            for head in (\"currency\", \"direction_known\", \"is_credit\"):\n                if attr[head] is None:\n                    continue\n                expected_rows[case[\"id\"] + \":attributes:\" + item[\"candidate_id\"] + \":\" + head] = attr[head]\n        if reference[\"reason\"] == \"recalled\":\n            attr, normal = attr_by_id[reference[\"span\"]]\n            count[\"unique_recalled_reference_\" + normal[\"status\"]] += 1\n            count[\"unique_recalled_direction_known\" if attr[\"direction_known\"] else \"unique_recalled_direction_unknown\"] += 1\n            if normal[\"status\"] == \"review\":\n                normalized_reasons[normal[\"reason\"]] += 1\n            if attr[\"currency\"] == \"review\" and attr[\"direction_known\"]:\n                count[\"unique_recalled_currency_review_but_credit_defined\"] += 1\n        for omission in case[\"omitted_supervision\"]:\n            omits[omission[\"reason\"]] += 1\n            assert omission[\"head\"] == (\"is_credit\" if omission[\"reason\"] == \"undefined_direction\" else \"span\")\n            if omission[\"reason\"] == \"undefined_direction\":\n                assert attr_by_id[omission[\"candidate_id\"]][0][\"is_credit\"] is None\n    parsed_records = []\n    with (data / (split + \".jsonl\")).open(\"rb\") as stream:\n        for raw in stream:\n            if raw.strip():\n                record = json.loads(raw)\n                assert record[\"split\"] == split\n                parsed_records.append(record)\n    assert len(parsed_records) == manifest[\"counts\"][split] == len(expected_rows)\n    assert set(record[\"id\"] for record in parsed_records) == set(expected_rows)\n    for record in parsed_records:\n        head = record[\"metadata\"][\"stage\"] + \"/\" + record[\"metadata\"][\"question_id\"]\n        heads[head] += 1\n        assert expected_rows[record[\"id\"]] is not None\n        assert len(record[\"target\"]) == len(record[\"options\"])\n        assert sum(record[\"target\"]) == 1\n    stats[split] = {\n        \"documents\": len(selected), \"groups\": len({case[\"group_id\"] for case in selected}),\n        \"typed_records\": len(parsed_records), \"counts\": dict(sorted(count.items())),\n        \"unique_present\": count[\"a_recalled\"] + count[\"a_candidate_miss\"],\n        \"reference_ready_on_unique_actual_recalled_target\": count[\"unique_recalled_reference_ready\"],\n        \"head_counts\": dict(sorted(heads.items())), \"omitted_supervision\": dict(sorted(omits.items())),\n        \"unique_recalled_review_reasons\": dict(sorted(normalized_reasons.items())),\n        \"schema\": {\n            \"case_keys\": list(selected[0]), \"A_state_keys\": list(selected[0][\"selection_request\"][\"state\"]),\n            \"A_heads\": list(selected[0][\"selection_request\"][\"questions\"]),\n            \"B_sidecar_keys\": list(selected[0][\"attributes\"][0]),\n            \"B_state_keys\": list(selected[0][\"attributes\"][0][\"request\"][\"state\"]),\n            \"B_heads\": list(selected[0][\"attributes\"][0][\"request\"][\"questions\"]),\n            \"typed_record_keys\": list(parsed_records[0]),\n        },\n    }\nassert all(sha(data / name) == digest for name, digest in manifest[\"files_sha256\"].items())\nassert \"jev.case_amount_extraction\" not in sys.modules\nprint(json.dumps({\n    \"pins\": pins, \"source_files_sha256\": manifest[\"configuration\"][\"source_files_sha256\"],\n    \"dataset_files_sha256\": manifest[\"files_sha256\"], \"decode_logs\": decode_logs, \"heldout\": stats,\n    \"full_corpus_verify_called\": False, \"producer_imported\": False, \"model_or_http_performed\": False,\n    \"nonheldout_split_files_hashed_without_parsing\": [\"train.jsonl\", \"calibration.jsonl\", \"validation.jsonl\"],\n}, sort_keys=True, indent=2))\nPY",
+    "exit_code": 0,
+    "wall_time_seconds": 1.262478959,
+    "run_count": 1,
+    "console_output": "{\n  \"dataset_files_sha256\": {\n    \"calibration.jsonl\": \"4db65ea37fc9569f3666d87762aec37c6786dfa7e7caee9dc70ef6e1420d6e6b\",\n    \"cases.jsonl\": \"cdd75692ee62722ca90080bc47e381da41aaaad9bc3f2e420201094713aa56b7\",\n    \"families.jsonl\": \"b5c255040c98ae9b680dd16c8ea78a48e29059b45ec54773b7925b111b9be788\",\n    \"ood.jsonl\": \"11f3348654087a561fc3ec934144712e38decf6cfb43c21efb5b96099e0f3e93\",\n    \"test.jsonl\": \"f8500ef9dbd65280b2c58edcfc579dd175ddde52bc2b19b6b97c5cd84bff8bd8\",\n    \"train.jsonl\": \"68a34ca1371b60dc9b49c7d26882893758c16bc1dbb85a636cf0643ed7f5047d\",\n    \"validation.jsonl\": \"b9bc54dd4c39eb1ab40313bf0ce1339c48b579077000b5de1c0a9ffaba802e76\"\n  },\n  \"decode_logs\": {\n    \"cases\": {\n      \"full_payload_decode_counts\": {\n        \"calibration\": 0,\n        \"ood\": 640,\n        \"test\": 224,\n        \"train\": 0,\n        \"validation\": 0\n      },\n      \"prefix_counts\": {\n        \"calibration\": 144,\n        \"ood\": 640,\n        \"test\": 224,\n        \"train\": 2128,\n        \"validation\": 64\n      }\n    },\n    \"families\": {\n      \"full_payload_decode_counts\": {\n        \"calibration\": 0,\n        \"ood\": 40,\n        \"test\": 14,\n        \"train\": 0,\n        \"validation\": 0\n      },\n      \"prefix_counts\": {\n        \"calibration\": 9,\n        \"ood\": 40,\n        \"test\": 14,\n        \"train\": 133,\n        \"validation\": 4\n      }\n    }\n  },\n  \"full_corpus_verify_called\": false,\n  \"heldout\": {\n    \"ood\": {\n      \"counts\": {\n        \"a_ambiguous_target\": 40,\n        \"a_candidate_miss\": 80,\n        \"a_recalled\": 400,\n        \"a_target_absent\": 120,\n        \"all_B_candidates\": 2960,\n        \"all_B_currency_EUR\": 1098,\n        \"all_B_currency_GBP\": 871,\n        \"all_B_currency_USD\": 871,\n        \"all_B_currency_review\": 120,\n        \"all_B_currency_review_but_credit_defined\": 40,\n        \"all_B_direction_known\": 2760,\n        \"all_B_direction_unknown\": 200,\n        \"all_B_normalization_ready\": 2720,\n        \"all_B_normalization_review\": 240,\n        \"unique_recalled_currency_review_but_credit_defined\": 40,\n        \"unique_recalled_direction_known\": 280,\n        \"unique_recalled_direction_unknown\": 120,\n        \"unique_recalled_reference_ready\": 240,\n        \"unique_recalled_reference_review\": 160\n      },\n      \"documents\": 640,\n      \"groups\": 40,\n      \"head_counts\": {\n        \"attributes/currency\": 2960,\n        \"attributes/direction_known\": 2960,\n        \"attributes/is_credit\": 2760,\n        \"selection/span\": 600,\n        \"selection/target_present\": 640\n      },\n      \"omitted_supervision\": {\n        \"forced_single_candidate\": 40,\n        \"undefined_direction\": 200\n      },\n      \"reference_ready_on_unique_actual_recalled_target\": 240,\n      \"schema\": {\n        \"A_heads\": [\n          \"span\",\n          \"target_present\"\n        ],\n        \"A_state_keys\": [\n          \"text\",\n          \"requested_role\",\n          \"policy\",\n          \"candidates\"\n        ],\n        \"B_heads\": [\n          \"currency\",\n          \"direction_known\",\n          \"is_credit\"\n        ],\n        \"B_sidecar_keys\": [\n          \"candidate_id\",\n          \"request\",\n          \"reference\",\n          \"normalized_reference\"\n        ],\n        \"B_state_keys\": [\n          \"text\",\n          \"policy\",\n          \"selected_id\",\n          \"selected\"\n        ],\n        \"case_keys\": [\n          \"id\",\n          \"family_id\",\n          \"group_id\",\n          \"split\",\n          \"template_id\",\n          \"variant\",\n          \"selection_request\",\n          \"selection_reference\",\n          \"attributes\",\n          \"omitted_supervision\"\n        ],\n        \"typed_record_keys\": [\n          \"group_id\",\n          \"id\",\n          \"kind\",\n          \"metadata\",\n          \"options\",\n          \"question\",\n          \"source\",\n          \"split\",\n          \"state\",\n          \"target\"\n        ]\n      },\n      \"typed_records\": 9920,\n      \"unique_present\": 480,\n      \"unique_recalled_review_reasons\": {\n        \"currency_requires_review\": 40,\n        \"direction_requires_review\": 120\n      }\n    },\n    \"test\": {\n      \"counts\": {\n        \"a_ambiguous_target\": 14,\n        \"a_candidate_miss\": 28,\n        \"a_recalled\": 140,\n        \"a_target_absent\": 42,\n        \"all_B_candidates\": 1036,\n        \"all_B_currency_EUR\": 190,\n        \"all_B_currency_GBP\": 335,\n        \"all_B_currency_USD\": 469,\n        \"all_B_currency_review\": 42,\n        \"all_B_currency_review_but_credit_defined\": 14,\n        \"all_B_direction_known\": 966,\n        \"all_B_direction_unknown\": 70,\n        \"all_B_normalization_ready\": 952,\n        \"all_B_normalization_review\": 84,\n        \"unique_recalled_currency_review_but_credit_defined\": 14,\n        \"unique_recalled_direction_known\": 98,\n        \"unique_recalled_direction_unknown\": 42,\n        \"unique_recalled_reference_ready\": 84,\n        \"unique_recalled_reference_review\": 56\n      },\n      \"documents\": 224,\n      \"groups\": 14,\n      \"head_counts\": {\n        \"attributes/currency\": 1036,\n        \"attributes/direction_known\": 1036,\n        \"attributes/is_credit\": 966,\n        \"selection/span\": 210,\n        \"selection/target_present\": 224\n      },\n      \"omitted_supervision\": {\n        \"forced_single_candidate\": 14,\n        \"undefined_direction\": 70\n      },\n      \"reference_ready_on_unique_actual_recalled_target\": 84,\n      \"schema\": {\n        \"A_heads\": [\n          \"span\",\n          \"target_present\"\n        ],\n        \"A_state_keys\": [\n          \"text\",\n          \"requested_role\",\n          \"policy\",\n          \"candidates\"\n        ],\n        \"B_heads\": [\n          \"currency\",\n          \"direction_known\",\n          \"is_credit\"\n        ],\n        \"B_sidecar_keys\": [\n          \"candidate_id\",\n          \"request\",\n          \"reference\",\n          \"normalized_reference\"\n        ],\n        \"B_state_keys\": [\n          \"text\",\n          \"policy\",\n          \"selected_id\",\n          \"selected\"\n        ],\n        \"case_keys\": [\n          \"id\",\n          \"family_id\",\n          \"group_id\",\n          \"split\",\n          \"template_id\",\n          \"variant\",\n          \"selection_request\",\n          \"selection_reference\",\n          \"attributes\",\n          \"omitted_supervision\"\n        ],\n        \"typed_record_keys\": [\n          \"group_id\",\n          \"id\",\n          \"kind\",\n          \"metadata\",\n          \"options\",\n          \"question\",\n          \"source\",\n          \"split\",\n          \"state\",\n          \"target\"\n        ]\n      },\n      \"typed_records\": 3472,\n      \"unique_present\": 168,\n      \"unique_recalled_review_reasons\": {\n        \"currency_requires_review\": 14,\n        \"direction_requires_review\": 42\n      }\n    }\n  },\n  \"model_or_http_performed\": false,\n  \"nonheldout_split_files_hashed_without_parsing\": [\n    \"train.jsonl\",\n    \"calibration.jsonl\",\n    \"validation.jsonl\"\n  ],\n  \"pins\": {\n    \"data/amount-extraction-control-v1/manifest.json\": \"6f89f81336ac36505c563193da27fca2155fa566175451854f0ac410979ea80b\",\n    \"reports/amount-extraction-control-v1/independent-audit.json\": \"ed9f0aaf9f1c40fde1379d4655f40b1199b621ea204cc853b00fec2581fd2e22\",\n    \"reports/amount-extraction-control-v1/verify.py\": \"dc4727e62791af8b8ac2776358868c2f1f6ed810387ecae00e6d5087e39aef24\"\n  },\n  \"producer_imported\": false,\n  \"source_files_sha256\": {\n    \"api.py\": \"493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254\",\n    \"case_amount_extraction.py\": \"d87466f66b0c07d1c6df6e65579db3e0494317c57578695fffa52536307100fd\",\n    \"data.py\": \"97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e\",\n    \"recipes.py\": \"2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5\"\n  }\n}\n"
+  }
+}

@@ -1,0 +1,7 @@
+# Milestone publication queue
+
+The user authorized milestone posts on @Zefan_Cai and explicitly requested Chrome Computer Use after the browser connector returned `Codex auth token is unavailable`. The first ledger post is now published and independently visible in the own-account timeline: <https://x.com/Zefan_Cai/status/2106095771909328920>. `computer-use-receipts.json` preserves the exact text and confirmation. Further posts require fresh UI state because the user is also operating Chrome.
+
+`drafts.json` preserves seven evidence-linked posts for the completed ledger, deployment, measured acceleration, fixed-step synthetic pilot, negative natural-routing result, actual-model browser/export workflow and five verified community references. The user requested paragraph breaks and a few emoji; `style-references.json` records four actual high-engagement technical posts inspected in Chrome, used only for presentation structure. The original plain drafts are retained separately. The deployment draft must link the new verified Linux record before publishing. The public JevBench development comparison found unchanged Choice/Noul accuracy and modest Score MAE improvement across seven items; it does not establish an official leaderboard or natural-data gain. Full 27B fast-CUDA measurements remain unavailable.
+
+External human trials and completed customer stories currently number zero. The engineering browser run is not a human customer story. A future user-story post requires an actual participating user and recorded completion evidence.

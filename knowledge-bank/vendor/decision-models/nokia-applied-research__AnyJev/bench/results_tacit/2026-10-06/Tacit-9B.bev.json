@@ -1,0 +1,38 @@
+{
+  "n": 46320,
+  "one_forward": {
+    "correct": 33652
+  },
+  "adaptive": {
+    "correct": 34967,
+    "escalated": 8366,
+    "below_tau": 9597,
+    "reasoning_tokens": 21224754
+  },
+  "escalated_decisions": {
+    "correct_before": 3771,
+    "correct_after": 5086
+  },
+  "model": "morriszjm/Tacit-9B",
+  "task": "bev-decision test split",
+  "settings": {
+    "adaptive": true,
+    "tau": 0.5,
+    "max_cot_share": 0.2,
+    "cot_window": 1000,
+    "cot_max_tokens": 8192,
+    "block": 1000,
+    "order": "as stored"
+  },
+  "env": {
+    "anyjev": "0.3.0 + first_level (main, unreleased)",
+    "engine": "vllm serve",
+    "vllm": "0.17.1",
+    "replicas": 4,
+    "hardware": "4x H100 NVL",
+    "python": "3.12.8"
+  },
+  "seconds": 1384.6,
+  "date": "2026-10-06",
+  "command": "python scripts/eval_tacit.py --model morriszjm/Tacit-9B --servers http://127.0.0.1:8020,http://127.0.0.1:8021,http://127.0.0.1:8022,http://127.0.0.1:8023 --task bev --jevbench jevbench --adaptive --out runs/Tacit-9B_bev --result bench/results_tacit/2026-10-06/Tacit-9B.bev.json --hardware 4x H100 NVL"
+}

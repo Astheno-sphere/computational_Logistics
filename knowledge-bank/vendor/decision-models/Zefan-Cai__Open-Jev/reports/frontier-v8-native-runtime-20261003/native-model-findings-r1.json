@@ -1,0 +1,53 @@
+{
+  "author": "train_diagnostic_design",
+  "corrected_current_snapshot": {
+    "scripts/frontier_v8_native_model.py": "6c33a98d5b08a0ef0adf41b6a06793847a755ac81c3722bfd38adb35d25ed873",
+    "tests/test_frontier_v8_native_model.py": "497c7137e5709f483b646eb4cc393333c5206b52f6565cd2d4120b57d776b7f7"
+  },
+  "created_at_utc": "2026-10-03T12:01:46.990114+00:00",
+  "findings": [
+    {
+      "issue": "Saved head/adapter tensors were cast to FP32 before equality; Float64 values could round into equality rather than prove exact saved dtype/value identity.",
+      "old_code": "expected = expected.to(dtype=required_dtype)",
+      "original_snapshot_hash_limit": "A digest was not captured before this correction; no retrospective digest is invented.",
+      "original_snapshot_sha256": null,
+      "regression": "test_saved_trainable_dtype_cannot_round_into_exact_identity",
+      "resolution": "Require saved dtype and actual dtype both equal the required FP32 (base BF16), match shape, and compare exact tensor values without a dtype cast.",
+      "reviewers": [
+        "natural_trial_gap"
+      ]
+    },
+    {
+      "issue": "Checking only model_file and train_file did not reject cached jev/api/metrics/data/prefix_cache modules from another checkout.",
+      "original_snapshot_hash_limit": "A digest was not captured before this correction; no retrospective digest is invented.",
+      "original_snapshot_sha256": null,
+      "regression": "test_cached_scientific_dependencies_from_another_root_reject",
+      "resolution": "Validate every already-loaded jev module and frozen scripts module origin/hash before and after optional imports and before initialization, predictions and optimizer observations; do not import missing modules just for observation.",
+      "reviewers": [
+        "root",
+        "natural_trial_gap"
+      ]
+    },
+    {
+      "issue": "An observer strong reference could keep the original model resident after Source A deletes it before checkpoint reload, changing memory telemetry.",
+      "original_snapshot_sha256": "e8a860e0b75c3c120e4580d9f0e42097f3ca3aa7cf7cc558b253d5393082f3d0",
+      "regression": "test_observer_does_not_keep_model_alive_across_original_checkpoint_reload",
+      "resolution": "Store only a weakref, dereference for the first original accumulated-step audit, and retain JSON-only evidence.",
+      "reviewers": [
+        "train_diagnostic_design"
+      ]
+    }
+  ],
+  "limits": [
+    "Historical code findings and CPU fake regressions only; no native model/runtime or live resource proof."
+  ],
+  "schema_version": 1,
+  "status": "historical_native_model_findings_corrected_in_current_CPU_candidate",
+  "validation": {
+    "CPU_fake_tests_passed": 16,
+    "GPU_actions": 0,
+    "Torch_imports": 0,
+    "model_calls": 0,
+    "subtest_cases": 18
+  }
+}

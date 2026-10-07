@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "audited_at_utc": "2026-09-22T23:39:46.996759+00:00",
+  "scope": "231 public JevBench tasks only: 72 original, 48 easy, 111 hard. The private and judge tiers are unavailable; this is not the full 534-task benchmark and no full-benchmark composite is computed. ZefanCai Open-Jev uses Qwen LoRA weights and a decision head; it is a different system from the Kotoba and Codiv projects also called OpenJev.",
+  "audit_method": "Offline saved-response replay with pinned upstream scorer plus independent standard-library JSON, native probability extraction, lexical argmax, denominators, Brier and ordinal-MAE calculations; read-only remote checkpoint byte hashing. No inference or hosted calls.",
+  "public_tasks": 231,
+  "upstream_commit": "f8ce71361165846101d02ebc83ad44e47ae44fc3",
+  "input_sha256": "2e20ff5f94dd04d015b3a7b9abd955757b6c5be25b55b97fcd141cb52f88b4aa",
+  "dataset_sha256": "dc3995d8ae1e2fc8e81ce38431add509eb8bb39b85aadfd0c7c32079382dde51",
+  "expected_identity": {
+    "model": "Qwen/Qwen3.8-27B",
+    "method": "lora_decision_head",
+    "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+    "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+    "temperature": 2.5343690298472983,
+    "code_commit": "7ac6bab261bd97efc3d446152999e94ae432e5b0",
+    "max_length": 16384
+  },
+  "raw_artifacts_sha256": {
+    "27b/collection/attempts.jsonl": "992f46bfde787e9d9e7a31ad507bcf0ad785f9cbf2fcf407a9e17cd1c84a9daf",
+    "27b/collection/report.json": "753f4aaa877ed03d6bf8a3d89024777c75ed7f05e86723d862c2b37a38d19c4d",
+    "27b/collection/requests.json": "2e20ff5f94dd04d015b3a7b9abd955757b6c5be25b55b97fcd141cb52f88b4aa",
+    "27b/collection/samples.jsonl": "2122d0fda83a361aa00a9726de36fb41c54f6fb33126a340d2fc428113e01781",
+    "27b/summary.json": "ede7fda4e114c22bed02ec5a389a3bd4b9952eeeeed4a64e39cdce88d6589b8f",
+    "manifest.json": "42cd6636d03f11b236b7b2b957ba25b689b9913ab986406a354063cffa1420df"
+  },
+  "checkpoint_files_sha256": {
+    "adapter/README.md": "f9e934433c6ae81516474d416c6b1dcf5193fe08bf41205363cf0b5b33760c1e",
+    "adapter/adapter_config.json": "0a11cc4a895a0ef163c1d25a4e2a5600c362adb805b4ce9e6278de9e8c78946a",
+    "adapter/adapter_model.safetensors": "1c857224bd3609c6a71eacf7f71dd021115fcc0f791936b1fc332e915b548a81",
+    "head.pt": "76e382f122abfa4e0c467d860a8d142d2fb6d2a98dc0ef9e19870bfc6eb296b4",
+    "model.json": "394c4ccc4f880172571abd141e16d00bf9dc140d1e252bae4e9185ee4cf8c508",
+    "temperature.json": "185c0b85539d195d02a2d4949295f0400fc208d9eb7ac4e5e6c97ebd339a235f"
+  },
+  "checks": {
+    "same_frozen_231_requests_and_pinned_clean_upstream": true,
+    "all_remote_files_match_local_download_sha256": true,
+    "checkpoint_directory_content_hash_independently_recomputed": true,
+    "saved_summary_hash_matches_execution_manifest": true,
+    "all_231_raw_response_hashes_verified": true,
+    "all_231_native_model_identities_verified": true,
+    "all_dispatches_and_samples_match_frozen_request_ids": true,
+    "all_native_probabilities_reconstructed_from_raw": true,
+    "all_231_probability_vectors_strictly_valid": true,
+    "independent_standard_library_accuracy_and_denominators_match": true,
+    "independent_standard_library_brier_and_ordinal_mae_match": true,
+    "pinned_upstream_full_summary_replayed_with_1e_minus_12_float_tolerance": true,
+    "zero_failed_pending_or_inflight_requests": true,
+    "direct_transport_not_claimed_as_http": true
+  },
+  "replayed_summary_leaves": 3483,
+  "cross_runtime_float_replay": {
+    "tolerance": 1e-12,
+    "nonidentical_float_leaves": 30,
+    "maximum_absolute_difference": 2.220446049250313e-16,
+    "non_float_and_integer_results_exact": true,
+    "note": "Remote Python and local Python summary arithmetic differs in a few final floating-point bits; exact full-summary byte parity is not claimed."
+  },
+  "independent_results": {
+    "all": {
+      "n_planned": 231,
+      "n_attempted": 231,
+      "n_valid": 231,
+      "n_correct": 197,
+      "accuracy": 0.8528138528138528
+    },
+    "original": {
+      "n_planned": 72,
+      "n_attempted": 72,
+      "n_valid": 72,
+      "n_correct": 69,
+      "accuracy": 0.9583333333333334
+    },
+    "easy": {
+      "n_planned": 48,
+      "n_attempted": 48,
+      "n_valid": 48,
+      "n_correct": 48,
+      "accuracy": 1.0
+    },
+    "hard": {
+      "n_planned": 111,
+      "n_attempted": 111,
+      "n_valid": 111,
+      "n_correct": 80,
+      "accuracy": 0.7207207207207207
+    }
+  },
+  "independent_probability_metrics": {
+    "brier_mean": 0.24198311678602757,
+    "ordinal_mae": 0.3798003972534468,
+    "ordinal_count": 18
+  },
+  "limitations": [
+    "231 public tasks only; unavailable private/judge tasks were not scored.",
+    "Four-rank shared-node direct-execution timings cannot be compared as speedups against the old single-GPU HTTP or hosted HTTPS timings.",
+    "Checkpoint hash verification establishes artifact identity; this offline audit does not rerun model inference or establish benchmark-training semantic separation.",
+    "Raw requests, labels, task IDs and responses remain in an ignored local run directory."
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "citation-control-v1",
+    "groups": 200,
+    "ood_groups": 40,
+    "seed": 42,
+    "license": "CC0-1.0",
+    "runtime_builder": "jev.recipes.citation_check",
+    "split_policy": "whole_original_document_group; independent_id_hash_splits; reserved_operations_wording_ood",
+    "source_files_sha256": {
+      "case_citation.py": "e6aec3d46c095a97c23eafd295d5e52918899b4486d547a387f465ec5e668222",
+      "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+    }
+  },
+  "summary": {
+    "records": 4000,
+    "groups": 200,
+    "unique_inputs": 4000,
+    "splits": {
+      "calibration": 200,
+      "ood": 800,
+      "test": 300,
+      "train": 2520,
+      "validation": 180
+    },
+    "kinds": {
+      "choice": 4000
+    },
+    "families": {
+      "evidence": 4000
+    },
+    "sources": {
+      "citation-control-v1": 4000
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "c8e939ea7e49290a8d551b93cf759dda68dd25bce264dbd0461cf2fb1e7ca448",
+    "calibration.jsonl": "feae8a0adb34690d0dadb920213b3da3f29b52aaf4c938bd3279c58821a69e04",
+    "validation.jsonl": "e3b7dd9759199d9aa64e1df94b1efdd0ef91a7fdc7090ce0aa6943604fefb1f7",
+    "test.jsonl": "fd55095c6387a3027e0eb9639e3c6a802cdff29e587ef3118457d84285016a50",
+    "ood.jsonl": "f85863a39afaf12cb5ab3e4ab554f9bba93a41b1741629daa6a855c9dd3520eb",
+    "documents.jsonl": "33a147e60e3bcfd25938ce07163cd3a9c6e638eb54e495879e7f1aa4e984f333",
+    "cases.jsonl": "62abcf56013a7dcb84af430a4a75a936a3a00d5be9981c5571c94f3f3470afac"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "counts": {
+    "train": 2520,
+    "calibration": 200,
+    "validation": 180,
+    "test": 300,
+    "ood": 800
+  },
+  "sha256": {
+    "train": "c8e939ea7e49290a8d551b93cf759dda68dd25bce264dbd0461cf2fb1e7ca448",
+    "calibration": "feae8a0adb34690d0dadb920213b3da3f29b52aaf4c938bd3279c58821a69e04",
+    "validation": "e3b7dd9759199d9aa64e1df94b1efdd0ef91a7fdc7090ce0aa6943604fefb1f7",
+    "test": "fd55095c6387a3027e0eb9639e3c6a802cdff29e587ef3118457d84285016a50",
+    "ood": "f85863a39afaf12cb5ab3e4ab554f9bba93a41b1741629daa6a855c9dd3520eb"
+  },
+  "document_count": 200,
+  "total_case_count": 4400,
+  "semantic_case_count": 4000,
+  "quote_not_found_count": 400,
+  "label_counts": {
+    "supported": 1400,
+    "contradicted": 1400,
+    "insufficient": 1200
+  },
+  "quote_mode_counts": {
+    "context_only": 1304,
+    "exact": 1351,
+    "normalized": 1345,
+    "reworded_not_found": 200,
+    "extended_not_found": 200
+  },
+  "intended_scope": "Original controlled-policy citation decisions; wording OOD only; no arbitrary factual-verification claim.",
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false
+}

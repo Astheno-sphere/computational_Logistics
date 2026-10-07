@@ -1,0 +1,47 @@
+{
+  "state": {
+    "adapter": "drone",
+    "observation": {
+      "observation_id": "sim-frame-30",
+      "target": {
+        "visible": true,
+        "seconds_unseen": 0
+      },
+      "obstacles": [
+        {
+          "ahead_m": 2,
+          "left_gap_open": false,
+          "right_gap_open": true
+        }
+      ],
+      "flight": {
+        "altitude_m": 1.5,
+        "climb_clearance_verified": false
+      }
+    }
+  },
+  "questions": {
+    "maneuver": {
+      "type": "choice",
+      "instructions": "Choose one permitted tactical maneuver using the measured scene. The simulator retains its collision reflex and flight controller.",
+      "criteria": {
+        "gap_right": "Use the observed safe gap on the right",
+        "brake": "Slow down or stop forward travel",
+        "hold_course": "Continue along the current clear course"
+      }
+    },
+    "risk": {
+      "type": "score",
+      "instructions": "How immediate is the collision risk in this measured scene?",
+      "criteria": [
+        "Clear open course",
+        "Tight clearance or approaching obstacle",
+        "Imminent collision"
+      ]
+    },
+    "target_truly_lost": {
+      "type": "noul",
+      "instructions": "Do the observations support loss of the tracked target rather than a brief occlusion?"
+    }
+  }
+}

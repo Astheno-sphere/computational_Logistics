@@ -1,0 +1,278 @@
+{
+  "accepted": true,
+  "accepted_for_minimum_source_implementation": true,
+  "actionable_findings": [],
+  "at_utc": "2026-10-04T00:32:03.472500+00:00",
+  "audit_script": {
+    "bytes": 17684,
+    "path": "runs/frontier-v8-owned-c-lifecycle-20261004/independent_design_review_r1.py",
+    "sha256": "5ec80b2094c3cd52deb36bb1c57e7f1dd63fc8170ff83cb57ab3b6ff463c4d04"
+  },
+  "base_actual_main": "3d874d4e33c67af993fa8028751f02205ad96c97",
+  "branch": "codex/open-jev-v8-owned-c-lifecycle-20261004",
+  "candidate": {
+    "bytes": 10563,
+    "path": "runs/frontier-v8-owned-c-lifecycle-20261004/CPU-owned-C-lifecycle-design-r2.json",
+    "sha256": "24520a5acc3e778c03661a34ba1eee9a74150651f0130c1069538f8797072e42"
+  },
+  "checks": [
+    {
+      "name": "exact_r2_design_hash",
+      "passed": true
+    },
+    {
+      "name": "latest_actual_main_and_new_branch_declared",
+      "passed": true
+    },
+    {
+      "name": "candidate_only_no_freeze_or_launch",
+      "passed": true
+    },
+    {
+      "name": "minimum_four_new_source_paths_not_implemented",
+      "passed": true
+    },
+    {
+      "name": "closed_normal_and_controller_loss_cases",
+      "passed": true
+    },
+    {
+      "name": "all_declared_actual_counts_zero",
+      "passed": true
+    },
+    {
+      "name": "all_availability_authority_fields_false",
+      "passed": true
+    },
+    {
+      "name": "prior_inputs_and_no_old_output_reexecution_declared",
+      "passed": true
+    },
+    {
+      "name": "three_immutable_utility_identity_declarations",
+      "passed": true
+    },
+    {
+      "name": "manual:Fixed process layout and count",
+      "passed": true
+    },
+    {
+      "name": "manual:Parent wait ownership",
+      "passed": true
+    },
+    {
+      "name": "manual:Controller and guard setup anchors",
+      "passed": true
+    },
+    {
+      "name": "manual:Worker readiness and release",
+      "passed": true
+    },
+    {
+      "name": "manual:Normal case arming",
+      "passed": true
+    },
+    {
+      "name": "manual:Controlled controller-loss arming",
+      "passed": true
+    },
+    {
+      "name": "manual:PID and descriptor signal ownership",
+      "passed": true
+    },
+    {
+      "name": "manual:Private FD closure and framing",
+      "passed": true
+    },
+    {
+      "name": "manual:Terminal report draining and reap",
+      "passed": true
+    },
+    {
+      "name": "manual:Finite budget epochs and expiry",
+      "passed": true
+    },
+    {
+      "name": "manual:First failure and cleanup uncertainty",
+      "passed": true
+    },
+    {
+      "name": "manual:Descriptor closure facts",
+      "passed": true
+    },
+    {
+      "name": "manual:Source and mapped-code limits",
+      "passed": true
+    },
+    {
+      "name": "manual:Symbolic ABI and self signal disposition",
+      "passed": true
+    },
+    {
+      "name": "manual:Observer bridge and closed execution",
+      "passed": true
+    },
+    {
+      "name": "manual:Meaningful portable parser negatives",
+      "passed": true
+    },
+    {
+      "name": "manual:Strict real Linux lifecycle cases",
+      "passed": true
+    },
+    {
+      "name": "manual:Source and future host gates",
+      "passed": true
+    }
+  ],
+  "checks_passed": 27,
+  "checks_total": 27,
+  "conceptual_peer_summary": "Read-only peer independently emphasized guard-only worker waitpid parenthood and controller-loss/partial-handshake races; no tools/source reads/tests/compiler/host edits for that conceptual note. Summary of peer message, not an execution receipt.",
+  "containment_available": false,
+  "data_parsing_operations": 0,
+  "execution_available": false,
+  "functional_containment_verified": false,
+  "implementation_review_conditions": [
+    "Record and verify descriptor ownership/close facts per process and per inherited copy, not a global numeric-FD close count. Worker must close inherited controller pidfd/unrelated writers while guard keeps its own valid copies.",
+    "Implement exact readiness/ARM/ACK state transitions and negative early-controller/worker exit, missing/partial report, EPIPE and deadline edges; enum or ready boolean alone is insufficient evidence of arm.",
+    "Every loop and cleanup path must honor inherited deadlines, preserve first failure, report unknown/unreaped outcomes, and never reset remaining budget or signal after the declared cleanup window.",
+    "Success parser must recompute PID-birth/nonce/parent bindings, controller poll event, actual signal return, worker pidfd exit and matching waitpid status, guard/controller parent reaps, timing order and close facts from exact typed returned evidence.",
+    "Source review must check the particular observed header constants/signatures and trusted toolchain facts. This design review does not supply constants, source freeze, actual execution, success fixtures or a general process-management API."
+  ],
+  "launch_authority": false,
+  "limits": [
+    "Independent reasoning and current design JSON bindings only; no proposed source, fixture, compiler, project module, old audit, data, CI raw, host or network operation was executed.",
+    "Declared utility hashes are design identities; their bodies were not reread/rehashed by this critique. No current runtime/input capability is proven.",
+    "R1 issues are retained as authored review-message summaries; root resolved them in a distinct r2 candidate before source. Acceptance is source-planning permission, not acceptance of unwritten implementation or actual lifecycle outcomes.",
+    "Four C roles plus separate observer/bootstrap/toolchain activity must be counted honestly. Owned direct-worker/controller-loss evidence cannot be generalized to arbitrary descendants, guard/coordinator/observer/host loss, physical exclusion, GPU lease, foreign queue restore or model/runtime ABI.",
+    "Later source tests/review/latest exact-head CI/integration and separately accepted exact prelaunch are mandatory before fresh host episodes. Each case requires new declared scope/nonce/path/attempt; no fallback/retry/resume/current or old output reuse."
+  ],
+  "manual_accepted_areas": 18,
+  "manual_assessments": [
+    {
+      "area": "Fixed process layout and count",
+      "assessment": "accepted",
+      "reason": "Exactly4 C fixture roles: coordinator directly owns controller and guard; guard directly owns one fixed forked worker. Python observer/bootstrap and compiler/linker processes are separately counted. No externally supplied PID/executable or worker exec/extra services."
+    },
+    {
+      "area": "Parent wait ownership",
+      "assessment": "accepted",
+      "reason": "Guard alone waitpid-reaps worker. Coordinator separately pidfd-observes and waitpid-reaps its controller/guard. Inherited controller pidfd supplies liveness/exit observation without conferring waitpid parenthood."
+    },
+    {
+      "area": "Controller and guard setup anchors",
+      "assessment": "accepted",
+      "reason": "Controller ready packet is validated against own-fork identity before controller pidfd acquisition. Guard publishes its identity then blocks; coordinator owns validated guard pidfd before GUARD_START allows worker fork. Early setup acquisition or handshake failure remains negative."
+    },
+    {
+      "area": "Worker readiness and release",
+      "assessment": "accepted",
+      "reason": "Worker remains on sole guard control pipe until private identity/nonce and own-fork PID/birth/boot/UID are bound and guard holds worker pidfd. Guard forwards readiness only after checks; partial/missing readiness or pre-readiness controller exit cannot produce success."
+    },
+    {
+      "area": "Normal case arming",
+      "assessment": "accepted",
+      "reason": "NORMAL_ARM is sent only after complete guard/worker readiness. Guard records worker-stop intent and validates live controller/identity/product/deadlines before ACK; coordinator validates ACK before controller orderly quit. Guard owns normal worker exit/reap and coordinator matches controller exit0."
+    },
+    {
+      "area": "Controlled controller-loss arming",
+      "assessment": "accepted",
+      "reason": "LOSS_ARM follows complete readiness and controller-live checks; exact acknowledged arm precedes deliberate controller exit. Guard must observe controller pidfd exit and revalidate its own/worker identity/product/time before one fixed symbolic worker pidfd signal. Setup controller death is a negative, not a successful loss case."
+    },
+    {
+      "area": "PID and descriptor signal ownership",
+      "assessment": "accepted",
+      "reason": "All target PIDs derive from the current fixture fork results/private role handshake; no free PID or kill(PID) fallback. Anchored pidfd preserves target association under trusted source. Guard signals only its newly created worker, no retry, and actual poll/wait outcomes must confirm expected SIGKILL termination."
+    },
+    {
+      "area": "Private FD closure and framing",
+      "assessment": "accepted",
+      "reason": "Every role closes unused pipe/controller/report FDs; guard drops controller-control writer before worker creation, worker drops inherited unrelated writers/descriptors. Nonblocking private packets are bounded below PIPE_BUF and validate role/magic/nonce/exact lengths with bounded accumulation."
+    },
+    {
+      "area": "Terminal report draining and reap",
+      "assessment": "accepted",
+      "reason": "Guard writes bounded terminal facts before exit. Coordinator drains with finite deadline before blocking final reap, avoiding pipe-backpressure deadlock; matched controller/guard wait statuses do not substitute for worker facts, which only guard can reap."
+    },
+    {
+      "area": "Finite budget epochs and expiry",
+      "assessment": "accepted",
+      "reason": "All roles inherit coordinator t0 before pipe/fork. Shared deadlines are work+5, owned signal/exit/reap cleanup+8, guard terminal+10, worker self+12, coordinator+14; per-read resets forbidden. Outer direct-child30+2 timeout is larger and separately scoped. Every poll/read/write/WNOHANG step recomputes finite nonreverse remaining budget."
+    },
+    {
+      "area": "First failure and cleanup uncertainty",
+      "assessment": "accepted",
+      "reason": "Clock/source/identity/handshake errors retain first typed failure, separately recording cleanup outcomes/unknowns. Invalid ownership prevents signal. Bounded worker self-expiry is a code path, not observed asynchronous recovery; coordinator/guard/observer/host loss and generalized descendant restoration remain outside scope."
+    },
+    {
+      "area": "Descriptor closure facts",
+      "assessment": "accepted",
+      "reason": "Every normal handled acquired pidfd copy closes at most once with immediate errno and no signal/close retry. Success uses immediate F_GETFD/EBADF with no intervening descriptor opening; first failure remains distinct from later cleanup facts."
+    },
+    {
+      "area": "Source and mapped-code limits",
+      "assessment": "accepted",
+      "reason": "C roles share reviewed forked product mapping. Product stat identity is checked before release/signal; Python binds exact captured inputs/artifacts before compile/runtime and postruntime. fstat/ctime is explicitly not continuous source-byte or full mapped-code authentication; trusted compiler/loader/procfs/filesystem assumptions remain visible."
+    },
+    {
+      "area": "Symbolic ABI and self signal disposition",
+      "assessment": "accepted",
+      "reason": "System-header SYS_pidfd_open/SYS_pidfd_send_signal, fixed flags0/NULL/SIGKILL, explicit syscall operand casts and representability assertions are reviewed before use. No syscall/provider/architecture guessing or old API shim. Ignoring SIGPIPE is disclosed only as current-product disposition for handled EPIPE, not a foreign signal."
+    },
+    {
+      "area": "Observer bridge and closed execution",
+      "assessment": "accepted",
+      "reason": "New observer executes captured immutable helper/toolchain/selfcheck utility bodies in private nonmain namespaces and calls only backend/pure ELF/link parsers, never old observe/CLI/product/native/science. Seven-file closure and five deployed Git sources+fresh request are correctly distinct; --execute stays rejected before request/context/compiler/Torch."
+    },
+    {
+      "area": "Meaningful portable parser negatives",
+      "assessment": "accepted",
+      "reason": "Design requires duplicate/nonfinite/type, foreign PID/PPID/birth/UID/boot/nonce/product, wrong wait owner/status, early exit/partial readiness/missing terminal report, clock/timeouts and forged normal/loss negatives. Injected helper/backend seams are labeled CPU fixtures."
+    },
+    {
+      "area": "Strict real Linux lifecycle cases",
+      "assessment": "accepted",
+      "reason": "Separate fresh normal and loss fixtures actually compile/link/run dedicated C; normal worker must exit0 and loss worker must have actual single owned signal plus matched WIFSIGNALED/SIGKILL poll/wait facts. Skip only nonLinux; missing declared Linux prerequisites fail. No ready boolean or injected model/GPU substitution suffices."
+    },
+    {
+      "area": "Source and future host gates",
+      "assessment": "accepted",
+      "reason": "Current acceptance permits only minimal source work. Independent source/meaningful tests/commit/push/attached PR/latest exact CI/main integration precede any separately declared host case/nonce/path/attempt/exact prelaunch. No current request/nonce/host action, old consumed replay, resource rights, model ABI, promotion or restoration claim is supplied."
+    }
+  ],
+  "model_runtime_ABI_observed": false,
+  "old_audits_tests_host_or_consumed_outputs_reexecuted": 0,
+  "r1_candidate": {
+    "bytes": 9396,
+    "path": "runs/frontier-v8-owned-c-lifecycle-20261004/CPU-owned-C-lifecycle-design-r1.json",
+    "sha256": "db0e935c372712c5c8dbc7798c6a1f9172863915d28f281e46b1bd2577753163"
+  },
+  "resolved_prior_design_gaps": [
+    "normal_and_loss_arming_order",
+    "coordinator_guard_pidfd_anchor",
+    "shared_budget_epochs"
+  ],
+  "resource_authority": false,
+  "retained_r1_findings": {
+    "bytes": 2867,
+    "path": "runs/frontier-v8-owned-c-lifecycle-20261004/independent-design-findings-r1.json",
+    "sha256": "246ed5631ee7efd48c2fd653f8905470dc904ca2b896c67eba480f126d7f5271"
+  },
+  "reviewer": "/root/c_toolchain_publication_review",
+  "reviewer_Git_calls": 0,
+  "reviewer_compiler_invocations": 0,
+  "reviewer_host_operations": 0,
+  "reviewer_network_operations": 0,
+  "reviewer_source_implementation_edits": 0,
+  "reviewer_source_imports": 0,
+  "reviewer_tests_run": 0,
+  "role_disclosure": {
+    "reviewer_authored_candidate_or_source": false,
+    "reviewer_authored_new_design_critique": true,
+    "reviewer_previously_authored_static_source_prelaunch_actual_publication_reviews": true,
+    "root_authored_design_candidates": true
+  },
+  "schema_version": 1,
+  "source_freeze_or_host_declaration_created": false,
+  "status": "accepted_r2_minimum_owned_C_lifecycle_design_for_source_only_with_limits"
+}

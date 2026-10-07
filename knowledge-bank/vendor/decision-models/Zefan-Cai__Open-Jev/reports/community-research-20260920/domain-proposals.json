@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "research_date": "2026-09-20",
+  "status": "three_domains_generated_and_audited",
+  "new_domains_proposed": 3,
+  "new_domains_generated_by_this_task": 3,
+  "training_rows_generated_by_this_task": 18915,
+  "jf100_read": false,
+  "jf100_imported": false,
+  "items": [
+    {
+      "domain_id": "context-retention-control-v1",
+      "source_repository": "tamaratran/fast-jev-compaction",
+      "priority": 1,
+      "contract": {
+        "state": [
+          "context",
+          "goal",
+          "history[].i",
+          "history[].role",
+          "history[].text",
+          "history[].tool_calls[].id",
+          "history[].tool_calls[].tool",
+          "history[].tool_calls[].input",
+          "history[].tool_calls[].result"
+        ],
+        "dynamic_items": "One question pair per eligible completed call; number and IDs come from this history.",
+        "questions": [
+          {
+            "id": "call_<id>",
+            "type": "noul",
+            "semantics": "Must the fact and input of this tool call stay for the current goal?"
+          },
+          {
+            "id": "result_<id>",
+            "type": "noul",
+            "semantics": "Must the full output stay verbatim because re-running will not supply the needed evidence?"
+          }
+        ],
+        "deterministic_executor": "Pinned calls kept without asking. keepResult>=threshold -> keep call and output; otherwise keepCall>=threshold -> keep call and a truncated output; otherwise drop pair. No orphan tool results.",
+        "source_files": [
+          "src/compact.ts#L55-L66",
+          "src/compact.ts#L101-L114",
+          "src/state.ts#L151-L205",
+          "src/types.ts#L66-L86"
+        ],
+        "source_boundary": "The model sees output status/length notes, not the full tool result. First and recent messages are pinned; incomplete calls are excluded."
+      },
+      "existing_coverage": "workflow-controls-v1/agent_trace_observability labels task/authorization issues; it does not label retention of tool calls and verbatim results.",
+      "original_generator": "Generate original coding-task histories from explicit artifact/dependency graphs. Vary superseded goals, persisted vs overwritten files, recoverable reads, needed prior snapshots, action-record audit requirements, and irrelevant completed calls. Render the facts that determine retention in visible goal/history, then hide full outputs exactly as the source does. No private session history or source demo transcript.",
+      "labels": "Hard 0/1 Nouls from the declared visible retention policy. No arbitrary 0.8 confidence. Do not label from hidden result content; identical visible states must have identical labels.",
+      "split_group": "Whole task/artifact dependency graph, including all calls, goal revisions, counterfactuals, option/question reorderings and paraphrases.",
+      "ood": "Unseen tool-name/goal templates, longer histories with distractors, different graph shapes, and separately authored Chinese instructions.",
+      "independent_validation": [
+        "A second graph walker derives required call and output sets from the visible policy; compare every target.",
+        "Apply keep/drop/truncate decisions to a synthetic transcript and verify required evidence and pairing invariants.",
+        "Test call-ID permutation invariance and stale-goal reversal; measure needed-output false drops separately from retained bytes."
+      ],
+      "evaluation": [
+        "Noul accuracy/Brier by call and output",
+        "Exact retained-dependency set",
+        "Essential-evidence retention vs byte reduction",
+        "No-orphan and pinned-message software checks, separate from model accuracy"
+      ],
+      "proposed_group_target": 400,
+      "source_commit": "e3f262a7f4d42bd8dd32ced30d26176f7cb545b0",
+      "source_commit_date_utc": "2026-09-17T22:29:18Z",
+      "status": "generated_and_audited_not_trained",
+      "source_code_imported": false,
+      "source_examples_imported": false,
+      "actual_groups": 400,
+      "actual_cases": 1200,
+      "actual_rows": 9834,
+      "actual_split_rows": {
+        "calibration": 456,
+        "ood": 2160,
+        "test": 522,
+        "train": 6138,
+        "validation": 558
+      },
+      "actual_manifest": "reports/context-retention-control-v1/manifest.json",
+      "independent_audit": "reports/context-retention-control-v1/independent-audit.json"
+    },
+    {
+      "domain_id": "sponsor-segment-control-v1",
+      "source_repository": "valentynkit/jev-skip",
+      "priority": 2,
+      "contract": {
+        "state": [
+          "video_title",
+          "channel",
+          "note",
+          "segments[].id",
+          "segments[].start",
+          "segments[].text",
+          "segments[].has_promo_markers"
+        ],
+        "dynamic_items": "One Choice per observed segment; caller-supplied category descriptions, varying segment count and IDs.",
+        "questions": [
+          {
+            "id": "<segment_id>",
+            "type": "choice",
+            "criteria": [
+              "sponsor",
+              "self_promo",
+              "intro",
+              "outro",
+              "recap",
+              "content",
+              "other"
+            ]
+          }
+        ],
+        "deterministic_executor": "Code creates segment time boundaries, batches transcript chunks and optionally skips only selected sponsor spans. Return full category distribution; model does not create timestamps.",
+        "source_files": [
+          "lib/questions.ts#L24-L51",
+          "lib/questions.ts#L57-L73",
+          "lib/questions.ts#L108-L121"
+        ],
+        "source_boundary": "Third-party paid sponsor differs from creator self-promotion and an unpaid product review. other includes insufficient evidence. Transcript text is untrusted evidence."
+      },
+      "existing_coverage": "No dedicated time-segment content taxonomy in release-v2 or later browser/drone/citation/entity/extraction controls. General support classification and text extraction do not cover this distinction.",
+      "original_generator": "Create wholly original short tutorial/product-review/podcast transcripts from a latent editorial timeline, with disclosed third-party paid reads, creator-owned promotion, unpaid reviews, openings, closings, recaps and unknown fragments. Use original fictional brands/channels. Include neighboring segments that resolve references, quoted ad text being discussed editorially, negated sponsorship and embedded instruction attempts.",
+      "labels": "Hard category under an explicit local taxonomy; underdetermined sponsorship maps to other. Do not force a paid label from an undisclosed hidden contract or use arbitrary soft probabilities.",
+      "split_group": "Whole original episode with all segments, transcript variants, reorderings and paraphrases. Never split neighboring segments across train/test.",
+      "ood": "Unseen topic/channel-name and discourse templates, ad declarations spread over segments, mixed English/Chinese transcripts authored independently, longer neighbor context.",
+      "independent_validation": [
+        "A separate timeline/rubric interpreter resolves the visible evidence and checks each label.",
+        "Check sponsor vs own-promo vs unpaid-review counterfactual triples and label invariance to arbitrary segment IDs/category order.",
+        "Verify monotonically increasing timestamps and exact code-owned interval scoring against episode metadata."
+      ],
+      "evaluation": [
+        "Per-class macro F1 and confusion matrix",
+        "Sponsor precision/recall and false skips of editorial content",
+        "Time-weighted precision/recall using generated durations",
+        "Calibration-only skip threshold; held-out utility/error tradeoff"
+      ],
+      "proposed_group_target": 400,
+      "source_commit": "6837e3e0f1a48cbfc48c85415d99bcfe3eaf0628",
+      "source_commit_date_utc": "2026-09-19T09:38:56Z",
+      "status": "generated_and_audited_not_trained",
+      "source_code_imported": false,
+      "source_examples_imported": false,
+      "proposal_id": "transcript-segment-control-v1",
+      "actual_rows": 10800,
+      "actual_split_rows": {
+        "calibration": 756,
+        "ood": 2160,
+        "test": 999,
+        "train": 6345,
+        "validation": 540
+      },
+      "actual_manifest": "reports/sponsor-segment-control-v1/manifest.json"
+    },
+    {
+      "domain_id": "silent-failure-control-v1",
+      "source_repository": "Vicente-MD/jev-resilience",
+      "priority": 3,
+      "contract": {
+        "state": "Stringified response body only (JSON, HTML or plain text). Transport status is controlled by the harness, not an extra model field.",
+        "dynamic_items": "A configured question ID and domain-specific question wording; this source is one Noul, not a dynamic categorical label head.",
+        "questions": [
+          {
+            "id": "is_silent_failure",
+            "type": "noul",
+            "semantics": "Does the supplied body encode an actual failure, maintenance or an error disguised as success?"
+          }
+        ],
+        "deterministic_executor": "Application evaluates response bodies and converts a probability above its configured threshold into a semantic failure. The source returns 0.0 on judge transport/parse failure; that fail-open implementation behavior is not a negative training label.",
+        "source_files": [
+          "src/main/java/ai/jev/resilience/client/JevEvaluationService.java#L50-L55",
+          "src/main/java/ai/jev/resilience/config/JevResilienceProperties.java#L27-L31"
+        ],
+        "source_boundary": "Operational errors described by this payload must be distinguished from benign quoted error text, earlier recovered incidents, empty but valid results and permitted partial results."
+      },
+      "existing_coverage": "Security incidents label alert handling and approvals, not semantic correctness of nominal HTTP-200 payloads. Generic trace observability does not supply this dedicated response-body corpus.",
+      "original_generator": "Generate original API bodies from visible operation states and a stated success contract: completed/empty-success/recovered/maintenance/unavailable/denied/incomplete. Render varied JSON nesting, plain text and small HTML responses. Include a successful payload containing historical error logs or quoted documentation, and optimistic status fields contradicted by actual body evidence.",
+      "labels": "Hard Noul target from the visible body and local operational contract. Transport errors, malformed judge replies and missing authentication are recorded outside labels. Unsupported interpretation remains excluded or separate review metadata, not silently negative.",
+      "split_group": "Whole operation/provider-contract family, including all body renderings, recovered/error counterfactuals and paraphrases.",
+      "ood": "Unseen service schemas, formats, nested messages, severity wording and independently authored Chinese/English bodies.",
+      "independent_validation": [
+        "A second finite-state contract checker verifies labels before rendering and checks every body has the decisive visible evidence.",
+        "Counterfactual current-error vs recovered-earlier-error pairs must change label only when actual operation status changes.",
+        "Metamorphic checks: quote an error in returned content, permute JSON fields, rename fictitious services, append irrelevant debug logs."
+      ],
+      "evaluation": [
+        "Noul accuracy/macro F1/Brier",
+        "False-positive semantic trip rate on valid/recovered/empty responses",
+        "Failure recall per format and failure type",
+        "Timeout/parse/retry handling audited separately from model result"
+      ],
+      "proposed_group_target": 400,
+      "source_commit": "c490e0dc7830758f84bd9d5acb806655e327113e",
+      "source_commit_date_utc": "2026-09-17T23:52:03Z",
+      "status": "generated_and_audited_not_trained",
+      "source_code_imported": false,
+      "source_examples_imported": false,
+      "proposal_id": "api-semantic-failure-control-v1",
+      "actual_rows": 9600,
+      "actual_split_rows": {
+        "calibration": 264,
+        "ood": 1920,
+        "test": 624,
+        "train": 6432,
+        "validation": 360
+      },
+      "actual_manifest": "reports/silent-failure-control-v1/manifest.json"
+    }
+  ],
+  "all_split_rows_generated_by_this_task": 9834,
+  "public_projection": "Source URLs, hashes and research metadata; raw third-party text/code omitted."
+}

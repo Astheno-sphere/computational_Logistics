@@ -1,0 +1,201 @@
+{
+  "GPU_or_foreign_restore": false,
+  "MS_skills_sha256": {
+    "<caller-home>/.agents/skills/azure-ms-node-ops/SKILL.md": "4d92146a5790ebbbb0103d069b788cf76d77f6922498317e9d53933114e16128",
+    "<caller-home>/.agents/skills/ms-node-ops/SKILL.md": "862d03644f47d36f517857698e3bc872729475ed1ab9389583453740cf739667"
+  },
+  "at_utc": "2026-10-04T07:59:29.459767+00:00",
+  "case": "worker_loss",
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=15",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "LogLevel=ERROR",
+        "sigma@100.64.180.123",
+        "exec /bin/sh -c 'set -eu\numask 077\ntest -d /\ntest ! -L /\ntest -d /data\ntest ! -L /data\ntest -d /data/zefan\ntest ! -L /data/zefan\ntest \"$(/usr/bin/id -u)\" = 1000\ntest -O /data/zefan\nexec /bin/mkdir -m 700 /data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91\n'"
+      ],
+      "name": "fresh-exec-descendant-worker_loss-staging-reservation-r1",
+      "timeout_seconds": 45
+    },
+    {
+      "argv": [
+        "/usr/bin/scp",
+        "-p",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=15",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "LogLevel=ERROR",
+        "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_exec_descendant.py",
+        "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_exec_guardian.c",
+        "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_exec_leaf.c",
+        "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_exec_protocol.h",
+        "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_containment_capability.py",
+        "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_c_toolchain.py",
+        "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_selfcheck.py",
+        "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/CPU-owned-C-exec-descendant-worker_loss-request-r1.json",
+        "sigma@100.64.180.123:/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/"
+      ],
+      "name": "exact-eight-exec-descendant-worker_loss-inputs-SCP-r1",
+      "timeout_seconds": 45
+    },
+    {
+      "argv": [
+        "/usr/bin/ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=15",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "LogLevel=ERROR",
+        "sigma@100.64.180.123",
+        "exec /usr/bin/env -i PATH=/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 CUDA_VISIBLE_DEVICES= NVIDIA_VISIBLE_DEVICES=none /home/sigma/miniconda3/envs/llm_env/bin/python3.11 -B -I -S /data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/frontier_v8_owned_c_exec_descendant.py --observe-owned-c-exec-descendant --request /data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/CPU-owned-C-exec-descendant-worker_loss-request-r1.json --expected-request-sha256 b09eebfcb2aa8fa5f394200137299c0ecdeca4c31f7cea0237d43e922d363609"
+      ],
+      "name": "actual-CPU-owned-C-exec-descendant-worker_loss-launch-r1",
+      "timeout_seconds": 240
+    }
+  ],
+  "consumption_timing": {
+    "before_transport": [
+      "case",
+      "nonce",
+      "paths",
+      "attempt",
+      "request",
+      "callerledger"
+    ],
+    "product_PID_runtime_argv": "not yet existing; permanently consumed when actually created/bound; not all preconsumed before transport"
+  },
+  "containment_available": false,
+  "declared_transport_invocations": {
+    "SCP": 1,
+    "SSH": 2,
+    "total": 3
+  },
+  "deployed_inputs": [
+    {
+      "bytes": 84619,
+      "git_object": "1c55d3dbd982499d5e71f725fefd65d600b9df73",
+      "kind": "exact_committed_Git_A_source",
+      "local_path": "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_exec_descendant.py",
+      "remote_path": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/frontier_v8_owned_c_exec_descendant.py",
+      "sha256": "829d078cfa8dc7c63be8d8ff2d02e1e536debbe244d73dd092668d0f6690064d",
+      "source_A_path": "scripts/frontier_v8_owned_c_exec_descendant.py"
+    },
+    {
+      "bytes": 43923,
+      "git_object": "35917bb943de835005aa42056227446e379030c6",
+      "kind": "exact_committed_Git_A_source",
+      "local_path": "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_exec_guardian.c",
+      "remote_path": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/frontier_v8_owned_c_exec_guardian.c",
+      "sha256": "1d2ee12a68bf5c6fba75e748d6d58137ec17081945b44ceaa4bbe766f6f8edae",
+      "source_A_path": "scripts/frontier_v8_owned_c_exec_guardian.c"
+    },
+    {
+      "bytes": 12274,
+      "git_object": "8254d0f22999118844a53df2d68e5ffb08d34e82",
+      "kind": "exact_committed_Git_A_source",
+      "local_path": "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_exec_leaf.c",
+      "remote_path": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/frontier_v8_owned_c_exec_leaf.c",
+      "sha256": "4bb5c326a5974e866722dfea613d3e6fe9ef91d55c22e6406134c7376182beeb",
+      "source_A_path": "scripts/frontier_v8_owned_c_exec_leaf.c"
+    },
+    {
+      "bytes": 31881,
+      "git_object": "771ef0e1ab1ea86806e2fb0415a7816c4b16db9f",
+      "kind": "exact_committed_Git_A_source",
+      "local_path": "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_exec_protocol.h",
+      "remote_path": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/frontier_v8_owned_c_exec_protocol.h",
+      "sha256": "15867da31419a542ab65e17e618a61c69c39d8372c73e2554beb1ea04270d690",
+      "source_A_path": "scripts/frontier_v8_owned_c_exec_protocol.h"
+    },
+    {
+      "bytes": 19015,
+      "git_object": "7941fb41823294805e3cbbecf597e3af29372270",
+      "kind": "exact_committed_Git_A_source",
+      "local_path": "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_containment_capability.py",
+      "remote_path": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/frontier_v8_containment_capability.py",
+      "sha256": "1bcda91a4ac9ab50fe051b140fd7ba0fae649c257b45674d1ab15c2bb9a69412",
+      "source_A_path": "scripts/frontier_v8_containment_capability.py"
+    },
+    {
+      "bytes": 27365,
+      "git_object": "f9f999bafd3a2861ade7b333607368f82a54bffc",
+      "kind": "exact_committed_Git_A_source",
+      "local_path": "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_c_toolchain.py",
+      "remote_path": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/frontier_v8_c_toolchain.py",
+      "sha256": "2175f96e939993db69eb14348fa3115ae583416a1d38307f38f23bd378d003c0",
+      "source_A_path": "scripts/frontier_v8_c_toolchain.py"
+    },
+    {
+      "bytes": 26508,
+      "git_object": "5b355b60430cb3fbb1c8532f66c94438e906a23a",
+      "kind": "exact_committed_Git_A_source",
+      "local_path": "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/frontier_v8_owned_c_selfcheck.py",
+      "remote_path": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/frontier_v8_owned_c_selfcheck.py",
+      "sha256": "3374d4ed4ef1bafa38d8f4340ffcc042ee396d966228a682adf890182108b47c",
+      "source_A_path": "scripts/frontier_v8_owned_c_selfcheck.py"
+    },
+    {
+      "bytes": 1725,
+      "kind": "fresh_nonGit_request",
+      "local_path": "<caller-home>/Codex-new/Open-Jev-efficiency-20261002/runs/frontier-v8-owned-c-exec-descendant-20261004/fresh-CPU-owned-C-exec-descendant-worker_loss-inputs-r1/CPU-owned-C-exec-descendant-worker_loss-request-r1.json",
+      "remote_path": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/CPU-owned-C-exec-descendant-worker_loss-request-r1.json",
+      "sha256": "b09eebfcb2aa8fa5f394200137299c0ecdeca4c31f7cea0237d43e922d363609"
+    }
+  ],
+  "dispatcher_sha256": "755f4c78ae1165e85d602b1d88a3b5e9d8ffcdcf81cd7754f4019c287bf96969",
+  "execution_available": false,
+  "fault": "none",
+  "functional_containment_verified": false,
+  "historical_host_bootstrap_expectations": {
+    "path": "runs/frontier-v8-owned-c-guardian-20261004/fresh-CPU-owned-C-guardian-guard_loss-inputs-r1/CPU-owned-C-guardian-guard_loss-request-r1.json",
+    "role": "Static historical expectations only; fresh observer checks host/self/bootstrap, not live resource or physical/nodealias proof",
+    "sha256": "12b046d9a30047f982adbe32782a7d2dfebecc7e8e7b16f384dc64d682806e9b"
+  },
+  "limits": [
+    "Eight deploy files: seven exact Git-A runtime sources plus one fresh nonGit request; nine-source closure includes tests/docs",
+    "Two fresh products, each four compiler stages plus one link; one guardian runtime with fixed G -> X/E -> D and extra Python/toolchain activity",
+    "Normal directed signals0, E reaps D/raw0 and G reaps E/raw0; no G wait unadopted D",
+    "Worker_loss G_E signal/reapEraw9 then independently observed D adoption and G_D signal/adoptedreapDraw9; once per original handle, E_D budget0",
+    "G_E acquired preexec and not reopened; samePID/birth/boot/UID/PPID across distinct product transition; five startupFD facts plus exec-errorEOF",
+    "Forty FD provenance rows; new child pipe0/1/2 legal; killed-owner/unreturnedclose facts not invented explicitclose/EBADF",
+    "First saved error disables later commands/signals; negative directedsignals0; partial reset/clock unknown remains failed, Gtotal exhaustion may retain unparsed raw",
+    "Fixed shared work5/cleanup8/terminal10/Gtotal12/childexpiry14; expiry intent not observed recovery",
+    "No retry/resume/fallback/old PID/argv/product/root/nonce reuse; each actual-created object permanently consumed",
+    "Only returned-process evidence; no independent remote rawC/header/CPP/object/product/marker/receipt retrieval or fsync/mappedcode/ancestry/nodealias/physicalexclusion proof",
+    "Postlink snapshots not complete link-time payload proof; direct outer timeout not descendant/G/observer/host-loss cleanup guarantee",
+    "No model bridge/execution/resource/GPU/foreign restore authority from this CPU fixture",
+    "No Torch/model/training/pipcheck/install/CUDA/GPU/queue/browser/externaltrials; science/native/data/planfreeze immutable"
+  ],
+  "local_dispatch_ledger": "fresh-CPU-owned-C-exec-descendant-worker_loss-transport-attempt-r1.consumed.json",
+  "model_runtime_ABI_observed": false,
+  "nonce": "85d65809af85cf915fea5d654d6a0f6f67ea973237f10c9884826d02be893a88",
+  "production_controller_guard_completed": false,
+  "prospective_products": [
+    "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/attempt-r1/guardian/guardian",
+    "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/attempt-r1/leaf/leaf"
+  ],
+  "remote_attempt_directory": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91/attempt-r1",
+  "remote_staging_root": "/data/zefan/open-jev-v8-owned-c-exec-descendant-worker_loss-20261004T075929Z-85d65809af85cf91",
+  "resource_authority": false,
+  "schema_version": 1,
+  "scope": "frontier_v8_owned_C_fixed_exec_descendant_CPU_fixture",
+  "source_commit": "5574bc65604dda7ba34b2f54b261fa07353da02e",
+  "source_integration_receipt_sha256": "f54af7cae96cc4f001137eb37b1755e7ff0e862194166940411876699937030e",
+  "source_main_merge": "88f2e205a314b3b96a1918534f9499e805c66d2e",
+  "source_tree": "459c9efd0d60afce8587c9e526cebbf16aea79db",
+  "status": "declared_not_dispatched"
+}

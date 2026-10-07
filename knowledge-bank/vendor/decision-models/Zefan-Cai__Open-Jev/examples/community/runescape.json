@@ -1,0 +1,43 @@
+{
+  "state": {
+    "adapter": "runescape",
+    "observation": {
+      "observation_id": "rs-tick-42",
+      "player_status": "skilling",
+      "hitpoints": 10,
+      "current_action": "fish-spott1",
+      "recent_events": [
+        "Fishing XP gained two ticks ago"
+      ],
+      "objective": "Continue fishing"
+    }
+  },
+  "questions": {
+    "next_action": {
+      "type": "choice",
+      "instructions": "Select the next legal catalog action. Keeping the current action continues it; a different action changes the goal.",
+      "criteria": {
+        "fish-spott1": "Continue net fishing at observed spot T1",
+        "walk-bank": "Walk to the observed bank"
+      }
+    },
+    "this_tick": {
+      "type": "choice",
+      "instructions": "Select an allowed immediate tick action without changing the longer-term goal.",
+      "criteria": {
+        "do_nothing": "Let the current action continue",
+        "restart_current": "Re-click the current observed fishing target"
+      }
+    },
+    "poll_again_in_ticks": {
+      "type": "choice",
+      "instructions": "When should the controller request another decision, given the observed urgency?",
+      "criteria": {
+        "1": "Poll after 1 game ticks",
+        "2": "Poll after 2 game ticks",
+        "5": "Poll after 5 game ticks",
+        "10": "Poll after 10 game ticks"
+      }
+    }
+  }
+}

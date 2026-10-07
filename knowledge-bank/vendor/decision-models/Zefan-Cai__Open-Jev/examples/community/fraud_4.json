@@ -1,0 +1,36 @@
+{
+  "state": {
+    "adapter": "fraud_local_example",
+    "transaction": "A new device initiated an unusually large purchase in a different country; the account holder has not confirmed it.",
+    "policy": "Hold unconfirmed anomalous payments for review. A challenge is appropriate when identity confirmation can resolve uncertainty."
+  },
+  "questions": {
+    "fraud_suspected": {
+      "type": "noul",
+      "instructions": "Do the supplied facts support suspicion of unauthorized payment?"
+    },
+    "identity_confirmed": {
+      "type": "noul",
+      "instructions": "Has the account holder confirmed this transaction?"
+    },
+    "risk_level": {
+      "type": "score",
+      "instructions": "Rate the observed fraud risk.",
+      "criteria": [
+        "Ordinary established activity",
+        "Uncertain anomaly",
+        "Strong unauthorized-use evidence"
+      ]
+    },
+    "recommended_action": {
+      "type": "choice",
+      "instructions": "Select the next policy-compatible handling proposal.",
+      "criteria": {
+        "allow": "Allow payment",
+        "challenge": "Request identity confirmation",
+        "hold_review": "Hold for authorized review",
+        "decline": "Decline under the supplied policy"
+      }
+    }
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "sql-semantics-v3",
+    "groups_per_family": 64,
+    "seed": 20260921,
+    "license": "CC0-1.0",
+    "generator_sha256": "9f3cf5436c5fcb94845207967d4b9e1a5f90ffdb221803389bb62db33dc0ced3",
+    "inspiration_url": "https://github.com/ryan-sunny/dbt-assay/tree/ebf8812c9aeb19747f7168a0e08d3d224e170b12",
+    "split_policy": "semantic_operator_x_layout_family_disjoint_4train_1cal_1val_1test_1ood",
+    "external_examples_imported": false,
+    "benchmark_inputs_read": false,
+    "paid_calls": 0,
+    "layout_profiles": [
+      {
+        "normalized_customers": false,
+        "integer_days": false,
+        "cte": false,
+        "split": "train"
+      },
+      {
+        "normalized_customers": true,
+        "integer_days": false,
+        "cte": false,
+        "split": "train"
+      },
+      {
+        "normalized_customers": false,
+        "integer_days": true,
+        "cte": false,
+        "split": "train"
+      },
+      {
+        "normalized_customers": true,
+        "integer_days": true,
+        "cte": false,
+        "split": "calibration"
+      },
+      {
+        "normalized_customers": false,
+        "integer_days": false,
+        "cte": true,
+        "split": "train"
+      },
+      {
+        "normalized_customers": true,
+        "integer_days": false,
+        "cte": true,
+        "split": "validation"
+      },
+      {
+        "normalized_customers": false,
+        "integer_days": true,
+        "cte": true,
+        "split": "test"
+      },
+      {
+        "normalized_customers": true,
+        "integer_days": true,
+        "cte": true,
+        "split": "ood"
+      }
+    ]
+  },
+  "summary": {
+    "records": 12288,
+    "groups": 6144,
+    "unique_inputs": 12288,
+    "splits": {
+      "calibration": 1536,
+      "ood": 1536,
+      "test": 1536,
+      "train": 6144,
+      "validation": 1536
+    },
+    "kinds": {
+      "choice": 12288
+    },
+    "families": {
+      "evidence": 12288
+    },
+    "sources": {
+      "sql-semantics-v3": 12288
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "ec763cfc84c6f80f428fc2a5eed9bd365c8b48a30beb71fa47712d45802cdd4d",
+    "calibration.jsonl": "3746c535a0d9f8eb95fe1ab337b378bcfc3d691fe36fdb998aaf3c1d7b6827c9",
+    "validation.jsonl": "12fdb95692d0f64ea29d4abe5d62010a5050b908bb6389ff8601530af63d728d",
+    "test.jsonl": "d0d72d7513c284d430322e255c12bab8e4a1abd0bfbbc38c6c35954761183fe1",
+    "ood.jsonl": "12d896af7f855cfc4295ca63767f10dada3ca64bba96d805fb5b0f52eda3d61c"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "unique_databases": 6144,
+  "counterfactual_groups": 6144,
+  "single_request_counterfactual_edges": 6144,
+  "unique_contexts": 12288,
+  "sql_structural_families": 96,
+  "unique_candidate_sql_template_sets": 48,
+  "semantic_operators": {
+    "extended_amount": 1024,
+    "distinct_customers": 1024,
+    "null_average": 1024,
+    "time_window": 1024,
+    "unit_conversion": 1024,
+    "refund_netting": 1024,
+    "join_multiplicity": 1024,
+    "anti_join_nulls": 1024,
+    "weighted_rate": 1024,
+    "group_threshold": 1024,
+    "latest_snapshot": 1024,
+    "left_join_zeros": 1024
+  },
+  "candidate_count_distribution": {
+    "3": 1024,
+    "4": 11264
+  },
+  "equivalent_candidate_count_distribution": {
+    "1": 10247,
+    "2": 2041
+  },
+  "probability_mass_by_candidate_position": {
+    "0": 3128.0,
+    "1": 3111.0,
+    "2": 3159.5,
+    "3": 2889.5
+  },
+  "largest_full_model_input_characters": 3941,
+  "sqlite_version": "3.53.2",
+  "checks": {
+    "every_candidate_executes": true,
+    "python_sqlite_answers_agree": true,
+    "equivalent_correct_candidates_share_target": true,
+    "every_zero_target_differs_on_visible_rows": true,
+    "counterfactual_changes_only_request_and_changes_answer": true,
+    "parent_database_and_structural_family_split_disjoint": true,
+    "unique_visible_databases_and_contexts": true,
+    "all_queries_read_only": true
+  },
+  "scope": "Original complete toy SQLite warehouses for 12 business-semantic operators. 96 operator/layout combinations at full size are structural families, not 96 independently collected domains. Two related metric requests share each database; decision rows are not independent database instances.",
+  "limitations": [
+    "Correctness means exact scalar answer equivalence on the fully visible finite database, not SQL equivalence on every possible database.",
+    "OOD holds out normalized-customer + integer-day + CTE combinations within the authored grammar; semantic operators are shared across splits.",
+    "Customers-normalization and timestamp representation change schema; CTE versus derived relation is a query-form factor, not a new business domain.",
+    "English metric definitions are controlled original language, not naturally collected business stakeholder requests or dbt-assay examples.",
+    "Single-request counterfactuals change the requested metric; they are not table-cell mutations or independently collected warehouses.",
+    "SQLite scalar tasks do not establish arbitrary SQL dialect, large warehouse, DDL, security-audit or natural text-to-SQL capability.",
+    "Rounded decimal requests are compared exactly after the specified rounding; NULL and zero are distinct.",
+    "No model inference, training or benchmark improvement is established by this dataset."
+  ],
+  "training_performed": false,
+  "model_inference_performed": false
+}

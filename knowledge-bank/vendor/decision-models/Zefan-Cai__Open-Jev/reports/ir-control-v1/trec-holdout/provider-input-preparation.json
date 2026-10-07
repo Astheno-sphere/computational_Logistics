@@ -1,0 +1,63 @@
+{
+  "status": "prepared_not_evaluated",
+  "input_sha256": "cc7bc949dbc269dacb61bdb61fc8982db14bc4df3698f9d32f5f1c8b6795eb83",
+  "input_bytes": 4296284,
+  "source_manifests": {
+    "dl19": {
+      "manifest_sha256": "84c7cc23ce0f7309a48432c449e7856aeff96f9e2571f1f18cdb405703a6c297",
+      "query_count": 43,
+      "files_sha256": {
+        "candidates.jsonl": "865a4158341f4a20163910214484c42e10889955d07e3bd255944dc04b4b29a3",
+        "qrels.txt": "8a1f10d550732e4cd91d7fc49846a3784de4040972f583e69285a88f3c5fee92"
+      }
+    },
+    "dl20": {
+      "manifest_sha256": "494d6f39537b65981ea6707c7ba232e890460ad8f51e86628d2c2a5547288ea4",
+      "query_count": 54,
+      "files_sha256": {
+        "candidates.jsonl": "e3dd06cf93e0bf07c56f096066fd39237770f23c8342ae636e76b55a57c2747e",
+        "qrels.txt": "60d4c34561f9687f8f73e0a752ba80ab80159b3e9c1bedd0a351f747ed6f5684"
+      }
+    }
+  },
+  "preparation_source_sha256": "08fccfc9b09143f50f4d8e9c3c3c2e2496890723066ce9d7715a48c897fb7a99",
+  "tiktoken_version": "0.11.0",
+  "protocol": {
+    "method": "listwise_score",
+    "request_profile": "general-ir-v1",
+    "window_size": 20,
+    "step_size": 10,
+    "top_k": 100,
+    "tokenizer": "cl100k_base",
+    "query_max_tokens": 32,
+    "passage_max_tokens": 128
+  },
+  "truncation": "decode(encode(text)[:limit]) with default replacement decoding, matching the author token-prefix policy. The re-encoded string can exceed the prefix limit; these cases and new U+FFFD characters are counted, not silently repaired.",
+  "token_statistics": {
+    "query": {
+      "count": 97,
+      "truncated": 0,
+      "original_max_tokens": 18,
+      "returned_max_tokens": 18,
+      "returned_total_tokens": 673,
+      "new_replacement_characters": 0,
+      "reencoded_above_prefix_limit": 0
+    },
+    "passage": {
+      "count": 9700,
+      "truncated": 1260,
+      "original_max_tokens": 279,
+      "returned_max_tokens": 129,
+      "returned_total_tokens": 801203,
+      "new_replacement_characters": 10,
+      "reencoded_above_prefix_limit": 5
+    }
+  },
+  "queries": 97,
+  "candidate_occurrences": 9700,
+  "planned_requests_per_provider": 873,
+  "qrels_in_provider_input": false,
+  "raw_inputs_publicly_redistributed": false,
+  "model_inference_performed": false,
+  "scope": "All judged DL19/DL20 queries with their downloaded BM25 top100. Same initial texts, order and algorithm across providers; later sliding windows adapt to each provider's rankings. Full qrels remain separate for later scoring. Truncation limits are approximate cl100k tokens, not Qwen tokenizer limits. Not an exact replay of the community author's prompts, gateway, concurrency or historical mutable model."
+}

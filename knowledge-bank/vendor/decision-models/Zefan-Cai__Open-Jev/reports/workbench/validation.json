@@ -1,0 +1,220 @@
+{
+  "checked_at": "2026-09-23T05:57:13.574257+00:00",
+  "scope": "Deployment checks for the no-code workbench; not a quality benchmark or an inference speed comparison.",
+  "model": "ZefanCai/Open-Jev-2B",
+  "model_revision": "0c7aa498b1627be8da4acf34c863ff0ee0a92785",
+  "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+  "code_commit": "45d5a0e81ab82b70070f05300afc4e821772b1f1",
+  "space_initial_commit": "ce8278238af1c9658d19356064293b0f65314176",
+  "hardware": "Hugging Face CPU Basic (2 vCPU, 16 GB RAM)",
+  "urls": {
+    "website": "https://zefan-cai.github.io/open-jev/workbench/",
+    "space": "https://huggingface.co/spaces/ZefanCai/Open-Jev-Workbench"
+  },
+  "automated_checks": {
+    "http_and_api_contract": 21,
+    "javascript_contract": 6,
+    "fixture_browser_workbench": 11,
+    "fixture_site_layout": 4
+  },
+  "real_cpu_smoke": {
+    "status": "passed",
+    "request": {
+      "state": "我重复付了两次款，请帮我退回多付的钱。",
+      "questions": {
+        "category": {
+          "type": "choice",
+          "instructions": "根据客户消息的主要诉求，选择一个最合适的分类。",
+          "criteria": {
+            "退款": "退货、退款、重复扣款",
+            "物流": "包裹配送和物流进度",
+            "产品咨询": "询问产品功能或用法",
+            "其他": "不属于以上类别"
+          }
+        }
+      }
+    },
+    "response": {
+      "answers": {
+        "category": {
+          "type": "choice",
+          "choice": "退款",
+          "probabilities": {
+            "退款": 0.9178196146146261,
+            "物流": 0.003476907500953962,
+            "产品咨询": 0.0024278222269018316,
+            "其他": 0.07627565565751804
+          },
+          "confidence": 0.8904261528195015
+        }
+      },
+      "model": "Qwen/Qwen3.5-2B",
+      "usage": {
+        "input_tokens": 281,
+        "output_tokens": 0
+      },
+      "metadata": {
+        "method": "lora_decision_head",
+        "temperature": 1.518796342858676,
+        "candidate_sequences": 4,
+        "inference_seconds": 16.835244835005142,
+        "prefix_cache": {
+          "enabled": false,
+          "mode": "independent_candidates"
+        },
+        "checkpoint_sha256": "3076462e6356412082e79af909227b39b2863b90def79155ca0821aa506b7ded",
+        "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "max_length": 1024,
+        "code_commit": "45d5a0e81ab82b70070f05300afc4e821772b1f1"
+      }
+    },
+    "observed_wall_seconds": 17.209027375036385,
+    "invalid_request_status": 422
+  },
+  "startup_observation": {
+    "seconds": 28.580147296073847,
+    "process_peak_rss_mib_until_startup_finished": 3250.44921875,
+    "not_full_service_peak": true
+  },
+  "limitations": [
+    "One benign four-category request is a deployment check, not an accuracy estimate or latency benchmark.",
+    "CPU-versus-GPU output parity was not evaluated.",
+    "The workbench uses the released 2B model; it does not run the new 27B checkpoint."
+  ],
+  "new_benchmark_results": false,
+  "gpu_jobs_started": false,
+  "real_browser": {
+    "scope": "One real CPU classification batch, two fictional rows, two categories. No retry or concurrent inference.",
+    "checks_passed": 12,
+    "requests": [
+      {
+        "index": 1,
+        "url": "https://zefancai-open-jev-workbench.hf.space/v1/systemone",
+        "method": "POST",
+        "startedAt": "2026-09-23T05:58:10.548Z",
+        "startMs": 1790143090548,
+        "body": {
+          "state": "这笔订单重复扣款了，请退款。",
+          "questions": {
+            "category": {
+              "type": "choice",
+              "instructions": "根据消息的主要诉求，在退款和物流中选择一个最合适的类别。",
+              "criteria": {
+                "退款": "退款或重复扣款",
+                "物流": "包裹配送或到货时间"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 2,
+        "url": "https://zefancai-open-jev-workbench.hf.space/v1/systemone",
+        "method": "POST",
+        "startedAt": "2026-09-23T05:58:18.634Z",
+        "startMs": 1790143098634,
+        "body": {
+          "state": "请问包裹什么时候送达？",
+          "questions": {
+            "category": {
+              "type": "choice",
+              "instructions": "根据消息的主要诉求，在退款和物流中选择一个最合适的类别。",
+              "criteria": {
+                "退款": "退款或重复扣款",
+                "物流": "包裹配送或到货时间"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "responses": [
+      {
+        "index": 1,
+        "status": 200,
+        "finishedAt": "2026-09-23T05:58:18.653Z",
+        "endMs": 1790143098653,
+        "elapsedMs": 8105,
+        "body": {
+          "answers": {
+            "category": {
+              "type": "choice",
+              "choice": "退款",
+              "probabilities": {
+                "退款": 0.9776707129745378,
+                "物流": 0.022329287025462243
+              },
+              "confidence": 0.9553414259490756
+            }
+          },
+          "model": "Qwen/Qwen3.5-2B",
+          "usage": {
+            "input_tokens": 140,
+            "output_tokens": 0
+          },
+          "metadata": {
+            "method": "lora_decision_head",
+            "temperature": 1.518796342858676,
+            "candidate_sequences": 2,
+            "inference_seconds": 7.9696720209904015,
+            "prefix_cache": {
+              "enabled": false,
+              "mode": "independent_candidates"
+            },
+            "checkpoint_sha256": "3076462e6356412082e79af909227b39b2863b90def79155ca0821aa506b7ded",
+            "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+            "max_length": 1024,
+            "code_commit": "45d5a0e81ab82b70070f05300afc4e821772b1f1"
+          }
+        }
+      },
+      {
+        "index": 2,
+        "status": 200,
+        "finishedAt": "2026-09-23T05:58:26.298Z",
+        "endMs": 1790143106298,
+        "elapsedMs": 7664,
+        "body": {
+          "answers": {
+            "category": {
+              "type": "choice",
+              "choice": "物流",
+              "probabilities": {
+                "退款": 0.08755685786282381,
+                "物流": 0.9124431421371761
+              },
+              "confidence": 0.8248862842743523
+            }
+          },
+          "model": "Qwen/Qwen3.5-2B",
+          "usage": {
+            "input_tokens": 130,
+            "output_tokens": 0
+          },
+          "metadata": {
+            "method": "lora_decision_head",
+            "temperature": 1.518796342858676,
+            "candidate_sequences": 2,
+            "inference_seconds": 7.571796291973442,
+            "prefix_cache": {
+              "enabled": false,
+              "mode": "independent_candidates"
+            },
+            "checkpoint_sha256": "3076462e6356412082e79af909227b39b2863b90def79155ca0821aa506b7ded",
+            "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+            "max_length": 1024,
+            "code_commit": "45d5a0e81ab82b70070f05300afc4e821772b1f1"
+          }
+        }
+      }
+    ],
+    "csv_original_columns": [
+      "id",
+      "text",
+      "source"
+    ],
+    "mobile_viewport_px": 390,
+    "javascript_errors": 0,
+    "retries": 0
+  }
+}

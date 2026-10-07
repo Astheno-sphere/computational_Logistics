@@ -1,0 +1,528 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "import",
+    "version": "community-routing-v3",
+    "seed": 20260921,
+    "datasets": {
+      "banking77": {
+        "repository": "PolyAI-LDN/task-specific-datasets",
+        "revision": "57ec275d8078af65b7731c2a98be812d844a6d6b",
+        "license": "CC-BY-4.0",
+        "catalog": "BANKING77 banking support intents",
+        "attribution": "Casanueva et al. (2020), Efficient Intent Detection with Dual Sentence Encoders, PolyAI BANKING77",
+        "intent_count": 77,
+        "files": {
+          "banking-train.csv": {
+            "path": "banking_data/train.csv",
+            "sha256": "b06e26ac675513959a63135f11b94ea7786ed02da65db93a5650d8838cbc664b",
+            "split": "train",
+            "rows": 10003
+          },
+          "banking-test.csv": {
+            "path": "banking_data/test.csv",
+            "sha256": "d12d6e3bc4c3103966ae786dc435913c0c563dfa328f5a3646d0e62cfeeb474d",
+            "split": "test",
+            "rows": 3080
+          }
+        }
+      },
+      "clinc150": {
+        "repository": "clinc/oos-eval",
+        "revision": "828f8093932c8fe6ca7936c3d2e52903b1c523de",
+        "license": "CC-BY-3.0",
+        "catalog": "CLINC150 assistant intents",
+        "attribution": "Larson et al. (2019), An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction, CLINC150",
+        "intent_count": 150,
+        "files": {
+          "clinc-data-full.json": {
+            "path": "data/data_full.json",
+            "sha256": "36923c3705a59e08fe9c3883d8bc2dd966ef93e22cb78ac41171782a698d56e0"
+          }
+        },
+        "split_counts": {
+          "train": 15000,
+          "val": 3000,
+          "test": 4500,
+          "oos_train": 100,
+          "oos_val": 100,
+          "oos_test": 1000
+        }
+      }
+    },
+    "source_counts": {
+      "banking77": {
+        "train": 10003,
+        "test": 3080
+      },
+      "clinc150": {
+        "oos_val": 100,
+        "val": 3000,
+        "train": 15000,
+        "oos_test": 1000,
+        "test": 4500,
+        "oos_train": 100
+      }
+    },
+    "normalization": "NFKC, Unicode casefold, word tokens, collapsed whitespace; raw utterances unchanged.",
+    "candidate_sizes_including_abstain": [
+      2,
+      4,
+      8
+    ],
+    "views_per_in_scope_utterance": 3,
+    "views_per_oos_utterance": 2,
+    "audit": {
+      "raw_rows": 36783,
+      "retained_catalog_utterances": 36640,
+      "retained_global_utterance_groups": 36632,
+      "removed": {
+        "official_heldout_group_reserved_from_train": 68,
+        "duplicate_utterance_within_catalog": 61,
+        "conflicting_labels_within_catalog": 8,
+        "official_test_group_reserved_from_validation": 6
+      },
+      "cross_source_components": [
+        {
+          "normalized_utterance_sha256": "b0515b7ba2b65d5612ac94ddb055a90b8b94da74f74052ba7d85f347de2fa23e",
+          "catalog_labels": {
+            "banking77": [
+              "top_up_by_cash_or_cheque"
+            ],
+            "clinc150": [
+              "oos"
+            ]
+          },
+          "official_roles": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "7bd38a367945d97bc8cbd901d097f09c8f81e96d28a1bf8947ebe49067267e70",
+          "catalog_labels": {
+            "banking77": [
+              "order_physical_card"
+            ],
+            "clinc150": [
+              "new_card"
+            ]
+          },
+          "official_roles": [
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "13b7a2b2ef75b712f9b3b4d122e3a67e06dcfc17a9f3716e783c8c0c76e85bde",
+          "catalog_labels": {
+            "banking77": [
+              "declined_card_payment"
+            ],
+            "clinc150": [
+              "card_declined"
+            ]
+          },
+          "official_roles": [
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "9d3cb0f2e6a9d8270a37961e6e0ffedd2f15a1267896f6abcb59e273a6ff6ea6",
+          "catalog_labels": {
+            "banking77": [
+              "lost_or_stolen_card"
+            ],
+            "clinc150": [
+              "report_lost_card"
+            ]
+          },
+          "official_roles": [
+            "test",
+            "val"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "b84f7e516e46058eea5d60643ad9cbdf067530213c2add1c2e6e23ac7fc79cd7",
+          "catalog_labels": {
+            "banking77": [
+              "card_not_working"
+            ],
+            "clinc150": [
+              "damaged_card"
+            ]
+          },
+          "official_roles": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "39e1c8f21163755692c8fc344dc09a5bebb77a16501d48cfeeead134160c0db4",
+          "catalog_labels": {
+            "banking77": [
+              "lost_or_stolen_phone"
+            ],
+            "clinc150": [
+              "find_phone"
+            ]
+          },
+          "official_roles": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "fef1c4e7aae497ab6da8fd0024f3d3bdc3f2e0136b7ac9047f2b9da2675ee1e8",
+          "catalog_labels": {
+            "banking77": [
+              "lost_or_stolen_phone"
+            ],
+            "clinc150": [
+              "find_phone"
+            ]
+          },
+          "official_roles": [
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "9b79b71966f4beae705d341264517417ebac561c626c0a8b9d86eafd3301b055",
+          "catalog_labels": {
+            "banking77": [
+              "lost_or_stolen_phone"
+            ],
+            "clinc150": [
+              "find_phone"
+            ]
+          },
+          "official_roles": [
+            "train",
+            "val"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "1a33c366f028159a29e8f843871958e99e1f40e716109a1033ddf98881d4beb3",
+          "catalog_labels": {
+            "banking77": [
+              "lost_or_stolen_phone"
+            ],
+            "clinc150": [
+              "find_phone"
+            ]
+          },
+          "official_roles": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "36d052e8d7f706440f9bcf4acf4aeea49f250f7f6ece2e6e3f4cd5e916117565",
+          "catalog_labels": {
+            "banking77": [
+              "lost_or_stolen_card"
+            ],
+            "clinc150": [
+              "report_lost_card"
+            ]
+          },
+          "official_roles": [
+            "train",
+            "val"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "0c730e2becf23d2b5b94310e5ef956cc360d03175d8be44b8d219bb99161f7d7",
+          "catalog_labels": {
+            "banking77": [
+              "edit_personal_details"
+            ],
+            "clinc150": [
+              "oos"
+            ]
+          },
+          "official_roles": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "77c8df72be5d7efce3a913ba21f6444fe4a9fa2c72ba8e037f3d99b7848c2a45",
+          "catalog_labels": {
+            "banking77": [
+              "visa_or_mastercard"
+            ],
+            "clinc150": [
+              "new_card"
+            ]
+          },
+          "official_roles": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "de8d83264f41334e67c4c3e2818b44d9eab21e8dd088c649a1978549331a2bf7",
+          "catalog_labels": {
+            "banking77": [
+              "declined_card_payment"
+            ],
+            "clinc150": [
+              "card_declined"
+            ]
+          },
+          "official_roles": [
+            "test"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "2bccf6ebb56e3e97555f8eabc3e7ae42c6fbda2d73793463a3d93013c9364a40",
+          "catalog_labels": {
+            "banking77": [
+              "card_not_working"
+            ],
+            "clinc150": [
+              "damaged_card"
+            ]
+          },
+          "official_roles": [
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "b4fd3fcf2c385e028dfab9f75141dac335cd2fc4b633bb941d7b89b495bdc16d",
+          "catalog_labels": {
+            "banking77": [
+              "card_not_working"
+            ],
+            "clinc150": [
+              "damaged_card"
+            ]
+          },
+          "official_roles": [
+            "test",
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "e4a96c7f14f7d214696aab04a3fd10dbe10bb67ed19428d2b4e93d47e8ba740f",
+          "catalog_labels": {
+            "banking77": [
+              "lost_or_stolen_card"
+            ],
+            "clinc150": [
+              "report_lost_card"
+            ]
+          },
+          "official_roles": [
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "c4a615c6891919e567c282d5fcc5633ea857a2adc0f38662bd80f9d32c66711d",
+          "catalog_labels": {
+            "banking77": [
+              "card_delivery_estimate"
+            ],
+            "clinc150": [
+              "replacement_card_duration"
+            ]
+          },
+          "official_roles": [
+            "train"
+          ]
+        },
+        {
+          "normalized_utterance_sha256": "a1ba880fad7f2c4c8098bd3a5a5d8bb57292a01a069d9d0d0b772f3c9add7c9b",
+          "catalog_labels": {
+            "banking77": [
+              "declined_card_payment"
+            ],
+            "clinc150": [
+              "card_declined"
+            ]
+          },
+          "official_roles": [
+            "train"
+          ]
+        }
+      ],
+      "cross_source_label_policy": "Labels belong to distinct named catalogs; different spellings are reported, not automatically adjudicated as semantic conflicts. Within-catalog conflicts are excluded; shared groups keep one split globally.",
+      "decision_rows": 108720,
+      "view_sizes": {
+        "banking77/calibration/choice_omitted/2": 152,
+        "banking77/calibration/choice_omitted/4": 152,
+        "banking77/calibration/choice_omitted/8": 151,
+        "banking77/calibration/choice_present/2": 152,
+        "banking77/calibration/choice_present/4": 152,
+        "banking77/calibration/choice_present/8": 151,
+        "banking77/ood/choice_omitted/2": 167,
+        "banking77/ood/choice_omitted/4": 167,
+        "banking77/ood/choice_omitted/8": 167,
+        "banking77/ood/choice_present/2": 167,
+        "banking77/ood/choice_present/4": 167,
+        "banking77/ood/choice_present/8": 167,
+        "banking77/test/choice_omitted/2": 1025,
+        "banking77/test/choice_omitted/4": 1025,
+        "banking77/test/choice_omitted/8": 1025,
+        "banking77/test/choice_present/2": 1025,
+        "banking77/test/choice_present/4": 1025,
+        "banking77/test/choice_present/8": 1025,
+        "banking77/train/choice_omitted/2": 2828,
+        "banking77/train/choice_omitted/4": 2828,
+        "banking77/train/choice_omitted/8": 2828,
+        "banking77/train/choice_present/2": 2828,
+        "banking77/train/choice_present/4": 2828,
+        "banking77/train/choice_present/8": 2828,
+        "banking77/validation/choice_omitted/2": 168,
+        "banking77/validation/choice_omitted/4": 167,
+        "banking77/validation/choice_omitted/8": 167,
+        "banking77/validation/choice_present/2": 168,
+        "banking77/validation/choice_present/4": 167,
+        "banking77/validation/choice_present/8": 167,
+        "clinc150/calibration/choice_omitted/2": 749,
+        "clinc150/calibration/choice_omitted/4": 743,
+        "clinc150/calibration/choice_omitted/8": 741,
+        "clinc150/calibration/choice_out_of_scope/2": 11,
+        "clinc150/calibration/choice_out_of_scope/4": 17,
+        "clinc150/calibration/choice_out_of_scope/8": 18,
+        "clinc150/calibration/choice_present/2": 749,
+        "clinc150/calibration/choice_present/4": 743,
+        "clinc150/calibration/choice_present/8": 741,
+        "clinc150/ood/choice_omitted/2": 248,
+        "clinc150/ood/choice_omitted/4": 250,
+        "clinc150/ood/choice_omitted/8": 248,
+        "clinc150/ood/choice_out_of_scope/2": 3,
+        "clinc150/ood/choice_out_of_scope/4": 1,
+        "clinc150/ood/choice_out_of_scope/8": 2,
+        "clinc150/ood/choice_present/2": 248,
+        "clinc150/ood/choice_present/4": 250,
+        "clinc150/ood/choice_present/8": 248,
+        "clinc150/test/choice_omitted/2": 1502,
+        "clinc150/test/choice_omitted/4": 1505,
+        "clinc150/test/choice_omitted/8": 1489,
+        "clinc150/test/choice_out_of_scope/2": 330,
+        "clinc150/test/choice_out_of_scope/4": 327,
+        "clinc150/test/choice_out_of_scope/8": 343,
+        "clinc150/test/choice_present/2": 1502,
+        "clinc150/test/choice_present/4": 1505,
+        "clinc150/test/choice_present/8": 1489,
+        "clinc150/train/choice_omitted/2": 4237,
+        "clinc150/train/choice_omitted/4": 4247,
+        "clinc150/train/choice_omitted/8": 4247,
+        "clinc150/train/choice_out_of_scope/2": 34,
+        "clinc150/train/choice_out_of_scope/4": 24,
+        "clinc150/train/choice_out_of_scope/8": 24,
+        "clinc150/train/choice_present/2": 4237,
+        "clinc150/train/choice_present/4": 4247,
+        "clinc150/train/choice_present/8": 4247,
+        "clinc150/validation/choice_omitted/2": 738,
+        "clinc150/validation/choice_omitted/4": 739,
+        "clinc150/validation/choice_omitted/8": 740,
+        "clinc150/validation/choice_out_of_scope/2": 23,
+        "clinc150/validation/choice_out_of_scope/4": 22,
+        "clinc150/validation/choice_out_of_scope/8": 21,
+        "clinc150/validation/choice_present/2": 738,
+        "clinc150/validation/choice_present/4": 739,
+        "clinc150/validation/choice_present/8": 740
+      },
+      "unique_utterances_by_source_split": {
+        "banking77/calibration": 455,
+        "banking77/ood": 501,
+        "banking77/test": 3075,
+        "banking77/train": 8484,
+        "banking77/validation": 502,
+        "clinc150/calibration": 2279,
+        "clinc150/ood": 752,
+        "clinc150/test": 5496,
+        "clinc150/train": 12813,
+        "clinc150/validation": 2283
+      },
+      "noul_positive_negative": {
+        "banking77/calibration": {
+          "no": 228,
+          "yes": 227
+        },
+        "banking77/ood": {
+          "no": 251,
+          "yes": 250
+        },
+        "banking77/test": {
+          "no": 1538,
+          "yes": 1537
+        },
+        "banking77/train": {
+          "yes": 4242,
+          "no": 4242
+        },
+        "banking77/validation": {
+          "no": 251,
+          "yes": 251
+        },
+        "clinc150/calibration": {
+          "yes": 1139,
+          "no": 1140
+        },
+        "clinc150/ood": {
+          "yes": 376,
+          "no": 376
+        },
+        "clinc150/test": {
+          "yes": 2748,
+          "no": 2748
+        },
+        "clinc150/train": {
+          "no": 6407,
+          "yes": 6406
+        },
+        "clinc150/validation": {
+          "yes": 1141,
+          "no": 1142
+        }
+      }
+    },
+    "limitations": [
+      "Exactly two independently labeled datasets, not 151 domains.",
+      "Candidate subsets are constructed using source gold; subset accuracy is not original full-catalog accuracy.",
+      "Hard negatives use readable intent-name token overlap, not an embedding semantic model.",
+      "Human intent labels and readable descriptions may be ambiguous or imperfect.",
+      "Within-source utterance OOD does not establish new-intent or new-domain generalization.",
+      "No benchmark requests, GPU training, or model quality measurements are performed."
+    ]
+  },
+  "summary": {
+    "records": 108720,
+    "groups": 36632,
+    "unique_inputs": 108720,
+    "splits": {
+      "calibration": 8156,
+      "ood": 3753,
+      "test": 24713,
+      "train": 63809,
+      "validation": 8289
+    },
+    "kinds": {
+      "choice": 72080,
+      "noul": 36640
+    },
+    "families": {
+      "semantic_routing": 108720
+    },
+    "sources": {
+      "banking77-routing-v3": 39051,
+      "clinc150-routing-v3": 69669
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "d9b16649ace8ba78e6ab16fb45be51eac5e9285a409afdb355c644078687a50b",
+    "calibration.jsonl": "33f7bfcb34b030263421e2d5ba53b37e0933c2780dc3c86fd4f2b28d7ab4d1d8",
+    "validation.jsonl": "9f8aac9345d4add638ca960536d86f18deb7cb59032427b08ba73baec6fb072c",
+    "test.jsonl": "b4fe7d77edb940f2f0087559736f44ae1d62824f46beb82bd71832d1b90c3edb",
+    "ood.jsonl": "95bec3bd456d9316bdd0405f05cae408f63d30f15761fa0c63f67737fc98e43a"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "status": "pending_external_inputs_and_model_evaluation",
+  "external_benchmarks": ["TREC-DL19", "TREC-DL20"],
+  "external_corpus_downloaded": false,
+  "external_candidates_downloaded": false,
+  "external_qrels_downloaded": false,
+  "external_model_evaluation_performed": false,
+  "external_benchmark_results": null,
+  "storage_policy": "Read-only evaluation files must live outside the repository data tree, including resolved symlink targets. Do not convert them to training rows.",
+  "source_experiment": "https://github.com/ielab/llm-rankers/tree/ac843ed63a302900d76722b83be926fdb84a3936/jev",
+  "required_provenance_before_run": [
+    "Exact candidate dataset repository, immutable revision, filename and file SHA-256; distinguish downloaded BM25 candidates from independently rerun retrieval.",
+    "Exact query and qrel sources, revision/date and SHA-256; retain all judged query IDs in the evaluation denominator.",
+    "Corpus and candidate reuse terms and attribution recorded with external input manifest.",
+    "Declared BM25 top-100, k1=0.9, b=0.4; an input manifest declaration alone does not independently verify retrieval.",
+    "Query/passage preprocessing and tokenizer version. The author's approximate cl100k_base limits were 32 query and 128 passage tokens; this loader does not truncate.",
+    "Immutable model/checkpoint identity where available, provider endpoint and requested/returned model aliases, typed request profile, library versions and code commit.",
+    "All raw requests/responses and failed attempts, algorithm request counts, whole-query wall time, successful HTTP latency and actual billing or clearly marked token-cost estimates."
+  ],
+  "manifest_template_not_ready_to_run": {
+    "usage": "evaluation_only",
+    "benchmark": "TREC-DL19",
+    "retriever": {"name": "BM25", "top_k": 100, "k1": 0.9, "b": 0.4},
+    "files_sha256": {
+      "candidates.jsonl": "REPLACE_WITH_SHA256_OF_ACTUAL_EXTERNAL_FILE",
+      "qrels.txt": "REPLACE_WITH_SHA256_OF_ACTUAL_EXTERNAL_FILE"
+    }
+  },
+  "candidate_format": {
+    "one_jsonl_object_per_query": {
+      "id": "EXTERNAL_QUERY_ID",
+      "query": "EXTERNAL_QUERY_TEXT",
+      "documents": [
+        {"id": "EXTERNAL_DOCUMENT_ID", "text": "EXTERNAL_PASSAGE_TEXT", "bm25_rank": 1, "bm25_score": 0.0}
+      ]
+    },
+    "requirements": "Exactly 100 unique identified documents per query, ordered bm25_rank 1..100, with finite numeric BM25 scores. The one-document shape above is a schema example, not valid input or benchmark data."
+  },
+  "qrels_format": "Whitespace-separated query_id iteration document_id grade; grade is an integer from 0 to 3, or -1 for unjudged.",
+  "metric": {
+    "name": "nDCG@10",
+    "gain": "Raw qrel grade, not exponential gain; negative/unjudged grades contribute zero.",
+    "discount": "log2(rank + 1), with rank starting at one",
+    "denominator": "All qrel query IDs; an absent or failed run query contributes zero.",
+    "source": "https://github.com/usnistgov/trec_eval/blob/dc0c991c80bae2087de774ed76278e11d9d9f4c6/m_ndcg_cut.c"
+  },
+  "implementation": "jev.ir_eval.load_external_holdout and jev.ir_eval.ndcg_at_k",
+  "loader_verification_only": "The loader verifies structure, hashes and isolation. Its success is not an executed retrieval experiment, model evaluation, or reproduction of the original tweet."
+}

@@ -1,0 +1,81 @@
+{
+  "kind": "independent_contact_service_execution_review",
+  "verified": true,
+  "is_model_quality_evidence": false,
+  "final_http_audit": "reports/contact-service-eval/http-software-audit-direct/audit.json",
+  "full_selection_audit": "reports/contact-service-eval/http-software-audit-direct/selection-audit.json",
+  "evaluator_sha256": "562dac913d4cebf2732aef9d055dd8dea126c2ec2987573321f1554caf06153a",
+  "tests_sha256": "3606f0727c3983f833d0ddecf9a6d7218f589d99db0682d2502501e20e4e89eb",
+  "docs_sha256": "9db0e606a9b4c405926247426950f3130a7b9a5502fa53ce0e1e8eae84c2d923",
+  "executions": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 runs/phone-extraction-control-v1-venv/bin/python reports/contact-service-eval/verify_http_pipeline.py --output-dir reports/contact-service-eval/http-software-audit",
+      "exit_code": 0,
+      "stdout": "{\"actual_loopback_requests\": 24, \"full_default_documents\": 1924, \"is_model_quality_evidence\": false, \"software_checks\": 15, \"verified\": true}\n",
+      "script_sha256": "08c924403f1b6b6c3227914e5a85e54ee744b1c109bea0de80682160c0bd78ff",
+      "actual_loopback_requests": 24,
+      "note": "Initial successful run. Every request was received by the local fixture. Review then found that the default opener did not explicitly disable system/environment proxies; exact original source preserved in verification-source.py.",
+      "source_snapshot_path": "reports/contact-service-eval/http-software-audit/verification-source.py"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 runs/phone-extraction-control-v1-venv/bin/python reports/contact-service-eval/verify_http_pipeline.py --output-dir reports/contact-service-eval/http-software-audit-direct",
+      "exit_code": 0,
+      "stdout": "{\"actual_loopback_requests\": 24, \"full_default_documents\": 1924, \"is_model_quality_evidence\": false, \"software_checks\": 15, \"verified\": true}\n",
+      "script_sha256": "303a1606e1e86ecc1f972ce4bee893459e7f4020deb12fff63547b9d4afccd8a",
+      "actual_loopback_requests": 24,
+      "note": "Final run after disabling proxies and redirects in a scoped dedicated opener. Explicit injected transport still calls the production http_attempt implementation.",
+      "source_snapshot_path": "reports/contact-service-eval/verify_http_pipeline.py"
+    }
+  ],
+  "checks": {
+    "full_default_heldout_documents": 1924,
+    "full_default_sampling_or_caps": false,
+    "final_software_boundary_checks": 15,
+    "final_actual_loopback_requests": 24,
+    "all_execution_actual_loopback_requests": 48,
+    "model_requests": 0,
+    "owner_test_suite_reruns": 0,
+    "nonheldout_case_targets_decoded_by_independent_verifiers_or_evaluator": 0,
+    "all_final_HTTP_artifact_hashes_verified": true,
+    "all_initial_HTTP_artifact_hashes_verified": true,
+    "evaluator_source_and_test_hashes_unchanged": true
+  },
+  "tokenizer_archive_audit": {
+    "path": "reports/contact-service-eval/tokenizer-archive-audit.json",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3.12 reports/contact-service-eval/verify_tokenizer_archive.py --output reports/contact-service-eval/tokenizer-archive-audit.json",
+    "sequence_count_per_tokenizer": 27872,
+    "models": 3,
+    "retokenized": false,
+    "scope": "Offline identity/order/prompt-payload/arithmetic verification of existing tokenizer archive; not independent tokenization or model quality.",
+    "capture_exception": "Original root capture decoded all local case JSON before filtering (including training reference fields). These were not used to select/render requests and no training prompts were sent. Original source/hash/results retained. Independent archive verifier filters metadata bytes before decoding."
+  },
+  "evidence_sha256": {
+    "reports/contact-service-eval/verify_heldout.py": "e7bcdaa11aa382e8dec2f449a1ec6ffb75e3edea2a8643ad7131d989aec8f861",
+    "reports/contact-service-eval/heldout-preflight.json": "3fa7ad7690c309922465744f35727c0575c63b47c3774ee3b4cdeb037c016a62",
+    "reports/contact-service-eval/preflight-verification.json": "3e2c1eacb9891f0436322ad62c284ad29136b057cf5fd868578ec2309cdea499",
+    "reports/contact-service-eval/metrics-review.json": "68938bba6df1d4cb358df5518acd7c2e2ae46f88a0b9528edda1cc68246ca3a0",
+    "reports/contact-service-eval/verify_tokenizer_archive.py": "e32af3c51dc4281be2a7f3c9b4ae7fc2506469efcf623f17c63934e8373c331e",
+    "reports/contact-service-eval/tokenizer-archive-audit.json": "bc169eba7115c549d195c3dbe497af31a5b3e5a509ae1f719bddd77dfdfabb73",
+    "reports/contact-service-eval/tokenizer-lengths.json": "d23b1caefc8035706c02c94916bd64e057241b450833b4e0677f41840565e6aa",
+    "reports/contact-service-eval/tokenizer-lengths-raw.json.gz": "b602c182dbac1a2c611fa91b8045af3c80f51c3564bb1a2293dc7d6e4bd43fff",
+    "reports/contact-service-eval/capture_tokenizer_lengths.py": "af7311df60970566c230377548ac39c8f3dc45ef024c27e7145b27563c47893e",
+    "reports/contact-service-eval/verify_http_pipeline.py": "303a1606e1e86ecc1f972ce4bee893459e7f4020deb12fff63547b9d4afccd8a",
+    "reports/contact-service-eval/http-software-audit/audit.json": "c326d55f2c225b25884d37f6c7c482c308c97665e84e5feeaacdae254625019d",
+    "reports/contact-service-eval/http-software-audit/verification-source.py": "08c924403f1b6b6c3227914e5a85e54ee744b1c109bea0de80682160c0bd78ff",
+    "reports/contact-service-eval/http-software-audit-direct/audit.json": "36cc39716251aed242906f08f614d517c285ae306da0d9181b44fb663fb48d6e",
+    "reports/contact-service-eval/http-software-audit-direct/selection-audit.json": "e9df7d050287e23967448909302553c57a1313d530e945864ee8c85bf5571490"
+  },
+  "limits": [
+    "All scripted scores are software fixtures, not learned-model results.",
+    "Family metadata is decoded by the evaluator across splits; training/calibration/validation split files are hashed only and nonheldout case targets are not decoded.",
+    "Fixture runs explicitly patch load_cases to a small fixed ID subset. Their inherited selection text is not a full-dataset performance claim; the separate default loader audit covers all 1924 heldout documents.",
+    "No JF100 or external benchmark accessed; no SSH/GPU/deployment/model inference."
+  ],
+  "final_script_static_review": {
+    "reviewer": "independent citation_audit subagent",
+    "source_sha256": "303a1606e1e86ecc1f972ce4bee893459e7f4020deb12fff63547b9d4afccd8a",
+    "proxy_and_redirect_scope_confirmed": true,
+    "unresolved_findings": [],
+    "executed_tests_or_fixtures": false
+  }
+}

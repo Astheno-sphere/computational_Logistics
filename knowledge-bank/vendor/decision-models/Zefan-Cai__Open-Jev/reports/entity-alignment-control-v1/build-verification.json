@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "status": "passed_build_schema_and_example_checks",
+  "checked_at_utc": "2026-09-20T14:22:45.033953+00:00",
+  "python_version": "3.12.14",
+  "generation_command": "PYTHONDONTWRITEBYTECODE=1 python3.12 -m jev.case_entity_alignment --output-dir data/entity-alignment-control-v1 --groups 200 --ood-groups 40 --seed 42",
+  "manifest_sha256": "b3afddbeb926d57b7d7ea13c5fbda0fff878c647ea9ff1ee8a09b11d7f2f9eb5",
+  "source_files_sha256": {
+    "case_entity_alignment.py": "61911203a4e09c7b865d0494e8cd73853907796e7023400ee14357696862382b",
+    "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+    "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+    "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+  },
+  "tracked_manifest_identical": true,
+  "family_count": 200,
+  "case_count": 2800,
+  "typed_record_count": 11200,
+  "head_counts": {
+    "match": 2800,
+    "name_agrees": 2800,
+    "manufacturer_agrees": 2800,
+    "capacity_agrees": 2800
+  },
+  "split_counts": {
+    "train": 6944,
+    "calibration": 728,
+    "validation": 280,
+    "test": 1008,
+    "ood": 2240
+  },
+  "reference_route_counts": {
+    "2": 800,
+    "0": 800,
+    "1": 1200
+  },
+  "field_evidence_counts": {
+    "name": {
+      "agreement": 1800,
+      "conflict": 200,
+      "unknown": 800
+    },
+    "manufacturer": {
+      "agreement": 2200,
+      "conflict": 200,
+      "unknown": 400
+    },
+    "capacity": {
+      "agreement": 2000,
+      "conflict": 400,
+      "unknown": 400
+    }
+  },
+  "standard_validator": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3.12 -m jev.data validate data/entity-alignment-control-v1",
+    "status": "passed",
+    "exit_code": 0,
+    "summary": {
+      "records": 11200,
+      "groups": 200,
+      "unique_inputs": 11200,
+      "splits": {
+        "calibration": 728,
+        "ood": 2240,
+        "test": 1008,
+        "train": 6944,
+        "validation": 280
+      },
+      "kinds": {
+        "noul": 8400,
+        "score": 2800
+      },
+      "families": {
+        "evidence": 11200
+      },
+      "sources": {
+        "entity-alignment-control-v1": 11200
+      }
+    },
+    "stdout": "{\n  \"records\": 11200,\n  \"groups\": 200,\n  \"unique_inputs\": 11200,\n  \"splits\": {\n    \"calibration\": 728,\n    \"ood\": 2240,\n    \"test\": 1008,\n    \"train\": 6944,\n    \"validation\": 280\n  },\n  \"kinds\": {\n    \"noul\": 8400,\n    \"score\": 2800\n  },\n  \"families\": {\n    \"evidence\": 11200\n  },\n  \"sources\": {\n    \"entity-alignment-control-v1\": 11200\n  }\n}\n",
+    "stderr": ""
+  },
+  "example": {
+    "path": "examples/entity-alignment-fields.json",
+    "sha256": "0b56556bea1d2e87c36e5bdf10d4a1ad19ab4a823c9e881331314cc1eb1f760c",
+    "request_only": true,
+    "compiled_heads": [
+      "match",
+      "name_agrees",
+      "manufacturer_agrees",
+      "capacity_agrees"
+    ],
+    "types": [
+      "score",
+      "noul",
+      "noul",
+      "noul"
+    ],
+    "documentation_example_matches": true,
+    "documentation_example_code_sha256": "1cc9d63d624f17e157fa9fe3d58f3ba69120242ecc8da3cab05c2fa189a1b26d",
+    "discoverable_by_examples_listing": true,
+    "discovery_method": "Live loopback GET /examples.json against make_server; no inference requested"
+  },
+  "generator_help_exit_code": 0,
+  "source_hashes_match_manifest": true,
+  "scope": {
+    "external_samples_or_model_outputs_used": false,
+    "jf100_or_magellan_rows_read": false,
+    "training_performed": false,
+    "model_inference_performed": false,
+    "remote_or_gpu_operations": false,
+    "new_data_mixed_into_training": false,
+    "frozen_datasets_written": false,
+    "shared_source_modified": false,
+    "model_scores": null
+  },
+  "limitations": [
+    "Self-defined name/manufacturer/capacity catalog policy, not the official brewery/style task.",
+    "Same identifiers can imply same with missing attributes under this declared policy only.",
+    "OOD changes alias/policy wording and unit presentation within one fixed evidence policy.",
+    "Reference labels and exact quantity preprocessing are not model confidences, physical identity guarantees, or graph-merge authorization."
+  ],
+  "data_files_match_manifest": true,
+  "finalization": {
+    "capacity_contract": "positive ordinary ASCII decimal string; mixed Unicode digit strings are unknown evidence",
+    "previous_candidate_preserved_in_ignored_directory": "data/entity-alignment-control-v1-draft-unicode-boundary",
+    "preserved_candidate_manifest_sha256": "a8dccc2c161216e3c952bc155ffd0102e35480ef5ef256326fe885a1752372c8",
+    "previous_candidate_was_uncommitted_and_untrained": true
+  }
+}

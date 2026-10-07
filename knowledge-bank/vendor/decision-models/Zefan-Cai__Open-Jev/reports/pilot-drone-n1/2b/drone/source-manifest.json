@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "drone-control-v1",
+    "groups": 500,
+    "ood_groups": 100,
+    "seed": 42,
+    "runtime_builder": "jev.community.drone_request",
+    "model_input": "exact compiled runtime state/question/kind/options",
+    "teacher_reads": "visible goal, permitted maneuvers, disclosed policy and thresholds, measured obstacle/flight geometry and speeds, target visibility/history",
+    "ood_axes": [
+      "two blocking barriers instead of one",
+      "higher speeds, larger body/obstacle widths and altitude",
+      "longer occlusion history and low-obstacle distractor"
+    ],
+    "source_files_sha256": {
+      "case_drone.py": "960123ae52d9a1c0a35263cdd02dc336e2537af790fc6a32ef2603f1bb11fde7",
+      "community.py": "b784c0c64e9dd72f2ce0ba13f77133a66b996702b9b043687ea9d3ed93fcac2b",
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254"
+    }
+  },
+  "summary": {
+    "records": 25249,
+    "groups": 500,
+    "unique_inputs": 25249,
+    "splits": {
+      "calibration": 1274,
+      "ood": 5051,
+      "test": 2068,
+      "train": 15694,
+      "validation": 1162
+    },
+    "kinds": {
+      "choice": 8083,
+      "noul": 8583,
+      "score": 8583
+    },
+    "families": {
+      "policy": 25249
+    },
+    "sources": {
+      "drone-control-v1": 25249
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "b357280a1f64fea750593055943542bd12f22140004855299f76507deeacf814",
+    "calibration.jsonl": "cf98df15a7d3457b4dee82cbc1189a9a69622a6cdbc547108e3d4903305603ed",
+    "validation.jsonl": "0ffed618b55f3b172e7c71bd496691dbf70bee21c90d336b8692651f14884156",
+    "test.jsonl": "e8103ea1e2ded17609192dd37a86a9b6c49bc6dea27397d76028bcabc55041c6",
+    "ood.jsonl": "25da866e76bef9225743be81e791ab290a1b03623074b4a182bff53fb75a9ae5"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "case_count": 8583,
+  "cases_file": "cases.jsonl",
+  "cases_sha256": "d4ca0d575186dca4f6f0e04e113c14aaa6dadde1fcdad2ae98746600409bb107",
+  "supervision": {
+    "emitted_choice_rows": 8083,
+    "emitted_score_rows": 8583,
+    "emitted_noul_rows": 8583,
+    "forced_single_candidate_maneuvers_omitted": 500
+  },
+  "maneuver_counts": {
+    "hold_course": 2084,
+    "brake": 3084,
+    "gap_left": 1083,
+    "gap_right": 1083,
+    "climb": 666,
+    "reacquire": 583
+  },
+  "risk_counts": {
+    "0": 2834,
+    "2": 668,
+    "1": 5081
+  },
+  "target_loss_counts": {
+    "false": 6587,
+    "true": 1996
+  },
+  "variant_counts": {
+    "observed": 500,
+    "imminent_geometry": 416,
+    "left_gap_geometry": 417,
+    "right_gap_geometry": 417,
+    "climb_available": 500,
+    "climb_unverified": 500,
+    "climb_height_limit": 500,
+    "climb_clearance_limit": 500,
+    "side_goal_left": 500,
+    "side_goal_right": 500,
+    "brief_occlusion": 500,
+    "occlusion_timer_only": 500,
+    "observed_failed_scans": 417,
+    "route_goal_counterfactual": 500,
+    "missing_gap_action": 500,
+    "single_permitted_maneuver": 500,
+    "id_and_order_permutation": 500,
+    "distant_geometry": 333,
+    "positive_reappearance": 83
+  },
+  "limits": "Synthetic snapshot controls only; no simulator trajectories, collision outcomes, physical target-loss truth, real flight, external/JF100 records, GPU inference, or release-v2/browser-v1 mixing."
+}

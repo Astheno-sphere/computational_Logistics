@@ -1,0 +1,44 @@
+{
+  "state": {
+    "adapter": "heist",
+    "observation": {
+      "observation_id": "guard-view-8",
+      "guard_id": "guard-2",
+      "local_evidence": [
+        "A visible visitor lacks a valid vault badge",
+        "Visitor is approaching the vault door"
+      ]
+    }
+  },
+  "questions": {
+    "threat": {
+      "type": "noul",
+      "instructions": "Does this guard's local evidence indicate a threat to the museum? Do not assume hidden world facts."
+    },
+    "suspicion": {
+      "type": "score",
+      "instructions": "How suspicious should this guard be from its local evidence?",
+      "criteria": [
+        "Routine benign activity",
+        "Ambiguous suspicious activity",
+        "Strong evidence of an active threat"
+      ]
+    },
+    "intent": {
+      "type": "choice",
+      "instructions": "Select one legal tactical intent justified by this guard's local observations.",
+      "criteria": {
+        "observe": "Continue watching",
+        "challenge": "Ask the visitor to present access credentials"
+      }
+    },
+    "target": {
+      "type": "choice",
+      "instructions": "Which observed entity deserves this guard's attention?",
+      "criteria": {
+        "none": "No observed entity should be targeted",
+        "visitor-4": "The visitor visible near the vault door"
+      }
+    }
+  }
+}

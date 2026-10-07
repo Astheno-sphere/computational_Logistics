@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "Read-only review of the new TREC publication data, builder, rendering source and documentation; no browser, API or GPU calls.",
+  "baseline_commit": "15e81b989eddb64ec68333feb27e382719a1ab81",
+  "checks": [
+    "Generated TREC JSON exactly equals the current build_trec output.",
+    "Public Jev summary is byte-identical to the independently audited run summary.",
+    "Summary SHA256 matches both website evidence and independent audit.",
+    "Both benchmark scores, valid-query counts and downloaded BM25 values exactly match audited evidence.",
+    "Open-Jev 2B/9B, Luna and Astra cells are pending and contain no model scores.",
+    "Existing categorical suites, provider list and categorical evidence hashes are unchanged from the baseline commit.",
+    "Builder explicitly binds each provider column to its expected model identity.",
+    "Rendering source places strict nDCG first with valid-query counts; scalar nDCG is explicitly supplementary.",
+    "TREC remains separate from categorical reference-match tables.",
+    "Documentation explains full 43/54 denominators, zero contributions for strict failures, adaptive later windows and the independent protocol.",
+    "Preparation counts in documentation match the frozen record: 10 added replacement characters, 5 above-prefix reencodings, maximum129 tokens.",
+    "Method and evidence URLs target the public Open-Jev repository.",
+    "Runtime-version documentation is supported by the separate hashed controller observation; 57 final CPU tests passed in that evidence.",
+    "Final CSS includes mobile TREC caption wrapping; its current hash is bound here. Browser execution is a separate QA artifact."
+  ],
+  "reviewed_results": {
+    "dl19": {
+      "queries": 43,
+      "primary_strict_ndcg_at_10": 0.27583611543892894,
+      "supplemental_actual_scalar_ndcg_at_10": 0.7282184260107177,
+      "strict_complete_queries": 15,
+      "scalar_complete_queries": 43
+    },
+    "dl20": {
+      "queries": 54,
+      "primary_strict_ndcg_at_10": 0.1906665802224159,
+      "supplemental_actual_scalar_ndcg_at_10": 0.7157341301273342,
+      "strict_complete_queries": 16,
+      "scalar_complete_queries": 54
+    }
+  },
+  "collection": {
+    "http_200": 873,
+    "transport_errors": 0,
+    "strict_valid_requests": 765,
+    "strict_validation_failures": 108,
+    "scalar_usable_requests": 873,
+    "strict_complete_queries": 31,
+    "scalar_complete_queries": 97
+  },
+  "limitations": [
+    "Browser layout, accessibility execution and deployed URLs are verified separately.",
+    "Only Jev has a published complete TREC result in this snapshot; pending cells are not quality estimates.",
+    "The collector Python3.10 statement was separately verified by the parent task against the live controller executable; the original raw report does not itself contain a runtime-version field."
+  ],
+  "files_sha256": {
+    "scripts/build_provider_quality_site.py": "2283ce7c1b2d541f9ed2dd6ca4a0310fbc6ba81e6e8f874a75a247c1ce7f89d1",
+    "site/provider-quality.json": "cfc06975fe5992d52751de2795cb5fa22f7796b4e0aa50cb96460df33ba2932e",
+    "site/app.js": "1943f9d7947a4be1b3f5ae94873bdbb7bf232da8bd6f7ba8b95462f137aebff3",
+    "site/index.html": "ce9c2f25734f5d3cab39780b1fdf56fb5cd7e43be15a31598df6e7716983fd4e",
+    "site/styles.css": "a11949cb34f953e17e10becbae514d13b79f708e3c3e63a2b1e1d9d91af11bb9",
+    "docs/provider-comparison.md": "fdac6cdad789ff95826a38de37a2f48f8a25afd9adeee7d613fef198deffad93",
+    "reports/ir-control-v1/trec-holdout/README.md": "c744e3c3c34bbb011772d5a825ed4b55bb8bb7e85d153209b3c8d1f561015a71",
+    "reports/ir-control-v1/trec-holdout/jev-listwise-summary.json": "2a4925b265c18cb1bad192cf96d824e96d2c4510eee259e80c95d8fb7501c20a",
+    "reports/ir-control-v1/trec-holdout/jev-result-independent-audit.json": "e4a6c67ca9831f3fa608d6c24a7f4735a5cd2561d582c3341466881ee9046189",
+    "reports/ir-control-v1/trec-holdout/provider-input-preparation.json": "05d26bb2ab5abb4641a3e419619050641d52ced762fd4f94ebfb272e437502a1",
+    "reports/ir-control-v1/trec-holdout/scorer-validation.json": "016862e6cd64e488e1e6623e760111375eb28ddbf3d26e5ed6529939e8afe070"
+  },
+  "external_validation_evidence": {
+    "path": "reports/ir-control-v1/trec-holdout/scorer-validation.json",
+    "passed_cpu_tests": 57,
+    "collector_runtime_observed": "3.10.12",
+    "local_replay_runtime": "3.14.5"
+  }
+}

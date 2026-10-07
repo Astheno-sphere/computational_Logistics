@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "silent-failure-control-v1",
+    "groups": 400,
+    "ood_groups": 80,
+    "seed": 42,
+    "license": "CC0-1.0",
+    "split_policy": "whole_provider_contract_family_and_counterfactual_pairs; hash_id_splits; reserved_zh_schema_layout_and_wording_ood",
+    "source_contract": {
+      "repository": "Vicente-MD/jev-resilience",
+      "commit": "c490e0dc7830758f84bd9d5acb806655e327113e",
+      "url": "https://github.com/Vicente-MD/jev-resilience/blob/c490e0dc7830758f84bd9d5acb806655e327113e/src/main/java/ai/jev/resilience/client/JevEvaluationService.java#L50-L55",
+      "source_code_imported": false,
+      "source_examples_imported": false,
+      "question_independently_authored": true
+    },
+    "runtime_contract": {
+      "state": "stringified response body only",
+      "question_id": "is_silent_failure",
+      "type": "noul",
+      "transport_status_is_model_input": false,
+      "judge_transport_fallback_is_training_target": false
+    },
+    "source_files_sha256": {
+      "jev/silent_failure_data.py": "f0127220b61a2b9eb913b60f99ebe84f9948b999c9f1bf813ffd35dfd13bf4a7",
+      "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "jev/data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e",
+      "reports/silent-failure-control-v1/verify.py": "b697c9515e724fc9ca722d910f0034e8e02ced593fac6818816c904fe7ee6cff"
+    }
+  },
+  "summary": {
+    "records": 9600,
+    "groups": 400,
+    "unique_inputs": 9600,
+    "splits": {
+      "calibration": 264,
+      "ood": 1920,
+      "test": 624,
+      "train": 6432,
+      "validation": 360
+    },
+    "kinds": {
+      "noul": 9600
+    },
+    "families": {
+      "evidence": 9600
+    },
+    "sources": {
+      "silent-failure-control-v1": 9600
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "3b83b1d937ca2df42e94d15a7ef70125672f653ceeb82fe3790a7b07d2bf8a8f",
+    "calibration.jsonl": "2c86b1ddc82f20fe6979920620caa5dbb3568dcc159c307ee32b49e99bc2c85d",
+    "validation.jsonl": "173e5a00b1a5573d91ea5ba323bea2b1d4358eea44cceee85dce5823d9ea221a",
+    "test.jsonl": "37c95060bd0c38d9dd3315e30d60ad69a38d8fe717fca32e7c77b4ed4a944024",
+    "ood.jsonl": "3fd69c6e86ab7e6b6034e4b48bd55d845488efca1815626af9b9103e30cfd299"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "pair_count": 4800,
+  "records_per_group": 24,
+  "label_counts": {
+    "yes": 4800,
+    "no": 4800
+  },
+  "format_counts": {
+    "html": 1600,
+    "text": 1600,
+    "json": 6400
+  },
+  "family_counts": {
+    "train": 268,
+    "calibration": 11,
+    "validation": 15,
+    "test": 26,
+    "ood": 80
+  },
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false,
+  "scope": "Controlled original response-body contracts, not arbitrary API correctness or a measured model capability."
+}

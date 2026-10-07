@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "audited_at_utc": "2026-09-21T06:11:51.749917+00:00",
+  "status": "passed",
+  "audit_method": "Read-only independent per-record replay of saved raw responses, frozen request and dispatch accounting, checkpoint hashing, and exact equality with the pinned upstream summary. No inference or provider request was issued.",
+  "scope": "231 public JevBench tasks only: 72 original, 48 easy, 111 hard. The private and judge tiers are unavailable; this is not the full 534-task benchmark and no full-benchmark composite is computed. ZefanCai Open-Jev uses Qwen LoRA weights and a decision head; it is a different system from the Kotoba and Codiv projects also called OpenJev.",
+  "public_tasks": 231,
+  "public_tiers": {
+    "original": 72,
+    "easy": 48,
+    "hard": 111
+  },
+  "upstream_url": "https://github.com/fstandhartinger/jevbench",
+  "upstream_commit": "f8ce71361165846101d02ebc83ad44e47ae44fc3",
+  "execution_code_commit": "3c5bb4a5451ccfd81a5b9f2e05edaf2103805c94",
+  "input_sha256": "2e20ff5f94dd04d015b3a7b9abd955757b6c5be25b55b97fcd141cb52f88b4aa",
+  "dataset_sha256": "dc3995d8ae1e2fc8e81ce38431add509eb8bb39b85aadfd0c7c32079382dde51",
+  "hardware": "NVIDIA H100 80GB HBM3",
+  "execution": {
+    "device_count": 1,
+    "model_order": [
+      "2b",
+      "9b"
+    ],
+    "candidate_batch_size": 1,
+    "max_length": 16384,
+    "prefix_cache": false,
+    "concurrency": 1,
+    "warmups": 0,
+    "retries": 0,
+    "identity_probe_requests": 0
+  },
+  "source_files_sha256": {
+    "scripts/jevbench_openjev.py": "cf1d6c77f538036d0c9cd230d3bb9150203a9309239e6e25cd05ac8f1cc43dd9",
+    "scripts/run_jevbench_suite.py": "251b2744b82a609430aab3e5287589c8c37dcb070927375e82ce5cc0e8178491",
+    "scripts/run_service_suite.py": "e2fc86dfa26721f5b6477fa7a8d6d4875d211f1b11cb39c4fe6b0c907a85a17e",
+    "jev/server.py": "932aee18e81f9fc3d7a534f7a22f497c97bc45935626331e5452557d00b97ee1",
+    "jev/serving.py": "c801af2867613ff978931c4c127ef063f9eab52074c9eb871e00b523d702eec9",
+    "jev/api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254"
+  },
+  "checks": {
+    "execution_commit_and_tracked_source_clean": true,
+    "pinned_upstream_source_and_dataset_checksums": true,
+    "frozen_input_checksum": true,
+    "suite_manifest_complete": true,
+    "suite_cleanup_confirmed": true,
+    "previously_released_2b_and_9b_checkpoint_packages_unchanged": true
+  },
+  "models": {
+    "2b": {
+      "identity": {
+        "model": "Qwen/Qwen3.5-2B",
+        "method": "lora_decision_head",
+        "checkpoint_sha256": "3076462e6356412082e79af909227b39b2863b90def79155ca0821aa506b7ded",
+        "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "temperature": 1.518796342858676,
+        "code_commit": "3c5bb4a5451ccfd81a5b9f2e05edaf2103805c94",
+        "max_length": 16384
+      },
+      "hf_repo": "ZefanCai/Open-Jev-2B",
+      "request_accounting": {
+        "planned_requests": 231,
+        "started_requests": 231,
+        "attempted_requests": 231,
+        "successful_requests": 231,
+        "failed_requests": 0,
+        "pending_requests": 0,
+        "in_flight_requests": 0
+      },
+      "n_correct": 150,
+      "accuracy": 0.6493506493506493,
+      "planned_accuracy": 0.6493506493506493,
+      "schema_valid": 231,
+      "schema_validity": 1,
+      "schema_validity_strict": 1,
+      "n_renormalized": 0,
+      "per_public_tier": {
+        "original": {
+          "n_planned": 72,
+          "n_attempted": 72,
+          "n_correct": 56,
+          "accuracy": 0.7777777777777778,
+          "complete": true
+        },
+        "easy": {
+          "n_planned": 48,
+          "n_attempted": 48,
+          "n_correct": 48,
+          "accuracy": 1,
+          "complete": true
+        },
+        "hard": {
+          "n_planned": 111,
+          "n_attempted": 111,
+          "n_correct": 46,
+          "accuracy": 0.4144144144144144,
+          "complete": true
+        }
+      },
+      "latency": {
+        "type": "http_loopback_full_response_wall_time_including_validation",
+        "n": 231,
+        "p50_ms": 138.00172321498394,
+        "p95_ms": 205.81924449652433,
+        "model_loading_timed": false,
+        "repeated_latency_benchmark": false,
+        "matched_hardware_comparison": false,
+        "note": "One full-response wall time per task, including response validation. Model loading is outside the clock. These are heterogeneous quality-run diagnostics, not a repeated or matched-hardware latency benchmark."
+      },
+      "cost_usd": null,
+      "cost_basis": "local_compute_unmetered_not_free",
+      "evidence_sha256": {
+        "requests.json": "2e20ff5f94dd04d015b3a7b9abd955757b6c5be25b55b97fcd141cb52f88b4aa",
+        "attempts.jsonl": "228496dcb5820556be08a6844c3ec8a3bc8e99cd97c72b570b0d361a780eee29",
+        "samples.jsonl": "7247d9a40de174725e33dc6710d819fd69dac08fd5e8c62f005726103d0b8c3d",
+        "report.json": "eafd9f09651275f994080cf4a5615f42e390dabd3aa802bc224a32148ad93057",
+        "summary.json": "3fbd67b643e516713dfab7d7ba54e65aa5ddbb7eb768368f7a0d8c3c4af38750"
+      },
+      "checks": {
+        "checkpoint_content_hash_matches_report": true,
+        "all_231_raw_response_hashes_verified": true,
+        "all_231_checkpoint_identities_verified": true,
+        "raw_and_parsed_types_and_order_match": true,
+        "native_probabilities_recomputed_from_raw": true,
+        "dispatches_samples_and_frozen_requests_match": true,
+        "all_scores_recomputed_with_pinned_upstream": true,
+        "full_summary_exactly_reproduced": true,
+        "owned_server_pid_absent": true
+      },
+      "released_checkpoint_comparison": {
+        "manifest": "reports/huggingface-model-release/2b/release-manifest.json",
+        "manifest_sha256": "fd4c1b0785b3b57fa05b1aa06d7e4daf08445ffcd27e9bd2da6fca949823407e",
+        "repo_id": "ZefanCai/Open-Jev-2B",
+        "base_model": "Qwen/Qwen3.5-2B",
+        "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+        "source_evaluated_checkpoint_directory_sha256": "8c37b393c27d2b58009463a89dd1a873b7c010ecd1b8c184c7ada5efe13f8bfb",
+        "packaged_inference_directory_sha256": "3076462e6356412082e79af909227b39b2863b90def79155ca0821aa506b7ded",
+        "exact_released_package_content_match": true
+      }
+    },
+    "9b": {
+      "identity": {
+        "model": "Qwen/Qwen3.5-9B",
+        "method": "lora_decision_head",
+        "checkpoint_sha256": "9302c52feba99d079918755f2469f4f088266e9786327bab550248f3d83716d3",
+        "base_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+        "temperature": 1.8969118766347646,
+        "code_commit": "3c5bb4a5451ccfd81a5b9f2e05edaf2103805c94",
+        "max_length": 16384
+      },
+      "hf_repo": "ZefanCai/Open-Jev-9B",
+      "request_accounting": {
+        "planned_requests": 231,
+        "started_requests": 231,
+        "attempted_requests": 231,
+        "successful_requests": 231,
+        "failed_requests": 0,
+        "pending_requests": 0,
+        "in_flight_requests": 0
+      },
+      "n_correct": 179,
+      "accuracy": 0.7748917748917749,
+      "planned_accuracy": 0.7748917748917749,
+      "schema_valid": 231,
+      "schema_validity": 1,
+      "schema_validity_strict": 1,
+      "n_renormalized": 0,
+      "per_public_tier": {
+        "original": {
+          "n_planned": 72,
+          "n_attempted": 72,
+          "n_correct": 65,
+          "accuracy": 0.9027777777777778,
+          "complete": true
+        },
+        "easy": {
+          "n_planned": 48,
+          "n_attempted": 48,
+          "n_correct": 48,
+          "accuracy": 1,
+          "complete": true
+        },
+        "hard": {
+          "n_planned": 111,
+          "n_attempted": 111,
+          "n_correct": 66,
+          "accuracy": 0.5945945945945946,
+          "complete": true
+        }
+      },
+      "latency": {
+        "type": "http_loopback_full_response_wall_time_including_validation",
+        "n": 231,
+        "p50_ms": 189.151581376791,
+        "p95_ms": 839.3336646258831,
+        "model_loading_timed": false,
+        "repeated_latency_benchmark": false,
+        "matched_hardware_comparison": false,
+        "note": "One full-response wall time per task, including response validation. Model loading is outside the clock. These are heterogeneous quality-run diagnostics, not a repeated or matched-hardware latency benchmark."
+      },
+      "cost_usd": null,
+      "cost_basis": "local_compute_unmetered_not_free",
+      "evidence_sha256": {
+        "requests.json": "2e20ff5f94dd04d015b3a7b9abd955757b6c5be25b55b97fcd141cb52f88b4aa",
+        "attempts.jsonl": "3b7168320fc0a1d76364e9d6d0eb1ea95ba5bb23d0ada1669c90daf3c3de08f5",
+        "samples.jsonl": "199bed42c830a7c4abdbf1b43c644d6c93d76363095d943b1271c8237c4cf3cf",
+        "report.json": "f3b4c7cc2bf8c23fecf4d9ff4ac0a21bcedaa58af96ebb97cc40deef4421766f",
+        "summary.json": "d6f7e2d50ba0115c2b315868cef218083d88a2dd2555af15f558aa5a75fa4a7b"
+      },
+      "checks": {
+        "checkpoint_content_hash_matches_report": true,
+        "all_231_raw_response_hashes_verified": true,
+        "all_231_checkpoint_identities_verified": true,
+        "raw_and_parsed_types_and_order_match": true,
+        "native_probabilities_recomputed_from_raw": true,
+        "dispatches_samples_and_frozen_requests_match": true,
+        "all_scores_recomputed_with_pinned_upstream": true,
+        "full_summary_exactly_reproduced": true,
+        "owned_server_pid_absent": true
+      },
+      "released_checkpoint_comparison": {
+        "manifest": "reports/huggingface-model-release/9b/release-manifest.json",
+        "manifest_sha256": "4da63d57613a8806479ddc2118f916ac1e1aeb7c8fdc41f5e529a58a6c8c0e62",
+        "repo_id": "ZefanCai/Open-Jev-9B",
+        "base_model": "Qwen/Qwen3.5-9B",
+        "base_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+        "source_evaluated_checkpoint_directory_sha256": "a691105dd5751bfcf72d276a6ce075d45054db77ae3272e87b5f07b2bd7e2193",
+        "packaged_inference_directory_sha256": "9302c52feba99d079918755f2469f4f088266e9786327bab550248f3d83716d3",
+        "exact_released_package_content_match": true
+      }
+    }
+  },
+  "publication_notes": [
+    "This is a new external evaluation suite for the already released checkpoints; it does not revise or pool previously reported benchmark results.",
+    "Only the 231-task public JevBench subset was evaluated; no score for the unavailable full 534-task benchmark is claimed.",
+    "Accuracy covers all 231 planned tasks because both runs are complete. Latency is a diagnostic of this heterogeneous quality run, not a repeated speed benchmark or a like-for-like hardware comparison."
+  ]
+}

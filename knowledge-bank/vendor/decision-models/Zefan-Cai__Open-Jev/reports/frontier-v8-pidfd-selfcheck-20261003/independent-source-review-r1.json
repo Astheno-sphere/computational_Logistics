@@ -1,0 +1,373 @@
+{
+  "artifacts": {
+    "ci_workflow": {
+      "bytes": 1252,
+      "path": ".github/workflows/ci.yml",
+      "sha256": "d46415ada0a857e847afc655bec0853e7729adadc3555527b24c6a94f6782f70"
+    },
+    "design": {
+      "bytes": 3133,
+      "path": "runs/frontier-v8-pidfd-selfcheck-20261003/CPU-own-pidfd-design-scope-r1.json",
+      "sha256": "cbc248b10ef535bcabc8fd5a83d377438d6ebb340843c48053cf78009d20e184"
+    },
+    "documentation": {
+      "bytes": 5360,
+      "path": "docs/frontier-v8-pidfd-selfcheck.md",
+      "sha256": "a2cb53826ba5e372ba3e425442e3eadf9d7802e2f4be14a5ea049cec8b4dc540"
+    },
+    "focused_receipt": {
+      "bytes": 648,
+      "path": "runs/frontier-v8-pidfd-selfcheck-20261003/local-focused-r1.json",
+      "sha256": "96c3ded537b1c9e38ff93c9a7b9bf20b1d8c804478acb1658701780ace668df5"
+    },
+    "focused_stderr": {
+      "bytes": 4759,
+      "path": "runs/frontier-v8-pidfd-selfcheck-20261003/local-focused-r1.stderr.txt",
+      "sha256": "a7d2268add2e196687c419abf4ac3f0cd8c6f130a6b09c9c9acf35d1c7b10ce4"
+    },
+    "focused_stdout": {
+      "bytes": 0,
+      "path": "runs/frontier-v8-pidfd-selfcheck-20261003/local-focused-r1.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "immutable_helper": {
+      "bytes": 19015,
+      "path": "scripts/frontier_v8_containment_capability.py",
+      "sha256": "1bcda91a4ac9ab50fe051b140fd7ba0fae649c257b45674d1ab15c2bb9a69412"
+    },
+    "source": {
+      "bytes": 23729,
+      "path": "scripts/frontier_v8_pidfd_selfcheck.py",
+      "sha256": "43d0d643ad0c6f11f1a56505229371a94c3d026498b17327642077447dc8f32d"
+    },
+    "tests": {
+      "bytes": 30463,
+      "path": "tests/test_frontier_v8_pidfd_selfcheck.py",
+      "sha256": "e9da1da99ffec5e1385cd52b8358f96e0db03d03f1d315f1b03f8ff795e7c8f6"
+    }
+  },
+  "at_utc": "2026-10-03T20:51:49.887825+00:00",
+  "base_commit": "e72c643ea2e86dfb83ae3c9970ecc4148d94c71b",
+  "checks": [
+    {
+      "evidence": "Exact reviewed/final declared bytes",
+      "name": "source_exact_sha",
+      "passed": true
+    },
+    {
+      "evidence": "Exact reviewed/final declared bytes",
+      "name": "tests_exact_sha",
+      "passed": true
+    },
+    {
+      "evidence": "Exact reviewed/final declared bytes",
+      "name": "documentation_exact_sha",
+      "passed": true
+    },
+    {
+      "evidence": "Exact reviewed/final declared bytes",
+      "name": "immutable_helper_exact_sha",
+      "passed": true
+    },
+    {
+      "evidence": "Exact reviewed/final declared bytes",
+      "name": "design_exact_sha",
+      "passed": true
+    },
+    {
+      "evidence": "Reviewer used ast.parse only; observer not imported or executed",
+      "name": "source_AST_valid",
+      "passed": true
+    },
+    {
+      "evidence": "Reviewer used ast.parse only; fixtures not rerun",
+      "name": "tests_AST_valid",
+      "passed": true
+    },
+    {
+      "evidence": [
+        "argparse",
+        "ctypes",
+        "errno",
+        "hashlib",
+        "json",
+        "os",
+        "pathlib",
+        "re",
+        "select",
+        "stat",
+        "sys",
+        "types"
+      ],
+      "name": "stdlib_only_imports",
+      "passed": true
+    },
+    {
+      "evidence": "Full AST call set plus manual call graph: no signal, child, model, network, installation, raw syscall or guessed library route",
+      "name": "no_forbidden_calls",
+      "passed": true
+    },
+    {
+      "evidence": [
+        "attempt_directory",
+        "bootstrap",
+        "host",
+        "identity_helper_sha256",
+        "nonce",
+        "observer_sha256",
+        "schema_version",
+        "scope"
+      ],
+      "name": "eight_exact_request_fields",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "containment_available": false,
+        "execution_available": false,
+        "functional_containment_verified": false,
+        "model_runtime_ABI_observed": false,
+        "resource_authority": false
+      },
+      "name": "all_five_authority_flags_false",
+      "passed": true
+    },
+    {
+      "evidence": "Guard precedes parser/helper/input/path/explicit export resolution; trusted standard imports happen first",
+      "name": "execute_guard_first",
+      "passed": true
+    },
+    {
+      "evidence": "Only exact captured helper bytes compiled",
+      "name": "helper_hash_before_compile",
+      "passed": true
+    },
+    {
+      "evidence": "Primary source/helper/raw request/bootstrap/host/self checked before output consumption",
+      "name": "input_bindings_before_marker",
+      "passed": true
+    },
+    {
+      "evidence": "Named C export constructed only inside consumed phase",
+      "name": "constructor_after_marker",
+      "passed": true
+    },
+    {
+      "evidence": "Exact tracked fd closed once; immediate fstat check without intervening open",
+      "name": "one_close_call_no_retry",
+      "passed": true
+    },
+    {
+      "evidence": [
+        "test_backend_calls_only_current_pid_flags_zero_and_captures_errno_immediately",
+        "test_backend_named_process_export_has_exact_typed_prototype",
+        "test_backend_polls_only_returned_fd_and_closed_check_requires_EBADF",
+        "test_captured_helper_refuses_cache_changed_bytes_and_symlink_boundaries",
+        "test_close_EINTR_is_not_retried_and_cannot_pass",
+        "test_constructor_probe_and_postvalidation_failures_retain_consumed_receipts",
+        "test_errno_negative_open_is_terminal_without_close_or_fallback",
+        "test_execute_refuses_before_parser_helper_request_or_export_resolution",
+        "test_failures_after_open_keep_exactly_one_close_and_immediate_check",
+        "test_fd_still_open_and_provider_drift_cannot_be_verified",
+        "test_fdinfo_unique_current_pid_and_optional_descriptive_namespace",
+        "test_invalid_returned_fd_never_closes_a_guessed_descriptor",
+        "test_observer_prevalidation_failure_never_consumes_or_resolves_backend",
+        "test_observer_success_is_consumed_once_and_receipt_has_no_authority",
+        "test_provider_disk_identity_is_descriptive_and_must_match_mapping",
+        "test_provider_failure_before_open_has_no_descriptor_operation",
+        "test_provider_mapping_preserves_actual_non_libc_provider",
+        "test_provider_mapping_refuses_unbound_ambiguous_deleted_or_anonymous",
+        "test_real_linux_default_backend_observes_only_own_descriptor",
+        "test_real_linux_fresh_file_cli_returns_complete_consumed_receipt",
+        "test_request_requires_exact_raw_eight_field_declaration",
+        "test_success_and_fd_zero_close_the_exact_returned_descriptor",
+        "test_unexpected_poll_events_fail_and_close_once",
+        "test_wrong_descriptor_pid_refuses_poll_but_closes_once"
+      ],
+      "name": "24_named_fixtures",
+      "passed": true
+    },
+    {
+      "evidence": "All AST fixture names occur exactly in saved verbose output",
+      "name": "exact_saved_fixture_set",
+      "passed": true
+    },
+    {
+      "evidence": "Linux results remain pending actual CI",
+      "name": "22_portable_pass_2_linux_skip",
+      "passed": true
+    },
+    {
+      "evidence": "Root exclusive once-only local-focused-r1; review read saved evidence only",
+      "name": "focused_rc0_no_timeout",
+      "passed": true
+    },
+    {
+      "evidence": "Exact saved raw stream hash and length match receipt",
+      "name": "focused_stdout_integrity",
+      "passed": true
+    },
+    {
+      "evidence": "Exact saved raw stream hash and length match receipt",
+      "name": "focused_stderr_integrity",
+      "passed": true
+    },
+    {
+      "evidence": "Empty stdout; complete24-test verbose stderr and summary",
+      "name": "focused_output_summary",
+      "passed": true
+    },
+    {
+      "evidence": "Required Linux C widths only; pointer width descriptive",
+      "name": "doc_architecture_correction",
+      "passed": true
+    },
+    {
+      "evidence": "Consumed only after marker; BaseException/host loss can bypass receipt/stdout",
+      "name": "doc_consumption_interruption_correction",
+      "passed": true
+    },
+    {
+      "evidence": "Exactly-once close after tracked return assignment, without async handoff claim",
+      "name": "doc_fd_handoff_correction",
+      "passed": true
+    },
+    {
+      "evidence": "No claimed Linux/MS/model/resource/durability result",
+      "name": "doc_no_premature_results",
+      "passed": true
+    },
+    {
+      "evidence": "Unchanged push/PR Ubuntu Python3.10/3.14 workflow discovers new methods; no CI pass inferred",
+      "name": "CI_automatic_discovery",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Linux -B -I -S and equal UID/eUID checked before helper/input reads",
+      "name": "fresh_entry_preconditions",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Component nofollow directory walk, bounded regular leaf, before/after/leaf file identities; distinct non-main module identity and preloaded-name refusal",
+      "name": "helper_capture_and_cache_boundary",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Exact helper body defines/imports trusted stdlib and constants; old observe/main/seven-field parser never called; no native-A body imported",
+      "name": "immutable_helper_usage_only",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Duplicate/nonfinite rejection, exact scope/schema/nonce/helper/source/raw hashes, strict nested host/bootstrap fields",
+      "name": "request_raw_json_binding",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Fresh owned parent/root/marker disjoint from source/helper/request/bootstrap; earlier attempt prefixes refused",
+      "name": "input_output_disjointness",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: CDLL(None,use_errno=True).pidfd_open only; exact c_int/c_uint->c_int and Linux C widths4; no architecture inferred",
+      "name": "named_export_typed_ABI",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Actual function address maps to unique executable file-backed interval; anonymous/deleted/ambiguous/nonexec mappings refused",
+      "name": "actual_provider_binding",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Bounded canonical regular ELF disk file device/inode matches mapping, identity/hash captured before/after; descriptive trusted baseline, no mapped code authentication or libc pin",
+      "name": "provider_canonical_file_binding",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Type-exact current own PID positive within signed-int range before named call; flags0",
+      "name": "only_own_positive_PID_flags0",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: One open attempt; errno captured immediately on negative result; no guessed FD cleanup, raw syscall, alternate provider/interpreter or fallback",
+      "name": "one_call_errno_terminal",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Internally derived own fdinfo only, unique Pid=current own PID; NSpid descriptive; no foreign read/scan",
+      "name": "returned_FD_identity",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Returned own descriptor alone registered POLLIN; poll0 once; nonempty/error fails",
+      "name": "one_poll0_live_empty",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Tracked nonnegative returned fd including0 closes once on fdinfo/poll failures; close/EINTR not retried; immediate fstat EBADF required and reused number never reclosed",
+      "name": "FD0_and_once_finally_close",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Provider mapping/canonical path/hash/file identity compared after probe; any mismatch/error prevents verification",
+      "name": "provider_postvalidation_failure_closed",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Source/helper/request/bootstrap bytes+identities and own boot/PID/PPID/birth/UID/executable/host rechecked; current parent/root bindings rechecked",
+      "name": "input_self_output_postvalidation",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Top-level own descriptor fact true only after successful probe and full input/self/output postvalidation; broad authority always false",
+      "name": "outer_success_postvalidation_gate",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Missing symbol/probe/input postvalidation failures after consumption remain failed; preconsumption errors do not consume; BaseException interruption limits documented",
+      "name": "failure_receipt_scope",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Full receipt stdout and rc0 only on narrow own-descriptor fact; no independent remote receipt or marker retrieval/durability claim",
+      "name": "complete_returned_stdout_receipt",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Ledgers and local file boundaries cover type/prototype/current-PID/errno, provider/fdinfo negatives, fd0, poll errors, once-only close and close-error/provider drift, helper cache/hash/symlinks, raw request and pre/post consumption",
+      "name": "portable_fixture_relevance",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Default backend exercises own current process only; fresh CLI fixture starts its own observer only. Observer does not create child/signal/worker/model operations; actual CI needed",
+      "name": "Linux_fixture_boundaries",
+      "passed": true
+    },
+    {
+      "evidence": "Independent source/fixture/doc line review: Marker body/identity not reread after probe. Accepted under declared trusted baseline for narrow own-descriptor claim; parent/root rebound and no marker durability/authentication claim",
+      "name": "marker_postvalidation_limit",
+      "passed": true
+    }
+  ],
+  "checks_passed": 49,
+  "checks_total": 49,
+  "final_actionable_findings": [],
+  "initial_findings_count": 1,
+  "preserved_documentation_finding": {
+    "path": "runs/frontier-v8-pidfd-selfcheck-20261003/independent-documentation-precision-finding-r1.json",
+    "sha256": "fb0c8886e91efc2b0e155fcbc162c0181ed3c39fe8a418eedaab2cffcc933169"
+  },
+  "reviewer": "/root/bridge_evidence_review",
+  "reviewer_host_operations": 0,
+  "reviewer_tests_run": 0,
+  "schema_version": 1,
+  "scope": "Independent static source/test/doc and saved once-only local focused-run audit; no source edits, fixture execution, host/network/API calls or old proof retries by reviewer",
+  "scope_limits": [
+    "Linux2 fixtures skipped locally require actual CI results",
+    "No MS host observation/lease or model result",
+    "No containment/execution/resource/model-runtime ABI authority",
+    "No mapped-provider code authentication or predeclared libc/architecture pin",
+    "No marker postvalidation/durability/authentication claim",
+    "BaseException/host-loss/async C return-handoff limits recorded in final docs"
+  ],
+  "status": "accepted_final_source_fixture_documentation_bytes_with_limits"
+}

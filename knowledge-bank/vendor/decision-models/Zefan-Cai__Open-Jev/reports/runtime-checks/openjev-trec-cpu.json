@@ -1,0 +1,68 @@
+{
+  "status": "cpu_verified_no_model_results",
+  "verified_at": "2026-09-21T03:48:12.863682+00:00",
+  "tests": {
+    "passed": 79,
+    "skips": 0,
+    "command": "python3 -m unittest tests.test_openjev_trec tests.test_openjev_trec_summary tests.test_service_suite tests.test_openjev_provider tests.test_provider_quality tests.test_provider_suite -v",
+    "log_sha256": "cfa4c14a2317e3c54d6acd8b56156a6df19a1e4a4e686328a999a715bc59d78d"
+  },
+  "independent_review": {
+    "reviewer": "provider_client_review",
+    "status": "passed",
+    "targeted_tests_passed": 31,
+    "resolved_issues": [
+      "Raw JSON Boolean/numeric types and probability order require strict wire binding",
+      "Fatal HTTP/transport/identity failure cannot precede subsequent requests in a valid replay",
+      "Score outside0..3 must fail before sample is recorded as successful"
+    ]
+  },
+  "real_frozen_cpu_preflight": {
+    "input_sha256": "cc7bc949dbc269dacb61bdb61fc8982db14bc4df3698f9d32f5f1c8b6795eb83",
+    "input_bytes": 4296284,
+    "queries": 97,
+    "planned_max_requests": 873,
+    "holdouts": {
+      "dl19": {
+        "manifest_sha256": "84c7cc23ce0f7309a48432c449e7856aeff96f9e2571f1f18cdb405703a6c297",
+        "files_sha256": {
+          "candidates.jsonl": "865a4158341f4a20163910214484c42e10889955d07e3bd255944dc04b4b29a3",
+          "qrels.txt": "8a1f10d550732e4cd91d7fc49846a3784de4040972f583e69285a88f3c5fee92"
+        },
+        "queries": 43
+      },
+      "dl20": {
+        "manifest_sha256": "494d6f39537b65981ea6707c7ba232e890460ad8f51e86628d2c2a5547288ea4",
+        "files_sha256": {
+          "candidates.jsonl": "e3dd06cf93e0bf07c56f096066fd39237770f23c8342ae636e76b55a57c2747e",
+          "qrels.txt": "60d4c34561f9687f8f73e0a752ba80ab80159b3e9c1bedd0a351f747ed6f5684"
+        },
+        "queries": 54
+      }
+    }
+  },
+  "source_sha256": {
+    "scripts/evaluate_openjev_trec.py": "2d772eba2d5d3347aa639fa2797989a7b288d3bfa9bddd47cf3ade93e8b518b9",
+    "scripts/summarize_openjev_trec.py": "9ab2fc6e0dd6aa13f954acc2e3f3055ec5e64b0602b843a09b4649087024d5af",
+    "scripts/run_service_suite.py": "e2fc86dfa26721f5b6477fa7a8d6d4875d211f1b11cb39c4fe6b0c907a85a17e",
+    "tests/test_openjev_trec.py": "cd33ff499c0ac2f81b2eff06fc1b59cd2150afb6e9f5c65208754de62652f757",
+    "tests/test_openjev_trec_summary.py": "8f930f80b2ef7d7d6d76dad12351b2ae05a3e21698f3ccd309365e18bf81945b",
+    "tests/test_service_suite.py": "c6f43ee67d024394c25e986cad88c7f2c57e1c1e1adb3e81af1ba6b39d4f7b9f"
+  },
+  "regressions": [
+    "Complete873-call synthetic adaptive reranking",
+    "Expected float Score rather than argmax or rounding",
+    "Full official qrels including outside-top100 ideal DCG and full43/54querydenominators",
+    "Failedqueryzero with no BM25fallback; partialresults provisional",
+    "DispatchbeforeHTTP; SIGTERMfailedsample; SIGKILLunsettledjournal",
+    "No network/subprocess during offline replay",
+    "Fatal/inconsistentcollectioncleanup before probe or nextmodel",
+    "Existingprovider-quality rawtype/orderguard also hardened"
+  ],
+  "external_api_calls": 0,
+  "gpu_allocations": 0,
+  "model_quality_results_produced": false,
+  "existing_api_bundles_or_frozen_data_changed": false,
+  "historical_cpu_deployment_88c8aef_changed": false,
+  "next": "Deploy a separate reviewed checkout; supersede88c8aef for futureprovider-quality launches afterpreflight. Preserve all oldsource/evidence. RealGPUevaluation waits core/audit/contact/providerquality gates."
+}

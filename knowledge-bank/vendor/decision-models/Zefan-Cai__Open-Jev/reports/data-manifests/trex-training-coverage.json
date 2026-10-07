@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "audited_at_utc": "2026-09-20T09:08:43.017051+00:00",
+  "status": "passed",
+  "scope": "Read-only source, manifest and train-file analysis. No test/OOD/JF100 row or label reads, no model loading, no new states/data, and no remote operations.",
+  "code": {
+    "jev/games.py": {
+      "sha256": "5b7ac9f459bd86a724b39c7c2f87f8e8d7441a28aa7a7f14ef0fe94366544afe",
+      "references": {
+        "obstacle_configuration": 542,
+        "collision_rule": 554,
+        "runtime_state": 585,
+        "public_browser_adapter": 783,
+        "deduplication": 899
+      }
+    },
+    "jev/data.py": {
+      "sha256": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e",
+      "references": {
+        "group_hash_split": 35
+      }
+    },
+    "reproduction_script": {
+      "path": "reports/data-manifests/check_trex_training_coverage.py",
+      "sha256": "49f6d1e7569aca5ddeca4adff7dcf03e945d508225735c612f809434239139bd"
+    }
+  },
+  "train_files": {
+    "control-games-v1": {
+      "train_path": "data/control-games-v1/train.jsonl",
+      "train_sha256": "f62d4b79188eb3c79588dad81a3ade327b77c115617140f40bb171888a8931d2",
+      "manifest_path": "data/control-games-v1/manifest.json",
+      "manifest_sha256": "316555d96755d5a272f61817ca102cc466b69be0d73f86c5afb574841aef0377",
+      "trex_train_rows": 28,
+      "trex_rows_ordered_canonical_sha256": "3ce55d423cf2665a827d10207731cf6025bf4af6c2e97723c307a111dbcf97b0"
+    },
+    "release-v1": {
+      "train_path": "data/release-v1/train.jsonl",
+      "train_sha256": "08426d06a2f640cfbabfdaa7363c94ab0a05e631d2e14d1b839131ef87100a8b",
+      "manifest_path": "data/release-v1/manifest.json",
+      "manifest_sha256": "c3d831b9df50852a3f5bd708febdd9ccfc05715bfbcc0eba30ec97d8b82bd298",
+      "trex_train_rows": 28,
+      "trex_rows_ordered_canonical_sha256": "3ce55d423cf2665a827d10207731cf6025bf4af6c2e97723c307a111dbcf97b0"
+    },
+    "release-v2": {
+      "train_path": "data/release-v2/train.jsonl",
+      "train_sha256": "80a9ec19da9c4065b72f7a9e5ff8d67e62c1d1dd2572dfd296e46bfe2ea5a182",
+      "manifest_path": "data/release-v2/manifest.json",
+      "manifest_sha256": "56105dc9fc89ef74919f5beb60bb6ae8c6e17bb95699dab59205f67d8b338d97",
+      "trex_train_rows": 28,
+      "trex_rows_ordered_canonical_sha256": "3ce55d423cf2665a827d10207731cf6025bf4af6c2e97723c307a111dbcf97b0"
+    },
+    "browser-drone-expansion-v1": {
+      "train_path": "data/browser-drone-expansion-v1/train.jsonl",
+      "train_sha256": "91a3e3c715abd735509a5a23453161475aff85626f2c47563a8fab4e7dc79239",
+      "manifest_path": "data/browser-drone-expansion-v1/manifest.json",
+      "manifest_sha256": "ba001b88787ce21576017897a0cbdedd5917ceb29ad3522b0e1fb7b4836d49df",
+      "trex_train_rows": 28,
+      "trex_rows_ordered_canonical_sha256": "3ce55d423cf2665a827d10207731cf6025bf4af6c2e97723c307a111dbcf97b0"
+    }
+  },
+  "mechanism": {
+    "generator_configuration": {
+      "type": "synthetic",
+      "generator_version": "control-games-v1",
+      "seed": 42,
+      "games": [
+        "trex_runner",
+        "tile_platformer"
+      ],
+      "episodes_per_game": 100,
+      "max_steps": 40,
+      "behavior": "even episode indices teacher; odd indices seeded random",
+      "deduplication": "exact runtime state/questions request",
+      "split_groups": {
+        "trex_runner": "complete visible observation",
+        "tile_platformer": "complete terrain layout, all positions kept together"
+      },
+      "ood": "none; all episodes use the unchanged local runtime configuration",
+      "target_basis": "deterministic current-observation teacher, independent of behavior action",
+      "representation": "exact compile_request(**game_request(runtime)) model inputs"
+    },
+    "speed_values": [
+      6,
+      8,
+      10,
+      12
+    ],
+    "obstacle_configurations": {
+      "small_cactus_groups": 3,
+      "large_cactus_groups": 3,
+      "pterodactyl_flight_paths_single_group": 3
+    },
+    "maximum_distinct_visible_states_from_code": 36,
+    "manifest_total_trex_rows": 36,
+    "train_rows": 28,
+    "deduplication": "Global exact runtime state/questions request hash; seed, episode and teacher provenance are excluded from model inputs.",
+    "split": "Label-independent group hash with an 80% train interval; all 28 train group hashes independently match.",
+    "train_hash_bucket_range": [
+      156,
+      7966
+    ],
+    "episode_limit": "Each local episode has at most 12 obstacles despite max_steps=40; random behavior may terminate earlier. The observed manifest nevertheless reaches the 36-state ceiling.",
+    "teacher_filter": "Teacher chooses labels but does not discard observations. No no-safe-action fallback occurs among these 28 train rows.",
+    "conclusion": "Current finite runtime is saturated. More seeds/episodes, longer rollouts or retaining duplicates do not add visible-state coverage; no generator fix is indicated."
+  },
+  "train_only_findings": {
+    "counts": {
+      "label": {
+        "jump_full": 20,
+        "duck": 2,
+        "jump_short": 2,
+        "keep_running": 4
+      },
+      "speed": {
+        "6": 8,
+        "8": 8,
+        "12": 6,
+        "10": 6
+      },
+      "speed_mode": {
+        "normal": 28
+      },
+      "motion": {
+        "running": 28
+      },
+      "obstacle_configuration": {
+        "small_cactus/triple/ground_hazard": 3,
+        "pterodactyl/single/blocks_running_and_ducking": 4,
+        "pterodactyl/single/blocks_running_only": 2,
+        "small_cactus/single/ground_hazard": 2,
+        "large_cactus/double/ground_hazard": 2,
+        "small_cactus/double/ground_hazard": 3,
+        "large_cactus/triple/ground_hazard": 4,
+        "pterodactyl/single/clears_running_dinosaur": 4,
+        "large_cactus/single/ground_hazard": 4
+      },
+      "safe_action_count": {
+        "1": 17,
+        "2": 7,
+        "3": 4
+      },
+      "safe_action_set": {
+        "jump_full": 17,
+        "jump_full,duck": 2,
+        "jump_short,jump_full": 5,
+        "jump_full,duck,keep_running": 4
+      }
+    },
+    "distinct_visible_states": 28,
+    "unique_questions": 1,
+    "unique_geometries": 1,
+    "geometry": {
+      "duck_height": 0.8,
+      "obstacle_start_x": 12,
+      "player_width": 1,
+      "standing_height": 2
+    },
+    "first_seen_episode_range": [
+      0,
+      16
+    ],
+    "positive_unsafe_targets": 0,
+    "declared_preference_matches": 28,
+    "no_safe_fallbacks": 0,
+    "jump_full_safe_on_existing_train_states": 28,
+    "safety_scope": "Collision checks used only the existing 28 train states. Multiple safe actions in 11 rows receive a single declared-preference target; this does not establish action safety outside train.",
+    "training_share_percent": {
+      "release-v2": 0.03464660463274599,
+      "browser-drone-expansion-v1": 0.02537979043544469
+    },
+    "missing_dimensions": [
+      "slow speed mode",
+      "jumping/ducking observation phases",
+      "variable geometry and distances",
+      "continuous speed/acceleration",
+      "inter-obstacle gaps and action latency",
+      "browser adapter's separate maneuver and jump_profile questions"
+    ]
+  },
+  "unimplemented_future_options": [
+    {
+      "option": "Independent browser-format bridge",
+      "status": "not implemented",
+      "proposal": "A separate version could adapt only the existing 28 train observations to trex_request's two questions, producing 56 task rows over the same 28 states.",
+      "coverage_claim": "Representation coverage only; zero new physical states. This would not modify current frozen mixtures or active training.",
+      "validation": [
+        "All source IDs must belong to these original train rows; never move reserved states into training.",
+        "Match the adapter exactly: maneuver has three candidates, jump_profile has two; preserve question IDs and keep both questions in one scene group.",
+        "Labels must follow the existing train observations and declared conditional question semantics; disclose that they are not measured browser physics.",
+        "Count both unique states and task rows; do not report 56 rows as 56 new states."
+      ]
+    },
+    {
+      "option": "Independent browser trajectory corpus",
+      "status": "not implemented",
+      "proposal": "Use separately collected browser/controller trajectories when real dynamics are in scope; declare physically valid motion, distance, speed and timing fields and a controller-compatible oracle.",
+      "validation": [
+        "Freeze new scene/episode groups before evaluation and keep related variants together.",
+        "Check state and action coverage, valid labels and duplicate/group leakage independently; report per-action safety and closed-loop collision/success metrics separately from preference accuracy.",
+        "Leave existing frozen data, held-out labels and the running 27B job unchanged."
+      ]
+    }
+  ],
+  "limitations": [
+    "The analysis explains dataset cardinality and train coverage, not a causal explanation of model errors.",
+    "No held-out behavior, actual Chrome physics, model performance or new-data benefit was evaluated."
+  ]
+}

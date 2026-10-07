@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "usage": "evaluation_only",
+  "benchmark": "TREC-DL19",
+  "retriever": {
+    "name": "BM25",
+    "top_k": 100,
+    "k1": 0.9,
+    "b": 0.4
+  },
+  "files_sha256": {
+    "candidates.jsonl": "865a4158341f4a20163910214484c42e10889955d07e3bd255944dc04b4b29a3",
+    "qrels.txt": "8a1f10d550732e4cd91d7fc49846a3784de4040972f583e69285a88f3c5fee92"
+  },
+  "candidate_source": {
+    "repository": "castorini/rank_llm_data",
+    "revision": "39db0a25a552dd2a12012df22029686bf7fdc050",
+    "file": "retrieve_results/BM25/retrieve_results_dl19_top100.jsonl",
+    "url": "https://huggingface.co/datasets/castorini/rank_llm_data/resolve/39db0a25a552dd2a12012df22029686bf7fdc050/retrieve_results/BM25/retrieve_results_dl19_top100.jsonl",
+    "bytes": 2000369,
+    "sha256": "ec396c5725d0cec98739de9aff9fd6785da09e56fd21bee5b52dc19806f06899",
+    "matches_hf_lfs_oid": true,
+    "acquisition": "Downloaded published BM25 candidates with real passage text; retrieval was not rerun."
+  },
+  "qrel_source": {
+    "official_url": "https://trec.nist.gov/data/deep/2019qrels-pass.txt",
+    "download_url": "https://mirror.ir-datasets.com/2f4be390198da108f6845c822e5ada14",
+    "official_endpoint_observation": "HTTP 403; used public IRDS mirror whose content matches its expected official-file MD5.",
+    "sha256": "8a1f10d550732e4cd91d7fc49846a3784de4040972f583e69285a88f3c5fee92",
+    "md5": "2f4be390198da108f6845c822e5ada14",
+    "bytes": 187092
+  },
+  "query_source": {
+    "url": "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-test2019-queries.tsv.gz",
+    "sha256_compressed": "d66f01dfa8a3e60fe375ba645efc004f97ff4dd2a424536b8d5810c16182a3b5",
+    "md5_compressed": "eda71eccbe4d251af83150abe065368c",
+    "official_unfiltered_query_count": 200,
+    "selected_query_texts_match_exactly": true
+  },
+  "ird_expected_checksums_source": {
+    "revision": "99d81800b2819b89ed536e21455cb3a57050ab7b",
+    "url": "https://github.com/allenai/ir_datasets/blob/99d81800b2819b89ed536e21455cb3a57050ab7b/ir_datasets/etc/downloads.json",
+    "sha256": "127db44e0c5cd8d3195d885f893701b7045d894af828bd7336b7904af0a0b742"
+  },
+  "license_and_reuse": {
+    "msmarco_terms_url": "https://microsoft.github.io/msmarco/",
+    "terms_revision": "21b4ece9f4fc10fa4cec2028bb74287629945df6",
+    "terms_sha256": "ab69d6410caaa38b13c395e6d4e0d6b77bab27f2545185c5518d8597acc624c2",
+    "terms_summary": "Intended for non-commercial research only. Made available without extending a license or underlying intellectual-property rights; Microsoft notes it may not own underlying document rights.",
+    "hf_dataset_license_declaration": null,
+    "code_license_does_not_relicense_passages": true,
+    "raw_data_republication_authorized_or_performed": false,
+    "local_use": "Isolated research evaluation only; no training export, public repository payload, or Hugging Face upload."
+  },
+  "author_alignment": {
+    "commit": "ac843ed63a302900d76722b83be926fdb84a3936",
+    "prepare_script_sha256": "fbfddc75d67528d634d2e208663d806f087961ecaf64c602a3dbe930d2b9f820",
+    "converter_sha256": "66cda937575ef493ab675f344dd8ac084dd2b60e29c8e860a4166389da58fe67",
+    "same_candidate_repository_and_file_paths": true,
+    "original_author_revision_was_pinned": false,
+    "original_author_exact_file_bytes_known": false,
+    "retrieval_parameters_evidence": "Author prepare_data.sh and converter document pyserini msmarco-v1-passage BM25 k1=0.9 b=0.4. This preparation preserves downloaded ranks/scores, checks nonincreasing scores, and does not independently reconstruct the index or retrieval.",
+    "query_selection": "All and only judged query IDs; matches the author ir_datasets .../judged selection.",
+    "preprocessing": "Whitespace collapsed in candidate text exactly as author converter; official query strings unchanged. No token truncation applied in stored candidates.",
+    "runtime_limits_not_applied_here": {
+      "query_tokens": 32,
+      "passage_tokens": 128,
+      "encoding": "cl100k_base",
+      "author_tiktoken_version": "not pinned"
+    },
+    "provider_difference": "Author used Vercel typesafe-ai/jev. No provider was called during preparation."
+  },
+  "query_count": 43,
+  "candidate_count": 4300,
+  "unique_passages": 4297,
+  "qrel_count": 9260,
+  "qrel_query_count": 43,
+  "normalized_passage_occurrences": 0,
+  "synthetic_text_added": false,
+  "training_performed": false,
+  "model_evaluation_performed": false,
+  "preparation_script_sha256": "6f9688d700f586e5ba88d409b264045ce5b17eb796771d01cfa9470ac2f87c84"
+}

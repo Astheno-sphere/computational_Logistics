@@ -1,0 +1,128 @@
+{
+  "status": "cpu_validated_gpu_not_started",
+  "verified_at": "2026-09-21T02:42:38.849057+00:00",
+  "tests": {
+    "command": "python3 -m unittest tests.test_openjev_provider tests.test_service_suite tests.test_provider_quality tests.test_provider_suite -v",
+    "passed": 48,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "independent_review": {
+    "reviewer": "provider_client_review",
+    "status": "passed_after_interruption_fix",
+    "client_tests": 11,
+    "service_tests": 35,
+    "resolved_issue": "SIGTERM had lost an in-flight request; dispatch journal and interruption handling now preserve it, and dangling journals cannot be scored."
+  },
+  "input_preflight": {
+    "coverage": {
+      "directory": "data/provider-comparison-v1",
+      "manifest_sha256": "f03b181d6470732dea6818df75c18ee80cb9401281bfe4fad410ed0829bac727",
+      "requests": 189,
+      "labelled_decisions": 146,
+      "files": {
+        "requests.json": {
+          "sha256": "ecb1e3bc62cfd72ceb51bdb1bfab5dbc74afe64440cb653dd85dc86e05833b5d",
+          "bytes": 620720
+        },
+        "gold.json": {
+          "sha256": "d5ce66697b4c2b162a3d7559fdf6c445591483436d6b64666770b1cf98305126",
+          "bytes": 94659
+        }
+      }
+    },
+    "jf100": {
+      "directory": "data/provider-comparison-jf100-v1",
+      "manifest_sha256": "03b5c41c198e04614a0add36c717c326570ed7b2982be0515fb7dca65efbb2ca",
+      "requests": 300,
+      "labelled_decisions": 300,
+      "files": {
+        "requests.json": {
+          "sha256": "2a373b30cdbcd26fdbc538252c7a5d1c5250f86160a57e9a96d70ca2f2d6106c",
+          "bytes": 566564
+        },
+        "gold.json": {
+          "sha256": "bfdb34b6a7a939335244f812b7ffe89c895578d2768adf9b352bfd96d20229ff",
+          "bytes": 146562
+        }
+      }
+    },
+    "ir-pilot": {
+      "directory": "data/provider-ir-pilot-v1",
+      "manifest_sha256": "519da8ff5432093fa88d79aaa9a101529f66692c6393a8e8f2e8996eeab279f3",
+      "requests": 132,
+      "labelled_decisions": 174,
+      "files": {
+        "requests.json": {
+          "sha256": "d95b0e53ab85b447f0197e37f9d91847d745a6d39a23818511cf22ecbbb13035",
+          "bytes": 236381
+        },
+        "gold.json": {
+          "sha256": "33348e5b44e676c350f0e988f3bac8150f1cd5b4a76bea1e31a7a5d445a9c4ab",
+          "bytes": 105199
+        }
+      }
+    },
+    "fizzbuzz": {
+      "directory": "data/provider-fizzbuzz-control-v1",
+      "manifest_sha256": "92809c48f5cfd0d8db9f764233be38f9902c15036cbf5be57f050cdbc5c458a0",
+      "requests": 100,
+      "labelled_decisions": 300,
+      "files": {
+        "requests.json": {
+          "sha256": "c028ff64c44ab102a76f7c493061b412cb78fba8bb53cf245ea0665ff79e33ed",
+          "bytes": 113039
+        },
+        "gold.json": {
+          "sha256": "cdbfddc97691c764265ebf217f7f742accfdc8e8c2914783c02bc2ff260f4048",
+          "bytes": 121618
+        }
+      }
+    },
+    "mailroom": {
+      "directory": "data/provider-mailroom-probe-v1",
+      "manifest_sha256": "25d00d67e4e31ec791d3ae1c67f69bbd15a0c778ca7c8746b7a8838506b63df3",
+      "requests": 87,
+      "labelled_decisions": 921,
+      "files": {
+        "requests.json": {
+          "sha256": "766471bc5441199dc77ea02446370ab7eef8735f2ef4ddec2692bf8327552c34",
+          "bytes": 519151
+        },
+        "gold.json": {
+          "sha256": "07ae03e9d2f169fb8e3df38457807d0e9e79f0a0565c2f30c9892b04df66733e",
+          "bytes": 618457
+        }
+      }
+    }
+  },
+  "requests_per_model": 808,
+  "labelled_decisions_per_model": 1841,
+  "hard_targets_per_model": 1826,
+  "source_sha256": {
+    "scripts/evaluate_openjev_provider.py": "dd392e97aad48451f0f707b5335e42c3cdd956dd778adee1e15d3a9a9d193f0c",
+    "scripts/run_service_suite.py": "3ad2edd5d3539edeab746f373ec8c07dc3a959201dd3efe41b4ef1e5575b6977",
+    "tests/test_openjev_provider.py": "caf1f8aac915cf966a298b46c6a4d8f4be60c9ad6d1813170a777f9488fc2b4c",
+    "tests/test_service_suite.py": "7be2aaf3a9a07aeaabc764064d29502de646375e734a613796310895e1a29049"
+  },
+  "checks": [
+    "Exact frozen inputs; no gold in client input payload",
+    "Model/base revision/checkpoint/temperature/commit/context length bound on every successful response",
+    "Prefix cache disabled; one attempt per workload and no retries",
+    "Invalid probability mass retained and scored as failure",
+    "Timed-out or changed service stops before another request",
+    "SIGTERM and SIGKILL exercised against CPU loopback server in real subprocesses",
+    "Default existing measurements unchanged"
+  ],
+  "external_api_requests": 0,
+  "gpu_allocations": 0,
+  "new_model_quality_results": false,
+  "frozen_data_or_gold_changed": false,
+  "active_training_or_core_plan_changed": false,
+  "remaining": [
+    "Provision isolated N1 checkout and original private inputs",
+    "Wait for core guard, independent audit, contact/amount and allocation cleanup",
+    "New GPU responses require independent quality audit before publication",
+    "TREC/local adapter and full registries remain pending"
+  ]
+}

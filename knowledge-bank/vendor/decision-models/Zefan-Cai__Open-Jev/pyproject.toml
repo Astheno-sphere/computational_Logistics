@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-jev"
+version = "0.1.0.dev0"
+description = "Open Qwen-based non-generative probability decisions and demo tasks"
+requires-python = ">=3.10"
+license = "MIT"
+readme = "README.md"
+
+[project.optional-dependencies]
+train = ["torch>=2.8", "transformers==5.10.2", "peft==0.19.1", "accelerate==1.13.0", "datasets==5.0.0", "safetensors"]
+doom = ["vizdoom==1.2.4"]
+phone = ["phonenumbers==9.0.14"]
+fast = ["triton>=3.4,<4", "ninja", "flash-linear-attention==0.5.2"]
+
+[project.scripts]
+open-jev-serve = "jev.server:main"
+open-jev-train = "jev.train:main"
+
+[tool.setuptools.packages.find]
+include = ["jev*", "third_party", "third_party.open_jev_fast*"]
+
+[tool.setuptools.package-data]
+"third_party.open_jev_fast" = ["LICENSE", "THIRD_PARTY_NOTICES.md", "PROVENANCE.json", "src/*.cu", "src/*.cpp"]

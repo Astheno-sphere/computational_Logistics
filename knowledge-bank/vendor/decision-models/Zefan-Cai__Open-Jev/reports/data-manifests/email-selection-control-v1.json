@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "configuration": {
+    "type": "synthetic",
+    "generator_version": "email-selection-control-v1",
+    "groups": 200,
+    "ood_groups": 40,
+    "seed": 42,
+    "license": "CC0-1.0",
+    "split_policy": "all_document_contact_counterfactuals_in_family; hash_id_splits; reserved_contact_card_layout_and_role_wording_ood",
+    "candidate_extractor": {
+      "name": "jev.recipes.extract_candidates(email)",
+      "pattern": "[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+",
+      "reads_query_or_gold": false,
+      "known_limits": "Existing ASCII regex misses quoted local parts and can return partial Unicode local/domain spans; exact misses are retained."
+    },
+    "source_files_sha256": {
+      "case_email_selection.py": "dbcd4beaf0167fb4e4e3115289a63643c21a14221381400e4151c71b6557a544",
+      "recipes.py": "2757ea6c42ecec667f066fecaf5dc7a2b34971d231cd082e12729355bbc7b9a5",
+      "api.py": "493f1fb9c3ffccbdc5f07d555791f9d86b3db7e1a53eef278230211cb6883254",
+      "data.py": "97c1764a5090f60476397baf889a864359e0d59b48d99ddf3b34335d3e1b138e"
+    }
+  },
+  "summary": {
+    "records": 5400,
+    "groups": 200,
+    "unique_inputs": 5400,
+    "splits": {
+      "calibration": 81,
+      "ood": 1080,
+      "test": 432,
+      "train": 3618,
+      "validation": 189
+    },
+    "kinds": {
+      "choice": 2600,
+      "noul": 2800
+    },
+    "families": {
+      "evidence": 5400
+    },
+    "sources": {
+      "email-selection-control-v1": 5400
+    }
+  },
+  "files_sha256": {
+    "train.jsonl": "2127d52a792e1e7d2727315aaf7368e61b50d9853559f4e694aa96964e3fe492",
+    "calibration.jsonl": "d6a6ddb37d4d086028a8c68f6b2c677ff4860ac0441c35e586d4f2233aa4bdd9",
+    "validation.jsonl": "575c2a53df3b075210cb6f4845e94a15123321af0945208b0b7eba00cb044ad9",
+    "test.jsonl": "9d4138f70de5473700dd59a92bb893d87e68d98ce0a76ead98c907fe8256e28e",
+    "ood.jsonl": "975ec0cff2afd7188313682b73de64be76ad7f8fdc42603fefb1c2cc616ecd04",
+    "families.jsonl": "5491993709233822930fad05271b21c0c3aa57ab66ced9d5d97164b0f07b604d",
+    "cases.jsonl": "49ce82cd0cbd79bf2164f8c2a24b733bcea44a146a9f5568c06a5e3aaee72495"
+  },
+  "model_input_fields": [
+    "state",
+    "question",
+    "kind",
+    "options"
+  ],
+  "family_count": 200,
+  "document_count": 2800,
+  "typed_record_count": 5400,
+  "head_counts": {
+    "span": 2600,
+    "target_present": 2800
+  },
+  "selection_reference_counts": {
+    "recalled": 1000,
+    "target_absent": 800,
+    "ambiguous_target": 400,
+    "candidate_miss": 600
+  },
+  "candidate_count": 17400,
+  "candidate_recall": {
+    "denominator": "documents with exactly one populated current requested-role field",
+    "recalled": 1000,
+    "missed": 600,
+    "eligible": 1600,
+    "fraction": "1000/1600",
+    "rate": 0.625,
+    "absent_documents_excluded": 800,
+    "ambiguous_documents_excluded": 400
+  },
+  "candidate_copy_reference_counts": {
+    "copied": 17000,
+    "review": 400
+  },
+  "omitted_supervision_counts": {
+    "forced_single_candidate": 200
+  },
+  "observed_order_diversity": {
+    "field_status_order_count": 2291,
+    "recalled_target_candidate_ids": {
+      "span_6": 143,
+      "span_5": 155,
+      "span_2": 145,
+      "span_4": 139,
+      "span_0": 145,
+      "span_3": 131,
+      "span_1": 142
+    },
+    "ordering_rule": "Shuffle complete field lines using family and opaque document nonce, without query, gold or label-based permutation selection."
+  },
+  "counts": {
+    "train": 3618,
+    "calibration": 81,
+    "validation": 189,
+    "test": 432,
+    "ood": 1080
+  },
+  "training_performed": false,
+  "model_inference_performed": false,
+  "frozen_training_datasets_modified": false,
+  "scope": "Current-contact selection under a controlled visible grammar; exact copying does not establish role correctness, RFC validity or email delivery."
+}

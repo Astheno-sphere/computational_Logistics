@@ -1,0 +1,70 @@
+{
+  "state": {
+    "text": "Invoice example-217\nNumber format: EU\nCurrency declaration: EUR\nSubtotal: EUR 100,00 | Flow: charge\nTax: EUR 21,50 | Flow: charge\nAmount due: EUR -121,50 | Flow: credit\nCredit balance: EUR 14,00 | Flow: credit",
+    "requested_role": "due",
+    "policy": {
+      "version": "visible-invoice-amount-v1",
+      "locale": "EU",
+      "layout": "invoice",
+      "scope": "Controlled invoice fields, not arbitrary document understanding or an authorization to transact.",
+      "grammar": "Headers are Number format: <US|EU> and Currency declaration: <USD|EUR|GBP|not stated>. Invoice lines are <role>: <value> | Flow: <flow>. Ledger lines are <role> :: flow=<flow>; value=<value>. A value is the complete text in that slot; not recorded means no value. Unrecognized lines do not supply fields.",
+      "roles": {
+        "Subtotal": "subtotal",
+        "Tax": "tax",
+        "Amount due": "due",
+        "Credit balance": "credit",
+        "Shipping estimate": "shipping"
+      },
+      "flows": {
+        "charge": "charge",
+        "credit": "credit",
+        "not stated": null
+      },
+      "presence_rule": "target_present means at least one requested-role field is populated, even if its amount format is unsupported. It is independent of candidate recall. Missing roles and not recorded slots are absent. Multiple populated requested-role fields are ambiguous, even if their values are equal.",
+      "selection_rule": "Select a candidate only when exactly one requested-role field is populated and a candidate equals its complete value text and both character offsets. Otherwise select none. none never proves target absence. Candidates come from the complete document without access to the query or reference spans.",
+      "number_rule": "Use ASCII digits only, with exactly two fractional digits. US uses decimal dot and optional comma groups of three. EU uses decimal comma and optional dot OR narrow no-break-space groups of three, never mixed. Ungrouped integers have no leading zeros except zero. A numeric sign may be + or - immediately before the number. Parentheses around the complete monetary expression imply a negative sign; combining parentheses and a numeric sign is invalid. Values include one visible currency marker, before or after the number. No exponent, rounding, inferred locale or generated digits.",
+      "currency_rule": "USD, EUR and GBP identify those currencies; € means EUR and £ means GBP under this declared policy only. $ and ¤ require the supported Currency declaration header. CAD is unsupported and yields review. An explicit supported ISO marker overrides the document declaration. Partial or invalid amounts yield review.",
+      "direction_rule": "Use only the flow attached to the complete selected field, through the visible flows table. An absent or unknown flow is unknown, even with a numeric sign. An explicit negative sign or parentheses requires credit; explicit plus requires charge. A sign/flow conflict is unknown and requires review. Unsigned magnitudes can be either credit or charge. direction_known is yes only for a valid complete amount and an established, sign-consistent flow. is_credit is defined only when direction_known is yes; otherwise ignore it and provide no supervised is_credit target.",
+      "normalization_rule": "Copy the actual selected candidate. Reject identifiable partial spans using its source offsets and public field grammar, even if a predicted head says known. Parse exact Decimal magnitude. Unknown currency or direction, inconsistent attributes, malformed values or sign conflicts require review. Apply credit negativity exactly once with Decimal.copy_abs/copy_negate; never use context-rounding arithmetic."
+    },
+    "candidates": {
+      "span_0": {
+        "text": "EUR 100,00",
+        "start": 74,
+        "end": 84
+      },
+      "span_1": {
+        "text": "EUR 21,50",
+        "start": 105,
+        "end": 114
+      },
+      "span_2": {
+        "text": "EUR -121,50",
+        "start": 142,
+        "end": 153
+      },
+      "span_3": {
+        "text": "EUR 14,00",
+        "start": 185,
+        "end": 194
+      }
+    }
+  },
+  "questions": {
+    "span": {
+      "type": "choice",
+      "instructions": "Select the complete verbatim amount span for the requested role under the visible policy.",
+      "criteria": {
+        "span_0": "{\"text\": \"EUR 100,00\", \"start\": 74, \"end\": 84}",
+        "span_1": "{\"text\": \"EUR 21,50\", \"start\": 105, \"end\": 114}",
+        "span_2": "{\"text\": \"EUR -121,50\", \"start\": 142, \"end\": 153}",
+        "span_3": "{\"text\": \"EUR 14,00\", \"start\": 185, \"end\": 194}",
+        "none": "No unique complete candidate answers the requested role; this does not establish absence."
+      }
+    },
+    "target_present": {
+      "type": "noul",
+      "instructions": "Does at least one requested-role field contain a populated value, independently of whether the regex recalled it? Apply the visible presence rule."
+    }
+  }
+}

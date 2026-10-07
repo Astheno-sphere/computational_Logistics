@@ -1,0 +1,213 @@
+{
+  "checks": [
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "The exact manifest, all corpus byte hashes and producer-source hashes are pinned. Family metadata for every split is decoded for routing; full case references are decoded only after ID-to-family lookup and requested test/OOD filtering. All typed split files are only hashed. This must not be described as zero nonheldout JSON of every kind because family metadata is decoded.",
+      "end_line": 108,
+      "id": "heldout_only_case_payload_loading",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 26
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "Every case in a requested heldout split is included, with duplicate/group/incomplete checks. Ordering uses split, SHA-256 of group ID and SHA-256 of case ID only. Validation can reject an invalid corpus, but no label-based subsampling or outcome-based removal is present.",
+      "end_line": 108,
+      "id": "selection_uses_IDs_not_labels",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 63
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "The attribute count and set of candidate IDs must match all actual candidates. Reference direction_known must be a bool; is_credit must be bool when known and null otherwise. Frozen manifest lineage plus the existing independent reference audit binds the remaining sidecar semantics.",
+      "end_line": 60,
+      "id": "all_actual_B_references_and_conditional_schema",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 43
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "A error or actual none returns before B. Otherwise amount_attributes(original_A, actual_selected_id) constructs B, rather than dispatching stored reference B or a gold span. A presence uses p >= 0.5 and is retained independently; it does not gate B.",
+      "end_line": 137,
+      "id": "actual_A_to_B_without_presence_or_gold_gate",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 111
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "All three B predictions are thresholded or decoded from actual responses. normalize_amount receives predicted currency and predicted direction_known; is_credit is passed only when predicted known is true and otherwise None. No reference-known condition gates runtime normalization.",
+      "end_line": 137,
+      "id": "predicted_known_controls_normalization_only",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 131
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "B currency and direction-known compare against the actual A-selected candidate reference. Credit total increments only when that actual reference direction is known, regardless of predicted known and even when B fails. Currency review does not remove a reference-defined credit target: the frozen corpus has 54 such heldout candidates.",
+      "end_line": 176,
+      "id": "actual_reference_known_controls_credit_scoring",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 159
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "Undefined reference credit adds to actual_b_undefined_credit but never to the credit accuracy denominator. The joint defined-head comparison requires currency and known correctness and ignores credit only where the reference says it is undefined. A wrong known prediction still fails joint through known_ok. Protocol validation still applies to every declared head before b.status becomes ok.",
+      "end_line": 176,
+      "id": "undefined_credit_is_not_false_or_free_credit",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 165
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "Raw Choice can be correct when both prediction and reference are none on a miss. Exact extraction additionally requires unique target, eligible actual non-none candidate, span ID correctness and complete text/start/end equality. Thus miss-none cannot earn raw-span extraction or normalized value success.",
+      "end_line": 194,
+      "id": "miss_none_does_not_extract",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 148
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "A wrong-role or wrong-offset candidate may produce a ready guard but fails exact. Partial candidates must pass the frozen normalizer source-span checks and still cannot equal a complete requested target. value_ok requires exact, correct defined B heads, reference ready and actual guard ready, then compares exact currency/decimal strings; matching None values or matching review statuses cannot satisfy it.",
+      "end_line": 194,
+      "id": "wrong_role_partial_and_null_outputs_do_not_succeed",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 149
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "All unique requested targets increment exact_raw_span, final_value and complete_output totals independently of A/B success: test 168, OOD 480, total 648. The fixed normalized_pair_on_reference_ready_target subset is test 84, OOD 240, total 324, determined only by the reference for the unique actually recalled target. Wrong selection, none, B failure and pending status remain zero within the relevant fixed denominators.",
+      "end_line": 204,
+      "id": "fixed_unique_and_reference_ready_denominators",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 179
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "No float conversion or arithmetic is used to score amount output: the ready (currency, amount-string) pair must equal the frozen exact reference. Final-value success is independent of presence; complete_output additionally requires positive presence. Credit sign and long-decimal arithmetic are delegated to the frozen runtime normalizer, whose source was independently audited earlier.",
+      "end_line": 194,
+      "id": "exact_decimal_and_complete_output_semantics",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 182
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "One pending outcome is initialized for every selected case. Ordinary exceptions set pipeline_error without removing records. A finally block writes each attempted outcome; the outer finally appends all remaining pending records and summarizes the full cases/outcomes. B failure may retain valid A credit but fails B/final-value metrics. This is a static control-flow conclusion, not a runtime fault-injection result.",
+      "end_line": 288,
+      "id": "all_failures_and_pending_outcomes_remain_visible",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 249
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "The frozen imported call_stage writes and flushes request JSON/base64/hash before transport, then records response bytes/status/base64/hash before strict JSON parsing. It locks valid identity metadata before schema validation and rejects later drift. HTTP errors and invalid JSON are statuses rather than dropped cases. This uses the previously reviewed shared implementation; no new HTTP call occurred here.",
+      "end_line": 185,
+      "id": "wire_bytes_and_identity_are_preserved_by_shared_stage",
+      "path": "scripts/evaluate_contact_service.py",
+      "start_line": 150
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "An explicit transport selects software_fixture mode. The quality flag requires ordinary HTTP mode, complete state and a nonempty stable identity. Completed-with-errors, interrupted, changed-input and fixture runs cannot pass it. Service identity remains self-reported metadata, not independent proof of loaded weights.",
+      "end_line": 276,
+      "id": "model_quality_flag_requires_complete_HTTP_mode",
+      "path": "scripts/evaluate_amount_service.py",
+      "start_line": 237
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "The fixture binds 127.0.0.1, validates the exact generated endpoint, disables proxies with ProxyHandler({}), rejects redirects, and scopes a patch of shared_http.urlopen to that direct opener. It still calls the production http_attempt through an explicitly injected transport. Each saved report is required to be software_fixture with is_model_quality_evidence false.",
+      "end_line": 235,
+      "id": "independent_HTTP_fixture_disables_proxy_and_redirects",
+      "path": "reports/amount-service-eval/verify_http_pipeline.py",
+      "start_line": 190
+    },
+    {
+      "assessment": "consistent_by_static_inspection",
+      "basis": "The independent HTTP audit first reconstructs the complete prefix-filtered heldout population and request order and compares it with the real loader and fixed pending denominators, without HTTP. Only later small fixture runs patch load_cases. The lexicographically first frozen heldout family is document-family-0158c08a07966eb6b17d in OOD, consistent with the explicit fixture split. The final audit metadata also sets is_model_quality_evidence false.",
+      "end_line": 137,
+      "id": "independent_fixture_population_and_label_are_separate",
+      "path": "reports/amount-service-eval/verify_http_pipeline.py",
+      "start_line": 64
+    }
+  ],
+  "created_at_utc": "2026-09-20T18:23:00.967444+00:00",
+  "fixed_populations_from_frozen_reports": {
+    "ood": {
+      "all_possible_B": 2960,
+      "all_possible_B_credit_defined": 2760,
+      "all_possible_B_credit_undefined": 200,
+      "ambiguous_target": 40,
+      "candidate_miss": 80,
+      "currency_review_but_credit_defined": 40,
+      "documents": 640,
+      "families": 40,
+      "recalled": 400,
+      "reference_ready": 240,
+      "target_absent": 120,
+      "unique_present": 480
+    },
+    "test": {
+      "all_possible_B": 1036,
+      "all_possible_B_credit_defined": 966,
+      "all_possible_B_credit_undefined": 70,
+      "ambiguous_target": 14,
+      "candidate_miss": 28,
+      "currency_review_but_credit_defined": 14,
+      "documents": 224,
+      "families": 14,
+      "recalled": 140,
+      "reference_ready": 84,
+      "target_absent": 42,
+      "unique_present": 168
+    },
+    "test_plus_ood": {
+      "all_possible_B": 3996,
+      "all_possible_B_credit_defined": 3726,
+      "all_possible_B_credit_undefined": 270,
+      "ambiguous_target": 54,
+      "candidate_miss": 108,
+      "currency_review_but_credit_defined": 54,
+      "documents": 864,
+      "families": 54,
+      "recalled": 540,
+      "reference_ready": 324,
+      "target_absent": 162,
+      "unique_present": 648
+    }
+  },
+  "input_files_sha256": {
+    "docs/amount-service-evaluation.md": "6c90b160180ca3d71fd9c0232293f6d57a9effd23bf07e0f6364442985ce9a93",
+    "reports/amount-service-eval/heldout-preflight.json": "2c146746d55f53a9d72fb8fe8f1b2beea24b2927fa9b2943acd09eeb5eb4cc70",
+    "reports/amount-service-eval/reference-review.json": "6469e84bd35de80f275883d2f942507eec71d3749b7265232f2a24b3a7d17e89",
+    "reports/amount-service-eval/verify_http_pipeline.py": "7a7a4576bd930d8576fe4cb920c1034df5e0fb8f99adde04a230e8c2349c68a4",
+    "scripts/evaluate_amount_service.py": "7ebb3a4028ddc5436b4c49e3ea799eb36ed5537518fdae283166866ec0c4d17a",
+    "scripts/evaluate_contact_service.py": "562dac913d4cebf2732aef9d055dd8dea126c2ec2987573321f1554caf06153a",
+    "tests/test_amount_service.py": "09c5fb6955dc9515271aea9fd93969c4169a0af6880395dfc2193e87b12d993e"
+  },
+  "is_model_quality_evidence": false,
+  "kind": "independent_amount_evaluator_static_metrics_review",
+  "limitations": [
+    "Runtime full-loader equality, loopback response/error behavior and focused test execution belong to separate evidence produced by other agents; this report checks their implementation statically only.",
+    "The evaluator uses frozen producer builders/reference functions for heldout integrity and normalization. This review verifies that references are not substituted for predictions or B dispatch, rather than claiming no producer code is used.",
+    "All-possible-candidate B counts are fixed data coverage, while runtime B and conditional-credit populations depend on actual model selections.",
+    "Unknown/review guard correctness is not extracted amount success. The full unique-target metric retains 324 targets without a ready reference pair; 324/648 is a structural reference-availability ceiling, not an achieved model result.",
+    "This is a controlled synthetic amount task, not arbitrary invoice/PDF/OCR understanding or permission to transact."
+  ],
+  "reviewed_documentation": {
+    "observed_sha256": "6c90b160180ca3d71fd9c0232293f6d57a9effd23bf07e0f6364442985ce9a93",
+    "path": "docs/amount-service-evaluation.md",
+    "scope": "Read for agreement on fixed populations, actual-A conditioning, reference-known scoring, predicted-known normalization, undefined heads and error/pending disclosure. Documentation test/runtime claims were not independently rerun."
+  },
+  "reviewer": "source_coverage/citation_audit",
+  "schema_version": 1,
+  "scope": {
+    "HTTP_SSH_or_network_used": false,
+    "denominator_source": "Existing heldout-preflight.json and reference-review.json only; counts compared with static counter conditions.",
+    "evaluator_or_HTTP_auditor_imported_or_executed": false,
+    "model_quality_evidence": false,
+    "new_dataset_case_family_or_split_payloads_read": false,
+    "static_source_review_only": true,
+    "test_source": "Frozen test file hash checked only; no owner test result is claimed as independently executed by this reviewer.",
+    "tests_or_fixtures_run": false
+  },
+  "status": "completed_no_unresolved_findings_in_reviewed_scope"
+}

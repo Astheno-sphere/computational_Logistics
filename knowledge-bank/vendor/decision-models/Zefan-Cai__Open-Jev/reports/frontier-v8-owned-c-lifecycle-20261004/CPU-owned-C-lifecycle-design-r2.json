@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "at_utc": "2026-10-04T00:28:36.482655+00:00",
+  "status": "proposal_pending_independent_design_review_not_frozen_or_launch_authority",
+  "scope": "frontier_v8_owned_C_direct_worker_lifecycle_fixture",
+  "base_actual_main": "3d874d4e33c67af993fa8028751f02205ad96c97",
+  "branch": "codex/open-jev-v8-owned-c-lifecycle-20261004",
+  "new_source_paths": [
+    "scripts/frontier_v8_owned_c_lifecycle.py",
+    "scripts/frontier_v8_owned_c_lifecycle.c",
+    "tests/test_frontier_v8_owned_c_lifecycle.py",
+    "docs/frontier-v8-owned-c-lifecycle.md"
+  ],
+  "immutable_utility_sources": {
+    "scripts/frontier_v8_containment_capability.py": "1bcda91a4ac9ab50fe051b140fd7ba0fae649c257b45674d1ab15c2bb9a69412",
+    "scripts/frontier_v8_c_toolchain.py": "2175f96e939993db69eb14348fa3115ae583416a1d38307f38f23bd378d003c0",
+    "scripts/frontier_v8_owned_c_selfcheck.py": "3374d4ed4ef1bafa38d8f4340ffcc042ee396d966228a682adf890182108b47c"
+  },
+  "cases": [
+    "normal",
+    "controller_loss"
+  ],
+  "case_isolation": "Each CLI/request accepts one closed case enum and64hex fresh nonce, no external PID/executable/command; source fixtures each use distinct temporary roots/nonces. Future host cases require separate declared scopes/attempts and one execution each only after source integration. No nonce/request/hostdeclaration now.",
+  "process_layout": "One new compiled C coordinator directly forks controller and guard; guard forks one fixed worker. Four C fixture roles including coordinator; Python observer/bootstrap and compiler/linker processes are additional counted activity outside these4. No worker exec or services/additional worker descendants.",
+  "setup_protocol": [
+    "Coordinator captures self boot/UID/EUID/PID/PPID/birth and inherited product dev/inode/mode/owner/size/mtime/ctime baseline. Creates dedicated bounded private pipes, nonblocking ends, closes all unused ends in every role.",
+    "Fork controller first; controller publishes bounded identity+nonce ready packet, then parks on its sole coordinator-control pipe. Coordinator validates fresh fork PID/PPID/UID/EUID/boot/birth and opens controller pidfd before creating guard. No PID is accepted externally.",
+    "Coordinator forks guard carrying anchored controller pidfd/product/t0; guard closes controller-control writer and unrelated descriptors, publishes private guard identity+nonce and parks on sole coordinator start pipe. Coordinator binds own-fork guard PID/PPID/birth/boot/UID/EUID/product and acquires matching guard pidfd before sending GUARD_START. Only after validated GUARD_START may guard fork worker. Worker closes unrelated controller/report descriptors, publishes private ready identity+nonce and parks on sole guard control pipe.",
+    "Guard opens worker pidfd before release, binds owned fork PID/PPID/birth/boot/UID/EUID/nonce and rechecks inherited product identity and finite monotonic time. Guard must detect controller pidfd readability during every setup/progress wait. Controller loss before complete readiness is a negative setup failure, never controllerloss-success.",
+    "Guard forwards bounded readiness packet to coordinator only after worker identity/pidfd binding. Coordinator validates it; only then issues fixed case action. Packet sizes bounded below PIPE_BUF, exact length/magic/nonce/role checks; short reads use bounded accumulation rather than trusting partial packet.",
+    "Normal coordinator sends NORMAL_ARM only after complete guard+worker readiness. Guard validates worker-stop intent, identity/product/deadlines and controller still live, records normal armed before returning exact NORMAL_ARM_ACK. Coordinator validates ACK before sending controller orderly quit. Guard directs worker orderly completion, verifies worker exit using its pidfd and its own matching waitpid. Controller exit is expected only after NORMAL_ARM; coordinator independently pidfd-observes/reaps controller exit0.",
+    "Controllerloss coordinator sends LOSS_ARM only after complete guard+worker readiness. Guard revalidates identity/product/time/controller live and records loss armed before exact LOSS_ARM_ACK. Coordinator validates ACK then sends fixed deliberate controller exit command. Guard requires exact controller pidfd exit event plus unchanged own/worker identity/product/deadline before one symbolic SYS_pidfd_send_signal(workerfd,SIGKILL,NULL,0). No PID-kill fallback or signal retry; guard never reaps controller.",
+    "Guard observes exact worker pidfd exit and is the sole worker waitpid parent; returns bounded terminal facts packet before exit. Coordinator drains terminal report with finite deadline before reap; independently matches its controller and guard waitpid statuses. Parsed report success cannot replace actual syscall/poll/wait outcomes."
+  ],
+  "budgets": {
+    "epoch": "Coordinator captures monotonic t0 before any pipe/fork; all forked roles inherit same t0 and exact absolute deadlines; no resetting per-read timeouts",
+    "setup_work_deadline": "t0+5seconds, includes readiness/arming/case command and expected worker action",
+    "own_cleanup_deadline": "t0+8seconds, latest owned signal/exit/wait window; signal only before this deadline",
+    "guard_terminal_deadline": "t0+10seconds, bounded terminal packet/write and coordinator drain; no fresh worker action after cleanup deadline",
+    "worker_self_expiry": "t0+12seconds, later than guard signal/reap deadline; worker bounded self-expiry does not prove observed cleanup",
+    "coordinator_total_deadline": "t0+14seconds, final own controller/guard reaps/report window; no unbounded wait",
+    "outer_compiler_or_runtime_direct_child_timeout_seconds": 30,
+    "outer_direct_child_kill_reap_seconds": 2,
+    "algorithm": "Monotonic finite nonreverse checks from inherited t0; recompute remaining absolute deadlines on every poll/read/write/waitpid WNOHANG. Work/cleanup/terminal/total stage failure retains first typed error. Worker selfdeadline exceeds guard work+cleanup window; no claim about async/hostloss."
+  },
+  "identity_source_limits": "New controlled C roles share reviewed forked product mapping. Runtime product/stat identity drift is rejected before release/signal; Python observer exactsource/input/artifact binding precompile/preruntime/postruntime preserved. Product fstat/ctime identity is not full mapped-code or continuous source-byte authentication; trusted compiler/loader/procfs/filesystem baseline remains explicit.",
+  "error_cleanup": [
+    "Retain first failure and separately record acquiredFD/signal/close/poll/wait/reap outcomes, including unknowns. Acquired pidfds attempt close at mostonce, preserve immediate errno; successfulclose immediately F_GETFD/EBADF with no intervening FD opening.",
+    "Early setup/handshake/controllerdeath/clock/identity/source drift never success. If worker pidfd is acquired and current owned identity still valid, at mostone pidfd cleanup signal; if identity cannot be revalidated, do not signal. Fixed worker selfdeadline remains bounded codepath but does not prove asynchronous or hostloss recovery.",
+    "Coordinator only owns controller/guard reap and can use anchored pidfds for bounded owned cleanup; guard alone owns worker reap. Controller pipe EOF is handled as negative unless declared orderly/loss action was armed. Preserve orphan/unknown cases and do not claim all-tree cleanup.",
+    "No SIGSTOP/SIGCONT/foreignPID/GPU/queue action. SIGPIPE may be ignored by the current product for handled EPIPE only, disclosed as self signal disposition. Full guard/coordinator/observer/hostloss cleanup is outside scope."
+  ],
+  "C_signatures_headers": "Linux/GNU system headers and declared symbolic SYS_pidfd_open/SYS_pidfd_send_signal/SIGKILL/POLLIN/EBADF; staticassert sizes/representability. syscall((long)SYS_pidfd_open,(long)ownedforkpid,(unsigned long)0) and syscall((long)SYS_pidfd_send_signal,(long)ownedfd,(long)SIGKILL,(void*)NULL,(unsigned long)0). No guessed number/provider/architecture.",
+  "observer_bridge": "New Python observer captures and executes immutable helper/toolchain/selfcheck pure utility bodies in distinct nonmain namespaces; never old observe/CLI/oldproduct/guard. Reuse compiler backend and pure ELF/link map parsers only. New seven-file source closure=4new+3immutableutilities, six deployed inputs=5Git sourcefiles+1fresh request when future declared. New strict request binds threeutility hashes/newobserver/C/case/nonce/host/bootstrap/attempt. Refuse --execute before request/context/compiler/Torch; native/module/science bodies never imported.",
+  "meaningful_fixtures": [
+    "Portable strict duplicate/nonfinite/typed JSON and foreign PID/PPID/birth/UID/boot/nonce/product identity checks, wrongcontroller/guard/worker reaping identity/status, earlyexit/partial readiness/missingreport, timeout/reverseclock and forgednormal/loss success.",
+    "Strict real Linux newtemp/newnonce normal fixedCcase actualcompiler/link/runtime, verify normal workerwaitpid exit0 and all expected role readiness/exit/onceclose facts; skip only nonLinux, missing Linuxcompiler/prerequisites on declaredLinux isfailure.",
+    "Strict real Linux distinct controllerloss case, actual symbolic singleownedworkerSIGKILL, poll/wait statusWIFSIGNALED/SIGKILL and controller/coordinator ownership facts, allterminal authoritative outcomes recomputed from returnedfacts; no booleanmock substitutes for these realcases.",
+    "Meaningful helper/backend tests for output/root/input drift and bounded compilerchild failure can inject CPUonlytrusted fixture seams, but must be labeled injected, no MS/model/restoration claims."
+  ],
+  "availability": {
+    "functional_containment_verified": false,
+    "containment_available": false,
+    "execution_available": false,
+    "resource_authority": false,
+    "model_runtime_ABI_observed": false,
+    "production_controller_guard_completed": false,
+    "GPU_or_foreign_restore": false
+  },
+  "actual_counts": {
+    "SSH": 0,
+    "SCP": 0,
+    "compiler": 0,
+    "Torch": 0,
+    "model": 0,
+    "training": 0,
+    "GPU": 0,
+    "foreign_queue": 0,
+    "install": 0,
+    "browser": 0,
+    "external_trials": 0
+  },
+  "verification_sequence": "Independent design before smallest source implementation; focused meaningfultests/sourcepreservation/sourcecommitpush/independentreview/PRattach/alllatestexactCI/main before any separate newhostphase; no oldattempt/sourceaudits/rawlog reruns",
+  "prior_science_native_data_plan_freeze_unchanged": true,
+  "supersedes_for_candidate_only": "CPU-owned-C-lifecycle-design-r1.json"
+}

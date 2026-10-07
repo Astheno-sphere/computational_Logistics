@@ -1,0 +1,3930 @@
+{
+  "status": "complete",
+  "code_commit": "6db40fe18d354450984654020bbb1d05cb771ce9",
+  "plan_sha256": "078db2759609de2373412682a6551cdcab2d617fd9defedbabae07abeafcca4d",
+  "released_temperature": 1.518796342858676,
+  "trained_temperature": 1.2960827517392262,
+  "steps": 64,
+  "training_rows_consumed": 256,
+  "distinct_training_rows": 128,
+  "reload_max_probability_error": 0.0,
+  "trained_checkpoint": {
+    "files_sha256": {
+      "adapter/adapter_config.json": "a7e8618f0eb49d92337cc6971a84bd657229de12df692a8b087765088d378ce1",
+      "adapter/adapter_model.safetensors": "9e453500857fa92bdbe47993474169f8e8df3a9f446dec779a103d78fca2b590",
+      "head.pt": "7936d4dd6dfcc3574389fd845d999d6765b00d4a82aeac9feaee7bd5464ccb1c",
+      "model.json": "d985eafa4d635113ee8cc912e0512a95aac0bed3426e9256931235b75cb3d6c5",
+      "temperature.json": "550e6b6cf6e7368d9bbcb9a5e0d8af91b9f290da2e8b4a2f73e92f361379e931"
+    },
+    "sha256": "9f64accc455dceb66ad79d34697a7ca9168d5750ba75b19717323cf84b18b63e",
+    "config": {
+      "model_id": "Qwen/Qwen3.5-2B",
+      "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+      "max_length": 4096,
+      "lora_rank": 8,
+      "method": "independent_candidate_lora_nll_brier"
+    },
+    "temperature": 1.2960827517392262
+  },
+  "metrics": {
+    "v5_test": {
+      "baseline_logits_at_released_temperature": {
+        "count": 32,
+        "accuracy": 0.46875,
+        "nll": 0.8563153115287567,
+        "brier": 0.5803951428589526,
+        "multiclass_ece": 0.20000307343742801,
+        "by_family": {
+          "timeline": {
+            "count": 32,
+            "accuracy": 0.46875,
+            "nll": 0.8563153115287567,
+            "brier": 0.5803951428589526,
+            "multiclass_ece": 0.20000307343742801
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 24,
+            "accuracy": 0.4583333333333333,
+            "nll": 0.8814819418927199,
+            "brier": 0.5821472636103585,
+            "multiclass_ece": 0.22462417564374526
+          },
+          "noul": {
+            "count": 8,
+            "accuracy": 0.5,
+            "nll": 0.7808154204368662,
+            "brier": 0.5751387806047353,
+            "multiclass_ece": 0.3008514479279165
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 8,
+          "correct": 1,
+          "accuracy": 0.125,
+          "accepted": 2,
+          "coverage": 0.25,
+          "abstentions": 6,
+          "error_among_accepted": 0.5
+        }
+      },
+      "baseline_logits_at_trained_temperature": {
+        "count": 32,
+        "accuracy": 0.46875,
+        "nll": 0.8751112152175842,
+        "brier": 0.6013509201523735,
+        "multiclass_ece": 0.2855694352412011,
+        "by_family": {
+          "timeline": {
+            "count": 32,
+            "accuracy": 0.46875,
+            "nll": 0.8751112152175842,
+            "brier": 0.6013509201523735,
+            "multiclass_ece": 0.2855694352412011
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 24,
+            "accuracy": 0.4583333333333333,
+            "nll": 0.8927509332944457,
+            "brier": 0.6023412209286549,
+            "multiclass_ece": 0.29639607467419876
+          },
+          "noul": {
+            "count": 8,
+            "accuracy": 0.5,
+            "nll": 0.8221920609869998,
+            "brier": 0.598380017823529,
+            "multiclass_ece": 0.25308951694220794
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 8,
+          "correct": 2,
+          "accuracy": 0.25,
+          "accepted": 3,
+          "coverage": 0.375,
+          "abstentions": 5,
+          "error_among_accepted": 0.3333333333333333
+        }
+      },
+      "trained_logits_at_released_temperature": {
+        "count": 32,
+        "accuracy": 0.75,
+        "nll": 0.46805698547214736,
+        "brier": 0.3098651897134133,
+        "multiclass_ece": 0.10534588961246114,
+        "by_family": {
+          "timeline": {
+            "count": 32,
+            "accuracy": 0.75,
+            "nll": 0.46805698547214736,
+            "brier": 0.3098651897134133,
+            "multiclass_ece": 0.10534588961246114
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 24,
+            "accuracy": 0.75,
+            "nll": 0.4857881076611805,
+            "brier": 0.3184371028216921,
+            "multiclass_ece": 0.15373413335236355
+          },
+          "noul": {
+            "count": 8,
+            "accuracy": 0.75,
+            "nll": 0.41486361890504797,
+            "brier": 0.2841494503885769,
+            "multiclass_ece": 0.09928748982125844
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 8,
+          "correct": 3,
+          "accuracy": 0.375,
+          "accepted": 3,
+          "coverage": 0.375,
+          "abstentions": 5,
+          "error_among_accepted": 0.0
+        }
+      },
+      "trained_logits_at_trained_temperature": {
+        "count": 32,
+        "accuracy": 0.75,
+        "nll": 0.4611158027624089,
+        "brier": 0.3121923588128623,
+        "multiclass_ece": 0.07936308890586638,
+        "by_family": {
+          "timeline": {
+            "count": 32,
+            "accuracy": 0.75,
+            "nll": 0.4611158027624089,
+            "brier": 0.3121923588128623,
+            "multiclass_ece": 0.07936308890586638
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 24,
+            "accuracy": 0.75,
+            "nll": 0.4784656207372522,
+            "brier": 0.3217968848363599,
+            "multiclass_ece": 0.10739740810520493
+          },
+          "noul": {
+            "count": 8,
+            "accuracy": 0.75,
+            "nll": 0.409066348837879,
+            "brier": 0.28337878074236955,
+            "multiclass_ece": 0.18858102093035722
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 8,
+          "correct": 3,
+          "accuracy": 0.375,
+          "accepted": 3,
+          "coverage": 0.375,
+          "abstentions": 5,
+          "error_among_accepted": 0.0
+        }
+      }
+    },
+    "v4_test": {
+      "baseline_logits_at_released_temperature": {
+        "count": 128,
+        "accuracy": 0.671875,
+        "nll": 0.8853395538717118,
+        "brier": 0.4873684720240576,
+        "multiclass_ece": 0.14682099171944107,
+        "by_family": {
+          "authorization": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.7600376594012176,
+            "brier": 0.44318576872708604,
+            "multiclass_ece": 0.2323067561107796
+          },
+          "negation": {
+            "count": 20,
+            "accuracy": 0.95,
+            "nll": 0.22881804017847368,
+            "brier": 0.10926823531003309,
+            "multiclass_ece": 0.09675995541310746
+          },
+          "numeric_candidates": {
+            "count": 20,
+            "accuracy": 0.3,
+            "nll": 1.7900814790004826,
+            "brier": 0.8869428225872653,
+            "multiclass_ece": 0.21599947470764852
+          },
+          "policy_distractors": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.548974476876112,
+            "brier": 0.35931435746959284,
+            "multiclass_ece": 0.2316450864781463
+          },
+          "state_tracking": {
+            "count": 24,
+            "accuracy": 0.625,
+            "nll": 1.2134927453840472,
+            "brier": 0.6297369927363751,
+            "multiclass_ece": 0.3694648556497075
+          },
+          "timeline": {
+            "count": 24,
+            "accuracy": 0.6666666666666666,
+            "nll": 0.7350584957181754,
+            "brier": 0.47063553798028274,
+            "multiclass_ece": 0.24128143052917464
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 96,
+            "accuracy": 0.6458333333333334,
+            "nll": 0.8621482690154529,
+            "brier": 0.4915046489883215,
+            "multiclass_ece": 0.13744622770602502
+          },
+          "noul": {
+            "count": 32,
+            "accuracy": 0.75,
+            "nll": 0.9549134084404866,
+            "brier": 0.47495994113126466,
+            "multiclass_ece": 0.2225706016887242
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 32,
+          "correct": 17,
+          "accuracy": 0.53125,
+          "accepted": 23,
+          "coverage": 0.71875,
+          "abstentions": 9,
+          "error_among_accepted": 0.2608695652173913
+        }
+      },
+      "baseline_logits_at_trained_temperature": {
+        "count": 128,
+        "accuracy": 0.671875,
+        "nll": 0.938536740058346,
+        "brier": 0.4978871757883339,
+        "multiclass_ece": 0.15781360140126893,
+        "by_family": {
+          "authorization": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.8125491044777282,
+            "brier": 0.4581039049870454,
+            "multiclass_ece": 0.24794002521975314
+          },
+          "negation": {
+            "count": 20,
+            "accuracy": 0.95,
+            "nll": 0.21676235098351682,
+            "brier": 0.10400657208146799,
+            "multiclass_ece": 0.06966870754408175
+          },
+          "numeric_candidates": {
+            "count": 20,
+            "accuracy": 0.3,
+            "nll": 1.8989976088467402,
+            "brier": 0.8973842441494273,
+            "multiclass_ece": 0.22034410835375212
+          },
+          "policy_distractors": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.5816843118655908,
+            "brier": 0.383421458168749,
+            "multiclass_ece": 0.19996902169301878
+          },
+          "state_tracking": {
+            "count": 24,
+            "accuracy": 0.625,
+            "nll": 1.3502143911438342,
+            "brier": 0.6442831718350559,
+            "multiclass_ece": 0.371016082732486
+          },
+          "timeline": {
+            "count": 24,
+            "accuracy": 0.6666666666666666,
+            "nll": 0.7303204090226979,
+            "brier": 0.47535161621381805,
+            "multiclass_ece": 0.18730376794653877
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 96,
+            "accuracy": 0.6458333333333334,
+            "nll": 0.8936090801193758,
+            "brier": 0.5040237825464052,
+            "multiclass_ece": 0.15432696368046214
+          },
+          "noul": {
+            "count": 32,
+            "accuracy": 0.75,
+            "nll": 1.0733197198752575,
+            "brier": 0.47947735551412024,
+            "multiclass_ece": 0.2206683904900118
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 32,
+          "correct": 19,
+          "accuracy": 0.59375,
+          "accepted": 26,
+          "coverage": 0.8125,
+          "abstentions": 6,
+          "error_among_accepted": 0.2692307692307692
+        }
+      },
+      "trained_logits_at_released_temperature": {
+        "count": 128,
+        "accuracy": 0.6484375,
+        "nll": 0.8783979559091747,
+        "brier": 0.4980941005439142,
+        "multiclass_ece": 0.1630122902359045,
+        "by_family": {
+          "authorization": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.746342514125345,
+            "brier": 0.43273946038265426,
+            "multiclass_ece": 0.23735745173896378
+          },
+          "negation": {
+            "count": 20,
+            "accuracy": 0.95,
+            "nll": 0.1553413156087694,
+            "brier": 0.08258102444593299,
+            "multiclass_ece": 0.06909648861291598
+          },
+          "numeric_candidates": {
+            "count": 20,
+            "accuracy": 0.3,
+            "nll": 1.6762386388569426,
+            "brier": 0.8746384461896136,
+            "multiclass_ece": 0.21018869078255706
+          },
+          "policy_distractors": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.5306566278903843,
+            "brier": 0.36084993489566186,
+            "multiclass_ece": 0.20025767067428052
+          },
+          "state_tracking": {
+            "count": 24,
+            "accuracy": 0.5416666666666666,
+            "nll": 1.3928239669360387,
+            "brier": 0.7289441326227682,
+            "multiclass_ece": 0.3664539209722755
+          },
+          "timeline": {
+            "count": 24,
+            "accuracy": 0.625,
+            "nll": 0.7014825508450245,
+            "brier": 0.4685503486832225,
+            "multiclass_ece": 0.1672947068299001
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 96,
+            "accuracy": 0.65625,
+            "nll": 0.8542411710470651,
+            "brier": 0.4854763636885931,
+            "multiclass_ece": 0.13750811954958428
+          },
+          "noul": {
+            "count": 32,
+            "accuracy": 0.625,
+            "nll": 0.950868310495504,
+            "brier": 0.5359473111098779,
+            "multiclass_ece": 0.2914871465054916
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 32,
+          "correct": 19,
+          "accuracy": 0.59375,
+          "accepted": 27,
+          "coverage": 0.84375,
+          "abstentions": 5,
+          "error_among_accepted": 0.2962962962962963
+        }
+      },
+      "trained_logits_at_trained_temperature": {
+        "count": 128,
+        "accuracy": 0.6484375,
+        "nll": 0.9459490327922618,
+        "brier": 0.5148027150887001,
+        "multiclass_ece": 0.19158190620168003,
+        "by_family": {
+          "authorization": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.808127532405012,
+            "brier": 0.4506174113842068,
+            "multiclass_ece": 0.20738874899429138
+          },
+          "negation": {
+            "count": 20,
+            "accuracy": 0.95,
+            "nll": 0.1509434625801704,
+            "brier": 0.08526702860899917,
+            "multiclass_ece": 0.07365764013737106
+          },
+          "numeric_candidates": {
+            "count": 20,
+            "accuracy": 0.3,
+            "nll": 1.7636930585485444,
+            "brier": 0.8890732988985723,
+            "multiclass_ece": 0.24399790481399175
+          },
+          "policy_distractors": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.570401303226341,
+            "brier": 0.3853410699739024,
+            "multiclass_ece": 0.2269177528610257
+          },
+          "state_tracking": {
+            "count": 24,
+            "accuracy": 0.5416666666666666,
+            "nll": 1.5736906687879826,
+            "brier": 0.75168135385789,
+            "multiclass_ece": 0.4248473065863753
+          },
+          "timeline": {
+            "count": 24,
+            "accuracy": 0.625,
+            "nll": 0.7270663754706898,
+            "brier": 0.4853507858937783,
+            "multiclass_ece": 0.19160514321987765
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 96,
+            "accuracy": 0.65625,
+            "nll": 0.9027177925650279,
+            "brier": 0.5016694839497975,
+            "multiclass_ece": 0.17017618655454214
+          },
+          "noul": {
+            "count": 32,
+            "accuracy": 0.625,
+            "nll": 1.0756427534739632,
+            "brier": 0.554202408505409,
+            "multiclass_ece": 0.31505028459782775
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 32,
+          "correct": 19,
+          "accuracy": 0.59375,
+          "accepted": 27,
+          "coverage": 0.84375,
+          "abstentions": 5,
+          "error_among_accepted": 0.2962962962962963
+        }
+      }
+    },
+    "v5_ood": {
+      "baseline_logits_at_released_temperature": {
+        "count": 32,
+        "accuracy": 0.53125,
+        "nll": 0.8061161671988162,
+        "brier": 0.5654895032679865,
+        "multiclass_ece": 0.19652138847491823,
+        "by_family": {
+          "timeline": {
+            "count": 32,
+            "accuracy": 0.53125,
+            "nll": 0.8061161671988162,
+            "brier": 0.5654895032679865,
+            "multiclass_ece": 0.19652138847491823
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 24,
+            "accuracy": 0.5,
+            "nll": 0.852218955941007,
+            "brier": 0.5939583014498738,
+            "multiclass_ece": 0.20211181889911237
+          },
+          "noul": {
+            "count": 8,
+            "accuracy": 0.625,
+            "nll": 0.6678078009722425,
+            "brier": 0.4800831087223248,
+            "multiclass_ece": 0.3600603787270658
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 8,
+          "correct": 3,
+          "accuracy": 0.375,
+          "accepted": 5,
+          "coverage": 0.625,
+          "abstentions": 3,
+          "error_among_accepted": 0.4
+        }
+      },
+      "baseline_logits_at_trained_temperature": {
+        "count": 32,
+        "accuracy": 0.53125,
+        "nll": 0.8403790550949509,
+        "brier": 0.5912853187461924,
+        "multiclass_ece": 0.26082902573432787,
+        "by_family": {
+          "timeline": {
+            "count": 32,
+            "accuracy": 0.53125,
+            "nll": 0.8403790550949509,
+            "brier": 0.5912853187461924,
+            "multiclass_ece": 0.26082902573432787
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 24,
+            "accuracy": 0.5,
+            "nll": 0.879991690989347,
+            "brier": 0.6202836827090129,
+            "multiclass_ece": 0.24624002388138821
+          },
+          "noul": {
+            "count": 8,
+            "accuracy": 0.625,
+            "nll": 0.7215411474117617,
+            "brier": 0.5042902268577312,
+            "multiclass_ece": 0.3588900220449636
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 8,
+          "correct": 3,
+          "accuracy": 0.375,
+          "accepted": 5,
+          "coverage": 0.625,
+          "abstentions": 3,
+          "error_among_accepted": 0.4
+        }
+      },
+      "trained_logits_at_released_temperature": {
+        "count": 32,
+        "accuracy": 0.78125,
+        "nll": 0.4813309881234793,
+        "brier": 0.3136610230083107,
+        "multiclass_ece": 0.10701153865705891,
+        "by_family": {
+          "timeline": {
+            "count": 32,
+            "accuracy": 0.78125,
+            "nll": 0.4813309881234793,
+            "brier": 0.3136610230083107,
+            "multiclass_ece": 0.10701153865705891
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 24,
+            "accuracy": 0.75,
+            "nll": 0.5424400462868262,
+            "brier": 0.3540708057158784,
+            "multiclass_ece": 0.11890181079891615
+          },
+          "noul": {
+            "count": 8,
+            "accuracy": 0.875,
+            "nll": 0.2980038136334384,
+            "brier": 0.19243167488560778,
+            "multiclass_ece": 0.1362950304563456
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 8,
+          "correct": 4,
+          "accuracy": 0.5,
+          "accepted": 4,
+          "coverage": 0.5,
+          "abstentions": 4,
+          "error_among_accepted": 0.0
+        }
+      },
+      "trained_logits_at_trained_temperature": {
+        "count": 32,
+        "accuracy": 0.78125,
+        "nll": 0.48288889479458685,
+        "brier": 0.3167245339026614,
+        "multiclass_ece": 0.15429289721190953,
+        "by_family": {
+          "timeline": {
+            "count": 32,
+            "accuracy": 0.78125,
+            "nll": 0.48288889479458685,
+            "brier": 0.3167245339026614,
+            "multiclass_ece": 0.15429289721190953
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 24,
+            "accuracy": 0.75,
+            "nll": 0.5476103593455813,
+            "brier": 0.3592568545853265,
+            "multiclass_ece": 0.16208551772346694
+          },
+          "noul": {
+            "count": 8,
+            "accuracy": 0.875,
+            "nll": 0.2887245011416038,
+            "brier": 0.1891275718546657,
+            "multiclass_ece": 0.1309150356772374
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 8,
+          "correct": 4,
+          "accuracy": 0.5,
+          "accepted": 4,
+          "coverage": 0.5,
+          "abstentions": 4,
+          "error_among_accepted": 0.0
+        }
+      }
+    },
+    "v4_ood": {
+      "baseline_logits_at_released_temperature": {
+        "count": 128,
+        "accuracy": 0.6484375,
+        "nll": 0.908329400308953,
+        "brier": 0.5030721022096515,
+        "multiclass_ece": 0.1705707933508087,
+        "by_family": {
+          "authorization": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.6543442512507534,
+            "brier": 0.3925483004025908,
+            "multiclass_ece": 0.13801515974827344
+          },
+          "negation": {
+            "count": 20,
+            "accuracy": 0.85,
+            "nll": 0.49146025213859285,
+            "brier": 0.2762055918086979,
+            "multiclass_ece": 0.13276810230900254
+          },
+          "numeric_candidates": {
+            "count": 20,
+            "accuracy": 0.35,
+            "nll": 1.3846785341717722,
+            "brier": 0.7443298944303312,
+            "multiclass_ece": 0.19087919730366204
+          },
+          "policy_distractors": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.4891792054106837,
+            "brier": 0.33068112011999073,
+            "multiclass_ece": 0.2394029254375673
+          },
+          "state_tracking": {
+            "count": 24,
+            "accuracy": 0.625,
+            "nll": 1.5452363122596333,
+            "brier": 0.7215078124514825,
+            "multiclass_ece": 0.4066836901861608
+          },
+          "timeline": {
+            "count": 24,
+            "accuracy": 0.5833333333333334,
+            "nll": 0.7828019535782794,
+            "brier": 0.5084059770319833,
+            "multiclass_ece": 0.27723831012722605
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 96,
+            "accuracy": 0.6354166666666666,
+            "nll": 0.8885091238334873,
+            "brier": 0.480596659890139,
+            "multiclass_ece": 0.14832483808421618
+          },
+          "noul": {
+            "count": 32,
+            "accuracy": 0.6875,
+            "nll": 0.9677902297353482,
+            "brier": 0.5704984291681887,
+            "multiclass_ece": 0.30226456954900593
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 32,
+          "correct": 14,
+          "accuracy": 0.4375,
+          "accepted": 23,
+          "coverage": 0.71875,
+          "abstentions": 9,
+          "error_among_accepted": 0.391304347826087
+        }
+      },
+      "baseline_logits_at_trained_temperature": {
+        "count": 128,
+        "accuracy": 0.6484375,
+        "nll": 0.969848972149814,
+        "brier": 0.5168091502941471,
+        "multiclass_ece": 0.1930845140127315,
+        "by_family": {
+          "authorization": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.7055094038931969,
+            "brier": 0.4159136760303469,
+            "multiclass_ece": 0.21064735333146345
+          },
+          "negation": {
+            "count": 20,
+            "accuracy": 0.85,
+            "nll": 0.5203425219013729,
+            "brier": 0.28049553549643924,
+            "multiclass_ece": 0.16732642433226586
+          },
+          "numeric_candidates": {
+            "count": 20,
+            "accuracy": 0.35,
+            "nll": 1.418400954095426,
+            "brier": 0.7578905081786058,
+            "multiclass_ece": 0.20887907850695403
+          },
+          "policy_distractors": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.5091407434289474,
+            "brier": 0.35241432831627323,
+            "multiclass_ece": 0.23222273051060963
+          },
+          "state_tracking": {
+            "count": 24,
+            "accuracy": 0.625,
+            "nll": 1.7538390607896464,
+            "brier": 0.7337529357979946,
+            "multiclass_ece": 0.41000975588242583
+          },
+          "timeline": {
+            "count": 24,
+            "accuracy": 0.5833333333333334,
+            "nll": 0.7908607712435759,
+            "brier": 0.5169674924194007,
+            "multiclass_ece": 0.2549741995933608
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 96,
+            "accuracy": 0.6354166666666666,
+            "nll": 0.9311120127113915,
+            "brier": 0.49355988317754057,
+            "multiclass_ece": 0.16254618724456063
+          },
+          "noul": {
+            "count": 32,
+            "accuracy": 0.6875,
+            "nll": 1.0860598504650816,
+            "brier": 0.5865569516439655,
+            "multiclass_ece": 0.3206327131621356
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 32,
+          "correct": 14,
+          "accuracy": 0.4375,
+          "accepted": 23,
+          "coverage": 0.71875,
+          "abstentions": 9,
+          "error_among_accepted": 0.391304347826087
+        }
+      },
+      "trained_logits_at_released_temperature": {
+        "count": 128,
+        "accuracy": 0.6328125,
+        "nll": 0.8955519774416192,
+        "brier": 0.493784630606054,
+        "multiclass_ece": 0.18195876263482935,
+        "by_family": {
+          "authorization": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.6383041703734207,
+            "brier": 0.3880786390863767,
+            "multiclass_ece": 0.18280621590167453
+          },
+          "negation": {
+            "count": 20,
+            "accuracy": 0.85,
+            "nll": 0.3987643195696869,
+            "brier": 0.24789427914501722,
+            "multiclass_ece": 0.08999314961353333
+          },
+          "numeric_candidates": {
+            "count": 20,
+            "accuracy": 0.35,
+            "nll": 1.3236860485736508,
+            "brier": 0.7105971305809469,
+            "multiclass_ece": 0.19169093560759248
+          },
+          "policy_distractors": {
+            "count": 20,
+            "accuracy": 0.7,
+            "nll": 0.4985894435110427,
+            "brier": 0.3521172952489796,
+            "multiclass_ece": 0.2625150038866097
+          },
+          "state_tracking": {
+            "count": 24,
+            "accuracy": 0.5833333333333334,
+            "nll": 1.7255739635920795,
+            "brier": 0.762783644594195,
+            "multiclass_ece": 0.4495545256216554
+          },
+          "timeline": {
+            "count": 24,
+            "accuracy": 0.5833333333333334,
+            "nll": 0.667916597740056,
+            "brier": 0.45516159858699123,
+            "multiclass_ece": 0.19652203621073575
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 96,
+            "accuracy": 0.6458333333333334,
+            "nll": 0.8756919002213456,
+            "brier": 0.46736217434492694,
+            "multiclass_ece": 0.1515094641004344
+          },
+          "noul": {
+            "count": 32,
+            "accuracy": 0.59375,
+            "nll": 0.9551322091024401,
+            "brier": 0.5730519993894344,
+            "multiclass_ece": 0.28950168301313284
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 32,
+          "correct": 17,
+          "accuracy": 0.53125,
+          "accepted": 25,
+          "coverage": 0.78125,
+          "abstentions": 7,
+          "error_among_accepted": 0.32
+        }
+      },
+      "trained_logits_at_trained_temperature": {
+        "count": 128,
+        "accuracy": 0.6328125,
+        "nll": 0.966027775419501,
+        "brier": 0.5109368992411097,
+        "multiclass_ece": 0.21386841587952726,
+        "by_family": {
+          "authorization": {
+            "count": 20,
+            "accuracy": 0.75,
+            "nll": 0.6962566105154807,
+            "brier": 0.4139987178935308,
+            "multiclass_ece": 0.2121416368719553
+          },
+          "negation": {
+            "count": 20,
+            "accuracy": 0.85,
+            "nll": 0.42342987153281014,
+            "brier": 0.2589122091244841,
+            "multiclass_ece": 0.15516330021827604
+          },
+          "numeric_candidates": {
+            "count": 20,
+            "accuracy": 0.35,
+            "nll": 1.3437877437117651,
+            "brier": 0.7238987962993064,
+            "multiclass_ece": 0.25196455179856814
+          },
+          "policy_distractors": {
+            "count": 20,
+            "accuracy": 0.7,
+            "nll": 0.5220227494900963,
+            "brier": 0.37538702617885766,
+            "multiclass_ece": 0.2610700268645174
+          },
+          "state_tracking": {
+            "count": 24,
+            "accuracy": 0.5833333333333334,
+            "nll": 1.9707007765875668,
+            "brier": 0.7713969036358446,
+            "multiclass_ece": 0.4042297010233105
+          },
+          "timeline": {
+            "count": 24,
+            "accuracy": 0.5833333333333334,
+            "nll": 0.6935332129413116,
+            "brier": 0.47676926773659134,
+            "multiclass_ece": 0.2372229147737475
+          }
+        },
+        "by_kind": {
+          "choice": {
+            "count": 96,
+            "accuracy": 0.6458333333333334,
+            "nll": 0.9296011878077425,
+            "brier": 0.4823322025061762,
+            "multiclass_ece": 0.18298112593442295
+          },
+          "noul": {
+            "count": 32,
+            "accuracy": 0.59375,
+            "nll": 1.0753075382547779,
+            "brier": 0.5967509894459101,
+            "multiclass_ece": 0.32948515649164
+          }
+        },
+        "noul_thresholds_0.2_0.8": {
+          "n": 32,
+          "correct": 17,
+          "accuracy": 0.53125,
+          "accepted": 25,
+          "coverage": 0.78125,
+          "abstentions": 7,
+          "error_among_accepted": 0.32
+        }
+      }
+    }
+  },
+  "paired_decisions": {
+    "v5_test": {
+      "n": 32,
+      "correct_to_correct": 13,
+      "incorrect_to_correct": 11,
+      "correct_to_incorrect": 2,
+      "incorrect_to_incorrect": 6,
+      "argmax_changed": 13,
+      "noul_status_transitions": {
+        "abstained_to_abstained": 4,
+        "abstained_to_yes": 1,
+        "no_to_no": 1,
+        "abstained_to_no": 1,
+        "no_to_abstained": 1
+      }
+    },
+    "v4_test": {
+      "n": 128,
+      "correct_to_correct": 79,
+      "incorrect_to_correct": 4,
+      "correct_to_incorrect": 7,
+      "incorrect_to_incorrect": 38,
+      "argmax_changed": 12,
+      "noul_status_transitions": {
+        "abstained_to_abstained": 4,
+        "no_to_no": 18,
+        "yes_to_yes": 4,
+        "abstained_to_yes": 4,
+        "abstained_to_no": 1,
+        "no_to_abstained": 1
+      }
+    },
+    "v5_ood": {
+      "n": 32,
+      "correct_to_correct": 13,
+      "incorrect_to_correct": 12,
+      "correct_to_incorrect": 4,
+      "incorrect_to_incorrect": 3,
+      "argmax_changed": 16,
+      "noul_status_transitions": {
+        "no_to_abstained": 2,
+        "abstained_to_yes": 1,
+        "no_to_no": 3,
+        "abstained_to_abstained": 2
+      }
+    },
+    "v4_ood": {
+      "n": 128,
+      "correct_to_correct": 77,
+      "incorrect_to_correct": 4,
+      "correct_to_incorrect": 6,
+      "incorrect_to_incorrect": 41,
+      "argmax_changed": 10,
+      "noul_status_transitions": {
+        "abstained_to_yes": 3,
+        "yes_to_yes": 2,
+        "no_to_no": 18,
+        "no_to_abstained": 3,
+        "abstained_to_abstained": 4,
+        "abstained_to_no": 2
+      }
+    }
+  },
+  "boundary_offset_results": {
+    "test": {
+      "boundary": {
+        "before_delivery": {
+          "baseline_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 0.81010841139041,
+            "brier": 0.5568924222732283,
+            "multiclass_ece": 0.4739306567629951,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 0.81010841139041,
+                "brier": 0.5568924222732283,
+                "multiclass_ece": 0.4739306567629951
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.112075625831526,
+                "brier": 0.779400879704395,
+                "multiclass_ece": 0.5685467879065249
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.5081411969492939,
+                "brier": 0.33438396484206157,
+                "multiclass_ece": 0.3793145256194653
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 0.8254128562277718,
+            "brier": 0.5770782474336655,
+            "multiclass_ece": 0.4808513346415231,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 0.8254128562277718,
+                "brier": 0.5770782474336655,
+                "multiclass_ece": 0.4808513346415231
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.1588219411032905,
+                "brier": 0.8284863771399399,
+                "multiclass_ece": 0.597063469110591
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.4920037713522529,
+                "brier": 0.32567011772739113,
+                "multiclass_ece": 0.36463920017245516
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.0,
+            "nll": 1.031040180184489,
+            "brier": 0.8049512167474482,
+            "multiclass_ece": 0.6250160589485332,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.031040180184489,
+                "brier": 0.8049512167474482,
+                "multiclass_ece": 0.6250160589485332
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.129403454150806,
+                "brier": 0.8766816315310217,
+                "multiclass_ece": 0.6464661573803363
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 0.932676906218172,
+                "brier": 0.7332208019638745,
+                "multiclass_ece": 0.6035659605167302
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.0,
+            "nll": 1.0900545761090445,
+            "brier": 0.8617524153774632,
+            "multiclass_ece": 0.649093075969168,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.0900545761090445,
+                "brier": 0.8617524153774632,
+                "multiclass_ece": 0.649093075969168
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.200984649920172,
+                "brier": 0.9478372535523446,
+                "multiclass_ece": 0.6778967757844301
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 0.9791245022979171,
+                "brier": 0.7756675772025817,
+                "multiclass_ece": 0.6202893761539059
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          }
+        },
+        "at_delivery": {
+          "baseline_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.75,
+            "nll": 0.6083198089475026,
+            "brier": 0.3706031189770148,
+            "multiclass_ece": 0.41850907892625644,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.6083198089475026,
+                "brier": 0.3706031189770148,
+                "multiclass_ece": 0.41850907892625644
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.6083198089475026,
+                "brier": 0.3706031189770148,
+                "multiclass_ece": 0.41850907892625644
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.75,
+            "nll": 0.5749706504799499,
+            "brier": 0.3578471451493277,
+            "multiclass_ece": 0.3991568594969598,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.5749706504799499,
+                "brier": 0.3578471451493277,
+                "multiclass_ece": 0.3991568594969598
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.5749706504799499,
+                "brier": 0.3578471451493277,
+                "multiclass_ece": 0.3991568594969598
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 1.0,
+            "nll": 0.3736373729434953,
+            "brier": 0.18743345353981647,
+            "multiclass_ece": 0.3070768795589191,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.3736373729434953,
+                "brier": 0.18743345353981647,
+                "multiclass_ece": 0.3070768795589191
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.3736373729434953,
+                "brier": 0.18743345353981647,
+                "multiclass_ece": 0.3070768795589191
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 1.0,
+            "nll": 0.325811352375342,
+            "brier": 0.15619724300539903,
+            "multiclass_ece": 0.27246808367090525,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.325811352375342,
+                "brier": 0.15619724300539903,
+                "multiclass_ece": 0.27246808367090525
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.325811352375342,
+                "brier": 0.15619724300539903,
+                "multiclass_ece": 0.27246808367090525
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          }
+        },
+        "inside_window": {
+          "baseline_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 0.5,
+            "nll": 0.7187342703515877,
+            "brier": 0.4745289609614693,
+            "multiclass_ece": 0.4366527803093184,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.5,
+                "nll": 0.7187342703515877,
+                "brier": 0.4745289609614693,
+                "multiclass_ece": 0.4366527803093184
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.5348260199064896,
+                "brier": 0.3110997926342687,
+                "multiclass_ece": 0.357226443314381
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.2704590216868816,
+                "brier": 0.9648164659430711,
+                "multiclass_ece": 0.6749317912941306
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 1.0
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 0.5,
+            "nll": 0.7245738960850034,
+            "brier": 0.48206077323098007,
+            "multiclass_ece": 0.4228537804558755,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.5,
+                "nll": 0.7245738960850034,
+                "brier": 0.48206077323098007,
+                "multiclass_ece": 0.4228537804558755
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.5014819915188972,
+                "brier": 0.3006616707178854,
+                "multiclass_ece": 0.3327214447819646
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.3938496097833224,
+                "brier": 1.026258080770264,
+                "multiclass_ece": 0.6932507874776085
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 1.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.38710381444195846,
+            "brier": 0.20000346472730468,
+            "multiclass_ece": 0.31845081903616207,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.38710381444195846,
+                "brier": 0.20000346472730468,
+                "multiclass_ece": 0.31845081903616207
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.34660297963012415,
+                "brier": 0.16063161417085967,
+                "multiclass_ece": 0.2918140810246203
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.5086063188774614,
+                "brier": 0.3181190163966397,
+                "multiclass_ece": 0.39836103307078746
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.3412593051391345,
+            "brier": 0.1673675129194623,
+            "multiclass_ece": 0.2858640268615431,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.3412593051391345,
+                "brier": 0.1673675129194623,
+                "multiclass_ece": 0.2858640268615431
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.2946056126586882,
+                "brier": 0.12576379030994242,
+                "multiclass_ece": 0.25396026575391817
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.4812203825804734,
+                "brier": 0.29217868074802195,
+                "multiclass_ece": 0.3815753101844178
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          }
+        },
+        "exception": {
+          "baseline_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 0.375,
+            "nll": 1.0113635714883131,
+            "brier": 0.6780690410340232,
+            "multiclass_ece": 0.4147414894958625,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.375,
+                "nll": 1.0113635714883131,
+                "brier": 0.6780690410340232,
+                "multiclass_ece": 0.4147414894958625
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.16666666666666666,
+                "nll": 1.1438811637593047,
+                "brier": 0.7637741916662767,
+                "multiclass_ece": 0.5593983716967347
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.6138107946753382,
+                "brier": 0.42095358913726333,
+                "multiclass_ece": 0.45837433838031927
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 0.375,
+            "nll": 1.0315024085105506,
+            "brier": 0.7027816419223997,
+            "multiclass_ece": 0.3257417668218063,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.375,
+                "nll": 1.0315024085105506,
+                "brier": 0.7027816419223997,
+                "multiclass_ece": 0.3257417668218063
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.16666666666666666,
+                "nll": 1.1749947021499474,
+                "brier": 0.8009300991284136,
+                "multiclass_ece": 0.584752550765391
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.6010255275923602,
+                "brier": 0.4083362703043581,
+                "multiclass_ece": 0.4512905850089479
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.04243353993523464,
+            "brier": 0.003017158591190219,
+            "multiclass_ece": 0.04149903323586712,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.04243353993523464,
+                "brier": 0.003017158591190219,
+                "multiclass_ece": 0.04149903323586712
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.041351093109307784,
+                "brier": 0.002507674294872695,
+                "multiclass_ece": 0.04049867115944957
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.04568088041301521,
+                "brier": 0.004545611480142792,
+                "multiclass_ece": 0.04450011946511956
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 2,
+              "accuracy": 1.0,
+              "accepted": 2,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.023130419363824643,
+            "brier": 0.000974060596894727,
+            "multiclass_ece": 0.022839606528587852,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.023130419363824643,
+                "brier": 0.000974060596894727,
+                "multiclass_ece": 0.022839606528587852
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.021602459992152125,
+                "brier": 0.000703697850008065,
+                "multiclass_ece": 0.02136718829854445
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.027714297478842194,
+                "brier": 0.0017851488375547132,
+                "multiclass_ece": 0.027256861218717954
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 2,
+              "accuracy": 1.0,
+              "accepted": 2,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.0
+            }
+          }
+        },
+        "at_deadline": {
+          "baseline_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.75,
+            "nll": 0.6342850541779382,
+            "brier": 0.44618947978412427,
+            "multiclass_ece": 0.4002201132150467,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.6342850541779382,
+                "brier": 0.44618947978412427,
+                "multiclass_ece": 0.4002201132150467
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.5377194399199252,
+                "brier": 0.31197785707170317,
+                "multiclass_ece": 0.4054212955800441
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.7308506684359513,
+                "brier": 0.5804011024965454,
+                "multiclass_ece": 0.39501893085004924
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.75,
+            "nll": 0.6484770894278503,
+            "brier": 0.4608322738456214,
+            "multiclass_ece": 0.2666480573560054,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.6484770894278503,
+                "brier": 0.4608322738456214,
+                "multiclass_ece": 0.2666480573560054
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.49506484363563663,
+                "brier": 0.2884089451991399,
+                "multiclass_ece": 0.377268672358629
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.801889335220064,
+                "brier": 0.6332556024921029,
+                "multiclass_ece": 0.4057586651277161
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 1.0,
+            "nll": 0.22783037982664905,
+            "brier": 0.09721562377720144,
+            "multiclass_ece": 0.19701305781070802,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.22783037982664905,
+                "brier": 0.09721562377720144,
+                "multiclass_ece": 0.19701305781070802
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.283170389541755,
+                "brier": 0.11371887584075208,
+                "multiclass_ece": 0.24658120324744437
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.17249037011154314,
+                "brier": 0.08071237171365081,
+                "multiclass_ece": 0.14744491237397167
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 1.0,
+            "nll": 0.1897076837239025,
+            "brier": 0.07269337354455108,
+            "multiclass_ece": 0.16765357780179563,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.1897076837239025,
+                "brier": 0.07269337354455108,
+                "multiclass_ece": 0.16765357780179563
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.23120915445352166,
+                "brier": 0.08150303090778224,
+                "multiclass_ece": 0.20640188211839472
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.14820621299428333,
+                "brier": 0.0638837161813199,
+                "multiclass_ece": 0.12890527348519648
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          }
+        },
+        "after_deadline": {
+          "baseline_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 1.3376135340344009,
+            "brier": 0.9642801178462684,
+            "multiclass_ece": 0.6591718168737024,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.3376135340344009,
+                "brier": 0.9642801178462684,
+                "multiclass_ece": 0.6591718168737024
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.3376135340344009,
+                "brier": 0.9642801178462684,
+                "multiclass_ece": 0.6591718168737024
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 1.4398765164139928,
+            "brier": 1.045364864483614,
+            "multiclass_ece": 0.6906238855142772,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.4398765164139928,
+                "brier": 1.045364864483614,
+                "multiclass_ece": 0.6906238855142772
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.4398765164139928,
+                "brier": 1.045364864483614,
+                "multiclass_ece": 0.6906238855142772
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.0,
+            "nll": 1.25287324206816,
+            "brier": 0.9832799770058507,
+            "multiclass_ece": 0.6876739238772633,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.25287324206816,
+                "brier": 0.9832799770058507,
+                "multiclass_ece": 0.6876739238772633
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.25287324206816,
+                "brier": 0.9832799770058507,
+                "multiclass_ece": 0.6876739238772633
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.0,
+            "nll": 1.3545733608850639,
+            "brier": 1.070212691542771,
+            "multiclass_ece": 0.7221488279962343,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.3545733608850639,
+                "brier": 1.070212691542771,
+                "multiclass_ece": 0.7221488279962343
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.3545733608850639,
+                "brier": 1.070212691542771,
+                "multiclass_ece": 0.7221488279962343
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          }
+        }
+      },
+      "offset_pair": {
+        "+00:00 to +05:30": {
+          "baseline_logits_at_released_temperature": {
+            "count": 12,
+            "accuracy": 0.5833333333333334,
+            "nll": 0.8138871699235551,
+            "brier": 0.5488374907623285,
+            "multiclass_ece": 0.20470087630869338,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.5833333333333334,
+                "nll": 0.8138871699235551,
+                "brier": 0.5488374907623285,
+                "multiclass_ece": 0.20470087630869338
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.5555555555555556,
+                "nll": 0.8253087595671454,
+                "brier": 0.5408852025937716,
+                "multiclass_ece": 0.16045988809777542
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.7796224009927838,
+                "brier": 0.5726943552679992,
+                "multiclass_ece": 0.33742384094144723
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 3,
+              "error_among_accepted": null
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 12,
+            "accuracy": 0.5833333333333334,
+            "nll": 0.8377426337879066,
+            "brier": 0.5742822739959016,
+            "multiclass_ece": 0.3412831235697957,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.5833333333333334,
+                "nll": 0.8377426337879066,
+                "brier": 0.5742822739959016,
+                "multiclass_ece": 0.3412831235697957
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.5555555555555556,
+                "nll": 0.8455796228931862,
+                "brier": 0.566989695728171,
+                "multiclass_ece": 0.2926912295283307
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.8142316664720681,
+                "brier": 0.5961600087990933,
+                "multiclass_ece": 0.4870588056941904
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 1,
+              "accuracy": 0.3333333333333333,
+              "accepted": 1,
+              "coverage": 0.3333333333333333,
+              "abstentions": 2,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 12,
+            "accuracy": 0.75,
+            "nll": 0.4859996307473094,
+            "brier": 0.3217560308878072,
+            "multiclass_ece": 0.09997325096845583,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.75,
+                "nll": 0.4859996307473094,
+                "brier": 0.3217560308878072,
+                "multiclass_ece": 0.09997325096845583
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.7777777777777778,
+                "nll": 0.486639563983212,
+                "brier": 0.3158699235904609,
+                "multiclass_ece": 0.0855826544665941
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.48407983103960167,
+                "brier": 0.33941435277984616,
+                "multiclass_ece": 0.3324024062494133
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 1,
+              "accuracy": 0.3333333333333333,
+              "accepted": 1,
+              "coverage": 0.3333333333333333,
+              "abstentions": 2,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 12,
+            "accuracy": 0.75,
+            "nll": 0.4843553827686033,
+            "brier": 0.327919009917298,
+            "multiclass_ece": 0.11681776864490385,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.75,
+                "nll": 0.4843553827686033,
+                "brier": 0.327919009917298,
+                "multiclass_ece": 0.11681776864490385
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.7777777777777778,
+                "nll": 0.4838302468503003,
+                "brier": 0.32121581867323845,
+                "multiclass_ece": 0.10436481826909501
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.48593079052351223,
+                "brier": 0.3480285836494765,
+                "multiclass_ece": 0.32264370176391405
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 1,
+              "accuracy": 0.3333333333333333,
+              "accepted": 1,
+              "coverage": 0.3333333333333333,
+              "abstentions": 2,
+              "error_among_accepted": 0.0
+            }
+          }
+        },
+        "-08:00 to +00:00": {
+          "baseline_logits_at_released_temperature": {
+            "count": 12,
+            "accuracy": 0.4166666666666667,
+            "nll": 0.830577653179778,
+            "brier": 0.5608917765060701,
+            "multiclass_ece": 0.19161676901678684,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.4166666666666667,
+                "nll": 0.830577653179778,
+                "brier": 0.5608917765060701,
+                "multiclass_ece": 0.19161676901678684
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.4444444444444444,
+                "nll": 0.8793302221939109,
+                "brier": 0.5840808280976391,
+                "multiclass_ece": 0.4171016524430499
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.3333333333333333,
+                "nll": 0.6843199461373798,
+                "brier": 0.4913246217313632,
+                "multiclass_ece": 0.4940462720152494
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 3,
+              "error_among_accepted": null
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 12,
+            "accuracy": 0.4166666666666667,
+            "nll": 0.8267376883406644,
+            "brier": 0.5666104377213168,
+            "multiclass_ece": 0.2048951467645159,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.4166666666666667,
+                "nll": 0.8267376883406644,
+                "brier": 0.5666104377213168,
+                "multiclass_ece": 0.2048951467645159
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.4444444444444444,
+                "nll": 0.8744987383298874,
+                "brier": 0.5919653639053539,
+                "multiclass_ece": 0.21305972032906734
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.3333333333333333,
+                "nll": 0.6834545383729956,
+                "brier": 0.4905456591692054,
+                "multiclass_ece": 0.20718065158744947
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 3,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 12,
+            "accuracy": 0.75,
+            "nll": 0.47108143798534735,
+            "brier": 0.3096122606302458,
+            "multiclass_ece": 0.16085745322112235,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.75,
+                "nll": 0.47108143798534735,
+                "brier": 0.3096122606302458,
+                "multiclass_ece": 0.16085745322112235
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.7777777777777778,
+                "nll": 0.4748981279404142,
+                "brier": 0.30535426585022624,
+                "multiclass_ece": 0.19611363237862375
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.4596313681201469,
+                "brier": 0.3223862449703045,
+                "multiclass_ece": 0.055088915748618295
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 1,
+              "accuracy": 0.3333333333333333,
+              "accepted": 1,
+              "coverage": 0.3333333333333333,
+              "abstentions": 2,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 12,
+            "accuracy": 0.75,
+            "nll": 0.46123777859195164,
+            "brier": 0.30964121859943133,
+            "multiclass_ece": 0.0672152241048641,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.75,
+                "nll": 0.46123777859195164,
+                "brier": 0.30964121859943133,
+                "multiclass_ece": 0.0672152241048641
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.7777777777777778,
+                "nll": 0.4634069711166796,
+                "brier": 0.30568976801158754,
+                "multiclass_ece": 0.07004704823758862
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.45473020101776784,
+                "brier": 0.3214955703629625,
+                "multiclass_ece": 0.0587197517066906
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 1,
+              "accuracy": 0.3333333333333333,
+              "accepted": 1,
+              "coverage": 0.3333333333333333,
+              "abstentions": 2,
+              "error_among_accepted": 0.0
+            }
+          }
+        },
+        "+05:30 to -08:00": {
+          "baseline_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 0.375,
+            "nll": 0.9585640114600267,
+            "brier": 0.6569866705332125,
+            "multiclass_ece": 0.48473313695138237,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.375,
+                "nll": 0.9585640114600267,
+                "brier": 0.6569866705332125,
+                "multiclass_ece": 0.48473313695138237
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.3333333333333333,
+                "nll": 0.9689692949292955,
+                "brier": 0.6411400084043173,
+                "multiclass_ece": 0.5017094766806117
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.9273481610522197,
+                "brier": 0.7045266569198979,
+                "multiclass_ece": 0.43380411776369443
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 2,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.5
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 0.375,
+            "nll": 1.0037243776774798,
+            "brier": 0.6940646130336662,
+            "multiclass_ece": 0.4942226904077169,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.375,
+                "nll": 1.0037243776774798,
+                "brier": 0.6940646130336662,
+                "multiclass_ece": 0.4942226904077169
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.3333333333333333,
+                "nll": 0.9908861913431717,
+                "brier": 0.6709322942643324,
+                "multiclass_ece": 0.5107101190745551
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 1.042238936680404,
+                "brier": 0.7634615693416681,
+                "multiclass_ece": 0.4447604044072024
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 2,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.5
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 0.75,
+            "nll": 0.4366063387896047,
+            "brier": 0.2924083215765738,
+            "multiclass_ece": 0.19306677730544514,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.75,
+                "nll": 0.4366063387896047,
+                "brier": 0.2924083215765738,
+                "multiclass_ece": 0.19306677730544514
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.5008458927592833,
+                "brier": 0.34191212712573776,
+                "multiclass_ece": 0.1923921031416275
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.24388767688056906,
+                "brier": 0.14389690492908178,
+                "multiclass_ece": 0.19509079979689825
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 0.75,
+            "nll": 0.4260734690088033,
+            "brier": 0.29242909247635523,
+            "multiclass_ece": 0.20450383105687836,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.75,
+                "nll": 0.4260734690088033,
+                "brier": 0.29242909247635523,
+                "multiclass_ece": 0.20450383105687836
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.4930066559985391,
+                "brier": 0.3468291593182004,
+                "multiclass_ece": 0.33172810125333935
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.2252739080395959,
+                "brier": 0.12922889195081985,
+                "multiclass_ece": 0.1822789035155219
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          }
+        }
+      }
+    },
+    "ood": {
+      "boundary": {
+        "inside_window": {
+          "baseline_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 0.25,
+            "nll": 1.0612800785749867,
+            "brier": 0.7933868597121818,
+            "multiclass_ece": 0.48014603277053625,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.25,
+                "nll": 1.0612800785749867,
+                "brier": 0.7933868597121818,
+                "multiclass_ece": 0.48014603277053625
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.16666666666666666,
+                "nll": 1.1292582513296556,
+                "brier": 0.8350072315548638,
+                "multiclass_ece": 0.5016963754722857
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.85734556031098,
+                "brier": 0.6685257441841358,
+                "multiclass_ece": 0.41549500466528794
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 2,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.5
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 0.25,
+            "nll": 1.1406143067803884,
+            "brier": 0.8553248516786776,
+            "multiclass_ece": 0.511356317319333,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.25,
+                "nll": 1.1406143067803884,
+                "brier": 0.8553248516786776,
+                "multiclass_ece": 0.511356317319333
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.16666666666666666,
+                "nll": 1.2003196135118288,
+                "brier": 0.897952319468331,
+                "multiclass_ece": 0.5385813906308331
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.961498386586067,
+                "brier": 0.7274424483097176,
+                "multiclass_ece": 0.42968109738483257
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 2,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.5
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.31750441407581553,
+            "brier": 0.15638489161346,
+            "multiclass_ece": 0.26360210251439276,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.31750441407581553,
+                "brier": 0.15638489161346,
+                "multiclass_ece": 0.26360210251439276
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.35738671514681525,
+                "brier": 0.1741839192066774,
+                "multiclass_ece": 0.2965297572207351
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.1978575108628165,
+                "brier": 0.10298780883380787,
+                "multiclass_ece": 0.16481913839536594
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.27524121224551723,
+            "brier": 0.12816332562385074,
+            "multiclass_ece": 0.23296379773428605,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.27524121224551723,
+                "brier": 0.12816332562385074,
+                "multiclass_ece": 0.23296379773428605
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.30845130904484386,
+                "brier": 0.14218832473699497,
+                "multiclass_ece": 0.2610632063992632
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.1756109218475373,
+                "brier": 0.08608832828441806,
+                "multiclass_ece": 0.1486655717393544
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          }
+        },
+        "at_deadline": {
+          "baseline_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 1.3151390449854268,
+            "brier": 0.9465872788887191,
+            "multiclass_ece": 0.6392516596616635,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.3151390449854268,
+                "brier": 0.9465872788887191,
+                "multiclass_ece": 0.6392516596616635
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.4051284470894772,
+                "brier": 1.0312316140820512,
+                "multiclass_ece": 0.6856614220743875
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 1.2251496428813766,
+                "brier": 0.8619429436953866,
+                "multiclass_ece": 0.5928418972489395
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 1.0
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 1.4430774237837773,
+            "brier": 1.007133995178592,
+            "multiclass_ece": 0.6568102765691636,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.4430774237837773,
+                "brier": 1.007133995178592,
+                "multiclass_ece": 0.6568102765691636
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.532338373103927,
+                "brier": 1.1117806960642975,
+                "multiclass_ece": 0.7189153884721555
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 1.3538164744636276,
+                "brier": 0.9024872942928867,
+                "multiclass_ece": 0.5947051646661717
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 1.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 1.0,
+            "nll": 0.4052878346864809,
+            "brier": 0.21761925847891891,
+            "multiclass_ece": 0.3309408995512978,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.4052878346864809,
+                "brier": 0.21761925847891891,
+                "multiclass_ece": 0.3309408995512978
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.4254066519711987,
+                "brier": 0.22735398039522325,
+                "multiclass_ece": 0.3446368927548078
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.385169017401763,
+                "brier": 0.20788453656261457,
+                "multiclass_ece": 0.31724490634778774
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 1.0,
+            "nll": 0.3629305769616221,
+            "brier": 0.18531036761569178,
+            "multiclass_ece": 0.30172029102385234,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.3629305769616221,
+                "brier": 0.18531036761569178,
+                "multiclass_ece": 0.30172029102385234
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.37859056874942143,
+                "brier": 0.1936897952963958,
+                "multiclass_ece": 0.3129268114875775
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.3472705851738228,
+                "brier": 0.17693093993498782,
+                "multiclass_ece": 0.2905137705601271
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          }
+        },
+        "after_deadline": {
+          "baseline_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.75,
+            "nll": 0.5768727230335214,
+            "brier": 0.3602019397664018,
+            "multiclass_ece": 0.3759836132282157,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.5768727230335214,
+                "brier": 0.3602019397664018,
+                "multiclass_ece": 0.3759836132282157
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.5768727230335214,
+                "brier": 0.3602019397664018,
+                "multiclass_ece": 0.3759836132282157
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.75,
+            "nll": 0.5593851784151141,
+            "brier": 0.361330166288496,
+            "multiclass_ece": 0.35804502845638464,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.5593851784151141,
+                "brier": 0.361330166288496,
+                "multiclass_ece": 0.35804502845638464
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.75,
+                "nll": 0.5593851784151141,
+                "brier": 0.361330166288496,
+                "multiclass_ece": 0.35804502845638464
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.0,
+            "nll": 1.2141816442944384,
+            "brier": 0.9401410006635095,
+            "multiclass_ece": 0.669037068860707,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.2141816442944384,
+                "brier": 0.9401410006635095,
+                "multiclass_ece": 0.669037068860707
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.2141816442944384,
+                "brier": 0.9401410006635095,
+                "multiclass_ece": 0.669037068860707
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.0,
+            "nll": 1.3051247309310667,
+            "brier": 1.0196543079017255,
+            "multiclass_ece": 0.702198383902118,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.3051247309310667,
+                "brier": 1.0196543079017255,
+                "multiclass_ece": 0.702198383902118
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.0,
+                "nll": 1.3051247309310667,
+                "brier": 1.0196543079017255,
+                "multiclass_ece": 0.702198383902118
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          }
+        },
+        "exception": {
+          "baseline_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.34958758707408705,
+            "brier": 0.18176206641141862,
+            "multiclass_ece": 0.28845220026977464,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.34958758707408705,
+                "brier": 0.18176206641141862,
+                "multiclass_ece": 0.28845220026977464
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.41318750334855037,
+                "brier": 0.2211088590933784,
+                "multiclass_ece": 0.3380687025275442
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.15878783825069698,
+                "brier": 0.0637216883655393,
+                "multiclass_ece": 0.13960269349646598
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.30910487447422413,
+            "brier": 0.15191304115725043,
+            "multiclass_ece": 0.259988728322308,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.30910487447422413,
+                "brier": 0.15191304115725043,
+                "multiclass_ece": 0.259988728322308
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.3687008704320656,
+                "brier": 0.18674715078199514,
+                "multiclass_ece": 0.3078452300890449
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.13031688660069946,
+                "brier": 0.04741071228301637,
+                "multiclass_ece": 0.1164192230220974
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.04380533745265509,
+            "brier": 0.003484774443976165,
+            "multiclass_ece": 0.042799359488694566,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.04380533745265509,
+                "brier": 0.003484774443976165,
+                "multiclass_ece": 0.042799359488694566
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.04405611537200682,
+                "brier": 0.003453872870999844,
+                "multiclass_ece": 0.043021720438013444
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.04305300369459988,
+                "brier": 0.003577479162905127,
+                "multiclass_ece": 0.0421322766407376
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 2,
+              "accuracy": 1.0,
+              "accepted": 2,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 1.0,
+            "nll": 0.02469763048064754,
+            "brier": 0.0012026909161041033,
+            "multiclass_ece": 0.024363729722314154,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 1.0,
+                "nll": 0.02469763048064754,
+                "brier": 0.0012026909161041033,
+                "multiclass_ece": 0.024363729722314154
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 1.0,
+                "nll": 0.02445768362839187,
+                "brier": 0.0011792249992227941,
+                "multiclass_ece": 0.024120422313187746
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.02541747103741456,
+                "brier": 0.0012730886667480306,
+                "multiclass_ece": 0.025093651949693374
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 2,
+              "accuracy": 1.0,
+              "accepted": 2,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.0
+            }
+          }
+        },
+        "before_delivery": {
+          "baseline_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.5,
+            "nll": 0.7644227020003084,
+            "brier": 0.554196107694696,
+            "multiclass_ece": 0.23907375373028233,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.5,
+                "nll": 0.7644227020003084,
+                "brier": 0.554196107694696,
+                "multiclass_ece": 0.23907375373028233
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 1.0988972415547011,
+                "brier": 0.7822501567451547,
+                "multiclass_ece": 0.5923397539956314
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.42994816244591555,
+                "brier": 0.3261420586442373,
+                "multiclass_ece": 0.29230191949756973
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.5,
+            "nll": 0.8049851251508601,
+            "brier": 0.5839655911488257,
+            "multiclass_ece": 0.44769374527601635,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.5,
+                "nll": 0.8049851251508601,
+                "brier": 0.5839655911488257,
+                "multiclass_ece": 0.44769374527601635
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 1.169437408305067,
+                "brier": 0.8281107297523477,
+                "multiclass_ece": 0.6006328874452798
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.4405328419966534,
+                "brier": 0.33982045254530396,
+                "multiclass_ece": 0.29475460310675283
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 1.1792478029186897,
+            "brier": 0.8703117911218105,
+            "multiclass_ece": 0.5638296308251608,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.1792478029186897,
+                "brier": 0.8703117911218105,
+                "multiclass_ece": 0.5638296308251608
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 1.792559883262805,
+                "brier": 1.2853467072605174,
+                "multiclass_ece": 0.7858801834987823
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.5659357225745741,
+                "brier": 0.4552768749831035,
+                "multiclass_ece": 0.34177907815153924
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 1.3107100386279602,
+            "brier": 0.9367464868603229,
+            "multiclass_ece": 0.5859684845932805,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.3107100386279602,
+                "brier": 0.9367464868603229,
+                "multiclass_ece": 0.5859684845932805
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 2,
+                "accuracy": 0.0,
+                "nll": 2.01482105074828,
+                "brier": 1.381275043188137,
+                "multiclass_ece": 0.8191682791650938
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 0.6065990265076404,
+                "brier": 0.49221793053250895,
+                "multiclass_ece": 0.3527686900214673
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 1,
+              "accuracy": 0.5,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          }
+        },
+        "at_delivery": {
+          "baseline_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 0.970759536273123,
+            "brier": 0.712632847546875,
+            "multiclass_ece": 0.54904978122814,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 0.970759536273123,
+                "brier": 0.712632847546875,
+                "multiclass_ece": 0.54904978122814
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 0.970759536273123,
+                "brier": 0.712632847546875,
+                "multiclass_ece": 0.54904978122814
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 0.25,
+            "nll": 1.0161463509006299,
+            "brier": 0.7633770116817695,
+            "multiclass_ece": 0.5645468263988,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.0161463509006299,
+                "brier": 0.7633770116817695,
+                "multiclass_ece": 0.5645468263988
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 0.25,
+                "nll": 1.0161463509006299,
+                "brier": 0.7633770116817695,
+                "multiclass_ece": 0.5645468263988
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 4,
+            "accuracy": 1.0,
+            "nll": 0.32931112003128366,
+            "brier": 0.16147680168737494,
+            "multiclass_ece": 0.2729502843831799,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.32931112003128366,
+                "brier": 0.16147680168737494,
+                "multiclass_ece": 0.2729502843831799
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.32931112003128366,
+                "brier": 0.16147680168737494,
+                "multiclass_ece": 0.2729502843831799
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 4,
+            "accuracy": 1.0,
+            "nll": 0.28446812638371594,
+            "brier": 0.13335307576364036,
+            "multiclass_ece": 0.24002229354602672,
+            "by_family": {
+              "timeline": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.28446812638371594,
+                "brier": 0.13335307576364036,
+                "multiclass_ece": 0.24002229354602672
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 4,
+                "accuracy": 1.0,
+                "nll": 0.28446812638371594,
+                "brier": 0.13335307576364036,
+                "multiclass_ece": 0.24002229354602672
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 0,
+              "correct": 0,
+              "accuracy": null,
+              "accepted": 0,
+              "coverage": null,
+              "abstentions": 0,
+              "error_among_accepted": null
+            }
+          }
+        }
+      },
+      "offset_pair": {
+        "+08:45 to +12:45": {
+          "baseline_logits_at_released_temperature": {
+            "count": 12,
+            "accuracy": 0.5,
+            "nll": 0.9369992342525713,
+            "brier": 0.6763475570200738,
+            "multiclass_ece": 0.4165545500701681,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.5,
+                "nll": 0.9369992342525713,
+                "brier": 0.6763475570200738,
+                "multiclass_ece": 0.4165545500701681
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.4444444444444444,
+                "nll": 1.0137171982363862,
+                "brier": 0.731508530646516,
+                "multiclass_ece": 0.45353165482209296
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.7068453423011269,
+                "brier": 0.5108646361407467,
+                "multiclass_ece": 0.3056232358143935
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 2,
+              "accuracy": 0.6666666666666666,
+              "accepted": 3,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.3333333333333333
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 12,
+            "accuracy": 0.5,
+            "nll": 1.0116376469994963,
+            "brier": 0.7242695800020459,
+            "multiclass_ece": 0.4389833964525591,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.5,
+                "nll": 1.0116376469994963,
+                "brier": 0.7242695800020459,
+                "multiclass_ece": 0.4389833964525591
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.4444444444444444,
+                "nll": 1.0823744625274758,
+                "brier": 0.7827909888954387,
+                "multiclass_ece": 0.4820518505766779
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.7994272004155585,
+                "brier": 0.5487053533218671,
+                "multiclass_ece": 0.30977803408020305
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 2,
+              "accuracy": 0.6666666666666666,
+              "accepted": 3,
+              "coverage": 1.0,
+              "abstentions": 0,
+              "error_among_accepted": 0.3333333333333333
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 12,
+            "accuracy": 0.8333333333333334,
+            "nll": 0.3852803825621918,
+            "brier": 0.23870195418326298,
+            "multiclass_ece": 0.17411713094718037,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.8333333333333334,
+                "nll": 0.3852803825621918,
+                "brier": 0.23870195418326298,
+                "multiclass_ece": 0.17411713094718037
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.7777777777777778,
+                "nll": 0.45619658050452727,
+                "brier": 0.28672790311634466,
+                "multiclass_ece": 0.18526839607768825
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 1.0,
+                "nll": 0.1725317887351853,
+                "brier": 0.09462410738401796,
+                "multiclass_ece": 0.14066333555565658
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 2,
+              "accuracy": 0.6666666666666666,
+              "accepted": 2,
+              "coverage": 0.6666666666666666,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 12,
+            "accuracy": 0.8333333333333334,
+            "nll": 0.36499907680956123,
+            "brier": 0.23024395214526283,
+            "multiclass_ece": 0.06146518046786383,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.8333333333333334,
+                "nll": 0.36499907680956123,
+                "brier": 0.23024395214526283,
+                "multiclass_ece": 0.06146518046786383
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.7777777777777778,
+                "nll": 0.4350977911930855,
+                "brier": 0.27898276926671833,
+                "multiclass_ece": 0.09276987340623906
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 1.0,
+                "nll": 0.1547029336589885,
+                "brier": 0.08402750078089632,
+                "multiclass_ece": 0.12691016720865797
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 2,
+              "accuracy": 0.6666666666666666,
+              "accepted": 2,
+              "coverage": 0.6666666666666666,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          }
+        },
+        "+12:45 to -05:45": {
+          "baseline_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 0.625,
+            "nll": 0.8091035458560932,
+            "brier": 0.5542491942279221,
+            "multiclass_ece": 0.3276552545619883,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.625,
+                "nll": 0.8091035458560932,
+                "brier": 0.5542491942279221,
+                "multiclass_ece": 0.3276552545619883
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.7332291208934102,
+                "brier": 0.4840047394167004,
+                "multiclass_ece": 0.24880865169555233
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 1.0367268207441418,
+                "brier": 0.764982558661587,
+                "multiclass_ece": 0.5641950631612962
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 1.0
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 0.625,
+            "nll": 0.8382986141196805,
+            "brier": 0.5731415423109196,
+            "multiclass_ece": 0.244942407495989,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.625,
+                "nll": 0.8382986141196805,
+                "brier": 0.5731415423109196,
+                "multiclass_ece": 0.244942407495989
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.7430221024912727,
+                "brier": 0.49514918669844615,
+                "multiclass_ece": 0.13738623506722028
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 0.5,
+                "nll": 1.1241281490049049,
+                "brier": 0.8071186091483399,
+                "multiclass_ece": 0.5676109247822951
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 1,
+              "coverage": 0.5,
+              "abstentions": 1,
+              "error_among_accepted": 1.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 8,
+            "accuracy": 0.75,
+            "nll": 0.6338897108233763,
+            "brier": 0.41132027370647867,
+            "multiclass_ece": 0.23612054280951217,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.75,
+                "nll": 0.6338897108233763,
+                "brier": 0.41132027370647867,
+                "multiclass_ece": 0.23612054280951217
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.7305711424318,
+                "brier": 0.4916221633711096,
+                "multiclass_ece": 0.3046643829442473
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.3438454159981055,
+                "brier": 0.17041460471258585,
+                "multiclass_ece": 0.2903062553047413
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 8,
+            "accuracy": 0.75,
+            "nll": 0.6748366405137015,
+            "brier": 0.42734157318925475,
+            "multiclass_ece": 0.263292413689811,
+            "by_family": {
+              "timeline": {
+                "count": 8,
+                "accuracy": 0.75,
+                "nll": 0.6748366405137015,
+                "brier": 0.42734157318925475,
+                "multiclass_ece": 0.263292413689811
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 6,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.7990483396113021,
+                "brier": 0.5239609938698183,
+                "multiclass_ece": 0.2643697916834125
+              },
+              "noul": {
+                "count": 2,
+                "accuracy": 1.0,
+                "nll": 0.30220154322089987,
+                "brier": 0.1374833111475639,
+                "multiclass_ece": 0.26006027970900647
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 2,
+              "correct": 0,
+              "accuracy": 0.0,
+              "accepted": 0,
+              "coverage": 0.0,
+              "abstentions": 2,
+              "error_among_accepted": null
+            }
+          }
+        },
+        "-05:45 to +08:45": {
+          "baseline_logits_at_released_temperature": {
+            "count": 12,
+            "accuracy": 0.5,
+            "nll": 0.6732415143735424,
+            "brier": 0.46212498887594244,
+            "multiclass_ece": 0.2931398235287794,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.5,
+                "nll": 0.6732415143735424,
+                "brier": 0.46212498887594244,
+                "multiclass_ece": 0.2931398235287794
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.4444444444444444,
+                "nll": 0.7700472703440259,
+                "brier": 0.5297104469420141,
+                "multiclass_ece": 0.36623814389278603
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.3828242464620913,
+                "brier": 0.25936861467772787,
+                "multiclass_ece": 0.27840773201691776
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 1,
+              "accuracy": 0.3333333333333333,
+              "accepted": 1,
+              "coverage": 0.3333333333333333,
+              "abstentions": 2,
+              "error_among_accepted": 0.0
+            }
+          },
+          "baseline_logits_at_trained_temperature": {
+            "count": 12,
+            "accuracy": 0.5,
+            "nll": 0.6705074238405851,
+            "brier": 0.47039690844718773,
+            "multiclass_ece": 0.2061032994206392,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.5,
+                "nll": 0.6705074238405851,
+                "brier": 0.47039690844718773,
+                "multiclass_ece": 0.2061032994206392
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.4444444444444444,
+                "nll": 0.7689219784499348,
+                "brier": 0.541199373862965,
+                "multiclass_ece": 0.1851861520547956
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.3752637600125366,
+                "brier": 0.25798951219985605,
+                "multiclass_ece": 0.2688547415181699
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 1,
+              "accuracy": 0.3333333333333333,
+              "accepted": 1,
+              "coverage": 0.3333333333333333,
+              "abstentions": 2,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_released_temperature": {
+            "count": 12,
+            "accuracy": 0.75,
+            "nll": 0.4756757785515018,
+            "brier": 0.3235139247012467,
+            "multiclass_ece": 0.2689628955892374,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.75,
+                "nll": 0.4756757785515018,
+                "brier": 0.3235139247012467,
+                "multiclass_ece": 0.2689628955892374
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.7777777777777778,
+                "nll": 0.503262781305809,
+                "brier": 0.3297128032119248,
+                "multiclass_ece": 0.27757849614182667
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.3929147702885801,
+                "brier": 0.3049172891692122,
+                "multiclass_ece": 0.24311609393146952
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 2,
+              "accuracy": 0.6666666666666666,
+              "accepted": 2,
+              "coverage": 0.6666666666666666,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          },
+          "trained_logits_at_trained_temperature": {
+            "count": 12,
+            "accuracy": 0.75,
+            "nll": 0.4728135489668692,
+            "brier": 0.3294604228023308,
+            "multiclass_ece": 0.25560553409221454,
+            "by_family": {
+              "timeline": {
+                "count": 12,
+                "accuracy": 0.75,
+                "nll": 0.4728135489668692,
+                "brier": 0.3294604228023308,
+                "multiclass_ece": 0.25560553409221454
+              }
+            },
+            "by_kind": {
+              "choice": {
+                "count": 9,
+                "accuracy": 0.7777777777777778,
+                "nll": 0.4924976073209296,
+                "brier": 0.32972818038094004,
+                "multiclass_ece": 0.25933712240103074
+              },
+              "noul": {
+                "count": 3,
+                "accuracy": 0.6666666666666666,
+                "nll": 0.4137613739046883,
+                "brier": 0.3286571500665029,
+                "multiclass_ece": 0.24441076916576587
+              }
+            },
+            "noul_thresholds_0.2_0.8": {
+              "n": 3,
+              "correct": 2,
+              "accuracy": 0.6666666666666666,
+              "accepted": 2,
+              "coverage": 0.6666666666666666,
+              "abstentions": 1,
+              "error_among_accepted": 0.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope": "Controlled original synthetic pilot. No public/sealed benchmark content, official JevBench improvement or deployment-ready model claim.",
+  "limitation": "One fixed synthetic pilot; v4 regression rows were already development evidence; four temperature combinations isolate descriptive effects, not causal/generalization proof"
+}

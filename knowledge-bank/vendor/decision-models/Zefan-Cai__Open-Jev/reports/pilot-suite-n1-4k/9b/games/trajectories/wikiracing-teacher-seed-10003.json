@@ -1,0 +1,111 @@
+{
+  "game": {
+    "name": "wikiracing",
+    "source": "Computer",
+    "target": "Physics",
+    "graph_sha256": "ece669f2bcd77cdc8ac60af80a0acdd0f5d1503df4d3fcbbaa42e652453c7c87",
+    "max_candidates": 12
+  },
+  "seed": 10003,
+  "policy": "full_graph_shortest_path_oracle_baseline",
+  "is_model": false,
+  "max_steps": 40,
+  "steps": [
+    {
+      "request": {
+        "state": {
+          "current_page": "Computer",
+          "target_page": "Physics",
+          "navigation": "Select one of the offered outgoing article links."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose an offered outgoing link to reach the target article in as few steps as possible.",
+            "criteria": {
+              "Mathematics": null,
+              "Music": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "Mathematics",
+        "probabilities": {
+          "Mathematics": 1.0,
+          "Music": 0.0
+        }
+      },
+      "action": "Mathematics",
+      "reward": 0.0,
+      "next_state": {
+        "current_page": "Mathematics",
+        "target_page": "Physics",
+        "navigation": "Select one of the offered outgoing article links."
+      },
+      "terminal": false,
+      "latency_ms": 0.04363991320133209,
+      "environment_latency_ms": 0.019572675228118896
+    },
+    {
+      "request": {
+        "state": {
+          "current_page": "Mathematics",
+          "target_page": "Physics",
+          "navigation": "Select one of the offered outgoing article links."
+        },
+        "questions": {
+          "action": {
+            "type": "choice",
+            "instructions": "Choose an offered outgoing link to reach the target article in as few steps as possible.",
+            "criteria": {
+              "Computer": null,
+              "Physics": null
+            }
+          }
+        }
+      },
+      "answer": {
+        "type": "choice",
+        "choice": "Physics",
+        "probabilities": {
+          "Computer": 0.0,
+          "Physics": 1.0
+        }
+      },
+      "action": "Physics",
+      "reward": 1.0,
+      "next_state": {
+        "current_page": "Physics",
+        "target_page": "Physics",
+        "navigation": "Select one of the offered outgoing article links."
+      },
+      "terminal": true,
+      "latency_ms": 0.028995797038078308,
+      "environment_latency_ms": 0.017037615180015564
+    }
+  ],
+  "initial_state": {
+    "current_page": "Computer",
+    "target_page": "Physics",
+    "navigation": "Select one of the offered outgoing article links."
+  },
+  "metrics": {
+    "steps": 2,
+    "stop_reason": "terminal",
+    "total_reward": 1.0,
+    "mean_decision_latency_ms": 0.0363178551197052,
+    "success": true,
+    "path": [
+      "Computer",
+      "Mathematics",
+      "Physics"
+    ]
+  },
+  "evaluation_policy": "teacher",
+  "evaluation_game": "wikiracing",
+  "evaluation_seed": 10003,
+  "valid": true,
+  "service_identity": null
+}

@@ -1,0 +1,52 @@
+{
+  "status": "proposed_not_launched",
+  "purpose": "Fresh bounded 2B pilot on browser-drone-expansion-v1 after its assigned training GPU becomes free",
+  "repo": "/mnt/localssd/open-jev/repo",
+  "repo_commit": "99e881108c6cacadafd364088505e84975ca43fc",
+  "python": "/mnt/localssd/open-jev/runtime/venv/bin/python",
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "GPU-fc42ba52-5802-1120-aef6-87fb880ddb8e",
+    "HF_HUB_CACHE": "/mnt/localssd/open-jev/hf-cache",
+    "HF_HUB_OFFLINE": "1",
+    "TOKENIZERS_PARALLELISM": "false",
+    "OMP_NUM_THREADS": "4"
+  },
+  "module": "jev.train",
+  "arguments": {
+    "model": "Qwen/Qwen3.5-2B",
+    "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+    "data": "/data/zefan/open-jev/data/browser-drone-expansion-v1",
+    "output": "/data/zefan/open-jev/runs/browser-drone-expansion-v1-2b-pilot-n1-v1",
+    "steps": 400,
+    "train_rows": 0,
+    "max_length": 4096,
+    "training_sampling": "shuffled",
+    "accumulation": 4,
+    "eval_rows": 512,
+    "calibration_rows": 512,
+    "lora_rank": 8,
+    "lr": 0.00005,
+    "head_lr": 0.0001,
+    "brier_weight": 0.1,
+    "seed": 20260920,
+    "checkpoint_every": 100
+  },
+  "dataset_manifest_sha256": "ba001b88787ce21576017897a0cbdedd5917ceb29ad3522b0e1fb7b4836d49df",
+  "records_consumed": 1600,
+  "full_pass_alternative": {
+    "status": "proposed_not_launched",
+    "steps": 27581,
+    "accumulation": 4,
+    "records_consumed": 110324,
+    "checkpoint_every": 500,
+    "output": "/data/zefan/open-jev/runs/browser-drone-expansion-v1-2b-fullpass-n1-v1",
+    "initialization": "Fresh pinned base model; strict resume cannot change a saved dataset or step schedule"
+  },
+  "prerequisites": [
+    "Assigned training GPU is free; do not interrupt active jobs or use the evaluation GPU",
+    "Frozen dataset and inspected implementation hashes still match the preflight",
+    "Pinned base weights and tokenizer are present in the named local Hugging Face cache",
+    "Fresh output directory is available and no second scheduler has claimed the GPU"
+  ],
+  "limits": "Input lengths verified only; training memory fit, throughput and task quality are unmeasured"
+}

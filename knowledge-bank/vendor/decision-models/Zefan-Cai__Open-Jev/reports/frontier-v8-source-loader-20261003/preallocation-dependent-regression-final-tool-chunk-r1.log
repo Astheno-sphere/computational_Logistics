@@ -1,0 +1,69 @@
+ok
+test_nested_roots_wrong_head_inventory_and_loader_origin_are_rejected (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_nested_roots_wrong_head_inventory_and_loader_origin_are_rejected) ... ok
+test_partial_import_exception_restores_existing_parent_attributes (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_partial_import_exception_restores_existing_parent_attributes) ... ok
+test_preloaded_scientific_or_scripts_modules_and_optional_packages_rejected (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_preloaded_scientific_or_scripts_modules_and_optional_packages_rejected) ... ok
+test_same_bytes_replacement_of_root_between_captures_rejected (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_same_bytes_replacement_of_root_between_captures_rejected) ... ok
+test_sparse_worktree_actual_git_pointer_is_supported (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_sparse_worktree_actual_git_pointer_is_supported) ... FAIL
+test_symlink_blob_and_alias_root_are_rejected (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_symlink_blob_and_alias_root_are_rejected) ... ok
+test_top_level_optional_import_is_blocked_and_partial_state_restored (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_top_level_optional_import_is_blocked_and_partial_state_restored) ... ok
+
+======================================================================
+FAIL: test_actual_clean_repositories_import_real_modules_and_restore_state (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_actual_clean_repositories_import_real_modules_and_restore_state)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ethan/Codex-new/Open-Jev-efficiency-20261002/tests/test_frontier_v8_source_loader.py", line 126, in test_actual_clean_repositories_import_real_modules_and_restore_state
+    self.child('''
+    ~~~~~~~~~~^^^^
+        before = (dict(sys.modules), sys.path, list(sys.path), sys.meta_path, list(sys.meta_path),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+        assert sys.dont_write_bytecode == before[9]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ''')
+    ^^^^
+  File "/Users/ethan/Codex-new/Open-Jev-efficiency-20261002/tests/test_frontier_v8_source_loader.py", line 122, in child
+    self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 30, in <module>
+    assert modules.comparator.decision(.8) == 'accept'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+
+======================================================================
+FAIL: test_sparse_worktree_actual_git_pointer_is_supported (tests.test_frontier_v8_source_loader.SourceLoaderTests.test_sparse_worktree_actual_git_pointer_is_supported)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/ethan/Codex-new/Open-Jev-efficiency-20261002/tests/test_frontier_v8_source_loader.py", line 389, in test_sparse_worktree_actual_git_pointer_is_supported
+    self.child(f"context['scientific_root'] = {str(sparse)!r}\nassert pathlib.Path(context['scientific_root'], '.git').is_file()\nhelper.verify_three_sources(context)\nwith helper.load_cpu_modules(context) as modules:\n    assert modules.trainer.__file__.startswith(context['scientific_root'])")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/ethan/Codex-new/Open-Jev-efficiency-20261002/tests/test_frontier_v8_source_loader.py", line 122, in child
+    self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 20, in <module>
+    helper.verify_three_sources(context)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/private/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/tmpiinm_lir/operational/scripts/frontier_v8_source_loader.py", line 202, in verify_three_sources
+    return _verified(context)[0]
+           ~~~~~~~~~^^^^^^^^^
+  File "/private/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/tmpiinm_lir/operational/scripts/frontier_v8_source_loader.py", line 194, in _verified
+    first = _capture(context)
+  File "/private/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/tmpiinm_lir/operational/scripts/frontier_v8_source_loader.py", line 182, in _capture
+    sources[role], current = _checkout(roots[role], commits[role], files[role])
+                             ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/tmpiinm_lir/operational/scripts/frontier_v8_source_loader.py", line 106, in _checkout
+    require(not _git(root, 'status', '--porcelain=v1', '-z', '--untracked-files=all',
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        '--ignored=matching'), 'Dirty, untracked or ignored source files rejected')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/var/folders/j_/cgptvvk145zdy4jv1wfk5j8r0000gn/T/tmpiinm_lir/operational/scripts/frontier_v8_source_loader.py", line 50, in require
+    raise SourceVerificationError(message)
+copied_operational_helper.SourceVerificationError: Dirty, untracked or ignored source files rejected
+
+
+----------------------------------------------------------------------
+Ran 53 tests in 84.649s
+
+FAILED (failures=2, skipped=15)

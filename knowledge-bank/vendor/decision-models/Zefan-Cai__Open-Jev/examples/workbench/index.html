@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sort support messages, emails and feedback with Open-Jev. Paste text or import a CSV, define categories, and download the results.">
+  <meta name="theme-color" content="#0f766e">
+  <title>Text classification workbench · Open-Jev</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to workbench</a>
+  <header class="site-header">
+    <a class="brand" href="https://zefan-cai.github.io/open-jev/" aria-label="Open-Jev project home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>Open-Jev <span class="brand-divider">/</span> <span class="brand-product">Text classification</span></span>
+    </a>
+    <nav class="header-actions" aria-label="Project information">
+      <span id="health" class="service-status" data-state="checking" role="status">Checking the model connection</span>
+      <a href="../index.html" class="quiet-link">Developer examples <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span aria-hidden="true"></span> LESS MANUAL SORTING</p>
+        <h1 id="page-title">Your text.<br>Your categories.</h1>
+        <p class="hero-description">Route support messages. Organize feedback. <br class="desktop-break">Add your text and categories. Open-Jev suggests a label for each row.</p>
+      </div>
+      <div class="hero-example" aria-label="Illustrative classification workflow, not a measured model result">
+        <div class="example-label">For example, a support message</div>
+        <p class="example-message">“My package has not moved in three days.<br>Can you check it?”</p>
+        <div class="example-bottom"><span class="example-arrow" aria-hidden="true">↳</span><span class="category-chip">Shipping</span><span class="example-caption">Illustration</span></div>
+      </div>
+    </section>
+
+    <ol class="steps" aria-label="How it works">
+      <li><span class="step-dot">1</span><span>Add text</span></li>
+      <li><span class="step-dot">2</span><span>Define categories</span></li>
+      <li><span class="step-dot">3</span><span>Classify each row</span></li>
+      <li><span class="step-dot">4</span><span>Download results</span></li>
+    </ol>
+
+    <section class="preset-section" aria-labelledby="preset-title">
+      <div class="section-intro"><h2 id="preset-title">Start with a task</h2><p>Edit the text and categories to fit your work.</p></div>
+      <div class="preset-grid">
+        <button type="button" class="preset active" data-preset="support" aria-pressed="true">
+          <span class="preset-icon" aria-hidden="true">↗</span>
+          <span><strong>Support routing</strong><span>Refunds, shipping, product questions…</span></span>
+          <span class="preset-check" aria-hidden="true">✓</span>
+        </button>
+        <button type="button" class="preset" data-preset="feedback" aria-pressed="false">
+          <span class="preset-icon" aria-hidden="true">≡</span>
+          <span><strong>Feedback sorting</strong><span>Feature requests, bugs, questions…</span></span>
+          <span class="preset-check" aria-hidden="true">✓</span>
+        </button>
+        <button type="button" class="preset" data-preset="custom" aria-pressed="false">
+          <span class="preset-icon" aria-hidden="true">＋</span>
+          <span><strong>Custom task</strong><span>Choose categories for your work</span></span>
+          <span class="preset-check" aria-hidden="true">✓</span>
+        </button>
+      </div>
+    </section>
+
+    <div class="workbench-grid">
+      <section class="panel input-panel" aria-labelledby="input-title">
+        <div class="panel-heading"><span class="section-number">01</span><div><h2 id="input-title">Add the text to organize</h2><p>Each row receives one suggested category.</p></div></div>
+        <div class="mode-switch" role="group" aria-label="Text input method">
+          <button type="button" data-mode="text" class="active" aria-pressed="true" aria-controls="text-panel">Paste text</button>
+          <button type="button" data-mode="csv" aria-pressed="false" aria-controls="csv-panel">Import CSV</button>
+        </div>
+        <div id="text-panel">
+          <label for="input-text">Text to classify</label>
+          <textarea id="input-text" rows="9" placeholder="My package has not moved in three days. Can you check it?&#10;How can I return my order?&#10;Can I connect this to a tablet?" aria-describedby="input-hint" spellcheck="false"></textarea>
+          <p id="input-hint" class="field-help">One message per line, up to 200 rows. Paste support messages, email summaries or feedback.</p>
+        </div>
+        <div id="csv-panel" hidden>
+          <label for="csv-file">Choose a CSV file</label>
+          <div class="file-field"><span class="file-icon" aria-hidden="true">↑</span><p>Import your existing spreadsheet</p><input type="file" id="csv-file" accept=".csv,text/csv" aria-describedby="csv-hint"></div>
+          <p id="csv-hint" class="field-help">Save Excel files as CSV first. Maximum file size: 2 MB; maximum rows per batch: 200.</p>
+          <label for="text-column">Which column should be classified?</label>
+          <select id="text-column" disabled><option value="">Choose a file first</option></select>
+        </div>
+        <div id="input-preview" class="input-preview" aria-live="polite"></div>
+      </section>
+
+      <section class="panel category-panel" aria-labelledby="category-title">
+        <div class="panel-heading"><span class="section-number">02</span><div><h2 id="category-title">Define your categories</h2><p>Describe the task in your own words.</p></div></div>
+        <label for="instructions">What should this task do?</label>
+        <textarea id="instructions" class="short-textarea" rows="2" placeholder="Choose the category that best matches the main request in each support message."></textarea>
+        <label for="categories">Which categories can it choose?</label>
+        <textarea id="categories" rows="6" placeholder="Refunds: returns, refunds, or damaged items&#10;Shipping: dispatch, delivery, or package tracking&#10;Product questions: specifications, features, or usage&#10;Other: none of the categories apply" aria-describedby="category-hint" spellcheck="false"></textarea>
+        <p id="category-hint" class="field-help">One category per line. Use “Name: description” to distinguish similar options.</p>
+        <div class="small-tip"><span aria-hidden="true">↳</span><p>Include “Other” or “Human review” for messages that need a closer look.</p></div>
+      </section>
+    </div>
+
+    <section class="run-panel" aria-labelledby="run-title">
+      <div class="run-copy"><span class="section-number">03</span><div><h2 id="run-title">Ready to classify</h2><p>Review the text and categories, then process each row.</p></div></div>
+      <div class="run-actions">
+        <button id="show-demo" type="button" class="button button-secondary">Show an example</button>
+        <button id="run" type="button" class="button button-primary">Start classification <span aria-hidden="true">→</span></button>
+        <button id="stop" type="button" class="button button-secondary" hidden>Stop</button>
+      </div>
+      <p id="progress" class="progress-text" role="status" aria-live="polite"></p>
+    </section>
+
+    <div id="mode-note" class="mode-note" role="status">“Show an example” uses preset illustrations, not measured model outputs. A connected Open-Jev service is required to classify your own text.</div>
+    <div id="error" class="error-message" role="alert" hidden></div>
+    <p class="privacy-note"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 2 4 4.5v5.3c0 3.3 2.3 5.8 6 8.2 3.7-2.4 6-4.9 6-8.2V4.5L10 2Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m7 10 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Your input is sent to the connected Open-Jev service only when you select “Start classification”. This page does not save your content in browser storage.</p>
+
+    <section class="panel result-panel" aria-labelledby="results-title">
+      <div class="result-header"><div class="panel-heading"><span class="section-number">04</span><div><h2 id="results-title">Review and download your results</h2><p id="result-summary" role="status">Download the completed results as a CSV.</p></div></div><button id="download" type="button" class="button button-secondary" disabled>Download results <span aria-hidden="true">↓</span></button></div>
+      <div id="empty-state" class="empty-state"><span class="empty-icon" aria-hidden="true"><i></i><i></i><i></i></span><h3>Your organized text will appear here</h3><p>No data ready? Select “Show an example” to explore the workflow.</p></div>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Classification results; scroll horizontally for all columns">
+        <table id="results"><thead><tr><th scope="col">Row</th><th scope="col">Original text</th><th scope="col">Suggested category</th><th scope="col">Category probability</th><th scope="col">Status</th></tr></thead><tbody id="result-rows"></tbody></table>
+      </div>
+      <p class="result-footnote">A category probability describes how the model distributes probability among your options. It is not a guarantee of correctness. Review important results.</p>
+    </section>
+
+    <section class="under-workbench" aria-label="Saved settings and service help">
+      <details class="advanced-details">
+        <summary><span>Save settings or connect your own tools</span><span class="details-plus" aria-hidden="true">＋</span></summary>
+        <div class="details-body"><p>Save your categories and instructions for another task. Developers can use the request format below to add classification to an existing workflow.</p><button id="download-config" type="button" class="button button-secondary">Download task settings</button><h3>Example request</h3><pre><code id="request-preview">Add text and categories to see the request format here.</code></pre></div>
+      </details>
+      <details class="advanced-details">
+        <summary><span>How do I connect a model?</span><span class="details-plus" aria-hidden="true">＋</span></summary>
+        <div id="setup-note" class="details-body"><p>If no model is connected, follow the quick-start guide to run Open-Jev on your computer or server. Open this workbench from the service address to classify your own text.</p><p><a href="https://github.com/Zefan-Cai/Open-Jev/blob/main/docs/get-started.md">Read the quick-start guide <span aria-hidden="true">↗</span></a></p><a id="hosted-link" class="button button-secondary" hidden>Open the hosted workbench <span aria-hidden="true">↗</span></a></div>
+      </details>
+    </section>
+  </main>
+
+  <footer class="site-footer"><p>Open-Jev · Put your classification rules to work.</p><div><a href="https://github.com/Zefan-Cai/Open-Jev">Source code <span aria-hidden="true">↗</span></a><a href="https://zefan-cai.github.io/open-jev/">Project website <span aria-hidden="true">↗</span></a></div></footer>
+</body>
+</html>

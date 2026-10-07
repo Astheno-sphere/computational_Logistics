@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "status": "real_gpu_smoke_failed_fast_cuda_parity",
+  "source_commit": "42e46481da6dd8191d6f510fc3680c70fd4f051d",
+  "checkpoint_sha256": "c49994563c3c4f04a99d9130203c4e526f4ae5086c84deec57698d18cb652e71",
+  "base_revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+  "report_sha256": "607229c5a2a9cfa5639d63f5c28166321099bc6375bfe9e2d2c68411ad57c1cd",
+  "raw_file_sha256": "3fc0a03676ab5202a084c1a23dfc9e36e178dcaee7ddb57a3e09dd74fc14b5d1",
+  "raw_byte_identical": true,
+  "completed_at": "2026-10-02T19:17:50.482676+00:00",
+  "probability_tolerance": 0.0001,
+  "workloads": 1,
+  "candidate_sequences": 7,
+  "iterations": 1,
+  "warmups": 0,
+  "full_all_backend_comparison_started": false,
+  "accepted_fast_cuda_speedup": false,
+  "per_backend": [
+    {
+      "backend": "torch",
+      "reference": true,
+      "cross_backend_parity_passed": null,
+      "max_probability_error": 0,
+      "max_score_expectation_error": 0,
+      "decision_changes": 0,
+      "threshold_flips": 0,
+      "in_process_warm_samples_ms": [
+        104.12532277405262
+      ],
+      "loopback_http_warm_samples_ms": [
+        102.27123647928238
+      ],
+      "resident_allocated_bytes": 51311140352,
+      "request_peak_allocated_bytes": 51739411968
+    },
+    {
+      "backend": "triton-tail",
+      "reference": false,
+      "cross_backend_parity_passed": true,
+      "max_probability_error": 2.8153601006053464e-08,
+      "max_score_expectation_error": 2.8882501390548043e-08,
+      "decision_changes": 0,
+      "threshold_flips": 0,
+      "in_process_warm_samples_ms": [
+        108.84600318968296
+      ],
+      "loopback_http_warm_samples_ms": [
+        105.61342537403107
+      ],
+      "resident_allocated_bytes": 51378259456,
+      "request_peak_allocated_bytes": 51510456320
+    },
+    {
+      "backend": "fast-cuda",
+      "reference": false,
+      "cross_backend_parity_passed": false,
+      "max_probability_error": 0.005932847569811495,
+      "max_score_expectation_error": 0.0002687427685839072,
+      "decision_changes": 0,
+      "threshold_flips": 0,
+      "in_process_warm_samples_ms": [
+        32.323820516467094
+      ],
+      "loopback_http_warm_samples_ms": [
+        34.97367165982723
+      ],
+      "resident_allocated_bytes": 51317720576,
+      "request_peak_allocated_bytes": 51415327232
+    }
+  ],
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "current_fleet_scope": {
+    "nodes": [
+      "N1-1",
+      "N1-3",
+      "N4-1",
+      "N4-2",
+      "N4-3",
+      "N4-4"
+    ],
+    "node_count": 6,
+    "gpu_count": 48,
+    "definition": "User-confirmed current fleet scope; not a live occupancy poll"
+  },
+  "operation": {
+    "checkpoint_preserved": true,
+    "model_optimizer_sampler_tree_restore_verified": true,
+    "original_failure_retry_budget_preserved": true,
+    "completed_checkpoint_loss": false,
+    "unfinished_batch_replayed": true,
+    "optional_gpu5_pilot_started": false
+  },
+  "notes": [
+    "All three backends executed real checkpoint inference and loopback HTTP.",
+    "Triton-tail passed this single request; broader workload validation remains required.",
+    "Fast-cuda failed both probability and Score-expectation tolerance although this request had no decision or audited threshold flips.",
+    "One warm sample and sequential backends cannot establish a performance result.",
+    "The complete three-backend run was correctly skipped on failed smoke parity."
+  ]
+}

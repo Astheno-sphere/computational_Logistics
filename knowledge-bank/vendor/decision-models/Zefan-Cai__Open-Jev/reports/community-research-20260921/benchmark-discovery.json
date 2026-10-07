@@ -1,0 +1,754 @@
+{
+  "schema_version": 1,
+  "status": "research_only_training_paused_no_evaluation_run",
+  "checked_at_utc": "2026-09-21T05:20:52.856Z",
+  "scope": "Bounded public GitHub source and known public X-post research. Existing source inventory was inspected first. Ten high-value source contracts were retained; discovery search counts are not claims of exhaustive ecosystem or social coverage.",
+  "actions": {
+    "training_started": false,
+    "gpu_used": false,
+    "paid_inference_api_called": false,
+    "shared_browser_control_used": false,
+    "third_party_repository_code_executed": false,
+    "benchmark_dataset_downloaded": false,
+    "raw_benchmark_dataset_written": false,
+    "external_message_sent": false,
+    "committed": false,
+    "only_persistent_output": "reports/community-research-20260921/benchmark-discovery.json"
+  },
+  "baseline": {
+    "prepared_typed_rows_all_splits": 408884,
+    "train_rows": 268493,
+    "calibration_rows": 16937,
+    "validation_rows": 15532,
+    "test_rows": 33183,
+    "ood_rows": 74739,
+    "task_source_ids": 25,
+    "domain_count_if_customer_sources_merged": 24,
+    "full_heldout_union_rows": 107922,
+    "source_document": "docs/website-and-videos.md",
+    "note": "Counts are the current inventory, not newly trained capability or distinct documents. Existing customer/workflow/game/browser/drone/citation/entity/amount/email/phone/context/sponsor/silent-failure/IR/mailroom controls are not recounted as new. No rows were added by this research."
+  },
+  "search": {
+    "provider": "GitHub public repository search plus direct immutable raw source reads",
+    "queries": [
+      "jev benchmark in:name,description,readme",
+      "jev typesafe in:name,description,readme",
+      "jev game in:name,description,readme",
+      "jev benchmark in:name,description"
+    ],
+    "targeted_query_total_count": 118,
+    "coverage_limit": "Sorted-by-update discovery is a bounded sample. Secondary indexes were used only to locate primary source posts. No authenticated X search or Xiaohongshu claim is made in this report."
+  },
+  "priority_findings": [
+    {
+      "id": "rag-frozen-candidates",
+      "priority": 1,
+      "repository": "emretheus/jev-rag-benchmark",
+      "novelty": "New external retrieval and answerability-gating benchmark, adjacent to existing IR controls and separate TREC; not a new prepared source yet.",
+      "observed_contract": "Branch J is Codiv openjev-0.1, one batch Noul request per query with one relevance question per passage. Branch T is hosted TypeSafe Jev; NVIDIA is a separate cross-encoder. All rerankers use the same frozen top-20 hybrid candidates; sorting preserves the original hybrid rank on score ties. README describes XQuAD-EN (1,190 queries) and SciFact (300), with retrieval nDCG@10/Recall/MRR, calibration, and a separately frozen-context answer-generation stage.",
+      "identity_correction": {
+        "our_models_tested": false,
+        "upstream_openjev_provider": "codiv",
+        "upstream_openjev_base_url": "https://api.codiv.ai",
+        "upstream_openjev_model": "openjev-0.1",
+        "our_checkpoint_ids": [
+          "ZefanCai/Open-Jev-2B",
+          "ZefanCai/Open-Jev-9B"
+        ],
+        "base_architecture": "Author protocol describes its OpenJev as DiffusionGemma 26B based; weights were not independently inspected.",
+        "evidence": [
+          "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/configs/default.yaml#L32",
+          "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/configs/default.yaml#L36",
+          "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/config.py#L39",
+          "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/rerank.py#L11",
+          "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/docs/protocol.md#L54"
+        ]
+      },
+      "code_evidence": [
+        "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/clients/systemone.py#L82",
+        "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/rerank.py#L33"
+      ],
+      "runnable_entrypoints": [
+        "uv run jev-rag data prepare --dataset all",
+        "uv run jev-rag run --dataset xquad-en --branches A,J,N",
+        "uv run jev-rag report --results <saved-results>"
+      ],
+      "license": {
+        "code": "MIT, LICENSE fetched",
+        "data": "Source dataset licenses apply separately; no XQuAD/SciFact input data was downloaded or cleared for redistribution here."
+      },
+      "author_claims_not_reproduced": [
+        "Reported Jev versus Codiv-OpenJev deltas are upstream author measurements, not our model results.",
+        "Confidence partitioning and real-Jev comparison are explicitly post-hoc exploratory additions.",
+        "Zero-dollar free-tier usage does not establish intrinsic model cost or reproducible free availability."
+      ],
+      "proposed_comparison": "Add explicitly named Open-Jev-2B and Open-Jev-9B branches to the same frozen candidate sets, plus Jev and strict-output GPT; keep raw APIs/timings and all failures. Report reranking, answerability gate, and downstream answer quality separately.",
+      "contamination": "Freeze candidate pools, query grouping and prompts before new inference. All external questions/passages/labels remain evaluation-only; do not tune our training mixture to these published examples or post-hoc thresholds."
+    },
+    {
+      "id": "racing-lap-adaptation",
+      "priority": 2,
+      "repository": "enoyola/jev-grand-prix",
+      "novelty": "New racing and between-lap adaptation task; current drone snapshots and simple games do not establish this stateful control capability.",
+      "observed_contract": "server.py maps structured telemetry to racing descriptions and asks two five-way Choices (racing line and pedals) plus a trouble Noul in one driving request. A separate end-of-lap request supplies one faster/same/slower Choice per corner. JavaScript supplies continuous steering/physics and records lap completion; the model selects discrete targets, not every low-level physics step.",
+      "code_evidence": [
+        "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/server.py#L140",
+        "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/server.py#L174",
+        "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/server.py#L272",
+        "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/web/game.js#L164",
+        "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/web/game.js#L240"
+      ],
+      "primary_post": "https://x.com/edwartnoyola/status/2101799243811876866",
+      "runnable_entrypoints": [
+        "uv run server.py"
+      ],
+      "license": {
+        "code": "MIT, LICENSE fetched",
+        "assets": "No upstream media downloaded or reused."
+      },
+      "author_claims_not_reproduced": [
+        "README lap-time improvements and zero-crash runs were not rerun. The post confirms the intended 11-corner feedback loop, not comparative model performance."
+      ],
+      "proposed_comparison": "Use identical seeded tracks, physics and initial conditions for every provider. Compare full-race completion, off-track/crash counts, valid laps, lap-time trajectory and end-to-end action age. Add fixed-policy and no-debrief ablations to isolate model choice from controller assistance.",
+      "training_proposal": "If approved later, create original tracks/telemetry and race-engineer cases with explicit simulator-derived outcomes; split entire tracks and races, including all lap revisions, together. Do not convert only successful demo laps into a general success claim."
+    },
+    {
+      "id": "speed-card-game",
+      "priority": 3,
+      "repository": "tubone24/jev-practice-speed",
+      "novelty": "New finite card-game contract and continuous interaction; not represented by existing Snake/Tic-tac-toe sources.",
+      "observed_contract": "buildQuestions emits one Noul per hand-card/pile candidate, one best-move Choice including pass, and a pressure Score. An independent rules function computes legality. Execution can use either a validator prefilter or foul penalties; these modes materially change the controller.",
+      "code_evidence": [
+        "https://github.com/tubone24/jev-practice-speed/blob/bbd53f5adcad29d609d8311822ae685270d841e6/public/js/ai.js#L55",
+        "https://github.com/tubone24/jev-practice-speed/blob/bbd53f5adcad29d609d8311822ae685270d841e6/public/js/ai.js#L191",
+        "https://github.com/tubone24/jev-practice-speed/blob/bbd53f5adcad29d609d8311822ae685270d841e6/public/js/ai.js#L248",
+        "https://github.com/tubone24/jev-practice-speed/blob/bbd53f5adcad29d609d8311822ae685270d841e6/src/core/jev-core.js#L254"
+      ],
+      "critical_measurement_limits": [
+        "No key or forceMock=true routes to synthetic mockAnswer and returns mock:true. A successful HTTP response alone does not prove model inference.",
+        "In no-foul mode, the independent legality oracle filters actions; report raw model false positives/negatives separately from execution validity and wins.",
+        "Missing Noul fields currently fall back to zero in the demo evaluator; benchmark collectors should retain missing/invalid outputs as failures instead."
+      ],
+      "runnable_entrypoints": [
+        "npm start"
+      ],
+      "license": {
+        "code": "No top-level LICENSE was present in the inspected tree; do not copy implementation without a verified grant.",
+        "assets": "README lists some CC0 audio sources, which does not license the entire application. No assets downloaded."
+      },
+      "proposed_comparison": "Implement an independent original Speed simulator and use paired deck seeds, equal clocks and foul mode. Track complete-game winner/completion, remaining cards, false legality judgments, validator intervention, stale-response rate and p50/p95 action latency. Reject mock/degraded runs as model evidence.",
+      "primary_post": "No specific author X post was verified for this repository in this bounded pass."
+    },
+    {
+      "id": "judge-public-api-compatibility",
+      "priority": 4,
+      "repository": "binbandit/jev-demo",
+      "novelty": "New specific PR backward-compatibility judgment; existing trace observability and citation controls are related but do not cover this contract.",
+      "observed_contract": "The PR request uses title/diff state and a Noul asking whether the diff breaks a public API; application labeling uses an illustrative 0.8 threshold. Customer classification is already covered and should not be counted as a new domain. The two-provider demo uses identical state/questions but returns Jev probabilities versus a GPT enum/boolean through Portkey.",
+      "code_evidence": [
+        "https://github.com/binbandit/jev-demo/blob/08c7da4da94463c955defb936d58c1a39c482878/src/examples/pull-request.ts#L3",
+        "https://github.com/binbandit/jev-demo/blob/08c7da4da94463c955defb936d58c1a39c482878/src/examples/pull-request.ts#L24",
+        "https://github.com/binbandit/jev-demo/blob/08c7da4da94463c955defb936d58c1a39c482878/src/compare.ts#L13",
+        "https://github.com/binbandit/jev-demo/blob/08c7da4da94463c955defb936d58c1a39c482878/README.md#L71"
+      ],
+      "runnable_entrypoints": [
+        "bun dev",
+        "bun test"
+      ],
+      "license": {
+        "code": "No top-level LICENSE found in inspected tree; use an independently written implementation until a grant is verified."
+      },
+      "author_claims_not_reproduced": [
+        "A single interactive comparison is not an accuracy or efficiency benchmark.",
+        "The README's cache exclusion and timing behavior describe this demo; no live requests were made in this review."
+      ],
+      "related_primary_post": {
+        "url": "https://x.com/HamelHusain/status/2101533413010440593",
+        "relationship": "Independent general judge-evaluation guidance, not an endorsement of this repository."
+      },
+      "proposed_comparison": "Construct original minimal library versions and diffs with executable consumer compatibility checks as labels, plus separately adjudicated ambiguous changes. Use a held-out repository/family split, per-class error rates and calibration only where native probabilities exist. Compare strict boolean GPT outputs without inventing comparable GPT confidence."
+    },
+    {
+      "id": "agent-failure-attribution",
+      "priority": 5,
+      "repository": "TokenTrim/jev-agent-failure-benchmark",
+      "novelty": "A new external causal-attribution benchmark; our agent_trace_observability source checks local permission/evidence rules and should not be equated with locating the responsible agent/step/error mode.",
+      "observed_contract": "Candidate agents and exact step coordinates are parsed from rendered trace headers in first-seen order, not supplied from gold labels. The package scores who/when/what and a joint correctness measure, reusing whowhen_eval metric recipes; agent comparison excludes single-agent conditions according to the source. README provides a resumable CLI over 6,257 traces.",
+      "code_evidence": [
+        "https://github.com/TokenTrim/jev-agent-failure-benchmark/blob/4d46af795a4a4409940a65857da73e45abaea2db/src/jevbench/candidates.py#L1",
+        "https://github.com/TokenTrim/jev-agent-failure-benchmark/blob/4d46af795a4a4409940a65857da73e45abaea2db/src/jevbench/candidates.py#L33",
+        "https://github.com/TokenTrim/jev-agent-failure-benchmark/blob/4d46af795a4a4409940a65857da73e45abaea2db/src/jevbench/metrics.py#L17",
+        "https://github.com/TokenTrim/jev-agent-failure-benchmark/blob/4d46af795a4a4409940a65857da73e45abaea2db/src/jevbench/metrics.py#L92"
+      ],
+      "runnable_entrypoints": [
+        "jevbench sample --n 6257 --out <private-sample>",
+        "jevbench estimate --sample <private-sample>",
+        "jevbench run --sample <private-sample>",
+        "jevbench report"
+      ],
+      "license": {
+        "code": "Apache-2.0, LICENSE fetched",
+        "data": "README attributes Leoxx/whowhen_pro as CC-BY-4.0; upstream dataset card/license was not independently rechecked here. Do not redistribute until verified."
+      },
+      "author_claims_not_reproduced": [
+        "README compares constrained-choice Jev who/when with paper baselines; it explicitly warns that those output contracts differ.",
+        "Published full-run scores/cost were not recomputed or rerun."
+      ],
+      "proposed_comparison": "Make all providers select the same visible agent/step/taxonomy candidates; report individual-axis scores, joint success, taxonomy F1, invalid outputs and cost/latency separately. Keep paper numbers in a separate reference column.",
+      "contamination": "Use this external corpus only as holdout. Any future training controls must come from original independently executable causal traces, with all variants of one failure graph grouped together."
+    },
+    {
+      "id": "large-taxonomy-calibration",
+      "priority": 6,
+      "repository": "AbdelStark/jev-benchmarks",
+      "novelty": "New external 4/6/72-label and probability-quality comparisons; ticket intent overlaps current customer controls, but emotion/news and large dynamic taxonomies are not dedicated sources in the current 25.",
+      "observed_contract": "JevBackend sends one Choice with the same ordered label descriptions used by other backends. The metric code computes macro-F1, probability quality, target-stratified paired bootstrap and maximum threshold-realizable empirical coverage at an error budget. README pins BTZSC revision fef2a2ac62b69c58670047dddf045c53d7c3cb5e and GLiNER revision 235cf92d6d4318da9bfca0d08975c8fa7250d13b, sampling 100 items each from AG News, Banking77/BTZSC (72 classes) and DAIR Emotion.",
+      "code_evidence": [
+        "https://github.com/AbdelStark/jev-benchmarks/blob/0d610cc53e79bcbec691312b0c4adb4a0e371642/src/jev_benchmarks/adapters/jev.py#L27",
+        "https://github.com/AbdelStark/jev-benchmarks/blob/0d610cc53e79bcbec691312b0c4adb4a0e371642/src/jev_benchmarks/metrics.py#L24",
+        "https://github.com/AbdelStark/jev-benchmarks/blob/0d610cc53e79bcbec691312b0c4adb4a0e371642/src/jev_benchmarks/metrics.py#L50",
+        "https://github.com/AbdelStark/jev-benchmarks/blob/0d610cc53e79bcbec691312b0c4adb4a0e371642/src/jev_benchmarks/metrics.py#L119"
+      ],
+      "runnable_entrypoints": [
+        "uv run jev-bench prepare --config configs/pilot-v1.yaml",
+        "uv run jev-bench run --config configs/pilot-v1.yaml --backend <backend>",
+        "uv run jev-bench report --config configs/pilot-v1.yaml"
+      ],
+      "license": {
+        "code": "Apache-2.0, LICENSE fetched",
+        "data": "BTZSC and constituent dataset licenses remain separate and were not reverified in this pass."
+      },
+      "author_claims_not_reproduced": [
+        "Author results are mixed, including worse Jev calibration on emotion.",
+        "The pilot chooses and evaluates risk thresholds on the same slice, so they are descriptive and not validated deployment thresholds.",
+        "M4 CPU GLiNER versus hosted Jev latency is deployment-specific."
+      ],
+      "proposed_comparison": "Add 2B/9B and strict-output GPT on identical held-out label sets. Split calibration from final evaluation; report macro-F1, Brier/NLL/ECE, risk-coverage, candidate-count scaling and both warm/cold timing with exact hardware/response contract."
+    },
+    {
+      "id": "model-benchmark-identity",
+      "priority": 7,
+      "repository": "fstandhartinger/jevbench",
+      "novelty": "New model-comparison reference and candidate pool, not a new domain by itself.",
+      "observed_contract": "Current README describes 534 frozen typed decisions and separate hard/held-out material with composite scoring. The inspected local_openjev adapter explicitly imports typed_decisions.OpenJev for com-kotobalabs/open-jev-deberta-v3-large; that adapter is not our Qwen 2B/9B model. Author CPU-to-hosted adjustments such as x2 plus 0.15 seconds are assumptions, not measured API latency.",
+      "code_evidence": [
+        "https://github.com/fstandhartinger/jevbench/blob/f8ce71361165846101d02ebc83ad44e47ae44fc3/jevbench/adapters/local_openjev.py#L3",
+        "https://github.com/fstandhartinger/jevbench/blob/f8ce71361165846101d02ebc83ad44e47ae44fc3/jevbench/adapters/local_openjev.py#L48",
+        "https://github.com/fstandhartinger/jevbench/blob/f8ce71361165846101d02ebc83ad44e47ae44fc3/README.md#L74",
+        "https://github.com/fstandhartinger/jevbench/blob/f8ce71361165846101d02ebc83ad44e47ae44fc3/THIRD-PARTY.md#L3"
+      ],
+      "primary_post": "https://x.com/Eito_Miyamura/status/2101696473389736354",
+      "license": {
+        "code": "MIT, LICENSE fetched",
+        "data": "THIRD-PARTY says MIT covers harness and 72 original public decisions only; other data and models retain their own terms. Do not seek or reconstruct withheld questions."
+      },
+      "limits": [
+        "No full benchmark run, composite recomputation or per-entrant identity audit was performed.",
+        "The general X claim that Jev was distilled is an author's interpretation, not evidence about our models or verified weight lineage."
+      ],
+      "proposed_comparison": "Use raw accuracy/calibration/observed latency axes and explicit model repo+revision labels. If adding our systems upstream later, register them as ZefanCai/Open-Jev-2B and -9B; do not borrow another similarly named entrant's score."
+    }
+  ],
+  "existing_reference_rechecks": [
+    {
+      "repository": "softpudding/jev-frontier-100",
+      "commit": "9abacec47394f3b393f81fbe3cdd524f028bc088",
+      "novelty": "No change from already pinned local external evaluation.",
+      "contract": "100 fixed synthetic questions, 50 counterfactual pairs, ten domains; three option rotations produce 300 decisions, not 300 independent examples. Qwen budget variants and published Jev reference already documented locally.",
+      "license": "MIT fetched",
+      "source": "https://github.com/softpudding/jev-frontier-100/blob/9abacec47394f3b393f81fbe3cdd524f028bc088/README.md#L39",
+      "local_evidence": "docs/frontier-eval.md",
+      "primary_post": "https://x.com/XiaoYan13429139/status/2101213202264547729",
+      "holdout": "Keep all questions/golds/rationales and performance outcomes out of training and prompt development."
+    },
+    {
+      "repository": "achimala/jev-paint",
+      "original_user_url": "https://github.com/achimala/jevinci",
+      "commit": "ecf9c48d290e086bde790d6e24b93324667155e9",
+      "novelty": "Same previously verified painting repository, not an additional game.",
+      "contract": "Existing four pixel representations are palette Choice, silhouette Noul, RGB Nouls and HSL Choice plus Scores. Local geometry data is not open-ended artistic performance.",
+      "license": "MIT fetched",
+      "local_evidence": "docs/painting.md",
+      "source": "https://github.com/achimala/jev-paint/blob/ecf9c48d290e086bde790d6e24b93324667155e9/web/jev.mjs"
+    },
+    {
+      "repository": "ielab/llm-rankers",
+      "commit": "bf7911d91a9304bf331ad49c99cc5e09bf2d354e",
+      "novelty": "Same previously verified author IR code; pointwise/pairwise/setwise/listwise contracts already researched. Do not recount synthetic IR as TREC data.",
+      "contract": "Original author contract uses BM25 top-100 DL19/DL20, pointwise Noul/Score, two-order pairwise comparisons, setwise heap ranking and bottom-up listwise windows. TREC labels and candidate passage files remain separate holdouts.",
+      "license": "Apache-2.0 code fetched; TREC/MS MARCO/candidate-source terms are separate.",
+      "local_evidence": "reports/ir-control-v1/source-code-research.json",
+      "source": "https://github.com/ielab/llm-rankers/blob/bf7911d91a9304bf331ad49c99cc5e09bf2d354e/jev/jev_rankers.py",
+      "primary_post": "https://x.com/ShengyaoZhuang/status/2101212268440723895"
+    }
+  ],
+  "direct_x_posts": [
+    {
+      "url": "https://x.com/edwartnoyola/status/2101799243811876866",
+      "retrieval_url": "https://api.fxtwitter.com/edwartnoyola/status/2101799243811876866",
+      "http_status": 200,
+      "response_sha256": "05342941e696b903d91324511170d957269ebb7a547810da1ec883102645c3ae",
+      "author": "edwartnoyola",
+      "posted_at_utc": "2026-09-20T22:22:43Z",
+      "text": "I built a racing game where Jev is the driver with Claude Code!\n\nJev picks the racing line and when to brake, given the speed and the corner ahead.\n\nJev has no memory, so after each lap the game hands it the times for all 11 corners and it decides where to push harder.",
+      "interpretation": "Direct author description corroborates racing/debrief contract. Video was not downloaded or analyzed; lap success/quality not independently verified."
+    },
+    {
+      "url": "https://x.com/HamelHusain/status/2101533413010440593",
+      "retrieval_url": "https://api.fxtwitter.com/HamelHusain/status/2101533413010440593",
+      "http_status": 200,
+      "response_sha256": "4d637f76908925b8e59e86ae36625fa6d7aca9bf07d2a97cbaed8f6c3ed93086",
+      "author": "HamelHusain",
+      "posted_at_utc": "2026-09-20T04:46:24Z",
+      "text": "Can you use Jev for Evals? Yes! Remember that a LLM Judge is also classifier*. Make sure to test your classifiers against human labels and don't overfit. Hope this helps!",
+      "external_source": "https://hamel.dev/blog/posts/evals-faq/why-do-you-recommend-binary-passfail-evaluations-instead-of-1-5-ratings-likert-scales.html",
+      "interpretation": "Methodological recommendation; no benchmark scores or dedicated dataset in the post."
+    },
+    {
+      "url": "https://x.com/node_jz/status/2101869614170820861",
+      "retrieval_url": "https://api.fxtwitter.com/node_jz/status/2101869614170820861",
+      "http_status": 200,
+      "response_sha256": "905146f6f8e608918d6688cfde0cd8634a41e83c8e8a366154ee597a115a2319",
+      "author": "node_jz",
+      "posted_at_utc": "2026-09-21T03:02:21Z",
+      "text": "The Jev loop handles combat, map routes, shops, event rooms, rest sites, and card rewards.\n\nThe harness provides game state, recent decisions, legal moves, and relevant strategy and tips.",
+      "interpretation": "New stateful game-loop lead; no repository, runnable rules or outcome metric was linked in the inspected post response, so it is not a verified benchmark contract."
+    },
+    {
+      "url": "https://x.com/filicroval/status/2101692321364406600",
+      "retrieval_url": "https://api.fxtwitter.com/filicroval/status/2101692321364406600",
+      "http_status": 200,
+      "response_sha256": "e3d8c5b8d79d31497de2f99fb8c37f4c099eec98d594e2c3dff74fc7ced8f33a",
+      "author": "filicroval",
+      "posted_at_utc": "2026-09-20T15:17:51Z",
+      "text": "jev can play pokémon now. like, actually play.\n\nevery turn it reads the live showdown state, weighs every legal move, tera and switch, then commits.\n\n81 calls. 277ms average. $0.0096 spent.",
+      "interpretation": "Author-reported Showdown demo; not the existing Pokémon Red adapter, and not a verified win rate. No runnable code link was present in the inspected post response."
+    },
+    {
+      "url": "https://x.com/Eito_Miyamura/status/2101696473389736354",
+      "retrieval_url": "https://api.fxtwitter.com/Eito_Miyamura/status/2101696473389736354",
+      "http_status": 200,
+      "response_sha256": "fb84a2acafde1702f0ccecd12914a10b0d691fcfa8a1628ddea744a8da812972",
+      "author": "Eito_Miyamura",
+      "posted_at_utc": "2026-09-20T15:34:21Z",
+      "text_excerpt": "Jev has effectively been distilled already. Faster than Jev, Cheaper than Jev, and almost as smart as Jev.",
+      "linked_repository": "https://github.com/fstandhartinger/jevbench",
+      "interpretation": "Author characterization, not evidence that any specific similarly named Open-Jev entrant is ours."
+    },
+    {
+      "url": "https://x.com/XiaoYan13429139/status/2101213202264547729",
+      "retrieval_url": "https://api.fxtwitter.com/XiaoYan13429139/status/2101213202264547729",
+      "http_status": 200,
+      "response_sha256": "291fbc1291064bcce3fbdf63242895ab462c501c9ea14f80bdec229777aba010",
+      "author": "XiaoYan13429139",
+      "posted_at_utc": "2026-09-19T07:34:00Z",
+      "text_excerpt": "我设计了一套基准测试Jev对比Qwen3.5 0.8B 2B 4B，给出0-2048的thinking budget。",
+      "linked_repository": "https://github.com/softpudding/jev-frontier-100",
+      "interpretation": "Original author describes JF100 budget experiment. Its broad intelligence-equivalence claim exceeds what this small synthetic benchmark establishes."
+    }
+  ],
+  "discovery_index": {
+    "repository": "2456868764/jevguide",
+    "commit": "07298344072ec169e23b0928691586e3e5808d52",
+    "status": "secondary discovery only; direct posts verified separately",
+    "source_files": [
+      {
+        "path": "categories/gaming.md",
+        "sha256": "952bbb1d49dbb3cf988fe17b13ce2fd13aab0592d6afb47fa760e7bcfc3a23f1",
+        "bytes": 115905
+      },
+      {
+        "path": "authors/edward-noyola.md",
+        "sha256": "73cac7363f1cda4fd1d4d5ddc896245b90f8c0877b6787a1e6bbf46978fb5a80",
+        "bytes": 244
+      },
+      {
+        "path": "authors/soft-pudding.md",
+        "sha256": "8acbc7e45ae566268b2d07e9e613daf25c42aedcaa80d89ab07ee26b30953193",
+        "bytes": 299
+      }
+    ]
+  },
+  "source_pins": [
+    {
+      "repository": "emretheus/jev-rag-benchmark",
+      "repository_url": "https://github.com/emretheus/jev-rag-benchmark",
+      "commit": "f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1",
+      "tree_sha256": "bdb2035c24418448b2424f9ab954e16ababde5618d3bd3ffea9c1f102bde7c01",
+      "tree_truncated": false,
+      "tree_file_count": 59,
+      "checked_files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/emretheus/jev-rag-benchmark/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/README.md",
+          "permalink": "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/README.md",
+          "sha256": "ea4a50ebb7d02695dea45951d85dac3082e835ae94911a7e8540241e5ba523ee",
+          "bytes": 12772
+        },
+        {
+          "path": "docs/protocol.md",
+          "url": "https://raw.githubusercontent.com/emretheus/jev-rag-benchmark/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/docs/protocol.md",
+          "permalink": "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/docs/protocol.md",
+          "sha256": "7a6e9ebcdcd94126112426094d6ffe886c8b813a344dedf10159313de6736979",
+          "bytes": 4992
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://raw.githubusercontent.com/emretheus/jev-rag-benchmark/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/LICENSE",
+          "permalink": "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/LICENSE",
+          "sha256": "f4e11d5123142a722e23725118c82b46b21611472086bbd1d575b64d19eebaf6",
+          "bytes": 1091
+        },
+        {
+          "path": "src/jev_rag_bench/clients/systemone.py",
+          "url": "https://raw.githubusercontent.com/emretheus/jev-rag-benchmark/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/clients/systemone.py",
+          "permalink": "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/clients/systemone.py",
+          "sha256": "312861963b292a5f07d747482411d0e5e3b5e3bbcc8a772058562ee36e344c33",
+          "bytes": 4017
+        },
+        {
+          "path": "src/jev_rag_bench/config.py",
+          "url": "https://raw.githubusercontent.com/emretheus/jev-rag-benchmark/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/config.py",
+          "permalink": "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/config.py",
+          "sha256": "227c20376b3fe5ee6577d87706ec624ef6157a208b244d08b1512cc8a1b8ff9d",
+          "bytes": 4756
+        },
+        {
+          "path": "src/jev_rag_bench/rerank.py",
+          "url": "https://raw.githubusercontent.com/emretheus/jev-rag-benchmark/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/rerank.py",
+          "permalink": "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/src/jev_rag_bench/rerank.py",
+          "sha256": "b83d7be2efb9e25d8b2e0839f25889633a2f167da26d1e3ba6c312ee84724e5e",
+          "bytes": 2820
+        },
+        {
+          "path": "configs/default.yaml",
+          "url": "https://raw.githubusercontent.com/emretheus/jev-rag-benchmark/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/configs/default.yaml",
+          "permalink": "https://github.com/emretheus/jev-rag-benchmark/blob/f02b0f1e44d5277a5d5ee5575cc3c3f16590b7b1/configs/default.yaml",
+          "sha256": "6eb5af19765eb61d5ae92b937bd3a28b92e1a5aa41038f1157ae918b23facd2e",
+          "bytes": 1734
+        }
+      ]
+    },
+    {
+      "repository": "enoyola/jev-grand-prix",
+      "repository_url": "https://github.com/enoyola/jev-grand-prix",
+      "commit": "351ebb50f9d94d255ad50e37433da62f0ba6cdf9",
+      "tree_sha256": "6912848698d53206b4bccad0e739e44b2f641c319d0466a695b5a3fd90a960f5",
+      "tree_truncated": false,
+      "tree_file_count": 10,
+      "checked_files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/enoyola/jev-grand-prix/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/README.md",
+          "permalink": "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/README.md",
+          "sha256": "76df9963274e9c2d1e9372f1764a84645dda5a14a7debe61936f0bb94f74e88d",
+          "bytes": 6748
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://raw.githubusercontent.com/enoyola/jev-grand-prix/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/LICENSE",
+          "permalink": "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/LICENSE",
+          "sha256": "209339fe765c943ac391b04413b9e372c407e2ac3ba9a23f6385bd820ada364b",
+          "bytes": 1064
+        },
+        {
+          "path": "server.py",
+          "url": "https://raw.githubusercontent.com/enoyola/jev-grand-prix/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/server.py",
+          "permalink": "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/server.py",
+          "sha256": "7192f981a6b12fd3166cb15758d42dee334b15a67d277632bd3edeef86db30f3",
+          "bytes": 15686
+        },
+        {
+          "path": "web/game.js",
+          "url": "https://raw.githubusercontent.com/enoyola/jev-grand-prix/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/web/game.js",
+          "permalink": "https://github.com/enoyola/jev-grand-prix/blob/351ebb50f9d94d255ad50e37433da62f0ba6cdf9/web/game.js",
+          "sha256": "6eb946525eec3ca653249037fdef808a8a1e44d1673dab5b0eed83f6de64db38",
+          "bytes": 33616
+        }
+      ]
+    },
+    {
+      "repository": "tubone24/jev-practice-speed",
+      "repository_url": "https://github.com/tubone24/jev-practice-speed",
+      "commit": "bbd53f5adcad29d609d8311822ae685270d841e6",
+      "tree_sha256": "72d4c4e31b175d02f7b595146de79daf6634432e296347c9ffef596b726b2240",
+      "tree_truncated": false,
+      "tree_file_count": 44,
+      "checked_files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/tubone24/jev-practice-speed/bbd53f5adcad29d609d8311822ae685270d841e6/README.md",
+          "permalink": "https://github.com/tubone24/jev-practice-speed/blob/bbd53f5adcad29d609d8311822ae685270d841e6/README.md",
+          "sha256": "9eb7fcdab398e169ab0c4989c189961700e8d7091c9adb210136d585efa9a7e5",
+          "bytes": 19846
+        },
+        {
+          "path": "public/js/ai.js",
+          "url": "https://raw.githubusercontent.com/tubone24/jev-practice-speed/bbd53f5adcad29d609d8311822ae685270d841e6/public/js/ai.js",
+          "permalink": "https://github.com/tubone24/jev-practice-speed/blob/bbd53f5adcad29d609d8311822ae685270d841e6/public/js/ai.js",
+          "sha256": "39dc6510d861a8bc6c9a4ab9c49e9c48cedefde0fd45315930357d288727f551",
+          "bytes": 12698
+        },
+        {
+          "path": "src/core/jev-core.js",
+          "url": "https://raw.githubusercontent.com/tubone24/jev-practice-speed/bbd53f5adcad29d609d8311822ae685270d841e6/src/core/jev-core.js",
+          "permalink": "https://github.com/tubone24/jev-practice-speed/blob/bbd53f5adcad29d609d8311822ae685270d841e6/src/core/jev-core.js",
+          "sha256": "7c1865544d2815d52a7d94d7ad55628c673cb89d94a18af007c01ee8f7a2b293",
+          "bytes": 10442
+        }
+      ]
+    },
+    {
+      "repository": "binbandit/jev-demo",
+      "repository_url": "https://github.com/binbandit/jev-demo",
+      "commit": "08c7da4da94463c955defb936d58c1a39c482878",
+      "tree_sha256": "0cedbcf2681b2c79826e6b87a80e2d15723ae662ca2960f9f5e0511f9cea202e",
+      "tree_truncated": false,
+      "tree_file_count": 36,
+      "checked_files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/binbandit/jev-demo/08c7da4da94463c955defb936d58c1a39c482878/README.md",
+          "permalink": "https://github.com/binbandit/jev-demo/blob/08c7da4da94463c955defb936d58c1a39c482878/README.md",
+          "sha256": "d61315e985df585bc102f236b5298e27f0d45e16d747291fb6afa08e6f180d64",
+          "bytes": 7738
+        },
+        {
+          "path": "src/examples/pull-request.ts",
+          "url": "https://raw.githubusercontent.com/binbandit/jev-demo/08c7da4da94463c955defb936d58c1a39c482878/src/examples/pull-request.ts",
+          "permalink": "https://github.com/binbandit/jev-demo/blob/08c7da4da94463c955defb936d58c1a39c482878/src/examples/pull-request.ts",
+          "sha256": "e951b5225ef54aa3fef14faf1e2c06e2b2929f8796d4e9cfd520159fa911ec63",
+          "bytes": 1037
+        },
+        {
+          "path": "src/compare.ts",
+          "url": "https://raw.githubusercontent.com/binbandit/jev-demo/08c7da4da94463c955defb936d58c1a39c482878/src/compare.ts",
+          "permalink": "https://github.com/binbandit/jev-demo/blob/08c7da4da94463c955defb936d58c1a39c482878/src/compare.ts",
+          "sha256": "408dcbfff96629248664ec95bcddf969d4e5c675ede2365169c172b3071d445a",
+          "bytes": 1850
+        }
+      ]
+    },
+    {
+      "repository": "TokenTrim/jev-agent-failure-benchmark",
+      "repository_url": "https://github.com/TokenTrim/jev-agent-failure-benchmark",
+      "commit": "4d46af795a4a4409940a65857da73e45abaea2db",
+      "tree_sha256": "5b89dabef89c5a9bab48055b71b6062688c4e33a2aa35a76d30d3b4ba54561fd",
+      "tree_truncated": false,
+      "tree_file_count": 38,
+      "checked_files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/TokenTrim/jev-agent-failure-benchmark/4d46af795a4a4409940a65857da73e45abaea2db/README.md",
+          "permalink": "https://github.com/TokenTrim/jev-agent-failure-benchmark/blob/4d46af795a4a4409940a65857da73e45abaea2db/README.md",
+          "sha256": "70a3c9ee7ef3cee3ce11da62cf4ac426bc86818340dc49786be164ea920b686a",
+          "bytes": 3967
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://raw.githubusercontent.com/TokenTrim/jev-agent-failure-benchmark/4d46af795a4a4409940a65857da73e45abaea2db/LICENSE",
+          "permalink": "https://github.com/TokenTrim/jev-agent-failure-benchmark/blob/4d46af795a4a4409940a65857da73e45abaea2db/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        {
+          "path": "src/jevbench/candidates.py",
+          "url": "https://raw.githubusercontent.com/TokenTrim/jev-agent-failure-benchmark/4d46af795a4a4409940a65857da73e45abaea2db/src/jevbench/candidates.py",
+          "permalink": "https://github.com/TokenTrim/jev-agent-failure-benchmark/blob/4d46af795a4a4409940a65857da73e45abaea2db/src/jevbench/candidates.py",
+          "sha256": "c75a45f6eb9a29a5111a00f0757aacdf9ba7867c97f1765a223f063fae861be4",
+          "bytes": 1988
+        },
+        {
+          "path": "src/jevbench/metrics.py",
+          "url": "https://raw.githubusercontent.com/TokenTrim/jev-agent-failure-benchmark/4d46af795a4a4409940a65857da73e45abaea2db/src/jevbench/metrics.py",
+          "permalink": "https://github.com/TokenTrim/jev-agent-failure-benchmark/blob/4d46af795a4a4409940a65857da73e45abaea2db/src/jevbench/metrics.py",
+          "sha256": "612377cb40dacd09ceb4a3d0e18a2cad0edd48725dada7b194e80d24daf285f8",
+          "bytes": 6680
+        }
+      ]
+    },
+    {
+      "repository": "AbdelStark/jev-benchmarks",
+      "repository_url": "https://github.com/AbdelStark/jev-benchmarks",
+      "commit": "0d610cc53e79bcbec691312b0c4adb4a0e371642",
+      "tree_sha256": "1797bd4f696b8de2e928568aaf4c37200c5f241c5d68ae4aeaacd641d129c7a2",
+      "tree_truncated": false,
+      "tree_file_count": 47,
+      "checked_files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/AbdelStark/jev-benchmarks/0d610cc53e79bcbec691312b0c4adb4a0e371642/README.md",
+          "permalink": "https://github.com/AbdelStark/jev-benchmarks/blob/0d610cc53e79bcbec691312b0c4adb4a0e371642/README.md",
+          "sha256": "fe6422e6cc707cb989672a5db283f835539d09333c093e803f47c5761334f0ea",
+          "bytes": 9331
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://raw.githubusercontent.com/AbdelStark/jev-benchmarks/0d610cc53e79bcbec691312b0c4adb4a0e371642/LICENSE",
+          "permalink": "https://github.com/AbdelStark/jev-benchmarks/blob/0d610cc53e79bcbec691312b0c4adb4a0e371642/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "bytes": 11357
+        },
+        {
+          "path": "src/jev_benchmarks/adapters/jev.py",
+          "url": "https://raw.githubusercontent.com/AbdelStark/jev-benchmarks/0d610cc53e79bcbec691312b0c4adb4a0e371642/src/jev_benchmarks/adapters/jev.py",
+          "permalink": "https://github.com/AbdelStark/jev-benchmarks/blob/0d610cc53e79bcbec691312b0c4adb4a0e371642/src/jev_benchmarks/adapters/jev.py",
+          "sha256": "5055ff17fe88120a18cbeda9ecfa5f7bf3111c8d53cb20fecc8b8657099e083b",
+          "bytes": 1981
+        },
+        {
+          "path": "src/jev_benchmarks/metrics.py",
+          "url": "https://raw.githubusercontent.com/AbdelStark/jev-benchmarks/0d610cc53e79bcbec691312b0c4adb4a0e371642/src/jev_benchmarks/metrics.py",
+          "permalink": "https://github.com/AbdelStark/jev-benchmarks/blob/0d610cc53e79bcbec691312b0c4adb4a0e371642/src/jev_benchmarks/metrics.py",
+          "sha256": "bd36d82ad3525ad2cc16284cf720d3d29aa0669f1d7a48a8dc5846217d04173b",
+          "bytes": 7198
+        }
+      ]
+    },
+    {
+      "repository": "fstandhartinger/jevbench",
+      "repository_url": "https://github.com/fstandhartinger/jevbench",
+      "commit": "f8ce71361165846101d02ebc83ad44e47ae44fc3",
+      "tree_sha256": "6d88c8073f14b39a7fb36f7afd4223b0d95d4f0bfa6e1750ebefa0b5cb2c3740",
+      "tree_truncated": false,
+      "tree_file_count": 146,
+      "checked_files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/fstandhartinger/jevbench/f8ce71361165846101d02ebc83ad44e47ae44fc3/README.md",
+          "permalink": "https://github.com/fstandhartinger/jevbench/blob/f8ce71361165846101d02ebc83ad44e47ae44fc3/README.md",
+          "sha256": "f95e38b801be51ac9fdfc18f023184f62fa07e731170ee56f007331302bc9411",
+          "bytes": 24583
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://raw.githubusercontent.com/fstandhartinger/jevbench/f8ce71361165846101d02ebc83ad44e47ae44fc3/LICENSE",
+          "permalink": "https://github.com/fstandhartinger/jevbench/blob/f8ce71361165846101d02ebc83ad44e47ae44fc3/LICENSE",
+          "sha256": "3e5beed774bb0bcbfb2fcf24ba9554212c6ae112937d308040989465ab0c5784",
+          "bytes": 1096
+        },
+        {
+          "path": "THIRD-PARTY.md",
+          "url": "https://raw.githubusercontent.com/fstandhartinger/jevbench/f8ce71361165846101d02ebc83ad44e47ae44fc3/THIRD-PARTY.md",
+          "permalink": "https://github.com/fstandhartinger/jevbench/blob/f8ce71361165846101d02ebc83ad44e47ae44fc3/THIRD-PARTY.md",
+          "sha256": "396422e29055bba4073f4a9e5a7163cc724f13e970a34ef58e8ea1fb439b9b38",
+          "bytes": 2654
+        },
+        {
+          "path": "jevbench/adapters/local_openjev.py",
+          "url": "https://raw.githubusercontent.com/fstandhartinger/jevbench/f8ce71361165846101d02ebc83ad44e47ae44fc3/jevbench/adapters/local_openjev.py",
+          "permalink": "https://github.com/fstandhartinger/jevbench/blob/f8ce71361165846101d02ebc83ad44e47ae44fc3/jevbench/adapters/local_openjev.py",
+          "sha256": "9059a076e421c1aee58de9143e6fb4b8d2785d31aa7f33548466e784b78a1f93",
+          "bytes": 5478
+        }
+      ]
+    },
+    {
+      "repository": "softpudding/jev-frontier-100",
+      "repository_url": "https://github.com/softpudding/jev-frontier-100",
+      "commit": "9abacec47394f3b393f81fbe3cdd524f028bc088",
+      "tree_sha256": "002795622f0371c3a592be1acee4e39bc4849ee370cb501ad050bf61da758453",
+      "tree_truncated": false,
+      "tree_file_count": 50,
+      "checked_files": [
+        {
+          "path": "README.md",
+          "url": "https://raw.githubusercontent.com/softpudding/jev-frontier-100/9abacec47394f3b393f81fbe3cdd524f028bc088/README.md",
+          "permalink": "https://github.com/softpudding/jev-frontier-100/blob/9abacec47394f3b393f81fbe3cdd524f028bc088/README.md",
+          "sha256": "0e34090a63f6f5ca9d445b10476c8b3b59ec0568e9c045aac91a43635381001a",
+          "bytes": 6442
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://raw.githubusercontent.com/softpudding/jev-frontier-100/9abacec47394f3b393f81fbe3cdd524f028bc088/LICENSE",
+          "permalink": "https://github.com/softpudding/jev-frontier-100/blob/9abacec47394f3b393f81fbe3cdd524f028bc088/LICENSE",
+          "sha256": "c944509bf87f8d3833d07a1a68339587938fe172b45017972bbaf701385b0763",
+          "bytes": 1075
+        }
+      ]
+    },
+    {
+      "repository": "achimala/jev-paint",
+      "repository_url": "https://github.com/achimala/jev-paint",
+      "commit": "ecf9c48d290e086bde790d6e24b93324667155e9",
+      "tree_sha256": "f22a7df8c2f2fe7eeea561f7639c9047f35576e272faec5a30637d01b4d2e54d",
+      "tree_truncated": false,
+      "tree_file_count": 19,
+      "checked_files": [
+        {
+          "path": "LICENSE",
+          "url": "https://raw.githubusercontent.com/achimala/jev-paint/ecf9c48d290e086bde790d6e24b93324667155e9/LICENSE",
+          "sha256": "1607e9149a254c619d0ceb4119ed9346e13048c28c1d437d80ff2837e40159da",
+          "bytes": 1070
+        }
+      ]
+    },
+    {
+      "repository": "ielab/llm-rankers",
+      "repository_url": "https://github.com/ielab/llm-rankers",
+      "commit": "bf7911d91a9304bf331ad49c99cc5e09bf2d354e",
+      "tree_sha256": "f3bb1ca6065dfed2bdbfca34fbf0a3229da4c06ba6c2a2258573f217f5854bf2",
+      "tree_truncated": false,
+      "tree_file_count": 72,
+      "checked_files": [
+        {
+          "path": "LICENSE",
+          "url": "https://raw.githubusercontent.com/ielab/llm-rankers/bf7911d91a9304bf331ad49c99cc5e09bf2d354e/LICENSE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "bytes": 11357
+        }
+      ]
+    }
+  ],
+  "comparison_rules": [
+    "Distinguish exact model repository, checkpoint revision, API resolved model, provider, precision, and calibration; similarly named OpenJev projects are not interchangeable.",
+    "Use the same visible inputs and finite candidate meanings for all providers. Compare compact strict-output GPT decisions separately from a full-distribution output contract; do not invent GPT probabilities.",
+    "Measure matched client timing boundaries, concurrency, warm/cold cache conditions, request retries/failures, and complete wall time. Source APIs and local H100 execution have different hardware/network boundaries.",
+    "For closed loops, pair seeds/environment/controller/clock limits and report full goal completion alongside raw model decision quality. Rule filtering, mock outputs and fallback actions must be attributed explicitly.",
+    "API list-price estimates, trial credits, local hardware rentals, and claimed deployment-normalized latency must be labelled separately from measured/billed cost.",
+    "Keep all external benchmark inputs/labels and observed errors out of later training. Generate new original controls from task contracts, with whole document/trace/track/template groups held together and unseen families for OOD.",
+    "A finite schema, a runnable demo, an author's post, a software fixture and a measured model benchmark are different evidence levels; this report claims source inspection only."
+  ],
+  "next_steps": [
+    "Retain training pause. Decide which external holdouts to add, freeze contracts and license checks before any model run.",
+    "Prioritize RAG with our explicitly identified checkpoint branches, original racing/card simulators with complete-game metrics, and independently labelled judge tasks.",
+    "Use new task families for original future data design; do not increment 408,884 rows or 25 sources until generated data passes independent label/split/provenance audits."
+  ],
+  "existing_inventory_source_files": [
+    {
+      "path": "docs/website-and-videos.md",
+      "sha256": "4fdbe8489488af3ae9f7f013b0987615381cf562bafd5f7445714cfc371989ac",
+      "bytes": 8373
+    },
+    {
+      "path": "docs/public-capabilities.md",
+      "sha256": "48798e2978966342190f1a0d3b8cb81bfae5b4d59bd7e020939fff97d43afdb1",
+      "bytes": 17814
+    },
+    {
+      "path": "docs/community-research-20260920.md",
+      "sha256": "689670eb2bf4b34144f42bc032d67dadd03e638c0fc6c852d6150f6f307b908c",
+      "bytes": 13621
+    },
+    {
+      "path": "docs/source-coverage-followup-20260920.md",
+      "sha256": "329386a196926b9acda316b49f73d8ed5196efb070d13803805ba40fc0789f45",
+      "bytes": 16914
+    },
+    {
+      "path": "docs/frontier-eval.md",
+      "sha256": "9f4fe2ad82b05d2761dae82a1b6beea87f1e932e890546d70e4c075ffd06b1fc",
+      "bytes": 9029
+    },
+    {
+      "path": "docs/painting.md",
+      "sha256": "3164470c0a145dd915a3099833e8edf55cb07a22fcf9210c39abb737fe9c0285",
+      "bytes": 4019
+    },
+    {
+      "path": "reports/ir-control-v1/source-code-research.json",
+      "sha256": "103004e2b2131ab9cba4afd3ba8174575c5351591d0031a506b5fa9bb756d6b6",
+      "bytes": 12523
+    }
+  ]
+}
