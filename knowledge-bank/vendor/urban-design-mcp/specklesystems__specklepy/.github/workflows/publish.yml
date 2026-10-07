@@ -1,0 +1,78 @@
+name: "Publish Python Package"
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "202*.*.*"
+
+permissions: {} # no permissions by default, override on a per-job basis
+
+concurrency:
+  group: ${{ github.workflow }}-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: "./.github/workflows/pr.yml"
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      CONNECTORS_GH_TOKEN: ${{ secrets.CONNECTORS_GH_TOKEN }}
+    permissions:
+      contents: read
+      packages: read # required to pull docker images
+
+  publish-package:
+    name: "Build and Publish Python Package"
+    runs-on: ubuntu-latest
+    needs: test
+
+    # set the environment based on what triggered the workflow
+    environment:
+      name: ${{ github.ref_type == 'tag' && 'pypi' || 'testpypi' }}
+
+    permissions:
+      contents: read
+      id-token: write # for publishing pypi packages with uv
+
+    steps:
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false # DO NOT REMOVE. Refer to https://docs.zizmor.sh/audits/#cache-poisoning
+
+      - name: "Checkout code"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: "Build package artifacts"
+        run: uv build
+
+      # Logic for TestPyPI (on main branch push)
+      - name: "Publish to TestPyPI"
+        if: ${{ github.ref_type == 'branch' }}
+        run: uv publish --index test
+
+      # Pinned to the version just built (hatch-vcs makes it dynamic, so read it off the
+      # wheel): unpinned, uv skips the pre-release and would verify an older PyPI
+      # release instead. `unsafe-best-match` lets the dependencies resolve from PyPI;
+      # with the default first-index strategy TestPyPI's stray copies of them win and
+      # the resolution fails.
+      - name: "Verify TestPyPI package installation"
+        if: ${{ github.ref_type == 'branch' }}
+        run: |
+          version="$(ls dist/specklepy-*.whl | sed -E 's|.*/specklepy-([^-]+)-.*|\1|')"
+          uv run --index test --index-strategy unsafe-best-match --with "specklepy==${version}" --no-project -- python -c "import specklepy"
+
+      # Logic for PyPI (on v3* tag creation)
+      - name: "Publish to PyPI"
+        if: ${{ github.ref_type == 'tag' }}
+        run: uv publish
+
+      - name: "Verify PyPI package installation"
+        if: ${{ github.ref_type == 'tag' }}
+        run: |
+          version="$(ls dist/specklepy-*.whl | sed -E 's|.*/specklepy-([^-]+)-.*|\1|')"
+          uv run --with "specklepy==${version}" --no-project -- python -c "import specklepy"
