@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         id="product"
+         name="Base product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="gama.ui.application.GamaApplication"
+            name="Gama">
+	<property
+            name="rendererFactoryUri"
+            value="bundleclass://gama.ui.application/gama.ui.application.workbench.GamaStackRendererFactory">
+      </property>
+         <property
+               name="windowImages"
+               value="icons/window/icon16.png,icons/window/icon32.png,icons/window/icon48.png,icons/window/icon64.png,icons/window/icon128.png,icons/window/icon256.png">
+         </property> 
+         <property
+               name="aboutText"
+               value="GAMA Platform - 0.0.0-SNAPSHOT http://gama-platform.org&#x0A;&#x0A;(c) 2007-2008 IRD-UR GEODES (France) &amp; IFI-MSI (Vietnam)&#x0A;(c) 2009-2011 UMI 209 UMMISCO IRD/UPMC - MSI (Vietnam)&#x0A;(c) 2012-2017 UMI 209 UMMISCO IRD/UPMC &amp; Partners&#x0A;(c) 2018-2026 UMI 209 UMMISCO IRD/SU &amp; Partners">
+         </property>
+         <property
+               name="aboutImage"
+               value="icons/window/icon128.png">
+         </property>
+         <property
+               name="appName"
+               value="Gama">
+         </property>
+         <property
+               name="startupProgressRect"
+               value="420,480,80,12">
+         </property>
+         <property
+               name="startupForegroundColor"
+               value="C56D45">
+         </property>
+         <property
+               name="startupMessageRect"
+               value="420,500,100,16">
+         </property>
+         <property
+               name="preferenceCustomization"
+               value="plugin_customization.ini">
+         </property>
+      </product>
+   </extension>
+
+   <extension
+         id="GamaApplication"
+         name="Gama"
+         point="org.eclipse.core.runtime.applications">
+       <application
+            icon="/icons/window/icon256.png">
+         <run
+               class="gama.ui.application.Application">
+            <parameter
+                  name="preferenceCustomization"
+                  value="plugin_customization.ini">
+            </parameter>
+         </run>
+      </application>
+   </extension>
+
+
+</plugin>

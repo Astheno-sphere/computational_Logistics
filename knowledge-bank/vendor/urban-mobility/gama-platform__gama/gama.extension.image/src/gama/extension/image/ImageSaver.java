@@ -1,0 +1,203 @@
+/*******************************************************************************************************
+ *
+ * ImageSaver.java, in gama.extension.image, is part of the source code of the GAMA modeling and simulation platform .
+ *
+ * (c) 2007-2024 UMI 209 UMMISCO IRD/SU & Partners (IRIT, MIAT, TLU, CTU)
+ *
+ * Visit https://github.com/gama-platform/gama for license information and contacts.
+ *
+ ********************************************************************************************************/
+package gama.extension.image;
+
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Set;
+
+import javax.imageio.ImageIO;
+
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.Sets;
+
+import gama.api.gaml.expressions.IExpression;
+import gama.api.gaml.types.Cast;
+import gama.api.gaml.types.IType;
+import gama.api.gaml.types.Types;
+import gama.api.kernel.species.ISpecies;
+import gama.api.kernel.topology.IProjection;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.matrix.IField;
+import gama.api.utils.files.SaveOptions;
+import gama.core.topology.gis.ProjectionFactory;
+import gama.core.topology.grid.GridPopulation;
+import gama.gaml.statements.save.AbstractSaver;
+
+/**
+ * The Class ImageSaver.
+ */
+public class ImageSaver extends AbstractSaver {
+
+	/** The Constant FILE_FORMATS. */
+	public static final Set<String> FILE_FORMATS = Set.of("image", "jpg", "jpeg", "png", "gif");
+
+	/**
+	 * Save.
+	 *
+	 * @param scope
+	 *            the scope
+	 * @param item
+	 *            the item
+	 * @param file
+	 *            the file
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@Override
+	public void save(final IScope scope, final IExpression item, final File file, final SaveOptions options)
+			throws IOException {
+		File f = file;
+		String path = f.getAbsolutePath();
+		String t = "image".equals(options.type()) ? "png" : "jpeg".equals(options.type()) ? "jpg" : options.type();
+		if ("image".equals(t)) { t = "png"; }
+		if ("jpeg".equals(t)) { t = "jpg"; }
+		if (!path.contains("." + t)) {
+			path += "." + t;
+			f = new File(path);
+		}
+
+		if (f.exists() && !f.delete()) return;
+		Object v = item.value(scope);
+		boolean saved = false;
+		if (v instanceof IField gf) {
+			saveField(scope, gf, f, t);
+			ProjectionFactory.saveTargetCRSAsPRJFile(scope, f.getAbsolutePath());
+			saved = true;
+		} else {
+			final ISpecies species = Cast.asSpecies(scope, v);
+			if (species != null && species.isGrid()) {
+				saveGrid(scope, species, f, t);
+				ProjectionFactory.saveTargetCRSAsPRJFile(scope, f.getAbsolutePath());
+				saved = true;
+			}
+		}
+		if (!saved) {
+			GamaImage image = GamaImageType.staticCast(scope, item.value(scope), false);
+			if (image == null) return;
+			ImageIO.write(image, t, file);
+		}
+	}
+
+	/**
+	 * Save grid.
+	 *
+	 * @param scope
+	 *            the scope
+	 * @param species
+	 *            the species
+	 * @param file
+	 *            the file
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	private void saveGrid(final IScope scope, final ISpecies species, final File file, final String type)
+			throws IOException {
+		final GridPopulation gp = (GridPopulation) species.getPopulation(scope);
+		final int cols = gp.getNbCols();
+		final int rows = gp.getNbRows();
+		IProjection worldProjection = scope.getSimulation().getProjectionFactory().getWorld();
+		double x = worldProjection == null ? 0 : worldProjection.getProjectedEnvelope().getMinX();
+		double y = worldProjection == null ? 0 : worldProjection.getProjectedEnvelope().getMinY();
+		final double cw = gp.getAgent(0).getGeometry().getWidth();
+		final double ch = gp.getAgent(0).getGeometry().getHeight();
+		x += cw / 2;
+		y += ch / 2;
+		try (final FileWriter fw =
+				new FileWriter(file.getAbsolutePath().replace(".png", ".pgw").replace(".jpg", ".jgw"));) {
+			fw.write(cw + "\n0.0\n0.0\n" + ch + "\n" + x + "\n" + y);
+		}
+		final BufferedImage image = new BufferedImage(cols, rows, BufferedImage.TYPE_INT_RGB);
+		DataBufferInt buffer = (DataBufferInt) image.getRaster().getDataBuffer();
+		final int[] imageData = buffer.getData();
+		System.arraycopy(gp.getTopology().getPlaces().getDisplayData(), 0, imageData, 0, imageData.length);
+		// see #3592
+		// for (final Object g : gp.getAgents(scope).iterable(scope)) {
+		// final IGridAgent ag = (IGridAgent) g;
+		// image.setRGB(ag.getX(), rows - 1 - ag.getY(), ag.getColor().getRGB());
+		// }
+		ImageIO.write(image, type, file);
+
+	}
+
+	/**
+	 * Save field.
+	 *
+	 * @param scope
+	 *            the scope
+	 * @param field
+	 *            the field
+	 * @param f
+	 *            the f
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	private void saveField(final IScope scope, final IField field, final File f, final String t) throws IOException {
+		if (field.isEmpty(scope)) return;
+		final int cols = field.getCols(scope);
+		final int rows = field.getRows(scope);
+		IProjection worldProjection = scope.getSimulation().getProjectionFactory().getWorld();
+		double x = worldProjection == null ? 0 : worldProjection.getProjectedEnvelope().getMinX();
+		double y = worldProjection == null ? 0 : worldProjection.getProjectedEnvelope().getMinY();
+		final double cw =
+				scope.getSimulation().getProjectionFactory().getWorld().getProjectedEnvelope().getWidth() / cols;
+		final double ch =
+				scope.getSimulation().getProjectionFactory().getWorld().getProjectedEnvelope().getHeight() / rows;
+		x += cw / 2;
+		y += ch / 2;
+		try (final FileWriter fw =
+				new FileWriter(f.getAbsolutePath().replace(".png", ".pgw").replace(".jpg", ".jgw"));) {
+			fw.write(cw + "\n0.0\n0.0\n" + ch + "\n" + x + "\n" + y);
+		}
+		final BufferedImage image = new BufferedImage(cols, rows, BufferedImage.TYPE_INT_RGB);
+		final int[] imageData = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		final double[] minmaxVal = field.getMinMax();
+		final double[] values = field.getFieldData(scope);
+		final double range = minmaxVal[1] - minmaxVal[0];
+		final double min = minmaxVal[0];
+		final double invRange = range == 0 ? 0 : 255d / range;
+		for (int row = 0; row < rows; row++) {
+			final int sourceOffset = row * cols;
+			final int targetOffset = (rows - 1 - row) * cols;
+			for (int col = 0; col < cols; col++) {
+				int gray = range == 0 ? 0 : (int) Math.round((values[sourceOffset + col] - min) * invRange);
+				if (gray < 0) {
+					gray = 0;
+				} else if (gray > 255) { gray = 255; }
+				imageData[targetOffset + col] = 0x010101 * gray;
+			}
+		}
+		ImageIO.write(image, t, f);
+
+	}
+
+	/**
+	 * Compute file types.
+	 *
+	 * @author Alexis Drogoul (alexis.drogoul@ird.fr)
+	 * @return the sets the
+	 * @date 29 août 2023
+	 */
+	@Override
+	public Set<String> computeFileTypes() {
+		return Sets.union(Set.of(ImageIO.getWriterFileSuffixes()), FILE_FORMATS);
+	}
+
+	@Override
+	public IType getDataType() { return Types.get(GamaImageType.ID); }
+
+	@Override
+	public BiMap<String, String> getSynonyms() { return ImmutableBiMap.of("jpg", "jpeg"); }
+
+}

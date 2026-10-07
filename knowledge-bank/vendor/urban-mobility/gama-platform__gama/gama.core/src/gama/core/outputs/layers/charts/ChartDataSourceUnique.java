@@ -1,0 +1,117 @@
+/*******************************************************************************************************
+ *
+ * ChartDataSourceUnique.java, in gama.core, is part of the source code of the GAMA modeling and simulation platform
+ * (v.2025-03).
+ *
+ * (c) 2007-2025 UMI 209 UMMISCO IRD/SU & Partners (IRIT, MIAT, ESPACE-DEV, CTU)
+ *
+ * Visit https://github.com/gama-platform/gama for license information and contacts.
+ *
+ ********************************************************************************************************/
+package gama.core.outputs.layers.charts;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import gama.annotations.constants.IKeyword;
+import gama.api.gaml.GAML;
+import gama.api.gaml.expressions.IExpression;
+import gama.api.gaml.types.Cast;
+import gama.api.gaml.types.Types;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.color.GamaColorFactory;
+import gama.api.types.color.IColor;
+import gama.gaml.operators.Random;
+
+/**
+ * The Class ChartDataSourceUnique.
+ */
+public class ChartDataSourceUnique extends ChartDataSource {
+
+	/** The myname. */
+	private String legend;
+
+	@Override
+	public boolean cloneMe(final IScope scope, final int chartCycle, final ChartDataSource source) {
+		final boolean res = super.cloneMe(scope, chartCycle, source);
+		final IColor col = ChartProperties.getDefaultSeriesColor(scope, chartCycle);
+		final IExpression ncol = GAML.getExpressionFactory().createConst(col, Types.COLOR);
+		this.colorexp = ncol;
+		final String previousname = ((ChartDataSourceUnique) source).legend;
+		legend = previousname + "_1*";
+		if (previousname.endsWith("*")) {
+			final int index = previousname.lastIndexOf('_');
+			final String nosim = previousname.substring(index + 1, previousname.lastIndexOf('*'));
+			int nosimv = Cast.asInt(scope, nosim);
+			final String basename = previousname.substring(0, index);
+			nosimv = nosimv + 1;
+			legend = basename + "_" + nosimv + "*";
+		}
+
+		return res;
+	}
+
+	@Override
+	public ChartDataSource getClone(final IScope scope, final int chartCycle) {
+		final ChartDataSourceUnique res = new ChartDataSourceUnique();
+		res.cloneMe(scope, chartCycle, this);
+		return res;
+	}
+
+	/**
+	 * Gets the myserie.
+	 *
+	 * @return the myserie
+	 */
+	public ChartDataSeries getMyserie() { return mySeries.get(legend); }
+
+	/**
+	 * Sets the legend.
+	 *
+	 * @param scope
+	 *            the scope
+	 * @param stval
+	 *            the stval
+	 */
+	public void setLegend(final IScope scope, final String stval) {
+		legend = stval;
+	}
+
+		@Override
+	public void updatevalues(final IScope scope, final int chartCycle) {
+		super.updatevalues(scope, chartCycle);
+		if (getValue() == null) return;
+		final Object o = getValue().value(scope);
+		if (o != null) {
+			updateseriewithvalue(scope, getMyserie(), o, chartCycle, computeBarValues(scope), -1);
+		}
+	}
+
+	/**
+	 * Infer dataset properties.
+	 *
+	 * @param scope
+	 *            the scope
+	 * @param myserie
+	 *            the myserie
+	 */
+	public void inferDatasetProperties(final IScope scope, final ChartDataSeries myserie) {
+		Object o = null;
+		if (this.getValue() != null) { o = this.getValue().value(scope); }
+		final int type_val = get_data_type(scope, o);
+		getDataset().getOutput().setDefaultPropertiesFromType(scope, this, type_val);
+
+	}
+
+	@Override
+	public void createInitialSeries(final IScope scope) {
+		final ChartDataSeries myserie = new ChartDataSeries();
+		myserie.setMysource(this);
+		myserie.setDataset(getDataset());
+		inferDatasetProperties(scope, myserie);
+		myserie.setName(legend);
+		getDataset().addNewSerie(legend, myserie, 0);
+		mySeries.put(legend, myserie);
+	}
+
+}

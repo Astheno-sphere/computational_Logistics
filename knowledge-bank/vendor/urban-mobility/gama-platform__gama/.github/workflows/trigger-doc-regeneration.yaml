@@ -1,0 +1,105 @@
+#
+# This workflow compile and send analysis to sonarcloud
+# + generate documentation and commit it to the wiki repository
+# + trigger GHA on website's repository
+#
+
+name: "Documentation Auto Refresh"
+
+on:
+  workflow_dispatch:  # For manual trigger
+  schedule:
+    - cron: "0 0 * * 6"
+
+jobs:
+  generating-documentation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Adopt OpenJDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "25"
+          java-package: jdk
+
+      - name: Set custom runner parameters
+        run: |
+          echo "MAVEN_OPTS='-Xmx15g'" >> ~/.mavenrc
+
+      - uses: ./.github/actions/maven-build-cache
+        name: Restore Maven Build Cache
+        with:
+          action: restore
+
+      - uses: ./.github/actions/maven-dependency-cache
+        name: Restore Maven Dependency Cache
+        with:
+          action: restore
+
+      - name: Compiling GAMA
+        run: |
+          # Tycho doesn't honor optional tag : https://www.eclipse.org/lists/tycho-user/msg03542.html
+          # Related #836
+          sed -i '/gama\.feature\.copilot/d' $GITHUB_WORKSPACE/gama.product/gama.product
+          bash travis/build.sh -B -T 4
+
+      - uses: ./.github/actions/maven-build-cache
+        name: Save Maven Build Cache
+        with:
+          action: save
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - uses: ./.github/actions/maven-dependency-cache
+        name: Save Maven Dependency Cache
+        if: "${{ github.ref_name }} == 'main'"
+        with:
+          action: save
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Generate documentation
+        run: |
+          git clone --depth 1 https://github.com/gama-platform/gama.wiki.git  $GITHUB_WORKSPACE/../gama.wiki
+          cd $GITHUB_WORKSPACE/gama.documentation/
+          java -cp ".:libs/jdom-2.0.1.jar:target/classes:../gama.annotations/target/classes" gama.documentation.MainGenerateWiki -online
+
+      - name: Commit updated documentation files
+        run: |
+          git config --global user.email "my.gama.bot@gmail.com"
+          git config --global user.name "GAMA Bot"
+          cd $GITHUB_WORKSPACE/../gama.wiki
+          git remote set-url origin https://gama-bot:$BOT_TOKEN@github.com/gama-platform/gama.wiki.git
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "Regenerate operators artifacts on wiki  - $(date)"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+
+      - name: Trigger documentation website rebuild
+        run: |
+          curl --request POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token ${{ secrets.BOT_TOKEN }}" \
+            --data '{"event_type": "automated-generation"}' \
+            https://api.github.com/repos/gama-platform/gama-platform.github.io/dispatches
+
+      - name: Push prism-gaml.js to prism-gaml repository
+        run: |
+          git clone --depth 1 https://gama-bot:$BOT_TOKEN@github.com/gama-platform/prism-gaml.git $GITHUB_WORKSPACE/../prism-gaml
+          cp $GITHUB_WORKSPACE/gama.documentation/files/gen/prism/prism-gaml.js $GITHUB_WORKSPACE/../prism-gaml/components/prism-gaml.js
+          cd $GITHUB_WORKSPACE/../prism-gaml
+          if [ -n "$(git status --porcelain)" ]; then
+            git add components/prism-gaml.js
+            git commit -m "Update prism-gaml.js - $(date)"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}

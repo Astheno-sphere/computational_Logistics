@@ -1,0 +1,62 @@
+/**
+* Name: MQTT Send Example
+* Author: Nicolas Marilleau, Arnaud Grignard
+* Description: Shows how to send messages between two agents (sender and receiver) using the MQTT protocol.
+*   The sender agent publishes a message to a topic; the receiver agent subscribes and logs incoming messages.
+*   Demonstrates the 'send' and 'fetch' network actions in their simplest MQTT form.
+* Tags: network, MQTT, send, receive, messaging, protocol, communication
+*/
+
+model MQTT_HelloWorld_Send
+
+global {	
+	list<string> clients <-["sender","receiver"];
+	init {
+		write "A MQTT server should run." color: #red;
+		write "Another instance of GAMA should run the model Example_MQTT_Receive.gaml, to show how agents receive messages.";
+		
+		create NetworkingAgent number:1{
+			name <-clients[0];
+			dest <- clients[1];
+			/**
+			 * Demo connection based on a default free remote server (broker.mqtt.cool, with port 1883). 
+			 * Using the default MQQT server requires an available internet connection. Depending on your web access, it could be slow down the simulation. 
+			 * It is a free and unsecure server.
+			 * Using YOUR server is thus adviced. You can download free solution such as ActiveMQ (http://activemq.apache.org) 
+			 */
+			do connect(with_name:"sender");
+			
+			// default ActiveMQ MQTT login is "admin", the password is "admin" and the port is 1883
+			// do connect(to:"localhost", port:1883, with_name:"sender");
+			// do connect(to:"localhost", port:1883, with_name:"sender", login:"admin", password:"admin", port: 1883);
+		}
+	}
+}
+
+species NetworkingAgent skills:[network]{
+	string dest;
+	
+	reflex send when: cycle mod 10  = 3
+	{
+		write "sending message: " + "This message a string from " + name;
+		do send(to:"receiver", contents:"This message a string from " + name);
+	}
+	
+	reflex send2 when: cycle mod 10  = 5
+	{
+		int a <- 0;		
+		write "sending message: " + a;
+		do send(to:"receiver", contents:a);		
+	}
+
+	reflex send3 when: cycle mod 10  = 8
+	{
+		write "sending message: " + self;
+		do send(to:"receiver", contents:self);			
+	}
+}
+
+experiment Network_sender type: gui {
+	output {
+	}
+}
