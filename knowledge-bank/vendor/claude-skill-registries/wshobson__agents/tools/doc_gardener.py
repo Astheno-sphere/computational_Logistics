@@ -1,0 +1,968 @@
+#!/usr/bin/env python3
+"""Doc-gardener — recurring drift detection across the repo.
+
+Per the OpenAI harness engineering pattern, a recurring task scans for:
+1. Generated artifacts whose source file is newer (regenerate needed)
+2. Context files (AGENTS.md, CLAUDE.md) above ~150 lines
+3. Dead links from docs/ into plugins/ or other docs/, and inside skill files
+4. Skills above 8 KB body without `references/` (Codex hard cap)
+5. Plugin entries in marketplace.json without a corresponding plugins/<name>/ directory
+6. Plugins missing from marketplace.json
+7. Component counts quoted in README.md / AGENTS.md that no longer match reality
+8. Same-named agents whose bodies have diverged across plugins
+9. Generated Markdown artifacts with invalid YAML frontmatter
+
+Each finding ships with a `Fix:` remediation line.
+
+Usage:
+    python tools/doc_gardener.py
+    python tools/doc_gardener.py --strict   # exit nonzero on any finding
+    python tools/doc_gardener.py --check <kind>   # only run one check
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+from collections import defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, cast
+
+import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from tools.adapters.base import WORKTREE, list_plugins, parse_frontmatter
+
+PLUGINS_DIR = WORKTREE / "plugins"
+DOCS_DIR = WORKTREE / "docs"
+MARKETPLACE_JSON = WORKTREE / ".claude-plugin" / "marketplace.json"
+
+CONTEXT_FILES = {
+    "AGENTS.md": 150,
+    "CLAUDE.md": 200,  # slightly larger since it documents the source-of-truth
+}
+
+CODEX_SKILL_CAP_BYTES = 8 * 1024
+
+# Headline component counts are quoted in these files and go stale on every
+# plugin add/remove. Only the two canonical context files are scanned — docs/
+# carries per-category subtotals that legitimately differ from the totals.
+COUNT_DOC_FILES = ("README.md", "AGENTS.md")
+COUNT_RE = re.compile(r"\b(\d[\d,]*)\s+(plugins?|subagents?|agents?|skills?|commands?)\b")
+
+# Every spelling the two files use, mapped to its key in actual_counts(). AGENTS.md
+# calls the agent total "subagents" in its cross-harness section, and a total of one
+# would be written in the singular. Singular forms are matched for that reason, which
+# is also why only these two curated files are scanned: prose like "each plugin ships
+# 1 agent" elsewhere would read as a stale total.
+COUNT_NOUN_ALIASES = {
+    "plugin": "plugins",
+    "subagent": "agents",
+    "subagents": "agents",
+    "agent": "agents",
+    "skill": "skills",
+    "command": "commands",
+}
+
+# An agent's frontmatter `name:` is plugin-namespaced, so two copies of the same agent
+# can never compare equal on raw text. It is dropped before comparing. A byte-order
+# mark or leading blank line would otherwise hide the frontmatter from the parser.
+BOM = "\ufeff"
+BODY_LEADING_BLANKS_RE = re.compile(r"\A(?:[ \t]*\n)+")
+
+# Intentional variants, keyed by (plugin, agent file stem). These are workflow-specific
+# versions that share a name with the general agent shipped in other plugins:
+# backend-development's short feature-development trio, which sits beside the full
+# specialists, and incident-response's production-incident versions. They differ on
+# purpose, so they are left out of the divergence comparison instead of being renamed,
+# which would change their generated IDs and every `subagent_type` that calls them.
+INTENTIONAL_AGENT_VARIANTS = frozenset(
+    {
+        ("backend-development", "security-auditor"),
+        ("backend-development", "test-automator"),
+        ("backend-development", "performance-engineer"),
+        ("incident-response", "code-reviewer"),
+        ("incident-response", "debugger"),
+        ("incident-response", "error-detective"),
+        ("incident-response", "test-automator"),
+    }
+)
+
+
+# ── Findings ─────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class Finding:
+    kind: str
+    severity: str  # 'info' | 'warning' | 'error'
+    path: Path
+    message: str
+    fix: str
+
+    def render(self) -> str:
+        try:
+            rel = self.path.relative_to(WORKTREE)
+        except ValueError:
+            rel = self.path
+        return (
+            f"[{self.severity:7}] {self.kind:24} {rel}: {self.message}\n           Fix: {self.fix}"
+        )
+
+
+@dataclass
+class Report:
+    findings: list[Finding] = field(default_factory=list)
+
+    def add(self, **kwargs) -> None:
+        self.findings.append(Finding(**kwargs))
+
+    def by_severity(self, severity: str) -> list[Finding]:
+        return [f for f in self.findings if f.severity == severity]
+
+
+def marketplace_entry_problem(entry: object) -> str | None:
+    """Say why a `plugins[]` entry is unusable, or None when it is fine.
+
+    Both readers of the manifest go through this. When only one of them enforced the
+    shape, a counts-only run could report a stale total from a manifest the
+    consistency check rejects.
+    """
+    if not isinstance(entry, dict):
+        return f" is {type(entry).__name__}, expected an object"
+    name = entry.get("name")
+    if name is not None and not isinstance(name, str):
+        return f".name is {type(name).__name__}, expected a string"
+    return None
+
+
+def read_text_or_none(path: Path, report: Report) -> str | None:
+    """Read a file as UTF-8, reporting a finding rather than killing the whole run.
+
+    One unreadable file should cost its own finding, not every other check's output.
+    """
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        report.add(
+            kind="UNREADABLE_FILE",
+            severity="error",
+            path=path,
+            message=f"cannot be read as UTF-8 text: {exc}",
+            fix="Re-save the file as UTF-8, or remove it if it is not source.",
+        )
+        return None
+
+
+# ── Checks ───────────────────────────────────────────────────────────────────
+
+
+def check_stale_artifacts(report: Report) -> None:
+    """Detect generated artifacts whose source mtime > artifact mtime.
+
+    For each adapter output directory, walk and check.
+    """
+    # Map of (source path resolver, generated path glob)
+    pairs: list[tuple[Path, Path]] = []
+
+    # Codex agent TOMLs map to plugins/<plugin>/agents/<name>.md
+    codex_agents = WORKTREE / ".codex" / "agents"
+    if codex_agents.is_dir():
+        for toml_path in codex_agents.glob("*.toml"):
+            name = toml_path.stem  # "<plugin>__<agent>"
+            if "__" in name:
+                plugin, agent = name.split("__", 1)
+                src = PLUGINS_DIR / plugin / "agents" / f"{agent}.md"
+                if src.is_file():
+                    pairs.append((src, toml_path))
+
+    # Codex skills (only the head SKILL.md; if source changed, references/ would
+    # also be stale, but the head is the canonical indicator).
+    # The Codex adapter synthesizes a skill from each command (codex.py
+    # _emit_command_as_skill), so the source can be EITHER:
+    #   plugins/<plugin>/skills/<leaf>/SKILL.md   (real skill)
+    #   plugins/<plugin>/commands/<leaf>.md       (command-as-skill)
+    # When the two collide, the command-skill is suffixed with __command.
+    codex_skills = WORKTREE / ".codex" / "skills"
+    if codex_skills.is_dir():
+        for skill_md in codex_skills.glob("*/SKILL.md"):
+            name = skill_md.parent.name
+            if "__" not in name:
+                continue
+            plugin, leaf = name.split("__", 1)
+            # Preference order:
+            # 1. Real skill at plugins/<p>/skills/<leaf>/SKILL.md (handles the case where
+            #    leaf is literally `<x>__command` — a legitimately-named skill).
+            # 2. If leaf ends with `__command` AND no real skill exists, treat as the
+            #    command-collision suffix and look in commands/.
+            # 3. Otherwise fall through to commands/<leaf>.md (basic command-as-skill).
+            real_skill_src = PLUGINS_DIR / plugin / "skills" / leaf / "SKILL.md"
+            if real_skill_src.is_file():
+                pairs.append((real_skill_src, skill_md))
+                continue
+            if leaf.endswith("__command"):
+                src = PLUGINS_DIR / plugin / "commands" / f"{leaf[: -len('__command')]}.md"
+            elif leaf.endswith("__cmd"):
+                # Second-order collision suffix
+                src = PLUGINS_DIR / plugin / "commands" / f"{leaf[: -len('__cmd')]}.md"
+            else:
+                src = PLUGINS_DIR / plugin / "commands" / f"{leaf}.md"
+            if src.is_file():
+                pairs.append((src, skill_md))
+
+    # OpenCode agents
+    opencode_agents = WORKTREE / ".opencode" / "agents"
+    if opencode_agents.is_dir():
+        for md in opencode_agents.glob("*.md"):
+            name = md.stem
+            if "__" in name:
+                plugin, agent = name.split("__", 1)
+                src = PLUGINS_DIR / plugin / "agents" / f"{agent}.md"
+                if src.is_file():
+                    pairs.append((src, md))
+
+    # OpenCode commands (.opencode/commands/<plugin>__<cmd>.md -> plugins/<p>/commands/<cmd>.md)
+    opencode_commands = WORKTREE / ".opencode" / "commands"
+    if opencode_commands.is_dir():
+        for md in opencode_commands.glob("*.md"):
+            name = md.stem
+            if "__" in name:
+                plugin, cmd = name.split("__", 1)
+                src = PLUGINS_DIR / plugin / "commands" / f"{cmd}.md"
+                if src.is_file():
+                    pairs.append((src, md))
+
+    # OpenCode skills (.opencode/skills/<plugin>-<skill>/SKILL.md)
+    opencode_skills = WORKTREE / ".opencode" / "skills"
+    if opencode_skills.is_dir():
+        skill_sources: dict[str, Path] = {}
+        if PLUGINS_DIR.is_dir():
+            for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+                if not plugin_dir.is_dir():
+                    continue
+                for skill_file in sorted((plugin_dir / "skills").glob("*/SKILL.md")):
+                    skill_id = f"{plugin_dir.name}-{skill_file.parent.name}"
+                    existing = skill_sources.get(skill_id)
+                    if existing and existing != skill_file:
+                        report.add(
+                            kind="opencode-skill-id-collision",
+                            severity="error",
+                            path=skill_file,
+                            message=(
+                                f"OpenCode skill id `{skill_id}` also maps to "
+                                f"{existing.relative_to(WORKTREE)}"
+                            ),
+                            fix="Rename the plugin or skill so OpenCode's hyphenated skill id is unique.",
+                        )
+                        continue
+                    skill_sources[skill_id] = skill_file
+        for skill_md in opencode_skills.glob("*/SKILL.md"):
+            src = skill_sources.get(skill_md.parent.name)
+            if src and src.is_file():
+                pairs.append((src, skill_md))
+
+    # Copilot agents (.agent.md) and skills (SKILL.md) at .copilot/
+    copilot_root = WORKTREE / ".copilot"
+    copilot_agents = copilot_root / "agents"
+    if copilot_agents.is_dir():
+        for agent_md in copilot_agents.glob("*.agent.md"):
+            name = agent_md.stem
+            if name.endswith(".agent"):
+                name = name[: -len(".agent")]
+            if "__" in name:
+                plugin, agent = name.split("__", 1)
+                src = PLUGINS_DIR / plugin / "agents" / f"{agent}.md"
+                if src.is_file():
+                    pairs.append((src, agent_md))
+
+    copilot_skills = copilot_root / "skills"
+    if copilot_skills.is_dir():
+        for skill_md in copilot_skills.glob("*/SKILL.md"):
+            name = skill_md.parent.name
+            if "__" in name:
+                plugin, leaf = name.split("__", 1)
+                src = PLUGINS_DIR / plugin / "skills" / leaf / "SKILL.md"
+                if src.is_file():
+                    pairs.append((src, skill_md))
+
+    # Antigravity: one self-contained plugin dir per source plugin at
+    # .antigravity/plugins/<plugin>/{plugin.json,skills/,agents/,commands/<plugin>/}.
+    antigravity_plugins = WORKTREE / ".antigravity" / "plugins"
+    if antigravity_plugins.is_dir():
+        for plugin_dir in sorted(p for p in antigravity_plugins.iterdir() if p.is_dir()):
+            plugin_name = plugin_dir.name
+            plugin_json = plugin_dir / "plugin.json"
+            if plugin_json.is_file():
+                src = PLUGINS_DIR / plugin_name / ".claude-plugin" / "plugin.json"
+                if src.is_file():
+                    pairs.append((src, plugin_json))
+            for skill_md in (plugin_dir / "skills").glob("*/SKILL.md"):
+                src = PLUGINS_DIR / plugin_name / "skills" / skill_md.parent.name / "SKILL.md"
+                if src.is_file():
+                    pairs.append((src, skill_md))
+            for agent_md in (plugin_dir / "agents").glob("*.md"):
+                src = PLUGINS_DIR / plugin_name / "agents" / agent_md.name
+                if src.is_file():
+                    pairs.append((src, agent_md))
+            for toml_path in (plugin_dir / "commands").rglob("*.toml"):
+                src = PLUGINS_DIR / plugin_name / "commands" / f"{toml_path.stem}.md"
+                if src.is_file():
+                    pairs.append((src, toml_path))
+
+    # Pi: .pi/skills/<plugin>/<skill>/SKILL.md, .pi/prompts/<plugin>__<cmd>.md,
+    # .pi/agents/<plugin>__<agent>.md.
+    pi_root = WORKTREE / ".pi"
+    if pi_root.is_dir():
+        for skill_md in (pi_root / "skills").glob("*/*/SKILL.md"):
+            plugin_name = skill_md.parent.parent.name
+            src = PLUGINS_DIR / plugin_name / "skills" / skill_md.parent.name / "SKILL.md"
+            if src.is_file():
+                pairs.append((src, skill_md))
+        for prompt_md in (pi_root / "prompts").glob("*.md"):
+            if "__" in prompt_md.stem:
+                plugin_name, cmd = prompt_md.stem.split("__", 1)
+                src = PLUGINS_DIR / plugin_name / "commands" / f"{cmd}.md"
+                if src.is_file():
+                    pairs.append((src, prompt_md))
+        for agent_md in (pi_root / "agents").glob("*.md"):
+            if "__" in agent_md.stem:
+                plugin_name, agent = agent_md.stem.split("__", 1)
+                src = PLUGINS_DIR / plugin_name / "agents" / f"{agent}.md"
+                if src.is_file():
+                    pairs.append((src, agent_md))
+
+    for src, gen in pairs:
+        if src.stat().st_mtime > gen.stat().st_mtime + 1:  # 1s grace
+            # Derive the plugin name correctly regardless of source layout.
+            # All adapter sources live under `plugins/<plugin>/...` — index 1 of parts
+            # relative to PLUGINS_DIR is always the plugin name.
+            try:
+                plugin_name = src.relative_to(PLUGINS_DIR).parts[0]
+            except (ValueError, IndexError):
+                plugin_name = "<plugin>"
+            report.add(
+                kind="STALE_ARTIFACT",
+                severity="info",
+                path=gen,
+                message=f"source {src.relative_to(WORKTREE)} is newer",
+                fix=f"Run `make generate HARNESS=<harness> PLUGIN={plugin_name}`.",
+            )
+
+
+GENERATED_MARKDOWN_ROOTS = (".codex", ".opencode", ".copilot", ".antigravity", ".pi")
+
+
+def check_generated_frontmatter_yaml(report: Report) -> None:
+    """Parse generated Markdown frontmatter with a real YAML loader.
+
+    Adapter-level smoke tests can miss syntax that tolerant line-oriented readers
+    accept.  Scan only generated harness outputs and fail on malformed or
+    non-mapping frontmatter so broken artifacts cannot be published silently.
+    """
+    for root_name in GENERATED_MARKDOWN_ROOTS:
+        root = WORKTREE / root_name
+        if not root.is_dir():
+            continue
+        for path in sorted(root.rglob("*.md")):
+            text = read_text_or_none(path, report)
+            if text is None:
+                continue
+            lines = text.lstrip(BOM).splitlines()
+            first_content = next((index for index, line in enumerate(lines) if line.strip()), None)
+            if first_content is None or lines[first_content].strip() != "---":
+                continue
+            lines = lines[first_content:]
+            closing = next(
+                (index for index, line in enumerate(lines[1:], 1) if line.rstrip() == "---"), None
+            )
+            if closing is None:
+                report.add(
+                    kind="INVALID_GENERATED_FRONTMATTER",
+                    severity="error",
+                    path=path,
+                    message="frontmatter opens with `---` but has no closing delimiter",
+                    fix="Fix the source metadata or adapter, then regenerate this artifact.",
+                )
+                continue
+            raw = "\n".join(lines[1:closing])
+            try:
+                parsed = yaml.safe_load(raw)
+            except yaml.YAMLError as exc:
+                detail = str(exc).splitlines()[0]
+                report.add(
+                    kind="INVALID_GENERATED_FRONTMATTER",
+                    severity="error",
+                    path=path,
+                    message=f"frontmatter is not valid YAML: {detail}",
+                    fix="Fix the source metadata or adapter, then regenerate this artifact.",
+                )
+                continue
+            if not isinstance(parsed, dict):
+                report.add(
+                    kind="INVALID_GENERATED_FRONTMATTER",
+                    severity="error",
+                    path=path,
+                    message=f"frontmatter is {type(parsed).__name__}, expected a YAML mapping",
+                    fix="Emit key/value frontmatter from the adapter, then regenerate this artifact.",
+                )
+
+
+def check_oversized_context_files(report: Report) -> None:
+    """Report context files that exceed their configured line budgets."""
+    for name, cap in CONTEXT_FILES.items():
+        path = WORKTREE / name
+        if not path.is_file():
+            continue
+        content = read_text_or_none(path, report)
+        if content is None:
+            continue
+        line_count = len(content.splitlines())
+        if line_count > cap:
+            report.add(
+                kind="CONTEXT_FILE_OVERSIZED",
+                severity="warning",
+                path=path,
+                message=f"{line_count} lines (cap: {cap})",
+                fix="Move detail into docs/ — context files should be table-of-contents only.",
+            )
+
+
+_LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+_FENCE_PATTERN = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+# A code span closes on a backtick run of the same length as the one that opened it.
+_INLINE_CODE_PATTERN = re.compile(r"(`+)(?!`).*?(?<!`)\1(?!`)")
+
+
+def _strip_code(content: str, *, inline: bool = True) -> str:
+    """Drop fenced blocks and inline code, so example links in skills aren't checked.
+
+    A fence closes only on a bare run of the same character at least as long as the
+    opener, so a ```` block can hold ``` examples. With `inline=False`, inline code
+    is kept.
+    """
+    kept: list[str] = []
+    fence: str | None = None
+    for line in content.splitlines():
+        match = _FENCE_PATTERN.match(line)
+        if fence is None:
+            if match:
+                fence = match.group(1)
+            else:
+                kept.append(_INLINE_CODE_PATTERN.sub("", line) if inline else line)
+            continue
+        run = line.strip()
+        if match and set(run) == {fence[0]} and len(run) >= len(fence):
+            fence = None
+    return "\n".join(kept)
+
+
+def _report_dead_links(md: Path, content: str, report: Report) -> None:
+    for link in _LINK_PATTERN.findall(content):
+        # Skip external links and same-page anchors
+        target = link.split("#", 1)[0]
+        if not target or link.startswith(("http://", "https://", "mailto:")):
+            continue
+        # A leading `/` resolves from the repository root, as it does on GitHub.
+        base = WORKTREE if target.startswith("/") else md.parent
+        link_path = (base / target.lstrip("/")).resolve()
+        if not link_path.exists():
+            report.add(
+                kind="DEAD_LINK",
+                severity="error",
+                path=md,
+                message=f"link to `{link}` does not resolve",
+                fix="Update the link target, or create the missing file. Links resolve from the file's own folder (or from the repository root when they start with `/`), so a link inside a skill's `references/` file is `./other.md`, not `references/other.md`. If the link points into generated output (`.codex/`, `.opencode/`, etc.), the generated tree may need to be regenerated.",
+            )
+
+
+_SKILL_REFERENCE_PATTERN = re.compile(r"^\*\*Reference:\*\*.*$", re.MULTILINE)
+_SKILL_REFERENCE_PATH_PATTERN = re.compile(r"`((?:references|assets|scripts)/[^`\s]+)`")
+
+
+def _report_dead_skill_references(md: Path, content: str, report: Report) -> None:
+    """Check `**Reference:** See `references/x.md`` pointers, which aren't markdown links.
+
+    These paths are written relative to the skill folder, even inside references/,
+    and must stay inside it.
+    """
+    # `plugins/<plugin>/skills/<skill>/...`, however deep the file is.
+    skill_dir = PLUGINS_DIR.joinpath(*md.relative_to(PLUGINS_DIR).parts[:3]).resolve()
+    for line in _SKILL_REFERENCE_PATTERN.findall(content):
+        for target in _SKILL_REFERENCE_PATH_PATTERN.findall(line):
+            resolved = (skill_dir / target).resolve()
+            if not resolved.is_relative_to(skill_dir) or not resolved.exists():
+                report.add(
+                    kind="DEAD_LINK",
+                    severity="error",
+                    path=md,
+                    message=f"**Reference:** to `{target}` does not exist in the skill folder",
+                    fix="Create the missing file in the skill folder, or remove the **Reference:** line.",
+                )
+
+
+def check_dead_links(report: Report) -> None:
+    """Find markdown links that point at missing files.
+
+    Covers docs/, the top-level guides, and every skill's SKILL.md and references/
+    files. Skill files skip links inside code, because skills carry sample documents,
+    and also have their `**Reference:**` pointers checked.
+    """
+    targets = [DOCS_DIR] if DOCS_DIR.is_dir() else []
+    for top_file in (
+        "README.md",
+        "CLAUDE.md",
+        "AGENTS.md",
+    ):
+        p = WORKTREE / top_file
+        if p.is_file():
+            targets.append(p)
+
+    for target in targets:
+        files = list(target.rglob("*.md")) if target.is_dir() else [target]
+        for md in files:
+            content = read_text_or_none(md, report)
+            if content is None:
+                continue
+            _report_dead_links(md, content, report)
+
+    if PLUGINS_DIR.is_dir():
+        for md in sorted(PLUGINS_DIR.glob("*/skills/*/**/*.md")):
+            content = read_text_or_none(md, report)
+            if content is None:
+                continue
+            _report_dead_links(md, _strip_code(content), report)
+            _report_dead_skill_references(md, _strip_code(content, inline=False), report)
+
+
+def check_codex_skill_caps(report: Report) -> None:
+    """Skills whose source body exceeds Codex's 8 KB cap and have no references/."""
+    if not PLUGINS_DIR.is_dir():
+        return
+    for skill_md in PLUGINS_DIR.glob("*/skills/*/SKILL.md"):
+        content = read_text_or_none(skill_md, report)
+        if content is None:
+            continue
+        _, body = parse_frontmatter(content)
+        body_bytes = len(body.encode("utf-8"))
+        if body_bytes > CODEX_SKILL_CAP_BYTES:
+            refs = skill_md.parent / "references"
+            if not refs.is_dir():
+                report.add(
+                    kind="SKILL_OVER_CODEX_CAP",
+                    severity="warning",
+                    path=skill_md,
+                    message=f"body is {body_bytes} bytes (Codex hard cap: {CODEX_SKILL_CAP_BYTES})",
+                    fix="Move detail sections into `references/details.md` and leave SKILL.md as navigation.",
+                )
+
+
+def check_marketplace_consistency(report: Report) -> None:
+    if not MARKETPLACE_JSON.is_file():
+        return
+    try:
+        raw = read_text_or_none(MARKETPLACE_JSON, report)
+        if raw is None:
+            return
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        report.add(
+            kind="MARKETPLACE_PARSE",
+            severity="error",
+            path=MARKETPLACE_JSON,
+            message=f"JSON parse error: {e}",
+            fix="Fix the JSON syntax — likely an unterminated string or missing comma.",
+        )
+        return
+
+    # Distinguish local entries from external (git-subdir, git, etc.). Only flag
+    # missing LOCAL entries as orphans — externals legitimately don't have a plugins/<name>/.
+    local_entries: dict[str, dict] = {}
+    external_names: set[str] = set()
+    entries = data.get("plugins", []) if isinstance(data, dict) else None
+    if not isinstance(entries, list):
+        report.add(
+            kind="MARKETPLACE_SHAPE",
+            severity="error",
+            path=MARKETPLACE_JSON,
+            message="expected an object with a `plugins` list at the top level",
+            fix='Restore the manifest shape: {"plugins": [ ... ]}.',
+        )
+        return
+    for position, raw_entry in enumerate(entries):
+        problem = marketplace_entry_problem(raw_entry)
+        if problem is not None:
+            report.add(
+                kind="MARKETPLACE_SHAPE",
+                severity="error",
+                path=MARKETPLACE_JSON,
+                message=f"plugins[{position}]{problem}",
+                fix="Remove the entry or give it the usual name/source/description fields.",
+            )
+            continue
+        entry = cast("dict[str, Any]", raw_entry)
+        name = entry.get("name")
+        if not name:
+            continue
+        source = entry.get("source")
+        if isinstance(source, dict):
+            # git-subdir, git, etc. — external
+            external_names.add(name)
+        elif isinstance(source, str) and source.startswith("./plugins/"):
+            local_entries[name] = entry
+
+    listed_local = set(local_entries.keys())
+    actual = set(list_plugins())
+
+    for name in sorted(listed_local - actual):
+        report.add(
+            kind="MARKETPLACE_ORPHAN",
+            severity="error",
+            path=MARKETPLACE_JSON,
+            message=f"plugin `{name}` listed in marketplace.json with local source but plugins/{name}/ missing",
+            fix=f"Either remove the entry or create plugins/{name}/.",
+        )
+    listed_all = listed_local | external_names
+    for name in sorted(actual - listed_all):
+        # External git-subdir plugins (like the existing `codex` external plugin) may
+        # not be in our marketplace.json — that's expected. Only flag if it has a
+        # local .claude-plugin/plugin.json.
+        if (PLUGINS_DIR / name / ".claude-plugin" / "plugin.json").is_file():
+            report.add(
+                kind="MARKETPLACE_MISSING",
+                severity="info",
+                path=MARKETPLACE_JSON,
+                message=f"plugins/{name}/ exists but is not in marketplace.json",
+                fix=f"Add a plugins[] entry for `{name}` (or leave it as draft / external).",
+            )
+
+
+def canonical_frontmatter_value(value: object) -> object:
+    """Order-independent form of a parsed frontmatter value.
+
+    Mapping key order carries no meaning, and `repr` preserves insertion order, so two
+    agents with the same nested fields written in a different order would otherwise
+    hash differently. List order is left alone because it is meaningful.
+    """
+    if isinstance(value, dict):
+        return {key: canonical_frontmatter_value(value[key]) for key in sorted(value)}
+    if isinstance(value, list):
+        return [canonical_frontmatter_value(item) for item in value]
+    return value
+
+
+def normalized_agent_text(text: str) -> str:
+    """Render an agent as its frontmatter fields minus `name` and `model`, plus its body.
+
+    Uses the same frontmatter parser the adapters use, so a copy is judged on its
+    fields and body rather than on exact delimiter formatting. That keeps CRLF files,
+    a closing `---` at end of file, and a trailing space after a delimiter from
+    reading as drift. A `name:` line in the body is body content and still counts.
+    `model` is a per-plugin deployment choice, so a tier difference alone is not drift.
+    """
+    text = text.lstrip(BOM)
+    trimmed = text.lstrip()
+    # Blank lines ahead of a frontmatter block are formatting. Ahead of anything else
+    # they are body content, and stripping them would hide an indentation difference.
+    if trimmed.startswith("---"):
+        text = trimmed
+    fields, body = parse_frontmatter(text)
+    fields.pop("name", None)
+    fields.pop("model", None)
+    rendered = "\n".join(
+        f"{key}: {canonical_frontmatter_value(fields[key])!r}" for key in sorted(fields)
+    )
+    # Line endings are formatting, so a CRLF copy must match its LF twin.
+    # parse_frontmatter strips leading "\n" but leaves the "\r" behind it.
+    # Strip newlines only, never spaces: leading indentation is content, so an
+    # indented code block must not compare equal to plain prose.
+    # Leading whitespace-only lines are delimiter residue: parse_frontmatter leaves
+    # the spaces from a `--- ` closing line, and blank lines before the body are
+    # formatting. Both go. A line that starts with spaces then real text is content,
+    # so its indentation survives.
+    normalized_body = BODY_LEADING_BLANKS_RE.sub("", body.replace("\r\n", "\n")).rstrip()
+    return f"{rendered}\n---\n{normalized_body}"
+
+
+def actual_counts(report: Report) -> dict[str, int | None]:
+    """Live component totals, counted the same way the adapters discover them.
+
+    `plugins` counts marketplace entries rather than plugins/ directories, because
+    the headline figure includes external (git-subdir) entries that have no local dir.
+    It is None when the manifest is missing or unparseable, which means "unknown"
+    rather than zero — otherwise one JSON syntax error would report every documented
+    plugin count as stale and tell the reader to write zero.
+    """
+    plugins: int | None = None
+    if MARKETPLACE_JSON.is_file():
+        raw = read_text_or_none(MARKETPLACE_JSON, report)
+        try:
+            manifest = None if raw is None else json.loads(raw)
+        except json.JSONDecodeError:
+            manifest = None  # check_marketplace_consistency reports the parse error
+        # Valid JSON of the wrong shape is still an unknown count, not a crash.
+        if isinstance(manifest, dict):
+            entries = manifest.get("plugins")
+            # Malformed entries make the total unknown. Counting them would let
+            # garbage drive an error-severity finding, and would disagree with
+            # check_marketplace_consistency about the same manifest.
+            if isinstance(entries, list) and all(
+                marketplace_entry_problem(e) is None for e in entries
+            ):
+                plugins = len(entries)
+    return {
+        "plugins": plugins,
+        "agents": len(list(PLUGINS_DIR.glob("*/agents/*.md"))),
+        "skills": len(list(PLUGINS_DIR.glob("*/skills/*/SKILL.md"))),
+        "commands": len(list(PLUGINS_DIR.glob("*/commands/*.md"))),
+    }
+
+
+def check_doc_counts(report: Report) -> None:
+    """Component counts quoted in README.md / AGENTS.md that no longer match reality."""
+    counts = actual_counts(report)
+    for filename in COUNT_DOC_FILES:
+        path = WORKTREE / filename
+        if not path.is_file():
+            continue
+        content = read_text_or_none(path, report)
+        if content is None:
+            continue
+        for lineno, line in enumerate(content.splitlines(), 1):
+            for quoted, noun in COUNT_RE.findall(line):
+                key = COUNT_NOUN_ALIASES.get(noun, noun)
+                actual = counts[key]
+                # A thousands separator is still one number: 1,234 agents.
+                claimed = int(quoted.replace(",", ""))
+                if actual is None or claimed == actual:
+                    continue
+                report.add(
+                    kind="STALE_COUNT",
+                    severity="error",
+                    path=path,
+                    message=f"line {lineno} says {quoted} {noun}, actual is {actual}",
+                    fix=f"Update the count to {actual} (every mention, not just this line).",
+                )
+
+
+def check_agent_divergence(report: Report) -> None:
+    """Same-named agents whose bodies have drifted apart across plugins.
+
+    Plugins are installed individually, so a shared agent is genuinely copied into
+    each plugin that offers it. A verbatim copy is therefore expected and is not
+    reported at all. Only copies whose bodies have drifted apart are findings.
+    Copies named in INTENTIONAL_AGENT_VARIANTS are skipped, and a pair whose agent
+    file no longer exists is reported so the allowlist cannot go stale.
+    """
+    if not PLUGINS_DIR.is_dir():
+        return
+    for plugin, agent in sorted(INTENTIONAL_AGENT_VARIANTS):
+        variant_path = PLUGINS_DIR / plugin / "agents" / f"{agent}.md"
+        if not variant_path.is_file():
+            report.add(
+                kind="STALE_AGENT_VARIANT",
+                severity="warning",
+                path=variant_path,
+                message=f"INTENTIONAL_AGENT_VARIANTS names ({plugin}, {agent}), "
+                "but this agent file does not exist",
+                fix="Drop the pair from INTENTIONAL_AGENT_VARIANTS in tools/doc_gardener.py.",
+            )
+
+    by_filename: dict[str, list[Path]] = defaultdict(list)
+    for agent_path in sorted(PLUGINS_DIR.glob("*/agents/*.md")):
+        if (agent_path.parent.parent.name, agent_path.stem) in INTENTIONAL_AGENT_VARIANTS:
+            # Left out of the comparison, but still read so an unreadable variant is
+            # reported: this check is where agent sources get their UTF-8 check.
+            read_text_or_none(agent_path, report)
+            continue
+        by_filename[agent_path.name].append(agent_path)
+
+    for filename, paths in sorted(by_filename.items()):
+        if len(paths) < 2:
+            continue
+        bodies: dict[str, list[Path]] = defaultdict(list)
+        for path in paths:
+            raw = read_text_or_none(path, report)
+            if raw is None:
+                continue
+            normalized = normalized_agent_text(raw)
+            bodies[hashlib.md5(normalized.encode("utf-8")).hexdigest()].append(path)
+
+        if len(bodies) > 1:
+            variants = " | ".join(
+                "+".join(p.parent.parent.name for p in group) for group in bodies.values()
+            )
+            report.add(
+                kind="AGENT_BODY_DIVERGENT",
+                severity="warning",
+                path=paths[0],
+                message=(
+                    f"`{filename}` has {len(paths)} copies in {len(bodies)} different "
+                    f"versions: {variants}"
+                ),
+                fix=(
+                    "Reconcile the copies. If one is an intentional variant, add its "
+                    "(plugin, agent) pair to INTENTIONAL_AGENT_VARIANTS in tools/doc_gardener.py."
+                ),
+            )
+
+
+ARGUMENTS_TOKEN = "$ARGUMENTS"
+ARGUMENTS_TAG_OPEN_RE = re.compile(r"^\s*<(?:user_request|user_input|arguments|input)>\s*$")
+ARGUMENTS_TAG_CLOSE_RE = re.compile(r"^\s*</(?:user_request|user_input|arguments|input)>\s*$")
+# A sentence near the interpolation that tells the model the text is data.
+ARGUMENTS_FRAMING_RE = re.compile(
+    r"\bas data\b|\bnot (?:as )?instructions\b|\btreat(?:s|ed|ing)?\b[^.\n]{0,80}\bas\b",
+    re.IGNORECASE,
+)
+ARGUMENTS_BACKTICKED_RE = re.compile(r"`[^`\n]*\$ARGUMENTS[^`\n]*`")
+FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
+
+
+def check_arguments_framing(report: Report) -> None:
+    """Commands that interpolate a raw `$ARGUMENTS` into prompt text with no framing.
+
+    Claude Code substitutes `$ARGUMENTS` textually wherever it appears, and every
+    command runs with tool access, so argument text copied from an issue, a log, or a
+    web page can carry instructions the agent then acts on with tools. An
+    interpolation counts as framed when it sits inside a `<user_request>` block (or
+    `<user_input>`, `<arguments>`, `<input>`), when a sentence within three lines
+    above or two below says the text is data rather than instructions, or when the
+    token is a backticked reference to the value, as in "Parse `$ARGUMENTS` for
+    flags". Fenced code blocks are skipped: there the value is a shell or JSON
+    string, not prompt text. One finding per command lists every offending line.
+    """
+    if not PLUGINS_DIR.is_dir():
+        return
+    for command in sorted(PLUGINS_DIR.glob("*/commands/*.md")):
+        raw = read_text_or_none(command, report)
+        if raw is None or ARGUMENTS_TOKEN not in raw:
+            continue
+        lines = raw.splitlines()
+        start = 0
+        if lines and lines[0].strip() == "---":
+            for idx in range(1, len(lines)):
+                if lines[idx].strip() == "---":
+                    start = idx + 1
+                    break
+        in_fence = False
+        in_tag = False
+        unframed: list[int] = []
+        for idx in range(start, len(lines)):
+            line = lines[idx]
+            if FENCE_RE.match(line):
+                in_fence = not in_fence
+                continue
+            if in_fence:
+                continue
+            if ARGUMENTS_TAG_OPEN_RE.match(line):
+                in_tag = True
+                continue
+            if ARGUMENTS_TAG_CLOSE_RE.match(line):
+                in_tag = False
+                continue
+            if ARGUMENTS_TOKEN not in line or in_tag:
+                continue
+            if ARGUMENTS_TOKEN not in ARGUMENTS_BACKTICKED_RE.sub("", line):
+                continue
+            # Three lines above and two below: a heading's clause sits past a blank line.
+            window = "\n".join(lines[max(start, idx - 3) : idx + 3])
+            if ARGUMENTS_FRAMING_RE.search(window):
+                continue
+            unframed.append(idx + 1)
+        if unframed:
+            where = ", ".join(str(n) for n in unframed)
+            report.add(
+                kind="ARGUMENTS_UNFRAMED",
+                severity="warning",
+                path=command,
+                message=(
+                    f"`$ARGUMENTS` is interpolated into the prompt without framing on "
+                    f"line{'s' if len(unframed) > 1 else ''} {where}"
+                ),
+                fix=(
+                    "Wrap it in a <user_request> block and say the text is data, not "
+                    'instructions; see docs/authoring.md, "Treat $ARGUMENTS as data".'
+                ),
+            )
+
+
+CHECKS = {
+    "stale": check_stale_artifacts,
+    "context": check_oversized_context_files,
+    "frontmatter-yaml": check_generated_frontmatter_yaml,
+    "links": check_dead_links,
+    "codex-cap": check_codex_skill_caps,
+    "marketplace": check_marketplace_consistency,
+    "counts": check_doc_counts,
+    "agent-divergence": check_agent_divergence,
+    "arguments": check_arguments_framing,
+}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Recurring drift detection (doc-gardener).")
+    parser.add_argument("--strict", action="store_true", help="Exit nonzero on any finding.")
+    parser.add_argument(
+        "--check",
+        choices=list(CHECKS.keys()),
+        action="append",
+        help="Run only the named check (repeat for multiple). Default: all.",
+    )
+    parser.add_argument("--quiet", action="store_true", help="Only print findings, no summary.")
+    args = parser.parse_args()
+
+    selected = args.check or list(CHECKS.keys())
+    report = Report()
+    for name in selected:
+        CHECKS[name](report)
+
+    if not report.findings:
+        if not args.quiet:
+            print(f"OK: garden is clean ({len(selected)} check(s) ran).")
+        return 0
+
+    # Sort by (severity priority, kind, path) so errors lead and similar findings group.
+    severity_order = {"error": 0, "warning": 1, "info": 2}
+    sorted_findings = sorted(
+        report.findings,
+        key=lambda f: (severity_order.get(f.severity, 9), f.kind, str(f.path)),
+    )
+
+    # Print a per-kind summary up front so triage is one scroll.
+    if not args.quiet:
+        from collections import Counter
+
+        kind_counts = Counter((f.severity, f.kind) for f in report.findings)
+        if kind_counts:
+            print("Summary:")
+            for (severity, kind), count in sorted(
+                kind_counts.items(),
+                key=lambda x: (severity_order.get(x[0][0], 9), -x[1]),
+            ):
+                print(f"  [{severity:7}] {kind:24} {count}")
+            print()
+
+    for f in sorted_findings:
+        print(f.render())
+
+    if not args.quiet:
+        errors = report.by_severity("error")
+        warnings = report.by_severity("warning")
+        infos = report.by_severity("info")
+        print()
+        print(f"Totals: {len(errors)} error(s), {len(warnings)} warning(s), {len(infos)} info.")
+
+    if report.by_severity("error"):
+        return 1
+    if args.strict and (report.by_severity("warning") or report.by_severity("info")):
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

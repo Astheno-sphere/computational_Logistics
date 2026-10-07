@@ -1,0 +1,107 @@
+# Architecture
+
+Top-level architectural map for agents, skills, and commands shared across seven coding tools. Detail lives in [docs/architecture.md](docs/architecture.md). The map follows the OpenAI [harness-engineering](https://openai.com/index/harness-engineering/) pattern.
+
+## Invariants
+
+1. **Single source of truth.** All agent / skill / command authoring happens under `plugins/<name>/`. Generated harness-specific artifacts (`.codex/skills/`, `.codex/agents/`, `.opencode/`, `.copilot/`, `.antigravity/`, `.pi/`) are produced by adapters and gitignored. The exception: small native-install registries (`.agents/plugins/marketplace.json`, `plugins/*/.codex-plugin/plugin.json`, `.cursor-plugin/`, `.cursor/rules/`) are committed — they only point at the source `plugins/`, so the invariant holds. Never hand-edit generated files.
+
+2. **One canonical context file.** `AGENTS.md` at repo root is the only context file authored directly. Claude Code reads `CLAUDE.md`, a symlink to `AGENTS.md`. Codex, Cursor, OpenCode, Antigravity CLI (`agy`), GitHub Copilot, and Pi read `AGENTS.md` natively.
+
+3. **Adapters handle tool-specific formats.** Authors write portable Markdown in the canonical Claude Code source format. Adapters under `tools/adapters/` rewrite frontmatter, map model aliases and tool names, and enforce body-size caps. Source files do not need separate versions for each tool.
+
+4. **Mechanical enforcement with remediation hints.** Every lint / validator finding ships with a concrete fix string. `make validate`, `make garden`, and the `plugin-eval` `harness_portability` dimension all follow this convention.
+
+5. **Progressive disclosure all the way down.** Context files (`AGENTS.md`, `CLAUDE.md`, etc.) cap at ~150 lines. Skill bodies cap at ~8 KB (Codex's hard limit). Detail offloads to `docs/` and `references/details.md`. Detail is loaded on demand, not pre-injected.
+
+## Component overview
+
+```
+agents/
+├── AGENTS.md                       # Canonical context file (committed)
+├── CLAUDE.md                       # symlink → AGENTS.md (Claude-specific addenda live in AGENTS.md)
+├── ARCHITECTURE.md                 # This file
+├── README.md                       # User-facing GitHub landing page
+├── CONTRIBUTING.md                 # Contributor entry point
+├── .claude-plugin/marketplace.json # Plugin registry (source of truth)
+├── .antigravity/plugins/<p>/       # Generated Antigravity CLI plugins (gitignored)
+├── .pi/{skills,prompts,agents}/    # Generated Pi skills, prompt templates, agents (gitignored)
+├── plugins/                        # SOURCE OF TRUTH (92 local plugins; 2 external in marketplace)
+│   └── <name>/
+│       ├── .claude-plugin/plugin.json
+│       ├── agents/*.md
+│       ├── commands/*.md
+│       └── skills/<n>/{SKILL.md, references/, assets/}
+├── tools/
+│   ├── adapters/                   # Per-harness adapter framework
+│   │   ├── base.py                 # Parser, HarnessAdapter ABC, helpers
+│   │   ├── capabilities.py         # Capability matrix; consumed by every adapter
+│   │   ├── codex.py / cursor.py / opencode.py / antigravity.py / copilot.py / pi.py
+│   │   └── cursor_rules/           # Hand-curated .mdc rules
+│   ├── generate.py                 # Unified CLI: `make generate HARNESS=<x>`
+│   ├── validate_generated.py       # Structural validation
+│   ├── doc_gardener.py             # Drift detection (per harness-engineering)
+│   └── tests/                      # Adapter + behavioral + CLI smoke tests
+└── docs/                           # Detailed reference docs
+    ├── architecture.md             # Full architecture (this file is the map)
+    ├── plugins.md / agents.md / agent-skills.md  # Catalogs
+    ├── usage.md                    # User workflows
+    ├── authoring.md                # Portable-content style guide
+    ├── harnesses.md                # Cross-harness capability matrix
+    ├── plugin-eval.md              # Quality evaluation framework
+    └── round-trip-results.md       # Real-CLI verification recipes
+```
+
+## Cross-harness adapter framework
+
+Each adapter consumes the canonical `plugins/` source and emits harness-native artifacts:
+
+| Adapter | Output | What it does |
+|---|---|---|
+| `codex.py` | committed `.agents/plugins/marketplace.json` + `plugins/*/.codex-plugin/plugin.json`; gitignored `.codex/skills/`, `.codex/agents/*.toml` | Marketplace + per-plugin manifests (point at source `plugins/`); Markdown → TOML transform, 8 KB body cap with `references/` overflow, sandbox_mode heuristic, collision detection |
+| `cursor.py` | `.cursor-plugin/`, `.cursor/rules/*.mdc` | Marketplace manifests + hand-curated rules. Cursor reads `.claude/` directly for skills/agents |
+| `opencode.py` | `.opencode/agents/`, `.opencode/commands/`, `.opencode/skills/` | Permission block from `tools:` allowlist (locked agents preserve intent); strict lowercase tool names; OpenCode-safe skill names |
+| `copilot.py` | `.copilot/agents/`, `.copilot/skills/`, `.copilot/commands/` | Markdown agent profiles + SKILL.md skills + commands-as-skills; model maps to native Claude models |
+| `antigravity.py` | `.antigravity/plugins/<p>/{skills/,agents/,commands/}` | Self-contained agy plugin per source plugin (no `<plugin>__` namespacing); model tier alias (`inherit`/`flash`/`pro`); TOML commands always inline the body (no `@{path}` injection — `agy plugin validate` never evaluates it) |
+| `pi.py` | `.pi/skills/<plugin>/<skill>/`, `.pi/prompts/<plugin>__<cmd>.md`, `.pi/agents/<plugin>__<agent>.md` | Skills nest under a per-plugin directory because Pi discovers `SKILL.md` recursively; prompt templates and agents are discovered flat, so both are namespaced `<plugin>__<name>`; agents follow the reference `subagent` extension's format and map model aliases to full provider model IDs |
+
+Detail in [`docs/harnesses.md`](docs/harnesses.md) (capability matrix per harness) and [`docs/architecture.md`](docs/architecture.md) (full design rationale).
+
+## Quality gates
+
+Three mechanical gates, each runnable as a make target and wired into CI:
+
+1. **`make validate`** — structural validation of every generated artifact. Errors block CI; warnings advisory.
+2. **`make garden`** — drift detection (dead links, stale artifacts, oversize skills, marketplace orphans). Sorted by severity with per-kind summary.
+3. **`make test`** — pytest suite (adapters + validators + gardener + real-source + round-trip). Real-CLI smoke tests are excluded; run them separately via `make smoke-test`.
+
+CI workflow: [`.github/workflows/validate.yml`](.github/workflows/validate.yml) runs all three on every PR, plus a `cli-smoke-test` job that installs OpenCode, Antigravity CLI, Pi, and Node and exercises them against the generated artifacts; the same job runs `gh skill` and `npx skills` against the source skills, with `gh skill publish --dry-run` as the agentskills.io spec gate.
+
+## Plugin component model
+
+Each plugin is a directory under `plugins/`. Three component types, all auto-discovered:
+
+- **Agents** (`agents/<name>.md`) — domain experts. Frontmatter: `name`, `description` ("Use PROACTIVELY when …"), `model: fable|opus|sonnet|haiku|inherit`, optional `tools:`, optional `color:`.
+- **Skills** (`skills/<n>/SKILL.md`) — modular knowledge with progressive disclosure. Frontmatter: `name`, `description` (must include a recognized trigger phrase like "Use when …"). Supporting material in `references/`, templates in `assets/`.
+- **Commands** (`commands/<n>.md`) — slash commands. Frontmatter: `description`, `argument-hint`.
+
+Full conventions in [`docs/authoring.md`](docs/authoring.md). Authoring for portability across all seven harnesses is the main concern; the adapter framework handles per-harness mechanics.
+
+## Model tiers
+
+The table describes model aliases in the shared Claude Code source format.
+
+| Tier | Model | Use |
+|---|---|---|
+| 1 | Opus | Architecture, security, code review, production coding |
+| 2 | inherit | Complex tasks — user chooses model (AI/ML, backend, specialized) |
+| 3 | Sonnet | Docs, testing, debugging, support |
+| 4 | Haiku | Fast ops, SEO, deployment, simple tasks |
+
+Adapters map source aliases to each tool's model IDs at generation time. Some adapters map `inherit` to a fixed default. See [model mappings](tools/adapters/capabilities.py) and the [capability matrix](docs/harnesses.md).
+
+## See also
+
+- [`docs/architecture.md`](docs/architecture.md) — full design rationale, file ownership, capability matrix detail
+- [OpenAI: Harness engineering](https://openai.com/index/harness-engineering/) — the practices this repo follows
+- [agents.md spec](https://agents.md/) — the AGENTS.md convention this repo adopts

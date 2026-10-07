@@ -1,0 +1,318 @@
+name: Validate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-json:
+    name: Validate JSON files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          persist-credentials: false
+
+      - name: Validate marketplace.json
+        run: python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
+
+      - name: Validate every plugin.json
+        run: |
+          set -e
+          shopt -s globstar nullglob
+          failed=0
+          for f in plugins/*/.claude-plugin/plugin.json; do
+            if ! python3 -m json.tool "$f" > /dev/null 2>&1; then
+              echo "::error file=$f::invalid JSON"
+              failed=1
+            fi
+          done
+          exit $failed
+
+      - name: Validate hooks.json files
+        run: |
+          set -e
+          shopt -s globstar nullglob
+          failed=0
+          for f in plugins/*/hooks/*.json; do
+            if ! python3 -m json.tool "$f" > /dev/null 2>&1; then
+              echo "::error file=$f::invalid JSON"
+              failed=1
+            fi
+          done
+          exit $failed
+
+      - name: Validate marketplace entries resolve to plugin dirs
+        run: |
+          python3 - <<'PY'
+          import json, os, posixpath, re, sys
+          from urllib.parse import urlparse
+          with open('.claude-plugin/marketplace.json') as f:
+              mp = json.load(f)
+          errors = []
+          for p in mp.get('plugins', []):
+              src = p.get('source')
+              if isinstance(src, str) and src.startswith('./plugins/'):
+                  path = src.lstrip('./')
+                  if not os.path.isdir(path):
+                      errors.append(f"{p['name']}: source {src} does not exist")
+                  elif not os.path.isfile(os.path.join(path, '.claude-plugin', 'plugin.json')):
+                      errors.append(f"{p['name']}: missing .claude-plugin/plugin.json in {src}")
+              elif isinstance(src, dict):
+                  if src.get('source') != 'git-subdir':
+                      errors.append(f"{p['name']}: unsupported source object {src.get('source')!r}")
+                      continue
+
+                  # Claude Code's git-subdir schema: url, path, ref?, sha? (sha is the effective pin).
+                  extra_keys = set(src) - {'source', 'url', 'path', 'ref', 'sha'}
+                  if extra_keys:
+                      errors.append(f"{p['name']}: git-subdir entry has unsupported keys: {sorted(extra_keys)}")
+
+                  sha = src.get('sha')
+                  if sha is not None and not re.fullmatch(r'[0-9a-f]{40}', sha):
+                      errors.append(f"{p['name']}: git-subdir sha must be a 40-character lowercase hex commit")
+
+                  url = src.get('url')
+                  path = src.get('path')
+
+                  if not url:
+                      errors.append(f"{p['name']}: git-subdir entry missing url")
+                  else:
+                      parsed = urlparse(url)
+                      if parsed.scheme != 'https' or parsed.netloc != 'github.com' or not parsed.path.endswith('.git'):
+                          errors.append(f"{p['name']}: git-subdir url must be an https://github.com/*.git URL")
+
+                  if not path:
+                      errors.append(f"{p['name']}: git-subdir entry missing path")
+                  elif path != '.':
+                      normalized = posixpath.normpath(path)
+                      if (
+                          path.startswith('/')
+                          or '\\' in path
+                          or normalized != path
+                          or normalized == '..'
+                          or normalized.startswith('../')
+                      ):
+                          errors.append(f"{p['name']}: git-subdir path must be a normalized relative path")
+          if errors:
+              for e in errors:
+                  print(f"::error::{e}")
+              sys.exit(1)
+          print(f"OK: {len(mp.get('plugins', []))} marketplace entries validated")
+          PY
+
+      - name: Check agent name uniqueness
+        run: python3 tools/check_agent_name_collisions.py --fail-on-duplicates
+
+  plugin-eval-tests:
+    name: plugin-eval pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/plugin-eval
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Sync dependencies
+        run: uv sync --all-extras
+
+      - name: Run tests
+        run: uv run pytest
+
+  tools-tests:
+    name: tools pytest (adapters + validators + gardener)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/plugin-eval
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Sync dependencies
+        run: uv sync --all-extras
+
+      - name: Run tools test suite
+        run: uv run pytest -q ../../tools/tests/ --ignore=../../tools/tests/test_cli_smoke.py
+
+  multi-harness-generate:
+    name: Cross-harness generation + validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync plugin-eval venv (provides pyyaml + adapter imports)
+        working-directory: plugins/plugin-eval
+        run: uv sync --all-extras
+
+      - name: Generate all harness artifacts
+        run: make generate-all
+
+      - name: Verify committed artifacts are in sync with sources
+        # Native-install artifacts are committed so the repo installs from a clone.
+        # Regeneration must produce no diff — if it does, a source change was committed
+        # without running `make generate-all`. Run it locally and commit the result.
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Generated artifacts drifted from the committed tree. Run 'make generate-all' and commit the result."
+            git status --short
+            git --no-pager diff --stat
+            exit 1
+          fi
+          echo "OK: committed harness artifacts match a fresh 'make generate-all'."
+
+      - name: Structural validation (strict)
+        run: make validate STRICT=1
+
+      - name: Doc-gardener (no errors allowed)
+        # Errors fail this step; warnings (e.g. oversized source skills with no
+        # references/) are surfaced but don't block. Use STRICT=1 to gate on warnings too.
+        run: make garden
+
+      - name: Upload generated artifacts for inspection
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: multi-harness-output
+          path: |
+            .codex/
+            .cursor/
+            .cursor-plugin/
+            .opencode/
+            opencode.json
+            .antigravity/
+            .pi/
+            AGENTS.md
+          retention-days: 7
+
+  cli-smoke-test:
+    name: Real-CLI smoke test (OpenCode + Antigravity + Pi)
+    runs-on: ubuntu-latest
+    # Real-CLI subprocess tests: invokes the actual harness binaries against our
+    # generated artifacts to catch issues that pure-Python parsing misses (CLI
+    # version drift, schema-loader surprises, plugin discovery bugs).
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Bun (for OpenCode CLI)
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2
+        with:
+          bun-version: latest
+
+      - name: Install OpenCode CLI
+        # Pinned. Without a version the installer asks api.github.com for the
+        # latest release, and shared runners hit the unauthenticated rate limit
+        # ("Failed to fetch version information"). Bump alongside the OpenCode
+        # release notes when the adapter needs a newer CLI.
+        run: |
+          curl -fsSL https://opencode.ai/install | bash -s -- --version 1.18.30
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+
+      - name: Install Antigravity CLI
+        # Bootstrapper defaults to $HOME/.local/bin; bump alongside any agy
+        # plugin-schema changes it ships. The CDN sometimes returns the script
+        # gzip-compressed, and bash can't run that from a pipe, so the step
+        # downloads it first and decompresses it when needed.
+        run: |
+          installer="$RUNNER_TEMP/agy-install.sh"
+          curl -fsSL --compressed --retry 3 -o "$installer" https://antigravity.google/cli/install.sh
+          if gzip -t "$installer" 2>/dev/null; then
+            gunzip -c "$installer" > "$installer.plain"
+            mv "$installer.plain" "$installer"
+          fi
+          bash "$installer"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Set up Node.js (for npx skills)
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Install Pi CLI
+        # Pinned to the version the adapter was verified against. Bump alongside any
+        # change to Pi's skill, prompt-template, or agent discovery rules.
+        # Only the direct version is pinned; the package's own dependencies still resolve
+        # within their caret ranges, which is acceptable for a smoke-test CLI install.
+        run: npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.85.1
+
+      - name: Ensure GitHub CLI has `gh skill` (2.90+)
+        # Runner images ship gh, but the skills smoke tests need the `gh skill`
+        # command group. Upgrade from GitHub's apt repository only when the
+        # preinstalled build predates it, so the job never depends on the image.
+        run: |
+          if gh skill --help > /dev/null 2>&1; then
+            echo "preinstalled $(gh --version | head -1) already has gh skill"
+            exit 0
+          fi
+          sudo mkdir -p -m 755 /etc/apt/keyrings
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+            | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+          sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+            | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq gh
+
+      - name: Verify CLI versions
+        run: |
+          opencode --version
+          agy --version
+          pi --version
+          gh --version
+          gh skill --help > /dev/null   # hard requirement: the skills smoke tests must run, not skip
+          npx --version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081  # v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync plugin-eval dependencies
+        working-directory: plugins/plugin-eval
+        run: uv sync --all-extras
+
+      - name: Generate all harness artifacts
+        run: make generate-all
+
+      - name: Run real-CLI smoke tests
+        working-directory: plugins/plugin-eval
+        run: uv run pytest -v ../../tools/tests/test_cli_smoke.py

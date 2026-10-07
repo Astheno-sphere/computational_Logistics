@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Evals Skill: Failure Rubrics and Eval Gates | Suede</title>
+    <meta name="description" content="It writes the one-paragraph AI-SPEC first, then maps every failure mode before a single test exists, and turns those into a severity-scored rubric, concrete pass and fail cases, and acceptance gates a release can fail on. A model grading its own output does not count as evidence here. Use it whenever a change ships LLM, RAG, agent, classifier, prompt, or generated-media behavior.">
+    <meta name="keywords" content="ai evals, llm evaluation, failure rubrics, RAG testing, eval gates, Suede Creator Skills">
+    <meta name="author" content="Jason Colapietro">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+    <link rel="canonical" href="https://skills.suedeai.ai/skills/suede-ai-eval.html">
+    <link rel="icon" href="../assets/favicon-64.png" type="image/png">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="AI Evals Skill: Failure Rubrics and Eval Gates | Suede">
+    <meta property="og:description" content="It writes the one-paragraph AI-SPEC first, then maps every failure mode before a single test exists, and turns those into a severity-scored rubric, concrete pass and fail cases, and acceptance gates a release can fail on. A model grading its own output does not count as evidence here. Use it whenever a change ships LLM, RAG, agent, classifier, prompt, or generated-media behavior.">
+    <meta property="og:url" content="https://skills.suedeai.ai/skills/suede-ai-eval.html">
+    <meta property="og:image" content="https://skills.suedeai.ai/assets/og-image-v2.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AI Evals Skill: Failure Rubrics and Eval Gates | Suede">
+    <meta name="twitter:description" content="It writes the one-paragraph AI-SPEC first, then maps every failure mode before a single test exists, and turns those into a severity-scored rubric, concrete pass and fail cases, and acceptance gates a release can fail on. A model grading its own output does not count as evidence here. Use it whenever a change ships LLM, RAG, agent, classifier, prompt, or generated-media behavior.">
+    <meta name="twitter:image" content="https://skills.suedeai.ai/assets/og-image-v2.png">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "@id": "https://skills.suedeai.ai/skills/suede-ai-eval.html#article",
+        "headline": "AI Evals Skill: Failure Rubrics and Eval Gates | Suede",
+        "description": "It writes the one-paragraph AI-SPEC first, then maps every failure mode before a single test exists, and turns those into a severity-scored rubric, concrete pass and fail cases, and acceptance gates a release can fail on. A model grading its own output does not count as evidence here. Use it whenever a change ships LLM, RAG, agent, classifier, prompt, or generated-media behavior.",
+        "url": "https://skills.suedeai.ai/skills/suede-ai-eval.html",
+        "author": {
+          "@type": "Person", "@id": "https://suedeai.ai/founder#person",
+          "name": "Jason Colapietro"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Suede AI",
+          "url": "https://suedeai.ai"
+        },
+        "about": ["AI evals", "LLM evaluation", "failure rubrics", "AI-SPEC", "RAG testing", "agent QA"],
+        "mainEntity": {
+          "@type": "SoftwareSourceCode",
+          "name": "suede-ai-eval",
+          "codeRepository": "https://github.com/JasonColapietro/suede-creator-skills/tree/main/skills/suede-ai-eval",
+          "programmingLanguage": "Markdown",
+          "applicationCategory": "DeveloperTool",
+          "license": "https://github.com/JasonColapietro/suede-creator-skills/blob/main/LICENSE"
+        }
+      }
+    </script>
+    <link rel="preload" href="../assets/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="stylesheet" href="../assets/skill.css">
+</head>
+  <body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <nav class="shell nav-inner" aria-label="Main navigation">
+        <a href="../" class="nav-logo" aria-label="Suede Creator Skills home">
+          <img src="../assets/suede-ai-logo-transparent.webp" alt="Suede AI" width="28" height="28" onerror="this.style.display='none'">
+          <span class="nav-logo-wordmark">Suede <span>Creator Skills</span></span>
+        </a>
+        <details class="nav-disclosure" open>
+      <summary class="nav-hamburger" aria-label="Open navigation menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </summary>
+      <div class="nav-links">
+          <a href="../">Home</a>
+          <a href="./">Skills</a>
+          <a href="../guide.html">Guide</a>
+          <a href="../book/">Book</a>
+          <a href="../blog/">Blog</a>
+          <a href="../copy.html">Copy Bank</a>
+      <a href="../cracked.html">Cracked Devs</a>
+          <a href="../plugins.html" class="nav-cta">Install</a>
+        </div>
+    </details>
+      </nav>
+    </header>
+    <main id="main" tabindex="-1" class="shell">
+      <div class="eyebrow">/suede-ai-eval &middot; AI evaluation</div>
+      <h1><span class="h1-task">AI Evals skill</span> An AI feature you can't fail isn't tested.</h1>
+      <p class="lead">It writes the one-paragraph AI-SPEC first, then maps every failure mode before a single test exists, and turns those into a severity-scored rubric, concrete pass and fail cases, and acceptance gates a release can fail on. A model grading its own output does not count as evidence here. Use it whenever a change ships LLM, RAG, agent, classifier, prompt, or generated-media behavior.</p>
+      <p><a class="button" href="../plugins.html">Install the skill</a> <a class="button secondary" href="https://github.com/JasonColapietro/suede-creator-skills/tree/main/skills/suede-ai-eval">View skill folder</a></p>
+
+      <div class="plain-ask" aria-label="Example request that routes to this skill">
+        <span class="plain-ask-quote">&quot;make this AI feature measurable before it ships&quot;</span>
+        <span class="plain-ask-arrow" aria-hidden="true">-&gt;</span>
+        <code class="plain-ask-cmd">/suede-ai-eval</code>
+        <span class="plain-ask-note">Ask in plain words. The <a href="suede-workflow-skills.html">router</a> reads the request and loads this lane; MCP agents find it with <code>list_suede_skills</code>.</span>
+      </div>
+
+      <div class="skill-term" aria-label="Sample session for /suede-ai-eval">
+        <div class="skill-term-bar" aria-hidden="true">
+          <span class="tdot2"></span><span class="tdot2"></span><span class="tdot2"></span>
+          <span class="skill-term-title">claude code &middot; sample session</span>
+        </div>
+        <div class="skill-term-body">
+          <span class="t-line"><span class="t-warn">$ </span><span class="t-cmd">/suede-ai-eval spec the support bot</span></span>
+          <span class="t-line">failure modes mapped &middot; 24 eval cases written</span>
+          <span class="t-line">acceptance gate: <span class="t-warn">hallucinated refund = release fail</span></span>
+          <span class="t-line"><span class="term-grade">AI-SPEC READY &middot; GATES ARMED</span><span class="term-cursor" aria-hidden="true"></span></span>
+        </div>
+      </div>
+
+      <section class="panel">
+        <h2>Public install command</h2>
+        <p><strong>Claude Code</strong>, adding the marketplace and the orchestration subset:</p>
+        <pre><code>/plugin marketplace add JasonColapietro/suede-creator-skills
+/plugin install suede-agent-workflows@suede</code></pre>
+        <p><strong>Codex</strong> is the public route. It installs from GitHub as a standard Codex skill folder.</p>
+        <pre><code>python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo JasonColapietro/suede-creator-skills \
+  --path skills/suede-ai-eval</code></pre>
+        <p>Restart Codex after installing the skill.</p>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>What it produces</h2>
+          <ul>
+            <li>AI-SPEC: user promise, inputs, outputs, allowed sources, forbidden behavior, fallback, latency, cost, and success signal.</li>
+            <li>Failure-mode rubric: severity, likelihood, detectability, current evidence, ship gate, and required fix.</li>
+            <li>Eval cases: stable IDs, input, setup, expected pass traits, forbidden traits, grade lane, and gate.</li>
+            <li>Coverage audit: what existing tests, logs, fixtures, prompt snapshots, screenshots, or live readbacks prove today.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h2>Where it fits</h2>
+          <p>Run it before shipping a new AI behavior, after a production miss, or when a product claim says AI quality is handled but the repo only has prompt review or happy-path manual testing.</p>
+          <p>It pairs naturally with Suede Agent Teams for large launches and Suede Code for implementation review. The eval plan defines what must be true; the code review checks whether the system actually enforces it.</p>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Eval dimensions by system type</h2>
+        <p>Start the failure-mode map from the canonical dimensions for the surface's system type, then add product-specific failure modes on top. Safety and task completion apply regardless of type.</p>
+        <div class="links">
+          <div class="link-row"><b>RAG / retrieval</b><span>Context faithfulness, hallucination, answer relevance, retrieval precision, source citation.</span></div>
+          <div class="link-row"><b>Multi-agent</b><span>Task decomposition, inter-agent handoff correctness, goal completion, loop detection.</span></div>
+          <div class="link-row"><b>Conversational</b><span>Tone and style, safety, instruction following, escalation accuracy.</span></div>
+          <div class="link-row"><b>Extraction / structured output</b><span>Schema compliance, field accuracy, format validity.</span></div>
+          <div class="link-row"><b>Autonomous / tool-using agent</b><span>Safety guardrails, tool-use correctness, cost and token adherence, task completion.</span></div>
+          <div class="link-row"><b>Content generation</b><span>Factual accuracy, brand voice, tone, originality.</span></div>
+          <div class="link-row"><b>Code generation</b><span>Correctness, safety, test pass rate, instruction following.</span></div>
+        </div>
+        <p>Each dimension gets a measurement approach before the eval case is written: code-based checks for schema and thresholds, an LLM judge for tone and reasoning quality, calibrated against a human-reviewed sample before the score counts as evidence, or human review for edge cases and the calibration itself.</p>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Default tooling</h2>
+          <p>Detected first, not mandated. An existing eval or tracing tool in the repo wins over any default.</p>
+          <ul>
+            <li>Tracing and observability defaults to Arize Phoenix; open-source, self-hostable, framework-agnostic.</li>
+            <li>RAG eval metrics default to RAGAS; faithfulness, answer relevance, context precision and recall out of the box.</li>
+            <li>Prompt regression in CI defaults to Promptfoo: CLI-first, no platform account required.</li>
+            <li>LangChain or LangGraph pipelines default to LangSmith instead of Phoenix.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h2>Coverage scoring</h2>
+          <p>A reference dataset needs at least 10 examples to start, 20+ before coverage counts as production-grade, weighted toward edge cases and known failure modes over happy-path samples.</p>
+          <p>Coverage and infrastructure score separately, then combine:</p>
+          <pre><code>coverage = covered dimensions / total dimensions × 100
+infra = (tooling + dataset + CI/CD + guardrails + tracing) / 5 × 100
+overall = coverage × 0.6 + infra × 0.4</code></pre>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Core gates</h2>
+        <div class="links">
+          <div class="link-row"><b>Severity 5</b><span>Legal, financial, rights/provenance, privacy, security, payment, irreversible user harm, or public trust collapse blocks release when uncovered.</span></div>
+          <div class="link-row"><b>Severity 4</b><span>Core wrong outcome, broken agent action, major cost spike, or misleading published statement needs an eval case, fallback behavior, and owner before release.</span></div>
+          <div class="link-row"><b>Regression</b><span>Every real observed failure needs a fixture, scripted check, or named manual readback path.</span></div>
+          <div class="link-row"><b>Claim truth</b><span>Public copy cannot claim eval coverage that does not exist in tests, logs, fixtures, or recorded readbacks.</span></div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Best prompts</h2>
+          <pre><code>Use $suede-ai-eval to audit this AI-powered route and produce an AI-SPEC, failure-mode rubric, eval cases, acceptance gates, and missing coverage.</code></pre>
+          <pre><code>Use $suede-ai-eval on this RAG/search feature. Check stale sources, conflicting docs, missing citations, forbidden claims, and privacy boundaries.</code></pre>
+        </article>
+        <article class="card">
+          <h2>Boundaries</h2>
+          <p>The skill does not claim legal, rights, licensing, medical, financial, or compliance clearance. It does not upload data, call private services, invent datasets, or treat a model's self-judgment as sufficient evidence.</p>
+        </article>
+      </section>
+      <section class="install-block" aria-labelledby="install-block-title">
+        <h2 id="install-block-title">Install this skill</h2>
+        <p class="install-lede">It ships inside the Suede Creator Skills pack, so one install brings the whole pack and this skill with it. Claude Code takes two commands the first time and one after that; Codex installs the same pack natively.</p>
+        <div class="install-term">
+          <div class="install-term-bar">
+            <span class="install-term-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+            <b>terminal &middot; install the pack</b>
+          </div>
+          <div class="install-row">
+            <div class="install-cmd">
+              <span class="install-label">Claude Code</span>
+              <pre class="install-code"><span class="install-prompt">$</span> /plugin marketplace add JasonColapietro/suede-creator-skills
+<span class="install-prompt">$</span> /plugin install suede-skills@suede</pre>
+            </div>
+            <button class="install-copy" type="button" data-install-copy aria-label="Copy the Claude Code install commands">Copy</button>
+          </div>
+          <div class="install-row">
+            <div class="install-cmd">
+              <span class="install-label">Codex</span>
+              <pre class="install-code"><span class="install-prompt">$</span> codex plugin add suede-skills@suede-codex</pre>
+            </div>
+            <button class="install-copy" type="button" data-install-copy aria-label="Copy the Codex install command">Copy</button>
+          </div>
+        </div>
+        <p class="install-status" role="status" aria-live="polite" data-install-status></p>
+        <p class="install-note">Cursor, Copilot, and Windsurf install through the skills CLI. Every path is on the <a href="../plugins.html">install page</a>, and every folder is readable first on <a href="https://github.com/JasonColapietro/suede-creator-skills" target="_blank" rel="noopener">GitHub</a>.</p>
+      </section>
+    </main>
+    <section class="ship-strip" aria-label="Install the pack">
+      <div class="shell">
+        <p class="ship-strip-head">Proof is part of the release.</p>
+        <p class="ship-strip-sub">First install takes two commands. After the marketplace is added, install is one. Every skill is plain Markdown.</p>
+        <div class="ship-strip-row">
+          <code><span class="prompt">$</span> /plugin marketplace add JasonColapietro/suede-creator-skills &rarr; /plugin install suede-skills@suede</code>
+          <a href="../plugins.html">All install paths</a>
+        </div>
+      </div>
+    </section>
+    <footer>
+      <div class="shell">
+        <p class="footer-note">Suede AI Eval: public Codex workflow for AI-SPECs, failure rubrics, eval cases, and ship gates.</p>
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <img src="../assets/suede-ai-logo-transparent.webp" alt="Suede AI" onerror="this.style.display='none'">
+            <span>Built by <strong>Jason Colapietro</strong> / Suede AI</span>
+          </div>
+          <div class="footer-links">
+            <a href="https://x.com/johnnysuede" target="_blank" rel="noopener">@johnnysuede</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai" target="_blank" rel="noopener">suedeai.ai</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://github.com/JasonColapietro/suede-creator-skills" target="_blank" rel="noopener">GitHub</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai/privacy" target="_blank" rel="noopener">Privacy</a>
+            <span class="footer-divider" aria-hidden="true">|</span>
+            <a href="https://suedeai.ai/contact" target="_blank" rel="noopener">Contact</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  <script>
+  // Mobile nav disclosure. The markup ships <details open> so a no-JS visit
+  // still reaches every link; this collapses it at mobile widths only and
+  // keeps the summary label in sync with the state.
+  (function () {
+    var box = document.querySelector('.nav-disclosure');
+    if (!box) return;
+    var summary = box.querySelector('summary');
+    var mq = window.matchMedia('(max-width: 768px)');
+    function collapseForViewport() { box.open = !mq.matches; }
+    function syncLabel() {
+      if (summary) summary.setAttribute('aria-label', box.open ? 'Close navigation menu' : 'Open navigation menu');
+    }
+    collapseForViewport();
+    syncLabel();
+    box.addEventListener('toggle', syncLabel);
+    if (mq.addEventListener) mq.addEventListener('change', collapseForViewport);
+    else if (mq.addListener) mq.addListener(collapseForViewport);
+    box.querySelectorAll('.nav-links a').forEach(function (link) {
+      link.addEventListener('click', function () { if (mq.matches) box.open = false; });
+    });
+  })();
+</script>
+<script>
+  // Progressive enhancement only: the commands are plain selectable text
+  // without JS. The button reports state twice -- its own accessible name for
+  // anyone focused on it, and the block's live region for anyone who is not.
+  document.querySelectorAll("[data-install-copy]").forEach(function (btn) {
+    var idleLabel = btn.getAttribute("aria-label");
+    btn.addEventListener("click", function () {
+      var row = btn.closest(".install-row");
+      var code = row && row.querySelector(".install-code");
+      var block = btn.closest(".install-block");
+      var status = block && block.querySelector("[data-install-status]");
+      if (!code || !navigator.clipboard) return;
+      navigator.clipboard.writeText(code.textContent.replace(/^\$ /gm, "").trim()).then(function () {
+        btn.textContent = "Copied";
+        btn.classList.add("copied");
+        btn.setAttribute("aria-label", idleLabel.replace(/^Copy /, "Copied ") + " to clipboard");
+        if (status) status.textContent = idleLabel.replace(/^Copy the /, "") + " copied to clipboard";
+        setTimeout(function () {
+          btn.textContent = "Copy";
+          btn.classList.remove("copied");
+          btn.setAttribute("aria-label", idleLabel);
+          if (status) status.textContent = "";
+        }, 2000);
+      });
+    });
+  });
+</script>
+</body>
+</html>
