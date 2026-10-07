@@ -3,7 +3,7 @@
 
     python servers/hops_app.py            # serves http://localhost:5000
 In Grasshopper: add a Hops component, set its path to http://localhost:5000/cl/route (or /cl/vrp,
-/cl/diagnose). Inputs and outputs appear as component parameters. Route points come back as
+/cl/diagnose, /cl/pathways). Inputs and outputs appear as component parameters. Route points come back as
 Rhino points in metres relative to the network's south-west corner; VRP routes come back as a data
 tree with one branch per vehicle, {0}, {1}, ... ready for Polyline.
 """
@@ -85,6 +85,29 @@ def cl_vrp(osm, problem, solver="pyvrp"):
 )
 def cl_diagnose(probe):
     return core.diagnose_tree(probe)["report"]
+
+
+@hops.component(
+    "/cl/pathways",
+    name="CL Pathways",
+    nickname="Pathways",
+    description="CO2 pathways of a policy package across futures; one branch per future",
+    inputs=[
+        hs.HopsString("Package", "P", "best, no_policy or a study package id such as P12", default="best"),
+        hs.HopsInteger("Futures", "F", "Number of sampled futures", default=20),
+        hs.HopsNumber("Target", "T", "2050 CO2 relative to 2025 that counts as success", default=0.2),
+    ],
+    outputs=[
+        hs.HopsNumber("Years", "Y", "Years of the pathway, 2025-2050"),
+        hs.HopsNumber("CO2", "C", "CO2 relative to 2025, branch {f} per future", hs.HopsParamAccess.TREE),
+        hs.HopsBoolean("Success", "S", "True where the future meets the target"),
+        hs.HopsString("Report", "R", "Package, robustness and target as JSON"),
+    ],
+)
+def cl_pathways(package="best", futures=20, target=0.2):
+    r = core.pathways(package, int(futures), float(target))
+    report = {k: r[k] for k in ("package", "target", "robustness")}
+    return r["years"], r["tree"], r["success"], json.dumps(report)
 
 
 if __name__ == "__main__":

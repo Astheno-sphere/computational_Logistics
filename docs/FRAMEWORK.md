@@ -190,7 +190,8 @@ agents that are part of the model.
 2. A synthetic-population step (PopulationSim or eqasim pipeline) feeding both ABMs.
 3. A MATSim/eqasim run for the case region, so the surrogate has training runs.
 4. The Jev / LLM benchmarking harness: the same choice situations asked to logit, Jev and LLM agents.
-5. A SimWrapper dashboard spec for ensemble outputs, and a Grasshopper pathway explorer.
+5. ~~A SimWrapper dashboard, kepler.gl agent-flow maps and a Grasshopper pathway explorer~~: built in
+   `skills/viz-story` (synthetic data). Next: real geography, and an animated time playback.
 6. Adaptive pathways (DAPP) on top of backcasting.
 
 ## Sources for the landscape
