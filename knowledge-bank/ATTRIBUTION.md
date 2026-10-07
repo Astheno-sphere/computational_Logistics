@@ -14,6 +14,7 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/claude-skill-registries/VoltAgent__awesome-claude-code-subagents`: https://github.com/VoltAgent/awesome-claude-code-subagents.git, MIT, commit 721e973
 - `vendor/claude-skill-registries/agent37-platform__agent37-skills-collection`: https://github.com/agent37-platform/agent37-skills-collection.git, MIT, commit 56902ba
 - `vendor/claude-skill-registries/anthropics__claude-plugins-official`: https://github.com/anthropics/claude-plugins-official.git, Apache-2.0, commit d4226d0
+- `vendor/claude-skill-registries/anthropics__skills`: https://github.com/anthropics/skills.git, per-folder, commit 683bc88
 - `vendor/claude-skill-registries/davila7__claude-code-templates`: https://github.com/davila7/claude-code-templates.git, MIT, commit 46361e8
 - `vendor/claude-skill-registries/mhattingpete__claude-skills-marketplace`: https://github.com/mhattingpete/claude-skills-marketplace.git, Apache-2.0, commit b5b34bc
 - `vendor/claude-skill-registries/obra__superpowers`: https://github.com/obra/superpowers.git, MIT, commit 8ca22db
@@ -51,6 +52,90 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/geo-python/networkx__networkx`: https://github.com/networkx/networkx.git, BSD-3-Clause, commit 6da4704
 - `vendor/geo-python/osmcode__pyosmium`: https://github.com/osmcode/pyosmium.git, BSD-2-Clause, commit c4f1ae4
 - `vendor/geo-python/pysal__pysal`: https://github.com/pysal/pysal.git, BSD-3-Clause, commit 00ac4c9
+- `vendor/harvested-architecture-and-design/Kentucky-ai__opentakeoff`: https://github.com/Kentucky-ai/opentakeoff.git, Apache-2.0, commit 0d502f4
+- `vendor/harvested-delivery/A1-x-Tech__mcp-yandex-dostavka`: https://github.com/A1-x-Tech/mcp-yandex-dostavka.git, MIT, commit 9ae2e92
+- `vendor/harvested-delivery/A1-x-Tech__mcp-yango-delivery`: https://github.com/A1-x-Tech/mcp-yango-delivery.git, MIT, commit 5007f18
+- `vendor/harvested-delivery/CydVilla__peckish`: https://github.com/CydVilla/peckish.git, MIT, commit 10e6fb1
+- `vendor/harvested-delivery/Dudude-bit__yandex-lavka-mcp`: https://github.com/Dudude-bit/yandex-lavka-mcp.git, MIT, commit 8ff40f5
+- `vendor/harvested-delivery/IAfanasov__packzoo-mcp`: https://github.com/IAfanasov/packzoo-mcp.git, MIT, commit fc6edde
+- `vendor/harvested-delivery/LS-SIEM-LLP__qa-probe`: https://github.com/LS-SIEM-LLP/qa-probe.git, Apache-2.0, commit 44ad73e
+- `vendor/harvested-delivery/Yang1Bai__claw-tsaver`: https://github.com/Yang1Bai/claw-tsaver.git, MIT, commit d5c362d
+- `vendor/harvested-delivery/arthurpanhku__DragonMCP`: https://github.com/arthurpanhku/DragonMCP.git, MIT, commit c015782
+- `vendor/harvested-delivery/catrinmdonnelly__royalmail-mcp`: https://github.com/catrinmdonnelly/royalmail-mcp.git, MIT, commit b2ba6c0
+- `vendor/harvested-delivery/childrentime__reactuse`: https://github.com/childrentime/reactuse.git, Unlicense, commit 38842e0
+- `vendor/harvested-delivery/getproxykit__proxykit-mcp`: https://github.com/getproxykit/proxykit-mcp.git, MIT, commit 9b0eb33
+- `vendor/harvested-delivery/kannajune__mcp-architect`: https://github.com/kannajune/mcp-architect.git, MIT, commit 38a37e0
+- `vendor/harvested-delivery/smklog__parcel-shipping-rates-mcp`: https://github.com/smklog/parcel-shipping-rates-mcp.git, MIT, commit eccbfb0
+- `vendor/harvested-delivery/todah-zg__codemagic-mcp`: https://github.com/todah-zg/codemagic-mcp.git, MIT, commit 7beed28
+- `vendor/harvested-delivery/warpfreight__warp-agent-mcp`: https://github.com/warpfreight/warp-agent-mcp.git, MIT, commit 1efced0
+- `vendor/harvested-delivery/zyqzyq__Unfour`: https://github.com/zyqzyq/Unfour.git, Apache-2.0, commit 88c8d1c
+- `vendor/harvested-environment-and-nature/Zhonghao1995__Agentic-MIKE-Plus`: https://github.com/Zhonghao1995/Agentic-MIKE-Plus.git, MIT, commit 81fbd95
+- `vendor/harvested-environment-and-nature/Zhonghao1995__agentic-swmm-workflow`: https://github.com/Zhonghao1995/agentic-swmm-workflow.git, MIT, commit a64d950
+- `vendor/harvested-environment-and-nature/ambeelabs__ambee-mcp`: https://github.com/ambeelabs/ambee-mcp.git, MIT, commit 7dd43ca
+- `vendor/harvested-environment-and-nature/atmospore__atmospore-mcp`: https://github.com/atmospore/atmospore-mcp.git, MIT, commit 8f8a7df
+- `vendor/harvested-environment-and-nature/malonestar__gov-data-mcp`: https://github.com/malonestar/gov-data-mcp.git, MIT, commit 5f05c48
+- `vendor/harvested-environment-and-nature/nalediym__touch-grass`: https://github.com/nalediym/touch-grass.git, MIT, commit 6cdeed5
+- `vendor/harvested-environment-and-nature/zax0rz__birdnet-go-mcp`: https://github.com/zax0rz/birdnet-go-mcp.git, MIT, commit fdfb331
+- `vendor/harvested-industrial-iot/Extelligence-ai__bagel`: https://github.com/Extelligence-ai/bagel.git, Apache-2.0, commit 761a4aa
+- `vendor/harvested-location-services/APOGEOAPI__apogeoapi-mcp`: https://github.com/APOGEOAPI/apogeoapi-mcp.git, MIT, commit b897f20
+- `vendor/harvested-location-services/ArtBreguez__greeks-mcp`: https://github.com/ArtBreguez/greeks-mcp.git, MIT, commit 85a0619
+- `vendor/harvested-location-services/Flightmussy__castlemap-mcp`: https://github.com/Flightmussy/castlemap-mcp.git, MIT, commit c428e57
+- `vendor/harvested-location-services/Flightmussy__filmmap-mcp`: https://github.com/Flightmussy/filmmap-mcp.git, MIT, commit 18ff97c
+- `vendor/harvested-location-services/GeiserX__pumperly-mcp`: https://github.com/GeiserX/pumperly-mcp.git, GPL, commit 4ce30aa
+- `vendor/harvested-location-services/HasData__yellowpages-mcp`: https://github.com/HasData/yellowpages-mcp.git, MIT, commit 342f361
+- `vendor/harvested-location-services/HasData__yelp-mcp`: https://github.com/HasData/yelp-mcp.git, MIT, commit c382bae
+- `vendor/harvested-location-services/Knight60__ArcGIS-Pro-MCP`: https://github.com/Knight60/ArcGIS-Pro-MCP.git, AGPL, commit e63d480
+- `vendor/harvested-location-services/Off-Nadir-Lab__offnadir-delta-mcp`: https://github.com/Off-Nadir-Lab/offnadir-delta-mcp.git, Apache-2.0, commit d414093
+- `vendor/harvested-location-services/PostalDataPI__postaldatapi-mcp`: https://github.com/PostalDataPI/postaldatapi-mcp.git, MIT, commit efb22cb
+- `vendor/harvested-location-services/SaintDoresh__Weather-MCP-ClaudeDesktop`: https://github.com/SaintDoresh/Weather-MCP-ClaudeDesktop.git, MIT, commit dbbb4a3
+- `vendor/harvested-location-services/SecretiveShell__MCP-timeserver`: https://github.com/SecretiveShell/MCP-timeserver.git, MIT, commit 95ae3ad
+- `vendor/harvested-location-services/ThinAirTelematics__thinair-geo`: https://github.com/ThinAirTelematics/thinair-geo.git, MIT, commit 454bd1e
+- `vendor/harvested-location-services/TimLukaHorstmann__mcp-weather`: https://github.com/TimLukaHorstmann/mcp-weather.git, MIT, commit 52e148f
+- `vendor/harvested-location-services/Vortx-AI__emem`: https://github.com/Vortx-AI/emem.git, Apache-2.0, commit 320a1d5
+- `vendor/harvested-location-services/atlasfetch-dev__atlasfetch-mcp`: https://github.com/atlasfetch-dev/atlasfetch-mcp.git, MIT, commit 71314f9
+- `vendor/harvested-location-services/bamwor-dev__bamwor-mcp-server`: https://github.com/bamwor-dev/bamwor-mcp-server.git, MIT, commit 8ce0b15
+- `vendor/harvested-location-services/briandconnelly__mcp-server-ipinfo`: https://github.com/briandconnelly/mcp-server-ipinfo.git, MIT, commit fb4af66
+- `vendor/harvested-location-services/cablate__mcp-google-map`: https://github.com/cablate/mcp-google-map.git, MIT, commit bc2c31f
+- `vendor/harvested-location-services/chuofringer__placeroot`: https://github.com/chuofringer/placeroot.git, MIT, commit 0aa87e9
+- `vendor/harvested-location-services/cqtrinv__trinvmcp`: https://github.com/cqtrinv/trinvmcp.git, MIT, commit 9fa9dec
+- `vendor/harvested-location-services/cturkieh__france-data-mcp`: https://github.com/cturkieh/france-data-mcp.git, MIT, commit e0f8166
+- `vendor/harvested-location-services/devilcoder01__weather-mcp-server`: https://github.com/devilcoder01/weather-mcp-server.git, MIT, commit 70eb466
+- `vendor/harvested-location-services/discava__mcp-server`: https://github.com/discava/mcp-server.git, MIT, commit 126b447
+- `vendor/harvested-location-services/gaopengbin__cesium-mcp`: https://github.com/gaopengbin/cesium-mcp.git, MIT, commit d60556f
+- `vendor/harvested-location-services/geolabel__geolabel-mcp`: https://github.com/geolabel/geolabel-mcp.git, MIT, commit b4f25e6
+- `vendor/harvested-location-services/geovicco-dev__bhoonidhi-mcp`: https://github.com/geovicco-dev/bhoonidhi-mcp.git, MIT, commit 25a5b5a
+- `vendor/harvested-location-services/geowire__geowire`: https://github.com/geowire/geowire.git, Apache-2.0, commit 8b2975f
+- `vendor/harvested-location-services/ip2location__mcp-ip2location-io`: https://github.com/ip2location/mcp-ip2location-io.git, MIT, commit 1a036ed
+- `vendor/harvested-location-services/iplocate__mcp-server-iplocate`: https://github.com/iplocate/mcp-server-iplocate.git, MIT, commit a41926d
+- `vendor/harvested-location-services/isdaniel__mcp_weather_server`: https://github.com/isdaniel/mcp_weather_server.git, Apache-2.0, commit a26ad58
+- `vendor/harvested-location-services/kukapay__nearby-search-mcp`: https://github.com/kukapay/nearby-search-mcp.git, MIT, commit 9509a13
+- `vendor/harvested-location-services/mahdin75__geoserver-mcp`: https://github.com/mahdin75/geoserver-mcp.git, MIT, commit 56a1419
+- `vendor/harvested-location-services/mahdin75__gis-mcp`: https://github.com/mahdin75/gis-mcp.git, MIT, commit be8a33d
+- `vendor/harvested-location-services/mapsmith-ai__MapSmith`: https://github.com/mapsmith-ai/MapSmith.git, AGPL, commit 9a44b50
+- `vendor/harvested-location-services/markpdxt__dronelytics-mcp`: https://github.com/markpdxt/dronelytics-mcp.git, MIT, commit 6dc2d1a
+- `vendor/harvested-location-services/matbel91765__gis-mcp-server`: https://github.com/matbel91765/gis-mcp-server.git, MIT, commit 1b0fb09
+- `vendor/harvested-location-services/muend__arcgis-mcp-bridge`: https://github.com/muend/arcgis-mcp-bridge.git, Apache-2.0, commit 3f85729
+- `vendor/harvested-location-services/ni-c__osm-mcp`: https://github.com/ni-c/osm-mcp.git, MIT, commit 87a5e3c
+- `vendor/harvested-location-services/qinisolabs__floodwise`: https://github.com/qinisolabs/floodwise.git, Apache-2.0, commit 5a09596
+- `vendor/harvested-location-services/rossshannon__weekly-weather-mcp`: https://github.com/rossshannon/weekly-weather-mcp.git, MIT, commit 44772db
+- `vendor/harvested-location-services/stadiamaps__stadiamaps-mcp-server-ts`: https://github.com/stadiamaps/stadiamaps-mcp-server-ts.git, BSD-3-Clause, commit 1412d4b
+- `vendor/harvested-location-services/sthan-io__mcp-server`: https://github.com/sthan-io/mcp-server.git, MIT, commit 3f41b93
+- `vendor/harvested-location-services/tools-mcp__vessel-traffic-mcp`: https://github.com/tools-mcp/vessel-traffic-mcp.git, MIT, commit 47549d5
+- `vendor/harvested-location-services/trackmage__trackmage-mcp-server`: https://github.com/trackmage/trackmage-mcp-server.git, MIT, commit 30cba91
+- `vendor/harvested-location-services/vibecodebeast__swath-mcp`: https://github.com/vibecodebeast/swath-mcp.git, MIT, commit 317ae89
+- `vendor/harvested-location-services/webcoderz__MCP-Geo`: https://github.com/webcoderz/MCP-Geo.git, MIT, commit 971996b
+- `vendor/harvested-location-services/xyver__daedal-map`: https://github.com/xyver/daedal-map.git, MIT, commit 39ce852
+- `vendor/harvested-real-estate/Capital-W-Holdings__us-property-parcel-real-estate-debt`: https://github.com/Capital-W-Holdings/us-property-parcel-real-estate-debt.git, MIT, commit 0fb7f7a
+- `vendor/harvested-real-estate/HasData__redfin-mcp`: https://github.com/HasData/redfin-mcp.git, MIT, commit 93919fd
+- `vendor/harvested-real-estate/HasData__zillow-mcp`: https://github.com/HasData/zillow-mcp.git, MIT, commit 1800e06
+- `vendor/harvested-real-estate/RantumBits__addressintel-mcp`: https://github.com/RantumBits/addressintel-mcp.git, MIT, commit e714e14
+- `vendor/harvested-real-estate/TargetGrps__partelisto-mcp`: https://github.com/TargetGrps/partelisto-mcp.git, MIT, commit eff0fd8
+- `vendor/harvested-real-estate/ashev87__propstack-mcp`: https://github.com/ashev87/propstack-mcp.git, MIT, commit 40497d9
+- `vendor/harvested-real-estate/atifnayeem-oss__saveproptax-mcp`: https://github.com/atifnayeem-oss/saveproptax-mcp.git, MIT, commit 79a5d00
+- `vendor/harvested-real-estate/forgemeshlabs__disruption-intelligence-mcp`: https://github.com/forgemeshlabs/disruption-intelligence-mcp.git, MIT, commit 77aaf3c
+- `vendor/harvested-real-estate/jbechtel-97__dealflowpro-mcp-server`: https://github.com/jbechtel-97/dealflowpro-mcp-server.git, MIT, commit 4f3b7e2
+- `vendor/harvested-real-estate/pedra-ai__pedra-mcp`: https://github.com/pedra-ai/pedra-mcp.git, MIT, commit 79bbe8b
+- `vendor/harvested-real-estate/zornade__zornade-mcp`: https://github.com/zornade/zornade-mcp.git, MIT, commit ac1e6b1
 - `vendor/logistics-benchmarks-solvers/ERGO-Code__HiGHS`: https://github.com/ERGO-Code/HiGHS.git, MIT, commit 73cac48
 - `vendor/logistics-benchmarks-solvers/Kuifje02__vrpy`: https://github.com/Kuifje02/vrpy.git, MIT, commit ff325cb
 - `vendor/logistics-benchmarks-solvers/N-Wouda__ALNS`: https://github.com/N-Wouda/ALNS.git, MIT, commit 5ef1fd1
@@ -115,6 +200,9 @@ Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes yo
 - `vendor/computational-design/ladybug-tools__honeybee-core`: AGPL
 - `vendor/computational-design/ladybug-tools__ladybug`: AGPL
 - `vendor/computational-design/ladybug-tools__lbt-grasshopper`: AGPL
+- `vendor/harvested-location-services/GeiserX__pumperly-mcp`: GPL
+- `vendor/harvested-location-services/Knight60__ArcGIS-Pro-MCP`: AGPL
+- `vendor/harvested-location-services/mapsmith-ai__MapSmith`: AGPL
 - `vendor/routing-engines/GIScience__openrouteservice`: MIXED:GPL+LGPL
 - `vendor/routing-engines/opentripplanner__OpenTripPlanner`: LGPL
 - `vendor/routing-engines/pgRouting__pgrouting`: GPL

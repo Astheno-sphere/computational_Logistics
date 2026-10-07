@@ -6,12 +6,16 @@ a foundation layer with a router, specialist skills, calculators and an
 orchestrated workflow. It also fixes what his plugins lack: routers checked by
 tests, standard frontmatter, and real solvers instead of arithmetic only.
 
-## Knowledge bank
+> **Status (honest):** the skills below are **planned, not built yet**. What exists today is the
+> knowledge bank and its tooling (`tools/`, `tests/`), plus `make_grid_osm.py` and `grid_molde.osm`.
 
-`knowledge-bank/` collects open-source skills, MCP servers, solvers and guides (license-checked,
-with credit). Start at `knowledge-bank/README.md`; the license-by-license list is `knowledge-bank/SOURCES.md`.
+## Knowledge bank (built)
 
-## What's inside
+`knowledge-bank/` collects open-source skills, MCP servers, solvers and guides, license-checked and
+credited, and assembles them into a catalog. Start at `knowledge-bank/README.md`, then
+`knowledge-bank/catalog/README.md`. What we still lack and what comes next: `knowledge-bank/ROADMAP.md`.
+
+## Planned skills (not built yet)
 
 | Skill | Does |
 |---|---|
@@ -23,8 +27,8 @@ with credit). Start at `knowledge-bank/README.md`; the license-by-license list i
 | `cl-calculator` | `grade_cost.py`, `route_energy.py` (stdlib, `--json`) |
 | `cl-train` | Lessons 0-7: Rhino + Grasshopper together, on this project |
 
-`lib/cl_frame.py` holds the only copy of the frame constants.
-`docs/abhinav-patterns.md` is the analysis of his repos this plugin is built from.
+Planned: `lib/cl_frame.py` (the only copy of the frame constants) and `docs/abhinav-patterns.md`
+(the analysis of his repos). The install and lesson steps below describe the planned plugin.
 
 ## Install (Windows, same machine as Rhino)
 
@@ -56,18 +60,9 @@ Then run `/cl-train 1`, then 2, and so on.
 
 ## What has been tested, and what hasn't
 
-- **Tested here (`pytest tests`, 14 passing):**
-  - frame maths vs PROJ (< 1 mm)
-  - least-energy routing vs brute-force Bellman-Ford
-  - one-way/access rules
-  - calculator physics and CLI
-  - skill structure: router targets exist, frontmatter keys are standard
-  - Rhino-side scripts avoid py3-only syntax
-- **Not testable outside Rhino:** everything that calls RhinoCommon or
-  Grasshopper (`ghkit`, `rhino_preflight`, `rhino_route` baking, recipes).
-  Lessons 0-2 are the live test. If a call errors, paste the traceback to
-  Claude Code; the fix is usually a component or port name on your plugin
-  version.
+- **Tested now (`python3 -m pytest tests`, 7 passing):** the knowledge-bank license classifier
+  (permissive vs copyleft vs not-open-source) and the catalog's domain classifier and frontmatter parser.
+- **Not built, so not tested:** every skill listed above, the Rhino-side scripts and the calculators.
 
 ## Honest limits
 
