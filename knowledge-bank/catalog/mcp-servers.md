@@ -1,10 +1,11 @@
-# MCP servers in the bank (81)
+# MCP servers in the bank (82)
 
 Detected by MCP SDK use in the code. Tool counts are approximate (pattern-matched).
 Read the server code before connecting it: it runs with your permissions.
 
 | Server | Category | License | Lang | Tools ~ | Launch | Last commit | What |
 |---|---|---|---|---|---|---|---|
+| `NousResearch__hermes-agent` | agent-harnesses | MIT | py | 8 | see README | 2026-10-06 | Hermes Agent: open agent framework from Nous Research |
 | `FlorianBruniaux__claude-code-ultimate-guide` | claude-code-guides | CC-BY-SA-4.0 | mjs,ts | 17 | see README |  | Claude Code architecture, hooks, memory, skills patterns |
 | `Kentucky-ai__opentakeoff` | harvested-architecture-and-design | Apache-2.0 | mjs,ts | 65 | see README | 2026-10-06 | Construction quantity takeoff MCP |
 | `A1-x-Tech__mcp-yandex-dostavka` | harvested-delivery | MIT | ts | 17 | npx / node | 2026-10-04 | Yandex Delivery B2B API: express-courier claims (price check, create, track, cancel) and pickup-point/NDD ord… |

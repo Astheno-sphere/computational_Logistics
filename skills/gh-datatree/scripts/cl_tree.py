@@ -5,10 +5,12 @@ A tree is an ordered map path -> branch (list of items). A path is a tuple of in
 Operations follow Grasshopper's components (Flatten, Graft, Simplify, Trim Tree, Shift Paths,
 Path Mapper, Flip Matrix) and its rule for pairing up inputs ("data matching").
 
-Two behaviours are modelled from McNeel's documentation and common use, and should be confirmed
-against a live probe (gh_tree_probe.py) when it matters; they are marked VERIFY below:
+Matching rules (repeat the last branch, then the last item) follow Issa, "Essential Algorithms and
+Data Structures for Computational Design in Grasshopper", 2nd ed., McNeel 2024, section 3_3
+(CC BY-SA 3.0 US; in knowledge-bank/books/). Two details the book leaves open are marked VERIFY and
+should be confirmed with a live probe (gh_tree_probe.py) when it matters:
   - which input's paths the outputs inherit when inputs differ,
-  - exactly which shared indices Simplify removes.
+  - whether Simplify also removes shared indices in the middle of paths.
 Runs on CPython 3 and IronPython 2.7 (no f-strings, no type hints).
 """
 import re
@@ -99,15 +101,21 @@ class Tree(object):
         return out
 
     def simplify(self):
-        """Remove the leading indices that every path shares. VERIFY: Grasshopper's Simplify also drops
-        some shared indices that are not leading; probe a live tree before relying on the exact paths."""
+        """Remove the leading and trailing indices that every path shares, which is how paths pile up
+        through a chain of components (Issa, Essential Algorithms and Data Structures, 2nd ed., 3_5_7;
+        CC BY-SA 3.0). Each path keeps at least one index. VERIFY: whether Grasshopper also drops
+        shared indices in the middle of paths; probe a live tree before relying on that case."""
         ps = self.paths
         if len(ps) < 2:
             return Tree(self.b)
-        n = 0
-        while all(len(p) > n + 1 for p in ps) and len(set(p[n] for p in ps)) == 1:
-            n += 1
-        return self._remap(lambda p: p[n:])
+        shortest = min(len(p) for p in ps)
+        lead = 0
+        while lead < shortest - 1 and len(set(p[lead] for p in ps)) == 1:
+            lead += 1
+        trail = 0
+        while lead + trail < shortest - 1 and len(set(p[len(p) - 1 - trail] for p in ps)) == 1:
+            trail += 1
+        return self._remap(lambda p: p[lead:len(p) - trail])
 
     def trim(self, depth=1):
         """Trim Tree: drop the last `depth` indices; branches that collide are merged in order."""

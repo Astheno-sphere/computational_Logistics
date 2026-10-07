@@ -4,7 +4,7 @@ Everything Claude-loadable in the bank, assembled by `tools/kb_assemble.py` from
 
 | What | Count |
 |---|---|
-| skill | 1567 |
+| skill | 1778 |
 | agent | 698 |
 | command | 311 |
 | plugin | 203 |
@@ -18,16 +18,16 @@ Everything Claude-loadable in the bank, assembled by `tools/kb_assemble.py` from
 | [urban](domains/urban.md) | 28 |
 | [architecture-aec](domains/architecture-aec.md) | 87 |
 | [computational-design](domains/computational-design.md) | 18 |
-| [geospatial](domains/geospatial.md) | 14 |
+| [geospatial](domains/geospatial.md) | 15 |
 | [optimisation](domains/optimisation.md) | 5 |
 | [simulation-ml](domains/simulation-ml.md) | 8 |
-| [agent-engineering](domains/agent-engineering.md) | 490 |
-| [other](domains/other.md) | 1971 |
+| [agent-engineering](domains/agent-engineering.md) | 500 |
+| [other](domains/other.md) | 2171 |
 
 - [interlinks.md](interlinks.md): library -> skills -> code
 - [plugins.md](plugins.md): plugins and marketplaces
 - [mcp-servers.md](mcp-servers.md): MCP servers with language, tool count, launch method
-- [issues.md](issues.md): 2 broken entries, 65 duplicate names
+- [issues.md](issues.md): 2 broken entries, 96 duplicate names
 - `skills.json`: the full machine-readable catalog
 
 ## Before you install anything from here

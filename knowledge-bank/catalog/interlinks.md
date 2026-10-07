@@ -42,8 +42,9 @@ Code in bank: `pyvrp__pyvrp`, `vidalt__HGS-CVRP`
 ## VROOM (0)
 Code in bank: `VROOM-Project__vroom`
 
-## OSRM (0)
+## OSRM (1)
 Code in bank: `Project-OSRM__osrm-backend`
+- skill **maps** (NousResearch__hermes-agent): `vendor/agent-harnesses/NousResearch__hermes-agent/skills/productivity/maps/SKILL.md`
 
 ## Valhalla (0)
 Code in bank: `valhalla__valhalla`
@@ -80,7 +81,7 @@ Code in bank: `mrcagney__gtfs_kit`
 - skill **data-driven-design** (Abhinavbwj__Claude-skills-for-Computational-Designers): `vendor/abhinav/Abhinavbwj__Claude-skills-for-Computational-Designers/skills/data-driven-design/SKILL.md`
 - skill **site-analysis** (Abhinavbwj__Urban-Design-Skills-Claude): `vendor/abhinav/Abhinavbwj__Urban-Design-Skills-Claude/skills/site-analysis/SKILL.md`
 
-## H3 (39)
+## H3 (41)
 Code in bank: `uber__h3-py`
 - agent **aem-frontend-specialist** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/agents/web-tools/aem-frontend-specialist.md`
 - agent **cli-ui-designer** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/agents/development-team/cli-ui-designer.md`
@@ -100,9 +101,11 @@ Code in bank: `uber__h3-py`
 - command **error-trace** (wshobson__agents): `vendor/claude-skill-registries/wshobson__agents/plugins/error-debugging/commands/error-trace.md`
 - command **error-trace** (wshobson__agents): `vendor/claude-skill-registries/wshobson__agents/plugins/error-diagnostics/commands/error-trace.md`
 - command **slo-implement** (wshobson__agents): `vendor/claude-skill-registries/wshobson__agents/plugins/observability-monitoring/commands/slo-implement.md`
+- skill **ai-presenter-video** (NousResearch__hermes-agent): `vendor/agent-harnesses/NousResearch__hermes-agent/optional-skills/creative/ai-presenter-video/SKILL.md`
 - skill **angular** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/development/angular/SKILL.md`
 - skill **angular-migration** (wshobson__agents): `vendor/claude-skill-registries/wshobson__agents/plugins/framework-migration/skills/angular-migration/SKILL.md`
 - skill **applying-brand-guidelines** (anthropics__claude-cookbooks): `vendor/frontier-model-tooling/anthropics__claude-cookbooks/skills/custom_skills/applying-brand-guidelines/SKILL.md`
+- skill **architecture-diagram** (NousResearch__hermes-agent): `vendor/agent-harnesses/NousResearch__hermes-agent/skills/creative/architecture-diagram/SKILL.md`
 - skill **browser-extension-builder** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/utilities/browser-extension-builder/SKILL.md`
 - skill **Data Privacy Compliance** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/enterprise-communication/data-privacy-compliance/SKILL.md`
 - skill **documentation-templates** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/document-processing/documentation-templates/SKILL.md`
@@ -120,7 +123,7 @@ Code in bank: `uber__h3-py`
 - skill **SEOAgent** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/business-marketing/seoagent/SKILL.md`
 - skill **shopify-development** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/web-development/shopify-development/SKILL.md`
 - skill **suede-ai-seo** (JasonColapietro__suede-creator-skills): `vendor/claude-skill-registries/JasonColapietro__suede-creator-skills/skills/suede-ai-seo/SKILL.md`
-- skill **technical-doc-creator** (mhattingpete__claude-skills-marketplace): `vendor/claude-skill-registries/mhattingpete__claude-skills-marketplace/visual-documentation-plugin/skills/technical-doc-creator/SKILL.md`
+- ... 1 more in `skills.json`
 
 ## Mesa (agent-based) (2)
 Code in bank: `projectmesa__mesa`, `projectmesa__mesa-geo`
@@ -249,7 +252,7 @@ Code in bank: not vendored (link-only or not added)
 Code in bank: `keplergl__kepler.gl`, `visgl__deck.gl`
 - skill **data-driven-design** (Abhinavbwj__Claude-skills-for-Computational-Designers): `vendor/abhinav/Abhinavbwj__Claude-skills-for-Computational-Designers/skills/data-driven-design/SKILL.md`
 
-## MCP SDK (38)
+## MCP SDK (43)
 Code in bank: `modelcontextprotocol__python-sdk`, `modelcontextprotocol__typescript-sdk`
 - agent **ai-engineer** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/agents/data-ai/ai-engineer.md`
 - agent **csharp-mcp-expert** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/agents/programming-languages/csharp-mcp-expert.md`
@@ -282,10 +285,13 @@ Code in bank: `modelcontextprotocol__python-sdk`, `modelcontextprotocol__typescr
 - skill **biomni** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/scientific/biomni/SKILL.md`
 - skill **build-mcp-server** (anthropics__claude-plugins-official): `vendor/claude-skill-registries/anthropics__claude-plugins-official/plugins/mcp-server-dev/skills/build-mcp-server/SKILL.md`
 - skill **ccboard** (FlorianBruniaux__claude-code-ultimate-guide): `vendor/claude-code-guides/FlorianBruniaux__claude-code-ultimate-guide/examples/skills/ccboard/SKILL.md`
+- skill **fastmcp** (NousResearch__hermes-agent): `vendor/agent-harnesses/NousResearch__hermes-agent/optional-skills/mcp/fastmcp/SKILL.md`
 - skill **fastmcp-server** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/development/fastmcp-server/SKILL.md`
 - skill **MCP Integration** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/development/mcp-integration/SKILL.md`
 - skill **mcp-builder** (anthropics__skills): `vendor/claude-skill-registries/anthropics__skills/skills/mcp-builder/SKILL.md`
 - skill **mcp-builder** (davila7__claude-code-templates): `vendor/claude-skill-registries/davila7__claude-code-templates/cli-tool/components/skills/development/mcp-builder/SKILL.md`
 - skill **mcp-google-map-project** (cablate__mcp-google-map): `vendor/harvested-location-services/cablate__mcp-google-map/.agents/skills/project-docs/SKILL.md`
 - skill **mcp-integration** (anthropics__claude-plugins-official): `vendor/claude-skill-registries/anthropics__claude-plugins-official/plugins/plugin-dev/skills/mcp-integration/SKILL.md`
-- skill **release-process** (cturkieh__france-data-mcp): `vendor/harvested-location-services/cturkieh__france-data-mcp/.claude/skills/release-process/SKILL.md`
+- skill **mcp-oauth-remote-gateway** (NousResearch__hermes-agent): `vendor/agent-harnesses/NousResearch__hermes-agent/optional-skills/mcp/mcp-oauth-remote-gateway/SKILL.md`
+- skill **mcporter** (NousResearch__hermes-agent): `vendor/agent-harnesses/NousResearch__hermes-agent/optional-skills/mcp/mcporter/SKILL.md`
+- ... 3 more in `skills.json`

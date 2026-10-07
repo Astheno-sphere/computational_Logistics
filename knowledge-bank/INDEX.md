@@ -315,3 +315,15 @@ Grasshopper data-tree code and references: tree conversion helpers, GhPython, Mc
 - **ladybug-tools__ladybug-rhino** [AGPL, vendored, copyleft]: Rhino/Grasshopper helpers incl. list_to_data_tree / data_tree_to_list (ladybug_rhino/grasshopper.py). `vendor/grasshopper-datatree/ladybug-tools__ladybug-rhino`
 - **mcneel__developer-rhino3d-com** [NONE, LINK-ONLY]: McNeel developer docs incl. 'The Why and How of Data Trees' and 'Grasshopper data trees and Python'. https://github.com/mcneel/developer-rhino3d-com.git
 - **mcneel__ghpython** [NONE, LINK-ONLY]: GhPython component; home of ghpythonlib treehelpers (Piacentino). https://github.com/mcneel/ghpython.git
+
+## gis-data-connectors (3 vendored, 0 link-only)
+GIS in Rhino/Grasshopper and national/open map data clients (Heron, QGIS, Kartverket).
+
+- **blueherongis__Heron** [MIT, vendored]: Grasshopper GIS import: shapefiles, rasters/DEM, OSM, REST services, Earth Anchor Point. `vendor/gis-data-connectors/blueherongis__Heron`
+- **kartverket__norgeskart** [MIT, vendored]: Kartverket's Norgeskart web map client (Norwegian mapping authority). `vendor/gis-data-connectors/kartverket__norgeskart`
+- **qgis__QGIS** [GPL, vendored, copyleft]: QGIS; processing framework and Python API (PyQGIS). `vendor/gis-data-connectors/qgis__QGIS`
+
+## agent-harnesses (1 vendored, 0 link-only)
+Open agent frameworks and harnesses beyond Claude Code (e.g. Hermes Agent).
+
+- **NousResearch__hermes-agent** [MIT, vendored]: Hermes Agent: open agent framework from Nous Research. `vendor/agent-harnesses/NousResearch__hermes-agent`

@@ -89,6 +89,19 @@ def solve_pyvrp(prob, obj, dur, seconds=2.0, seed=0):
 
 
 def solve_ortools(prob, obj, dur, seconds=2):
+    """Runs OR-Tools in a subprocess. OR-Tools bundles its own HiGHS, which cannot share a process
+    with the `highspy` package that Pyomo (opt-model) uses: whichever loads second fails to import.
+    Isolating it keeps both skills usable in one session (notebook, agent, test run)."""
+    import subprocess
+    payload = json.dumps({"prob": prob, "obj": obj, "dur": dur, "seconds": seconds})
+    r = subprocess.run([sys.executable, os.path.abspath(__file__), "--ortools-worker"], input=payload,
+                       capture_output=True, text=True, timeout=seconds + 60)
+    if r.returncode:
+        raise RuntimeError("OR-Tools worker failed: " + r.stderr.strip()[-400:])
+    return json.loads(r.stdout)
+
+
+def _ortools_core(prob, obj, dur, seconds=2):
     from ortools.constraint_solver import pywrapcp, routing_enums_pb2
     scale = SCALE[prob.get("objective", "travel_time")]
     shift = energy_shift(obj)
@@ -179,6 +192,10 @@ def solve(G, prob, solver="pyvrp", seconds=2.0):
 
 
 def main(argv=None):
+    if (argv or sys.argv[1:])[:1] == ["--ortools-worker"]:
+        d = json.load(sys.stdin)
+        json.dump(_ortools_core(d["prob"], d["obj"], d["dur"], d["seconds"]), sys.stdout)
+        return
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--osm", required=True)
     ap.add_argument("--dem")

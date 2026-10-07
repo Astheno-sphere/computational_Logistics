@@ -1,14 +1,15 @@
 ---
 name: cl-foundations
-description: Entry point for the Computational Logistics plugin. Routes requests about road networks, terrain-aware routing, delivery planning (VRP), Grasshopper data trees and the research knowledge bank to the right skill, and states the shared conventions (UTM 32N metres, seconds, kWh, assumptions to report).
+description: Entry point for the Asthenosphere computational logistics plugin. Routes requests about road networks, terrain-aware routing, delivery planning (VRP), optimisation models (LP/MIP), Grasshopper data trees and the research knowledge bank to the right skill, and states the shared conventions (UTM 32N metres, seconds, kWh, assumptions to report).
 ---
 
-# Computational Logistics: router and conventions
+# Asthenosphere: router and conventions
 
 | Request is about | Use |
 |---|---|
 | Road graph from OSM, grades, travel time, energy, a single route | `osm-network` |
 | Several stops, vans, capacity, time windows, fleet size | `vrp-solve` (uses `osm-network`) |
+| Depots, allocation, network flows, any LP/MIP, proving a route plan optimal | `opt-model` |
 | Grasshopper trees: wrong counts, pairing, nulls, paths; GhPython tree I/O | `gh-datatree`, agent `gh-datatree-debugger` |
 | Showing routes in Rhino/Grasshopper | `vrp-solve --paths` -> `cl_tree.routes_to_tree` -> polylines per `{vehicle}` |
 | Which open-source skill, engine or MCP server exists for X | `knowledge-bank/catalog/` (start at its README) |

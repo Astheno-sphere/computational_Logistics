@@ -1,9 +1,12 @@
-# Computational Logistics
+# Asthenosphere
 
-**Terrain-aware routing and delivery planning for small coastal cities, with an AI-agent toolchain
-for Rhino and Grasshopper.**
+**An open computational logistics lab for any city: terrain-aware routing, optimisation and delivery
+planning, connected to Rhino and Grasshopper through AI agents.**
 
-**Author:** [Your Name] · Research portfolio for doctoral application · Case sites: Molde and Kristiansund, Norway
+**Author:** [Your Name] · Research portfolio for doctoral application · First test case: Molde and Kristiansund, Norway
+
+> The asthenosphere is the slowly flowing layer beneath the Earth's rigid crust. Cities have one too:
+> the flows of goods, vans and people moving beneath their visible form. This lab models that layer.
 
 ---
 
@@ -24,6 +27,22 @@ design environment where architects and urban designers work, through Claude Cod
 A first result on synthetic terrain shows why it matters: on a 60 m hill, the least-energy route uses
 **48% less energy** than the fastest route for **25% more driving time** over the same distance.
 
+## Vision
+
+A city-agnostic system in five layers, built one tested skill at a time:
+
+| Layer | What it holds | Today |
+|---|---|---|
+| **Data** | open maps and terrain for any place: OpenStreetMap, Overture, Copernicus DEM, national sources such as Kartverket | OSM (offline and by place name), DEM rasters |
+| **Models** | road graphs with time and energy costs; routing, VRP, LP/MIP (AMPL-style, solver-agnostic) | `osm-network`, `vrp-solve`, `opt-model` |
+| **Design** | Rhino and Grasshopper: GIS import, layering, massing, data trees | `gh-datatree`, probe, debugger agent |
+| **Agents** | Claude Code skills and agents, MCP servers, open harnesses and models | plugin with router; Rhino/GH MCP in the bank |
+| **Knowledge** | curated, license-checked open-source code, books and references | `knowledge-bank/` with catalog |
+
+Molde is the first test case, not the limit: every skill takes a file or a place name and works in the
+local projected coordinate system. The plan for growing each layer is in
+[`docs/CHECKLIST.md`](docs/CHECKLIST.md).
+
 ## Research questions
 
 1. **Terrain and energy.** How much do grade-aware energy costs change route choice, fleet size and
@@ -41,6 +60,7 @@ A first result on synthetic terrain shows why it matters: on a 60 m hill, the le
 | [`skills/osm-network`](skills/osm-network/SKILL.md) | OSM to drivable graph (one-way rules, UTM), DEM grades, travel time, EV energy with regeneration, least-energy routing (Bellman-Ford) | Built, tested |
 | [`skills/vrp-solve`](skills/vrp-solve/SKILL.md) | Delivery routing with capacity, time windows, service times on road-network costs; PyVRP and OR-Tools cross-check; solver-independent validation | Built, tested |
 | [`skills/gh-datatree`](skills/gh-datatree/SKILL.md) | Tested model of Grasshopper data-tree semantics, live probe for Rhino 8, diagnoser that names the bug and the smallest fix | Model and diagnoser tested; Rhino probe not yet run in Rhino |
+| [`skills/opt-model`](skills/opt-model/SKILL.md) | AMPL-style LP/MIP in Pyomo: transportation, facility location, min-cost flow, exact CVRP; Gurobi, CPLEX or HiGHS; export to .lp/.mps/.nl/.gms | Built, tested; all solvers must agree |
 | [`agents/gh-datatree-debugger`](agents/gh-datatree-debugger.md) | Claude Code agent: probe, diagnose, fix, re-probe | Built |
 | [`skills/cl-foundations`](skills/cl-foundations/SKILL.md) | Router and shared conventions (units, CRS, assumptions to report) | Built |
 | [`knowledge-bank/`](knowledge-bank/README.md) | Curated, license-checked collection of third-party open-source skills, solvers, routing engines and MCP servers, assembled into a searchable catalog | Built (third-party work, credited) |
@@ -67,6 +87,11 @@ flowchart LR
 speed. Positive work is divided by drivetrain efficiency; negative work is recovered at a regeneration
 efficiency below 1. Because downhill edges are negative, least-energy paths are found with Bellman-Ford;
 regeneration below 100% rules out negative cycles, and the code fails loudly if bad data creates one.
+
+**Optimisation.** Models are written once, AMPL-style (sets, parameters, variables, constraints), and
+solved by whichever solver is available: Gurobi or CPLEX (free size-limited editions, full academic
+licenses) or HiGHS (open source). Every model is solved by every available solver in the tests, which
+must agree. An exact CVRP formulation certifies the heuristic VRP plans on small instances.
 
 **Routing.** Stops are snapped to the network; all stop-to-stop costs come from shortest paths on the
 chosen objective. PyVRP (hybrid genetic search) and OR-Tools (guided local search) solve the same
@@ -97,12 +122,16 @@ Reproduce: `python examples/showcase.py`.
 
 ## Validation
 
-`python -m pytest tests` runs 38 tests, including:
+`python -m pytest tests` runs 48 tests, including:
 - energy per edge against a hand calculation; uphill cost exceeds downhill recovery;
 - least-energy routes against an independent Bellman-Ford over reachable targets on a 120 m hill;
 - VRP: both solvers feasible and agreeing; a 5-stop case equal to brute-force enumeration of all routes;
   time-window violations reported, never hidden;
-- data trees: flatten, graft, simplify, trim, shift, flip, path-mapper masks, pairing by branch order,
+- optimisation: transportation and facility location against hand and brute-force optima, min-cost
+  flow against NetworkX, exact CVRP against brute force, and the exact model certifying the PyVRP plan
+  on the Molde grid; Gurobi, CPLEX and HiGHS agreeing on every model;
+- data trees: flatten, graft, simplify, trim, shift, flip, path-mapper masks, the matching rules of
+  Issa (2024) section 3_3, pairing by branch order,
   graft-against-flat-list cross products; the diagnoser on a recorded faulty definition;
 - skill and agent files well-formed, router targets existing.
 
@@ -131,11 +160,15 @@ With Claude Code, load the repository as a plugin: `claude --plugin-dir .` The r
 
 ## Roadmap
 
+Full checklist with sources and priorities: [`docs/CHECKLIST.md`](docs/CHECKLIST.md).
+
 1. Real case: Molde and Kristiansund networks with the Norwegian national elevation model.
 2. Ferry and bridge edges, and winter speed and energy profiles.
 3. Fleet scenarios: diesel vs electric, depot location, charging, sensitivity analysis.
 4. Accessibility and isochrones for services across the two towns.
-5. Rhino/Grasshopper integration through Rhino MCP: baking routes, live probing of data trees.
+5. Rhino/Grasshopper integration through Rhino MCP and Heron: GIS import at true coordinates, baking
+   routes, layering and massing, live probing of data trees.
+6. Multi-objective planning (time vs energy vs fleet size) with Pareto fronts.
 
 ## Repository map
 
@@ -145,6 +178,7 @@ agents/            Claude Code agents
 tests/             pytest suite
 examples/          showcase script reproducing the results above
 grid_molde.osm     synthetic test network
+docs/              checklist of what we absorb next, and from where
 knowledge-bank/    third-party open-source collection, catalog and tooling (see its README)
 tools/             knowledge-bank tooling: sync, harvest, assemble
 ```
@@ -153,6 +187,11 @@ tools/             knowledge-bank tooling: sync, harvest, assemble
 
 - Open-source engines: [OSMnx](https://github.com/gboeing/osmnx) (Boeing), [PyVRP](https://github.com/PyVRP/PyVRP)
   (Wouda, Lan, Kool), [Google OR-Tools](https://github.com/google/or-tools), [NetworkX](https://networkx.org).
+- Optimisation: [Pyomo](https://github.com/Pyomo/pyomo), [HiGHS](https://github.com/ERGO-Code/HiGHS);
+  Gurobi and IBM CPLEX through their free editions.
+- Data-tree rules checked against Rajaa Issa, *Essential Algorithms and Data Structures for
+  Computational Design in Grasshopper*, 2nd ed., Robert McNeel & Associates, 2024 (CC BY-SA 3.0 US);
+  the book and *The Essential Mathematics for Computational Design* are in `knowledge-bank/books/`.
 - The skill-plugin structure (foundation router, specialist skills, calculators) follows the open AEC
   skill collections by [Abhinav Bhardwaj](https://github.com/Abhinavbwj) (MIT).
 - Everything under `knowledge-bank/vendor/` is third-party work kept under its own license; see

@@ -8,6 +8,7 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/abhinav/Abhinavbwj__Skills-Architects`: https://github.com/Abhinavbwj/Skills-Architects.git, MIT, commit 30a0845
 - `vendor/abhinav/Abhinavbwj__Urban-Design-Skills-Claude`: https://github.com/Abhinavbwj/Urban-Design-Skills-Claude.git, MIT, commit 666327b
 - `vendor/abhinav/Abhinavbwj__aec-knowledge-graph`: https://github.com/Abhinavbwj/aec-knowledge-graph.git, MIT, commit 00e796f
+- `vendor/agent-harnesses/NousResearch__hermes-agent`: https://github.com/NousResearch/hermes-agent.git, MIT, commit 0e37a43
 - `vendor/claude-code-guides/FlorianBruniaux__claude-code-ultimate-guide`: https://github.com/FlorianBruniaux/claude-code-ultimate-guide.git, CC-BY-SA-4.0, commit f1b8cbe
 - `vendor/claude-skill-registries/GetBindu__awesome-claude-code-and-skills`: https://github.com/GetBindu/awesome-claude-code-and-skills.git, Apache-2.0, commit 5302371
 - `vendor/claude-skill-registries/JasonColapietro__suede-creator-skills`: https://github.com/JasonColapietro/suede-creator-skills.git, MIT, commit a9bf55e
@@ -52,6 +53,9 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/geo-python/networkx__networkx`: https://github.com/networkx/networkx.git, BSD-3-Clause, commit 6da4704
 - `vendor/geo-python/osmcode__pyosmium`: https://github.com/osmcode/pyosmium.git, BSD-2-Clause, commit c4f1ae4
 - `vendor/geo-python/pysal__pysal`: https://github.com/pysal/pysal.git, BSD-3-Clause, commit 00ac4c9
+- `vendor/gis-data-connectors/blueherongis__Heron`: https://github.com/blueherongis/Heron.git, MIT, commit 2abb8c8
+- `vendor/gis-data-connectors/kartverket__norgeskart`: https://github.com/kartverket/norgeskart.git, MIT, commit 536a961
+- `vendor/gis-data-connectors/qgis__QGIS`: https://github.com/qgis/QGIS.git, GPL, commit 6c00806
 - `vendor/grasshopper-datatree/ladybug-tools__ladybug-rhino`: https://github.com/ladybug-tools/ladybug-rhino.git, AGPL, commit 3d34f1f
 - `vendor/harvested-architecture-and-design/Kentucky-ai__opentakeoff`: https://github.com/Kentucky-ai/opentakeoff.git, Apache-2.0, commit 0d502f4
 - `vendor/harvested-delivery/A1-x-Tech__mcp-yandex-dostavka`: https://github.com/A1-x-Tech/mcp-yandex-dostavka.git, MIT, commit 9ae2e92
@@ -201,6 +205,7 @@ Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes yo
 - `vendor/computational-design/ladybug-tools__honeybee-core`: AGPL
 - `vendor/computational-design/ladybug-tools__ladybug`: AGPL
 - `vendor/computational-design/ladybug-tools__lbt-grasshopper`: AGPL
+- `vendor/gis-data-connectors/qgis__QGIS`: GPL
 - `vendor/grasshopper-datatree/ladybug-tools__ladybug-rhino`: AGPL
 - `vendor/harvested-location-services/GeiserX__pumperly-mcp`: GPL
 - `vendor/harvested-location-services/Knight60__ArcGIS-Pro-MCP`: AGPL

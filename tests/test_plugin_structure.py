@@ -22,10 +22,10 @@ def test_agents_have_name_description_tools():
 
 def test_router_points_only_at_existing_skills():
     text = (ROOT / "skills/cl-foundations/SKILL.md").read_text()
-    for name in ("osm-network", "vrp-solve", "gh-datatree"):
+    for name in ("osm-network", "vrp-solve", "gh-datatree", "opt-model"):
         assert "`%s`" % name in text and (ROOT / "skills" / name / "SKILL.md").exists()
 
 
 def test_plugin_manifest():
     m = json.loads((ROOT / ".claude-plugin/plugin.json").read_text())
-    assert m["name"] == "computational-logistics" and m["version"]
+    assert m["name"] == "asthenosphere" and m["version"]

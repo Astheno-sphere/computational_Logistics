@@ -33,6 +33,20 @@ def test_simplify_removes_shared_leading_indices():
     assert t.simplify() == T({"{0}": [1], "{1}": [2]})
 
 
+def test_simplify_removes_shared_trailing_indices_too():
+    t = T({"{0;1;0}": [1], "{0;2;0}": [2]})
+    assert t.simplify() == T({"{1}": [1], "{2}": [2]})
+
+
+def test_matching_follows_book_rule_repeat_last_branch_then_last_item():
+    a = T({"{0}": [1, 2, 3], "{1}": [4]})
+    b = T({"{0}": [10], "{1}": [20, 30], "{2}": [40]})
+    m = match({"A": a, "B": b})
+    assert m["branches"] == 3
+    assert [p["uses"]["A"] for p in m["plan"]] == ["{0}", "{1}", "{1}"]
+    assert [p["iterations"] for p in m["plan"]] == [3, 2, 1]
+
+
 def test_shift_paths_both_directions():
     t = T({"{2;0}": [1], "{2;1}": [2]})
     assert t.shift(-1) == T({"{2}": [1, 2]})
