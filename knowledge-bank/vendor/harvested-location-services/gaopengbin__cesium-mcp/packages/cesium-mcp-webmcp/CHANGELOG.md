@@ -1,0 +1,75 @@
+# cesium-mcp-webmcp
+
+## 0.4.0
+
+### Minor Changes
+
+- [#53](https://github.com/gaopengbin/cesium-mcp/pull/53) [`298232d`](https://github.com/gaopengbin/cesium-mcp/commit/298232d626012bc597d07146be0e545c024d0c05) Thanks [@gaopengbin](https://github.com/gaopengbin)! - Separate model-facing tool names from stable browser Bridge actions across the canonical contracts, MCP Runtime, WebMCP, and browser function-calling adapter. Existing public tool names and actions remain unchanged. Add a bilingual 61-tool naming audit and a compatibility-first migration policy for future naming improvements.
+
+- [#53](https://github.com/gaopengbin/cesium-mcp/pull/53) [`298232d`](https://github.com/gaopengbin/cesium-mcp/commit/298232d626012bc597d07146be0e545c024d0c05) Thanks [@gaopengbin](https://github.com/gaopengbin)! - Add session-scoped resource handles for storing GeoJSON and CZML once, then resolving `resourceId` across MCP, WebMCP, and the hosted function-calling agent.
+
+### Patch Changes
+
+- Updated dependencies [[`298232d`](https://github.com/gaopengbin/cesium-mcp/commit/298232d626012bc597d07146be0e545c024d0c05), [`298232d`](https://github.com/gaopengbin/cesium-mcp/commit/298232d626012bc597d07146be0e545c024d0c05)]:
+  - cesium-mcp-contracts@0.7.0
+  - cesium-mcp-bridge@1.146.0
+
+## 0.3.0
+
+### Minor Changes
+
+- [#52](https://github.com/gaopengbin/cesium-mcp/pull/52) [`f9480a7`](https://github.com/gaopengbin/cesium-mcp/commit/f9480a7dc812c1c02bfa76f46bb6d9a86c358896) Thanks [@gaopengbin](https://github.com/gaopengbin)! - Forward WebMCP execution signals through Bridge executors. Cancel pending camera and screenshot work, prevent cancelled layer and terrain loads from attaching late, and release late disposable resources. Terrain commands now await completion and report failures. Viewer registrations drain in-flight calls on unregister; use dispose() to cancel work before destroying the Viewer.
+
+### Patch Changes
+
+- [#50](https://github.com/gaopengbin/cesium-mcp/pull/50) [`219cb0c`](https://github.com/gaopengbin/cesium-mcp/commit/219cb0c2382a095bc359910e7fcf22a9632b7c7b) Thanks [@gaopengbin](https://github.com/gaopengbin)! - Build and test against CesiumJS 1.145, update the built-in Viewer and examples, and allow the verified 1.145 peer dependency while retaining support for 1.143. The development and CI baseline is Node.js 22 or newer, matching CesiumJS's engine requirement.
+
+- Updated dependencies [[`f9480a7`](https://github.com/gaopengbin/cesium-mcp/commit/f9480a7dc812c1c02bfa76f46bb6d9a86c358896), [`219cb0c`](https://github.com/gaopengbin/cesium-mcp/commit/219cb0c2382a095bc359910e7fcf22a9632b7c7b)]:
+  - cesium-mcp-bridge@1.145.3
+
+## 0.2.5
+
+### Patch Changes
+
+- [#36](https://github.com/gaopengbin/cesium-mcp/pull/36) [`5ae55e6`](https://github.com/gaopengbin/cesium-mcp/commit/5ae55e6ed0a38a84efc591428863bb0e7244c5b1) Thanks [@gaopengbin](https://github.com/gaopengbin)! - Add a one-package Viewer integration and harden WebMCP lifecycle registration with feature detection, inspectable tool payloads, and immediate cancellation of superseded batches.
+
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [[`33daff9`](https://github.com/gaopengbin/cesium-mcp/commit/33daff93c32e74d5476dd8d9461b33bf3ad88139)]:
+  - cesium-mcp-contracts@0.6.0
+
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [[`b2b9c92`](https://github.com/gaopengbin/cesium-mcp/commit/b2b9c92db6034e8ecb6c17f5a139ec6bf960bb30)]:
+  - cesium-mcp-contracts@0.5.0
+
+## 0.2.2
+
+### Patch Changes
+
+- [`2c9bfd9`](https://github.com/gaopengbin/cesium-mcp/commit/2c9bfd958503cb6d6eedaecc694bc4ac497a80ea) Thanks [@gaopengbin](https://github.com/gaopengbin)! - Use the shared JSON Schemas as the executable source for Runtime validation and defaults, align contract fields with Bridge support and CesiumJS 1.143 behavior, and expose the corrected schemas through WebMCP.
+
+- Updated dependencies [[`2c9bfd9`](https://github.com/gaopengbin/cesium-mcp/commit/2c9bfd958503cb6d6eedaecc694bc4ac497a80ea)]:
+  - cesium-mcp-contracts@0.4.0
+
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [[`e1f3eaf`](https://github.com/gaopengbin/cesium-mcp/commit/e1f3eaffc009284ea67da6de2cba39f0aa419b67)]:
+  - cesium-mcp-contracts@0.3.0
+
+## 0.2.0
+
+### Minor Changes
+
+- [`d92a2bb`](https://github.com/gaopengbin/cesium-mcp/commit/d92a2bb0b7d55499174b596f9a41d7b92636f7ea) Thanks [@gaopengbin](https://github.com/gaopengbin)! - Publish the canonical shared tool inventory and toolset definitions, re-export them from the WebMCP adapter, and derive the Runtime toolset manifest from those contracts while keeping credential and MCP discovery tools explicitly separated.
+
+### Patch Changes
+
+- Updated dependencies [[`d92a2bb`](https://github.com/gaopengbin/cesium-mcp/commit/d92a2bb0b7d55499174b596f9a41d7b92636f7ea)]:
+  - cesium-mcp-contracts@0.2.0

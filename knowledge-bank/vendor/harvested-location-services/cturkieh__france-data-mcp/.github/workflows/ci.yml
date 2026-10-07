@@ -1,0 +1,65 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v6
+        with:
+          # Match ingest-finess.yml — Node 22 for native WebSocket support
+          # (required by @supabase/realtime-js even when not used).
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests (no DB)
+        run: pnpm test:unit
+
+      - name: Setup Supabase CLI
+        id: setup-supabase
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+
+      - name: Start Supabase Local
+        run: |
+          supabase start
+          # Read the local anon key from supabase status output for tests
+          echo "SUPABASE_LOCAL_ANON_KEY=$(supabase status -o json | jq -r .ANON_KEY)" >> $GITHUB_ENV
+          echo "SUPABASE_URL=http://127.0.0.1:54321" >> $GITHUB_ENV
+          echo "SUPABASE_ANON_KEY=$(supabase status -o json | jq -r .ANON_KEY)" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(supabase status -o json | jq -r .SERVICE_ROLE_KEY)" >> $GITHUB_ENV
+
+      - name: Reset DB (apply migrations + seed)
+        run: pnpm db:reset
+
+      - name: Integration tests (Supabase Local)
+        run: pnpm test:integration
+
+      - name: Stop Supabase
+        # Ne stoppe que si la CLI a bien été installée. Sans ce guard, un lint
+        # ou typecheck failed plus haut skip Setup Supabase CLI mais le `Stop`
+        # avec `if: always()` essaie quand même → `supabase: command not found`.
+        if: always() && steps.setup-supabase.outcome == 'success'
+        run: supabase stop

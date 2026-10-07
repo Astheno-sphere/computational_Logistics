@@ -1,0 +1,17 @@
+@startuml
+Scheduler->Person: ActivityEndTrigger
+rnote over Person: ChoosingMode
+Person -> Household: MobilityStatusInquiry
+Household -> Person: MobilityStatusReponse
+Person-> Router: RoutingRequest
+Person-> Router: RideHailTransitRoutingRequest
+Person-> RideHailManager: RideHailInquiry
+Router -> Person: RoutingResponse
+Router -> Person: RideHailTransitRoutingResponse
+RideHailManager -> Person: RideHailInquiryResponse
+Person-> RideHailManager: RideHailTransitInquiry
+RideHailManager -> Person: RideHailTransitInquiryResponses
+Person-> Person: ModeChoice
+rnote over Person: FinishingModeChoice
+Person-> Scheduler: Completion
+@enduml

@@ -1,0 +1,75 @@
+---
+title: useScratch 用法與示例
+sidebar_label: useScratch
+description: "useScratch 是一個 React hook，能在元素上追蹤滑鼠與觸控的刮擦和拖曳手勢，回傳位置、位移量與時間資訊。"
+---
+# useScratch
+
+跟蹤元素上的刮擦/拖動手勢，支持滑鼠和觸摸。
+
+`useScratch` 追蹤元素上的刮擦/繪圖手勢，回傳一個物件，包含 `isScratching` 狀態、起始和當前座標以及距離和角度資訊。此 hook 同時處理滑鼠和觸控事件，適合建構塗鴉畫布、滑動手勢和繪圖互動。
+
+### 使用場景
+
+- 建構刮刮樂卡片或簽名板等塗鴉介面
+- 實作基於滑動方向和距離的手勢識別
+- 建立互動式繪圖或標註工具
+
+### 注意事項
+
+- **SSR 安全**：在伺服器端渲染時回傳預設狀態，`isScratching: false` 且座標為 undefined。伺服器上不會附加事件監聽器。
+- **滑鼠和觸控**：同時處理 `mousedown`/`mousemove`/`mouseup` 和 `touchstart`/`touchmove`/`touchend` 事件，實現跨裝置相容性。
+- **相關 hooks**：另請參閱 `useMouse` 用於一般游標追蹤，以及 `useLongPress` 用於按住偵測。
+
+## Usage
+
+```tsx live
+function Demo() {
+  const elementRef = useRef(null);
+  const state = useScratch(elementRef, {
+    onScratchStart: (s) => {
+      console.log('開始刮擦:', s);
+    },
+    onScratch: (s) => {
+      console.log('刮擦中:', s);
+    },
+    onScratchEnd: (s) => {
+      console.log('刮擦結束:', s);
+    },
+  });
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <div
+        ref={elementRef}
+        style={{
+          width: '300px',
+          height: '200px',
+          border: '1px solid var(--ifm-color-emphasis-300)',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: state.isScratching ? 'var(--ifm-color-emphasis-200)' : 'var(--ifm-background-surface-color)',
+          color: 'var(--ifm-color-content)',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
+        {state.isScratching ? '刮擦中...' : '點擊並拖動以刮擦'}
+      </div>
+      <div style={{ marginTop: '20px', fontFamily: 'monospace', fontSize: '12px', color: 'var(--ifm-color-content)' }}>
+        <div><strong>正在刮擦:</strong> {state.isScratching ? '是' : '否'}</div>
+        {state.x !== undefined && <div><strong>x:</strong> {Math.round(state.x)}</div>}
+        {state.y !== undefined && <div><strong>y:</strong> {Math.round(state.y)}</div>}
+        {state.dx !== undefined && <div><strong>dx:</strong> {Math.round(state.dx)}</div>}
+        {state.dy !== undefined && <div><strong>dy:</strong> {Math.round(state.dy)}</div>}
+      </div>
+    </div>
+  );
+};
+
+```
+
+%%API%%
+

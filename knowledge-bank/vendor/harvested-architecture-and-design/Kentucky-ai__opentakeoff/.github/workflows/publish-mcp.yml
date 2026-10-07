@@ -1,0 +1,124 @@
+name: Publish to MCP Registry
+
+# Full release automation via trusted publishing (adopted 2026-07-21, decision
+# doc in the maintainer binder): pushing an mcp-v* tag publishes the npm
+# artifact (OIDC, provenance attested — no token exists anywhere), then the
+# MCP registry entry, the GitHub release, and the MCPB bundle, fully
+# unattended — no approval click. The `release` environment's required
+# reviewer was removed 2026-07-22 (friction without added safety, since the
+# tag push is already admin-gated); it stays as the OIDC trust boundary, not
+# a pause point. workflow_dispatch exercises OIDC login without publishing.
+#
+# MCP releases live in the mcp-v* tag namespace: bare v* tags are app
+# releases (v0.2.0, v0.3.0 already exist), so the server versions its tags
+# as mcp-v<package version>.
+
+on:
+  push:
+    tags: ["mcp-v*"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # OIDC token for npm trusted publishing + mcp-publisher login github-oidc
+  contents: write # tag checkout + GitHub release creation
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: release # OIDC trust boundary for npm trusted publishing — no required reviewer (removed 2026-07-22)
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version consistency
+        run: |
+          PKG=$(jq -r .version package.json)
+          SRV=$(jq -r .version server.json)
+          SRVPKG=$(jq -r '.packages[0].version' server.json)
+          echo "package.json=$PKG server.json=$SRV server.json packages[0]=$SRVPKG"
+          if [ "$PKG" != "$SRV" ] || [ "$PKG" != "$SRVPKG" ]; then
+            echo "::error::version fields disagree — bump package.json and server.json together"
+            exit 1
+          fi
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME#mcp-v}"
+            if [ "$PKG" != "$TAG" ]; then
+              echo "::error::tag mcp-v$TAG does not match package version $PKG"
+              exit 1
+            fi
+          fi
+
+      - uses: actions/setup-node@v4
+        if: github.ref_type == 'tag'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            mcp/package-lock.json
+
+      - name: Install the engine's dependencies (mcp imports web/src/lib)
+        if: github.ref_type == 'tag'
+        working-directory: web
+        run: npm ci --no-audit --no-fund
+
+      - name: Publish to npm (trusted publishing, provenance attested)
+        if: github.ref_type == 'tag'
+        run: |
+          VERSION=$(jq -r .version package.json)
+          if npm view "opentakeoff-mcp@${VERSION}" version 2>/dev/null; then
+            echo "opentakeoff-mcp@${VERSION} is already on npm — skipping publish (idempotent re-run)"
+            exit 0
+          fi
+          npm ci --no-audit --no-fund
+          # prepublishOnly runs the full gate (typecheck + tests + build) before anything ships
+          npm publish --provenance --access public
+
+      - name: Wait for npm availability
+        if: github.ref_type == 'tag'
+        env:
+          NPM_AVAILABILITY_DEADLINE_MS: 900000
+          NPM_AVAILABILITY_INTERVAL_MS: 15000
+          NPM_AVAILABILITY_MAX_ATTEMPTS: 60
+          NPM_AVAILABILITY_REQUEST_TIMEOUT_MS: 10000
+        run: |
+          VERSION=$(jq -r .version package.json)
+          node ../scripts/wait-for-npm-availability.mjs opentakeoff-mcp "$VERSION"
+
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate to MCP Registry (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish or resume the exact MCP Registry version
+        if: github.ref_type == 'tag'
+        env:
+          REGISTRY_AVAILABILITY_DEADLINE_MS: 900000
+          REGISTRY_AVAILABILITY_INTERVAL_MS: 15000
+          REGISTRY_AVAILABILITY_MAX_ATTEMPTS: 60
+          REGISTRY_AVAILABILITY_REQUEST_TIMEOUT_MS: 10000
+        run: node ../scripts/publish-mcp-registry.mjs server.json
+
+      - name: Create the GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#mcp-v}"
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+                 --title "opentakeoff-mcp $VERSION" --generate-notes --verify-tag
+
+      - name: Build and attach the MCPB bundle
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm ci --no-audit --no-fund
+          npm run mcpb
+          gh release upload "$GITHUB_REF_NAME" dist-mcpb/opentakeoff-mcp.mcpb \
+            --repo "$GITHUB_REPOSITORY" --clobber

@@ -1,0 +1,23 @@
+# GeoWire server — 단일 컨테이너 (redis 등은 v0.2)
+services:
+  geowire:
+    build: .
+    image: geowire/geowire:0.1.0
+    ports:
+      - "4980:4980"
+    environment:
+      # 아래는 모두 선택 — 아무것도 없어도 nominatim(OSM)으로 동작한다(Zero-config)
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      GEOWIRE_API_KEYS: ${GEOWIRE_API_KEYS:-}
+      # 자체 데이터 CSV를 쓰려면 파일을 마운트하고 경로를 지정:
+      # GEOWIRE_INTERNAL_CSV: /data/my-places.csv
+    # volumes:
+    #   - ./my-places.csv:/data/my-places.csv:ro
+    restart: unless-stopped
+    healthcheck:
+      # distroless라 shell/curl이 없어 node로 헬스 체크
+      test: ["CMD", "/nodejs/bin/node", "-e", "fetch('http://127.0.0.1:4980/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

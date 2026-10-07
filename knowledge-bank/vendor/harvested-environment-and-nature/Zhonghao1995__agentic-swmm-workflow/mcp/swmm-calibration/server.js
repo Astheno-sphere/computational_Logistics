@@ -1,0 +1,373 @@
+#!/usr/bin/env node
+/** MCP server for swmm-calibration skill.
+ * Tools:
+ * - swmm_sensitivity_scan       (legacy: evaluate explicit candidate sets)
+ * - swmm_calibrate
+ * - swmm_calibrate_search       (random / lhs / adaptive)
+ * - swmm_calibrate_sceua        (SCE-UA, KGE primary, publication-grade)
+ * - swmm_calibrate_dream_zs     (DREAM-ZS Bayesian posterior, KGE-based likelihood)
+ * - swmm_validate
+ *
+ * NOTE: Sensitivity-analysis tools (OAT / Morris / Sobol') now live on the
+ * swmm-uncertainty MCP server; see mcp/swmm-uncertainty/server.js and the
+ * `swmm_sensitivity_oat`, `swmm_sensitivity_morris`, `swmm_sensitivity_sobol`
+ * tools introduced in issue #49.
+ */
+
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const calibratePy = path.resolve(__dirname, "../../skills/swmm-calibration/scripts/swmm_calibrate.py");
+
+const PY = process.env.PYTHON || "python3";
+
+function runPy(scriptPath, args) {
+  return new Promise((resolve, reject) => {
+    const p = spawn(PY, [scriptPath, ...args], { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    p.stdout.on("data", (d) => (stdout += d.toString()));
+    p.stderr.on("data", (d) => (stderr += d.toString()));
+    p.on("close", (code) => {
+      if (code === 0) resolve(stdout);
+      else reject(new Error(`python exited ${code}\n${stderr}`));
+    });
+  });
+}
+
+function materializeSearchSpace(a) {
+  // Inline search-space objects are written INTO the run root so the
+  // exact space used is preserved as run evidence ("the run dir is
+  // the record"). String inputs pass through as file paths.
+  if (typeof a.searchSpace === "string") return a.searchSpace;
+  fs.mkdirSync(a.runRoot, { recursive: true });
+  const dest = path.join(a.runRoot, "search_space.json");
+  fs.writeFileSync(dest, JSON.stringify(a.searchSpace, null, 2) + "\n", "utf-8");
+  return dest;
+}
+
+const Common = z.object({
+  baseInp: z.string(),
+  patchMap: z.string(),
+  observed: z.string(),
+  runRoot: z.string(),
+  swmmNode: z.string().default("O1"),
+  swmmAttr: z.string().default("Total_inflow"),
+  objective: z.enum(["nse", "kge", "rmse", "bias", "peak_flow_error", "peak_timing_error"]).default("nse"),
+  aggregate: z.enum(["none", "daily_mean"]).default("none"),
+  obsStart: z.string().optional(),
+  obsEnd: z.string().optional(),
+  timestampCol: z.string().optional(),
+  flowCol: z.string().optional(),
+  timeFormat: z.string().optional(),
+  summaryJson: z.string(),
+  rankingJson: z.string().optional(),
+  printRanking: z.boolean().default(false),
+  rankingTop: z.number().int().positive().default(10),
+  dryRun: z.boolean().default(false),
+});
+
+const SensitivityArgs = Common.extend({ parameterSets: z.string() });
+const CalibrateArgs = Common.extend({ parameterSets: z.string(), bestParamsOut: z.string().optional(), candidateRunDir: z.string().optional() });
+const SearchSpaceInput = z.union([z.string(), z.record(z.any())]);
+
+const SearchArgs = Common.extend({
+  searchSpace: SearchSpaceInput,
+  strategy: z.enum(["random", "lhs", "adaptive"]).default("lhs"),
+  iterations: z.number().int().positive().default(12),
+  rounds: z.number().int().positive().default(1),
+  seed: z.number().int().default(42),
+  eliteFraction: z.number().min(0.000001).max(1).default(0.3),
+  refineMargin: z.number().min(0).max(1).default(0.1),
+  minSpanFraction: z.number().min(0.000001).max(1).default(0.1),
+  bestParamsOut: z.string().optional(),
+  candidateRunDir: z.string().optional(),
+});
+const SceuaArgs = Common.extend({
+  searchSpace: SearchSpaceInput,
+  iterations: z.number().int().positive().default(200),
+  seed: z.number().int().default(42),
+  sceuaNgs: z.number().int().positive().default(4),
+  bestParamsOut: z.string().optional(),
+  convergenceCsv: z.string().optional(),
+  candidateRunDir: z.string().optional(),
+});
+const DreamZsArgs = Common.extend({
+  searchSpace: SearchSpaceInput,
+  iterations: z.number().int().positive().default(1000),
+  seed: z.number().int().default(42),
+  dreamChains: z.number().int().min(2).default(4),
+  dreamSigma: z.number().positive().default(0.1),
+  dreamRhatThreshold: z.number().positive().default(1.2),
+  dreamRunsAfterConvergence: z.number().int().positive().default(50),
+  dreamOutputDir: z.string().optional(),
+  bestParamsOut: z.string().optional(),
+  candidateRunDir: z.string().optional(),
+});
+const ValidateArgs = Common.extend({ bestParams: z.string(), trialName: z.string().default("validation") });
+
+function commonArgs(a) {
+  const out = [
+    "--base-inp", a.baseInp,
+    "--patch-map", a.patchMap,
+    "--observed", a.observed,
+    "--run-root", a.runRoot,
+    "--swmm-node", a.swmmNode,
+    "--swmm-attr", a.swmmAttr,
+    "--objective", a.objective,
+    "--aggregate", a.aggregate,
+    "--summary-json", a.summaryJson,
+    "--ranking-top", String(a.rankingTop),
+  ];
+  if (a.obsStart) out.push("--obs-start", a.obsStart);
+  if (a.obsEnd) out.push("--obs-end", a.obsEnd);
+  if (a.timestampCol) out.push("--timestamp-col", a.timestampCol);
+  if (a.flowCol) out.push("--flow-col", a.flowCol);
+  if (a.timeFormat) out.push("--time-format", a.timeFormat);
+  if (a.rankingJson) out.push("--ranking-json", a.rankingJson);
+  if (a.printRanking) out.push("--print-ranking");
+  if (a.dryRun) out.push("--dry-run");
+  return out;
+}
+
+const server = new Server({ name: "swmm-calibration-mcp", version: "0.5.0" }, { capabilities: { tools: {} } });
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: [
+    {
+      name: "swmm_sensitivity_scan",
+      description: "Evaluate many explicit parameter sets against observed flow and rank them.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          baseInp: { type: "string" }, patchMap: { type: "string" }, parameterSets: { type: "string" },
+          observed: { type: "string" }, runRoot: { type: "string" }, swmmNode: { type: "string", default: "O1" },
+          swmmAttr: { type: "string", default: "Total_inflow" }, objective: { type: "string", default: "nse" },
+          aggregate: { type: "string", enum: ["none", "daily_mean"], default: "none" },
+          obsStart: { type: "string" }, obsEnd: { type: "string" },
+          timestampCol: { type: "string" }, flowCol: { type: "string" }, timeFormat: { type: "string" },
+          summaryJson: { type: "string" }, rankingJson: { type: "string" },
+          printRanking: { type: "boolean", default: false }, rankingTop: { type: "integer", default: 10 },
+          dryRun: { type: "boolean", default: false }
+        },
+        required: ["baseInp", "patchMap", "parameterSets", "observed", "runRoot", "summaryJson"]
+      }
+    },
+    {
+      name: "swmm_calibrate",
+      description: "Evaluate explicit candidate parameter sets and report the best one for the chosen objective.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          baseInp: { type: "string" }, patchMap: { type: "string" }, parameterSets: { type: "string" },
+          observed: { type: "string" }, runRoot: { type: "string" }, swmmNode: { type: "string", default: "O1" },
+          swmmAttr: { type: "string", default: "Total_inflow" }, objective: { type: "string", default: "nse" },
+          aggregate: { type: "string", enum: ["none", "daily_mean"], default: "none" },
+          obsStart: { type: "string" }, obsEnd: { type: "string" },
+          timestampCol: { type: "string" }, flowCol: { type: "string" }, timeFormat: { type: "string" },
+          summaryJson: { type: "string" }, rankingJson: { type: "string" },
+          printRanking: { type: "boolean", default: false }, rankingTop: { type: "integer", default: 10 },
+          dryRun: { type: "boolean", default: false }, bestParamsOut: { type: "string" },
+          candidateRunDir: { type: "string" }
+        },
+        required: ["baseInp", "patchMap", "parameterSets", "observed", "runRoot", "summaryJson"]
+      }
+    },
+    {
+      name: "swmm_calibrate_search",
+      description: "Run bounded reproducible calibration search (random, LHS, or adaptive multi-round refinement).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          baseInp: { type: "string" }, patchMap: { type: "string" }, searchSpace: { description: "Search-space file path, OR an inline object {param: {min, max, type?, precision?}} which is written to <runRoot>/search_space.json so the space used is preserved as run evidence.", oneOf: [ { type: "string" }, { type: "object" } ] },
+          observed: { type: "string" }, runRoot: { type: "string" }, swmmNode: { type: "string", default: "O1" },
+          swmmAttr: { type: "string", default: "Total_inflow" }, objective: { type: "string", default: "nse" },
+          aggregate: { type: "string", enum: ["none", "daily_mean"], default: "none" },
+          obsStart: { type: "string" }, obsEnd: { type: "string" },
+          timestampCol: { type: "string" }, flowCol: { type: "string" }, timeFormat: { type: "string" },
+          summaryJson: { type: "string" }, rankingJson: { type: "string" },
+          printRanking: { type: "boolean", default: false }, rankingTop: { type: "integer", default: 10 },
+          dryRun: { type: "boolean", default: false }, bestParamsOut: { type: "string" },
+          strategy: { type: "string", enum: ["random", "lhs", "adaptive"], default: "lhs" },
+          iterations: { type: "integer", default: 12 },
+          rounds: { type: "integer", default: 1 },
+          seed: { type: "integer", default: 42 },
+          eliteFraction: { type: "number", default: 0.3 },
+          refineMargin: { type: "number", default: 0.1 },
+          minSpanFraction: { type: "number", default: 0.1 },
+          candidateRunDir: { type: "string" }
+        },
+        required: ["baseInp", "patchMap", "searchSpace", "observed", "runRoot", "summaryJson"]
+      }
+    },
+    {
+      name: "swmm_calibrate_sceua",
+      description: "Global SCE-UA calibration with KGE as the primary objective. Emits calibration_summary.json with primary_value, kge_decomposition (r, alpha, beta), secondary_metrics (NSE, PBIAS%, RMSE, peak-flow, peak-timing) and a convergence.csv trace. Requires the optional 'spotpy' Python dependency.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          baseInp: { type: "string" }, patchMap: { type: "string" }, searchSpace: { description: "Search-space file path, OR an inline object {param: {min, max, type?, precision?}} which is written to <runRoot>/search_space.json so the space used is preserved as run evidence.", oneOf: [ { type: "string" }, { type: "object" } ] },
+          observed: { type: "string" }, runRoot: { type: "string" }, swmmNode: { type: "string", default: "O1" },
+          swmmAttr: { type: "string", default: "Total_inflow" }, objective: { type: "string", default: "kge", enum: ["kge"] },
+          aggregate: { type: "string", enum: ["none", "daily_mean"], default: "none" },
+          obsStart: { type: "string" }, obsEnd: { type: "string" },
+          timestampCol: { type: "string" }, flowCol: { type: "string" }, timeFormat: { type: "string" },
+          summaryJson: { type: "string" }, rankingJson: { type: "string" },
+          printRanking: { type: "boolean", default: false }, rankingTop: { type: "integer", default: 10 },
+          dryRun: { type: "boolean", default: false }, bestParamsOut: { type: "string" },
+          convergenceCsv: { type: "string", description: "Where to write the per-iteration KGE trace (default: alongside summaryJson)." },
+          iterations: { type: "integer", default: 200, description: "SCE-UA budget (total function evaluations)." },
+          seed: { type: "integer", default: 42 },
+          sceuaNgs: { type: "integer", default: 4, description: "Number of complexes (spotpy default heuristic is 2*p+1)." },
+          candidateRunDir: { type: "string" }
+        },
+        required: ["baseInp", "patchMap", "searchSpace", "observed", "runRoot", "summaryJson"]
+      }
+    },
+    {
+      name: "swmm_calibrate_dream_zs",
+      description: "Run DREAM-ZS Bayesian calibration with a KGE-based likelihood (`exp(-0.5 * (1 - KGE) / sigma^2)`). Writes five posterior artefacts to the chosen audit directory (defaults to the parent of summaryJson): posterior_samples.csv (post-burn-in MCMC samples), best_params.json (MAP estimate), chain_convergence.json (Gelman-Rubin Rhat per parameter), posterior_<param>.png (marginal histogram per parameter), posterior_correlation.png (parameter correlation matrix). The calibration_summary.json keeps the Slice 1 shape (primary_objective='kge', primary_value, kge_decomposition, secondary_metrics) plus a `posterior_summary` block with chain count, Rhat values, and per-parameter quantiles. Requires the optional 'spotpy' Python dependency.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          baseInp: { type: "string" }, patchMap: { type: "string" }, searchSpace: { description: "Search-space file path, OR an inline object {param: {min, max, type?, precision?}} which is written to <runRoot>/search_space.json so the space used is preserved as run evidence.", oneOf: [ { type: "string" }, { type: "object" } ] },
+          observed: { type: "string" }, runRoot: { type: "string" }, swmmNode: { type: "string", default: "O1" },
+          swmmAttr: { type: "string", default: "Total_inflow" }, objective: { type: "string", default: "kge", enum: ["kge"] },
+          aggregate: { type: "string", enum: ["none", "daily_mean"], default: "none" },
+          obsStart: { type: "string" }, obsEnd: { type: "string" },
+          timestampCol: { type: "string" }, flowCol: { type: "string" }, timeFormat: { type: "string" },
+          summaryJson: { type: "string" }, rankingJson: { type: "string" },
+          printRanking: { type: "boolean", default: false }, rankingTop: { type: "integer", default: 10 },
+          dryRun: { type: "boolean", default: false }, bestParamsOut: { type: "string" },
+          dreamOutputDir: { type: "string", description: "Audit directory for the 5 DREAM-ZS artefacts. Defaults to the parent of summaryJson." },
+          iterations: { type: "integer", default: 1000, description: "Total MCMC iterations (across all chains)." },
+          seed: { type: "integer", default: 42 },
+          dreamChains: { type: "integer", default: 4, minimum: 2, description: "Number of MCMC chains (>=2 for Rhat)." },
+          dreamSigma: { type: "number", default: 0.1, description: "Likelihood width sigma on (1-KGE)." },
+          dreamRhatThreshold: { type: "number", default: 1.2, description: "Gelman-Rubin Rhat convergence threshold." },
+          dreamRunsAfterConvergence: { type: "integer", default: 50, description: "Extra samples to draw after convergence is detected." },
+          candidateRunDir: { type: "string" }
+        },
+        required: ["baseInp", "patchMap", "searchSpace", "observed", "runRoot", "summaryJson"]
+      }
+    },
+    {
+      name: "swmm_validate",
+      description: "Apply one chosen parameter set to a second event and score the validation run.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          baseInp: { type: "string" }, patchMap: { type: "string" }, bestParams: { type: "string" },
+          observed: { type: "string" }, runRoot: { type: "string" }, swmmNode: { type: "string", default: "O1" },
+          swmmAttr: { type: "string", default: "Total_inflow" }, objective: { type: "string", default: "nse" },
+          aggregate: { type: "string", enum: ["none", "daily_mean"], default: "none" },
+          obsStart: { type: "string" }, obsEnd: { type: "string" },
+          timestampCol: { type: "string" }, flowCol: { type: "string" }, timeFormat: { type: "string" },
+          summaryJson: { type: "string" }, rankingJson: { type: "string" },
+          printRanking: { type: "boolean", default: false }, rankingTop: { type: "integer", default: 10 },
+          dryRun: { type: "boolean", default: false }, trialName: { type: "string", default: "validation" }
+        },
+        required: ["baseInp", "patchMap", "bestParams", "observed", "runRoot", "summaryJson"]
+      }
+    }
+  ]
+}));
+
+server.setRequestHandler(CallToolRequestSchema, async (req) => {
+  const name = req.params.name;
+  const args = req.params.arguments || {};
+
+  if (name === "swmm_sensitivity_scan") {
+    const a = SensitivityArgs.parse(args);
+    fs.mkdirSync(path.dirname(a.summaryJson), { recursive: true });
+    const stdout = await runPy(calibratePy, ["sensitivity", ...commonArgs(a), "--parameter-sets", a.parameterSets]);
+    return { content: [{ type: "text", text: stdout }] };
+  }
+  if (name === "swmm_calibrate") {
+    const a = CalibrateArgs.parse(args);
+    fs.mkdirSync(path.dirname(a.summaryJson), { recursive: true });
+    const pyArgs = ["calibrate", ...commonArgs(a), "--parameter-sets", a.parameterSets];
+    if (a.bestParamsOut) pyArgs.push("--best-params-out", a.bestParamsOut);
+    if (a.candidateRunDir) pyArgs.push("--candidate-run-dir", a.candidateRunDir);
+    const stdout = await runPy(calibratePy, pyArgs);
+    return { content: [{ type: "text", text: stdout }] };
+  }
+  if (name === "swmm_calibrate_search") {
+    const a = SearchArgs.parse(args);
+    fs.mkdirSync(path.dirname(a.summaryJson), { recursive: true });
+    const pyArgs = [
+      "search",
+      ...commonArgs(a),
+      "--search-space", materializeSearchSpace(a),
+      "--strategy", a.strategy,
+      "--iterations", String(a.iterations),
+      "--rounds", String(a.rounds),
+      "--seed", String(a.seed),
+      "--elite-fraction", String(a.eliteFraction),
+      "--refine-margin", String(a.refineMargin),
+      "--min-span-fraction", String(a.minSpanFraction),
+    ];
+    if (a.bestParamsOut) pyArgs.push("--best-params-out", a.bestParamsOut);
+    if (a.candidateRunDir) pyArgs.push("--candidate-run-dir", a.candidateRunDir);
+    const stdout = await runPy(calibratePy, pyArgs);
+    return { content: [{ type: "text", text: stdout }] };
+  }
+  if (name === "swmm_calibrate_sceua") {
+    const a = SceuaArgs.parse({ ...args, objective: "kge" });
+    fs.mkdirSync(path.dirname(a.summaryJson), { recursive: true });
+    const pyArgs = [
+      "search",
+      ...commonArgs(a),
+      "--search-space", materializeSearchSpace(a),
+      "--strategy", "sceua",
+      "--iterations", String(a.iterations),
+      "--seed", String(a.seed),
+      "--sceua-ngs", String(a.sceuaNgs),
+    ];
+    if (a.bestParamsOut) pyArgs.push("--best-params-out", a.bestParamsOut);
+    if (a.convergenceCsv) pyArgs.push("--convergence-csv", a.convergenceCsv);
+    if (a.candidateRunDir) pyArgs.push("--candidate-run-dir", a.candidateRunDir);
+    const stdout = await runPy(calibratePy, pyArgs);
+    return { content: [{ type: "text", text: stdout }] };
+  }
+  if (name === "swmm_calibrate_dream_zs") {
+    const a = DreamZsArgs.parse({ ...args, objective: "kge" });
+    fs.mkdirSync(path.dirname(a.summaryJson), { recursive: true });
+    const pyArgs = [
+      "search",
+      ...commonArgs(a),
+      "--search-space", materializeSearchSpace(a),
+      "--strategy", "dream-zs",
+      "--iterations", String(a.iterations),
+      "--seed", String(a.seed),
+      "--dream-chains", String(a.dreamChains),
+      "--dream-sigma", String(a.dreamSigma),
+      "--dream-rhat-threshold", String(a.dreamRhatThreshold),
+      "--dream-runs-after-convergence", String(a.dreamRunsAfterConvergence),
+    ];
+    if (a.dreamOutputDir) pyArgs.push("--dream-output-dir", a.dreamOutputDir);
+    if (a.bestParamsOut) pyArgs.push("--best-params-out", a.bestParamsOut);
+    if (a.candidateRunDir) pyArgs.push("--candidate-run-dir", a.candidateRunDir);
+    const stdout = await runPy(calibratePy, pyArgs);
+    return { content: [{ type: "text", text: stdout }] };
+  }
+  if (name === "swmm_validate") {
+    const a = ValidateArgs.parse(args);
+    fs.mkdirSync(path.dirname(a.summaryJson), { recursive: true });
+    const pyArgs = ["validate", ...commonArgs(a), "--best-params", a.bestParams, "--trial-name", a.trialName];
+    const stdout = await runPy(calibratePy, pyArgs);
+    return { content: [{ type: "text", text: stdout }] };
+  }
+  throw new Error(`Unknown tool: ${name}`);
+});
+
+const transport = new StdioServerTransport();
+await server.connect(transport);

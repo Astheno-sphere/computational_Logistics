@@ -1,0 +1,117 @@
+---
+title: useLocalStorage 用法與示例
+sidebar_label: useLocalStorage
+description: "useLocalStorage 是一個 React hook，將 state 綁定到 localStorage 的鍵；提供類似 useState 的元組，並具備 SSR 安全、自訂序列化器與跨分頁同步。"
+---
+# useLocalStorage
+
+輕鬆管理 `localStorage`
+
+`useLocalStorage` 提供響應式的 `localStorage` 讀寫。它回傳一個元組，包含當前儲存的值和一個更新函式。值在 `localStorage` 變更時自動同步（包括跨分頁）。支援自訂序列化/反序列化。
+
+### 使用場景
+
+- 持久化使用者偏好設定（如主題、語言、佈局）
+- 儲存表單草稿以在頁面重新載入後恢復
+- 實作跨分頁同步的狀態管理
+
+### 注意事項
+
+- **SSR 安全**：在伺服器端渲染時回傳預設值。伺服器上不會存取 `localStorage`。
+- **跨分頁 & 同分頁同步**：綁定到相同鍵的每個組件都會保持同步——既在當前分頁內（始終開啟、無需重新載入），也跨其他分頁（透過 `storage` 事件）。`listenToStorageChanges: false` 只會停用跨分頁監聽；同分頁同步始終生效。
+- **相關 hooks**：另請參閱 `useSessionStorage` 用於工作階段層級的儲存，以及 `useCookie` 用於 cookie 儲存。
+
+## Usage
+
+```tsx live
+function Demo() {
+  // 綁定字串
+  const [value, setValue] = useLocalStorage("my-key", "key");
+  
+  // 綁定物件（使用自定義序列化器）
+  const [myObj, setMyObj] = useLocalStorage(
+    "myObj",
+    {
+      name: "test",
+    },
+    {
+      serializer: {
+        read: (val) => {
+          console.log("讀取", val);
+          return JSON.parse(val);
+        },
+        write: (val) => {
+          console.log("寫入", val);
+          return JSON.stringify(val);
+        },
+      },
+    }
+  );
+
+  return (
+    <div>
+      <div>
+        <h3>字串值</h3>
+        <div>值: {value}</div>
+        <button onClick={() => setValue("bar")}>設置為 "bar"</button>
+        <button onClick={() => setValue("baz")}>設置為 "baz"</button>
+        <button onClick={() => setValue(null)}>移除</button>
+      </div>
+      
+      <div style={{ marginTop: "20px" }}>
+        <h3>物件值</h3>
+        <div>物件: {JSON.stringify(myObj)}</div>
+        <button onClick={() => setMyObj({ name: "updated" })}>
+          更新物件
+        </button>
+        <button onClick={() => setMyObj({ name: "test", count: 1 })}>
+          添加屬性
+        </button>
+        <button onClick={() => setMyObj(null)}>移除物件</button>
+      </div>
+    </div>
+  );
+};
+
+```
+
+## 同分頁同步
+
+綁定到相同鍵的兩個組件會在同一分頁內保持同步——不只是跨分頁。在一個面板點擊按鈕，另一個面板會立即更新，無需重新載入：
+
+```tsx live noInline
+function StoragePanel({ label }) {
+  const [value, setValue] = useLocalStorage("shared-demo-key", "A");
+  return (
+    <div
+      style={{
+        border: "1px solid var(--sl-color-gray-5, #ccc)",
+        borderRadius: 6,
+        padding: 12,
+        marginBottom: 8,
+      }}
+    >
+      <strong>{label}</strong> 目前值：<code>{String(value ?? "(空)")}</code>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button onClick={() => setValue("A")}>Set A</button>
+        <button onClick={() => setValue("B")}>Set B</button>
+        <button onClick={() => setValue(null)}>Clear</button>
+      </div>
+    </div>
+  );
+}
+
+function Demo() {
+  return (
+    <div>
+      <p>在一個面板點擊按鈕——另一個面板會在同一分頁內同步更新：</p>
+      <StoragePanel label="組件 A" />
+      <StoragePanel label="組件 B" />
+    </div>
+  );
+}
+
+render(<Demo />);
+```
+
+%%API%%

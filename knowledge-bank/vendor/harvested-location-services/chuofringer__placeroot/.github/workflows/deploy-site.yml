@@ -1,0 +1,161 @@
+name: Deploy Site
+# Direct-upload the static marketing site (site/) to Cloudflare Pages. Same
+# pattern as the sibling funradar/flood repos: wrangler pages deploy from CI,
+# authenticated with the account's CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID
+# secrets — no Pages Git-integration build (the site is plain HTML).
+#
+# Branch-aware:
+#   - push to main            -> production deploy (placeroot.pages.dev, and any
+#                                custom domains like placeroot.dev)
+#   - push to any OTHER branch -> a Cloudflare Pages *preview* deploy, reachable
+#                                at https://<branch>.placeroot.pages.dev (the
+#                                exact URL is printed in this job's log and
+#                                listed under the project's Deployments in the
+#                                dashboard). This is how any branch's site
+#                                changes get previewed before they reach main.
+#
+# Prerequisites (owner, one-time):
+#   - A Cloudflare Pages project exists; its name must match PROJECT below, and
+#     its production branch is `main`.
+#   - Repo secrets CLOUDFLARE_API_TOKEN (Pages:Edit) and CLOUDFLARE_ACCOUNT_ID.
+#   - Custom domains placeroot.dev / placeroot.com attached to the project.
+on:
+  push:
+    # No branch filter: every branch that touches the site gets deployed —
+    # main as production, everything else as a preview.
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy-site.yml'
+  # A published release always redeploys production from the tagged tree,
+  # even if that release's merge didn't touch site/ (or its deploy failed).
+  # Belt and braces for "a release ships the website": the version bump lands
+  # via the Prepare Release PR, and this guarantees what's live matches the
+  # release regardless. Note the ref here is the *tag*, so the deploy step
+  # maps it to the production branch rather than deploying a tag-named
+  # preview.
+  release:
+    types: [published]
+  workflow_dispatch:
+
+# Serialize per deploy target: two deploys of the same branch queue; different
+# branches deploy in parallel (each is its own preview). Release events run
+# under a tag ref but deploy production, so they share main's group — a
+# merge-then-publish sequence can't race two production deploys.
+concurrency:
+  group: deploy-site-${{ github.event_name == 'release' && 'refs/heads/main' || github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT: placeroot
+  # Cloudflare Pages production branch. A deploy claiming any other branch
+  # name is a preview.
+  PRODUCTION_BRANCH: main
+
+# Workflow-level floor so any job added later starts read-only; the deploy
+# job below raises pull-requests to write for its preview-URL comment.
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    # Dependabot-triggered runs get Dependabot secrets, not Actions secrets,
+    # so CLOUDFLARE_API_TOKEN is empty and wrangler hard-fails (seen on the
+    # first grouped actions bump, PR #247). Its branches never touch site/
+    # content anyway — skip instead of failing every weekly bump.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        with:
+          # wrangler v4 (npx …@latest) requires Node >= 22.
+          node-version: '22'
+      - name: Deploy site/ to Cloudflare Pages (production on main, else preview)
+        id: deploy
+        run: |
+          # pipefail so a wrangler failure isn't masked by tee's exit 0.
+          set -o pipefail
+
+          # On a release event GITHUB_REF_NAME is the tag (v0.6.0), and
+          # passing that as --branch would publish a tag-named *preview*
+          # instead of production. A release always deploys production.
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            DEPLOY_BRANCH="$PRODUCTION_BRANCH"
+          else
+            DEPLOY_BRANCH="$GITHUB_REF_NAME"
+          fi
+          echo "Deploying ref $GITHUB_REF_NAME as branch $DEPLOY_BRANCH"
+
+          # Pinned, not @latest: wrangler 4.121.0 shipped depending on a
+          # miniflare alpha that was yanked from npm (ETARGET, broke the
+          # v0.9.1 site deploy). 4.120.0 installs cleanly; bump
+          # deliberately.
+          npx --yes wrangler@4.120.0 pages deploy site \
+            --project-name="$PROJECT" \
+            --branch="$DEPLOY_BRANCH" \
+            --commit-dirty=true | tee wrangler-deploy.log
+
+          # Capture the exact alias URL wrangler prints, rather than
+          # reconstructing Cloudflare's branch-name sanitization ourselves.
+          # A production (main) deploy prints no "Deployment alias URL:" line,
+          # so grep finds nothing and exits 1 — the trailing `|| true` keeps
+          # that expected no-match from failing the step under `set -e`/pipefail
+          # (the deploy itself already succeeded above). The PR-comment step is
+          # gated on a non-main ref + non-empty alias_url, so an empty value
+          # here is fine.
+          ALIAS_URL=$(grep -o 'Deployment alias URL: .*' wrangler-deploy.log | sed 's/^Deployment alias URL: //' | tr -d '\r' || true)
+          echo "alias_url=$ALIAS_URL" >> "$GITHUB_OUTPUT"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Comment preview URL on PR (non-main branches only)
+        if: github.ref_name != 'main' && steps.deploy.outputs.alias_url != ''
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const branch = process.env.GITHUB_REF_NAME;
+            const aliasUrl = ${{ toJSON(steps.deploy.outputs.alias_url) }};
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${branch}`,
+            });
+
+            if (prs.length === 0) {
+              core.info(`No open PR for branch "${branch}"; skipping preview comment.`);
+              return;
+            }
+
+            const marker = '<!-- preview-url -->';
+            const body = `${marker}\n**Cloudflare Pages preview:** ${aliasUrl}`;
+
+            for (const pr of prs) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+              });
+              const existing = comments.find(c => c.body && c.body.includes(marker));
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body,
+                });
+              }
+            }

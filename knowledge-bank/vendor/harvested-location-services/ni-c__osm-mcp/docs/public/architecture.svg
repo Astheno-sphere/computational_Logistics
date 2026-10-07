@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  GENERATED FILE — do not edit by hand.
+  Source: docs/assets/architecture.source.svg
+  Regenerate with: npm run assets
+  This copy is what npm shows: it brings its own background on purpose.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 484" width="768" height="484" role="img" aria-labelledby="arch-title arch-desc">
+  <title id="arch-title">osm-mcp architecture</title>
+  <desc id="arch-desc">An MCP client such as Claude talks to osm-mcp over stdio. The server exposes eleven read-only tools and calls the public OpenStreetMap services over HTTPS: Nominatim and Photon for geocoding, OSRM for routing, Valhalla for isochrones and Overpass for POI search. With an optional API key, routing, matrices and isochrones switch to OpenRouteService.</desc>
+
+  <style>
+    .node { stroke-width: 1.25; }
+    .node-accent { stroke-width: 1.5; }
+    .edge { stroke-width: 1.5; fill: none; }
+    .edge-accent { stroke-width: 1.75; fill: none; }
+    .edge-dashed { stroke-dasharray: 5 4; }
+    text { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "DejaVu Sans", sans-serif; font-size: 13px; }
+    .label-title { font-size: 13.5px; font-weight: 600; }
+    .label-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 12px; }
+    .label-muted { font-size: 11.5px; }
+
+    .node { fill: rgba(148, 163, 184, 0.10); stroke: #64748b; }
+    .node-accent { fill: rgba(129, 140, 248, 0.16); stroke: #a5b4fc; }
+    .edge { stroke: #64748b; }
+    .edge-accent { stroke: #a5b4fc; }
+    text { fill: #e2e8f0; }
+    .label-muted { fill: #94a3b8; }
+    marker path { fill: #64748b; stroke: none; }
+    marker.accent path { fill: #a5b4fc; }
+
+    .surface { fill: #0f172a; stroke: #1e293b; stroke-width: 1; }
+  </style>
+
+  <rect class="surface" x="0.5" y="0.5" width="767" height="483" rx="14" />
+
+  <g transform="translate(24, 24)">
+    <defs>
+      <marker id="arch-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 z" />
+      </marker>
+      <marker id="arch-arrow-accent" class="accent" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L7,3 L0,6 z" />
+      </marker>
+    </defs>
+
+    <rect class="node" x="20" y="170" width="160" height="80" rx="10" />
+    <text class="label-title" x="100" y="203" text-anchor="middle">MCP client</text>
+    <text class="label-muted" x="100" y="223" text-anchor="middle">Claude, Codex, …</text>
+
+    <rect class="node-accent" x="270" y="155" width="180" height="110" rx="10" />
+    <text class="label-title" x="360" y="188" text-anchor="middle">osm-mcp</text>
+    <text class="label-muted" x="360" y="210" text-anchor="middle">11 read-only tools</text>
+    <text class="label-muted" x="360" y="228" text-anchor="middle">rate limits · cache</text>
+    <text class="label-muted" x="360" y="246" text-anchor="middle">no API key required</text>
+
+    <path class="edge-accent" d="M180,210 L262,210" marker-end="url(#arch-arrow-accent)" />
+    <text class="label-mono" x="221" y="198" text-anchor="middle">stdio</text>
+
+    <rect class="node" x="550" y="20" width="150" height="56" rx="10" />
+    <text class="label-title" x="625" y="43" text-anchor="middle">Nominatim</text>
+    <text class="label-muted" x="625" y="61" text-anchor="middle">geocoding</text>
+
+    <rect class="node" x="550" y="88" width="150" height="56" rx="10" />
+    <text class="label-title" x="625" y="111" text-anchor="middle">Photon</text>
+    <text class="label-muted" x="625" y="129" text-anchor="middle">typo-tolerant search</text>
+
+    <rect class="node" x="550" y="156" width="150" height="56" rx="10" />
+    <text class="label-title" x="625" y="179" text-anchor="middle">OSRM</text>
+    <text class="label-muted" x="625" y="197" text-anchor="middle">routing (FOSSGIS)</text>
+
+    <rect class="node" x="550" y="224" width="150" height="56" rx="10" />
+    <text class="label-title" x="625" y="247" text-anchor="middle">Valhalla</text>
+    <text class="label-muted" x="625" y="265" text-anchor="middle">isochrones</text>
+
+    <rect class="node" x="550" y="292" width="150" height="56" rx="10" />
+    <text class="label-title" x="625" y="315" text-anchor="middle">Overpass</text>
+    <text class="label-muted" x="625" y="333" text-anchor="middle">POI search · mirrors</text>
+
+    <rect class="node" x="550" y="360" width="150" height="56" rx="10" />
+    <text class="label-title" x="625" y="383" text-anchor="middle">OpenRouteService</text>
+    <text class="label-muted" x="625" y="401" text-anchor="middle">optional · API key</text>
+
+    <path class="edge" d="M450,180 L542,48" marker-end="url(#arch-arrow)" />
+    <path class="edge" d="M450,192 L542,116" marker-end="url(#arch-arrow)" />
+    <path class="edge" d="M450,204 L542,184" marker-end="url(#arch-arrow)" />
+    <path class="edge" d="M450,216 L542,252" marker-end="url(#arch-arrow)" />
+    <path class="edge" d="M450,228 L542,320" marker-end="url(#arch-arrow)" />
+    <path class="edge edge-dashed" d="M450,240 L542,388" marker-end="url(#arch-arrow)" />
+
+    <text class="label-mono" x="496" y="160" text-anchor="middle">HTTPS</text>
+  </g>
+</svg>

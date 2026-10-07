@@ -1,0 +1,21 @@
+# Smithery deployment config for Bamwor World Data MCP server.
+# stdio transport, built from the repo Dockerfile. API key is optional
+# (the server works anonymously); users may supply one for full access.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      bamworApiKey:
+        type: string
+        title: Bamwor API Key
+        description: "Optional. Get a free key at https://bamwor.com/en/developers/quickstart — the server also works anonymously."
+    required: []
+  commandFunction: |-
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: config.bamworApiKey ? { BAMWOR_API_KEY: config.bamworApiKey } : {}
+    })
+build:
+  dockerfile: Dockerfile

@@ -1,0 +1,20 @@
+{#- 覆盖 Furo 默认侧栏品牌：标题与版本/文档说明分行，便于与浏览器标签区分 -#}
+<a class="sidebar-brand{% if logo %} centered{% endif %}" href="{{ pathto(master_doc) }}">
+  {%- if logo_url %}
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="{{ logo_url }}" alt="{{ _('Logo') }}"/>
+  </div>
+  {%- endif %}
+  {%- if theme_light_logo and theme_dark_logo %}
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="{{ pathto('_static/' + theme_light_logo, 1) }}" alt="{{ _('Light Logo') }}"/>
+    <img class="sidebar-logo only-dark" src="{{ pathto('_static/' + theme_dark_logo, 1) }}" alt="{{ _('Dark Logo') }}"/>
+  </div>
+  {%- endif %}
+  {% if not theme_sidebar_hide_name %}
+  <span class="sidebar-brand-text">
+    <span class="sidebar-brand-line sidebar-brand-title">AgentSociety 2</span>
+    <span class="sidebar-brand-line sidebar-brand-meta">v{{ release }} · {{ _('文档') }}</span>
+  </span>
+  {%- endif %}
+</a>

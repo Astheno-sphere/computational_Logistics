@@ -1,0 +1,194 @@
+.. _gdal_vector_sql:
+
+.. program:: gdal_vector_sql
+
+================================================================================
+``gdal vector sql``
+================================================================================
+
+.. versionadded:: 3.11
+
+.. only:: html
+
+    Apply SQL statement(s) to a dataset.
+
+.. Index:: gdal vector sql
+
+Synopsis
+--------
+
+.. program-output:: gdal vector sql --help-doc
+
+Description
+-----------
+
+:program:`gdal vector sql` returns one or several layers evaluated from
+SQL statements.
+
+Starting with GDAL 3.12, when using :option:`--update`, and without an output
+dataset specified, this can be used to execute statements that modify
+the input dataset, such as UPDATE, DELETE, etc.
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. include:: gdal_cli_include/gdalg_vector_compatible.rst
+
+Program-Specific Options
+------------------------
+
+.. option:: --output-layer <OUTPUT-LAYER>
+
+    Output SQL layer name(s). If not specified, a generic layer name such as
+    "SELECT" may be generated.
+
+    Must be specified as many times as there are SQL statements, either as
+    several --output-layer arguments, or a single one with the layer names
+    combined with comma.
+
+.. option:: --quiet
+
+    .. versionadded:: 3.12
+
+    Silence potential information messages.
+
+.. option:: --sql <sql_statement>|@<filename>
+
+    SQL statement to execute that returns a table/layer (typically a SELECT
+    statement).
+
+    Can be repeated to generated multiple output layers (repeating --sql <value>
+    for each output layer)
+
+.. include:: gdal_options/sql_dialect.rst
+
+
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/append_vector.rst
+
+    .. include:: gdal_options/co_vector.rst
+
+    .. include:: gdal_options/if.rst
+
+    .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/oo.rst
+
+    .. include:: gdal_options/of_vector.rst
+
+    .. include:: gdal_options/output_oo.rst
+
+    .. include:: gdal_options/overwrite.rst
+
+    .. include:: gdal_options/overwrite_layer.rst
+
+    .. include:: gdal_options/skip_errors.rst
+
+    .. include:: gdal_options/update.rst
+
+    .. include:: gdal_options/upsert.rst
+
+    .. include:: gdal_options/quiet.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
+Examples
+--------
+
+.. example::
+   :title: Generate a GeoPackage file with a layer sorted by descending population
+
+   .. code-block:: bash
+
+        $ gdal vector sql in.gpkg out.gpkg --output-layer country_sorted_by_pop --sql="SELECT * FROM country ORDER BY pop DESC"
+
+.. example::
+   :title: Generate a GeoPackage file with 2 SQL result layers
+
+   .. code-block:: bash
+
+        $ gdal vector sql in.gpkg out.gpkg --output-layer=beginning,end --sql="SELECT * FROM my_layer LIMIT 100" --sql="SELECT * FROM my_layer OFFSET 100000 LIMIT 100"
+
+.. example::
+   :title: Modify in-place a GeoPackage dataset
+
+   .. code-block:: bash
+
+        $ gdal vector sql --update my.gpkg --sql "DELETE FROM countries WHERE pop > 1e6"
+
+.. example::
+   :title: Add a new field to an existing layer of a GeoPackage
+   :id: gdal-vector-sql-addfield
+
+   .. code-block:: bash
+
+       $ gdal vector sql --update my.gpkg --sql "ALTER TABLE countries ADD COLUMN abbrev STRING(10)"
+
+.. example::
+   :title: Append to an existing layer of a GeoPackage file
+
+   .. code-block:: bash
+
+       $ gdal vector pipeline read europe.gpkg ! \
+                              sql --sql "SELECT * FROM country WHERE pop > 1e6" ! \
+                              write --append --output-layer-name=world world.gpkg
+
+.. example::
+   :title: List unique values in a Shapefile field
+   :id: gdal-vector-sql-distinct
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector pipeline \
+            ! read in.shp \
+            ! sql --sql "SELECT DISTINCT CODE FROM in ORDER BY CODE" \
+            ! info --features
+
+      .. code-tab:: ps1
+
+        gdal vector pipeline `
+            ! read in.shp `
+            ! sql --sql "SELECT DISTINCT CODE FROM in ORDER BY CODE" `
+            ! info --features
+
+.. example::
+   :title: Filter features from a polygon dataset that intersect a point in a separate dataset
+
+   This example uses the spatial operations provided by the SQLite dialect to select polygons
+   that intersect at least one point feature in a separate dataset. Because :program:`gdal vector sql`
+   operates on a single dataset, the two input datasets are first combined using :ref:`gdal_vector_concat`.
+
+   .. code-block:: bash
+
+       gdal vector pipeline ! \
+           concat polys.shp points.shp \
+               --mode stack ! \
+           sql --sql "SELECT * FROM polys WHERE EXISTS (SELECT 1 FROM points WHERE ST_Intersects(polys.geometry, points.geometry))" \
+               --dialect sqlite ! \
+           write polys_filtered.shp
+
+.. example::
+   :title: Use a pipeline to calculate the length of a GPS track and write to stdout
+
+   This example uses the ``ST_Length`` function to calculate the length of a layer with
+   a single feature. To calculate a length in meters, the layer is first projected to
+   a suitable coordinate reference system.
+
+   .. code-block:: console
+
+       $ gdal vector pipeline ! \
+            read out.gpx ! \ 
+            reproject --output-crs EPSG:32145 ! \
+            sql "SELECT ST_Length(geometry) FROM tracks" --dialect sqlite ! \
+            write /vsistdout/ --output-format CSV --lco HEADER=NO
+       10716.7409690568
+

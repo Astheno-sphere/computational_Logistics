@@ -1,0 +1,288 @@
+/* stylelint-disable-next-line */
+@import "tailwindcss";
+
+/* stylelint-disable-next-line */
+@theme {
+  --font-defaults: raleway, serif;
+  --font-headings: raleway, sans-serif;
+  --font-mono: roboto mono, monospace;
+  --text-xxs: 0.7rem;
+  --text-xs: 0.78rem;
+  --text-sm: 0.85rem;
+  --text-base: 1rem;
+  --text-lg: 1.05rem;
+  --text-xl: 1.1rem;
+  --text-2xl: 1.1rem;
+  --text-3xl: 1.2rem;
+  --text-4xl: 1.8rem;
+  --font-weight-extralight: 200;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --border-width-0: 0;
+  --border-width-1: 1px;
+  --border-width-2: 2px;
+  --border-width-3: 3px;
+  --border-width-4: 4px;
+  --border-width-default: 1px;
+  --border-color-theme: #d32333;
+  --border-color-lighter-grey: #f1f1f1;
+  --border-color-light-grey: #a8a8a8;
+  --border-color-mid-grey: #404040;
+  --border-color-dark-grey: #1d1d1d;
+  --border-color-darker-grey: #19181b;
+  --border-color-black: #000;
+  --border-color-white: #fff;
+  --color-theme: #d32333;
+  --color-lighter-grey: #f1f1f1;
+  --color-light-grey: #a8a8a8;
+  --color-mid-grey: #404040;
+  --color-dark-grey: #1d1d1d;
+  --color-darker-grey: #19181b;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: currentcolor;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-darker-grey text-lighter-grey;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    /* flex is for links inserted before headings */
+    @apply flex items-center py-1 font-headings text-light-grey;
+  }
+
+  h1 {
+    @apply pt-12 pb-4 text-3xl font-normal;
+  }
+
+  h2 {
+    @apply pt-6 pb-2 text-2xl font-normal;
+  }
+
+  h3 {
+    @apply pt-4 text-2xl font-medium;
+  }
+
+  h4 {
+    @apply text-xl;
+  }
+
+  h5 {
+    @apply text-lg;
+  }
+
+  h6 {
+    @apply text-base;
+  }
+
+  ul {
+    @apply pl-2 font-light;
+
+    & li {
+      @apply my-2 ml-2 text-sm font-light;
+
+      list-style-type: disc;
+    }
+  }
+
+  ol {
+    @apply pl-2 font-light;
+
+    & li {
+      @apply my-2 ml-6 text-sm font-light;
+
+      list-style-type: decimal;
+    }
+  }
+
+  p {
+    @apply my-2 text-sm font-light;
+  }
+
+  strong,
+  b {
+    @apply font-medium text-lighter-grey;
+  }
+
+  img {
+    @apply pt-6 pb-3;
+  }
+
+  :not(pre) > code {
+    @apply rounded-xs bg-dark-grey px-1 font-mono text-xs font-normal text-lighter-grey;
+  }
+
+  pre {
+    @apply my-4 overflow-x-auto whitespace-pre-wrap rounded-sm border border-darker-grey p-2;
+
+    & code {
+      @apply text-xs font-normal tracking-tight;
+    }
+  }
+
+  a {
+    @apply text-theme font-normal;
+
+    & code {
+      @apply text-theme font-normal;
+    }
+  }
+
+  table {
+    @apply mx-auto my-2 table-auto text-xs;
+
+    & th {
+      @apply border-l-1 border-r-1 border-mid-grey bg-dark-grey px-3 py-2 font-medium;
+    }
+
+    & td {
+      @apply border-t-1 border-l-1 border-r-1 border-mid-grey px-2 py-1 font-normal;
+    }
+
+    & tr {
+      @apply p-0.5;
+    }
+
+    & tr td:first-child,
+    & tr th:first-child {
+      @apply border-l-0;
+    }
+
+    & tr td:last-child,
+    & tr th:last-child {
+      @apply border-r-0;
+    }
+  }
+
+  @media only screen and (width <= 1200px) {
+    h1 {
+      @apply pt-8 pb-2 text-2xl font-normal;
+    }
+
+    h2,
+    h3 {
+      @apply pt-6 pb-1 font-light;
+    }
+
+    h2 {
+      @apply text-xl;
+    }
+
+    h3 {
+      @apply text-lg;
+    }
+
+    h4 {
+      @apply text-base;
+    }
+
+    h5 {
+      @apply text-sm;
+    }
+
+    h6 {
+      @apply text-sm;
+    }
+
+    ul,
+    li {
+      @apply ml-2 text-sm;
+    }
+
+    p {
+      @apply text-sm;
+    }
+
+    code {
+      @apply text-xxs;
+    }
+
+    pre {
+      @apply text-xxs;
+    }
+
+    th {
+      @apply py-1;
+    }
+
+    td {
+    }
+  }
+}
+
+.heading-icon {
+  @apply mr-2;
+
+  & path {
+    fill: #d33130;
+  }
+}
+
+/* for citations */
+.references {
+  @apply my-4 border-t border-mid-grey py-2;
+}
+
+.csl-entry {
+  @apply py-1 text-xs font-light text-light-grey;
+}
+
+.quote {
+  @apply ml-10;
+}
+
+/* for markdown admonitions / boxes */
+
+.box,
+blockquote {
+  @apply my-4 rounded-sm border border-l-3 bg-dark-grey px-3 py-1 border-mid-grey;
+
+  & p {
+    @apply my-1.5 text-xs leading-relaxed;
+  }
+
+  &.note {
+    @apply border-mid-grey border-l-light-grey;
+  }
+
+  &.warning {
+    @apply border-theme border-l-theme;
+  }
+}
+
+.katex {
+  @apply text-sm;
+
+  & .newline {
+    @apply py-1;
+  }
+}

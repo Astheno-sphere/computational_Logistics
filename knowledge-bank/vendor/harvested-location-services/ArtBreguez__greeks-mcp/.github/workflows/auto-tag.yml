@@ -1,0 +1,87 @@
+name: Auto-tag on version bump
+
+# When `version` in pyproject.toml changes on main and no matching tag exists
+# yet, create the `vX.Y.Z` tag and kick off the PyPI publish. This makes a merge
+# that bumps the version the single action needed to cut a release — no manual
+# `git tag` step.
+#
+# Why we trigger publish explicitly instead of relying on the tag push:
+# a tag created with the default GITHUB_TOKEN does NOT trigger other workflows
+# (GitHub's recursion guard). So we create the tag for provenance, then invoke
+# publish.yml directly via `gh workflow run` (it already exposes workflow_dispatch).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "pyproject.toml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write        # push the tag
+  actions: write         # dispatch publish.yml
+
+concurrency:
+  group: auto-tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need all tags to check existence
+
+      - name: Read version and guard consistency
+        id: ver
+        run: |
+          set -euo pipefail
+          PY_VER=$(grep -m1 '^version' pyproject.toml | sed -E 's/.*"([^"]+)".*/\1/')
+          INIT_VER=$(grep -m1 '__version__' src/greeks_mcp/__init__.py | sed -E 's/.*"([^"]+)".*/\1/')
+          if [ -z "$PY_VER" ]; then
+            echo "::error::could not parse version from pyproject.toml"; exit 1
+          fi
+          if [ "$PY_VER" != "$INIT_VER" ]; then
+            echo "::error::version mismatch — pyproject.toml=$PY_VER but __init__.py=$INIT_VER. Align them before releasing."
+            exit 1
+          fi
+          echo "version=$PY_VER" >> "$GITHUB_OUTPUT"
+          echo "tag=v$PY_VER" >> "$GITHUB_OUTPUT"
+          echo "Resolved release tag: v$PY_VER"
+
+      - name: Skip if tag already exists
+        id: check
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.ver.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists on origin — nothing to release."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.ver.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG (auto-tagged from pyproject.toml version bump)"
+          git push origin "$TAG"
+          echo "Pushed $TAG."
+
+      - name: Trigger PyPI publish
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.ver.outputs.tag }}"
+          # Dispatch publish.yml against the new tag ref so it builds the tagged
+          # commit. (A GITHUB_TOKEN-created tag won't auto-trigger the tag-push
+          # event, so we invoke it explicitly.)
+          gh workflow run publish.yml --ref "$TAG"
+          echo "Dispatched publish.yml on $TAG."

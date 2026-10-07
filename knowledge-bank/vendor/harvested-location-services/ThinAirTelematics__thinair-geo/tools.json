@@ -1,0 +1,5198 @@
+[
+  {
+    "name": "batch_geocode",
+    "description": "Geocode multiple addresses in one request with structured per-record results. Use for bulk operations instead of repeated single geocode calls. Max 50 per batch.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "maxItems": 50,
+          "description": "Array of addresses to geocode (max 50 per batch)"
+        }
+      },
+      "required": [
+        "addresses"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "lat": {
+                "type": "number"
+              },
+              "lon": {
+                "type": "number"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "source": {
+                "type": "string"
+              },
+              "layer": {
+                "type": "string"
+              },
+              "intersection_type": {
+                "type": "string",
+                "enum": [
+                  "corner",
+                  "interchange"
+                ]
+              },
+              "intersection_precision": {
+                "type": "string",
+                "enum": [
+                  "geometric_crossing",
+                  "tangent_intersection",
+                  "centroid_cluster",
+                  "approximate"
+                ]
+              },
+              "street_kind": {
+                "type": "string",
+                "enum": [
+                  "street",
+                  "route"
+                ]
+              },
+              "cross_street_kind": {
+                "type": "string",
+                "enum": [
+                  "street",
+                  "route"
+                ]
+              },
+              "street_route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "cross_street_route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Batch Geocode",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "directions",
+    "description": "Generate routes, ETAs, and turn-by-turn directions between locations. Live traffic is post-route ETA enrichment and does not change the returned path (path_influenced=false); truck traffic adjustments are slowdown-only. Supports car / truck / motorcycle / pedestrian / bicycle, with hazmat + dimension + toll avoidance for commercial routing. ETAs are returned as ISO 8601 with timezone offset (in the destination's local timezone). Use vehicle_profile presets (10 total — DRY_VAN_53, FLATBED_48/_40, STEP_DECK, TANKER, BOX_TRUCK_26, AUTO_CARRIER, SPRINTER_VAN, DOUBLE_TRAILER, OVERSIZE) when routing trucks — they set height/weight/length in one parameter.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Origin: address string ('Houston, TX'), 'lat,lon' string, or { lat, lon } object"
+        },
+        "to": {
+          "$ref": "#/properties/from",
+          "description": "Destination: address string ('Houston, TX'), 'lat,lon' string, or { lat, lon } object"
+        },
+        "via": {
+          "type": "array",
+          "items": {
+            "$ref": "#/properties/from"
+          },
+          "maxItems": 48,
+          "description": "Intermediate stops in order; same shape as from/to. Up to 48 waypoints (max 50 total locations)."
+        },
+        "alternates": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Number of genuine motorized alternate routes to request (0, 1, or 2). Positive values require no via waypoints."
+        },
+        "costing": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "truck",
+            "bicycle",
+            "pedestrian",
+            "motorcycle"
+          ],
+          "description": "Transport mode (default: auto). Use 'truck' for commercial vehicles"
+        },
+        "vehicle_profile": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Preset vehicle profile (10): DRY_VAN_53, FLATBED_48, FLATBED_40, STEP_DECK, TANKER, BOX_TRUCK_26, AUTO_CARRIER, SPRINTER_VAN, DOUBLE_TRAILER, OVERSIZE. Each sets height/weight/length/axle_count for that vehicle class in one parameter (e.g. DRY_VAN_53 = 4.11m tall, 36.3t, 22.25m long, 5 axles; OVERSIZE = 4.88m tall, 3.66m wide, 45.36t). The response echoes the applied dims in costing_options.truck. Any individual truck_height/truck_weight/etc. overrides a single field."
+        },
+        "truck_height": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Truck height in meters (e.g. 4.11m = 13'6\"). Triggers bridge avoidance"
+        },
+        "truck_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200,
+          "description": "Truck weight in metric tons (e.g. 36.3t = 80,000 lbs). Triggers weight-restricted road avoidance"
+        },
+        "truck_width": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Truck width in meters (e.g. 2.6m = 8'6\")"
+        },
+        "truck_length": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60,
+          "description": "Truck length in meters (e.g. 16.2m = 53')"
+        },
+        "hazmat": {
+          "type": "boolean",
+          "description": "Set true when transporting hazardous materials to avoid restricted routes"
+        },
+        "axle_load": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Axle weight in metric tons (e.g. 9.07t = 20,000 lbs per axle)"
+        },
+        "axle_count": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Number of axles (default 5 for semi-trailer)"
+        },
+        "top_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 300,
+          "description": "Maximum speed in km/h (default 105 for trucks)"
+        },
+        "use_highways": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Highway preference 0-1 (0=avoid, 1=prefer)"
+        },
+        "use_ferry": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Ferry preference 0-1 (0=avoid, 1=allow)"
+        },
+        "avoid_tolls": {
+          "type": "boolean",
+          "description": "Avoid toll roads when user requests toll-free routing"
+        },
+        "include_traffic": {
+          "type": "boolean",
+          "description": "Apply post-route live-traffic ETA enrichment (default: true). Traffic does not change the returned path; truck adjustments are slowdown-only."
+        },
+        "include_weather": {
+          "type": "boolean",
+          "description": "Attach current conditions sampled along the route corridor (default: false). Post-route annotation only: weather does not change the returned path. Extra upstream lookup, opt-in only."
+        },
+        "include_elevation": {
+          "type": "boolean",
+          "description": "When true, include available route elevation fields. Point elevation may be returned for the origin and destination. Cumulative gain/loss is returned only when route-profile elevation is available."
+        },
+        "include_geometry": {
+          "type": "string",
+          "enum": [
+            "none",
+            "encoded",
+            "full"
+          ],
+          "description": "Route geometry shape control. \"none\" returns origin/destination Points only. \"encoded\" returns an encoded polyline6 string in a top-level `geometry` field plus origin/destination Points (≈95% smaller than raw GeoJSON; decode with @mapbox/polyline at precision 6). \"full\" emits decoded coordinates as a LineString in `geojson.features[0]`. When omitted (default), small routes use \"full\" and long routes auto-downgrade to \"encoded\" with a `geometry_truncated` warning."
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "miles",
+            "kilometers"
+          ],
+          "description": "Distance units (default: miles). Accepts 'km'/'mi' as aliases."
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "instruction": {
+                "type": "string"
+              },
+              "distance": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "time": {
+                "type": "number"
+              },
+              "type": {
+                "type": "number"
+              },
+              "begin_shape_index": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        },
+        "costing_options": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "traffic_route": {
+          "type": "object",
+          "properties": {
+            "current_speed_admitted": {
+              "type": "boolean",
+              "const": true
+            },
+            "release_id": {
+              "type": "string"
+            },
+            "observed_at": {
+              "type": "string"
+            },
+            "max_age_seconds": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "current_speed_admitted"
+          ],
+          "additionalProperties": false
+        },
+        "alternates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "distance": {
+                "type": "number"
+              },
+              "distance_units": {
+                "type": "string",
+                "enum": [
+                  "miles",
+                  "kilometers"
+                ]
+              },
+              "duration_seconds": {
+                "type": "number"
+              },
+              "legs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "leg": {
+                      "type": "number"
+                    },
+                    "distance": {
+                      "type": "number"
+                    },
+                    "duration_seconds": {
+                      "type": "number"
+                    },
+                    "maneuvers": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "leg",
+                    "distance",
+                    "duration_seconds",
+                    "maneuvers"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "maneuvers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/items/items"
+                }
+              },
+              "geojson": {
+                "$ref": "#/properties/geojson"
+              },
+              "geometry": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "distance",
+              "distance_units",
+              "duration_seconds",
+              "legs",
+              "maneuvers"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "timezone_start": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "IANA timezone at the route origin, or null when unresolved. Contains information from timezone-boundary-builder, which is made available under the Open Database License (ODbL) v1.0. Timezone boundaries © OpenStreetMap contributors. US legal-zone cross-check: U.S. Department of Transportation, Bureau of Transportation Statistics (public domain)."
+        },
+        "timezone_end": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "IANA timezone at the route destination, or null when unresolved. Contains information from timezone-boundary-builder, which is made available under the Open Database License (ODbL) v1.0. Timezone boundaries © OpenStreetMap contributors. US legal-zone cross-check: U.S. Department of Transportation, Bureau of Transportation Statistics (public domain)."
+        },
+        "timezone_start_status": {
+          "type": "string",
+          "enum": [
+            "resolved",
+            "boundary_ambiguous",
+            "source_conflict",
+            "not_covered",
+            "unavailable"
+          ]
+        },
+        "timezone_end_status": {
+          "type": "string",
+          "enum": [
+            "resolved",
+            "boundary_ambiguous",
+            "source_conflict",
+            "not_covered",
+            "unavailable"
+          ]
+        },
+        "timezone_artifact_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "elevation_gain_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "elevation_loss_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "elevation_gain_ft": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "elevation_loss_ft": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "elevation_start_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "elevation_end_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "elevation_start_ft": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "elevation_end_ft": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "base_duration_seconds": {
+          "type": "number",
+          "description": "Route duration before any traffic-based adjustment, in seconds."
+        },
+        "effective_duration_seconds": {
+          "type": "number",
+          "description": "Authoritative duration for this response, in seconds, after any applicable traffic-based adjustment."
+        },
+        "traffic_delay_seconds": {
+          "type": "number",
+          "description": "Effective duration minus base duration, in seconds. Positive means traffic made the ETA slower, negative means it made the ETA faster, and zero means the duration was unchanged. For truck costing, general traffic evidence is slowdown-only, so this value is never negative."
+        },
+        "base_arrival_utc": {
+          "type": "string",
+          "description": "Arrival time derived from the base duration, expressed as an ISO 8601 UTC timestamp."
+        },
+        "base_arrival_local": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Arrival time derived from the base duration in the destination's local time, or null when the local timezone is unavailable."
+        },
+        "effective_arrival_utc": {
+          "type": "string",
+          "description": "Authoritative arrival time for this response, expressed as an ISO 8601 UTC timestamp."
+        },
+        "effective_arrival_local": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Authoritative arrival time in the destination's local time, or null when the local timezone is unavailable."
+        },
+        "traffic_provenance": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "none",
+                "eta_enrichment",
+                "candidate_ranking",
+                "native_live_routing",
+                "native_predicted_routing"
+              ],
+              "description": "Which traffic-processing rung this request attempted. `none`: no traffic data was consulted. `eta_enrichment`: after the route was chosen, traffic evidence was sought only to adjust its estimated duration; the roads returned are unchanged. The attempt may fail or produce no adjustment, so inspect `outcome` and `duration_influenced` for what reached this answer. `candidate_ranking`: traffic re-ranked several candidate routes against each other. `native_live_routing`: live speeds were used to choose which roads to take. `native_predicted_routing`: as above, plus time-of-day predicted speeds for a future departure."
+            },
+            "outcome": {
+              "type": "string",
+              "enum": [
+                "TRAFFIC_DISABLED",
+                "PROVIDER_DISABLED",
+                "QUOTA_EXHAUSTED",
+                "NO_SEGMENT_MATCH",
+                "INSUFFICIENT_COVERAGE",
+                "STALE_EVIDENCE",
+                "UPSTREAM_ERROR",
+                "APPLIED"
+              ],
+              "description": "Neutral, stable reason code for what happened to traffic evidence on this request. `TRAFFIC_DISABLED`: no traffic evidence was sought. `PROVIDER_DISABLED`: evidence was sought but the traffic backend was not configured. `QUOTA_EXHAUSTED`: the traffic backend's spend allotment was exhausted. `NO_SEGMENT_MATCH`: the backend answered but no sample matched a live road segment. `INSUFFICIENT_COVERAGE`: the backend reported no sensor coverage for the sampled area. `STALE_EVIDENCE`: an adjustment was computed, but the evidence behind it was fetched more than 30 minutes ago because the provider could not refresh it. `UPSTREAM_ERROR`: a configured backend or network failure prevented reading all requested traffic evidence. `APPLIED`: an adjustment was computed and reached this response; inspect `retrieved_at` / `retrieval_age_seconds` to see how old the evidence behind it is (acquisition age — this traffic source reports no observation time, see those fields' own descriptions). Material failure codes take precedence over `APPLIED` when only partial evidence adjusted the duration; `duration_influenced` remains true in that case."
+            },
+            "path_influenced": {
+              "type": "boolean",
+              "description": "Whether traffic could have changed WHICH roads were returned. False today: the route is selected from the road network's own speeds, so traffic never changes the path — only the estimated duration."
+            },
+            "duration_influenced": {
+              "type": "boolean",
+              "description": "Whether traffic actually changed the duration returned by THIS request. False when no traffic adjustment was applied, even if traffic was requested and fetched successfully."
+            },
+            "source_as_of": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "DEPRECATED since 2026-09-24, always null. The traffic source provides no observation timestamp, so this field can never be filled honestly. See `retrieved_at` for when ThinAir fetched the traffic evidence (not when it was observed). Will be removed in /v2."
+            },
+            "route_coverage_pct": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Percentage of the route's distance backed by a live traffic observation. This is a MEASURED figure, not an attributed one: it sums the length of road each traffic observation actually matched and divides by the route distance. Coverage can range from sparse observations to most of a corridor, depending on the evidence available for this request; use the returned value rather than assuming a sampling pattern. A low percentage does not mean the ETA is unreliable; it means most of the route's duration comes from the road network's own speeds rather than from live observation. Null when no live traffic observation carried a measurable length."
+            },
+            "freshness_seconds": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "DEPRECATED since 2026-09-24, always null — same reason as `source_as_of`. See `retrieval_age_seconds` for the acquisition age ThinAir CAN report honestly. Will be removed in /v2."
+            },
+            "retrieved_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "ISO 8601 time when ThinAir fetched the traffic evidence behind this response (point or tile). This is acquisition metadata, not the time the traffic was observed — the traffic source reports no observation time (see `source_as_of`). Null when no consulted sample's acquisition time was determinable."
+            },
+            "retrieval_age_seconds": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Age, in seconds, of `retrieved_at` — how long ago ThinAir fetched the traffic evidence behind this response (point or tile). This is acquisition/cache age, not traffic-observation freshness. Null under the same condition as `retrieved_at`."
+            },
+            "routing_release_id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Identifier of the road-network build that produced this route. Null today: the routing engine does not report one."
+            },
+            "overlay_epoch": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Identifier of the live-speed overlay applied to the road network. Null today: no live-speed overlay is in use."
+            }
+          },
+          "required": [
+            "mode",
+            "outcome",
+            "path_influenced",
+            "duration_influenced",
+            "source_as_of",
+            "route_coverage_pct",
+            "freshness_seconds",
+            "retrieved_at",
+            "retrieval_age_seconds",
+            "routing_release_id",
+            "overlay_epoch"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "base_duration_seconds",
+        "effective_duration_seconds",
+        "traffic_delay_seconds",
+        "base_arrival_utc",
+        "base_arrival_local",
+        "effective_arrival_utc",
+        "effective_arrival_local",
+        "traffic_provenance"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Directions",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "distance_matrix",
+    "description": "Compute road distances and travel times for every origin → destination pair. Endpoints accept free-text addresses or 'lat,lon' strings; N × M is capped at 625 pairs. Use for fleet dispatch, nearest-depot, and bulk ETA tables. Durations do NOT include live or historical traffic — see duration_basis; use directions for a traffic-adjusted ETA between two specific points.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "origins": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "minItems": 1,
+          "maxItems": 25,
+          "description": "Origin endpoints (1–25): address or 'lat,lon'"
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "minItems": 1,
+          "maxItems": 25,
+          "description": "Destination endpoints (1–25): address or 'lat,lon'"
+        },
+        "costing": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "truck",
+            "bicycle",
+            "pedestrian",
+            "motorcycle"
+          ],
+          "description": "Transport mode (default auto)"
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "miles",
+            "kilometers"
+          ],
+          "description": "Distance units (default kilometers)"
+        }
+      },
+      "required": [
+        "origins",
+        "destinations"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "origins": {
+          "type": "array",
+          "description": "Geocoded origin locations"
+        },
+        "destinations": {
+          "type": "array",
+          "description": "Geocoded destination locations"
+        },
+        "matrix": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "distance": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "time_seconds": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "distance",
+                "time_seconds"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "description": "matrix[i][j] = origin i → destination j: { distance (in the requested units), time_seconds }; both null when no route exists"
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "miles",
+            "kilometers"
+          ]
+        },
+        "costing": {
+          "type": "string"
+        },
+        "duration_basis": {
+          "type": "string",
+          "const": "static_road_speeds",
+          "description": "How matrix durations were computed. `static_road_speeds` (the only value today): durations come from the road network's own speed data — posted limits and road-class defaults — never from historical or live traffic. Use `directions` for a traffic-adjusted ETA between two specific points."
+        },
+        "traffic_applied": {
+          "type": "boolean",
+          "const": false,
+          "description": "Whether live or historical traffic influenced any matrix duration. Always false today — see `duration_basis`."
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "upstream_ms": {
+              "type": "number"
+            },
+            "origin_count": {
+              "type": "number"
+            },
+            "destination_count": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "upstream_error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "origins",
+        "destinations",
+        "matrix",
+        "units",
+        "costing"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Distance Matrix",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "explore",
+    "description": "BROWSING / DISCOVERY search — administrative places (cities, neighbourhoods, boroughs, counties, regions) near a location. Use this when the user is exploring a REGION rather than looking for a specific category. Supports population filtering ('cities > 100k'), ranking by significance or distance, and layer filtering (locality / neighbourhood / borough / county / region). Venues, addresses and streets are NOT served here — for venues and POI categories (gas, food, charging, etc.) use `search_places` instead. Each result carries its distance in the caller's units and a bearing from the center.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Center point address or 'lat,lon'"
+        },
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Latitude of center point"
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Longitude of center point"
+        },
+        "layers": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Comma-separated administrative layers: locality (default), neighbourhood, borough, county, region. venue, address, street and unknown names are rejected with a structured invalid_layer error — use search_places for venues. Radius policy is per layer: locality/county/region default 150 km and cap at 500 km; neighbourhood/borough default 25 km and cap at 100 km; a mixed request takes the tightest default and cap. With several layers, `size` is split evenly between them (remainder to the first) so one dense layer cannot flood the result."
+        },
+        "radius": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 500
+            },
+            {
+              "type": "string",
+              "maxLength": 32
+            }
+          ],
+          "description": "Search radius — e.g. radius: 30, units: 'miles'. Bare numbers are miles unless units is set; kilometers via units or a km suffix ('50km'); aliases mi/km/imperial/metric. A value carrying its own unit suffix ('50km', '30mi') is also accepted for compatibility and its suffix wins. Per-layer policy: locality/county/region default 150 km (93.206 mi) and cap at 500 km (~310 mi); neighbourhood/borough default 25 km (15.534 mi) and cap at 100 km (~62 mi); a request naming several layers takes the tightest default and cap among them. Numeric values above 500 fail input validation before the tool runs; a string form over the maximum ('600km') or an in-range number that is over the cap once read as miles (e.g. 400, or 400 with units 'miles' — 644 km) returns a structured radius_exceeds_max error naming the governing cap instead of results."
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "miles",
+            "kilometers"
+          ],
+          "description": "Units for a bare numeric `radius`: miles (default) or kilometers. Accepts the aliases mi, mile, imperial (miles) and km, kilometer, kilometre, kilometres, metric (kilometers), any case; echoed as miles|kilometers. Ignored when `radius` already carries a unit suffix; a contradicting pair is rejected. Does not supply a radius on its own (the default is per layer — 150 km for locality/county/region, 25 km for neighbourhood/borough; tightest wins when mixed) but selects the display unit of the meta.radius / meta.units echo."
+        },
+        "size": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Max results (default 10, max 50)"
+        },
+        "min_population": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000000000,
+          "description": "Minimum population filter, applied JS-side to whichever layers are served (locality, neighbourhood, borough, county, region)."
+        },
+        "sort": {
+          "type": "string",
+          "enum": [
+            "population",
+            "distance",
+            "combined"
+          ],
+          "description": "Ranking basis. Default `population` — significance (population where the source has it) with distance as the tiebreak. `distance` is nearest first; `combined` blends population against a distance decay. The basis applied is echoed in meta.ranking."
+        },
+        "boundary_country": {
+          "type": "string",
+          "maxLength": 3,
+          "description": "ISO country code to restrict results (alpha-2 or alpha-3)"
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "layer": {
+                "type": "string"
+              },
+              "population": {
+                "type": "number"
+              },
+              "distance_km": {
+                "type": "number"
+              },
+              "distance": {
+                "type": "number"
+              },
+              "distance_unit": {
+                "type": "string",
+                "enum": [
+                  "miles",
+                  "kilometers"
+                ]
+              },
+              "bearing": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 359
+              },
+              "coordinates": {
+                "type": "object",
+                "properties": {
+                  "lat": {
+                    "type": "number"
+                  },
+                  "lon": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "lat",
+                  "lon"
+                ],
+                "additionalProperties": true
+              },
+              "region": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "radius_km": {
+              "type": "number"
+            },
+            "radius": {
+              "type": "number"
+            },
+            "units": {
+              "$ref": "#/properties/items/items/properties/distance_unit"
+            },
+            "layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "ranking": {
+              "type": "string"
+            },
+            "truncated": {
+              "type": "boolean"
+            },
+            "total_candidates": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Explore",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "geocode",
+    "description": "Convert an address, place name, street, or intersection into coordinates and structured location results. Use when input is text and you need coordinates before routing, weather, or search. Supports street-level resolution and proximity biasing.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Address, place name, street, intersection (e.g. 'Broadway and 42nd Street New York'), or free-form location text"
+        },
+        "size": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 40,
+          "description": "Number of candidates to return (default 5, max 40)"
+        },
+        "focus_lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Bias results near this latitude — use when user says 'near me' or 'close to'"
+        },
+        "focus_lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Bias results near this longitude"
+        },
+        "layers": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Restrict to: address, street, venue, locality. Use layers=street when user clearly wants a street entity. Use layers=venue for stadiums, monuments, parks, and named POIs (e.g. 'Minute Maid Park', 'Lambeau Field', 'Statue of Liberty') — bypasses address-parser tokenization that otherwise resolves venue+state to the state region centroid"
+        },
+        "boundary_country": {
+          "type": "string",
+          "maxLength": 3,
+          "description": "ISO country code to reduce ambiguity (alpha-2 or alpha-3)"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "layer": {
+                "type": "string"
+              },
+              "intersection_type": {
+                "type": "string",
+                "enum": [
+                  "corner",
+                  "interchange"
+                ]
+              },
+              "intersection_precision": {
+                "type": "string",
+                "enum": [
+                  "geometric_crossing",
+                  "tangent_intersection",
+                  "centroid_cluster",
+                  "approximate"
+                ]
+              },
+              "street_kind": {
+                "type": "string",
+                "enum": [
+                  "street",
+                  "route"
+                ]
+              },
+              "cross_street_kind": {
+                "type": "string",
+                "enum": [
+                  "street",
+                  "route"
+                ]
+              },
+              "street_route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "cross_street_route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "place_type": {
+                "type": "string"
+              },
+              "confidence_scope": {
+                "type": "string",
+                "const": "query_to_candidate",
+                "description": "What `confidence` is scoped to. `query_to_candidate` means it scores how well this candidate matches the submitted query — it is NOT a probability that the place is real, that the address is correct, or that mail would arrive. Fixed value today; treat it as a closed set that may gain members."
+              },
+              "address_evidence": {
+                "type": "object",
+                "properties": {
+                  "house_number": {
+                    "type": "string",
+                    "enum": [
+                      "matched",
+                      "partial",
+                      "absent"
+                    ]
+                  },
+                  "street": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "locality": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "region": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "postal_code": {
+                    "type": "string",
+                    "enum": [
+                      "matched",
+                      "partial",
+                      "absent"
+                    ],
+                    "description": "Whether the candidate carries a postal code. Presence only — this states what the result has, and makes no claim about its correctness."
+                  }
+                },
+                "required": [
+                  "house_number",
+                  "street",
+                  "locality",
+                  "region",
+                  "postal_code"
+                ],
+                "additionalProperties": false,
+                "description": "What THIS CANDIDATE carries, component by component — `matched` (a real value is present), `partial` (only a coarser or derived stand-in, e.g. an interpolated house number or a locality falling back to its administrative parent), `absent` (nothing). This describes the result, NOT a comparison against your query: the engine returns no per-component match data, and re-parsing your text here would mean two parsers disagreeing about the same string. Derived from the feature, never from `confidence`."
+              },
+              "postal_code": {
+                "type": "string",
+                "pattern": "^[0-9]{5}$",
+                "description": "An eligible US ZIP5 read from the selected result's own postal-code field. While origin enforcement is active this field is emitted ONLY when the engine stamped the value as coming from the address record itself (`source_record` provenance); a value inherited from a parent area, or a result cached before that evidence existed, is omitted rather than emitted without provenance — so an absent ZIP under enforcement means \"not proven for this record\", not \"no such ZIP\". Provenance describes only WHERE the value came from. It is not a postal operator check of any kind — no certification, no address-quality rating, and no statement about whether mail would arrive — so a syntactically correct, correctly-sourced value can still be wrong for the address. Also omitted when unavailable or unsuitable for five-digit form. US address results only. Distinct from `address_evidence.postal_code`, which is a presence STATUS rather than a value. On reverse geocoding this describes the RETURNED ADDRESS — it is not a postal assignment to the coordinate you supplied."
+              },
+              "postal_input_match": {
+                "type": "string",
+                "enum": [
+                  "match",
+                  "conflict",
+                  "unavailable"
+                ],
+                "description": "STRUCTURED GEOCODING ONLY (`geocode_structured` / `POST /v1/search/structured`); absent from free-text geocoding. Whether the postcode YOU SUBMITTED agrees with this candidate's own postcode — `match` (same five-digit value), `conflict` (they differ), `unavailable` (no comparison was possible). This compares two values already in hand: no lookup, no external reference, and your query text is never parsed to find one. `conflict` does NOT say which side is wrong — your input may name a neighbouring area, the candidate may be a near-miss, or the record's own value may be stale; treat it as a prompt to ask a human, never as a correction to apply automatically. The candidate side counts only when its postcode came from the address record itself; one inherited from a parent area yields `unavailable` rather than a misleading verdict. `unavailable` also covers: nothing submitted, a submitted value not readable as a US five-digit code, and results cached before this field existed."
+              },
+              "address_line1": {
+                "type": "string",
+                "description": "House number and street for an eligible US address result, composed from the result's own components — never parsed from the display label. Absent when the result is not a US street address."
+              },
+              "address_line2": {
+                "type": "string",
+                "description": "Unit or suite, only when the source record carries one. A unit supplied in your request is never echoed back here."
+              },
+              "formatted_address": {
+                "type": "string",
+                "description": "Single-line US display form, e.g. `1600 Pennsylvania Avenue NW, Washington, DC 20500, USA`. The postal segment is present only when an eligible ZIP is; its absence never suppresses the street address."
+              },
+              "address_components": {
+                "type": "object",
+                "properties": {
+                  "house_number": {
+                    "type": "string"
+                  },
+                  "street": {
+                    "type": "string"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "locality": {
+                    "type": "string"
+                  },
+                  "region_code": {
+                    "type": "string"
+                  },
+                  "region_name": {
+                    "type": "string"
+                  },
+                  "postal_code": {
+                    "type": "string"
+                  },
+                  "country_code": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "The same US components the formatted string is built from. Every field is source-established or absent; nothing is inferred or back-filled."
+              },
+              "method": {
+                "type": "string"
+              },
+              "lat": {
+                "type": "number"
+              },
+              "lon": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        },
+        "precision": {
+          "type": "object",
+          "properties": {
+            "class": {
+              "type": "string"
+            },
+            "risk_flags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required_context": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "learning_overlay": {
+              "type": "object",
+              "properties": {
+                "applied": {
+                  "type": "boolean"
+                },
+                "rule_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "applied"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "class",
+            "risk_flags",
+            "required_context",
+            "learning_overlay"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Geocode",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "geocode_structured",
+    "description": "Geocode from discrete address components (address, locality, region, postalcode, country) instead of one free-text string. Use when the input is already fielded (forms, CRM records, stop tables) — skips free-text parsing so components can't be mis-tokenized. At least one component is required. No cross-street field: for named intersections use resolve_intersection or geocode.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Street address — house number + street name (e.g. '1600 Pennsylvania Ave NW')"
+        },
+        "locality": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "City / town name"
+        },
+        "region": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "State / province — full name or abbreviation (e.g. 'TX')"
+        },
+        "postalcode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Postal / ZIP code"
+        },
+        "country": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 64,
+          "description": "ISO 3166-1 alpha-2/alpha-3 country code (full names also resolve)"
+        },
+        "size": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 40,
+          "description": "Number of candidates to return (default 5, max 40)"
+        },
+        "boundary_country": {
+          "type": "string",
+          "maxLength": 3,
+          "description": "Scope results to this ISO country code — wins over `country` for boundary filtering"
+        },
+        "focus_lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Bias results near this latitude"
+        },
+        "focus_lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Bias results near this longitude"
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "layer": {
+                "type": "string"
+              },
+              "intersection_type": {
+                "type": "string",
+                "enum": [
+                  "corner",
+                  "interchange"
+                ]
+              },
+              "intersection_precision": {
+                "type": "string",
+                "enum": [
+                  "geometric_crossing",
+                  "tangent_intersection",
+                  "centroid_cluster",
+                  "approximate"
+                ]
+              },
+              "street_kind": {
+                "type": "string",
+                "enum": [
+                  "street",
+                  "route"
+                ]
+              },
+              "cross_street_kind": {
+                "type": "string",
+                "enum": [
+                  "street",
+                  "route"
+                ]
+              },
+              "street_route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "cross_street_route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "place_type": {
+                "type": "string"
+              },
+              "confidence_scope": {
+                "type": "string",
+                "const": "query_to_candidate",
+                "description": "What `confidence` is scoped to. `query_to_candidate` means it scores how well this candidate matches the submitted query — it is NOT a probability that the place is real, that the address is correct, or that mail would arrive. Fixed value today; treat it as a closed set that may gain members."
+              },
+              "address_evidence": {
+                "type": "object",
+                "properties": {
+                  "house_number": {
+                    "type": "string",
+                    "enum": [
+                      "matched",
+                      "partial",
+                      "absent"
+                    ]
+                  },
+                  "street": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "locality": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "region": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "postal_code": {
+                    "type": "string",
+                    "enum": [
+                      "matched",
+                      "partial",
+                      "absent"
+                    ],
+                    "description": "Whether the candidate carries a postal code. Presence only — this states what the result has, and makes no claim about its correctness."
+                  }
+                },
+                "required": [
+                  "house_number",
+                  "street",
+                  "locality",
+                  "region",
+                  "postal_code"
+                ],
+                "additionalProperties": false,
+                "description": "What THIS CANDIDATE carries, component by component — `matched` (a real value is present), `partial` (only a coarser or derived stand-in, e.g. an interpolated house number or a locality falling back to its administrative parent), `absent` (nothing). This describes the result, NOT a comparison against your query: the engine returns no per-component match data, and re-parsing your text here would mean two parsers disagreeing about the same string. Derived from the feature, never from `confidence`."
+              },
+              "postal_code": {
+                "type": "string",
+                "pattern": "^[0-9]{5}$",
+                "description": "An eligible US ZIP5 read from the selected result's own postal-code field. While origin enforcement is active this field is emitted ONLY when the engine stamped the value as coming from the address record itself (`source_record` provenance); a value inherited from a parent area, or a result cached before that evidence existed, is omitted rather than emitted without provenance — so an absent ZIP under enforcement means \"not proven for this record\", not \"no such ZIP\". Provenance describes only WHERE the value came from. It is not a postal operator check of any kind — no certification, no address-quality rating, and no statement about whether mail would arrive — so a syntactically correct, correctly-sourced value can still be wrong for the address. Also omitted when unavailable or unsuitable for five-digit form. US address results only. Distinct from `address_evidence.postal_code`, which is a presence STATUS rather than a value. On reverse geocoding this describes the RETURNED ADDRESS — it is not a postal assignment to the coordinate you supplied."
+              },
+              "postal_input_match": {
+                "type": "string",
+                "enum": [
+                  "match",
+                  "conflict",
+                  "unavailable"
+                ],
+                "description": "STRUCTURED GEOCODING ONLY (`geocode_structured` / `POST /v1/search/structured`); absent from free-text geocoding. Whether the postcode YOU SUBMITTED agrees with this candidate's own postcode — `match` (same five-digit value), `conflict` (they differ), `unavailable` (no comparison was possible). This compares two values already in hand: no lookup, no external reference, and your query text is never parsed to find one. `conflict` does NOT say which side is wrong — your input may name a neighbouring area, the candidate may be a near-miss, or the record's own value may be stale; treat it as a prompt to ask a human, never as a correction to apply automatically. The candidate side counts only when its postcode came from the address record itself; one inherited from a parent area yields `unavailable` rather than a misleading verdict. `unavailable` also covers: nothing submitted, a submitted value not readable as a US five-digit code, and results cached before this field existed."
+              },
+              "address_line1": {
+                "type": "string",
+                "description": "House number and street for an eligible US address result, composed from the result's own components — never parsed from the display label. Absent when the result is not a US street address."
+              },
+              "address_line2": {
+                "type": "string",
+                "description": "Unit or suite, only when the source record carries one. A unit supplied in your request is never echoed back here."
+              },
+              "formatted_address": {
+                "type": "string",
+                "description": "Single-line US display form, e.g. `1600 Pennsylvania Avenue NW, Washington, DC 20500, USA`. The postal segment is present only when an eligible ZIP is; its absence never suppresses the street address."
+              },
+              "address_components": {
+                "type": "object",
+                "properties": {
+                  "house_number": {
+                    "type": "string"
+                  },
+                  "street": {
+                    "type": "string"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "locality": {
+                    "type": "string"
+                  },
+                  "region_code": {
+                    "type": "string"
+                  },
+                  "region_name": {
+                    "type": "string"
+                  },
+                  "postal_code": {
+                    "type": "string"
+                  },
+                  "country_code": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "The same US components the formatted string is built from. Every field is source-established or absent; nothing is inferred or back-filled."
+              },
+              "method": {
+                "type": "string"
+              },
+              "lat": {
+                "type": "number"
+              },
+              "lon": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        },
+        "precision": {
+          "type": "object",
+          "properties": {
+            "class": {
+              "type": "string"
+            },
+            "risk_flags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required_context": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "learning_overlay": {
+              "type": "object",
+              "properties": {
+                "applied": {
+                  "type": "boolean"
+                },
+                "rule_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "applied"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "class",
+            "risk_flags",
+            "required_context",
+            "learning_overlay"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Structured Geocode",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "geofence_contains",
+    "description": "Tests one or more points for containment inside a polygon you supply as GeoJSON (Polygon, MultiPolygon, or a Feature/FeatureCollection wrapping one). Pure geometry against your own shape - it does not search a place index, so use explore or search_places to find what's near a point instead. Boundary points count as contained. Up to 1000 points per call, against a polygon of up to 100 rings/parts and 1000 positions per ring; larger inputs are rejected. Runs locally with no external lookup, but still counts as one metered request like other tools, so batch points into a single call rather than looping. Errors, rather than returning false, when the polygon is structurally invalid. Returns one boolean per point, in order, plus contained_count and point_count.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "polygon": {
+          "description": "A GeoJSON Polygon / MultiPolygon geometry, a Feature wrapping one, or a FeatureCollection"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lat": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "lon": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "lat",
+              "lon"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 1000,
+          "description": "Points to test ({ lat, lon } each), up to 1000"
+        }
+      },
+      "required": [
+        "points"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          },
+          "description": "One containment boolean per input point (in order)"
+        },
+        "contained_count": {
+          "type": "number",
+          "description": "How many input points are contained"
+        },
+        "point_count": {
+          "type": "number",
+          "description": "Number of points tested"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "results",
+        "contained_count",
+        "point_count"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Geofence Contains",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "isochrone",
+    "description": "Computes reachability polygons: the area reachable from an origin within given travel-time or travel-distance bands. Use for service coverage, dispatch range, territory design, and 'how far can I get in X minutes' questions; use directions or distance_matrix for a route or distance between specific points instead. Pass multiple bands in one call (contours_minutes:[10,20,30]) for nested polygons in one response, up to 4 bands, defaulting to 15/30/60-minute driving bands if none given. `location` accepts an address string or 'lat,lon'. `costing` selects the travel profile (auto default, or truck/bicycle/pedestrian/motorcycle). Read-only and cached. Returns a GeoJSON FeatureCollection of nested polygon contours, one per band.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Center point address or 'lat,lon'"
+        },
+        "contours_minutes": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "description": "Time bands in minutes, e.g. [10, 20, 30]. Max 4 bands per call (over returns 400)."
+        },
+        "contours_km": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 4,
+          "description": "Distance bands in km. Max 4 bands per call (over returns 400)."
+        },
+        "costing": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "truck",
+            "bicycle",
+            "pedestrian",
+            "motorcycle"
+          ],
+          "description": "Transport mode"
+        },
+        "truck_height": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Truck height in meters"
+        },
+        "truck_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200,
+          "description": "Truck weight in metric tons"
+        }
+      },
+      "required": [
+        "location"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Isochrone (Reachability)",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "issue_api_key",
+    "description": "Issue a fresh ta_geo_* API key for ThinAir GEO (geocoding/routing) for your current authenticated user/tenant, and rotate: any previous key keeps working for one hour, then stops — the response reports how many and exactly when (previous_keys_retiring, previous_keys_retire_at). Use it to rotate, or when a CLI/MCP client needs a key and can't reach the console. The new key is tied to your existing plan. Counts as 1 query against your daily quota. NOTE: this key works ONLY against ThinAir Geo — it does NOT authenticate against ThinAir Data, which issues its own ta_data_* key from its own identically-named tool.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "success",
+            "error"
+          ]
+        },
+        "credential_returned_once": {
+          "type": "boolean"
+        },
+        "api_key": {
+          "type": "string",
+          "description": "One-time API key secret. Returned only on successful creation, in both structuredContent.api_key and content[0].text — save it immediately. The server stores only sha-256 of the secret; once this response is lost, the key is unrecoverable and must be rotated. Matches AWS IAM / Stripe / GitHub PAT one-time-reveal semantics."
+        },
+        "key_id": {
+          "type": "string",
+          "description": "Non-secret fingerprint of the issued key. Safe to log and surface in UI."
+        },
+        "previous_keys_retiring": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many previously-live keys this mint scheduled to retire. issue_api_key rotates: after the grace window the returned key is the only live key on the account. 0 means there was nothing else."
+        },
+        "previous_keys_retire_at": {
+          "type": "string",
+          "description": "ISO 8601 instant when the previous keys stop working (one hour after this mint). Present only when previous_keys_retiring > 0. Update anything still using them before this time."
+        },
+        "user": {
+          "type": "string"
+        },
+        "plan": {
+          "type": "string"
+        },
+        "usage": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Issue ThinAir Geo API Key",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "locate",
+    "description": "Snap one coordinate to the road network and return the matched road's context: name, road class, speed limit, bearing, snap distance, side of street, truck legality, and toll/ferry/highway/bridge/tunnel flags — plus the IANA timezone. Use to answer 'what road is this point on and what are its rules?' for fleet/telematics snapping, geofence edge checks, or enriching a GPS fix. Set `include_elevation` for terrain-sourced point `elevation_m`; `grade_pct` is a forward-compatible field that stays null for now. Returns `matched:false` when no routable road is near the point — never a guess.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Latitude"
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Longitude"
+        },
+        "costing": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "truck",
+            "bicycle",
+            "pedestrian"
+          ],
+          "description": "Travel profile scoping edge access/legality. Default 'auto'."
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "imperial",
+            "metric"
+          ],
+          "description": "Unit system for the human summary — auto-detected (US/UK → imperial) when omitted."
+        },
+        "include_elevation": {
+          "type": "boolean",
+          "description": "Opt-in to point elevation — populates elevation_m/elevation_ft from terrain data (null with an 'elevation_unavailable' warning only where terrain isn't covered). grade_pct is a forward-compatible field that stays null for now (reserved for an elevation-enhanced road network)."
+        }
+      },
+      "required": [
+        "lat",
+        "lon"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        },
+        "matched": {
+          "type": "boolean"
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": {
+              "type": "number"
+            },
+            "lon": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "lat",
+            "lon"
+          ],
+          "additionalProperties": true
+        },
+        "road": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timezone": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "IANA timezone for the point, or null unless timezone_status is resolved. Contains information from timezone-boundary-builder, which is made available under the Open Database License (ODbL) v1.0. Timezone boundaries © OpenStreetMap contributors. US legal-zone cross-check: U.S. Department of Transportation, Bureau of Transportation Statistics (public domain)."
+        },
+        "timezone_status": {
+          "type": "string",
+          "enum": [
+            "resolved",
+            "boundary_ambiguous",
+            "source_conflict",
+            "not_covered",
+            "unavailable"
+          ]
+        },
+        "timezone_artifact_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "elevation_m": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "elevation_ft": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "grade_pct": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "meta": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Locate",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "map_match",
+    "description": "Map matching snaps raw GPS breadcrumbs to the road network. Feed a recorded trace (2–100 points) and get back the road-accurate route that was actually driven: matched geometry, distance, time, road names, and a 0–1 match confidence. `matched: true` only means a route was returned — gate on `match_status`: `full` when every input point was matched or interpolated onto the road network and the match is one continuous section, `none` when no point was, otherwise `partial`. `coverage` gives the per-point counts, `unmatched_ranges` (0-based input indexes that did not match) and `route_sections` (above 1, the geometry, distance and time cover only the first section — split the trace there). `match_status` is null, with `coverage.unavailable_reason`, when the per-point check could not be completed. Sparsely-reported traces (consecutive fixes farther apart than the default breakage distance — e.g. fleet units reporting every several minutes on a highway) can split into multiple sections; increase `breakage_distance_m` to keep them as one. Total matched distance is limited to 200 km per call — split longer sparse traces by distance, not only by the 100-point cap. Use for fleet trace cleanup, mileage from GPS logs, and reconstructing routes from telemetry. `road_names` come from the route's maneuver points, so they cover the roads the route turns onto or starts on — for the name of every segment actually travelled, use `trace_attributes`. For planning a route between places, use `directions` instead.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "shape": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lat": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "lon": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              },
+              "time": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "lat",
+              "lon"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 2,
+          "maxItems": 100,
+          "description": "Raw GPS breadcrumb trail in travel order — 2 to 100 points of { lat, lon, time? }. `time` is optional epoch seconds; timestamps improve match quality on noisy traces."
+        },
+        "costing": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "truck",
+            "bicycle",
+            "pedestrian"
+          ],
+          "description": "Transport mode the trace was recorded with (default: auto)"
+        },
+        "vehicle_profile": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Truck preset (DRY_VAN_53, FLATBED_48, BOX_TRUCK_26, …) — same 10-profile table as directions. Implies costing=truck."
+        },
+        "search_radius": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Snap radius in meters around each point (1–100). Increase for noisy GPS."
+        },
+        "breakage_distance_m": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 20000,
+          "description": "Maximum gap, in meters, between consecutive fixes before the trace is split into separate sections (100–20000). Increase for sparsely-reported GPS, such as fleet units reporting every several minutes on a highway. Optional — omitted uses the default."
+        }
+      },
+      "required": [
+        "shape"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "matched": {
+          "type": "boolean",
+          "description": "True when a route was returned for the trace. It does NOT mean the whole trace matched — use `match_status`."
+        },
+        "distance_km": {
+          "type": "number"
+        },
+        "duration_seconds": {
+          "type": "number"
+        },
+        "confidence": {
+          "type": "number",
+          "description": "0–1: fraction of input GPS points within the snap tolerance of the matched route. A distance heuristic: it ignores point order and which parallel roadway was matched. For the matcher's own per-point result use `match_status` / `coverage`."
+        },
+        "road_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "leg": {
+                "type": "number"
+              },
+              "distance_km": {
+                "type": "number"
+              },
+              "duration_seconds": {
+                "type": "number"
+              },
+              "road_names": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "leg",
+              "distance_km",
+              "duration_seconds",
+              "road_names"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "costing": {
+          "type": "string"
+        },
+        "vehicle_profile": {
+          "type": "string"
+        },
+        "costing_options": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "geometry": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "upstream_ms": {
+              "type": "number"
+            },
+            "point_count": {
+              "type": "integer"
+            },
+            "breakage_distance_m": {
+              "type": "integer",
+              "description": "Echoes the breakage_distance_m the caller requested, for confirmation — present only when the caller set it. This is the value SENT to the matcher, not a claim about what it did with it."
+            }
+          },
+          "required": [
+            "upstream_ms",
+            "point_count"
+          ],
+          "additionalProperties": true
+        },
+        "match_status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "full",
+                "partial",
+                "none"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Whole-trace match status from the matcher's own per-point results. `full`: every input point was matched or interpolated onto the road network AND the match is one continuous section. `none`: no input point was matched or interpolated. `partial`: anything else — some points unmatched, or the match broke into more than one section. null when the per-point check could not be completed; `coverage.unavailable_reason` says why. Gate on this field, not on `matched`."
+        },
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "point_count": {
+              "type": "integer",
+              "description": "Number of input GPS points"
+            },
+            "matched_count": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Input points the matcher placed on the road network directly. null when unavailable."
+            },
+            "interpolated_count": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Input points the matcher placed on the road network by interpolating between matched neighbours; counted as covered. null when unavailable."
+            },
+            "unmatched_count": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Input points the matcher could not place on the road network. null when unavailable."
+            },
+            "ratio": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "0–1: (matched_count + interpolated_count) / point_count, rounded down to 3 decimals so a partial trace never reads 1. null when unavailable."
+            },
+            "unmatched_ranges": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "start_index": {
+                        "type": "integer",
+                        "description": "0-based index of the first unmatched input point in this run"
+                      },
+                      "end_index": {
+                        "type": "integer",
+                        "description": "0-based index of the last unmatched input point in this run (inclusive)"
+                      },
+                      "point_count": {
+                        "type": "integer",
+                        "description": "Number of input points in this run"
+                      }
+                    },
+                    "required": [
+                      "start_index",
+                      "end_index",
+                      "point_count"
+                    ],
+                    "additionalProperties": true
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Contiguous runs of unmatched input points, as 0-based inclusive index ranges into `shape`, in trace order. Empty when every point was covered; null when unavailable."
+            },
+            "route_sections": {
+              "type": "integer",
+              "description": "Number of disjoint sections the match broke into (1 = continuous). When greater than 1, the returned geometry, distance and duration cover only the FIRST section — split the trace at the break and match the parts separately."
+            },
+            "unavailable_reason": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "upstream_error",
+                    "timeout",
+                    "no_point_status",
+                    "point_count_mismatch",
+                    "unknown_point_type"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Why the per-point counts and `match_status` are null: `upstream_error` (the per-point check failed), `timeout` (it did not answer in time), `no_point_status` (it answered without per-point results), `point_count_mismatch` (its results did not line up one-to-one with the input points), `unknown_point_type` (it reported a status this API does not recognise). null when coverage is available."
+            }
+          },
+          "required": [
+            "point_count",
+            "matched_count",
+            "interpolated_count",
+            "unmatched_count",
+            "ratio",
+            "unmatched_ranges",
+            "route_sections",
+            "unavailable_reason"
+          ],
+          "additionalProperties": true,
+          "description": "Per-point coverage of the trace from the matcher's own per-point status — independent of the distance-based `confidence`. Every key is always present."
+        }
+      },
+      "required": [
+        "matched",
+        "distance_km",
+        "duration_seconds",
+        "confidence",
+        "road_names",
+        "legs",
+        "costing"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Map Match (GPS → road)",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "place_get",
+    "description": "Look up a place by its stable ThinAir id (ta_place_… / ta_intersection_…) as returned in the `id` field of geocode, reverse_geocode, search_places, or resolve_intersection results. Ids are deterministic and survive re-serves — safe to store as favorites or foreign keys. Returns the canonical name, label, layer, and coordinates. Unknown or expired ids error with re-search guidance.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "ThinAir place id exactly as returned in a previous response's `id` field — ta_place_<key> or ta_intersection_<key>"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "place",
+                "intersection"
+              ]
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "layer": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lon": {
+          "type": "number"
+        },
+        "components": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "meta": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "lat",
+        "lon"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Get Place by ID",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "quota",
+    "description": "Check current usage, remaining limits, plan, and quota breakdown for the caller. FREE TO CALL — never counts against your quota, never blocked by it. Use this proactively when the user asks about usage or seems near limits.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "mcp": {
+          "type": "object",
+          "properties": {
+            "plan": {
+              "type": "string"
+            },
+            "used_today": {
+              "type": "number"
+            },
+            "daily_limit": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "const": "unlimited"
+                }
+              ]
+            },
+            "remaining_today": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "const": "unlimited"
+                }
+              ]
+            },
+            "monthly_limit": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "const": "unlimited"
+                }
+              ]
+            },
+            "price_per_month": {
+              "type": "string"
+            },
+            "suggested_upgrade": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "upgrade_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reset_at": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "plan",
+            "used_today",
+            "daily_limit",
+            "remaining_today",
+            "monthly_limit",
+            "price_per_month"
+          ],
+          "additionalProperties": true
+        },
+        "upstream": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "mcp"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Check Quota",
+      "readOnlyHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "resolve_intersection",
+    "description": "Resolve a NAMED cross-street (street1 × street2 within a locality/region/country) to a single best coordinate with a confidence score and a fleet-safe fallback. High-confidence tier matches US-metro highway corners; named non-highway streets resolve via the geocoder fallback. For free-form streets use geocode.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "street1": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "First street of the cross-street pair"
+        },
+        "street2": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Second (cross) street of the pair"
+        },
+        "locality": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "City / town that scopes the lookup"
+        },
+        "region": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "State / province (full name or abbreviation, e.g. 'TX')"
+        },
+        "country": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 3,
+          "description": "ISO 3166-1 alpha-2/alpha-3 country code"
+        }
+      },
+      "required": [
+        "street1",
+        "street2"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "feature": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "number"
+                },
+                "layer": {
+                  "type": "string"
+                },
+                "intersection_type": {
+                  "type": "string",
+                  "enum": [
+                    "corner",
+                    "interchange"
+                  ]
+                },
+                "intersection_precision": {
+                  "type": "string",
+                  "enum": [
+                    "geometric_crossing",
+                    "tangent_intersection",
+                    "centroid_cluster",
+                    "approximate"
+                  ]
+                },
+                "street_kind": {
+                  "type": "string",
+                  "enum": [
+                    "street",
+                    "route"
+                  ]
+                },
+                "cross_street_kind": {
+                  "type": "string",
+                  "enum": [
+                    "street",
+                    "route"
+                  ]
+                },
+                "street_route": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "cross_street_route": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "place_type": {
+                  "type": "string"
+                },
+                "confidence_scope": {
+                  "type": "string",
+                  "const": "query_to_candidate",
+                  "description": "What `confidence` is scoped to. `query_to_candidate` means it scores how well this candidate matches the submitted query — it is NOT a probability that the place is real, that the address is correct, or that mail would arrive. Fixed value today; treat it as a closed set that may gain members."
+                },
+                "address_evidence": {
+                  "type": "object",
+                  "properties": {
+                    "house_number": {
+                      "type": "string",
+                      "enum": [
+                        "matched",
+                        "partial",
+                        "absent"
+                      ]
+                    },
+                    "street": {
+                      "$ref": "#/properties/feature/anyOf/0/properties/address_evidence/properties/house_number"
+                    },
+                    "locality": {
+                      "$ref": "#/properties/feature/anyOf/0/properties/address_evidence/properties/house_number"
+                    },
+                    "region": {
+                      "$ref": "#/properties/feature/anyOf/0/properties/address_evidence/properties/house_number"
+                    },
+                    "postal_code": {
+                      "type": "string",
+                      "enum": [
+                        "matched",
+                        "partial",
+                        "absent"
+                      ],
+                      "description": "Whether the candidate carries a postal code. Presence only — this states what the result has, and makes no claim about its correctness."
+                    }
+                  },
+                  "required": [
+                    "house_number",
+                    "street",
+                    "locality",
+                    "region",
+                    "postal_code"
+                  ],
+                  "additionalProperties": false,
+                  "description": "What THIS CANDIDATE carries, component by component — `matched` (a real value is present), `partial` (only a coarser or derived stand-in, e.g. an interpolated house number or a locality falling back to its administrative parent), `absent` (nothing). This describes the result, NOT a comparison against your query: the engine returns no per-component match data, and re-parsing your text here would mean two parsers disagreeing about the same string. Derived from the feature, never from `confidence`."
+                },
+                "postal_code": {
+                  "type": "string",
+                  "pattern": "^[0-9]{5}$",
+                  "description": "An eligible US ZIP5 read from the selected result's own postal-code field. While origin enforcement is active this field is emitted ONLY when the engine stamped the value as coming from the address record itself (`source_record` provenance); a value inherited from a parent area, or a result cached before that evidence existed, is omitted rather than emitted without provenance — so an absent ZIP under enforcement means \"not proven for this record\", not \"no such ZIP\". Provenance describes only WHERE the value came from. It is not a postal operator check of any kind — no certification, no address-quality rating, and no statement about whether mail would arrive — so a syntactically correct, correctly-sourced value can still be wrong for the address. Also omitted when unavailable or unsuitable for five-digit form. US address results only. Distinct from `address_evidence.postal_code`, which is a presence STATUS rather than a value. On reverse geocoding this describes the RETURNED ADDRESS — it is not a postal assignment to the coordinate you supplied."
+                },
+                "postal_input_match": {
+                  "type": "string",
+                  "enum": [
+                    "match",
+                    "conflict",
+                    "unavailable"
+                  ],
+                  "description": "STRUCTURED GEOCODING ONLY (`geocode_structured` / `POST /v1/search/structured`); absent from free-text geocoding. Whether the postcode YOU SUBMITTED agrees with this candidate's own postcode — `match` (same five-digit value), `conflict` (they differ), `unavailable` (no comparison was possible). This compares two values already in hand: no lookup, no external reference, and your query text is never parsed to find one. `conflict` does NOT say which side is wrong — your input may name a neighbouring area, the candidate may be a near-miss, or the record's own value may be stale; treat it as a prompt to ask a human, never as a correction to apply automatically. The candidate side counts only when its postcode came from the address record itself; one inherited from a parent area yields `unavailable` rather than a misleading verdict. `unavailable` also covers: nothing submitted, a submitted value not readable as a US five-digit code, and results cached before this field existed."
+                },
+                "address_line1": {
+                  "type": "string",
+                  "description": "House number and street for an eligible US address result, composed from the result's own components — never parsed from the display label. Absent when the result is not a US street address."
+                },
+                "address_line2": {
+                  "type": "string",
+                  "description": "Unit or suite, only when the source record carries one. A unit supplied in your request is never echoed back here."
+                },
+                "formatted_address": {
+                  "type": "string",
+                  "description": "Single-line US display form, e.g. `1600 Pennsylvania Avenue NW, Washington, DC 20500, USA`. The postal segment is present only when an eligible ZIP is; its absence never suppresses the street address."
+                },
+                "address_components": {
+                  "type": "object",
+                  "properties": {
+                    "house_number": {
+                      "type": "string"
+                    },
+                    "street": {
+                      "type": "string"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "locality": {
+                      "type": "string"
+                    },
+                    "region_code": {
+                      "type": "string"
+                    },
+                    "region_name": {
+                      "type": "string"
+                    },
+                    "postal_code": {
+                      "type": "string"
+                    },
+                    "country_code": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "The same US components the formatted string is built from. Every field is source-established or absent; nothing is inferred or back-filled."
+                },
+                "method": {
+                  "type": "string"
+                },
+                "lat": {
+                  "type": "number"
+                },
+                "lon": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Best resolved intersection feature, including validated optional intersection provenance, or null when nothing resolved"
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Resolved confidence 0–1 (0 when nothing resolved)"
+        },
+        "fallback_used": {
+          "type": "boolean",
+          "description": "True when the geocoder fallback produced the answer"
+        },
+        "admin": {
+          "type": "object",
+          "properties": {
+            "locality": {
+              "type": "string"
+            },
+            "region": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "upstream_ms": {
+              "type": "number"
+            },
+            "method": {
+              "type": "string"
+            },
+            "query": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "upstream_error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "precision": {
+          "type": "object",
+          "properties": {
+            "class": {
+              "type": "string"
+            },
+            "risk_flags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required_context": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "learning_overlay": {
+              "type": "object",
+              "properties": {
+                "applied": {
+                  "type": "boolean"
+                },
+                "rule_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "applied"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "class",
+            "risk_flags",
+            "required_context",
+            "learning_overlay"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "feature",
+        "confidence"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Resolve Intersection",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "reverse_geocode",
+    "description": "Converts a coordinate pair into the nearest addresses, streets, venues, or administrative places, ordered by proximity. Use when starting from GPS or a map position; for text-to-coordinates use geocode, and for a point's road-network context (name, class, speed limit, legality) use locate instead. Read-only and cached. Near the poles (|lat| >= 85 degrees) the index is too sparse for a real nearest match, so this returns no results rather than a distant wrong guess. Returns up to `size` candidates (default 5, max 40); `layers` restricts the type returned (address, street, venue, neighbourhood, locality, county, region, country, postalcode, and more). Each result carries a confidence score, layer, label, and coordinates, same shape as geocode.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Latitude"
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Longitude"
+        },
+        "size": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 40,
+          "description": "Number of nearby candidates (default 5, max 40)"
+        },
+        "layers": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Restrict to a comma list of: address, street, venue, neighbourhood, borough, locality, localadmin, county, macrocounty, region, macroregion, dependency, country, continent, postalcode, coarse. Admin layers resolve from the nearest indexed feature's parent hierarchy."
+        }
+      },
+      "required": [
+        "lat",
+        "lon"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "layer": {
+                "type": "string"
+              },
+              "intersection_type": {
+                "type": "string",
+                "enum": [
+                  "corner",
+                  "interchange"
+                ]
+              },
+              "intersection_precision": {
+                "type": "string",
+                "enum": [
+                  "geometric_crossing",
+                  "tangent_intersection",
+                  "centroid_cluster",
+                  "approximate"
+                ]
+              },
+              "street_kind": {
+                "type": "string",
+                "enum": [
+                  "street",
+                  "route"
+                ]
+              },
+              "cross_street_kind": {
+                "type": "string",
+                "enum": [
+                  "street",
+                  "route"
+                ]
+              },
+              "street_route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "cross_street_route": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "place_type": {
+                "type": "string"
+              },
+              "confidence_scope": {
+                "type": "string",
+                "const": "query_to_candidate",
+                "description": "What `confidence` is scoped to. `query_to_candidate` means it scores how well this candidate matches the submitted query — it is NOT a probability that the place is real, that the address is correct, or that mail would arrive. Fixed value today; treat it as a closed set that may gain members."
+              },
+              "address_evidence": {
+                "type": "object",
+                "properties": {
+                  "house_number": {
+                    "type": "string",
+                    "enum": [
+                      "matched",
+                      "partial",
+                      "absent"
+                    ]
+                  },
+                  "street": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "locality": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "region": {
+                    "$ref": "#/properties/items/items/properties/address_evidence/properties/house_number"
+                  },
+                  "postal_code": {
+                    "type": "string",
+                    "enum": [
+                      "matched",
+                      "partial",
+                      "absent"
+                    ],
+                    "description": "Whether the candidate carries a postal code. Presence only — this states what the result has, and makes no claim about its correctness."
+                  }
+                },
+                "required": [
+                  "house_number",
+                  "street",
+                  "locality",
+                  "region",
+                  "postal_code"
+                ],
+                "additionalProperties": false,
+                "description": "What THIS CANDIDATE carries, component by component — `matched` (a real value is present), `partial` (only a coarser or derived stand-in, e.g. an interpolated house number or a locality falling back to its administrative parent), `absent` (nothing). This describes the result, NOT a comparison against your query: the engine returns no per-component match data, and re-parsing your text here would mean two parsers disagreeing about the same string. Derived from the feature, never from `confidence`."
+              },
+              "postal_code": {
+                "type": "string",
+                "pattern": "^[0-9]{5}$",
+                "description": "An eligible US ZIP5 read from the selected result's own postal-code field. While origin enforcement is active this field is emitted ONLY when the engine stamped the value as coming from the address record itself (`source_record` provenance); a value inherited from a parent area, or a result cached before that evidence existed, is omitted rather than emitted without provenance — so an absent ZIP under enforcement means \"not proven for this record\", not \"no such ZIP\". Provenance describes only WHERE the value came from. It is not a postal operator check of any kind — no certification, no address-quality rating, and no statement about whether mail would arrive — so a syntactically correct, correctly-sourced value can still be wrong for the address. Also omitted when unavailable or unsuitable for five-digit form. US address results only. Distinct from `address_evidence.postal_code`, which is a presence STATUS rather than a value. On reverse geocoding this describes the RETURNED ADDRESS — it is not a postal assignment to the coordinate you supplied."
+              },
+              "postal_input_match": {
+                "type": "string",
+                "enum": [
+                  "match",
+                  "conflict",
+                  "unavailable"
+                ],
+                "description": "STRUCTURED GEOCODING ONLY (`geocode_structured` / `POST /v1/search/structured`); absent from free-text geocoding. Whether the postcode YOU SUBMITTED agrees with this candidate's own postcode — `match` (same five-digit value), `conflict` (they differ), `unavailable` (no comparison was possible). This compares two values already in hand: no lookup, no external reference, and your query text is never parsed to find one. `conflict` does NOT say which side is wrong — your input may name a neighbouring area, the candidate may be a near-miss, or the record's own value may be stale; treat it as a prompt to ask a human, never as a correction to apply automatically. The candidate side counts only when its postcode came from the address record itself; one inherited from a parent area yields `unavailable` rather than a misleading verdict. `unavailable` also covers: nothing submitted, a submitted value not readable as a US five-digit code, and results cached before this field existed."
+              },
+              "address_line1": {
+                "type": "string",
+                "description": "House number and street for an eligible US address result, composed from the result's own components — never parsed from the display label. Absent when the result is not a US street address."
+              },
+              "address_line2": {
+                "type": "string",
+                "description": "Unit or suite, only when the source record carries one. A unit supplied in your request is never echoed back here."
+              },
+              "formatted_address": {
+                "type": "string",
+                "description": "Single-line US display form, e.g. `1600 Pennsylvania Avenue NW, Washington, DC 20500, USA`. The postal segment is present only when an eligible ZIP is; its absence never suppresses the street address."
+              },
+              "address_components": {
+                "type": "object",
+                "properties": {
+                  "house_number": {
+                    "type": "string"
+                  },
+                  "street": {
+                    "type": "string"
+                  },
+                  "unit": {
+                    "type": "string"
+                  },
+                  "locality": {
+                    "type": "string"
+                  },
+                  "region_code": {
+                    "type": "string"
+                  },
+                  "region_name": {
+                    "type": "string"
+                  },
+                  "postal_code": {
+                    "type": "string"
+                  },
+                  "country_code": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "The same US components the formatted string is built from. Every field is source-established or absent; nothing is inferred or back-filled."
+              },
+              "method": {
+                "type": "string"
+              },
+              "lat": {
+                "type": "number"
+              },
+              "lon": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        },
+        "precision": {
+          "type": "object",
+          "properties": {
+            "class": {
+              "type": "string"
+            },
+            "risk_flags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required_context": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "learning_overlay": {
+              "type": "object",
+              "properties": {
+                "applied": {
+                  "type": "boolean"
+                },
+                "rule_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "applied"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "class",
+            "risk_flags",
+            "required_context",
+            "learning_overlay"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Reverse Geocode",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "search_places",
+    "description": "CATEGORY-specific POI search near a point — gas stations, truck stops, restaurants, charging stations, etc. Use this when the user has a specific TYPE of place in mind (food / health / retail / fuel / accommodation / nightlife / transport / government / recreation). For broader DISCOVERY (e.g. 'cities within 50 miles' or 'venues by population'), use `explore` instead.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Free-text place query such as 'truck stop', 'restaurant', 'charging station'. One of `query` or `categories` is required — a bare center (`lat`+`lon`/`center`) with neither is rejected."
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "maxItems": 20,
+          "description": "Structured categories: food, fuel, charging_station, education, health, entertainment, retail, accommodation, nightlife, transport, government, recreation. One of `categories` or `query` is required — a bare center (`lat`+`lon`/`center`) with neither is rejected."
+        },
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Center latitude (alternative to `center` object)"
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Center longitude (alternative to `center` object)"
+        },
+        "center": {
+          "type": "object",
+          "properties": {
+            "lat": {
+              "$ref": "#/properties/lat"
+            },
+            "lon": {
+              "$ref": "#/properties/lon"
+            }
+          },
+          "required": [
+            "lat",
+            "lon"
+          ],
+          "additionalProperties": false,
+          "description": "Center point for nearby search ({lat, lon} object or JSON string). You can also pass flat lat/lon."
+        },
+        "radius": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 50
+            },
+            {
+              "type": "string",
+              "maxLength": 32
+            }
+          ],
+          "description": "Search radius — e.g. radius: 30, units: 'miles'. Bare numbers are miles unless units is set; kilometers via units or a km suffix ('5km'); aliases mi/km/imperial/metric. A value carrying its own unit suffix ('30mi', '5km') is also accepted and its suffix wins. Default 50 km (about 31 mi); maximum 50 km (up to 31.068 mi). Preferred over `radius_m`. Numeric values above 50 fail input validation before the tool runs; a string form over the maximum ('60km') or an in-range number that is over the cap once read as miles (e.g. 40, or 40 with units 'miles' — 64 km) is rejected with a radius error instead of results."
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "miles",
+            "kilometers"
+          ],
+          "description": "Units for a bare numeric `radius`: miles (default) or kilometers. Accepts the aliases mi, mile, imperial (miles) and km, kilometer, kilometre, kilometres, metric (kilometers), any case; echoed as miles|kilometers. Ignored when `radius` already carries a unit suffix; a contradicting pair is rejected. Not valid with `radius_m` alone — radius_m is always meters, so that pair is rejected. Does not supply a radius on its own (the default 50 km applies) but selects the display unit of the `units` echo."
+        },
+        "radius_m": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 50000,
+          "description": "Search radius in meters (max 50000 — i.e. 50 km / ~31 mi; default 50 km; 0 means 'not supplied' and applies the default). Accepted alias; `radius` + `units` is preferred. Sending both is only valid when they agree. Do not pair with `units`."
+        },
+        "limit": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Max results (default 10, max 50)"
+        },
+        "layers": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Restrict to: venue, address"
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "lat": {
+                "type": "number"
+              },
+              "lon": {
+                "type": "number"
+              },
+              "layer": {
+                "type": "string"
+              },
+              "distance_km": {
+                "type": "number"
+              },
+              "distance_meters": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "radius_km": {
+              "type": "number"
+            },
+            "units": {
+              "type": "string",
+              "enum": [
+                "miles",
+                "kilometers"
+              ]
+            }
+          },
+          "required": [
+            "radius_km",
+            "units"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Search Places",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "trace_attributes",
+    "description": "Trace attributes return road/network attributes for matched traces. Feed a GPS breadcrumb trail (2–100 points) and get per-segment road names, road classes, speed limits, surfaces, truck-route flags, and segment lengths along the matched route, plus a matcher confidence score. Sparsely-reported traces (consecutive fixes farther apart than the default breakage distance — e.g. fleet units reporting every several minutes on a highway) can split into multiple sections; increase `breakage_distance_m` to keep them as one. Total matched distance is limited to 200 km per call — split longer sparse traces by distance, not only by the 100-point cap. Use to audit what roads a vehicle actually used (speed-limit compliance, truck-route adherence, surface checks). For just the matched route line, use `map_match`.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "shape": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lat": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "lon": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              },
+              "time": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "lat",
+              "lon"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 2,
+          "maxItems": 100,
+          "description": "Raw GPS breadcrumb trail in travel order — 2 to 100 points of { lat, lon, time? }. `time` is optional epoch seconds; timestamps improve match quality on noisy traces."
+        },
+        "costing": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "truck",
+            "bicycle",
+            "pedestrian"
+          ],
+          "description": "Transport mode the trace was recorded with (default: auto)"
+        },
+        "vehicle_profile": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Truck preset (DRY_VAN_53, FLATBED_48, BOX_TRUCK_26, …) — same 10-profile table as directions. Implies costing=truck."
+        },
+        "search_radius": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Snap radius in meters around each point (1–100). Increase for noisy GPS."
+        },
+        "breakage_distance_m": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 20000,
+          "description": "Maximum gap, in meters, between consecutive fixes before the trace is split into separate sections (100–20000). Increase for sparsely-reported GPS, such as fleet units reporting every several minutes on a highway. Optional — omitted uses the default."
+        }
+      },
+      "required": [
+        "shape"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "matched": {
+          "type": "boolean"
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Matcher confidence 0–1"
+        },
+        "distance_km": {
+          "type": "number"
+        },
+        "duration_seconds": {
+          "type": "number"
+        },
+        "edge_count": {
+          "type": "number"
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "road_class": {
+                "type": "string"
+              },
+              "speed_limit_kph": {
+                "type": "number"
+              },
+              "length_m": {
+                "type": "number"
+              },
+              "surface": {
+                "type": "string"
+              },
+              "truck_route": {
+                "type": "boolean"
+              },
+              "elevation_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "elevation_ft": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "grade_pct": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "weighted_grade": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "mean_elevation_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "length_m"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "road_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "costing": {
+          "type": "string"
+        },
+        "vehicle_profile": {
+          "type": "string"
+        },
+        "costing_options": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "geometry": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "upstream_ms": {
+              "type": "number"
+            },
+            "point_count": {
+              "type": "integer"
+            },
+            "breakage_distance_m": {
+              "type": "integer",
+              "description": "Echoes the breakage_distance_m the caller requested, for confirmation — present only when the caller set it. This is the value SENT to the matcher, not a claim about what it did with it."
+            }
+          },
+          "required": [
+            "upstream_ms",
+            "point_count"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "matched",
+        "confidence",
+        "distance_km",
+        "edge_count",
+        "edges",
+        "road_names",
+        "costing"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Trace Attributes",
+      "readOnlyHint": true,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "traffic",
+    "description": "Retrieve live traffic conditions, congestion, and speed for a location. Use when traffic is needed independently of routing — for corridor monitoring, area congestion, or incident checks. COVERAGE: live data for ~30 major US metros; returns degraded or empty values outside these areas. For rural coordinates, qualify the response (e.g. 'no live traffic coverage here — showing free-flow speeds').",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Latitude"
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Longitude"
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "miles",
+            "kilometers"
+          ],
+          "description": "Speed units — auto-detected from location (mph in US/UK, km/h elsewhere). Override if needed. Accepts 'km'/'mi' as aliases."
+        }
+      },
+      "required": [
+        "lat",
+        "lon"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Live Traffic",
+      "readOnlyHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "weather",
+    "description": "Get current and forecast weather for a location, including severe weather alerts and minute-by-minute precipitation. Use for destination conditions, travel planning, or route risk assessment.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Place name or address (will be geocoded)"
+        },
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Latitude"
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Longitude"
+        },
+        "units": {
+          "type": "string",
+          "enum": [
+            "imperial",
+            "metric"
+          ],
+          "description": "Temperature/wind units (default: imperial)"
+        },
+        "include_forecast": {
+          "type": "boolean",
+          "description": "Include multi-day hourly forecast"
+        },
+        "forecast_days": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "Forecast days 1-16 (default 5)"
+        },
+        "include_alerts": {
+          "type": "boolean",
+          "description": "Include severe weather alerts and warnings (default: true)"
+        },
+        "include_minutely": {
+          "type": "boolean",
+          "description": "Include minute-by-minute precipitation for next 60 min"
+        }
+      },
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": {},
+          "description": "Map of scalar facts the LLM should surface verbatim"
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "geojson": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "FeatureCollection"
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Feature"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "geometry": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Point",
+                                  "LineString",
+                                  "Polygon",
+                                  "MultiPoint",
+                                  "MultiLineString",
+                                  "MultiPolygon",
+                                  "GeometryCollection"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "coordinates": {},
+                          "geometries": {
+                            "type": "array",
+                            "items": {}
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": true
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "geometry"
+                ],
+                "additionalProperties": true
+              }
+            }
+          },
+          "required": [
+            "type",
+            "features"
+          ],
+          "additionalProperties": true
+        },
+        "display_hint": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "summary",
+                    "table",
+                    "summary+table",
+                    "map",
+                    "chart+table"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "preferred_charts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "map_layers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "layout"
+          ],
+          "additionalProperties": true
+        },
+        "alerts": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          ]
+        },
+        "alerts_error": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "annotations": {
+      "title": "Weather",
+      "readOnlyHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true
+    }
+  }
+]

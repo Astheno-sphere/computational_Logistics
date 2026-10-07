@@ -1,0 +1,428 @@
+"""Test fixtures shared across the suite.
+
+Provides the audit-pipeline builders, the env-override context manager,
+and the ``isolated_home`` / ``isolated_config_dir`` isolation fixtures
+the provider / preflight tests rely on. The two LLM providers (openai
+default + anthropic opt-in) are pure-stdlib ``urllib`` clients exercised
+via their ``AISWMM_*_MOCK_*`` env hooks, so no synthetic SDK module is
+needed here.
+"""
+from __future__ import annotations
+
+import contextlib
+import importlib.util
+import io
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any
+from unittest import mock
+
+import pytest
+
+
+_MEMORY_DIR_PRESET_AT_SESSION_START = bool(os.environ.get("AISWMM_MEMORY_DIR"))
+
+
+@pytest.fixture
+def _memory_store_copy(tmp_path_factory):
+    """An empty memory store for each test (F-14, F-168).
+
+    Finding F-14 (2026-09-02): every full-suite run appended four
+    ``aiswmm_run_cli / swmm_error "ERROR 205: invalid keyword"`` rows to
+    the project's ``memory/modeling-memory/run_failures.jsonl`` (the CLI
+    honesty tests run ``aiswmm run`` on a broken INP, and the recorder's
+    default path is the repo-relative store). Hundreds of test rows had
+    accumulated in the failure memory the product is meant to learn from.
+    """
+    # Since 2026-09-06 nothing program-written is tracked, so the copy is
+    # an empty store; reference tables resolve to memory/initial/ through
+    # utils.paths.reference_table_path when the store has no override.
+    # Per test since 2026-09-26 (F-168): with one copy for the whole
+    # session, a test that counted rows in a ledger saw the rows of
+    # every earlier test and passed or failed by order.
+    return tmp_path_factory.mktemp("memory-store")
+
+
+@pytest.fixture(autouse=True)
+def _isolated_memory_store(monkeypatch, _memory_store_copy):
+    """Point every reader and writer at the session copy, test by test.
+
+    Per test (not per session) so a test that clears the variable cannot
+    leave the rest of the run writing into the real store; subprocesses
+    inherit the environment. A test that wants the default path still
+    ``monkeypatch.delenv``s it; an explicit ``AISWMM_MEMORY_DIR`` set by
+    the caller before the session is respected.
+    """
+    if _MEMORY_DIR_PRESET_AT_SESSION_START:
+        return
+    monkeypatch.setenv("AISWMM_MEMORY_DIR", str(_memory_store_copy))
+    # The session database follows the store (2026-09-06); a test that clears
+    # the environment still falls back to the real workspace, which the
+    # session-end guard below reports.
+    monkeypatch.setenv("AISWMM_SESSION_DB", str(_memory_store_copy / "memory.sqlite"))
+
+
+def _real_store_snapshot() -> dict[str, tuple[int, int]]:
+    """Size and mtime of every file in the real workspace store."""
+    store = Path(__file__).resolve().parents[1] / "memory" / "store"
+    if not store.is_dir():
+        return {}
+    out: dict[str, tuple[int, int]] = {}
+    for path in store.rglob("*"):
+        if path.is_file():
+            stat = path.stat()
+            out[str(path.relative_to(store))] = (stat.st_size, stat.st_mtime_ns)
+    return out
+
+
+def pytest_sessionstart(session):
+    session.config._aiswmm_real_store_before = _real_store_snapshot()
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """The suite never writes the developer's own memory (F-14, 2026-09-02;
+    the session database joined the rule on 2026-09-06 after a full run left
+    eight test sessions in memory/store/memory.sqlite)."""
+    before = getattr(session.config, "_aiswmm_real_store_before", None)
+    if before is None:
+        return
+    after = _real_store_snapshot()
+    changed = sorted(k for k in set(before) | set(after) if before.get(k) != after.get(k))
+    if changed:
+        sys.stderr.write(
+            "\nERROR: the test suite wrote into the real memory store (memory/store/): "
+            + ", ".join(changed)
+            + "\nA test dropped AISWMM_MEMORY_DIR / AISWMM_SESSION_DB (or cleared the environment) "
+            "and then ran a session. Isolate it.\n"
+        )
+        session.exitstatus = 1
+
+
+
+# The suite runs headless (non-TTY), where ``permissions.prompt_user`` now
+# fails closed (review P1-2). Tests intend for tool calls to execute, so opt
+# the whole suite into trusted auto-approval, exactly as CI/Docker automation
+# does. Individual tests that exercise the denial path unset it themselves.
+os.environ.setdefault("AISWMM_AUTO_APPROVE", "1")
+
+
+@contextlib.contextmanager
+def env_overrides(**overrides: str | None):
+    """Snapshot + restore ``os.environ`` for the duration of the block.
+
+    Promoted to ``conftest.py`` per issue #201 — both
+    ``tests/test_digest_locale_glyphs.py`` and
+    ``tests/test_prd08_b_storm_and_chrome.py`` previously rolled the
+    same context-manager (under the names ``_EnvOverride`` and
+    ``_env_overrides``). A single definition keeps the env-restore
+    contract aligned across the test suite.
+
+    Pass ``key=None`` to *unset* a variable for the duration of the
+    block (so a test that needs ``LC_ALL`` unset can ``LC_ALL=None``
+    rather than ``monkeypatch.delenv``).
+    """
+    snapshot: dict[str, str | None] = {}
+    for key, value in overrides.items():
+        snapshot[key] = os.environ.get(key)
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+    try:
+        yield
+    finally:
+        for key, original in snapshot.items():
+            if original is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = original
+
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_AUDIT_SCRIPT = (
+    _REPO_ROOT / "skills" / "swmm-experiment-audit" / "scripts" / "audit_run.py"
+)
+
+
+def load_audit_module():
+    """Load ``audit_run.py`` as an importable module.
+
+    The audit script is run as a subprocess by ``aiswmm audit`` and
+    therefore does not live inside the ``agentic_swmm`` package. Tests
+    that want to exercise its helpers reach for ``importlib.util`` —
+    previously each test file hand-rolled the spec/loader dance. Lifted
+    here per issue #196 so both audit-test files share one definition.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "_audit_run_under_test", _AUDIT_SCRIPT
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["_audit_run_under_test"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def seed_minimal_run_dir(
+    tmp_path: Path,
+    *,
+    case_name: str = "case-dedup",
+    with_internal_node: bool = False,
+) -> Path:
+    """Build the minimal SWMM run-dir layout the audit pipeline accepts.
+
+    The two audit-pipeline test files (``test_audit_run_results_section``
+    and ``test_audit_runner_manifest_dedup``) previously hand-rolled the
+    same ~50-line builder; consolidated here per issue #196 so the
+    fixture has a single source of truth.
+
+    ``with_internal_node=True`` adds the ``metrics.internal_node_peak``
+    payload that the Tecnopolo fixture in
+    ``test_audit_run_results_section`` requires.
+    """
+    run_dir = tmp_path / "runs" / case_name
+    runner = run_dir / "05_runner"
+    runner.mkdir(parents=True)
+    (runner / "model.rpt").write_text(
+        """
+        ***** Node Inflow Summary *****
+        ------------------------------------------------
+          OU2             OUTFALL       0.001       0.061      2    03:15
+
+        ***** Runoff Quantity Continuity *****
+        Continuity Error (%) ............. -0.13
+
+        ***** Flow Routing Continuity *****
+        Continuity Error (%) ............. -0.004
+        """,
+        encoding="utf-8",
+    )
+    (runner / "model.out").write_text("binary-placeholder", encoding="utf-8")
+    (runner / "stdout.txt").write_text("", encoding="utf-8")
+    (runner / "stderr.txt").write_text("", encoding="utf-8")
+    metrics: dict[str, Any] = {
+        "peak": {
+            "node": "OU2",
+            "peak": 0.061,
+            "time_hhmm": "03:15",
+            "units": "CMS",
+            "source": "Node Inflow Summary",
+        },
+        "continuity": {
+            "runoff_quantity": {
+                "Surface Runoff": {"col1": 0.097, "col2": 44.483},
+                "Continuity Error (%)": -0.13,
+            },
+            "flow_routing": {
+                "Continuity Error (%)": -0.004,
+            },
+        },
+    }
+    if with_internal_node:
+        metrics["internal_node_peak"] = {
+            "node": "J22",
+            "peak": 0.007,
+            "time_hhmm": "03:15",
+        }
+    (runner / "manifest.json").write_text(
+        json.dumps(
+            {
+                "files": {
+                    "rpt": str(runner / "model.rpt"),
+                    "out": str(runner / "model.out"),
+                    "stdout": str(runner / "stdout.txt"),
+                    "stderr": str(runner / "stderr.txt"),
+                },
+                "metrics": metrics,
+                "return_code": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return run_dir
+
+
+def seed_runner_manifest(
+    run_dir: Path,
+    *,
+    runner_dir_name: str = "06_runner",
+    **overrides: Any,
+) -> None:
+    """Build the ``O1``/``OUTFALL`` runner-stage fixture the audit_run.py
+    CLI accepts: model.rpt + model.out + stdout/stderr + manifest.json.
+
+    Four audit-CLI subprocess test files (``test_commands_audit_moc_and_bak``,
+    ``test_case_id_provenance``, ``test_audit_run_schema_v1_1``,
+    ``test_audit_note_human_decisions_section``) previously hand-rolled a
+    byte-for-byte-identical ``_seed_runner`` each -- only
+    ``test_case_id_provenance`` differs, in the manifest's ``metrics``
+    (adds a ``source: "rpt"`` peak and a ``continuity`` key) and a
+    top-level ``swmm5`` key. Consolidated here per ADR-0006 D5.
+
+    ADR-0004: the canonical runner stage is ``06_runner``; the four
+    existing callers all pre-date the rename and pass
+    ``runner_dir_name="05_runner"`` explicitly.
+
+    ``overrides`` are shallow-merged into the manifest dict's top level
+    after the base ``files``/``metrics``/``return_code`` are built --
+    e.g. passing ``metrics={...}`` replaces the default metrics dict
+    wholesale, and ``swmm5={...}`` adds a new top-level key.
+    """
+    runner = run_dir / runner_dir_name
+    runner.mkdir(parents=True)
+    (runner / "model.rpt").write_text(
+        """
+        ***** Node Inflow Summary *****
+        ------------------------------------------------
+          O1              OUTFALL       0.001       1.250      2    12:47
+
+        ***** Flow Routing Continuity *****
+        Continuity Error (%) ............. 0.00
+        """,
+        encoding="utf-8",
+    )
+    (runner / "model.out").write_text("binary-placeholder", encoding="utf-8")
+    (runner / "stdout.txt").write_text("", encoding="utf-8")
+    (runner / "stderr.txt").write_text("", encoding="utf-8")
+    manifest: dict[str, Any] = {
+        "files": {
+            "rpt": str(runner / "model.rpt"),
+            "out": str(runner / "model.out"),
+            "stdout": str(runner / "stdout.txt"),
+            "stderr": str(runner / "stderr.txt"),
+        },
+        "metrics": {
+            "peak": {
+                "node": "O1",
+                "peak": 1.25,
+                "time_hhmm": "12:47",
+                "units": "CMS",
+                "source": "Node Inflow Summary",
+            }
+        },
+        "return_code": 0,
+    }
+    manifest.update(overrides)
+    (runner / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+def seed_provenance_run_dir(project_root: Path, provenance: dict[str, Any]) -> Path:
+    """Build the minimal run dir ``trigger_memory_refresh`` accepts.
+
+    Layout: ``<project_root>/runs/abc/09_audit/experiment_provenance.json``.
+    Consolidates the per-file ``_make_run`` builders the audit-hook
+    memory-bridge tests used to hand-roll (same treatment issue #196 gave
+    the audit-pipeline run-dir builders).
+    """
+    run_dir = project_root / "runs" / "abc"
+    audit_dir = run_dir / "09_audit"
+    audit_dir.mkdir(parents=True)
+    (audit_dir / "experiment_provenance.json").write_text(
+        json.dumps(provenance), encoding="utf-8"
+    )
+    return run_dir
+
+
+@contextlib.contextmanager
+def patched_audit_hook_subprocess(**extra_stubs: Any):
+    """Stub ``audit_hook`` attributes for a test.
+
+    Until the memory simplification (2026-09-26) the hook shelled out to
+    the lessons summariser and the RAG refresh, which this stubbed to
+    success; both are gone and the hook is in-process only, so with no
+    keyword args this is a no-op. Additional ``audit_hook`` attributes
+    can still be stubbed via keyword args.
+    """
+    with contextlib.ExitStack() as stack:
+        for attr, retval in extra_stubs.items():
+            stack.enter_context(
+                mock.patch(
+                    f"agentic_swmm.memory.audit_hook.{attr}",
+                    return_value=retval,
+                )
+            )
+        yield
+
+
+class _FakeTTYStream(io.StringIO):
+    """StringIO that claims to be a TTY.
+
+    Spinner / TTY-rendering tests use this to force the carriage-return
+    rendering path (instead of the newline-per-line non-TTY fallback)
+    while still capturing output via ``.getvalue()``.
+
+    Lives here (instead of being duplicated in each test module) per
+    issue #190 — one definition keeps the test-side contract aligned
+    with the production ``Spinner._stream_is_tty`` probe.
+    """
+
+    def isatty(self) -> bool:  # type: ignore[override]
+        return True
+
+
+@pytest.fixture
+def isolated_home(tmp_path, monkeypatch):
+    """Point ``Path.home()`` at a fresh tmp dir to isolate config files.
+
+    The provider-preflight tests need an isolated ``HOME`` with no
+    ``OPENAI_API_KEY`` / ``ANTHROPIC_API_KEY`` leaking from the real
+    environment, so the two-API-key resolution is exercised against a
+    known-empty slate.
+    """
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    return home
+
+
+@pytest.fixture
+def isolated_config_dir(tmp_path, monkeypatch):
+    """Point ``config_dir()`` at a fresh tmp dir so anything written
+    under it (e.g. ``mcp.json``, ``silent_fallbacks.jsonl``) stays
+    local to the test.
+
+    Three test files previously rolled their own byte-identical copy
+    of this fixture (issue #220 reuse-review finding). Centralised
+    here next to ``isolated_home`` so the next consumer reuses it
+    instead of copying it a fourth time.
+    """
+    monkeypatch.setenv("AISWMM_CONFIG_DIR", str(tmp_path))
+    yield tmp_path
+
+
+def read_silent_fallback_events(jsonl_path):
+    """Read every JSON object from ``silent_fallbacks.jsonl`` in line order.
+
+    Helper shared by the error_boundary unit and regression tests so
+    both consume the same parsing convention (one JSON object per
+    non-empty line, UTF-8). Returns ``[]`` when the file does not
+    exist — a healthy session that triggered no boundary catches
+    leaves the jsonl absent.
+    """
+    import json
+    from pathlib import Path
+
+    path = Path(jsonl_path)
+    if not path.exists():
+        return []
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+@pytest.fixture(autouse=True)
+def _every_turn_introspects(monkeypatch):
+    """Keep the catalogue prologue observable on every planner turn.
+
+    Live finding F-70 (2026-09-02): the runtime remembers, per process, that
+    the catalogue was already listed. The suite runs hundreds of planner
+    turns in one process, so the memo is disabled here and exercised only by
+    tests that clear the variable on purpose.
+    """
+    monkeypatch.setenv("AISWMM_ALWAYS_INTROSPECT", "1")

@@ -1,0 +1,739 @@
+# Changelog
+
+This file is the user-facing change history for Unfour, following
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+
+## [Unreleased]
+
+## [0.10.0] - 2026-09-30
+
+Release after `v0.9.6`, adding local runbooks and easier exchange of API
+and database resources.
+
+### Added
+
+- **Flow V1** — Build local runbooks that combine saved API requests, SSH
+  tasks, and Database queries with Condition branches and Wait Until checks.
+  Use the Canvas editor, pass typed inputs and step results, and inspect run
+  history with step outcomes and polling attempts. Flow V1 is local-only;
+  definitions and run history are not included in Cloud Sync.
+- **Flow through MCP** — Let Codex and Cursor manage and run the same local
+  runbooks, cancel runs, and read paginated run history. Execution follows
+  workspace safety rules and required confirmations.
+- **API Collection and Environment import/export** — Exchange collections
+  in Unfour, Postman, and OpenAPI formats, and environments in Unfour and
+  Postman formats. Preview imports before applying them, keep imported names
+  distinct, and download exports directly. Environment secret values are left
+  empty; review arbitrary scripts and free-form content before sharing exports.
+- **Database table export** — Export one table's structure, data, or both;
+  use SQL for structure and SQL, CSV, or JSON for data. MCP exports also
+  support selected columns, filters, and row limits, with confirmation before
+  exporting data without a limit.
+
+### Fixed
+
+- **openGauss support** — Improve server detection, catalog and table
+  browsing, auto-increment column recognition, index metadata, native table
+  DDL, and structure/data exports through PostgreSQL-protocol connections.
+- **SQL execution context** — Keep the selected database and schema when
+  opening queries, running scripts, and reopening history. Schema discovery
+  no longer silently changes the execution context.
+- **Saved SQL context** — Save and restore the query's database and schema,
+  and group saved queries under the appropriate database in the sidebar.
+- **Flow run safety and feedback** — Validate resource and variable references
+  before execution, run the confirmed definition revision, and keep secrets
+  redacted in persisted outputs and diagnostics. Show clearer validation,
+  failure, cancellation, and history feedback.
+
+## [0.9.6] - 2026-09-14
+
+Maintenance release following the `v0.9.5` source tag, focused on MCP
+diagnostics and long-running call control, plus Database, API, SSH, and
+Workspace polish.
+
+### Added
+
+- **MCP diagnostics** — Add workspace-scoped database query history, database
+  and SSH connection metadata updates/deletes, SSH connection tests and stored
+  host fingerprint reads, with safe result schemas and guarded delete confirmation.
+
+### Fixed
+
+- **MCP long-running calls** — Keep stdio control messages responsive during
+  tool execution, accept client cancellation, propagate it to execution where
+  supported, and enforce a 120-second MCP safety deadline even when an API HTTP
+  timeout is disabled. Bound queued calls and shutdown cleanup.
+- **SQL draft close protection** — Closing a Query tab with unsaved user SQL
+  asks for confirmation instead of discarding the draft. Empty or unmodified
+  SQL still closes immediately.
+- **Dangerous SQL confirmation** — Run shortcuts and Run buttons no longer
+  confirm a pending dangerous run. Confirmation happens only from the dedicated
+  Confirm run action.
+- **Saved SQL open and save** — Opening saved SQL from the sidebar does not
+  replace the current editor. Successful saves update the tab baseline; failed
+  saves keep the draft dirty. Deleting saved SQL asks for confirmation.
+- **API save and history feedback** — History shows loading, error, and retry
+  states. The save dialog reports failures in place, keeps the entered name,
+  and only marks a request saved after a successful write.
+- **API save pending** — Repeat submits while creating a collection or folder
+  are ignored, and the dialog stays blocked until the pending save finishes.
+- **SSH batch close** — Close All, Close Others, and close-to-left/right ask
+  once and disconnect only the confirmed sessions. Single-session close stays
+  independent.
+- **Workspace labels** — Truncated workspace names show in full on hover.
+  Workspace safety-tier and variable-environment wording is clearer, and delete
+  now states that local API, SSH, and Database resources are removed.
+
+## [0.9.5] - 2026-09-12
+
+Maintenance release following the `v0.9.4` source tag, focused on Database SQL
+script execution, Cloud Sync defaults for new accounts, and workbench
+navigation.
+
+### Added
+
+- **About-page feedback** — Add GitHub Discussions and issue links on the About
+  page so early users can send feedback or report bugs without extra in-app UI.
+
+### Changed
+
+- **Database SQL script execution** — Run a SQL editor script as one command-bus
+  call on one physical connection. Whole-script safety preflight runs first,
+  execution stops at the first error, and each statement keeps its source range
+  and outcome. SQL is no longer rewritten with LIMIT or dispatched by guessing
+  whether it returns rows. Stop prevents later statements and waits for the
+  current statement to finish.
+- **Workbench navigation** — Keep unsaved editor drafts when switching modules
+  or layout, and simplify the workbench chrome around the command palette and
+  module activity bar.
+- **SQL editor run actions** — Replace the implicit Run / current-statement
+  action with adjacent Run All and Run Selected toolbar buttons. Run All always
+  executes the full editor script, including when text is selected. Run Selected
+  executes only the highlighted SQL and stays disabled when nothing is
+  selected. `Ctrl+Enter` / `Cmd+Enter` now runs All;
+  `Ctrl+Shift+Enter` / `Cmd+Shift+Enter` runs the selection.
+
+### Fixed
+
+- **Cloud Sync for new accounts** — First account activation on a device turns
+  Global Sync on. Existing preferences, including a previously chosen Off
+  setting, stay unchanged.
+- **SQL confirmation identity** — Run All and Run Selected confirmation stays
+  bound to the confirmed script after remount or schema auto-fill, does not
+  fall back to another run mode, and confirmation prompts are no longer shown
+  as execution failures.
+- **Database credential references** — Saving a connection after rotating
+  credentials into the current workspace keeps the current credential
+  reference instead of submitting a stale blank-password reference.
+
+## [0.9.4] - 2026-09-07
+
+Feature release following the `v0.9.3` source tag, focused on multipart API
+requests and Cloud Sync Protocol 5 compatibility.
+
+### Added
+
+- **Multipart form-data requests** — Add ordered text and file fields,
+  duplicate keys, empty values, disabled rows, file picking, streamed uploads,
+  and request-body history that preserves the actual body kind. File paths
+  remain transient bindings and are not persisted or synchronized.
+- **Cloud Sync Protocol 5 foundations** — Freeze the Protocol 5 client and add
+  entity registry and reader-revision tracking for safer remote reconciliation.
+
+### Fixed
+
+- **Cloud Sync compatibility and apply safety** — Close Protocol 5 compatibility
+  gaps, fail closed when remote changes cannot be applied completely, preserve
+  local intent for replay, and resolve workspace delete tombstones that are
+  already equivalent to local state.
+
+## [0.9.3] - 2026-09-04
+
+Maintenance release following the `v0.9.2` source tag, focused on API request
+execution control and Cloud Sync reliability.
+
+### Added
+
+- **API request execution control** — Add a global desktop timeout, per-request
+  overrides, and `0` for no timeout. Stop cancels the in-flight request and
+  shows a cancelled state without writing history. Saved timeouts are included
+  in Cloud Sync and collection import/export.
+
+### Changed
+
+- **MCP request timeouts** — Omitted `timeoutMs` uses a 60,000 ms safety
+  default, `timeoutMs: 0` is unlimited, and positive values are used as given
+  instead of being silently capped at 60 seconds.
+- **Desktop Settings layout** — Combine Account and Cloud Sync under Account &
+  Sync, keep Privacy with General, place Updates on About, and show the
+  Stable/Test channel on the About page.
+
+### Fixed
+
+- **Cloud Sync after sign-in** — Expired sessions no longer permanently block
+  pending changes. Sign in again to resume sync; the UI shows Sign-in required
+  when the session has expired, or Cloud Sync plan required when the account
+  no longer includes it, and keeps local work.
+- **Cloud Sync ownership and pending changes** — Each local workspace keeps one
+  cloud owner, pending changes survive sign-out or paused access, older
+  workspaces upload previously unsynced API requests, and retrying a blocked
+  API request sends the current local request.
+- **Cloud Sync errors and diagnostics** — Distinguish temporary server,
+  protocol, and rejected-request failures more clearly, show last push/pull,
+  retry time, and server request details in diagnostics, and retry due work
+  without waiting for the next periodic cycle.
+- **API request naming and history** — Rename a request from the editor, keep a
+  clear name on tabs, and show the saved name or a readable path in history.
+
+## [0.9.2] - 2026-09-02
+
+Maintenance and feature release following the `v0.9.1` source tag, focused on
+MCP execution semantics, privacy-preserving telemetry, and workspace
+usability.
+
+### Added
+
+- **Anonymous active-install telemetry** — Stable Desktop builds can record one
+  privacy-preserving `app_active` event per installation per UTC day, with a
+  first-run notice, Privacy settings, an independent OS-keychain installation
+  ID, and no account, workspace, or feature-usage fields. Test/dev builds keep
+  network telemetry disabled.
+- **MCP environment-variable tools** — Add
+  `unfour.api.set_environment_variable` and
+  `unfour.api.delete_environment_variable` through the command bus, including
+  empty values, metadata-preserving updates, sensitive-value masking, and
+  policy confirmation for guarded deletes.
+- **Store and product release assets** — Add the exact 300x300 Microsoft Store
+  listing icon and refresh product screenshots, including Workspace
+  Environments.
+
+### Changed
+
+- **MCP environment overrides and scripted replay** — `environmentId` now
+  selects the environment for the entire request-variable and pre/post-script
+  lifecycle without changing the Desktop active environment. Saved request
+  replay runs through the shared command-bus script path, and scripted replay
+  is treated as a write for read-only policy purposes.
+- **Fail-closed MCP policy** — Every registered tool now has an explicit
+  capability and risk classification; unknown or unclassified tools are
+  denied, and destructive API request, collection, environment, and variable
+  deletes are classified explicitly.
+- **Per-module sidebar layout** — API, SSH, and Database sidebars now have
+  independent defaults, bounds, and persisted widths, with compatibility for
+  the legacy single-width layout.
+
+### Fixed
+
+- **Cursor MCP on Windows** — One-click Cursor configuration wraps sidecar
+  paths that contain spaces (for example `D:\Program Files\Unfour\unfour-mcp.exe`)
+  in `cmd.exe /c`, matching how Cursor still launches stdio servers.
+- **Telemetry lifecycle and failure handling** — Delay the first stable-build
+  attempt until after the notice grace period, cancel it immediately on opt-out,
+  avoid aggressive retries or redirect following, and record a successful day
+  only after a 2xx response.
+
+## [0.9.1] - 2026-08-31
+
+Maintenance release following `v0.9.0`, focused on release hardening, runtime
+verification, and maintainability.
+
+### Added
+
+- **Public download manifest** — Publish a separate `stable/downloads.json`
+  manifest for website and Download Worker installer links.
+- **Coding-agent runtime guidance** — Document the real Codex and Cursor MCP
+  verification journey and the troubleshooting loop around Unfour.
+
+### Changed
+
+- **Cloud Sync structure** — Split repository, reconciliation, and worker
+  responsibilities into focused modules without changing package ownership.
+- **Linux AppImage baseline** — Pin the Standard x86_64 build to Ubuntu 22.04
+  and isolate its native Rust cache from older runner builds.
+- **Release evidence and product messaging** — Clarify release limits,
+  distribution support, and the backend-troubleshooting positioning.
+
+### Fixed
+
+- **Frontend lifecycle handling** — Harden account, Cloud Sync, update, API,
+  Database, SSH, and shared UI hook lifecycles and remove related lint issues.
+- **Safety regression coverage** — Expand account, database, SSH task,
+  command-bus, Cloud Sync, and MCP coverage for high-risk execution paths and
+  transactional rollback behavior.
+
+## [0.9.0] - 2026-08-29
+
+Released after `v0.8.0`, adding account-gated Cloud Sync, unified desktop and
+MCP runtimes, and signed in-app updates with multi-channel distribution. An
+active Pro subscription unlocks Cloud Sync in the same Unfour application.
+
+### Added
+
+- **Account and billing** — Add GitHub browser sign-in with PKCE and
+  `unfour://auth/callback`, OS-keychain desktop sessions, account and
+  entitlement state, and checkout/account-portal actions.
+- **Cloud Sync** — Add local-first synchronization unlocked by an active Pro
+  subscription for workspaces,
+  API collections/folders/requests, environments and variables, SSH tasks, and
+  SSH/Database connection definitions, with outbox retries, snapshots,
+  tombstones, remote-workspace download, conflict resolution, and recovery.
+- **Unified desktop and MCP runtime** — Share storage, command-bus setup,
+  account context, and Cloud Sync initialization between the Tauri desktop and
+  standalone `unfour-mcp` process, while retaining an ephemeral registry mode
+  for CI and protocol smoke tests.
+- **MCP client setup** — Add one-click Codex and Cursor configuration from
+  Settings, including platform-aware sidecar/Store alias commands and safe
+  preservation or backup of existing configuration.
+- **Signed in-app updates and Store distribution** — Add in-app updates backed
+  by signed updater artifacts for Standard builds and a separately
+  contract-tested Windows x64 MSIX path managed by Microsoft Store.
+- **Release candidate automation** — Add a reusable Standard build workflow for
+  Windows x64, macOS arm64/x64, and Linux x64 AppImage candidates, with
+  canonical artifacts, signatures, release checksums, and contract coverage.
+
+### Changed
+
+- **Distribution and release authority** — Split `standard` and
+  `microsoft-store` at build time. Standard publishes NSIS, macOS, and Linux
+  AppImage artifacts through GitHub/R2 and owns the Unfour updater, while Store
+  builds disable the internal updater and use the Microsoft Store update path.
+- **Release publication flow** — Resolve tags to exact commits, build once,
+  reuse identical staged bytes for GitHub and R2, and promote
+  `stable/latest.json` only after immutable artifacts and checksums pass.
+  Production signing and publication secrets are read from the GitHub
+  `production` Environment.
+- **Local data profiles** — Keep Stable, Test, and Dev product roots isolated
+  while desktop and MCP share the same resolver; preserve historical Community
+  and Cloud Sync migration data.
+
+### Fixed
+
+- **MCP process lifecycle** — Handle EOF, broken stdout, and termination
+  readiness cleanly, and avoid shutting down the Tokio runtime from an async
+  context.
+- **Windows Store and MSIX integration** — Use the stable `unfour-mcp.exe`
+  execution alias and invoke PowerShell 7 for MSIX tooling.
+- **Release artifact staging** — Correct the updater host, macOS updater
+  artifacts, Linux publication to AppImage only, and stable updater promotion
+  ordering.
+
+### Security
+
+- **Credential and sync isolation** — Keep account sessions in the OS keychain;
+  keep secrets, credential references, local paths, and runtime history out of
+  Cloud Sync payloads; and preserve workspace ownership and local-secret
+  boundaries during external applies.
+- **Artifact trust and Store boundaries** — Keep updater private keys and R2
+  credentials out of tracked files, require signed Standard updater artifacts,
+  and prevent Store builds from registering or invoking the internal updater.
+
+### Verification notes
+
+- **Verified real-environment journeys** — Recorded successful Windows install, launch,
+  uninstall, and previous-Stable-to-new-Stable update; macOS arm64/x64 install
+  and run; GitHub browser OAuth and Desktop callback/login; Creem Test checkout,
+  webhook, entitlement, and billing portal; PostgreSQL and MySQL; SSH Terminal,
+  SFTP, and SSH Tasks; and real Codex and Cursor MCP initialization, discovery,
+  tool calls, and Unfour data/tool access.
+- **Scoped follow-up verification** — Historical live multi-device Cloud Sync
+  evidence exists, but the v0.9.0 unified-client multi-device regression
+  remains `NOT VERIFIED` and will include single-device coverage. The first real
+  Creem Production end-to-end transaction, MCP prod policy/confirmation,
+  Linux AppImage runtime, real Microsoft Store/MSIX, and macOS Gatekeeper trust
+  journeys also remain `NOT VERIFIED` without reducing the completed platform
+  and Test-environment results.
+
+## [0.8.0] - 2026-08-26
+
+### Changed
+
+- **Faster desktop startup** — Load feature modules on demand and pause
+  inactive SSH and Database queries while preserving previously opened work.
+
+### Fixed
+
+- **Database query compatibility** — Improve PostgreSQL and MySQL/MariaDB
+  execution for selected catalogs and commands that require the simple query
+  protocol, including session, transaction, DDL, and `SHOW` statements.
+
+## [0.7.0] - 2026-08-23
+
+Feature release adding the connection sync-domain foundation for SSH and
+database connections, while separating device-local saves from cloud-visible
+mutations.
+
+### Added
+
+- **Connection sync-domain foundation** — Add revisioned connection snapshots,
+  tombstones, external apply, shared domain contracts, workspace ownership
+  validation, and command-bus transaction integration for SSH and Database
+  connections. This is a local foundation for optional edition sync and does
+  not enable a hosted sync service by itself.
+- **Connection domain coverage** — Add command-bus coverage for local and
+  external create, update, delete, no-op, workspace-boundary, and
+  credential-cleanup flows.
+
+### Changed
+
+- **Device-local connection saves** — Keep local-only configuration and
+  credential-reference changes out of cloud mutation streams while still
+  allowing local activity to be recorded.
+- **Connection CRUD paths** — Separate shared connection fields from
+  device-local state for SSH and Database persistence, so revisions and sync
+  status advance only when shared fields change.
+
+### Security
+
+- **Workspace-scoped connection handling** — Reject cross-workspace connection
+  operations and keep credential references device-local, preserving compatible
+  local credentials when external connection data is applied.
+
+## [0.6.0] - 2026-08-21
+
+Feature release adding the SSH task domain foundation for optional edition sync
+and expanding MCP registry and response contracts, with workspace and
+credential-scope hardening.
+
+### Added
+
+- **SSH task sync-domain foundation** — Add revisioned task and task-step
+  snapshots, tombstones, external apply, workspace-delete cascade handling,
+  and local-storage migrations. This is a local command-bus foundation and
+  does not enable hosted sync by itself.
+- **Connection-aware task entities** — Include connection context when
+  listing SSH task entities so task-domain consumers can resolve their owning
+  connection.
+- **Ephemeral MCP registry mode** — Support an in-memory registry for MCP
+  processes that should not persist registry state, with container packaging
+  and registry smoke coverage.
+
+### Changed
+
+- **MCP response contracts** — Keep `structuredContent` aligned with declared
+  `outputSchema` values and pass catalog context through `db.query_readonly`.
+- **Workspace deletion consistency** — Cascade soft-delete tombstones to live
+  API, Workspace, and SSH task children while preserving the caller-provided
+  deletion timestamp.
+- **SSH task persistence and transfer paths** — Preserve step-position and
+  paging metadata and keep literal transfer paths device-local.
+- **SSH terminal suggestions and history** — Stabilize command tracking and
+  suggestion behavior.
+
+### Fixed
+
+- **Linux MCP build** — Enable the required Tokio macros so `unfour-mcp` builds
+  on Linux.
+
+### Security
+
+- **Workspace-scoped database credentials** — Keep connection passwords and
+  credential references scoped to the current workspace.
+
+## [0.5.0] - 2026-08-18
+
+Feature release adding persistent SSH command history and history-aware MCP and
+terminal workflows, while extending the API domain foundation for optional
+edition sync.
+
+### Added
+
+- **SSH command history and suggestions** — Persist workspace- and
+  connection-scoped commands after remote echo, retain a bounded local history,
+  and show prefix-based suggestions while typing at detected shell prompts.
+  Arrow keys continue to reach the remote shell whenever the suggestion popup
+  is closed.
+- **MCP SSH history inspection** — Add the read-only
+  `unfour.ssh.list_history` tool with workspace, connection, text, time-range,
+  and result-limit filters so an agent can inspect recent commands and draft a
+  reusable SSH task for explicit user confirmation.
+- **API sync-domain coverage** — Add revisioned snapshots and external-apply
+  handling for API collections, folders, and saved requests. This extends the
+  local command-bus foundation for optional edition sync; it does not enable a
+  hosted sync service by itself.
+
+### Changed
+
+- **Terminal history interaction** — Suggestions use an explicit popup:
+  Up/Down selects an item, Tab or click inserts it, Escape dismisses it, and
+  Enter always submits the user's current line.
+- **Development hooks** — Install lefthook during `pnpm install` and format
+  staged Rust and TypeScript files before commits.
+- **Module responsibility splits** — Split oversized SSH task, MCP task,
+  Workspace external-apply, Database controller, SSH Terminal, and API domain
+  modules into focused files without changing their package ownership.
+
+### Fixed
+
+- **API external apply resilience** — Make collection, folder, and request
+  apply behavior more robust around missing parents, rollback, OpenAPI import,
+  and locally preserved redacted values.
+
+### Security
+
+- **History and API snapshot redaction** — Exclude password-prompt input and
+  conservatively redact sensitive SSH commands. Redact credentials in API
+  auth, headers, query parameters, URLs, JSON bodies, and form bodies while
+  preserving existing local secrets when redacted snapshots are applied.
+
+## [0.4.0] - 2026-08-11
+
+Feature release extending the local MCP workflow with workspace variables and
+SSH task automation.
+
+### Added
+
+- **MCP workspace variables and SSH tasks** — Add policy-aware workspace-global
+  variable CRUD and complete SSH task management, execution, run inspection,
+  cancellation, and cleanup tools over the existing command bus, including
+  confirmation handshakes and LLM-facing masking.
+
+### Changed
+
+- **SSH Task workflow** — Add manual ordering and drag-and-drop task reordering,
+  workspace/environment variable defaults, bounded live event handling, and
+  cached run transcripts for more stable task execution.
+- **Release and storage contracts** — Harden Stable/Test channel handling,
+  release identity checks, and CI packaging safeguards for the NSIS sidecar
+  lifecycle.
+
+### Security
+
+- **SSH task secret handling** — Mark task inputs as secret when requested and
+  redact them from task output, errors, persisted logs, and MCP responses.
+
+## [0.3.0] - 2026-07-30
+
+Release candidate adding API request scripting and the transactional Workspace
+domain foundation for future sync, together with desktop reliability and
+workflow improvements.
+
+### Added
+
+- **API request scripts** — Save and run JavaScript before a request and after
+  its response. Pre-request scripts can adjust the outgoing request and work
+  with workspace or environment variables; post-response scripts can inspect
+  responses, record tests, and write to a dedicated Console. Script status,
+  timing, test results, and errors are shown in the response panel, and script
+  definitions survive request persistence and OpenAPI import/export.
+- **Transactional Workspace domain foundation** — Add revisioned Workspace,
+  variable, and environment mutations; snapshots and tombstones; external
+  apply support; and transaction-scoped hooks for edition-level sync
+  composition. This is the local domain foundation and does not by itself
+  enable a hosted sync service.
+- **Isolated storage profiles** — Support stable, development, and test data
+  roots, plus an explicit absolute data-directory override, while preserving
+  the existing `~/.unfour` layout for stable installations without migration.
+- **SSH terminal clipboard menu** — Add right-click actions for Copy, Paste,
+  Paste Selected Text, and Select All, with platform-appropriate shortcuts.
+
+### Changed
+
+- **Workspace mutation consistency** — Route Workspace, variable, and
+  environment writes through one transactional command path shared by desktop
+  and MCP adapters. Active Workspace/environment selection, last-opened time,
+  and default Workspace remain device-local preferences rather than sync
+  mutations.
+- **Edition extension surfaces** — Add app-shell hooks for Workspace actions,
+  decorations, and variable decorations so edition-specific sync UI can
+  integrate without moving business logic into the shell.
+
+### Fixed
+
+- **Windows installer with running MCP clients** — Detect and stop the
+  `unfour-mcp` sidecar during NSIS install or uninstall, avoiding a stalled file
+  replacement when an MCP client still holds the executable.
+- **Database row actions** — Keep the row delete action visible when table
+  editing becomes available after the initial grid layout.
+
+## [0.2.0] - 2026-07-22
+
+Minor release focused on SSH file transfer and task automation, shared workspace
+variables, and multi-statement Database execution.
+
+### Added
+
+- **SSH SFTP remote files** — Browse remote directories, transfer files, and manage
+  remote paths from a dedicated Files panel with context menus, multi-select, and
+  drag-and-drop upload. The SSH sidebar adds Connections / Files / Tasks modes.
+- **SSH Task automation** — Create and run multi-step SSH tasks (command, upload,
+  download) with workspace-scoped templates, local path bindings, run history,
+  streamed transcripts, and Save / Run editor UX. Run placeholders can prefill
+  from the active workspace environment; executed commands are echoed in the run
+  output.
+- **Shared workspace variables** — Promote API environments to workspace-scoped
+  variables with title-bar active-environment switching and a dedicated
+  Environments editor (including dirty-leave confirmation). API request
+  resolution overlays workspace defaults.
+- **Database multi-statement Run** — Split editor SQL on semicolons and run
+  Current / All statements sequentially, showing multiple result sets as
+  sub-tabs.
+
+### Fixed
+
+- **Database table preview** — Stabilize table preview loading and remove
+  placeholder loading rows that could flash incorrect grid content.
+
+### Changed
+
+- **API environments ownership** — Environment CRUD and storage move out of the
+  API Client path into shared workspace variables; API Client consumes the
+  shared workspace active environment.
+
+### Docs
+
+- Updated architecture docs for workspace variables package boundaries, data
+  storage, and project structure.
+- Updated SSH Terminal and API Client package docs for the new surfaces.
+
+## [0.1.2] - 2026-07-20
+
+Feature and reliability release focused on API interoperability, Database row
+editing, and MCP/SSH stability.
+
+### Added
+
+- **OpenAPI collection export** — Export API collections as OpenAPI 3.1 from the
+  collection toolbar, with shared dialog and tree actions in the API Client.
+- **OpenAPI YAML import** — Import OpenAPI YAML into API collections through the
+  http-engine OpenAPI import path.
+- **Database table row editing** — Edit table rows with confirmation gating,
+  optimistic concurrency checks, and bind-parameter SQL updates.
+- **MCP API environment CRUD** — Manage API environments through MCP tools over
+  the command bus.
+- **Named secret operations** — Secret store supports named secret read/write
+  helpers for credential-reference workflows.
+- **Data grid UX** — Column resizing and JSON preview improvements in the shared
+  data table / Database table grid.
+
+### Fixed
+
+- **SSH failed sessions** — Failed SSH session tabs and connection errors are
+  preserved instead of being discarded silently.
+- **MCP idle shutdown** — Idle shutdown is disabled by default so long-lived MCP
+  clients are not interrupted unexpectedly.
+
+### Changed
+
+- **Database workspace controller** — Split Database page orchestration into
+  dedicated hooks and connection/tree helpers while preserving existing query
+  and schema flows.
+
+### Refactored
+
+- Split oversized backend modules into focused directories across
+  `database-engine`, `http-engine` (api_client), `ssh-engine`,
+  `unfour-command-bus`, and `unfour-mcp` tool handlers. Behavior is unchanged
+  aside from the features listed above.
+- Removed obsolete workspace implementation leftovers from the earlier
+  workspace boundary cleanup.
+
+### Docs
+
+- Updated README screenshots and product overview copy for the current desktop
+  modules.
+- Documented MCP environment tools and idle-shutdown default in MCP docs.
+
+## [0.1.1] - 2026-07-13
+
+Maintenance and polish release following the 0.1.0 public launch.
+
+### Added
+
+- **Desktop extension slots** — The app shell now exposes module mount surfaces
+  and extension slots (`packages/app-shell/src/extensions.ts`), enabling future
+  pluggable desktop features without touching core layout code.
+- **Release `core_commit` identity** — App system info and the About panel now
+  surface the built `core_commit`, and the Community release identity config is
+  unified across the build pipeline (`release.yml`, `build.rs`, `app.rs`).
+- **Generic deep-link runtime support** — Deep links now resolve at runtime
+  without hardcoded scheme handling.
+- **i18n resource loading** — Extended the shared i18n provider to load
+  additional resource bundles and added provider tests.
+
+### Changed
+
+- **Windows distribution** — The build now packages only the NSIS installer and
+  drops the MSI requirement, simplifying the upgrade story (see
+  `docs/release/distribution.md`).
+
+### Fixed
+
+- **Settings dialog** — Enlarged the settings window and removed the MCP tab
+  height flash on open.
+
+### Refactored
+
+- **File-size discipline** — Split oversized source files into module
+  directories across `unfour-core` (models), `unfour-mcp` (ssh tools),
+  `workspace-engine`, `api-client`, `command-client` (types), and `packages/ui`
+  (shell, tree-view). Behavior is unchanged; this improves maintainability and
+  keeps the CI large-file gate green.
+- **Shared styles** — Moved global styles out of `apps/desktop/src/styles.css`
+  into dedicated `packages/app-shell/src/styles` modules (animations, host,
+  index) and tightened the shared-token checks.
+
+### Docs
+
+- Marked API, SQLite, SSH, PostgreSQL, MySQL, and MCP release-verification
+  checks as PASS.
+- Updated README and distribution/release documentation to reflect the NSIS-only
+  Windows packaging.
+
+## [0.1.0] - 2026-07-09
+
+First public release.
+
+### Added
+
+- **API Client** — Compose, send, save, and inspect HTTP requests with workspace
+  environments and redacted history.
+- **SSH Terminal** — Manage SSH connections and terminal sessions with split
+  panes, host-key trust, and redacted log export.
+- **Database** — Manage connections, browse schemas, run SQL with confirmation
+  guardrails, and preview query results.
+- **Workspace** — Scope requests, environments, connections, activity, tabs, and
+  layout to a local workspace with unique names and per-workspace persistence.
+- **Local MCP server** — Expose safe local diagnostic tools (API replay, SSH
+  connection) to MCP clients over the command bus.
+- **App shell & platform** — Single-instance app, settings window, structured
+  local logs, centralized design tokens, and shared i18n.
+
+### Security
+
+- Credentials stored as references only; sensitive headers redacted in history,
+  activity, and logs; keychain purged on connection delete; MCP tools reject
+  forbidden write/control operations.
+
+### Known limitations
+
+- Signing is not yet complete; unsigned artifacts may trigger OS warnings.
+- Windows distributes both NSIS `.exe` and MSI `.msi` for the same version. NSIS
+  is recommended for ordinary users; MSI is available for MSI preference or
+  software deployment management. Choose one format because installing both
+  may create duplicate shortcuts or uninstall entries and confuse upgrades.
+- Cross-format detection, automatic uninstall, and NSIS/MSI cross-upgrade are
+  not implemented at this stage.
+- macOS Apple Silicon and Intel packages are real-device verified, but remain
+  unsigned and unnotarized; Gatekeeper may block them.
+- Linux artifacts remain experimental/unverified until real-device smoke checks
+  are complete.
+
+[0.10.0]: https://github.com/zyqzyq/Unfour/compare/v0.9.6...v0.10.0
+[0.9.6]: https://github.com/zyqzyq/Unfour/releases/tag/v0.9.6
+[0.9.5]: https://github.com/zyqzyq/Unfour/releases/tag/v0.9.5
+[0.9.4]: https://github.com/zyqzyq/Unfour/releases/tag/v0.9.4
+[0.9.3]: https://github.com/zyqzyq/Unfour/releases/tag/v0.9.3
+[0.9.2]: https://github.com/zyqzyq/Unfour/releases/tag/v0.9.2
+[0.9.1]: https://github.com/zyqzyq/Unfour/releases/tag/v0.9.1
+[0.9.0]: https://github.com/zyqzyq/Unfour/releases/tag/v0.9.0
+[0.8.0]: https://github.com/zyqzyq/Unfour/releases/tag/v0.8.0
+[0.7.0]: https://github.com/zyqzyq/Unfour/releases/tag/v0.7.0
+[0.6.0]: https://github.com/zyqzyq/Unfour/releases/tag/v0.6.0
+[0.5.0]: https://github.com/zyqzyq/Unfour/releases/tag/v0.5.0
+[0.4.0]: https://github.com/zyqzyq/Unfour/releases/tag/v0.4.0
+[0.3.0-rc.1]: https://github.com/zyqzyq/Unfour/releases/tag/v0.3.0-rc.1
+[0.2.0]: https://github.com/zyqzyq/Unfour/releases/tag/v0.2.0
+[0.1.2]: https://github.com/zyqzyq/Unfour/releases/tag/v0.1.2
+[0.1.1]: https://github.com/zyqzyq/Unfour/releases/tag/v0.1.1
+[0.1.0]: https://github.com/zyqzyq/Unfour/releases/tag/v0.1.0

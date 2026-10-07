@@ -1,0 +1,29 @@
+# Legacy v1.x package — publish only on core-v* tags.
+# Not part of AgentSociety2 active CI/security scope (see .github/agentsociety2-scope.yml).
+
+name: Upload Python Package - Agentsociety
+
+on:
+  push:
+    tags: ["core-v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    # Environment and permissions trusted publishing.
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Build frontend
+        run: |
+          bash scripts/rebuild_frontend.sh
+      - uses: astral-sh/setup-uv@v10.1.0
+      - run: cd packages/agentsociety && uv build
+      - run: cd packages/agentsociety && uv publish --trusted-publishing always

@@ -1,0 +1,613 @@
+from __future__ import annotations
+
+import argparse
+import importlib
+import importlib.util
+import json
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+from agentic_swmm.agent.flag_naming import (
+    register_example_flag,
+    register_quiet_flag,
+)
+from agentic_swmm.diagnostics.doctor_report import (
+    collect_llm_provider_status,
+    collect_memory_store_status,
+    collect_optout_status,
+    collect_sessions_db_status,
+    group_identical_warns,
+    grouped_warn_to_dict,
+    llm_provider_status_to_dict,
+    memory_store_status_to_dict,
+    optout_status_to_dict,
+    render_grouped_warns_section,
+    render_llm_provider_section,
+    render_memory_stores_section,
+    render_runtime_knobs_section,
+)
+from agentic_swmm.diagnostics.fixes import (
+    apply_fix_actions,
+    collect_fix_actions,
+    fix_action_to_dict,
+)
+from agentic_swmm.config import mcp_registry_path
+from agentic_swmm.utils.paths import repo_root, resolve_memory_dir, resource_path, resource_root
+
+
+_DOCTOR_EXAMPLE = "aiswmm doctor --fix --yes"
+
+
+def _module_available(name: str) -> bool:
+    """True only when the module actually imports.
+
+    find_spec() alone was a lie detector that could not detect lies: it
+    answers "is this package on disk", not "does it work". A venv carrying
+    numpy binaries built for another Python (cp311 wheels under cpython-312,
+    which is what happens when `python -m venv` is re-run over an existing
+    venv with a different interpreter) has a perfectly findable spec and
+    raises ImportError on use. doctor printed "numpy - importable OK" while
+    every plot in the product failed.
+    """
+    return _module_import_error(name) is None
+
+
+def _module_import_error(name: str) -> str | None:
+    """None when ``name`` imports, else a one-line reason."""
+    try:
+        importlib.import_module(name)
+    except BaseException as exc:  # a broken C extension can raise anything
+        first = str(exc).strip().splitlines()
+        return first[0][:200] if first else exc.__class__.__name__
+    return None
+
+
+def _swmm_version() -> str | None:
+    exe = _which_swmm5()
+    if not exe:
+        return None
+    env = os.environ.copy()
+    env["PATH"] = f"{Path(exe).parent}{os.pathsep}{env.get('PATH', '')}"
+    proc = subprocess.run([exe, "--version"], capture_output=True, text=True, env=env)
+    text = (proc.stdout + "\n" + proc.stderr).strip()
+    return text or "available"
+
+
+def _which_swmm5() -> str | None:
+    # Prefer the explicit override and the installer's fixed location
+    # ($AISWMM_CONFIG_DIR/swmm, default ~/.aiswmm/swmm) so doctor agrees with the
+    # runner's resolve_swmm5() regardless of the user's shell PATH, then fall
+    # back to PATH and the legacy repo .local/bin slot.
+    override = os.environ.get("AISWMM_SWMM5")
+    if override and Path(override).exists():
+        return override
+    config_dir = Path(os.environ.get("AISWMM_CONFIG_DIR") or (Path.home() / ".aiswmm"))
+    for name in ("swmm5", "swmm5.exe", "runswmm", "runswmm.exe"):
+        candidate = config_dir / "swmm" / name
+        if candidate.exists():
+            return str(candidate)
+    path_hit = shutil.which("swmm5")
+    if path_hit:
+        return path_hit
+    local_bin = repo_root() / ".local" / "bin"
+    for name in ("swmm5.exe", "runswmm.exe", "swmm5.cmd"):
+        candidate = local_bin / name
+        if candidate.exists():
+            return str(candidate)
+    return None
+
+
+def _worktree_install_detail(root: Path) -> str | None:
+    """Return a WARN detail string when ``root`` looks like a worktree.
+
+    Two signals (either is enough):
+
+    * The path contains ``.claude/worktrees/`` — Claude Code's worktree
+      layout. This is the common footgun: ``pip install -e .`` was run
+      from inside a temporary worktree and the runtime stays pinned to
+      that branch's snapshot.
+    * ``<root>/.git`` is a file (not a directory) — the canonical git
+      worktree marker that points into another ``.git`` directory.
+
+    Returns ``None`` for a normal checkout. Returns the WARN detail
+    string (with remediation) otherwise.
+    """
+
+    posix = root.as_posix()
+    if ".claude/worktrees/" in posix or _is_git_worktree(root):
+        return (
+            f"editable install points to a worktree at {root}. "
+            "Re-run 'pip install -e .' from the main checkout to sync "
+            "fixes."
+        )
+    return None
+
+
+def _mcp_json_drift(root: Path) -> list[tuple[str, str]]:
+    """Yield ``(server_name, detail)`` pairs for drifted MCP servers.
+
+    Reads ``~/.aiswmm/mcp.json`` (or whatever ``AISWMM_CONFIG_DIR``
+    overrides to) and for each server entry resolves the embedded
+    launcher path. If the launcher is **not** under the active repo
+    root, that server has drifted and gets a WARN row.
+
+    Returns an empty list when mcp.json is absent or unreadable —
+    that's the typical pre-``aiswmm setup`` state, not a drift.
+    """
+
+    try:
+        path = mcp_registry_path()
+    except Exception:  # pragma: no cover - defensive
+        return []
+    if not path.exists():
+        return []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    records = payload.get("mcp_servers")
+    if not isinstance(records, list):
+        return []
+    try:
+        active_root = root.resolve()
+    except OSError:  # pragma: no cover - defensive
+        active_root = root
+    drifted: list[tuple[str, str]] = []
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        name = str(record.get("name", "?"))
+        launcher = _record_launcher(record)
+        if launcher is None:
+            continue
+        try:
+            launcher_resolved = launcher.resolve()
+        except OSError:
+            launcher_resolved = launcher
+        if _is_under(launcher_resolved, active_root):
+            continue
+        drifted.append(
+            (
+                name,
+                (
+                    f"mcp.json routes {name} to a different checkout "
+                    f"({launcher_resolved}). Re-run "
+                    f"'aiswmm setup --refresh-mcp' to align with the "
+                    f"active install, or sync that checkout manually."
+                ),
+            )
+        )
+    return drifted
+
+
+def _mcp_servers_without_deps(root: Path) -> list[str]:
+    """Names of bundled MCP servers whose ``node_modules`` is missing.
+
+    Live finding F-122 (2026-09-03, S55): two servers had never been
+    installed on the machine and every listing failed with "MCP process
+    ended before sending a complete line". This is a directory check, no
+    server is started.
+    """
+    mcp_root = root / "mcp"
+    if not mcp_root.is_dir():
+        return []
+    missing: list[str] = []
+    for server_dir in sorted(mcp_root.iterdir()):
+        if not (server_dir / "package.json").is_file():
+            continue
+        if not (server_dir / "node_modules").is_dir():
+            missing.append(server_dir.name)
+    return missing
+
+
+def _record_launcher(record: dict) -> Path | None:
+    """Best-effort extraction of an MCP server's launcher path.
+
+    Prefers the explicit ``launcher`` key (set by ``discover_mcp_servers``
+    today), then falls back to ``args[0]`` per the PRD's "embedded
+    absolute path" description.
+    """
+
+    raw = record.get("launcher")
+    if isinstance(raw, str) and raw:
+        return Path(raw)
+    args = record.get("args")
+    if isinstance(args, list) and args:
+        first = args[0]
+        if isinstance(first, str) and first:
+            return Path(first)
+    return None
+
+
+def _is_under(child: Path, parent: Path) -> bool:
+    try:
+        child.relative_to(parent)
+    except ValueError:
+        return False
+    return True
+
+
+def _is_git_worktree(root: Path) -> bool:
+    git_marker = root / ".git"
+    # A normal checkout has ``.git`` as a directory; a worktree has it
+    # as a file containing ``gitdir: <path-to-main-.git/worktrees/...>``.
+    return git_marker.is_file()
+
+
+def register(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    parser = subparsers.add_parser("doctor", help="Check local runtime dependencies.")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help=(
+            "Emit the full doctor report as JSON on stdout instead of "
+            "the human-readable sections. Useful for CI integration."
+        ),
+    )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help=(
+            "After printing the report, walk through the suggested "
+            "remediations (mcp.json refresh, bootstrap memory). Each "
+            "action prompts y/N unless --yes is set."
+        ),
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help=(
+            "When combined with --fix, apply remediations without "
+            "asking for confirmation. Safe for CI/automation."
+        ),
+    )
+    register_quiet_flag(parser)
+    register_example_flag(parser, example_text=_DOCTOR_EXAMPLE)
+    parser.set_defaults(func=main)
+
+
+def _memory_dir(root: Path) -> Path:
+    """The modeling-memory directory doctor inspects.
+
+    Honours ``AISWMM_MEMORY_DIR`` and, on a pip install, the packaged
+    resource root (live finding F-130, 2026-09-04: doctor read
+    site-packages/memory, which never exists, while ``aiswmm bootstrap
+    memory`` wrote under the packaged root).
+    """
+    return resolve_memory_dir()
+
+
+def _runs_dir(root: Path) -> Path:
+    """Resolve the active runs root.
+
+    Honours ``AISWMM_RUNS_ROOT`` for parity with ``aiswmm memory`` so a
+    user who redirects their runs directory sees the redirected
+    sessions.sqlite location in the doctor report.
+    """
+    override = os.environ.get("AISWMM_RUNS_ROOT")
+    if override:
+        return Path(override)
+    return root / "runs"
+
+
+#: Kept in one place; the tool handler owns the canonical value.
+_SWMMCANADA_PUBLIC_URL = "https://swmm.h2ox.me"
+
+
+def _swmmcanada_upstream_check() -> tuple[str, bool, str, bool]:
+    """One install-check row for the SWMMCanada upstream service.
+
+    Before this row, the only signal that ``AISWMM_SWMMCANADA_URL`` was
+    wrong or the service was down was ``fetch_swmm_from_canada`` failing
+    at call time. Unset stays a quiet OK (the upstream is optional);
+    when set, a 2 s ``GET /api/v1/healthz`` probe reports reachability.
+    """
+    from agentic_swmm.integrations.swmmcanada_runner import resolve_base_url
+
+    url = resolve_base_url()
+    if not url:
+        return (
+            "SWMMCanada upstream",
+            True,
+            # Name the endpoint. A row that says only "set AISWMM_SWMMCANADA_URL"
+            # leaves the reader, human or planner, to guess what to set it to,
+            # and the guess that came back was a localhost address copied from
+            # a stale hint.
+            "not configured (optional). Enable with "
+            f"AISWMM_SWMMCANADA_URL={_SWMMCANADA_PUBLIC_URL}, or run `aiswmm setup`",
+            False,
+        )
+    import urllib.error
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(f"{url}/api/v1/healthz", timeout=2.0) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        status = str(payload.get("status", "")) if isinstance(payload, dict) else ""
+        healthy = status == "ok"
+        detail = f"{url} healthy" if healthy else f"{url} answered but status={status!r}"
+        return ("SWMMCanada upstream", healthy, detail, False)
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        reason = getattr(exc, "reason", exc)
+        return (
+            "SWMMCanada upstream",
+            False,
+            f"{url} unreachable ({reason}); fetch_swmm_from_canada will fail until the service is up",
+            False,
+        )
+
+
+def _build_install_checks(root: Path) -> list[tuple[str, bool, str, bool]]:
+    """The historical install-checks block, factored so the JSON path
+    and the text path share one source of truth."""
+    checks: list[tuple[str, bool, str, bool]] = []
+    checks.append(("repo root", root.exists(), str(root), True))
+    worktree_detail = _worktree_install_detail(root)
+    if worktree_detail is not None:
+        checks.append(("editable install", False, worktree_detail, False))
+    for server_name, drift_detail in _mcp_json_drift(root):
+        checks.append(
+            (f"mcp.json: {server_name}", False, drift_detail, False)
+        )
+    for server_name in _mcp_servers_without_deps(resource_root()):
+        checks.append(
+            (
+                f"mcp deps: {server_name}",
+                False,
+                f"no node_modules under mcp/{server_name}; its tools cannot start. "
+                f"Run: bash {resource_root() / 'scripts' / 'install_mcp_deps.sh'} {server_name}",
+                False,
+            )
+        )
+    # The detailed per-provider key rows live in the dedicated
+    # "LLM provider" section (render_llm_provider_section). This compact
+    # install-check row reflects the *default* provider's key so a fresh
+    # install sees an accurate hint instead of a hard-coded OpenAI line.
+    from agentic_swmm.agent.provider_preflight import provider_key_present
+    from agentic_swmm.providers.selection import resolve_selection
+
+    default_provider = resolve_selection().route
+    from agentic_swmm.providers.routes import ROUTES
+
+    spec = ROUTES.get(default_provider)
+    default_key_env = (spec.key_env if spec is not None else "") or f"{default_provider} route"
+    default_key_present = provider_key_present(default_provider)
+    if spec is not None and not spec.key_env:
+        detail = "keyless local route"
+    elif default_key_present:
+        detail = "set"
+    else:
+        detail = (
+            f"not set; needed for the default '{default_provider}' planner provider "
+            f"(aiswmm login {default_provider})"
+        )
+    checks.append((default_key_env, default_key_present, detail, False))
+    checks.append(_swmmcanada_upstream_check())
+    node = shutil.which("node")
+    checks.append(
+        (
+            "node executable",
+            node is not None,
+            node or "not found; needed for MCP server launchers",
+            True,
+        )
+    )
+    swmm = _which_swmm5()
+    swmm_detail = (
+        f"{swmm}; {_swmm_version() or 'version unavailable'}"
+        if swmm
+        else "not found in ~/.aiswmm/swmm, on PATH, or repo .local/bin; "
+        "re-run the installer or see docs/installation.md to install the engine"
+    )
+    checks.append(("swmm5 executable", swmm is not None, swmm_detail, True))
+    for module in ("numpy", "matplotlib", "swmmtoolbox"):
+        reason = _module_import_error(module)
+        detail = "importable"
+        if reason is not None:
+            # "missing" was wrong for the case that actually bites: the package
+            # is present and unusable. Say which it is, and quote the reason.
+            found = importlib.util.find_spec(module) is not None
+            detail = (
+                f"installed but fails to import: {reason}; "
+                "re-run the installer to rebuild the virtualenv"
+                if found
+                else "missing"
+            )
+        checks.append((f"python module: {module}", reason is None, detail, True))
+    # Optional [anywhere] extra — swmm-anywhere skill is callable iff
+    # swmmanywhere is importable. We deliberately treat absence as INFO,
+    # not WARN, since the default pip install aiswmm intentionally omits
+    # the 27 heavy geo deps. Upstream attribution: SWMManywhere is © Imperial
+    # College London, BSD-3-Clause.
+    anywhere_installed = _module_available("swmmanywhere")
+    checks.append(
+        (
+            "swmm-anywhere extra",
+            anywhere_installed,
+            "installed (SWMManywhere by Imperial College London, BSD-3)"
+            if anywhere_installed
+            else (
+                "not installed; install with: pip install aiswmm[anywhere] "
+                "(wraps SWMManywhere by Imperial College London, BSD-3-Clause; "
+                "only needed if you want to synthesise networks from a bbox)"
+            ),
+            False,
+        )
+    )
+    # The Word deliverable is a headline capability (see the case study in
+    # cases/). python-docx ships with aiswmm since F-155 (2026-09-05; a plain
+    # `pip install aiswmm` on 0.9.4 could not write the advertised report).
+    # Still reported, never silent, not a required check (issue #347).
+    report_installed = _module_available("docx")
+    checks.append(
+        (
+            "swmm-report (python-docx)",
+            report_installed,
+            "installed (Word deliverables available)"
+            if report_installed
+            else (
+                "python-docx missing although it ships with aiswmm; reinstall with: "
+                "pip install --force-reinstall aiswmm (needed for Word report export; "
+                "the rest of the workflow runs without it)"
+            ),
+            False,
+        )
+    )
+    for path in (
+        Path("skills/swmm-runner/scripts/swmm_runner.py"),
+        Path("skills/swmm-experiment-audit/scripts/audit_run.py"),
+        Path("skills/swmm-plot/scripts/plot_rain_runoff_si.py"),
+    ):
+        # Resolve the SAME way the runtime does. `root / path` is source-tree
+        # only: on a pip install the scripts ship under the wheel's data dir,
+        # not under site-packages, so this check reported four core scripts
+        # MISSING on every pip install while the runtime happily executed them
+        # (caught 2026-08-11 by running doctor in a clean venv).
+        try:
+            full = resource_path(*path.parts)
+            present = full.exists()
+        except FileNotFoundError:
+            full = root / path
+            present = False
+        checks.append((str(path), present, str(full), True))
+    return checks
+
+
+def _checks_to_dicts(
+    checks: list[tuple[str, bool, str, bool]],
+) -> list[dict]:
+    return [
+        {
+            "name": name,
+            "passed": passed,
+            "detail": detail,
+            "required": required,
+        }
+        for (name, passed, detail, required) in checks
+    ]
+
+
+def main(args: argparse.Namespace) -> int:
+    root = repo_root()
+    install_checks = _build_install_checks(root)
+    install_check_dicts = _checks_to_dicts(install_checks)
+
+    memory_dir = _memory_dir(root)
+    memory_stores = collect_memory_store_status(memory_dir)
+    # Append the session database row (issue #204). Since 2026-09-06 it is
+    # memory.sqlite inside the store; it keeps its own collector because it
+    # renders row counts, not line counts.
+    memory_stores.append(collect_sessions_db_status(memory_dir))
+    optout_flags = collect_optout_status()
+    llm_provider = collect_llm_provider_status()
+
+    # Pull the non-passing rows into a WARN/MISSING bucket so the
+    # grouping can collapse identical-cause WARNs (PRD-08 audit #28).
+    warn_or_missing = [
+        d for d in install_check_dicts if not d["passed"]
+    ]
+    # Issue #212: CORRUPT / UNREADABLE memory stores must appear in
+    # the Issues section AND drive a non-zero exit code so CI health
+    # checks don't miss data-loss conditions. Project each into the
+    # install-check shape so the existing renderer / exit-code logic
+    # picks them up without a special case.
+    severe_memory_stores = [
+        s for s in memory_stores
+        if s.severity in {"CORRUPT", "UNREADABLE"}
+    ]
+    for store in severe_memory_stores:
+        warn_or_missing.append(
+            {
+                "name": f"memory store: {store.name}",
+                "passed": False,
+                "detail": (
+                    store.remediation
+                    or f"{store.severity.lower()} — run aiswmm memory repair-sessions"
+                ),
+                "required": True,
+            }
+        )
+    grouped = group_identical_warns(warn_or_missing)
+
+    report = {
+        "checks": install_check_dicts,
+        "memory_stores": memory_stores,
+        "optout_status": optout_flags,
+        "llm_provider": llm_provider,
+        "grouped_warns": grouped,
+    }
+
+    if getattr(args, "json", False):
+        payload = {
+            "checks": install_check_dicts,
+            "memory_stores": [
+                memory_store_status_to_dict(s) for s in memory_stores
+            ],
+            "optout_status": [
+                optout_status_to_dict(s) for s in optout_flags
+            ],
+            "llm_provider": llm_provider_status_to_dict(llm_provider),
+            "grouped_warns": [grouped_warn_to_dict(r) for r in grouped],
+        }
+        # When --fix is set we still print the fix-action candidates
+        # so a CI consumer can decide what to run.
+        if getattr(args, "fix", False):
+            payload["fix_actions"] = [
+                fix_action_to_dict(a) for a in collect_fix_actions(report)
+            ]
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        # Section 1 — Install.
+        print("Install:")
+        for name, passed, detail, required in install_checks:
+            status = "OK" if passed else ("MISSING" if required else "WARN")
+            # Skip rows that have been absorbed into a grouped WARN; the
+            # grouped section will display them.
+            if not passed:
+                continue
+            print(f"  {status:7} {name} - {detail}")
+        # Section 2 — Memory stores.
+        print()
+        print(render_memory_stores_section(memory_stores))
+        # Section 3 — Runtime knobs.
+        print()
+        print(render_runtime_knobs_section(optout_flags))
+        # Section 3b — LLM provider (PRD-09).
+        print()
+        print(render_llm_provider_section(llm_provider))
+        # Section 4 — Issues (grouped).
+        body = render_grouped_warns_section(grouped)
+        if body:
+            print()
+            print(body)
+        # Section 5 — Suggested actions.
+        fix_actions = collect_fix_actions(report)
+        if fix_actions and not getattr(args, "fix", False):
+            print()
+            print("Suggested actions (run `aiswmm doctor --fix` to apply):")
+            for action in fix_actions:
+                print(f"  - {action.label}: {' '.join(action.command)}")
+
+    # ---- --fix interactive remediation
+    if getattr(args, "fix", False):
+        actions = collect_fix_actions(report)
+        if not actions:
+            print("\nno remediable actions available.")
+        else:
+            print("\nApplying fixes:")
+            apply_fix_actions(actions, yes=getattr(args, "yes", False))
+
+    # Overall exit code: 0 iff every required install check passed AND
+    # no memory store is CORRUPT or UNREADABLE (issue #212 — CI health
+    # checks must fail on data-loss conditions, not just missing
+    # binaries). MISSING memory stores stay advisory because the
+    # bootstrap verbs create them lazily; only the destructive
+    # CORRUPT / UNREADABLE states demand operator action.
+    install_ok = all(
+        passed or not required
+        for (_, passed, _, required) in install_checks
+    )
+    memory_severe = bool(severe_memory_stores)
+    return 0 if install_ok and not memory_severe else 1

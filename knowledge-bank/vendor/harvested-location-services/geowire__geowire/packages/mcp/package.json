@@ -1,0 +1,66 @@
+{
+  "name": "@geowirehq/mcp",
+  "version": "0.6.2",
+  "mcpName": "io.github.geowire/geowire",
+  "description": "GeoWire MCP server — place search, geocoding, directions, isochrones & area analysis over 10 map providers (no API key to start)",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "claude",
+    "ai-agents",
+    "llm-tools",
+    "geocoding",
+    "places",
+    "maps",
+    "directions",
+    "isochrone",
+    "openstreetmap",
+    "geospatial",
+    "location-intelligence"
+  ],
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "geowire-mcp": "./dist/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@geowirehq/core": "workspace:*",
+    "@geowirehq/provider-baidu": "workspace:*",
+    "@geowirehq/provider-census": "workspace:*",
+    "@geowirehq/provider-foursquare": "workspace:*",
+    "@geowirehq/provider-google": "workspace:*",
+    "@geowirehq/provider-internal": "workspace:*",
+    "@geowirehq/provider-kakao": "workspace:*",
+    "@geowirehq/provider-naver": "workspace:*",
+    "@geowirehq/provider-nominatim": "workspace:*",
+    "@geowirehq/provider-osrm": "workspace:*",
+    "@geowirehq/provider-sdk": "workspace:*",
+    "@geowirehq/provider-yelp": "workspace:*",
+    "@geowirehq/schema": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

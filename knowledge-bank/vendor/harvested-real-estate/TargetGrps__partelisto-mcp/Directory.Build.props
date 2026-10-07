@@ -1,0 +1,36 @@
+<Project>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <RepositoryUrl>https://github.com/targetgrps/partelisto-mcp</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/targetgrps/partelisto-mcp</PackageProjectUrl>
+        <Company>targetgrps</Company>
+        <Copyright>targetgrps</Copyright>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(CI_BUILD)' == 'true'">
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+        <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+        <PackageReference Include="FluentAssertions"/>
+        <PackageReference Include="Moq"/>
+        <PackageReference Include="JunitXml.TestLogger"/>
+        <PackageReference Include="xunit"/>
+        <PackageReference Include="xunit.runner.visualstudio">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.collector">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+</Project>

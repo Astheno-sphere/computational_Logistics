@@ -1,0 +1,52 @@
+rasterio package
+================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 2
+
+   rasterio.rio
+
+Submodules
+----------
+
+.. toctree::
+
+   rasterio.abc
+   rasterio.cache
+   rasterio.control
+   rasterio.coords
+   rasterio.crs
+   rasterio.drivers
+   rasterio.dtypes
+   rasterio.enums
+   rasterio.env
+   rasterio.errors
+   rasterio.features
+   rasterio.fill
+   rasterio.io
+   rasterio.mask
+   rasterio.merge
+   rasterio.plot
+   rasterio.profiles
+   rasterio.rpc
+   rasterio.sample
+   rasterio.session
+   rasterio.shutil
+   rasterio.stack
+   rasterio.tools
+   rasterio.transform
+   rasterio.vrt
+   rasterio.warp
+   rasterio.windows
+
+Module contents
+---------------
+
+.. automodule:: rasterio
+   :members:
+   :exclude-members: CRS, Env
+   :undoc-members:
+   :show-inheritance:

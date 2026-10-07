@@ -1,0 +1,70 @@
+import type {
+  ApiResponse,
+  ApiSavedRequest,
+  KeyValue,
+} from "@unfour/command-client";
+
+export type ApiResourceGroup = {
+  folder: string;
+  items: ApiSavedRequest[];
+};
+
+export type ApiRequestState =
+  | "new"
+  | "selected"
+  | "sending"
+  | "cancelling"
+  | "cancelled"
+  | "success"
+  | "failed"
+  | "network"
+  | "timeout";
+
+export type RequestParamsTab = "query" | "auth" | "headers" | "body" | "scripts" | "settings";
+export type ResponsePanelTab = "response" | "history";
+export type ResponseTab = "body" | "headers" | "cookies" | "timing" | "request" | "tests" | "console";
+export type ApiSplitDirection = "vertical" | "horizontal";
+export type ApiTabSource = "new" | "saved" | "history";
+export type ApiTabSaveState = "unsaved" | "saved" | "dirty" | "saving";
+export type ApiOpenIntent =
+  | { kind: "new"; nonce: number }
+  | { action?: "open" | "send"; kind: "saved"; nonce: number; requestId: string }
+  | { action?: "open" | "save"; historyId: string; kind: "history"; nonce: number };
+
+export type RequestBodyMode = "none" | "raw" | "form" | "multipart";
+export type RequestRawBodyType = "json" | "text";
+export type ApiAuthPlacement = "header" | "query";
+export type ApiAuthConfig =
+  | { type: "none" }
+  | { token: string; type: "bearer" }
+  | { password: string; type: "basic"; username: string }
+  | { addTo: ApiAuthPlacement; key: string; type: "api-key"; value: string };
+
+export type MultipartPart =
+  | { id: string; enabled: boolean; key: string; type: "text"; value: string }
+  | { id: string; enabled: boolean; key: string; type: "file"; fileName: string | null; filePath: string | null };
+
+export type RequestDraft = {
+  multipartParts: MultipartPart[];
+  auth: ApiAuthConfig;
+  body: string;
+  bodyMode: RequestBodyMode;
+  collectionId: string | null;
+  envVariables: KeyValue[];
+  formBody: KeyValue[];
+  headers: KeyValue[];
+  method: string;
+  name: string;
+  parentFolderId: string | null;
+  postResponseScript: string;
+  preRequestScript: string;
+  query: KeyValue[];
+  rawBodyType: RequestRawBodyType;
+  timeoutMs: number | null;
+  url: string;
+};
+
+export type ApiResponseSummary = {
+  response: ApiResponse | null;
+  responseCookies: KeyValue[];
+};

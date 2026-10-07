@@ -1,0 +1,45 @@
+---
+title: useTextSelection 用法与示例
+sidebar_label: useTextSelection
+description: "useTextSelection 是一个 React hook，通过 selectionchange 事件响应式地跟踪用户的文本选择，返回当前的 Selection 对象，没有选中内容时返回 null。"
+---
+# useTextSelection
+
+跟踪用户选中的文字
+
+`useTextSelection` 监听文档上的 `selectionchange` 事件，返回当前的 `Selection` 对象（如果没有选中内容则为 `null`）。返回的对象在用户选择、修改或清除页面上任何位置的文本选择时响应式更新。你可以在结果上调用 `.toString()` 获取选中的文本字符串。
+
+### 使用场景
+
+- 构建响应用户文本选择的注释或高亮工具
+- 当用户在编辑器中选择文本时显示浮动工具栏（粗体、斜体、链接）
+- 跟踪选中的文本用于搜索、复制或分享到社交功能
+
+### 注意事项
+
+- **文档范围**：hook 跟踪整个文档中的选择，而非特定元素。如需元素范围的行为，请检查选择的锚点或焦点节点进行过滤。
+- **仅浏览器**：`document.getSelection` 在 SSR 期间不可用。hook 在服务端返回 `null`。
+- 返回的 `Selection` 对象是浏览器的实时引用；其属性在重新渲染之间就地更新。
+
+## Usage
+
+```tsx live noInline
+
+function Demo() {
+  const selection = useTextSelection();
+
+  return (
+    <div style={{ padding: 40 }}>
+      <p>
+        在这里或页面上的任何地方选择一些文本，它将显示在下面
+      </p>
+
+      <div>选中的文本: {selection?.toString()}</div>
+    </div>
+  );
+};
+
+render(<Demo/>)
+```
+
+%%API%%

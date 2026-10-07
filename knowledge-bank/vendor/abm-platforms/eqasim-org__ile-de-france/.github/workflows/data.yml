@@ -1,0 +1,20 @@
+name: Tests if open data is properly accessible
+
+on:
+  schedule:
+  - cron: "0 10 * * 0" # every sunday 10am
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+    - name: Set up Python
+      uses: actions/setup-python@v7
+    - name: Verify availability of open data
+      shell: bash -el {0}
+      run: |
+        uv run scripts/verify_data.py

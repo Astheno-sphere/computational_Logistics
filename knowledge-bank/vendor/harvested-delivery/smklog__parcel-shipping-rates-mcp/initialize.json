@@ -1,0 +1,66 @@
+{
+  "protocolVersion": "2025-06-18",
+  "capabilities": {
+    "tools": {
+      "listChanged": false
+    },
+    "resources": {
+      "listChanged": false
+    },
+    "prompts": {
+      "listChanged": false
+    },
+    "extensions": {
+      "io.modelcontextprotocol/tasks": {}
+    }
+  },
+  "serverInfo": {
+    "name": "smklog-quotes",
+    "title": "SMKlog Parcel Shipping Rates",
+    "version": "1.4.0",
+    "description": "Live USPS, UPS, FedEx and DHL Express shipping rates for a parcel sent from a US address — inside the US, or to Canada, the UK, Germany or Australia — described in plain words. No scale, no account and no API key. Also reports how a checkout it prepared is going, tracks shipments bought on SMKlog and serves a monthly US parcel shipping price index.",
+    "websiteUrl": "https://smklog.com",
+    "icons": [
+      {
+        "src": "https://smklog.com/assets/icon-512.png",
+        "mimeType": "image/png",
+        "sizes": [
+          "512x512"
+        ]
+      },
+      {
+        "src": "https://smklog.com/assets/favicon.svg",
+        "mimeType": "image/svg+xml",
+        "sizes": [
+          "any"
+        ]
+      }
+    ]
+  },
+  "instructions": "Five tools. get_parcel_quote returns live shipping rates for a single parcel sent from a US origin — inside the US, or to Canada, the UK, Germany or Australia — across USPS, UPS and FedEx (plus DHL Express to Germany and Australia), from a plain-words item description (or exact dimensions). create_checkout_link turns one shipment into a prefilled checkout URL where the human pays for the shipping label; hand it the quote_id from get_parcel_quote and it reuses that quote instead of spending a second carrier call, and it returns a session_id. get_checkout_status takes that session_id and reports whether the human has paid and whether the label exists, with the tracking number once it does. track_parcel reports delivery status and scan events for a shipment whose label was bought on smklog.com. get_price_index returns the monthly SMKlog parcel shipping price index (a six-box basket priced to five US cities) for reference answers — reading it spends no quote allowance. Quotes are rate limited and cost real money to produce — call get_parcel_quote once per shipment, not per variation. SMKlog sells parcel labels only: a shipment past parcel limits or described as a pallet or freight load comes back as mode not_a_parcel with no rates (SMKlog does not arrange pallet or freight shipments), and more than one box comes back as mode multiple_boxes — one label per box, so quote each box on its own. Prices are checkout totals with the SMKlog fee inside; the fee is itemized only on the checkout receipt, and where the carrier publishes a counter price for the same parcel it is returned beside the rate so you can show what the person saves. Labels are purchased at https://smklog.com/assets/calculator.",
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "smklog-quotes",
+      "title": "SMKlog Parcel Shipping Rates",
+      "version": "1.4.0",
+      "description": "Live USPS, UPS, FedEx and DHL Express shipping rates for a parcel sent from a US address — inside the US, or to Canada, the UK, Germany or Australia — described in plain words. No scale, no account and no API key. Also reports how a checkout it prepared is going, tracks shipments bought on SMKlog and serves a monthly US parcel shipping price index.",
+      "websiteUrl": "https://smklog.com",
+      "icons": [
+        {
+          "src": "https://smklog.com/assets/icon-512.png",
+          "mimeType": "image/png",
+          "sizes": [
+            "512x512"
+          ]
+        },
+        {
+          "src": "https://smklog.com/assets/favicon.svg",
+          "mimeType": "image/svg+xml",
+          "sizes": [
+            "any"
+          ]
+        }
+      ]
+    }
+  }
+}

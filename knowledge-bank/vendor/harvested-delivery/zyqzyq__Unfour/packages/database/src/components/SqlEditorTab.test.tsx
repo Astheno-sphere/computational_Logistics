@@ -1,0 +1,381 @@
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { DatabaseConnection } from "@unfour/command-client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SqlEditorTab } from "./SqlEditorTab";
+
+const editorState = {
+  commands: [] as Array<{ handler: () => void; keybinding: number }>,
+  cursorOffset: 0,
+  notifySelection: () => undefined as void,
+  selection: "",
+};
+
+vi.mock("@monaco-editor/react", async () => {
+  const { useEffect, useRef } = await import("react");
+  return {
+    default: function MockEditor({
+      onChange,
+      onMount,
+      value,
+    }: {
+      onChange?: (value: string | undefined) => void;
+      onMount?: (editor: unknown, monaco: unknown) => void;
+      value?: string;
+    }) {
+      const onMountRef = useRef(onMount);
+      onMountRef.current = onMount;
+      useEffect(() => {
+        const editor = {
+          addCommand(keybinding: number, handler: () => void) {
+            editorState.commands.push({ handler, keybinding });
+          },
+          getModel: () => ({
+            getOffsetAt: () => editorState.cursorOffset,
+            getValueInRange: () => editorState.selection,
+          }),
+          getPosition: () => ({ column: 1, lineNumber: 1 }),
+          getSelection: () => ({ endColumn: 1, endLineNumber: 1, startLineNumber: 1, startColumn: 1 }),
+          layout: vi.fn(),
+          onDidChangeCursorSelection(listener: () => void) {
+            editorState.notifySelection = listener;
+            listener();
+            return { dispose: vi.fn() };
+          },
+        };
+        const monaco = {
+          KeyCode: { Enter: 4 },
+          KeyMod: { CtrlCmd: 1, Shift: 2 },
+          editor: { setTheme: vi.fn() },
+          languages: {
+            CompletionItemKind: { Field: 2, Struct: 1 },
+            registerCompletionItemProvider: () => ({ dispose: vi.fn() }),
+          },
+        };
+        onMountRef.current?.(editor, monaco);
+      }, []);
+      return (
+        <textarea
+          aria-label="sql editor"
+          onChange={(event) => onChange?.(event.target.value)}
+          value={value}
+        />
+      );
+    },
+  };
+});
+
+vi.mock("./sql-editor-theme", () => ({
+  configureSqlEditorThemes: vi.fn(),
+}));
+
+const savedSqlState = {
+  error: null as unknown,
+  isLoading: false,
+  remove: vi.fn(),
+  removePending: false,
+  save: vi.fn(),
+  saved: [] as Array<{
+    connectionId: string | null;
+    createdAt: string;
+    id: string;
+    name: string;
+    sql: string;
+    updatedAt: string;
+    workspaceId: string;
+  }>,
+  savePending: false,
+};
+
+vi.mock("../hooks/useSavedSql", () => ({
+  useSavedSql: () => savedSqlState,
+}));
+
+afterEach(cleanup);
+beforeEach(() => {
+  editorState.commands = [];
+  editorState.cursorOffset = 12;
+  editorState.notifySelection = () => undefined;
+  editorState.selection = "";
+  savedSqlState.error = null;
+  savedSqlState.isLoading = false;
+  savedSqlState.remove = vi.fn().mockResolvedValue([]);
+  savedSqlState.removePending = false;
+  savedSqlState.save = vi.fn().mockResolvedValue({ id: "sql-1" });
+  savedSqlState.saved = [];
+  savedSqlState.savePending = false;
+});
+
+const connection: DatabaseConnection = {
+  createdAt: "2026-01-01T00:00:00.000Z",
+  credentialRef: null,
+  database: null,
+  deletedAt: null,
+  driver: "sqlite",
+  host: null,
+  id: "conn-1",
+  name: "Local SQLite",
+  port: null,
+  readOnly: false,
+  remoteId: null,
+  revision: 1,
+  sqlitePath: "D:\\data\\app.sqlite",
+  sslMode: null,
+  syncStatus: "local",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  username: null,
+  workspaceId: "ws-1",
+};
+
+const MULTI_SQL = "SELECT 1;\nDELETE FROM t;\nSELECT 2;";
+const SELECTED_SQL = "DELETE FROM t;";
+
+function renderEditor(props: Partial<Parameters<typeof SqlEditorTab>[0]> = {}) {
+  const onOpenSavedSql = vi.fn();
+  const onRun = vi.fn();
+  const onSqlChange = vi.fn();
+  const onSqlSaved = vi.fn();
+  const onStop = vi.fn();
+  const view = render(
+    <SqlEditorTab
+      active
+      catalogOptions={[]}
+      connections={[connection]}
+      executePending={false}
+      onChangeQueryContext={vi.fn()}
+      onClearSql={vi.fn()}
+      onOpenSavedSql={onOpenSavedSql}
+      onRun={onRun}
+      onSelectConnection={vi.fn()}
+      onShowHistory={vi.fn()}
+      onSqlChange={onSqlChange}
+      onSqlSaved={onSqlSaved}
+      onStop={onStop}
+      pendingConfirmation={false}
+      queryCatalog={null}
+      querySchema={null}
+      schemaOptions={[]}
+      selectedConnectionId="conn-1"
+      sql={MULTI_SQL}
+      workspaceId="ws-1"
+      {...props}
+    />,
+  );
+  return { ...view, onOpenSavedSql, onRun, onSqlChange, onSqlSaved, onStop };
+}
+
+const savedSnippet = {
+  connectionId: "conn-1",
+  createdAt: "2026-01-01T00:00:00.000Z",
+  id: "sql-1",
+  name: "List users",
+  sql: "SELECT * FROM users;",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  workspaceId: "ws-1",
+};
+
+function setSelection(sql: string) {
+  editorState.selection = sql;
+  act(() => editorState.notifySelection());
+}
+
+describe("SQL editor run actions", () => {
+  it("runs the full editor SQL on Run All without cursor or selection", () => {
+    const { onRun } = renderEditor();
+    fireEvent.click(screen.getByRole("button", { name: "Run All" }));
+    expect(onRun).toHaveBeenCalledTimes(1);
+    expect(onRun).toHaveBeenCalledWith({ mode: "all" });
+  });
+
+  it("runs only the selection on Run Selected", () => {
+    const { onRun } = renderEditor();
+    setSelection(SELECTED_SQL);
+    fireEvent.click(screen.getByRole("button", { name: "Run Selected" }));
+    expect(onRun).toHaveBeenCalledTimes(1);
+    expect(onRun).toHaveBeenCalledWith({ sql: SELECTED_SQL });
+  });
+
+  it("disables Run Selected without a selection and does not send a request", () => {
+    const { onRun } = renderEditor();
+    const runSelected = screen.getByRole("button", { name: "Run Selected" });
+    expect(runSelected).toBeDisabled();
+    fireEvent.click(runSelected);
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
+  it("still runs the full editor SQL on Run All when a selection exists", () => {
+    const { onRun } = renderEditor();
+    setSelection(SELECTED_SQL);
+    fireEvent.click(screen.getByRole("button", { name: "Run All" }));
+    expect(onRun).toHaveBeenCalledWith({ mode: "all" });
+  });
+
+  it("disables both run buttons when SQL is empty", () => {
+    renderEditor({ sql: "   " });
+    expect(screen.getByRole("button", { name: "Run All" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Run Selected" })).toBeDisabled();
+  });
+
+  it("replaces both run buttons with Stop while execution is in progress", () => {
+    const { onRun, onStop } = renderEditor({ executePending: true });
+    expect(screen.queryByRole("button", { name: "Run All" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Run Selected" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Stop SQL execution" }));
+    expect(onStop).toHaveBeenCalledTimes(1);
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
+  it("resumes the stored batch from Confirm without rereading editor state", () => {
+    const { onRun } = renderEditor({ pendingConfirmation: true });
+    setSelection(SELECTED_SQL);
+    fireEvent.click(screen.getByRole("button", { name: "Confirm run" }));
+    expect(onRun).toHaveBeenCalledWith({ resume: true });
+    expect(screen.queryByRole("button", { name: "Run All" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Run Current" })).not.toBeInTheDocument();
+  });
+
+  it("does not confirm a pending dangerous run from editor shortcuts or Run buttons", () => {
+    const { onRun } = renderEditor({ pendingConfirmation: true });
+    setSelection(SELECTED_SQL);
+
+    expect(screen.queryByRole("button", { name: "Run All" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Run Selected" })).not.toBeInTheDocument();
+
+    const ctrlEnter = editorState.commands.find((command) => command.keybinding === 5);
+    const ctrlShiftEnter = editorState.commands.find((command) => command.keybinding === 7);
+    expect(ctrlEnter).toBeDefined();
+    expect(ctrlShiftEnter).toBeDefined();
+
+    act(() => {
+      ctrlEnter?.handler();
+      ctrlShiftEnter?.handler();
+    });
+
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
+  it("confirms only the stored pending SQL from the dedicated confirm action", () => {
+    const { onRun } = renderEditor({
+      pendingConfirmation: true,
+      sql: "DELETE FROM t; -- edited after the first run",
+    });
+    setSelection("SELECT 99;");
+
+    act(() => {
+      editorState.commands.find((command) => command.keybinding === 5)?.handler();
+      editorState.commands.find((command) => command.keybinding === 7)?.handler();
+    });
+    expect(onRun).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirm run" }));
+    expect(onRun).toHaveBeenCalledTimes(1);
+    expect(onRun).toHaveBeenCalledWith({ resume: true });
+    expect(onRun).not.toHaveBeenCalledWith({ mode: "all" });
+    expect(onRun).not.toHaveBeenCalledWith({ sql: "SELECT 99;" });
+  });
+
+  it("keeps Explain on current-statement / selection semantics", () => {
+    const { onRun } = renderEditor();
+    fireEvent.click(screen.getByRole("button", { name: "Explain" }));
+    expect(onRun).toHaveBeenCalledWith({
+      cursorOffset: 12,
+      explain: true,
+      mode: "current",
+      sql: undefined,
+    });
+    onRun.mockClear();
+    setSelection(SELECTED_SQL);
+    fireEvent.click(screen.getByRole("button", { name: "Explain" }));
+    expect(onRun).toHaveBeenCalledWith({
+      cursorOffset: 12,
+      explain: true,
+      mode: "current",
+      sql: SELECTED_SQL,
+    });
+  });
+
+  it("does not keep a Run Current dropdown", () => {
+    renderEditor();
+    expect(screen.queryByRole("button", { name: "Run Current" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Run options")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run All" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run Selected" })).toBeInTheDocument();
+  });
+});
+
+describe("SQL editor saved SQL", () => {
+  it("opens a saved snippet from the list dialog through onOpenSavedSql", async () => {
+    savedSqlState.saved = [savedSnippet];
+    const { onOpenSavedSql, onSqlChange } = renderEditor();
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: /Saved/ }));
+    fireEvent.click(await screen.findByTitle("SELECT * FROM users;"));
+
+    expect(onOpenSavedSql).toHaveBeenCalledWith(savedSnippet);
+    expect(onSqlChange).not.toHaveBeenCalled();
+  });
+
+  it("asks before deleting saved SQL and keeps it when cancelled", async () => {
+    savedSqlState.saved = [savedSnippet];
+    renderEditor();
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: /Saved/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete saved SQL List users" }));
+
+    expect(screen.getByRole("dialog", { name: "Delete saved query?" })).toHaveTextContent(
+      'Delete saved query "List users"? This cannot be undone.',
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(savedSqlState.remove).not.toHaveBeenCalled();
+  });
+
+  it("deletes saved SQL only after confirmation", async () => {
+    savedSqlState.saved = [savedSnippet];
+    renderEditor();
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: /Saved/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete saved SQL List users" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(savedSqlState.remove).toHaveBeenCalledWith("sql-1"));
+  });
+
+  it("updates the current tab baseline after a successful save", async () => {
+    const { onSqlSaved } = renderEditor({ sql: "SELECT 1;", queryCatalog: "analytics", querySchema: "audit" });
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Save SQL" }));
+    fireEvent.submit(screen.getByRole("button", { name: "Save" }).closest("form")!);
+
+    await waitFor(() => expect(savedSqlState.save).toHaveBeenCalled());
+    expect(savedSqlState.save).toHaveBeenCalledWith(expect.objectContaining({ connectionId: "conn-1", catalog: "analytics", schema: "audit" }));
+    expect(onSqlSaved).toHaveBeenCalledWith("SELECT 1;");
+  });
+
+  it("does not mark the tab saved when saving SQL fails", async () => {
+    savedSqlState.save = vi.fn().mockRejectedValue(new Error("disk full"));
+    const { onSqlSaved } = renderEditor({ sql: "SELECT 1;" });
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Save SQL" }));
+    fireEvent.submit(screen.getByRole("button", { name: "Save" }).closest("form")!);
+
+    await waitFor(() => expect(savedSqlState.save).toHaveBeenCalled());
+    expect(onSqlSaved).not.toHaveBeenCalled();
+  });
+});
+
+
+it("displays a restored context even before catalog/schema discovery completes", () => {
+  renderEditor({ queryCatalog: "analytics", querySchema: "audit", catalogOptions: ["app"], schemaOptions: ["public"] });
+  expect(screen.getByRole("combobox", { name: "Query database" })).toHaveValue("analytics");
+  expect(screen.getByRole("combobox", { name: "Query schema" })).toHaveValue("audit");
+});
+it("shows default search path instead of displaying an unselected first schema", () => {
+  renderEditor({ queryCatalog: "app", querySchema: null, catalogOptions: ["app"], schemaOptions: ["public", "audit"] });
+  expect(screen.getByRole("combobox", { name: "Query schema" })).toHaveValue("");
+  expect(screen.getByRole("option", { name: "Server default search path" })).toBeInTheDocument();
+});

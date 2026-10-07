@@ -1,0 +1,399 @@
+use super::*;
+
+// --- list_tables tests ---
+
+#[test]
+fn list_tables_returns_table_summaries() {
+    let registry = registry();
+    let result = registry
+        .call("unfour.db.list_tables", json!({ "connectionId": "conn-1" }))
+        .expect("should succeed");
+    crate::output_schema::assert_success_matches_output_schema(
+        &registry,
+        "unfour.db.list_tables",
+        &result,
+    );
+
+    let content = &result["structuredContent"];
+    assert_eq!(content["connectionId"], "conn-1");
+    assert_eq!(content["totalTables"], 5);
+    assert_eq!(content["count"], 5);
+    assert_eq!(content["truncated"], false);
+
+    let first = &content["tables"][0];
+    assert_eq!(first["name"], "users");
+    assert_eq!(first["catalog"], serde_json::Value::Null);
+    assert_eq!(first["schema"], "public");
+    assert_eq!(first["kind"], "table");
+    assert_eq!(first["columnCount"], 3);
+}
+
+#[test]
+fn list_tables_respects_limit() {
+    let result = registry()
+        .call(
+            "unfour.db.list_tables",
+            json!({ "connectionId": "conn-1", "limit": 2 }),
+        )
+        .expect("should succeed");
+
+    let content = &result["structuredContent"];
+    assert_eq!(content["count"], 2);
+    assert_eq!(content["totalTables"], 5);
+    assert_eq!(content["truncated"], true);
+}
+
+#[test]
+fn list_tables_filters_schema_in_adapter_contract() {
+    let result = registry()
+        .call(
+            "unfour.db.list_tables",
+            json!({
+                "connectionId": "conn-1", "schema": "analytics", "limit": 1
+            }),
+        )
+        .unwrap();
+    let content = &result["structuredContent"];
+    assert_eq!(content["count"], 1);
+    assert_eq!(content["totalTables"], 2);
+    assert_eq!(content["tables"][0]["schema"], "analytics");
+}
+
+#[test]
+fn list_tables_requires_connection_id() {
+    let result = registry().call("unfour.db.list_tables", json!({}));
+    assert!(result.is_err(), "should fail without connectionId");
+}
+
+#[test]
+fn list_tables_without_catalog_keeps_the_default_schema() {
+    let result = registry()
+        .call("unfour.db.list_tables", json!({ "connectionId": "conn-1" }))
+        .expect("should succeed");
+    assert_eq!(result["structuredContent"]["count"], 5);
+    assert!(result["structuredContent"]["tables"][0]["catalog"].is_null());
+}
+
+#[test]
+fn list_tables_passes_catalog_to_the_command_bus() {
+    let registry = registry();
+    let result = registry
+        .call(
+            "unfour.db.list_tables",
+            json!({ "connectionId": "conn-1", "catalog": "billing" }),
+        )
+        .expect("should succeed");
+    crate::output_schema::assert_success_matches_output_schema(
+        &registry,
+        "unfour.db.list_tables",
+        &result,
+    );
+    let content = &result["structuredContent"];
+    assert_eq!(content["count"], 1);
+    assert_eq!(content["tables"][0]["name"], "users");
+    assert_eq!(content["tables"][0]["catalog"], "billing");
+}
+
+#[test]
+fn list_tables_clamps_limit_to_500() {
+    let result = registry()
+        .call(
+            "unfour.db.list_tables",
+            json!({ "connectionId": "conn-1", "limit": 9999 }),
+        )
+        .expect("should succeed");
+
+    let content = &result["structuredContent"];
+    // We have 5 tables, limit clamped to 500, so all 5 returned.
+    assert_eq!(content["count"], 5);
+    assert_eq!(content["truncated"], false);
+}
+
+// --- describe_table tests ---
+
+#[test]
+fn describe_table_returns_columns() {
+    let registry = registry();
+    let result = registry
+        .call(
+            "unfour.db.describe_table",
+            json!({ "connectionId": "conn-1", "tableName": "users" }),
+        )
+        .expect("should succeed");
+    crate::output_schema::assert_success_matches_output_schema(
+        &registry,
+        "unfour.db.describe_table",
+        &result,
+    );
+
+    let content = &result["structuredContent"];
+    assert_eq!(content["connectionId"], "conn-1");
+    let table = &content["table"];
+    assert_eq!(table["name"], "users");
+    assert_eq!(table["catalog"], serde_json::Value::Null);
+    assert_eq!(table["schema"], "public");
+    assert_eq!(table["kind"], "table");
+    assert_eq!(table["columnCount"], 3);
+    assert!(table["ddl"].as_str().unwrap().contains("CREATE TABLE"));
+    assert_eq!(table["indexes"][0]["name"], "users_pkey");
+    assert_eq!(table["foreignKeys"][0]["name"], "users_ref");
+    assert_eq!(
+        table["capabilities"],
+        json!({
+            "indexes": true, "foreignKeys": true, "ddl": true
+        })
+    );
+
+    let id_col = &table["columns"][0];
+    assert_eq!(id_col["name"], "id");
+    assert_eq!(id_col["dataType"], "integer");
+    assert_eq!(id_col["nullable"], false);
+    assert_eq!(id_col["primaryKey"], true);
+}
+
+#[test]
+fn export_table_returns_only_managed_file_metadata() {
+    let registry = registry();
+    let arguments = json!({
+        "connectionId": "conn-1", "tableName": "users", "content": "data", "format": "csv"
+    });
+    let first = registry
+        .call("unfour.db.export_table", arguments.clone())
+        .unwrap();
+    assert_eq!(first["isError"], true);
+    let confirmation = crate::response::error_json(&first)["confirmation_text"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let mut confirmed = arguments;
+    confirmed["confirm"] = json!(true);
+    confirmed["confirmation_text"] = json!(confirmation);
+    let result = registry
+        .call("unfour.db.export_table", confirmed)
+        .expect("confirmed export");
+    crate::output_schema::assert_success_matches_output_schema(
+        &registry,
+        "unfour.db.export_table",
+        &result,
+    );
+    let content = &result["structuredContent"];
+    assert!(content["path"].as_str().unwrap().contains("exports"));
+    assert_eq!(content["rowCount"], 3);
+    assert_eq!(content["bytesWritten"], 42);
+    assert_eq!(content["format"], "csv");
+    assert_eq!(content.as_object().unwrap().len(), 4);
+    assert!(registry.call("unfour.db.export_table", json!({
+        "connectionId": "conn-1", "tableName": "users", "content": "data", "format": "csv", "destinationPath": "C:\\outside.csv"
+    })).is_err());
+}
+
+#[test]
+fn unbounded_data_export_requires_confirmation_bound_to_request() {
+    let registry = registry();
+    let arguments = json!({
+        "connectionId": "conn-1", "tableName": "users", "content": "structure-and-data",
+        "format": "sql", "columns": ["email"],
+        "filters": [{ "column": "id", "op": "eq", "values": [1] }]
+    });
+    let first = registry
+        .call("unfour.db.export_table", arguments.clone())
+        .unwrap();
+    let prompt = crate::response::error_json(&first);
+    assert_eq!(prompt["error"]["code"], "CONFIRMATION_REQUIRED");
+    assert_eq!(first["_meta"]["riskLevel"], "high");
+    let confirmation = prompt["confirmation_text"].as_str().unwrap();
+
+    let mut altered = arguments.clone();
+    altered["filters"][0]["values"] = json!([2]);
+    altered["confirm"] = json!(true);
+    altered["confirmationText"] = json!(confirmation);
+    let second = registry.call("unfour.db.export_table", altered).unwrap();
+    assert_eq!(
+        crate::response::error_json(&second)["error"]["code"],
+        "CONFIRMATION_REQUIRED"
+    );
+
+    let mut confirmed = arguments;
+    confirmed["confirm"] = json!(true);
+    confirmed["confirmationText"] = json!(confirmation);
+    let result = registry.call("unfour.db.export_table", confirmed).unwrap();
+    assert_eq!(result["isError"], false);
+}
+
+#[test]
+fn unbounded_data_export_requires_confirmation_in_full_access_and_read_only() {
+    for registry in [
+        ToolRegistry::with_command_bus(Arc::new(DbFailingCommandBus)),
+        ToolRegistry::with_command_bus(Arc::new(ProdDbStubCommandBus)),
+    ] {
+        let result = registry.call("unfour.db.export_table", json!({
+            "connectionId": "conn-1", "tableName": "users", "content": "data", "format": "csv"
+        })).unwrap();
+        assert_eq!(
+            crate::response::error_json(&result)["error"]["code"],
+            "CONFIRMATION_REQUIRED"
+        );
+    }
+}
+
+#[test]
+fn structure_only_and_bounded_data_exports_do_not_require_confirmation() {
+    let registry = registry();
+    for arguments in [
+        json!({ "connectionId": "conn-1", "tableName": "users", "content": "structure", "format": "sql" }),
+        json!({ "connectionId": "conn-1", "tableName": "users", "content": "data", "format": "csv", "limit": 1 }),
+        json!({ "connectionId": "conn-1", "tableName": "users", "content": "structure-and-data", "format": "sql", "limit": 1 }),
+    ] {
+        let result = registry.call("unfour.db.export_table", arguments).unwrap();
+        assert_eq!(result["isError"], false);
+    }
+}
+
+#[test]
+fn export_table_accepts_columns_filters_and_limit() {
+    let registry = registry();
+    let columns = registry
+        .call(
+            "unfour.db.export_table",
+            json!({
+                "connectionId": "conn-1",
+                "tableName": "users",
+                "content": "data",
+                "format": "csv",
+                "columns": ["email"],
+                "limit": 1
+            }),
+        )
+        .expect("column export");
+    assert_eq!(columns["structuredContent"]["rowCount"], 1);
+
+    let filtered = registry
+        .call(
+            "unfour.db.export_table",
+            json!({
+                "connectionId": "conn-1",
+                "tableName": "users",
+                "content": "data",
+                "format": "json",
+                "filters": [{ "column": "data_id", "op": "in", "values": [2, 3] }],
+                "limit": 2
+            }),
+        )
+        .expect("filtered export");
+    assert_eq!(filtered["structuredContent"]["rowCount"], 2);
+
+    let limited = registry
+        .call(
+            "unfour.db.export_table",
+            json!({
+                "connectionId": "conn-1",
+                "tableName": "users",
+                "content": "structure-and-data",
+                "format": "sql",
+                "columns": ["email"],
+                "filters": [{ "column": "data_id", "op": "eq", "values": ["2"] }],
+                "limit": 2
+            }),
+        )
+        .expect("limited export");
+    assert_eq!(limited["structuredContent"]["rowCount"], 2);
+    assert!(registry
+        .call(
+            "unfour.db.export_table",
+            json!({
+                "connectionId": "conn-1",
+                "tableName": "users",
+                "content": "data",
+                "format": "csv",
+                "where": "data_id IN (1)"
+            }),
+        )
+        .is_err());
+}
+
+#[test]
+fn database_execution_error_includes_sqlstate_and_logs_as_error() {
+    let result = registry()
+        .call(
+            "unfour.db.query_readonly",
+            json!({ "connectionId": "conn-1", "sql": "SELECT __db_error__" }),
+        )
+        .expect("structured error");
+    assert_eq!(result["isError"], true);
+    assert_eq!(crate::server::tool_result_log_status(&result), "error");
+    let payload = crate::response::error_json(&result);
+    assert_eq!(payload["error"]["code"], "DATABASE_ERROR");
+    assert_eq!(
+        payload["error"]["message"],
+        "The command-bus database query operation failed."
+    );
+    assert_eq!(payload["error"]["details"]["sqlState"], "42P01");
+    assert_eq!(
+        payload["error"]["details"]["databaseMessage"],
+        "relation \"missing\" does not exist"
+    );
+    assert!(!payload.to_string().contains("super-secret"));
+}
+
+#[test]
+fn export_error_returns_safe_reason_in_mcp_payload() {
+    let result = registry()
+        .call(
+            "unfour.db.export_table",
+            json!({
+                "connectionId": "conn-1", "tableName": "missing_ddl",
+                "content": "structure", "format": "sql"
+            }),
+        )
+        .unwrap();
+    let payload = crate::response::error_json(&result);
+    assert_eq!(payload["error"]["code"], "UNSUPPORTED_OPERATION");
+    assert_eq!(
+        payload["error"]["message"],
+        "The table export operation failed."
+    );
+    assert_eq!(
+        payload["error"]["details"]["reason"],
+        "DDL is not available for this table"
+    );
+}
+
+#[test]
+fn describe_table_with_schema_filter() {
+    let result = registry()
+        .call(
+            "unfour.db.describe_table",
+            json!({ "connectionId": "conn-1", "tableName": "events", "schema": "analytics" }),
+        )
+        .expect("should succeed");
+
+    let content = &result["structuredContent"];
+    assert_eq!(content["table"]["name"], "events");
+    assert_eq!(content["table"]["schema"], "analytics");
+    assert_eq!(content["table"]["kind"], "view");
+}
+
+#[test]
+fn describe_table_not_found_returns_error() {
+    let result = registry()
+        .call(
+            "unfour.db.describe_table",
+            json!({ "connectionId": "conn-1", "tableName": "nonexistent" }),
+        )
+        .expect("should return error result");
+
+    assert_eq!(result["isError"], true);
+    assert_eq!(
+        crate::response::error_json(&result)["error"]["code"],
+        "TABLE_NOT_FOUND"
+    );
+}
+
+#[test]
+fn describe_table_requires_table_name() {
+    let result = registry().call(
+        "unfour.db.describe_table",
+        json!({ "connectionId": "conn-1" }),
+    );
+    assert!(result.is_err(), "should fail without tableName");
+}

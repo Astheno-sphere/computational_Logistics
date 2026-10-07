@@ -1,0 +1,578 @@
+//! `query_region(geometry, bands?, agg?)` — spec §11 MCP `emem.query_region`.
+//!
+//! Geometry forms in this build:
+//!
+//! - `cell64` (e.g. `"damO.zb000.xUti.zde78"`) — single cell.
+//! - `cells:c1,c2,...` — explicit list of cell64 strings.
+//! - `bbox:lon_min,lat_min,lon_max,lat_max` — WGS-84 axis-aligned box,
+//!   sampled at the cell64 grid pitch (~10 m at the equator). The
+//!   responder caps coverage at [`MAX_BBOX_CELLS`] cells; an over-large
+//!   bbox returns a structured error pointing the caller to either
+//!   shrink the bbox or pass `cells:` directly.
+//!
+//! GeoJSON polyfill remains a separate concern — operators with an
+//! H3-equivalent indexer wire it in at the API layer.
+
+use std::collections::BTreeMap;
+use std::time::Instant;
+
+use serde::{Deserialize, Serialize};
+
+use emem_codec::geo::cell64_from_latlng;
+use emem_core::ErrorCode;
+use emem_fact::{Fact, FactCid, Receipt};
+use emem_storage::{Server, StorageError};
+
+use crate::cbor_ops::{as_f64, as_vec_f32};
+use crate::recall::{build_as_of_bound, TemporalAdvice};
+
+/// Hard ceiling on cells synthesised from a bbox. At the cell64 ~10 m
+/// pitch this covers ~6.4 km × 6.4 km at the equator; agents asking for
+/// regional aggregates beyond that are almost certainly better served
+/// by a coarser-grain primitive (and would otherwise OOM the responder).
+pub const MAX_BBOX_CELLS: usize = 4096;
+
+/// Hard ceiling on facts accumulated across the requested cells before
+/// aggregation. Caps the JSON response shape and the in-memory working
+/// set so a dense corpus + a 4096-cell bbox can't blow past ~few hundred
+/// MB. When the cap is reached the responder stops scanning further
+/// cells and aggregates over what it has so far — `receipt.fact_cids`
+/// reflects exactly what contributed.
+pub const MAX_REGION_FACTS: usize = 65_536;
+
+/// query_region request — geometry can be cell or comma list of cells.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct QueryRegionReq {
+    /// `<cell64>` | `cells:c1,c2,...`.
+    pub geometry: String,
+    /// Optional band filter.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bands: Option<Vec<String>>,
+    /// Aggregation: "mean" | "median" | "p90" | "vector_centroid".
+    /// When unset, every matching primary fact is returned per cell.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agg: Option<String>,
+    /// Bi-temporal valid-time bound — applied per-cell. See
+    /// [`crate::recall::RecallReq::as_of_tslot`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub as_of_tslot: Option<u64>,
+    /// Bi-temporal transaction-time bound — applied per-cell. See
+    /// [`crate::recall::RecallReq::as_of_signed_at`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub as_of_signed_at: Option<String>,
+    /// Multi-tenant scope (v0.0.8). When at least one field is set every
+    /// per-cell scan is restricted to facts written under the same
+    /// four-tuple (via the scope index) and the receipt binds the scope.
+    /// See [`crate::recall::RecallReq::scope`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<emem_fact::Scope>,
+}
+
+/// query_region response.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueryRegionResp {
+    /// Facts (per-cell or aggregated).
+    pub facts: Vec<Fact>,
+    /// Aggregated per-band summaries when `agg` is set.
+    pub aggregates: BTreeMap<String, ciborium::Value>,
+    /// Populated when the response is empty BECAUSE the bi-temporal
+    /// `as_of_*` bound filtered everything out. See
+    /// [`crate::recall::TemporalAdvice`] for the contract.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temporal_advice: Option<TemporalAdvice>,
+    /// `true` when `agg=mean` was reduced with a cos(lat) equal-area
+    /// weight per cell — i.e. the headline mean represents an
+    /// area-weighted average over the polygon rather than a sample-count
+    /// mean over the (lat/lng-uniform) cell grid. False when `agg` was
+    /// not `mean` or no aggregates were requested.
+    #[serde(default)]
+    pub cos_lat_weighting_applied: bool,
+    /// Signed receipt.
+    pub receipt: Receipt,
+}
+
+/// Run a region query.
+pub async fn query_region(
+    req: &QueryRegionReq,
+    srv: &Server,
+) -> Result<QueryRegionResp, StorageError> {
+    let started = Instant::now();
+    let bound = build_as_of_bound(None, req.as_of_tslot, req.as_of_signed_at.as_deref())?;
+    let scope_filter: Option<&emem_fact::Scope> = req.scope.as_ref().filter(|s| !s.is_empty());
+
+    let cells: Vec<String> = if let Some(rest) = req.geometry.strip_prefix("cells:") {
+        let parsed: Vec<String> = rest
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+        // Apply the same MAX_BBOX_CELLS cap that the bbox path enforces —
+        // an explicit `cells:c1,c2,…` list with millions of entries lets
+        // an attacker pin a request on per-cell storage scans for the
+        // whole gateway-timeout window. Same cap, same error message
+        // shape so clients can recover the same way.
+        if parsed.len() > MAX_BBOX_CELLS {
+            return Err(StorageError::Protocol {
+                code: ErrorCode::InvalidCell,
+                message: format!(
+                    "query_region: 'cells:' list has {} entries, cap is {MAX_BBOX_CELLS}. Split the call, or pass 'bbox:' for a region-shaped query.",
+                    parsed.len()
+                ),
+            });
+        }
+        parsed
+    } else if let Some(rest) = req.geometry.strip_prefix("bbox:") {
+        cells_from_bbox(rest)?
+    } else if req.geometry.starts_with('{') {
+        return Err(StorageError::Protocol {
+            code: ErrorCode::InvalidCell,
+            message:
+                "query_region: GeoJSON polyfill not yet implemented; pass 'bbox:lon_min,lat_min,lon_max,lat_max' or 'cells:c1,c2,...' instead"
+                    .into(),
+        });
+    } else {
+        vec![req.geometry.clone()]
+    };
+
+    // ── Per-cell scan + batched get_facts_many, run with bounded
+    //    concurrency, then merged back in cell order so the result is
+    //    byte-identical to the old sequential walk. ──────────────────
+    //
+    // Each cell produces an independent `(scanned cid+fact pairs,
+    // unbounded_count)` tuple. We collect into a `Vec<Option<_>>` slot
+    // keyed by the cell's index so the merge below sees results in the
+    // exact `cells` order regardless of which task finished first. The
+    // MAX_REGION_FACTS cap, band filter, scoped-tx filter, and the
+    // cell-order break are all re-applied serially during the merge, so
+    // the contributing facts/cids/cells and the receipt are unchanged.
+    let scoped_tx_filter = scope_filter.is_some() && bound.transaction_time.is_some();
+    // Per-cell scan result: the (cid, fact) pairs the cell scanned (in
+    // index order) plus how many unbounded facts the cell had (for the
+    // temporal_advice diagnostic).
+    type CellScan = (Vec<(FactCid, Option<Fact>)>, usize);
+    let mut scanned: Vec<Option<CellScan>> = vec![None; cells.len()];
+    {
+        // Bounded fan-out: cap in-flight scans so a 4096-cell bbox can't
+        // open thousands of concurrent storage/materializer reads.
+        const QR_SCAN_CONCURRENCY: usize = 16;
+        let mut set: tokio::task::JoinSet<Result<(usize, CellScan), StorageError>> =
+            tokio::task::JoinSet::new();
+        let mut next = 0usize;
+        let scope_owned: Option<emem_fact::Scope> = scope_filter.cloned();
+        loop {
+            while set.len() < QR_SCAN_CONCURRENCY && next < cells.len() {
+                let idx = next;
+                next += 1;
+                let cell = cells[idx].clone();
+                let storage = srv.storage.clone();
+                let bound = bound.clone();
+                let scope_owned = scope_owned.clone();
+                set.spawn(async move {
+                    let storage = storage.as_ref();
+                    let mut unbounded = 0usize;
+                    let entries = if let Some(sc) = scope_owned.as_ref() {
+                        // Scoped per-cell scan. The scope index is keyed by
+                        // valid-time tslot, so apply the valid-time half of
+                        // the bound from the key; the transaction-time half
+                        // is applied during the merge via `bound.fact_passes`.
+                        let mut s = storage.scan_cell_in_scope(&cell, None, Some(sc)).await?;
+                        if !bound.is_unbounded() {
+                            unbounded += s.len();
+                            if let Some(vt) = bound.valid_time {
+                                s.retain(|(k, _)| k.tslot <= vt);
+                            }
+                        }
+                        s
+                    } else if bound.is_unbounded() {
+                        storage.scan_cell(&cell, None).await?
+                    } else {
+                        // Track the unbounded count for temporal_advice.
+                        unbounded += storage.scan_cell(&cell, None).await?.len();
+                        storage.scan_cell_as_of(&cell, None, &bound).await?
+                    };
+                    let cids: Vec<FactCid> = entries.into_iter().map(|(_, c)| c).collect();
+                    let fetched = storage.get_facts_many(&cids).await?;
+                    let pairs: Vec<(FactCid, Option<Fact>)> =
+                        cids.into_iter().zip(fetched).collect();
+                    Ok((idx, (pairs, unbounded)))
+                });
+            }
+            let Some(joined) = set.join_next().await else {
+                break;
+            };
+            let (idx, scan) = joined.map_err(|e| StorageError::Protocol {
+                code: ErrorCode::Internal,
+                message: format!("query_region: scan task panicked: {e}"),
+            })??;
+            scanned[idx] = Some(scan);
+        }
+    }
+
+    let mut all_facts: Vec<Fact> = Vec::new();
+    let mut all_cids: Vec<FactCid> = Vec::new();
+    // Parallel to `all_facts` — the cell64 the fact was scanned from.
+    // Threaded into `aggregate` so the `mean` reducer can apply a
+    // cos(lat) equal-area weight per cell.
+    let mut all_fact_cells: Vec<String> = Vec::new();
+    let mut unbounded_total: usize = 0;
+    'outer: for (cell, scan) in cells.iter().zip(scanned) {
+        if all_facts.len() >= MAX_REGION_FACTS {
+            break;
+        }
+        let Some((pairs, unbounded)) = scan else {
+            continue;
+        };
+        unbounded_total += unbounded;
+        for (cid, fact) in pairs {
+            let Some(fact) = fact else { continue };
+            // Scoped path honours a transaction-time bound here (the scope
+            // index can't pre-filter on signed_at).
+            if scoped_tx_filter && !bound.fact_passes(&fact) {
+                continue;
+            }
+            if let Some(filter) = &req.bands {
+                let band = match &fact {
+                    Fact::Primary(p) => &p.band,
+                    Fact::Absence(n) => &n.band,
+                    Fact::Derivative(d) => &d.band,
+                };
+                if !filter.iter().any(|b| b == band) {
+                    continue;
+                }
+            }
+            all_cids.push(cid);
+            all_facts.push(fact);
+            all_fact_cells.push(cell.clone());
+            if all_facts.len() >= MAX_REGION_FACTS {
+                // Receipt cites only what actually contributed — the
+                // cap is honest, not a silent truncation, and the
+                // caller can shrink their bbox / cell list and retry.
+                break 'outer;
+            }
+        }
+    }
+
+    let aggregates = match req.agg.as_deref() {
+        None => BTreeMap::new(),
+        Some(op) => aggregate(&all_facts, &all_fact_cells, op)?,
+    };
+
+    let temporal_advice = if all_facts.is_empty() && !bound.is_unbounded() && unbounded_total > 0 {
+        Some(TemporalAdvice {
+                as_of_tslot: bound.valid_time,
+                as_of_signed_at: bound.transaction_time.clone(),
+                facts_at_cell_unbounded: unbounded_total,
+                hint: format!(
+                    "region has {unbounded_total} attested fact(s) across {} cell(s) without the as_of bound; \
+                     all of them were filtered by your as_of_tslot/as_of_signed_at. \
+                     Either drop the bound or widen it.",
+                    cells.len()
+                ),
+            })
+    } else {
+        None
+    };
+
+    let receipt = srv.sign_receipt_full(
+        "emem.query_region",
+        cells,
+        all_cids,
+        true,
+        started,
+        None,
+        req.scope.clone(),
+        &bound,
+    );
+    let cos_lat_weighting_applied = matches!(req.agg.as_deref(), Some("mean"));
+    Ok(QueryRegionResp {
+        facts: all_facts,
+        aggregates,
+        temporal_advice,
+        cos_lat_weighting_applied,
+        receipt,
+    })
+}
+
+fn aggregate(
+    facts: &[Fact],
+    cells: &[String],
+    op: &str,
+) -> Result<BTreeMap<String, ciborium::Value>, StorageError> {
+    // Carry the cell64 alongside the value so the per-band mean can apply
+    // a cos(lat) equal-area weight. The cells vector is parallel to facts —
+    // see the caller. Non-Primary facts are skipped here, same as before;
+    // they don't contribute to numeric aggregates.
+    let mut by_band: BTreeMap<String, Vec<(&str, &ciborium::Value)>> = BTreeMap::new();
+    for (cell, f) in cells.iter().zip(facts.iter()) {
+        if let Fact::Primary(p) = f {
+            by_band
+                .entry(p.band.clone())
+                .or_default()
+                .push((cell.as_str(), &p.value));
+        }
+    }
+    let mut out = BTreeMap::new();
+    for (band, pairs) in by_band {
+        let values: Vec<&ciborium::Value> = pairs.iter().map(|(_, v)| *v).collect();
+        let agg = match op {
+            "mean" => agg_mean(&pairs),
+            "median" => agg_median(&values),
+            "p90" => agg_percentile(&values, 0.90),
+            "vector_centroid" => agg_vector_centroid(&values),
+            other => {
+                return Err(StorageError::Protocol {
+                    code: ErrorCode::Internal,
+                    message: format!("unknown aggregation: {other}"),
+                })
+            }
+        };
+        if let Some(v) = agg {
+            out.insert(band, v);
+        }
+    }
+    Ok(out)
+}
+
+/// `mean` reducer for `query_region`. Applies a cos(lat) equal-area weight
+/// per cell so the headline isn't biased by the sample_cells fan-out
+/// over-representing polar latitudes — at lat 60° each cell covers ~50%
+/// the real-world area of an equator cell, so straight `Σv/n` overstates
+/// polar values by up to 21% on a 60°S–60°N polygon. Median / p90 don't
+/// need this because order statistics are invariant under reweighting.
+fn agg_mean(pairs: &[(&str, &ciborium::Value)]) -> Option<ciborium::Value> {
+    let weighted: Vec<(f64, f64)> = pairs
+        .iter()
+        .filter_map(|(cell, v)| as_f64(v).map(|x| (emem_codec::equal_area_weight_for(cell), x)))
+        .collect();
+    if weighted.is_empty() {
+        return None;
+    }
+    let sum_w: f64 = weighted.iter().map(|(w, _)| *w).sum();
+    let mean = if sum_w > 0.0 {
+        weighted.iter().map(|(w, x)| w * x).sum::<f64>() / sum_w
+    } else {
+        // Pole-only fan-out — degrade to unweighted rather than NaN.
+        let n = weighted.len() as f64;
+        weighted.iter().map(|(_, x)| *x).sum::<f64>() / n
+    };
+    Some(ciborium::Value::Float(mean))
+}
+
+fn agg_median(values: &[&ciborium::Value]) -> Option<ciborium::Value> {
+    // Strip NaN before aggregating: a single NaN would otherwise contaminate
+    // the median via partial_cmp's undefined ordering.
+    let mut nums: Vec<f64> = values
+        .iter()
+        .filter_map(|v| as_f64(v))
+        .filter(|x| !x.is_nan())
+        .collect();
+    if nums.is_empty() {
+        return None;
+    }
+    nums.sort_by(|a, b| a.total_cmp(b));
+    let mid = nums.len() / 2;
+    let m = if nums.len().is_multiple_of(2) {
+        (nums[mid - 1] + nums[mid]) / 2.0
+    } else {
+        nums[mid]
+    };
+    Some(ciborium::Value::Float(m))
+}
+
+fn agg_percentile(values: &[&ciborium::Value], p: f64) -> Option<ciborium::Value> {
+    let mut nums: Vec<f64> = values
+        .iter()
+        .filter_map(|v| as_f64(v))
+        .filter(|x| !x.is_nan())
+        .collect();
+    if nums.is_empty() {
+        return None;
+    }
+    nums.sort_by(|a, b| a.total_cmp(b));
+    let idx = ((nums.len() - 1) as f64 * p).round() as usize;
+    Some(ciborium::Value::Float(nums[idx]))
+}
+
+/// Parse a `lon_min,lat_min,lon_max,lat_max` bbox into the deduped
+/// list of cell64s that cover it at the active grid pitch.
+///
+/// The grid is ~9.54 m × ~9.55 m at the equator (cell64.geo bit layout);
+/// stepping at 8 m on each axis is half a bucket, which guarantees we
+/// don't skip over a cell at the corner of a stride. Cells repeat for
+/// adjacent strides falling in the same bucket, so we dedupe via
+/// `BTreeSet` to keep ordering stable for the receipt.
+fn cells_from_bbox(spec: &str) -> Result<Vec<String>, StorageError> {
+    let parts: Vec<&str> = spec.split(',').map(|s| s.trim()).collect();
+    if parts.len() != 4 {
+        return Err(StorageError::Protocol {
+            code: ErrorCode::InvalidCell,
+            message: format!(
+                "query_region: bbox must be 'bbox:lon_min,lat_min,lon_max,lat_max' (got {} components)",
+                parts.len()
+            ),
+        });
+    }
+    let parse_one = |s: &str, name: &str| -> Result<f64, StorageError> {
+        s.parse::<f64>().map_err(|e| StorageError::Protocol {
+            code: ErrorCode::InvalidCell,
+            message: format!("query_region: bbox {name} parse error '{s}': {e}"),
+        })
+    };
+    let lon_min = parse_one(parts[0], "lon_min")?;
+    let lat_min = parse_one(parts[1], "lat_min")?;
+    let lon_max = parse_one(parts[2], "lon_max")?;
+    let lat_max = parse_one(parts[3], "lat_max")?;
+    if !(-90.0..=90.0).contains(&lat_min) || !(-90.0..=90.0).contains(&lat_max) {
+        return Err(StorageError::Protocol {
+            code: ErrorCode::InvalidCell,
+            message: "query_region: bbox latitudes must be in [-90, 90]".into(),
+        });
+    }
+    if !(-180.0..=180.0).contains(&lon_min) || !(-180.0..=180.0).contains(&lon_max) {
+        return Err(StorageError::Protocol {
+            code: ErrorCode::InvalidCell,
+            message: "query_region: bbox longitudes must be in [-180, 180]".into(),
+        });
+    }
+    if lat_min > lat_max || lon_min > lon_max {
+        return Err(StorageError::Protocol {
+            code: ErrorCode::InvalidCell,
+            message:
+                "query_region: bbox is inverted; antimeridian-crossing boxes must be split into two"
+                    .into(),
+        });
+    }
+
+    // Half-bucket stride in degrees. The active geo codec is 21 lat × 22 lng
+    // bits, so one bucket is ~180/2^21° on lat and ~360/2^22° on lng.
+    let lat_step_deg = 180.0_f64 / ((1u64 << 21) as f64);
+    let lng_step_deg = 360.0_f64 / ((1u64 << 22) as f64);
+    let lat_n = ((lat_max - lat_min) / lat_step_deg).ceil() as i64 + 1;
+    let lng_n = ((lon_max - lon_min) / lng_step_deg).ceil() as i64 + 1;
+    if lat_n.saturating_mul(lng_n) as usize > MAX_BBOX_CELLS.saturating_mul(8) {
+        // Up-front bound — saves us walking a giant grid only to bail mid-loop.
+        return Err(StorageError::Protocol {
+            code: ErrorCode::InvalidCell,
+            message: format!(
+                "query_region: bbox would synthesise ~{} cells (cap {MAX_BBOX_CELLS}). Shrink the bbox or pass 'cells:c1,c2,...' for explicit selection. Active grid pitch is ~10 m, so the cap covers ~6.4 km × 6.4 km at the equator.",
+                lat_n.saturating_mul(lng_n)
+            ),
+        });
+    }
+
+    let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let mut lat = lat_min;
+    while lat <= lat_max {
+        let mut lng = lon_min;
+        while lng <= lon_max {
+            seen.insert(cell64_from_latlng(lat, lng));
+            if seen.len() > MAX_BBOX_CELLS {
+                return Err(StorageError::Protocol {
+                    code: ErrorCode::InvalidCell,
+                    message: format!(
+                        "query_region: bbox covers >{MAX_BBOX_CELLS} cells at the active grid pitch. Shrink the bbox or pass 'cells:c1,c2,...' for explicit selection."
+                    ),
+                });
+            }
+            lng += lng_step_deg;
+        }
+        lat += lat_step_deg;
+    }
+    // Always include the four corners so a bbox that's narrower than the
+    // step still produces at least the corner cells.
+    seen.insert(cell64_from_latlng(lat_min, lon_min));
+    seen.insert(cell64_from_latlng(lat_min, lon_max));
+    seen.insert(cell64_from_latlng(lat_max, lon_min));
+    seen.insert(cell64_from_latlng(lat_max, lon_max));
+    Ok(seen.into_iter().collect())
+}
+
+fn agg_vector_centroid(values: &[&ciborium::Value]) -> Option<ciborium::Value> {
+    let vecs: Vec<Vec<f32>> = values.iter().filter_map(|v| as_vec_f32(v)).collect();
+    if vecs.is_empty() {
+        return None;
+    }
+    let dim = vecs[0].len();
+    if !vecs.iter().all(|v| v.len() == dim) {
+        return None;
+    }
+    let mut sum = vec![0f64; dim];
+    for v in &vecs {
+        for (i, x) in v.iter().enumerate() {
+            sum[i] += *x as f64;
+        }
+    }
+    let n = vecs.len() as f64;
+    let mean: Vec<ciborium::Value> = sum
+        .into_iter()
+        .map(|s| ciborium::Value::Float(s / n))
+        .collect();
+    Some(ciborium::Value::Array(mean))
+}
+
+#[cfg(test)]
+mod bbox_tests {
+    use super::*;
+
+    /// A tiny bbox at the equator must enumerate ≥1 cell64 string and
+    /// every result must round-trip through the codec — proves the
+    /// `bbox:` geometry path is wired end-to-end without requiring a
+    /// live storage layer.
+    #[test]
+    fn tiny_bbox_at_equator_produces_cells() {
+        // ~50 m × 50 m around 0,0 — well above the bucket but well below
+        // the 4096-cell cap. Expect O(25) unique cells.
+        let cells = cells_from_bbox("0.0,0.0,4.5e-4,4.5e-4").expect("bbox parses");
+        assert!(!cells.is_empty(), "expected non-empty cell list");
+        assert!(
+            cells.len() <= MAX_BBOX_CELLS,
+            "{} cells exceeds cap {MAX_BBOX_CELLS}",
+            cells.len()
+        );
+        for c in &cells {
+            assert!(
+                emem_codec::geo::latlng_from_cell64(c).is_ok(),
+                "cell64 {c} did not round-trip through the codec"
+            );
+        }
+    }
+
+    /// An over-large bbox must surface a structured error pointing the
+    /// caller at the cap rather than silently OOMing.
+    #[test]
+    fn oversized_bbox_returns_capped_error() {
+        // 10° × 10° at the equator → ~1.2e6 × ~1.2e6 buckets ≫ cap.
+        let err = cells_from_bbox("-180.0,-90.0,180.0,90.0").expect_err("must error");
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("cap") || msg.contains("4096") || msg.contains("Shrink the bbox"),
+            "expected capacity-related message, got: {msg}"
+        );
+    }
+
+    /// A four-component check rejecting GeoJSON until the polyfill ships.
+    #[test]
+    fn bbox_parser_rejects_geojson_marker() {
+        // The parent `query_region` rejects GeoJSON before reaching here,
+        // but the bbox parser itself must reject malformed components
+        // with a clear message.
+        let err = cells_from_bbox("not,a,bbox").expect_err("must error");
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("bbox must be") || msg.contains("4 components") || msg.contains("parse"),
+            "expected component-shape message, got: {msg}"
+        );
+    }
+
+    /// Inverted bbox (lat_min > lat_max or lon_min > lon_max) must error
+    /// — antimeridian-crossing boxes have to be split by the caller.
+    #[test]
+    fn inverted_bbox_rejected() {
+        let err = cells_from_bbox("10.0,5.0,5.0,10.0").expect_err("must error");
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("inverted") || msg.contains("antimeridian"),
+            "expected inverted-box message, got: {msg}"
+        );
+    }
+}

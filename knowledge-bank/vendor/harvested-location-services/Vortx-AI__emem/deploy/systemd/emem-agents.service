@@ -1,0 +1,18 @@
+[Unit]
+Description=ememagentd — autonomous emem arcade agents
+After=network-online.target emem-server.service emem-llama-server.service
+Wants=emem-llama-server.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/emem-world/agents
+Environment=PYTHONUNBUFFERED=1
+# venv: needs blake3 and cryptography.
+ExecStart=/home/ubuntu/.emem-witness/venv/bin/python -u /home/ubuntu/emem-world/agents/ememagentd.py
+Restart=on-failure
+RestartSec=20
+
+[Install]
+WantedBy=multi-user.target

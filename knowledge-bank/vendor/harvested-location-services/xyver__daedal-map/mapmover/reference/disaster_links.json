@@ -1,0 +1,611 @@
+{
+  "_description": "Canonical disaster link semantics for shared links.parquet and embedded relationship fields",
+  "_schema_version": "1.0.0",
+  "_last_updated": "2026-09-20",
+  "shared_table": {
+    "preferred_columns": [
+      "parent_event_id",
+      "child_event_id",
+      "link_type"
+    ],
+    "compatible_columns": [
+      "parent_loc_id",
+      "child_loc_id",
+      "link_type"
+    ],
+    "allowed_link_types": [
+      "triggered"
+    ]
+  },
+  "published_contract": {
+    "supported_pack_ids": [
+      "earthquakes",
+      "floods",
+      "hurricanes",
+      "tornadoes",
+      "tsunamis",
+      "volcanoes",
+      "wildfires"
+    ],
+    "cross_hazard_only": true,
+    "requires_exact_event_id": true,
+    "default_cross_type_only": true,
+    "max_chain_depth": 2,
+    "published_link_families_last_checked": "2026-09-20",
+    "published_link_families": [
+      {
+        "from_event_type": "earthquake",
+        "to_event_type": "tsunami",
+        "source": "noaa",
+        "count": 592,
+        "notes": "Cross-hazard seismic trigger links."
+      },
+      {
+        "from_event_type": "hurricane",
+        "to_event_type": "flood",
+        "source": "derived_tc_flood",
+        "count": 1005,
+        "notes": "Tropical-cyclone flood links."
+      },
+      {
+        "from_event_type": "hurricane",
+        "to_event_type": "tornado",
+        "source": "derived_tc_tornado",
+        "count": 1305,
+        "notes": "Tropical-cyclone tornado links."
+      },
+      {
+        "from_event_type": "volcano",
+        "to_event_type": "earthquake",
+        "source": "smithsonian",
+        "count": 29,
+        "notes": "Volcano-linked earthquake references."
+      },
+      {
+        "from_event_type": "volcano",
+        "to_event_type": "tsunami",
+        "source": "smithsonian",
+        "count": 30,
+        "notes": "Volcano-linked tsunami references."
+      },
+      {
+        "from_event_type": "wildfire",
+        "to_event_type": "flood",
+        "source": "derived_postfire_flood",
+        "count": 13,
+        "notes": "Post-fire flood or burn-scar runoff links."
+      }
+    ],
+    "not_paired_families_last_checked": "2026-06-27",
+    "not_paired_families": [
+      {
+        "event_types": [
+          "earthquake",
+          "hurricane"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "earthquake",
+          "tornado"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "earthquake",
+          "flood"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "earthquake",
+          "wildfire"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "tsunami",
+          "hurricane"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "tsunami",
+          "tornado"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "tsunami",
+          "flood"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "tsunami",
+          "wildfire"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "volcano",
+          "hurricane"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "volcano",
+          "tornado"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "volcano",
+          "flood"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "volcano",
+          "wildfire"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "hurricane",
+          "wildfire"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "tornado",
+          "flood"
+        ],
+        "published_any_direction": false
+      },
+      {
+        "event_types": [
+          "tornado",
+          "wildfire"
+        ],
+        "published_any_direction": false
+      }
+    ],
+    "metaquestion_hints": [
+      "Use published_link_families to answer questions like what link types exist today and how many published links exist in each direction.",
+      "Treat direction as meaningful: wildfire to flood does not imply a published reverse flood to wildfire family.",
+      "Use not_paired_families to answer questions about cross-hazard pairs that are not yet published in either direction.",
+      "Same-pack sequences such as earthquake aftershocks are native-pack helpers, not shared cross-hazard published families."
+    ]
+  },
+  "relationship_language_hints": {
+    "schema_version": "1.0.0",
+    "neutral_terms": {
+      "side_a_label": "disaster_a",
+      "side_b_label": "disaster_b",
+      "canonical_direction_label": "canonical_direction"
+    },
+    "relationships": [
+      {
+        "relationship_id": "earthquake_to_tsunami",
+        "side_a": {
+          "event_type": "earthquake",
+          "pack_ids": [
+            "earthquakes"
+          ],
+          "aliases": [
+            "earthquake",
+            "earthquakes",
+            "quake",
+            "quakes",
+            "seismic event",
+            "seismic events"
+          ]
+        },
+        "side_b": {
+          "event_type": "tsunami",
+          "pack_ids": [
+            "tsunamis"
+          ],
+          "aliases": [
+            "tsunami",
+            "tsunamis",
+            "tidal wave",
+            "tidal waves"
+          ]
+        },
+        "canonical_direction": "a_to_b",
+        "a_to_b_phrases": [
+          "earthquakes that triggered tsunamis",
+          "tsunamis caused by earthquakes",
+          "tsunamis after earthquakes"
+        ],
+        "b_to_a_phrases": [
+          "earthquakes caused by tsunamis",
+          "earthquakes after tsunamis"
+        ],
+        "neutral_phrases": [
+          "earthquake tsunami links",
+          "earthquake tsunami chains"
+        ],
+        "clarify_when_reversed": true,
+        "reverse_edge_supported": false,
+        "reverse_query_behavior": "correct_and_continue_with_canonical_family",
+        "example_queries": [
+          "Show me earthquakes that triggered tsunamis since 2000.",
+          "Which tsunamis were linked to earthquakes?"
+        ]
+      },
+      {
+        "relationship_id": "hurricane_to_flood",
+        "side_a": {
+          "event_type": "hurricane",
+          "pack_ids": [
+            "hurricanes"
+          ],
+          "aliases": [
+            "hurricane",
+            "hurricanes",
+            "tropical cyclone",
+            "tropical cyclones",
+            "storm",
+            "storms"
+          ]
+        },
+        "side_b": {
+          "event_type": "flood",
+          "pack_ids": [
+            "floods"
+          ],
+          "aliases": [
+            "flood",
+            "floods",
+            "inland flood",
+            "inland floods"
+          ]
+        },
+        "canonical_direction": "a_to_b",
+        "a_to_b_phrases": [
+          "floods caused by hurricanes",
+          "floods after hurricanes",
+          "hurricanes that led to floods"
+        ],
+        "b_to_a_phrases": [
+          "hurricanes caused by floods",
+          "floods that caused hurricanes"
+        ],
+        "neutral_phrases": [
+          "hurricane flood links",
+          "storm flood chains"
+        ],
+        "clarify_when_reversed": true,
+        "reverse_edge_supported": false,
+        "reverse_query_behavior": "correct_and_continue_with_canonical_family",
+        "example_queries": [
+          "Show me floods linked to hurricanes.",
+          "How many hurricane to flood links do you have?"
+        ]
+      },
+      {
+        "relationship_id": "hurricane_to_tornado",
+        "side_a": {
+          "event_type": "hurricane",
+          "pack_ids": [
+            "hurricanes"
+          ],
+          "aliases": [
+            "hurricane",
+            "hurricanes",
+            "tropical cyclone",
+            "tropical cyclones",
+            "storm",
+            "storms"
+          ]
+        },
+        "side_b": {
+          "event_type": "tornado",
+          "pack_ids": [
+            "tornadoes"
+          ],
+          "aliases": [
+            "tornado",
+            "tornadoes",
+            "twister",
+            "twisters"
+          ]
+        },
+        "canonical_direction": "a_to_b",
+        "a_to_b_phrases": [
+          "tornadoes caused by hurricanes",
+          "tornadoes after hurricanes",
+          "hurricanes that spawned tornadoes"
+        ],
+        "b_to_a_phrases": [
+          "hurricanes caused by tornadoes",
+          "tornadoes that caused hurricanes"
+        ],
+        "neutral_phrases": [
+          "hurricane tornado links",
+          "storm tornado chains"
+        ],
+        "clarify_when_reversed": true,
+        "reverse_edge_supported": false,
+        "reverse_query_behavior": "correct_and_continue_with_canonical_family",
+        "example_queries": [
+          "Show me tornadoes linked to hurricanes.",
+          "How many hurricane to tornado links do you have?"
+        ]
+      },
+      {
+        "relationship_id": "volcano_to_earthquake",
+        "side_a": {
+          "event_type": "volcano",
+          "pack_ids": [
+            "volcanoes"
+          ],
+          "aliases": [
+            "volcano",
+            "volcanoes",
+            "eruption",
+            "eruptions",
+            "volcanic eruption",
+            "volcanic eruptions"
+          ]
+        },
+        "side_b": {
+          "event_type": "earthquake",
+          "pack_ids": [
+            "earthquakes"
+          ],
+          "aliases": [
+            "earthquake",
+            "earthquakes",
+            "quake",
+            "quakes",
+            "earthquake swarm",
+            "earthquake swarms"
+          ]
+        },
+        "canonical_direction": "a_to_b",
+        "a_to_b_phrases": [
+          "earthquakes linked to volcanic eruptions",
+          "earthquakes caused by volcanoes",
+          "volcanoes that triggered earthquakes"
+        ],
+        "b_to_a_phrases": [
+          "volcanoes caused by earthquakes",
+          "earthquakes that triggered volcanoes"
+        ],
+        "neutral_phrases": [
+          "volcano earthquake links",
+          "volcano earthquake chains"
+        ],
+        "clarify_when_reversed": true,
+        "reverse_edge_supported": false,
+        "reverse_query_behavior": "correct_and_continue_with_canonical_family",
+        "example_queries": [
+          "Which volcanic eruptions triggered earthquakes?",
+          "Show volcano earthquake links."
+        ]
+      },
+      {
+        "relationship_id": "volcano_to_tsunami",
+        "side_a": {
+          "event_type": "volcano",
+          "pack_ids": [
+            "volcanoes"
+          ],
+          "aliases": [
+            "volcano",
+            "volcanoes",
+            "eruption",
+            "eruptions",
+            "volcanic eruption",
+            "volcanic eruptions"
+          ]
+        },
+        "side_b": {
+          "event_type": "tsunami",
+          "pack_ids": [
+            "tsunamis"
+          ],
+          "aliases": [
+            "tsunami",
+            "tsunamis",
+            "tidal wave",
+            "tidal waves"
+          ]
+        },
+        "canonical_direction": "a_to_b",
+        "a_to_b_phrases": [
+          "tsunamis caused by volcanoes",
+          "tsunamis after eruptions",
+          "volcanoes that triggered tsunamis"
+        ],
+        "b_to_a_phrases": [
+          "volcanoes caused by tsunamis",
+          "tsunamis that triggered volcanoes"
+        ],
+        "neutral_phrases": [
+          "volcano tsunami links",
+          "volcano tsunami chains"
+        ],
+        "clarify_when_reversed": true,
+        "reverse_edge_supported": false,
+        "reverse_query_behavior": "correct_and_continue_with_canonical_family",
+        "example_queries": [
+          "Show volcanoes that triggered tsunamis.",
+          "Which tsunamis were linked to eruptions?"
+        ]
+      },
+      {
+        "relationship_id": "wildfire_to_flood",
+        "side_a": {
+          "event_type": "wildfire",
+          "pack_ids": [
+            "wildfires"
+          ],
+          "aliases": [
+            "wildfire",
+            "wildfires",
+            "fire",
+            "fires",
+            "burn scar",
+            "burn scars"
+          ]
+        },
+        "side_b": {
+          "event_type": "flood",
+          "pack_ids": [
+            "floods"
+          ],
+          "aliases": [
+            "flood",
+            "floods",
+            "post-fire flood",
+            "post-fire floods",
+            "debris flow",
+            "debris flows"
+          ]
+        },
+        "canonical_direction": "a_to_b",
+        "a_to_b_phrases": [
+          "floods caused by fires",
+          "floods after fires",
+          "post-fire floods",
+          "fires that led to floods"
+        ],
+        "b_to_a_phrases": [
+          "fires caused by floods",
+          "floods that led to fires",
+          "floods that caused fires"
+        ],
+        "neutral_phrases": [
+          "fire flood links",
+          "wildfire flood links",
+          "fire related floods"
+        ],
+        "clarify_when_reversed": true,
+        "reverse_edge_supported": false,
+        "reverse_query_behavior": "correct_and_continue_with_canonical_family",
+        "example_queries": [
+          "Show me post-fire floods in California.",
+          "How many other disasters are linked to fires?",
+          "Show me the floods that led to fires."
+        ]
+      }
+    ],
+    "not_paired_relationships": [
+      {
+        "relationship_id": "volcano_wildfire_not_paired",
+        "side_a": {
+          "event_type": "volcano",
+          "pack_ids": [
+            "volcanoes"
+          ]
+        },
+        "side_b": {
+          "event_type": "wildfire",
+          "pack_ids": [
+            "wildfires"
+          ]
+        },
+        "query_behavior": "state_not_published",
+        "note": "No published cross-disaster link family exists in either direction today.",
+        "example_queries": [
+          "Do you have volcano wildfire links?",
+          "Show me fires linked to volcanoes."
+        ]
+      },
+      {
+        "relationship_id": "earthquake_flood_not_paired",
+        "side_a": {
+          "event_type": "earthquake",
+          "pack_ids": [
+            "earthquakes"
+          ]
+        },
+        "side_b": {
+          "event_type": "flood",
+          "pack_ids": [
+            "floods"
+          ]
+        },
+        "query_behavior": "state_not_published",
+        "note": "No published cross-disaster link family exists in either direction today.",
+        "example_queries": [
+          "Do you have earthquake flood links?"
+        ]
+      },
+      {
+        "relationship_id": "tornado_wildfire_not_paired",
+        "side_a": {
+          "event_type": "tornado",
+          "pack_ids": [
+            "tornadoes"
+          ]
+        },
+        "side_b": {
+          "event_type": "wildfire",
+          "pack_ids": [
+            "wildfires"
+          ]
+        },
+        "query_behavior": "state_not_published",
+        "note": "No published cross-disaster link family exists in either direction today.",
+        "example_queries": [
+          "Do you have tornado wildfire links?"
+        ]
+      }
+    ],
+    "metaquestion_examples": [
+      "What type of links do you have?",
+      "How many wildfire to flood links are published?",
+      "Do you have reverse flood to wildfire links?",
+      "Which disaster types are not paired yet?"
+    ]
+  },
+  "embedded_fields": {
+    "triggered_by": {
+      "kind": "single_parent",
+      "note": "Hazard-native parent relationship field when a row explicitly references its cause."
+    },
+    "triggered": {
+      "kind": "child_list",
+      "note": "Hazard-native child relationship field when a row embeds downstream effects."
+    },
+    "earthquake_event_ids": {
+      "kind": "related_list",
+      "note": "Hazard-native related-earthquake list; should not be treated as a direct substitute for the shared link table."
+    },
+    "tsunami_event_id": {
+      "kind": "single_related",
+      "note": "Single related tsunami reference on an event row."
+    },
+    "tsunami_event_ids": {
+      "kind": "related_list",
+      "note": "Multiple related tsunami references on an event row."
+    },
+    "aftershock_count": {
+      "kind": "summary_only",
+      "note": "Count summary only; not a canonical edge field."
+    },
+    "link_type": {
+      "kind": "embedded_label",
+      "note": "Hazard-native relationship label when a row also carries embedded relationship ids."
+    }
+  }
+}

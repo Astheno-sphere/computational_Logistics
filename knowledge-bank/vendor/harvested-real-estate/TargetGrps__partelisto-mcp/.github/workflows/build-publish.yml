@@ -1,0 +1,67 @@
+name: Build and Publish Partelisto MCP Service
+
+# Self-contained, unlike the sibling services' build-publish.yml: those call
+# targetgrps/reusable-workflows, a *private* repo. A *public* repo (this one, made public
+# deliberately so community MCP directories like Smithery/Glama auto-index it) cannot call a
+# reusable workflow in a private repo at all - GitHub Actions rejects it outright ("workflow was
+# not found"), regardless of the private repo's access-level setting. Reusing that shared
+# pipeline isn't worth making it internal/public just for this one caller, and its extra features
+# (npm/nuget client publish, a Mongo image, Slack notify) don't apply here anyway - this service
+# has none of that.
+
+on:
+  push:
+    branches: [ main ]
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.11.0
+        with:
+          versionSpec: '5.x'
+
+      - name: Determine version
+        id: version
+        uses: gittools/actions/gitversion/execute@v0.11.0
+        with:
+          useConfigFile: true
+          configFilePath: GitVersion.yml
+
+      # secrets.GITHUB_TOKEN gets "permission_denied: write_package" against this package: it was
+      # first pushed with a personal token during initial rollout, and this repo's Actions identity
+      # was never added to its "Manage Actions access" list (a GHCR package setting with no REST API
+      # to set remotely). GH_TOKEN_TARGETGRPS is the same PAT already used org-wide for package access.
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN_TARGETGRPS }}
+
+      - name: Run tests (docker-compose.ci.yml, tests-stage image)
+        run: |
+          docker compose -f docker-compose.ci.yml up --build \
+            --abort-on-container-exit --exit-code-from targetgrps-partelisto-mcp-tests \
+            targetgrps-partelisto-mcp-tests
+
+      - name: Build and push runtime image
+        run: |
+          docker build --target runtime \
+            -t ghcr.io/targetgrps/partelisto-mcp:${{ steps.version.outputs.semVer }} \
+            -t ghcr.io/targetgrps/partelisto-mcp:latest \
+            .
+          docker push ghcr.io/targetgrps/partelisto-mcp:${{ steps.version.outputs.semVer }}
+          docker push ghcr.io/targetgrps/partelisto-mcp:latest

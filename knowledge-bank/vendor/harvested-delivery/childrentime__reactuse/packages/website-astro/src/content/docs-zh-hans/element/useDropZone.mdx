@@ -1,0 +1,54 @@
+---
+title: useDropZone 用法与示例
+sidebar_label: useDropZone
+description: "useDropZone 是一个 React hook，把元素变成文件拖放区——处理拖拽事件，返回是否悬停于区域上方的布尔值，并提供已放置文件的回调。"
+---
+# useDropZone
+
+创建一个可以拖拽文件的区域
+
+`useDropZone` 通过处理 `dragenter`、`dragover`、`dragleave` 和 `drop` 事件将 DOM 元素转变为文件放置目标。它返回一个布尔值，表示文件当前是否正在被拖拽到区域上方。当文件被放置时，提供的回调接收一个 `File` 对象数组（如果没有放置文件则为 `null`）。
+
+### 使用场景
+
+- 构建用户从桌面拖放文件的文件上传界面
+- 创建支持拖放的媒体画廊或文档管理器
+- 在表单构建器或 CMS 编辑器中实现拖放区域
+
+### 注意事项
+
+- **视觉反馈**：使用返回的 `isOver` 布尔值在文件被拖拽到放置区上方时高亮显示（例如更改边框颜色或背景）。
+- **清理**：组件卸载时所有拖拽相关的事件监听器会自动移除。
+- 参见 `useDraggable` 了解使页面内元素可拖拽（元素重新定位 vs 文件放置）。
+
+## Usage
+
+```tsx live
+
+function Demo() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const isOver = useDropZone(ref, (_files) => {});
+  return (
+    <div>
+      <p>将文件拖拽到拖放区域</p>
+      <div
+        ref={ref}
+        style={{
+          minHeight: 200,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: "1.5rem",
+          background: "rgba(156,163,175,0.1)",
+        }}
+      >
+        <div>是否在拖放区域上方: {JSON.stringify(isOver)}</div>
+      </div>
+    </div>
+  );
+};
+
+```
+
+%%API%%

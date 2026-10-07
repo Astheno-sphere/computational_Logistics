@@ -1,0 +1,72 @@
+{
+  "dxt_version": "0.1",
+  "name": "mcp-ip2location-io",
+  "display_name": "IP2Location.io MCP Server",
+  "version": "1.1.2",
+  "description": "IP Geolocation MCP server that query the geolocation information using IP2Location.io API.",
+  "long_description": "This is a simple Model Context Protocol (MCP) server implementation for IP2Location.io API. It will return geolocation information for an IP address, such as country, region, city, coordinates and so on.",
+  "keywords": ["mcp", "model-context-protocol", "IP", "geolocation", "IP locator", "python", "IP info"],
+  "license": "MIT",
+  "author": {
+    "name": "IP2Location.io",
+    "email": "support@ip2location.io",
+    "url": "https://github.com/ip2location"
+  },
+  "homepage": "https://github.com/ip2location/mcp-ip2location-io",
+  "documentation": "https://www.ip2location.io/documentation",
+  "icon": "icon.png",
+  "screenshots": [
+    "example.png"
+  ],
+  "server": {
+    "type": "python",
+    "entry_point": "src/server.py",
+    "mcp_config": {
+      "command": "ux",
+      "args": [
+            "--directory",
+            "${__dirname}/src",
+            "run",
+            "server.py"
+          ],
+      "env": {
+        "IP2LOCATION_API_KEY": "${user_config.ip2locationioapi_key}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "get_geolocation",
+      "description": "Fetch geolocation information for the given IPv4 or IPv6 address.",
+      "inputSchema": {
+          "type": "object",
+          "properties": {
+            "ip": {
+              "type": "string",
+              "description": "The IPv4 or IPv6 address to lookup."
+            }
+          }
+        }
+      }
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.8,<4.0"
+    }
+  },
+  "user_config": {
+    "ip2locationioapi_key": {
+      "type": "string",
+      "title": "IP2Location.io API Key",
+      "description": "Your IP2Location.io API key for detailed geolocation information.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ip2location-com/mcp-ip2location-io"
+  }
+}

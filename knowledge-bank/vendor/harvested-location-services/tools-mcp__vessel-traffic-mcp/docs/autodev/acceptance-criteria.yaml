@@ -1,0 +1,19 @@
+version: 1
+project: vessel-traffic-mcp
+criteria:
+  - id: SAFETY-001
+    description: The implementation never commits secrets, raw HAR captures, cookies, bearer tokens, or private provider credentials.
+  - id: SAFETY-002
+    description: Provider access is limited to official APIs, open-data feeds, user-provided credentials, or sanitized authorized capture fixtures.
+  - id: MCP-001
+    description: MCP tools are read-only and return source/freshness metadata.
+  - id: MCP-002
+    description: The server supports stdio for local clients and Streamable HTTP for remote clients.
+  - id: BYOK-001
+    description: Paid-provider credentials are supplied through redacted credential profiles or one-time in-memory values and are never logged or persisted accidentally.
+  - id: RESOLVE-001
+    description: Vessel names extracted from B/L-style documents can be mapped to ranked MMSI/IMO candidates with confidence evidence and ambiguity handling.
+  - id: DATA-001
+    description: Missing, stale, or out-of-coverage AIS data is represented as structured no-data state.
+  - id: TEST-001
+    description: Default tests are deterministic and do not call paid/live providers.

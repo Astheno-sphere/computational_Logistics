@@ -1,0 +1,61 @@
+---
+title: useTextDirection 用法与示例
+sidebar_label: useTextDirection
+description: "useTextDirection 是一个读取并更新元素 dir 属性的 React hook，用于控制 ltr 和 rtl 文本方向，适配从右到左的布局。"
+---
+# useTextDirection
+
+跟踪文字排列方向
+
+`useTextDirection` 读取并更新目标元素（默认为 `<html>`）上的 [`dir`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir) 属性，控制文本方向。它返回一个包含当前方向值（`"ltr"`、`"rtl"` 或 `"auto"`）和设置函数的元组。这对于构建支持从右到左语言（如阿拉伯语、希伯来语和波斯语）的国际化应用至关重要。
+
+### 使用场景
+
+- 在多语言应用中支持双向（BiDi）内容
+- 构建在 LTR 和 RTL 布局之间切换的语言选择器
+- 基于用户输入或内容语言动态调整文本方向
+
+### 注意事项
+
+- **以元素为准**：`initialValue` 是兜底值而非覆盖值。若目标元素已带有 `dir` 属性，hook 在首次渲染时就会报告该值（而不是等 effect 纠正），因此 RTL 文档不会先闪一下 `ltr`。只有元素没有 `dir` 时才会使用 `initialValue`。
+- **SSR 安全**：服务端不会访问 `document`，服务端渲染返回 `initialValue`（默认 `"ltr"`）和空操作设置函数。由于客户端在首次渲染时就读取元素，请传入与服务端渲染标记方向一致的 `initialValue`，否则两边不一致，React 会报 hydration 不匹配。
+- **目标选择器**：默认情况下，hook 在 `<html>` 元素上设置 `dir`。使用 `selector` 选项定位特定元素以进行作用域内的方向更改。
+- **相关 hooks**：参见 `usePreferredLanguages` 了解检测用户的语言偏好，这可以为文本方向的选择提供参考。
+
+## Usage
+
+```tsx live noInline
+
+function Demo() {
+  const [dir, setDir] = useTextDirection({
+    selector: "#_useTextDirectionDemo",
+  });
+
+  const text = useMemo(
+    () =>
+      dir === "ltr"
+        ? "这段文字是中文，正确地从左到右显示。"
+        : "这段文字是中文，但错误地从右到左显示。",
+    [dir],
+  );
+
+  const handleOnClick = () => {
+    const value = dir === "rtl" ? "ltr" : "rtl";
+    setDir(value);
+  };
+
+  return (
+    <div id="_useTextDirectionDemo">
+      <p>{text}</p>
+      <button onClick={handleOnClick}>
+        <span>{dir?.toUpperCase()}</span>
+      </button>
+      <span>点击更改方向</span>
+    </div>
+  );
+};
+
+render(<Demo/>)
+```
+
+%%API%%

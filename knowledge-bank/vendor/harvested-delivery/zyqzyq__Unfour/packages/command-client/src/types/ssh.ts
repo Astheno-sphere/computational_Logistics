@@ -1,0 +1,422 @@
+export type SshAuthKind = "password" | "private-key" | "none";
+
+export type SshConnectionInput = {
+  id?: string;
+  workspaceId: string;
+  name: string;
+  host: string;
+  port?: number | null;
+  username: string;
+  authKind: SshAuthKind;
+  keyPath?: string | null;
+  credentialRef?: string | null;
+  /** Plaintext password / key passphrase; stored in the OS keychain on save,
+   * never persisted to SQLite. Leave null when editing to keep the saved one. */
+  secret?: string | null;
+};
+
+export type CredentialCreateInput = {
+  workspaceId: string;
+  kind: string;
+  label: string;
+  secret: string;
+};
+
+export type CredentialDeleteInput = {
+  workspaceId: string;
+  credentialRef: string;
+};
+
+export type CredentialInspectInput = {
+  workspaceId: string;
+  credentialRef: string;
+};
+
+export type CredentialRotateInput = {
+  workspaceId: string;
+  credentialRef: string;
+  secret: string;
+};
+
+export type CredentialMetadata = {
+  workspaceId: string;
+  kind: string;
+  label: string;
+  credentialRef: string;
+};
+
+export type SshConnection = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  host: string;
+  port: number;
+  username: string;
+  authKind: SshAuthKind;
+  keyPath: string | null;
+  credentialRef: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  revision: number;
+  syncStatus: string;
+  remoteId: string | null;
+};
+
+export type SshTestResult = {
+  ok: boolean;
+  message: string;
+};
+
+export type SshConnectInput = {
+  workspaceId: string;
+  connectionId: string;
+  cols?: number | null;
+  rows?: number | null;
+  /**
+   * Transient credential override for validating a not-yet-saved secret (e.g.
+   * the "test connection" action). When omitted, the saved keychain credential
+   * is used. Never persisted.
+   */
+  secret?: string | null;
+};
+
+export type SshSessionInput = {
+  workspaceId: string;
+  sessionId: string;
+  data: string;
+};
+
+export type SshResizeInput = {
+  workspaceId: string;
+  sessionId: string;
+  cols: number;
+  rows: number;
+};
+
+export type SshCloseInput = {
+  workspaceId: string;
+  sessionId: string;
+};
+
+export type SshReconnectCancelInput = {
+  workspaceId: string;
+  sessionId: string;
+};
+
+export type SshLogExportInput = {
+  workspaceId: string;
+  sessionId: string;
+};
+
+export type SshSessionSummary = {
+  sessionId: string;
+  workspaceId: string;
+  connectionId: string;
+  status: "connected" | "degraded" | "reconnecting" | "disconnected" | "failed";
+  reconnectAttempt: number;
+  authKind: SshAuthKind;
+  host: string;
+  username: string;
+  cols: number;
+  rows: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SshSessionEvent = {
+  sessionId: string;
+  kind: "input" | "output" | "resize" | "close";
+  data: string;
+  createdAt: string;
+};
+
+export type SshCommandHistoryEntry = {
+  id: string;
+  workspaceId: string;
+  connectionId: string;
+  sessionId: string | null;
+  command: string;
+  cwd: string | null;
+  exitCode: number | null;
+  durationMs: number | null;
+  redacted: boolean;
+  executedAt: string;
+};
+
+export type SshCommandHistoryQuery = {
+  workspaceId: string;
+  connectionId?: string | null;
+  search?: string | null;
+  limit?: number | null;
+  includeRedacted?: boolean;
+  since?: string | null;
+  until?: string | null;
+};
+
+export type SshLogExport = {
+  sessionId: string;
+  filename: string;
+  content: string;
+  lineCount: number;
+  redacted: boolean;
+};
+
+export type SshHostKeyInput = {
+  workspaceId: string;
+  host: string;
+  port: number;
+};
+
+export type SshHostFingerprintInfo = {
+  workspaceId: string;
+  host: string;
+  port: number;
+  fingerprint: string;
+  createdAt: string;
+};
+
+export type SshKnownHostsImportInput = {
+  workspaceId: string;
+  content: string;
+};
+
+export type SshKnownHostsExportInput = {
+  workspaceId: string;
+};
+
+export type SshKnownHostsImportResult = {
+  imported: number;
+  skipped: number;
+  errors: string[];
+};
+
+export type SshKnownHostsExportResult = {
+  content: string;
+  entryCount: number;
+};
+
+export type SftpSessionInput = {
+  workspaceId: string;
+  sessionId: string;
+};
+
+export type SftpOpenResult = SftpSessionInput & {
+  connectionId: string;
+  homePath: string;
+};
+
+export type SftpPathInput = SftpSessionInput & {
+  path: string;
+};
+
+export type SftpRenameInput = SftpSessionInput & {
+  oldPath: string;
+  newPath: string;
+};
+
+export type SftpDeleteInput = SftpPathInput & {
+  isDirectory: boolean;
+};
+
+export type SftpFileKind = "directory" | "file" | "symlink" | "other";
+
+export type SftpFileEntry = {
+  name: string;
+  path: string;
+  kind: SftpFileKind;
+  size: number;
+  modifiedAt: string | null;
+  permissions: string | null;
+  linkTarget: string | null;
+};
+
+export type SftpDirectoryListing = SftpSessionInput & {
+  connectionId: string;
+  path: string;
+  entries: SftpFileEntry[];
+};
+
+export type SftpTransferInput = SftpSessionInput & {
+  localPath: string;
+  remotePath: string;
+  overwrite?: boolean;
+};
+
+export type SftpCancelTransferInput = {
+  workspaceId: string;
+  transferId: string;
+};
+
+export type SftpTransferStatus =
+  | "pending"
+  | "running"
+  | "success"
+  | "failed"
+  | "cancelled";
+
+export type SftpTransferState = SftpSessionInput & {
+  transferId: string;
+  connectionId: string;
+  direction: "upload" | "download";
+  localPath: string;
+  remotePath: string;
+  transferredBytes: number;
+  totalBytes: number;
+  bytesPerSecond: number;
+  status: SftpTransferStatus;
+  error: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+};
+
+export type SshTask = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type SshTaskStepType = "command" | "upload" | "download";
+
+export type SshTaskCommandConfig = {
+  command: string;
+  workingDirectory: string;
+  timeoutSeconds: number;
+  continueOnError: boolean;
+};
+
+export type SshTaskUploadConfig = {
+  localPath: string;
+  remotePath: string;
+  overwrite: boolean;
+};
+
+export type SshTaskDownloadConfig = {
+  remotePath: string;
+  localPath: string;
+  overwrite: boolean;
+};
+
+export type SshTaskStepConfig =
+  | SshTaskCommandConfig
+  | SshTaskUploadConfig
+  | SshTaskDownloadConfig;
+
+export type SshTaskStep = {
+  id: string;
+  workspaceId: string;
+  taskId: string;
+  name: string;
+  stepType: SshTaskStepType;
+  position: number;
+  enabled: boolean;
+  configVersion: number;
+  configJson: SshTaskStepConfig;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type SshTaskLocalBinding = {
+  taskId: string;
+  workspaceId: string;
+  defaultConnectionId: string | null;
+  lastUsedConnectionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SshTaskDetail = {
+  task: SshTask;
+  steps: SshTaskStep[];
+  localBinding: SshTaskLocalBinding | null;
+  /** Enabled template inputs from the task engine scanner. */
+  detectedInputs: string[];
+};
+
+export type SshTaskStepInput = {
+  id?: string;
+  name: string;
+  stepType: SshTaskStepType;
+  position: number;
+  enabled: boolean;
+  configVersion?: number;
+  configJson: SshTaskStepConfig;
+};
+
+export type SshTaskSaveInput = {
+  id?: string;
+  workspaceId: string;
+  name: string;
+  description: string;
+  defaultConnectionId: string | null;
+  steps: SshTaskStepInput[];
+};
+
+export type SshTasksReorderInput = {
+  workspaceId: string;
+  taskIds: string[];
+};
+
+export type SshTaskRunInput = {
+  workspaceId: string;
+  taskId: string;
+  connectionId: string | null;
+  inputs: Record<string, string>;
+  secretInputNames: string[];
+};
+
+export type SshTaskCancelInput = {
+  workspaceId: string;
+  runId: string;
+};
+
+export type SshTaskRunStatus = "running" | "success" | "failed" | "cancelled";
+
+export type SshTaskRun = {
+  id: string;
+  workspaceId: string;
+  taskId: string;
+  connectionId: string | null;
+  status: SshTaskRunStatus;
+  startedAt: string;
+  finishedAt: string | null;
+  errorMessage: string | null;
+  logPath: string;
+};
+
+export type SshTaskRunEvent = {
+  runId: string;
+  taskId: string;
+  kind: "run" | "step" | "output" | "transfer";
+  stepId: string | null;
+  stepName: string | null;
+  stepType: SshTaskStepType | null;
+  position: number | null;
+  status: SshTaskRunStatus | "success" | "failed" | "cancelled" | null;
+  stream: "stdout" | "stderr" | "command" | null;
+  data: string | null;
+  exitCode: number | null;
+  durationMs: number | null;
+  direction: "upload" | "download" | null;
+  transferredBytes: number | null;
+  totalBytes: number | null;
+  bytesPerSecond: number | null;
+  error: string | null;
+  createdAt: string;
+};
+
+export type SshTaskCleanupInput = {
+  workspaceId: string;
+  taskId: string | null;
+};
+
+export type SshTaskCleanupResult = {
+  deletedRuns: number;
+  deletedLogs: number;
+};

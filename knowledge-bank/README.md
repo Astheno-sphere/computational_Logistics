@@ -6,6 +6,8 @@ pulled from open-source repositories and arranged so nothing collides.
 
 - `sources.yaml`: the only input. One entry per upstream repo.
 - `vendor/<category>/<owner>__<repo>/`: verbatim snapshot, no git history.
+- `catalog/`: the assembled view: every skill, agent, command, plugin and MCP server, by domain, with interlinks.
+- `ROADMAP.md`: what we have, what we missed, what comes next.
 - `MANIFEST.json`: per source: license, commit, status, files, bytes, what was skipped.
 - `INDEX.md`: sources grouped by category in reading order. `SOURCES.md`, `ATTRIBUTION.md`: generated. Do not edit.
 
@@ -33,10 +35,12 @@ pulled from open-source repositories and arranged so nothing collides.
 python3 tools/kb_sync.py --check            # classify licenses only, copy nothing
 python3 tools/kb_sync.py                    # rebuild everything
 python3 tools/kb_sync.py --only owner__repo # refresh one source
+python3 tools/kb_harvest.py [--dry-run]     # add candidates from curated lists in the bank
+python3 tools/kb_assemble.py                # rebuild catalog/ (skills, agents, plugins, MCP servers)
 python3 -m pytest tests                     # license classifier tests
 ```
 Add a source: append to `sources.yaml` (`id`, `url`, `category`, `why`; optional `include`,
-`exclude`, `license_note`, `policy: link-only`), run `--check`, then sync.
+`exclude`, `license_note`, `per_folder`, `policy: link-only`), run `--check`, then sync.
 
 ## Not covered yet
 Frontier model weights, datasets, and benchmark instance files (data over 1 MB is skipped)

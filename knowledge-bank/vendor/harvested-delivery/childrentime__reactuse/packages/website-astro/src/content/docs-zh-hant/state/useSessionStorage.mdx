@@ -1,0 +1,44 @@
+---
+title: useSessionStorage 用法與示例
+sidebar_label: useSessionStorage
+description: "useSessionStorage 是一個將 state 綁定到 sessionStorage key 的 React hook，提供類似 useState 的元組，支援 SSR 安全、自訂序列化器與跨分頁同步。"
+---
+# useSessionStorage
+
+輕鬆管理 `sessionStorage`
+
+`useSessionStorage` 提供響應式的 `sessionStorage` 讀寫。它回傳一個元組，包含當前儲存的值和一個更新函式。與 `localStorage` 不同，`sessionStorage` 的資料只在當前工作階段（分頁）中持久化，關閉分頁後會被清除。
+
+### 使用場景
+
+- 儲存僅在當前瀏覽工作階段中需要的臨時資料
+- 持久化表單狀態以在頁面內導航時保留（但關閉分頁後不保留）
+- 儲存敏感的暫時資料，不希望在關閉分頁後持久化
+
+### 注意事項
+
+- **SSR 安全**：在伺服器端渲染時回傳預設值。伺服器上不會存取 `sessionStorage`。
+- **工作階段範圍**：資料僅在當前分頁的生命週期內持久化。不同分頁之間不共享。
+- **同分頁同步**：綁定到相同鍵的多個組件會在同一分頁內保持同步——更新一個會讓其他組件無需重新載入即可重新渲染。
+- **相關 hooks**：另請參閱 `useLocalStorage` 用於跨工作階段的持久化，以及 `useCookie` 用於 cookie 儲存。
+
+## Usage
+
+```tsx live
+
+function Demo() {
+  const [value, setValue] = useSessionStorage("my-key", "key");
+
+  return (
+    <div>
+      <div>值: {value}</div>
+      <button onClick={() => setValue("bar")}>設置為bar</button>
+      <button onClick={() => setValue("baz")}>設置為baz</button>
+      <button onClick={() => setValue(null)}>移除</button>
+    </div>
+  );
+};
+
+```
+
+%%API%%

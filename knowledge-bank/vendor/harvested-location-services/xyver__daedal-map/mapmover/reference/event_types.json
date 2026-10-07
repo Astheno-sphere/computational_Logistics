@@ -1,0 +1,189 @@
+{
+  "_description": "Disaster event types, codes, and data sources",
+  "_schema_version": "1.0.0",
+  "_last_updated": "2026-01",
+  "_note": "Used for disaster metadata generation and event categorization",
+
+  "event_types": {
+    "earthquake": {
+      "code": "EQ",
+      "display_name": "Earthquake",
+      "sources": ["USGS", "NOAA_NCEI"],
+      "magnitude_scale": "Richter/Moment",
+      "key_metrics": ["magnitude", "depth_km", "felt_radius_km", "damage_radius_km", "intensity"],
+      "impact_types": ["felt", "damaged", "epicenter"]
+    },
+    "hurricane": {
+      "code": "HRCN",
+      "display_name": "Hurricane/Tropical Cyclone",
+      "sources": ["IBTrACS", "NHC"],
+      "magnitude_scale": "Saffir-Simpson",
+      "key_metrics": ["max_wind_kt", "min_pressure_mb", "max_category"],
+      "impact_types": ["hurricane_track", "tropical_storm_track"]
+    },
+    "tsunami": {
+      "code": "TSUN",
+      "display_name": "Tsunami",
+      "sources": ["NOAA_NCEI"],
+      "magnitude_scale": "Wave Height (m)",
+      "key_metrics": ["max_water_height_m", "runup_count", "intensity"],
+      "impact_types": ["tsunami_source", "tsunami_runup"]
+    },
+    "volcano": {
+      "code": "VOLC",
+      "display_name": "Volcanic Eruption",
+      "sources": ["GVP"],
+      "magnitude_scale": "VEI",
+      "key_metrics": ["vei", "damage_radius_km"],
+      "impact_types": ["eruption_damage", "eruption_felt", "eruption_point"]
+    },
+    "tornado": {
+      "code": "TORN",
+      "display_name": "Tornado",
+      "sources": ["NOAA_SPC", "Environment_Canada"],
+      "magnitude_scale": "Enhanced Fujita (EF)",
+      "key_metrics": ["magnitude", "tornado_length_mi", "tornado_width_yd"],
+      "impact_types": ["tornado_track"]
+    },
+    "wildfire": {
+      "code": "FIRE",
+      "display_name": "Wildfire",
+      "sources": ["GFA", "MTBS", "CNFDB", "FIRMS"],
+      "magnitude_scale": "Area (km2)",
+      "key_metrics": ["area_km2", "burned_area_ha"],
+      "impact_types": ["burned", "burned_estimated", "burned_point"]
+    },
+    "flood": {
+      "code": "FLOOD",
+      "display_name": "Flood",
+      "sources": ["DFO"],
+      "magnitude_scale": "Severity (1-3)",
+      "key_metrics": ["severity", "area_affected_km2", "duration_days"],
+      "impact_types": ["flood_extent"]
+    },
+    "landslide": {
+      "code": "LAND",
+      "display_name": "Landslide",
+      "sources": ["NASA_GLC", "NOAA", "DesInventar"],
+      "magnitude_scale": "Volume/Area",
+      "key_metrics": ["fatality_count", "injury_count"],
+      "impact_types": ["landslide_point"]
+    },
+    "drought": {
+      "code": "DROU",
+      "display_name": "Drought",
+      "sources": ["USDM", "SPEI"],
+      "magnitude_scale": "USDM (D0-D4)",
+      "key_metrics": ["drought_level", "area_affected_km2", "duration_weeks"],
+      "impact_types": ["drought_area"]
+    }
+  },
+
+  "source_info": {
+    "USGS": {
+      "full_name": "US Geological Survey",
+      "url": "https://earthquake.usgs.gov/",
+      "license": "Public Domain"
+    },
+    "NOAA_NCEI": {
+      "full_name": "NOAA National Centers for Environmental Information",
+      "url": "https://www.ncei.noaa.gov/",
+      "license": "Public Domain"
+    },
+    "IBTrACS": {
+      "full_name": "International Best Track Archive for Climate Stewardship",
+      "url": "https://www.ncei.noaa.gov/products/international-best-track-archive",
+      "license": "Public Domain"
+    },
+    "GVP": {
+      "full_name": "Smithsonian Global Volcanism Program",
+      "url": "https://volcano.si.edu/",
+      "license": "Public Domain"
+    },
+    "GFA": {
+      "full_name": "Global Fire Atlas",
+      "url": "https://www.globalfiredata.org/",
+      "license": "CC-BY"
+    },
+    "MTBS": {
+      "full_name": "Monitoring Trends in Burn Severity",
+      "url": "https://www.mtbs.gov/",
+      "license": "Public Domain"
+    },
+    "CNFDB": {
+      "full_name": "Canadian National Fire Database",
+      "url": "https://cwfis.cfs.nrcan.gc.ca/",
+      "license": "Open Government License - Canada"
+    },
+    "NASA_GLC": {
+      "full_name": "NASA Global Landslide Catalog",
+      "url": "https://gpm.nasa.gov/landslides/",
+      "license": "Public Domain"
+    },
+    "DFO": {
+      "full_name": "Dartmouth Flood Observatory",
+      "url": "https://floodobservatory.colorado.edu/",
+      "license": "Public Domain"
+    },
+    "USDM": {
+      "full_name": "US Drought Monitor",
+      "url": "https://droughtmonitor.unl.edu/",
+      "license": "Public Domain"
+    }
+  },
+
+  "magnitude_scales": {
+    "richter": {
+      "name": "Richter/Moment Magnitude",
+      "unit": "M",
+      "ranges": {
+        "minor": [0, 4],
+        "light": [4, 5],
+        "moderate": [5, 6],
+        "strong": [6, 7],
+        "major": [7, 8],
+        "great": [8, 10]
+      }
+    },
+    "saffir_simpson": {
+      "name": "Saffir-Simpson Scale",
+      "unit": "Category",
+      "ranges": {
+        "tropical_depression": [0, 33],
+        "tropical_storm": [34, 63],
+        "cat1": [64, 82],
+        "cat2": [83, 95],
+        "cat3": [96, 112],
+        "cat4": [113, 136],
+        "cat5": [137, 999]
+      }
+    },
+    "vei": {
+      "name": "Volcanic Explosivity Index",
+      "unit": "VEI",
+      "ranges": {
+        "non_explosive": [0, 0],
+        "gentle": [1, 1],
+        "explosive": [2, 2],
+        "severe": [3, 3],
+        "cataclysmic": [4, 4],
+        "paroxysmal": [5, 5],
+        "colossal": [6, 6],
+        "super_colossal": [7, 7],
+        "mega_colossal": [8, 8]
+      }
+    },
+    "enhanced_fujita": {
+      "name": "Enhanced Fujita Scale",
+      "unit": "EF",
+      "ranges": {
+        "EF0": [65, 85],
+        "EF1": [86, 110],
+        "EF2": [111, 135],
+        "EF3": [136, 165],
+        "EF4": [166, 200],
+        "EF5": [201, 999]
+      }
+    }
+  }
+}

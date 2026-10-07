@@ -1,0 +1,35 @@
+# GeoWire configuration — every field is optional (works without this file).
+# Keys are read from the environment via ${VAR}; never commit plaintext keys.
+
+providers:
+  nominatim:
+    enabled: true                 # OpenStreetMap — default ON, no API key
+  google:
+    enabled: true
+    apiKey: ${GOOGLE_MAPS_API_KEY} # BYOK; skipped automatically if unset
+  internal:
+    enabled: true
+    source: ./my-places.csv        # your own places
+    priority: 100                  # rank your data first
+
+routing:
+  defaultStrategy: merge           # first-success | merge
+  # rank weights (sum need not be 100 — only relative ratios matter)
+  rank:
+    distance: 40
+    openingHours: 25
+    providerConfidence: 20
+    freshness: 15
+
+budget:
+  monthlyUSD: 50                   # over-budget paid providers are skipped
+  perRequestMaxUSD: 0.10
+
+cache:
+  adapter: memory                  # memory (redis in v0.2)
+  maxEntries: 1000
+  defaultTtlSeconds: 3600          # capped per-provider by policy.maxCacheTtlSeconds
+
+dedup:
+  mergeThreshold: 0.75             # >= merges two results into one
+  possibleThreshold: 0.6

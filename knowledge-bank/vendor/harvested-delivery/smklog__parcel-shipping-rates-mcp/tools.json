@@ -1,0 +1,643 @@
+{
+  "tools": [
+    {
+      "name": "get_parcel_quote",
+      "title": "Get live parcel shipping rates from a US origin",
+      "annotations": {
+        "title": "Get live parcel shipping rates from a US origin",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "description": "Live shipping rates for one parcel sent from a US origin — inside the US, or to Canada, the UK, Germany or Australia — across USPS, UPS and FedEx, and DHL Express on the German and Australian lanes. Describe the item in plain words and the packed box size and weight are estimated. Give exact dimensions and weight to skip the estimate. Returns up to five purchasable services, each as one checkout total with the SMKlog fee inside it (the fee is itemized only on the checkout receipt) and, where the carrier publishes one, its own counter price for the same parcel beside it.\n\nNot every request is priced. A shipment past parcel limits or described as a pallet or freight load returns mode not_a_parcel with no rates: SMKlog does not arrange pallet or freight shipments. More than one box returns mode multiple_boxes with no rates: one label per box, so quote each box with quantity 1. Shipping labels are bought on smklog.com, not through this tool.\n\nChoosing between the tools: use this one to answer what a shipment would cost. Then hand the quote_id it returns to create_checkout_link once the human has settled on shipping this exact parcel, so the pair costs one carrier call rather than two. Use get_price_index instead for typical or historical prices: it is free, while this tool spends a rate-limited carrier call every time.\n\nParameter rules:\n- weight_lb, length_in, width_in and height_in count only as a set of four, each above zero. Leave any one out and all four are ignored in favor of the estimate, so never send weight alone.\n- One label per box. quantity counts units of the item: units that fit one box are priced as that box (two books go in one carton), and units that need more than one box return mode multiple_boxes, as does any quantity above 1 sent with exact dimensions, since those describe a single box. A box past the largest parcel any carrier here takes (150 lb, 108 in on the longest side, 165 in of length plus girth; USPS stops lower, and only services that take the box are listed) or a product described as a pallet or freight load (a pallet of, LTL, truckload, shipping container) returns mode not_a_parcel. Neither carries rates.\n- product is the item itself, up to 200 characters. A bare route (\"to Canada\"), a bare weight (\"7 lbs\") or a question is refused as product_not_recognized before any carrier is called.\n- from_zip must be a real 5-digit US ZIP (ZIP+4 is trimmed to five), or the call fails with invalid_us_zip.\n- to_zip follows to_country: a 5-digit ZIP for US, otherwise that country's own postal code handed to the carriers as typed. A to_country outside US, CA, GB, DE and AU is refused as international_unsupported_online, so do not retry it with a different box.\n- Allowance: 80 calls an hour per client, shared with the public /quote route.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "product",
+          "from_zip",
+          "to_zip"
+        ],
+        "properties": {
+          "product": {
+            "type": "string",
+            "description": "Plain-words item description, e.g. \"65 inch flat screen TV in original box\"."
+          },
+          "from_zip": {
+            "type": "string",
+            "description": "Origin US ZIP code, 5 digits. The origin is always in the United States."
+          },
+          "to_zip": {
+            "type": "string",
+            "description": "Destination postal code: a 5-digit ZIP for the US, or the destination country's own postal code, e.g. M5V 2T6 for Toronto or SW1A 1AA for London."
+          },
+          "to_country": {
+            "type": "string",
+            "enum": [
+              "US",
+              "CA",
+              "GB",
+              "DE",
+              "AU"
+            ],
+            "default": "US",
+            "description": "Two-letter destination country: US (default), CA, GB, DE, AU."
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "How many of the item ship together. Default 1."
+          },
+          "weight_lb": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Packed weight, pounds. Decimals allowed."
+          },
+          "length_in": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Packed box length, inches."
+          },
+          "width_in": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Packed box width, inches."
+          },
+          "height_in": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Packed box height, inches."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Live rates for the shipment. Empty rates come with a mode that says why: not_a_parcel (SMKlog does not arrange pallet or freight shipments), multiple_boxes (quote each box on its own) or parcel_restricted.",
+        "required": [
+          "rates"
+        ],
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "description": "Handle to this quote, good for 15 minutes. Pass it to create_checkout_link as quote_id and that call spends no second carrier call. Null when no rate came back, or when the handle could not be stored."
+          },
+          "mode": {
+            "type": "string",
+            "description": "Quote mode: parcel_label_ready when rates are listed; not_a_parcel, multiple_boxes or parcel_restricted when they are not"
+          },
+          "package": {
+            "type": "object",
+            "description": "The packed box the rates were computed for"
+          },
+          "rates": {
+            "type": "array",
+            "description": "Up to five purchasable services. Not cheapest first: they are ranked by best value, each rate scored as its checkout total in cents plus 175 per business day of transit (30 days when the carrier quotes none), lowest score first, and a rate that publishes a carrier counter price may lead a near-tie within 50 cents or 2 percent. Sort by amount yourself when you want the cheapest.",
+            "items": {
+              "type": "object",
+              "required": [
+                "carrier",
+                "service",
+                "amount"
+              ],
+              "properties": {
+                "carrier": {
+                  "type": "string",
+                  "description": "USPS, UPS, FedEx or DHL"
+                },
+                "service": {
+                  "type": "string",
+                  "description": "Service name without the carrier prefix"
+                },
+                "service_label": {
+                  "type": "string",
+                  "description": "Full display name, carrier included"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Checkout total, USD, SMKlog fee inside"
+                },
+                "retail_amount": {
+                  "type": "number",
+                  "description": "Carrier retail counter price, USD; 0 when not published"
+                },
+                "delivery_days": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Business days in transit when the carrier quotes one"
+                },
+                "delivery_window": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "e.g. \"2-5 business days\""
+                },
+                "delivery_estimated_date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Estimated delivery date when quoted"
+                },
+                "currency": {
+                  "type": "string",
+                  "description": "ISO currency, USD"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "create_checkout_link",
+      "title": "Create a payment session for a shipping label",
+      "annotations": {
+        "title": "Create a payment session for a shipping label",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "description": "Turns a decided shipment into a payment session for buying its shipping label: the checkout amount and a handoff URL that opens SMKlog checkout prefilled with the parcel. Use it after get_parcel_quote, passing the quote_id that call returned, so the price is reused and no second carrier call is spent. Without a quote_id it prices the shipment live from the fields. The result carries a session_id: keep it, and get_checkout_status tells you when the human has paid and when the label exists.\n\nSide effects: it writes a session record (30-day life, readable through get_checkout_status) and is not idempotent. Calling it twice makes two sessions and, without a quote_id, spends two carrier calls. It never charges: no card is touched and nothing is reserved until the human confirms the contents certification and the carrier-adjustment consent on the page and pays there. A stale link simply reprices.\n\nNo session is returned when the shipment cannot be sold online: not a parcel (SMKlog does not arrange pallet or freight shipments), more than one box (one label per box), or an installed lithium battery crossing a border. Quote first to learn which case applies.\n\nParameter rules:\n- A valid quote_id overrides product, from_zip, to_zip, to_country and quantity. service is still honored.\n- An expired quote_id falls back to live pricing from the fields. If those were omitted too, the call fails with missing_required_fields, so pass them alongside an old id.\n- service is matched as a case-insensitive fragment of the display name (\"Ground Advantage\", \"UPS Ground Saver\"). A fragment that matches nothing silently anchors the quote's first rate, which is the top of the best-value ranking and not always the cheapest, so read the service field in the result.\n- from_zip is a real 5-digit US ZIP. to_zip follows to_country (US, CA, GB, DE or AU).\n- On the four international lanes the human completes the customs declaration on the page, and duty is billed to the recipient on arrival.",
+      "inputSchema": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "description": "The quote_id returned by a previous get_parcel_quote call. Valid for 15 minutes."
+          },
+          "product": {
+            "type": "string",
+            "description": "Plain-words item description. Required unless quote_id is given."
+          },
+          "from_zip": {
+            "type": "string",
+            "description": "Origin US ZIP code, 5 digits. Required unless quote_id is given."
+          },
+          "to_zip": {
+            "type": "string",
+            "description": "Destination postal code: a 5-digit ZIP for the US, or the destination country's own postal code. Required unless quote_id is given."
+          },
+          "to_country": {
+            "type": "string",
+            "enum": [
+              "US",
+              "CA",
+              "GB",
+              "DE",
+              "AU"
+            ],
+            "default": "US",
+            "description": "Two-letter destination country: US (default), CA, GB, DE, AU."
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "How many of the item ship together. Default 1."
+          },
+          "service": {
+            "type": "string",
+            "description": "Service to anchor the amount to, e.g. \"USPS Ground Advantage\". Omitted or unmatched, the amount anchors the quote's first rate, top of the best-value ranking rather than the cheapest; the human can still pick any service on the page."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "A payment session, not a charge: the amount and the handoff URL where the human pays. The amount is a live quote at this moment, not a hold or a reservation, and no money moves until the human completes the page.",
+        "required": [
+          "intent",
+          "amount",
+          "currency",
+          "handoff_url"
+        ],
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "Always \"session\" — this tool never charges"
+          },
+          "session_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Handle for get_checkout_status, shaped as_ plus a UUID, good for 30 days. Null only when the session record could not be stored."
+          },
+          "method": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Payment rails behind the checkout, e.g. stripe, card"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Live-quoted checkout total for the anchored service, USD"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO currency, USD"
+          },
+          "service": {
+            "type": "string",
+            "description": "The service the amount is anchored to"
+          },
+          "handoff_url": {
+            "type": "string",
+            "description": "Opens the SMKlog checkout prefilled with this shipment"
+          },
+          "identified_product_title": {
+            "type": "string",
+            "description": "What the estimator understood the item to be"
+          },
+          "quote_reused": {
+            "type": "boolean",
+            "description": "True when the amount came from a quote_id you supplied, so no carrier call was spent. False when this tool priced the shipment live -- either because no quote_id was given, or because the one given had expired."
+          },
+          "note": {
+            "type": "string",
+            "description": "Standing caveats: live quote, human confirms consents and pays"
+          }
+        }
+      }
+    },
+    {
+      "name": "track_parcel",
+      "title": "Track a SMKlog shipment",
+      "annotations": {
+        "title": "Track a SMKlog shipment",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "description": "Track a shipment whose shipping label was bought on smklog.com, by carrier tracking number. Returns the current delivery status, the latest scan events and the estimated delivery date when the carrier reports one. Works for SMKlog labels only — it is not a universal tracker for arbitrary USPS, UPS, FedEx or DHL numbers, so a number from any other seller comes back not-found rather than as a status. Unrelated to the two pricing tools: it neither quotes nor spends quote allowance. Parameter rules: tracking_number is the only key; no order id or email is needed or accepted. When the label was bought through a create_checkout_link session, get_checkout_status hands back this number at label_ready. It is matched after removing spaces and hyphens and ignoring case, so a pasted or spoken number works as-is. Expect USPS as 20 to 22 digits (13 characters ending in US for international), UPS as 1Z plus 16 characters, FedEx as 12 to 22 digits; anything shorter than 6 characters after cleanup is refused as tracking_number_required, and a number SMKlog never sold answers 404 tracking_not_found with status \"not_found\". Scan events come newest first, up to eight.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "tracking_number"
+        ],
+        "properties": {
+          "tracking_number": {
+            "type": "string",
+            "description": "Carrier tracking number from the SMKlog receipt or label page"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Current delivery status plus the scan timeline, newest first.",
+        "required": [
+          "tracking",
+          "events"
+        ],
+        "properties": {
+          "tracking": {
+            "type": "object",
+            "required": [
+              "tracking_code",
+              "status"
+            ],
+            "properties": {
+              "tracking_code": {
+                "type": "string",
+                "description": "The carrier tracking number"
+              },
+              "carrier": {
+                "type": "string",
+                "description": "USPS, UPS, FedEx or DHL"
+              },
+              "status": {
+                "type": "string",
+                "description": "Machine status, e.g. in_transit, delivered"
+              },
+              "status_label": {
+                "type": "string",
+                "description": "Human-readable status"
+              },
+              "status_detail": {
+                "type": "string",
+                "description": "Carrier detail when reported"
+              },
+              "last_event_at": {
+                "type": "string",
+                "description": "Timestamp of the latest scan"
+              },
+              "estimated_delivery": {
+                "type": "string",
+                "description": "Estimated delivery date when the carrier reports one"
+              },
+              "delivered_at": {
+                "type": "string",
+                "description": "Delivery timestamp once delivered"
+              },
+              "updated_at": {
+                "type": "string",
+                "description": "When this record last changed"
+              }
+            }
+          },
+          "events": {
+            "type": "array",
+            "description": "Scan events, newest first, up to eight",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "description": "Machine status at this scan"
+                },
+                "status_label": {
+                  "type": "string",
+                  "description": "Human-readable status"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What the carrier reported"
+                },
+                "datetime": {
+                  "type": "string",
+                  "description": "Scan timestamp"
+                },
+                "city": {
+                  "type": "string",
+                  "description": "Scan city"
+                },
+                "state": {
+                  "type": "string",
+                  "description": "Scan state"
+                },
+                "zip": {
+                  "type": "string",
+                  "description": "Scan ZIP"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_price_index",
+      "title": "US parcel shipping price index",
+      "annotations": {
+        "title": "US parcel shipping price index",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "The SMKlog parcel shipping price index: a monthly repriced basket of six common boxes (1 to 20 lb) shipped from Newark, NJ to five US cities, quoted through the same live USPS, UPS and FedEx pipeline that prices real shipments. Returns the cheapest purchasable service per box and lane with every rate behind it, plus basket averages. Reference data for questions like \"what does shipping a shoebox cost in the US right now\" — reading it spends no quote allowance. For a price on a specific shipment, call get_parcel_quote instead. Parameter rules: month names one published issue as YYYY-MM; issues exist from 2026-07 onward, one per month, and omitting month returns the newest. A month with no issue answers issue_not_found together with available_months, so one miss lists every valid value; anything not shaped YYYY-MM answers invalid_month. Every issue prices the same boxes and lanes, so two months compare cell for cell.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "description": "Issue month as YYYY-MM. Omit for the newest published issue."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "One published issue of the index: the cheapest service per box and lane with every rate behind it.",
+        "required": [
+          "month",
+          "captured_on",
+          "cells"
+        ],
+        "properties": {
+          "month": {
+            "type": "string",
+            "description": "Issue month, YYYY-MM"
+          },
+          "label": {
+            "type": "string",
+            "description": "Issue month spelled out, e.g. \"August 2026\""
+          },
+          "captured_on": {
+            "type": "string",
+            "description": "The date every price in this issue was captured"
+          },
+          "origin": {
+            "type": "string",
+            "description": "Origin of every lane, Newark NJ (07102)"
+          },
+          "basket_average": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Mean of the cheapest rate across all thirty cells, USD"
+          },
+          "carrier_wins": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "How many cells each carrier priced cheapest"
+          },
+          "cells": {
+            "type": "array",
+            "description": "One entry per box and destination",
+            "items": {
+              "type": "object",
+              "required": [
+                "box",
+                "to",
+                "cheapest"
+              ],
+              "properties": {
+                "box": {
+                  "type": "string",
+                  "description": "Basket carton, e.g. \"Book box\""
+                },
+                "dims": {
+                  "type": "string",
+                  "description": "Packed dimensions, inches"
+                },
+                "weight": {
+                  "type": "string",
+                  "description": "Packed weight, pounds"
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Destination city"
+                },
+                "to_zip": {
+                  "type": "string",
+                  "description": "Destination ZIP"
+                },
+                "cheapest": {
+                  "type": "object",
+                  "description": "The lowest-priced purchasable service for this cell"
+                },
+                "services": {
+                  "type": "array",
+                  "description": "Every purchasable service for this cell, cheapest first"
+                }
+              }
+            }
+          },
+          "page": {
+            "type": "string",
+            "description": "The published issue page on smklog.com"
+          },
+          "methodology": {
+            "type": "string",
+            "description": "How the numbers are produced"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_checkout_status",
+      "title": "Check a checkout session",
+      "annotations": {
+        "title": "Check a checkout session",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Reports where a payment session made by create_checkout_link stands: whether the human has opened checkout, paid, and whether the shipping label exists yet, with the tracking number once it does. Reads SMKlog's own order records only: no carrier call, no quote allowance, nothing changes. Poll it after handing the human the link, minutes apart rather than seconds, because nothing moves until the human acts.\n\nStatuses, in order: awaiting_checkout (link made, no checkout started), checkout_started (a checkout exists, not paid), paid (paid, label not created yet: the checkout page buys it right after payment, otherwise an operator picks it up), label_ready (label bought, tracking_number present), delivered, refunded. Once label_ready, feed tracking_number to track_parcel for scan events.\n\nParameter rules:\n- session_id is the session_id returned by create_checkout_link, shaped as_ plus a UUID. Nothing else identifies a session: no order id, no email, no quote_id.\n- A session lives 30 days from creation. An unknown, malformed or expired id answers session_not_found rather than a status.\n- The answer never carries names, addresses or emails. Treat the session_id like a tracking number: whoever holds it can read the tracking number.\n- A manual-review request made from the handoff page is not a checkout and leaves the status at awaiting_checkout.\n- Allowance: 60 checks an hour per client.",
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "session_id"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "pattern": "^as_[A-Za-z0-9-]{8,80}$",
+            "description": "The session_id from create_checkout_link."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "The stage of the checkout this session led to, derived from the order record.",
+        "required": [
+          "session_id",
+          "status"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "The session asked about"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "awaiting_checkout",
+              "checkout_started",
+              "paid",
+              "label_ready",
+              "delivered",
+              "refunded"
+            ],
+            "description": "Stage, in that order"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When create_checkout_link made the session, ISO 8601"
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "When the session stops answering, ISO 8601"
+          },
+          "amount": {
+            "type": "number",
+            "description": "The amount the session was anchored to, USD"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO currency, USD"
+          },
+          "service": {
+            "type": "string",
+            "description": "The service the session was anchored to"
+          },
+          "quote_reused": {
+            "type": "boolean",
+            "description": "Whether the session reused a quote_id"
+          },
+          "checkout": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The checkout the human started, null while awaiting_checkout",
+            "properties": {
+              "order_id": {
+                "type": "string",
+                "description": "SMKlog order id, the reference for support"
+              },
+              "started_at": {
+                "type": "string",
+                "description": "When the checkout was created"
+              },
+              "paid": {
+                "type": "boolean"
+              },
+              "label_ready": {
+                "type": "boolean"
+              },
+              "refunded": {
+                "type": "boolean"
+              },
+              "carrier": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "USPS, UPS, FedEx or DHL"
+              },
+              "service": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The service the human actually chose"
+              },
+              "tracking_number": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Present from label_ready on"
+              },
+              "tracking_status": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Latest carrier status when known"
+              },
+              "estimated_delivery": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "delivered_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "next": {
+            "type": "string",
+            "description": "What, if anything, the agent should do now"
+          }
+        }
+      }
+    }
+  ]
+}

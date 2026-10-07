@@ -1,0 +1,253 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  schedule:
+    # Weekly, so the audit job also runs in quiet weeks.
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # Separate from `build`, which compiles only src/ into dist/. This also
+      # typechecks test/, which vitest transpiles without checking.
+      - run: npm run typecheck
+      - run: npm run assets:check
+      - run: npm run build
+      - run: npm test
+        if: matrix.node-version != 24
+      - run: npm run test:coverage
+        if: matrix.node-version == 24
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: matrix.node-version == 24
+        with:
+          name: coverage
+          path: coverage/
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      # --ignore-scripts: an audit must not execute the code it is auditing.
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=high
+
+      # The note above the pin claims it is on the active LTS major; this is
+      # what makes that claim checkable. Asserts that every stage sits on the
+      # same image, that the major tag is still the LTS tag, and that the
+      # pinned digest really is an image of that major.
+      - run: .github/scripts/check-base-image-pin.sh Dockerfile
+
+  # `npm audit` checks the tree as it is; this checks the *change* a pull
+  # request makes to it — a new dependency with a known advisory, or a licence
+  # nobody agreed to — before it is in the tree at all.
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+
+  codeql:
+    # Code scanning is not available on private repositories on the free plan;
+    # this job activates itself when the repository goes public.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # init and analyze must always move together — see the dependabot codeql group.
+      - uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+
+  container-scan:
+    needs: test
+    runs-on: ubuntu-latest
+    # A container CVE used to be visible only as a red job: Trivy fails the build
+    # and uploads nothing, so nothing reaches the Security tab or the API, and a
+    # finding existed only for as long as someone was reading CI logs. The scan
+    # now also reports its results as code scanning alerts — which close
+    # themselves again once a later scan no longer sees them.
+    permissions:
+      # A job-level block replaces the workflow default, so contents is repeated.
+      contents: read
+      security-events: write
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            tag: amd64
+          - platform: linux/arm64
+            tag: arm64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          platforms: ${{ matrix.platform }}
+          tags: 'osm-mcp:audit-${{ matrix.tag }}'
+          cache-from: type=gha,scope=scan-${{ matrix.tag }}
+          cache-to: type=gha,mode=max,scope=scan-${{ matrix.tag }}
+      # Report first, gate second. This step never fails, so the SARIF is uploaded
+      # before the gate below can turn the job red — no `if: always()` needed, which
+      # would try to upload a file a crashed scan never wrote.
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          # Pin Trivy itself: the action's default has been a release that was
+          # withdrawn upstream, and the installer then dies after "found version".
+          version: v0.74.0
+          image-ref: 'osm-mcp:audit-${{ matrix.tag }}'
+          format: sarif
+          output: trivy-${{ matrix.tag }}.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          # Without this the SARIF ignores `severity` and reports every level,
+          # so the Security tab would fill with LOW noise the gate never blocks on.
+          limit-severities-for-sarif: true
+
+      # Skipped while the repository is private — code scanning needs GitHub
+      # Advanced Security, which the Free plan does not include, and the upload
+      # would fail with "Resource not accessible by integration". Same gate as the
+      # codeql job, and it starts working by itself the day the repo goes public.
+      # Fork pull requests are excluded for a different reason: their token is
+      # read-only whatever this permissions block says.
+      - uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        # Every continuation line sits at the same indentation on purpose: a folded
+        # scalar keeps the newline of a *more* indented line, and the expression
+        # parser then rejects the workflow without naming a line.
+        if: >-
+          ${{ !github.event.repository.private &&
+          (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository) }}
+        with:
+          sarif_file: trivy-${{ matrix.tag }}.sarif
+          # One category per matrix leg. Two uploads sharing a category replace
+          # each other, and one architecture's findings would vanish silently.
+          category: trivy-${{ matrix.tag }}
+
+      # The gate, unchanged in behaviour. It runs a second time rather than adding
+      # exit-code to the step above, because SARIF is not readable output: a red
+      # job would otherwise name no CVE in its log at all. Trivy and its database
+      # are already on disk here, so this costs seconds.
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: 'osm-mcp:audit-${{ matrix.tag }}'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          skip-setup-trivy: true
+
+  smoke:
+    # The weekly run only. This is the integration test of a server whose
+    # backend is somebody else's public infrastructure: Nominatim, OSRM and
+    # Overpass have no self-hosted edition worth putting in a compose file for
+    # a test run, and their usage policies are written for people, not for a
+    # job that fires on every push. So the question it answers is the one the
+    # weekly schedule asks everywhere else in this family — has the backend
+    # moved underneath the server — and it is allowed to fail without blocking
+    # a pull request.
+    if: github.event_name == 'schedule'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The script spawns dist/index.js, not src/.
+      - run: npm run build
+      - run: npm run smoke
+
+  publish:
+    # `smoke` is deliberately not in this list, and could not be: it only runs
+    # on the weekly schedule, so on a release tag it is skipped and a skipped
+    # job in `needs:` blocks everything after it. That matches what it is for —
+    # a report that a third party's service changed, not a gate on a release.
+    needs: [test, container-scan]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/ni-c/osm-mcp
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          sbom: true
+          provenance: mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

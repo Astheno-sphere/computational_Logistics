@@ -1,0 +1,220 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "agentsociety2-v*"
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate before release
+    runs-on: ubuntu-latest
+    env:
+      MEM0_TELEMETRY: "False"
+      ANONYMIZED_TELEMETRY: "False"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.1.0
+
+      - name: Lint and test Python package
+        run: |
+          cd packages/agentsociety2
+          uv sync --extra dev
+          uv run ruff check .
+          uv run mypy tests/ --follow-imports=skip
+          uv run pytest -q
+        env:
+          AGENTSOCIETY_LLM_API_KEY: ${{ secrets.AGENTSOCIETY_LLM_API_KEY }}
+          AGENTSOCIETY_LLM_API_BASE: ${{ secrets.AGENTSOCIETY_LLM_API_BASE }}
+          AGENTSOCIETY_LLM_MODEL: glm-5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: extension/.nvmrc
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Lint and audit extension
+        working-directory: extension
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          # Advisory failures (transitive deps) must not block the release;
+          # matches .gitlab-ci.yml lint-extension (13e28b5e).
+          npm audit --audit-level=high --registry=https://registry.npmjs.org || true
+
+  build-python:
+    name: Build Python distribution
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.1.0
+
+      - name: Build package
+        run: |
+          cd packages/agentsociety2
+          uv build --out-dir dist
+
+      - name: Check distribution
+        run: |
+          cd packages/agentsociety2
+          uv run --with twine twine check dist/*
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-package-distributions
+          path: packages/agentsociety2/dist/
+
+  build-vscode:
+    name: Build VSCode extension
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: extension/.nvmrc
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./extension
+        run: npm ci
+
+      - name: Validate webpack config
+        working-directory: ./extension
+        run: node -c webpack.config.js
+
+      - name: Build extension
+        working-directory: ./extension
+        run: npm run build
+
+      - name: Package extension
+        working-directory: ./extension
+        run: npm run package
+
+      - name: Verify VSIX contents
+        working-directory: ./extension
+        run: |
+          unzip -Z1 ai-social-scientist.vsix > vsix-contents.txt
+          grep -q '^extension/out/extension.js$' vsix-contents.txt
+          grep -q '^extension/out/webview/configPage.js$' vsix-contents.txt
+          grep -q '^extension/out/webview/initConfig.js$' vsix-contents.txt
+          grep -q '^extension/out/webview/prefillParams.js$' vsix-contents.txt
+          grep -q '^extension/out/webview/replay.js$' vsix-contents.txt
+          grep -q '^extension/out/webview/simSettings.js$' vsix-contents.txt
+          # js-yaml >= 5 ships its CJS entry as dist/js-yaml.cjs.js (no root index.js)
+          grep -q '^extension/node_modules/js-yaml/dist/js-yaml.cjs.js$' vsix-contents.txt
+
+      - name: Store the VSIX package
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-extension
+          path: extension/ai-social-scientist.vsix
+
+  publish-to-pypi:
+    name: Publish to PyPI
+    needs: build-python
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/agentsociety2
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+  github-release:
+    name: Create GitHub Release
+    needs: [publish-to-pypi, build-vscode]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download Python distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: python-dist/
+
+      - name: Download VSCode extension
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode-extension
+          path: vscode-dist/
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          TAG=${{ github.ref_name }}
+          VERSION=${TAG#agentsociety2-v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: git_cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: AgentSociety2 ${{ steps.get_version.outputs.version }}
+          body: ${{ steps.git_cliff.outputs.content }}
+          files: |
+            python-dist/*.tar.gz
+            python-dist/*.whl
+            vscode-dist/*.vsix
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

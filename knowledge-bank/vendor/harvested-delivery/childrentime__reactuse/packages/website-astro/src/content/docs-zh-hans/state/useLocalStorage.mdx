@@ -1,0 +1,118 @@
+---
+title: useLocalStorage 用法与示例
+sidebar_label: useLocalStorage
+description: "useLocalStorage 是一个 React hook，将 state 绑定到 localStorage 键上——返回类似 useState 的元组，支持 SSR 安全、自定义序列化器以及跨标签页同步。"
+---
+# useLocalStorage
+
+轻松管理 `localStorage`
+
+`useLocalStorage` 将 React 状态绑定到一个 `localStorage` 键。它返回一个类似 `useState` 的 `[value, setValue]` 元组。值在挂载时从存储中读取，每次调用 `setValue` 时写回。将值设为 `null` 移除该键。可以为非字符串数据类型提供自定义序列化器，hook 默认监听跨标签页的 `storage` 事件，以便一个标签页的更改反映在其他标签页中。
+
+### 使用场景
+
+- 跨页面重载持久化用户偏好（主题、语言、布局）
+- 缓存表单草稿或应用状态，以便用户可以从中断处继续
+- 通过 `storage` 事件在浏览器标签页之间共享简单状态
+
+### 注意事项
+
+- **持久化**：数据在页面重载和浏览器重启后仍然存在。如果只需要当前会话的数据，请使用 `useSessionStorage`。
+- **跨标签页 & 同标签页同步**：绑定到相同键的每个组件都会保持同步——既在当前标签页内（始终开启、无需刷新），也跨其他标签页（通过 `storage` 事件）。`listenToStorageChanges: false` 只会禁用跨标签页监听；同标签页同步始终生效。
+- **自定义序列化**：对于对象或非字符串值，在选项中提供 `serializer.read` 和 `serializer.write` 函数。默认行为对对象使用 JSON 序列化，对字符串值使用原始字符串。
+- 参见 `useSessionStorage` 了解会话作用域存储，以及 `useCookie` 了解基于 cookie 的持久化。
+
+## Usage
+
+```tsx live
+function Demo() {
+  // 绑定字符串
+  const [value, setValue] = useLocalStorage("my-key", "key");
+  
+  // 绑定对象（使用自定义序列化器）
+  const [myObj, setMyObj] = useLocalStorage(
+    "myObj",
+    {
+      name: "test",
+    },
+    {
+      serializer: {
+        read: (val) => {
+          console.log("读取", val);
+          return JSON.parse(val);
+        },
+        write: (val) => {
+          console.log("写入", val);
+          return JSON.stringify(val);
+        },
+      },
+    }
+  );
+
+  return (
+    <div>
+      <div>
+        <h3>字符串值</h3>
+        <div>值: {value}</div>
+        <button onClick={() => setValue("bar")}>设置为 "bar"</button>
+        <button onClick={() => setValue("baz")}>设置为 "baz"</button>
+        <button onClick={() => setValue(null)}>移除</button>
+      </div>
+      
+      <div style={{ marginTop: "20px" }}>
+        <h3>对象值</h3>
+        <div>对象: {JSON.stringify(myObj)}</div>
+        <button onClick={() => setMyObj({ name: "updated" })}>
+          更新对象
+        </button>
+        <button onClick={() => setMyObj({ name: "test", count: 1 })}>
+          添加属性
+        </button>
+        <button onClick={() => setMyObj(null)}>移除对象</button>
+      </div>
+    </div>
+  );
+};
+
+```
+
+## 同标签页同步
+
+绑定到相同键的两个组件会在同一标签页内保持同步——不只是跨标签页。在一个面板点击按钮，另一个面板会立即更新，无需刷新：
+
+```tsx live noInline
+function StoragePanel({ label }) {
+  const [value, setValue] = useLocalStorage("shared-demo-key", "A");
+  return (
+    <div
+      style={{
+        border: "1px solid var(--sl-color-gray-5, #ccc)",
+        borderRadius: 6,
+        padding: 12,
+        marginBottom: 8,
+      }}
+    >
+      <strong>{label}</strong> 当前值：<code>{String(value ?? "(空)")}</code>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button onClick={() => setValue("A")}>Set A</button>
+        <button onClick={() => setValue("B")}>Set B</button>
+        <button onClick={() => setValue(null)}>Clear</button>
+      </div>
+    </div>
+  );
+}
+
+function Demo() {
+  return (
+    <div>
+      <p>在一个面板点击按钮——另一个面板会在同一标签页内同步更新：</p>
+      <StoragePanel label="组件 A" />
+      <StoragePanel label="组件 B" />
+    </div>
+  );
+}
+
+render(<Demo />);
+```
+
+%%API%%

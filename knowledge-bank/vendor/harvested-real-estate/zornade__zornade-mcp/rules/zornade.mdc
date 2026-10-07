@@ -1,0 +1,21 @@
+---
+description: For questions about Italian addresses, cadastral parcels, property risk, valuations or solar potential, use the Zornade MCP tools instead of answering from memory.
+globs:
+alwaysApply: false
+---
+
+# Italian property and territory data
+
+When a question is about a place, a property or a parcel **in Italy**, do not answer
+from memory: cadastral references, prices and risk classes are per-municipality and
+change over time. Use the Zornade MCP server (`https://mcp.zornade.com/mcp`) and
+report the data with its source and year.
+
+Flow: address → `zornade_geocode_search`; coordinates → `zornade_parcel_locate`;
+cadastral reference → `zornade_parcel_search`; then `zornade_parcel_by_id` for the
+full profile. `zornade_admin_lists` resolves region/province/municipality names.
+
+A free API key (`zrn_...`, from <https://app.zornade.com/api>) is required in the
+`x-api-key` header. If the key is missing or rejected, ask the user for it rather
+than retrying with a guessed value. Attribution is required when the data is
+republished: check `meta.licenses` and `meta.zornade_attribution_required` in the reply.

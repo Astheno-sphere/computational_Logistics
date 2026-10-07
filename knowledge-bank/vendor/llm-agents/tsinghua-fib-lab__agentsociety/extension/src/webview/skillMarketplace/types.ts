@@ -1,0 +1,427 @@
+/**
+ * 技能管理 Webview 类型定义
+ * 
+ * 两种 Skill 类型：
+ * 1. Agent Skills - Agent 运行时使用，安装到 {workspace}/custom/skills/
+ * 2. Claude Code Skills - Claude Code IDE 使用，安装到 .claude/skills/
+ */
+
+export interface VSCodeAPI {
+  postMessage(message: unknown): void;
+  getState(): unknown;
+  setState(state: unknown): void;
+}
+
+// ============ Agent Skills（后端管理，Agent 运行时） ============
+
+export interface AgentSkill {
+  skill_id: string;
+  name: string;
+  description: string;
+  /** Registry source: `built-in` | `custom` | `env` (backend skill_registry). */
+  source: string;
+  source_label?: string;
+  path: string;
+  has_skill_md: boolean;
+  script: string;
+}
+
+// ============ Claude Code Skills（IDE 使用） ============
+
+export interface ClaudeCodeSkill {
+  name: string;
+  path: string;
+  hasSkillMd: boolean;
+  description?: string;
+  files: string[];
+  origin: 'workspace' | 'global';
+  /** false：目录在 .agentsociety-disabled-skills 保管区，Claude 不会当技能加载 */
+  active?: boolean;
+}
+
+// ============ Built-in Skills（插件自带，只读） ============
+
+export interface BuiltinSkillVersionInfo {
+  id: string;
+  label?: string;
+  addedIn?: string;
+  source: 'bundled' | 'snapshot';
+}
+
+export interface BuiltinSkill {
+  name: string;
+  path: string;
+  hasSkillMd: boolean;
+  description?: string;
+  /** True for agentsociety-* skills under version management. */
+  isVersioned?: boolean;
+  /** When isVersioned: which version is currently realized in .claude/skills/. */
+  activeVersion?: { source: 'bundled' | 'snapshot'; id: string };
+  availableVersions?: BuiltinSkillVersionInfo[];
+  snapshotCount?: number;
+}
+
+// ============ Skill Presets（仅 agentsociety-*） ============
+
+export interface SkillVersionRef {
+  source: 'bundled' | 'snapshot';
+  version?: string;
+  tag?: string;
+}
+
+export interface SkillPreset {
+  name: string;
+  active: boolean;
+  /** skillName -> SkillVersionRef. Skills not listed fall back to defaultVersion. */
+  mapping: Record<string, SkillVersionRef>;
+}
+
+// ============ Marketplace Skills（从 GitHub 仓库获取） ============
+
+export interface SkillCategory {
+  id: string;
+  name: string;
+  nameZh: string;
+  icon: string;
+}
+
+/** 市场源配置（支持多平台） */
+export interface SkillSourceConfig {
+  owner: string;
+  repo: string;
+  branch?: string;
+  skillsPath?: string;
+  /** 平台类型，默认 github */
+  platform?: 'github' | 'gitlab' | 'gitee';
+  /** GitLab/Gitee 自定义域名（自托管时使用） */
+  baseUrl?: string;
+}
+
+export interface MarketplaceSkill {
+  id: string;
+  name: string;
+  description: string;
+  descriptionZh?: string;
+  category: string;
+  author: string;
+  repo: string;
+  branch?: string;
+  path: string;
+  tags: string[];
+  compatibility: string[];
+  version?: string;
+  homepage?: string;
+  installTarget: 'agent' | 'claudeCode';
+  // 新增：已安装状态
+  installedVersion?: string;      // 本地已安装版本
+  updateAvailable?: boolean;      // 是否有更新可用
+  skillMdContent?: string;        // 远程 SKILL.md 内容（用于预览）
+}
+
+export type MarketplaceLoadError =
+  | { code: 'NO_SKILL_SOURCES'; channel: 'agent' | 'claude' }
+  | { code: 'NETWORK'; message: string }
+  | { code: 'GITHUB_SOURCE_FAILED'; source: string; message: string };
+
+export interface MarketplaceLoadPayload {
+  skills: MarketplaceSkill[];
+  errors: MarketplaceLoadError[];
+}
+
+export interface MarketplaceChannelsPayload {
+  agent: MarketplaceLoadPayload;
+  claude: MarketplaceLoadPayload;
+}
+
+export interface SkillSource {
+  name: string;
+  owner: string;
+  repo: string;
+  branch?: string;
+  path?: string;
+  skillType: 'agent' | 'claudeCode';
+}
+
+// ============ 安装相关 ============
+
+export interface InstalledSkill {
+  id: string;
+  name: string;
+  path: string;
+  installedAt: string;
+  source?: 'marketplace' | 'local';
+  skillType?: 'agent' | 'claudeCode';
+}
+
+export interface InstallProgress {
+  skillId: string;
+  status: 'pending' | 'downloading' | 'installing' | 'completed' | 'failed';
+  message?: string;
+  error?: string;
+}
+
+export interface AgentSkillDetailPayload {
+  success: boolean;
+  skill_id?: string;
+  name: string;
+  description: string;
+  source: string;
+  path: string;
+  script: string;
+  skill_md: string;
+}
+
+// ============ 整体状态 ============
+
+export interface SkillManagementState {
+  activeTab: 'agent' | 'agentMarketplace' | 'claudeCode' | 'builtin';
+  // Agent Skills（后端管理）
+  agentSkills: AgentSkill[];
+  agentSkillsLoading: boolean;
+  // Claude Code Skills
+  claudeCodeSkills: ClaudeCodeSkill[];
+  claudeCodeSkillsLoading: boolean;
+  // Built-in Skills
+  builtinSkills: BuiltinSkill[];
+  builtinSkillsLoading: boolean;
+  // Bundled Plugins
+  bundledPlugins: BundledPlugin[];
+  bundledPluginsLoading: boolean;
+  // Marketplace
+  agentMarketplaceSkills: MarketplaceSkill[];
+  claudeCodeMarketplaceSkills: MarketplaceSkill[];
+  marketplaceLoading: boolean;
+  marketplaceError: string | null;
+  // 市场源配置
+  agentSkillSources: SkillSourceConfig[];
+  claudeSkillSources: SkillSourceConfig[];
+  skillSourcesLoading: boolean;
+  // 通用
+  isLoading: boolean;
+  error: string | null;
+}
+
+// ============ 消息类型 ============
+
+export interface ExtensionMessage {
+  type:
+  | 'ready'
+  // Agent Skills
+  | 'listAgentSkills'
+  | 'fetchAgentSkillDetail'
+  | 'fetchLocalSkillMarkdown'
+  | 'importAgentSkill'
+  | 'importClaudeCodeSkill'
+  // Claude Code Skills
+  | 'listClaudeCodeSkills'
+  | 'openClaudeCodeSkill'
+  | 'deleteClaudeCodeSkill'
+  // Built-in Skills
+  | 'listBuiltinSkills'
+  | 'scanAgentSkills'
+  | 'refreshMarketplace'
+  | 'updateExtensionSkills'
+  | 'openAgentSkillDoc'
+  | 'openLocalSkillMarkdown'
+  // Marketplace
+  | 'installAgentSkill'
+  | 'installClaudeCodeSkill'
+  | 'openSkillFolder'
+  | 'openExternal'
+  | 'openSkillSourcesSettings'
+  | 'openClaudeSkillSourcesSettings'
+  | 'syncOneClaudeSkillFromVsix'
+  | 'setClaudeSkillActive'
+  | 'purgeClaudeCodeSkill'
+  // Skill Versioning
+  | 'listSkillPresets'
+  | 'applySkillPreset'
+  | 'createSkillSnapshot'
+  | 'savePreset'
+  | 'deletePreset'
+  | 'invokeSwitchSkillVersionCommand'
+  | 'invokeSnapshotSkillCommand'
+  | 'invokeEditSkillPresetsCommand'
+  // 市场源配置
+  | 'getSkillSources'          // 获取市场源配置
+  | 'saveSkillSources'         // 保存市场源配置
+  | 'getGithubToken'           // 获取 GitHub Token
+  | 'saveGithubToken'          // 保存 GitHub Token
+  // 更新差异预览
+  | 'getSkillUpdateDiff'       // 获取技能更新差异
+  | 'confirmSkillUpdate'       // 确认更新技能
+  // Bundled Plugins
+  | 'listBundledPlugins';      // 获取扩展自带插件列表
+  payload?: unknown;
+}
+
+export interface WebviewMessage {
+  type:
+  // Agent Skills
+  | 'agentSkillsLoaded'
+  | 'agentSkillImported'
+  | 'agentSkillDetailLoaded'
+  | 'localSkillMarkdownLoaded'
+  | 'skillDetailError'
+  // Claude Code Skills
+  | 'claudeCodeSkillsLoaded'
+  | 'claudeCodeSkillImported'
+  | 'claudeCodeSkillDeleted'
+  // Built-in Skills
+  | 'builtinSkillsLoaded'
+  // Bundled Plugins
+  | 'bundledPluginsLoaded'
+  // Marketplace
+  | 'marketplaceSkillsLoaded'
+  | 'installProgress'
+  | 'installComplete'
+  | 'installFailed'
+  // Skill Versioning
+  | 'skillPresetsLoaded'
+  | 'skillPresetApplied'
+  | 'skillSnapshotCreated'
+  // 更新相关
+  | 'skillUpdateDiffLoaded'
+  | 'skillUpdateDiffError'
+  // 市场源配置
+  | 'skillSourcesLoaded'       // 市场源配置加载完成
+  | 'skillSourcesSaved'        // 市场源配置保存完成
+  | 'skillSourcesError'        // 市场源配置操作错误
+  // GitHub Token
+  | 'githubTokenLoaded'        // GitHub Token 加载完成
+  | 'githubTokenSaved'         // GitHub Token 保存完成
+  // 通用
+  | 'error';
+  payload?: unknown;
+}
+
+// ============ 更新差异预览 ============
+
+export interface SkillFileDiff {
+  path: string;                   // 文件相对路径
+  status: 'added' | 'deleted' | 'modified';
+  hunks: DiffHunk[];              // diff 块
+}
+
+export interface DiffHunk {
+  oldStart: number;
+  oldLines: number;
+  newStart: number;
+  newLines: number;
+  lines: string[];                // diff 行 (以 +/-/空格 开头)
+}
+
+export interface SkillUpdateDiff {
+  skillId: string;
+  skillName: string;
+  localVersion: string;
+  remoteVersion: string;
+  filesAdded: string[];
+  filesDeleted: string[];
+  filesModified: string[];
+  fileDiffs: SkillFileDiff[];
+  changelog?: string;             // 可选的更新日志
+}
+
+// ============ SKILL.md Frontmatter ============
+
+export interface SkillFrontmatter {
+  name?: string;
+  description?: string;
+  descriptionZh?: string;
+  version?: string;
+  author?: string;
+  tags?: string[];
+}
+
+// ============ Bundled Plugins（扩展自带的 Claude Code 插件） ============
+
+export interface BundledPluginCommand {
+  name: string;       // 文件名（不含 .md）
+  path: string;       // 源文件路径
+  description?: string;
+}
+
+export interface BundledPlugin {
+  name: string;       // 插件名（如 "easypaper"）
+  version: string;
+  description: string;
+  author: string;
+  path: string;       // 插件根目录
+  skills: BuiltinSkill[];
+  commands: BundledPluginCommand[];
+}
+
+// ============ 原始配置类型（用于类型安全解析） ============
+
+export interface RawSkillSourceConfig {
+  owner?: unknown;
+  repo?: unknown;
+  branch?: unknown;
+  skillsPath?: unknown;
+  platform?: unknown;
+  baseUrl?: unknown;
+}
+
+// ============ 默认市场源配置 ============
+
+/** 默认 Claude 技能源（内置） */
+export const DEFAULT_CLAUDE_SOURCES: SkillSourceConfig[] = [
+  {
+    owner: 'anthropics',
+    repo: 'skills',
+    branch: 'main',
+    skillsPath: 'skills',
+    platform: 'github',
+  },
+  {
+    owner: 'obra',
+    repo: 'superpowers',
+    branch: 'main',
+    skillsPath: 'skills',
+    platform: 'github',
+  },
+  {
+    owner: 'affaan-m',
+    repo: 'everything-claude-code',
+    branch: 'main',
+    skillsPath: '.agents/skills',
+    platform: 'github',
+  },
+];
+
+/** 默认 Agent 技能源（无内置） */
+export const DEFAULT_AGENT_SOURCES: SkillSourceConfig[] = [];
+
+// ============ MCP Integrations（Claude Code + Codex） ============
+
+export type McpTransport = 'stdio' | 'http';
+
+export type McpServerRecord = {
+  id: string;
+  name: string;
+  transport: McpTransport;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  bearerTokenEnvVar?: string;
+  httpHeaders?: Record<string, string>;
+  enabledClaude: boolean;
+  enabledCodex: boolean;
+  builtin?: 'literature' | 'agentsociety';
+};
+
+export type McpProbeResult = {
+  ok: boolean;
+  status: number;
+  tools: string[];
+  error?: string;
+};
+
+export type McpPresetCatalogItem = {
+  presetId: string;
+  name: string;
+  descriptionKey: string;
+  transport: McpTransport;
+};

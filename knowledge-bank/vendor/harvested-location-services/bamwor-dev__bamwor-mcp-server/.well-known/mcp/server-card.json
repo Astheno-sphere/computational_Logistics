@@ -1,0 +1,113 @@
+{
+  "serverInfo": {
+    "name": "bamwor-world-data",
+    "version": "0.1.1"
+  },
+  "authentication": {
+    "required": true,
+    "schemes": ["apiKey"]
+  },
+  "tools": [
+    {
+      "name": "get_country",
+      "description": "Get detailed data about a country by name, slug, or ISO code. Returns population, area, capital, region, coordinates, and 20+ statistics.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Country name (e.g. \"Brazil\"), slug (e.g. \"brazil\"), or ISO code (e.g. \"BR\")"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "search_countries",
+      "description": "Search for countries by name or keyword, with optional region filter. Returns a list of matching countries with basic data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search term (country name, partial name, or keyword)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum results to return (1-50, default 25)",
+            "default": 25
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "search_cities",
+      "description": "Search for cities worldwide by name. Returns matching cities from a database of 13.4M cities with population and country.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "City name or partial name to search for (min 2 characters)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum results to return (1-50, default 20)",
+            "default": 20
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "list_cities_by_country",
+      "description": "List cities in a specific country, sorted by population or name. Supports minimum population filter. Covers 13.4M cities globally.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string",
+            "description": "Country name or slug (e.g. \"brazil\", \"Japan\", \"united-states\")"
+          },
+          "min_population": {
+            "type": "number",
+            "description": "Minimum population filter (e.g. 1000000 for cities above 1M)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum results to return (1-50, default 25)",
+            "default": 25
+          },
+          "sort": {
+            "type": "string",
+            "enum": ["population", "name"],
+            "description": "Sort order: \"population\" (default, descending) or \"name\" (ascending)",
+            "default": "population"
+          }
+        },
+        "required": ["country"]
+      }
+    },
+    {
+      "name": "compare_countries",
+      "description": "Compare two countries side by side across all available metrics: population, area, GDP, HDI, life expectancy, and more.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "country_a": {
+            "type": "string",
+            "description": "First country name or slug (e.g. \"brazil\", \"Japan\")"
+          },
+          "country_b": {
+            "type": "string",
+            "description": "Second country name or slug (e.g. \"argentina\", \"South Korea\")"
+          }
+        },
+        "required": ["country_a", "country_b"]
+      }
+    }
+  ],
+  "resources": [],
+  "prompts": []
+}

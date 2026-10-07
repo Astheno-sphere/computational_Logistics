@@ -1,0 +1,35 @@
+# The build only needs pyproject/README/LICENSE/src, but everything else in the
+# directory is still sent to the daemon without this file — including a local
+# .venv, built wheels and any .env sitting next to them. CI builds from a clean
+# checkout, so nothing private has ever reached a published layer; this is here
+# so a `docker build .` on a working machine cannot be the first time.
+.git/
+.github/
+.venv/
+venv/
+env/
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# secrets and local configuration
+.env
+.env.*
+*.pem
+*.key
+
+# large or irrelevant to the image
+benchmarks/
+docs/
+examples/
+tests/
+deploy/
+*.md
+!README.md
+uv.lock

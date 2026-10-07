@@ -1,0 +1,270 @@
+name: Release
+
+# Tag a commit to ship everything:
+#   1. Write the version's section in CHANGELOG.md (enforced — the consistency
+#      check fails the release without it; it becomes the release body)
+#   2. Bump versions everywhere (package.json, packages/mcp, desktop, extension
+#      + manifest, server.json, src/mcp.ts) — check-consistency.mjs verifies
+#   3. npm run build && npm test && git tag vX.Y.Z && git push --tags
+#
+# The release job publishes npm + MCP Registry, attaches .dmg/.mcpb +
+# SHA256SUMS.txt, and writes curated notes (CHANGELOG section + install table
+# + checksums). Tags with a hyphen (v0.5.0-rc1) publish as prereleases.
+# Every publish step is skip-if-already-published, so re-running a tag is safe.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the GitHub release
+  id-token: write # OIDC for npm trusted publishing + MCP Registry
+
+jobs:
+  verify:
+    name: Test and verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Metadata consistency
+        run: node scripts/check-consistency.mjs
+
+  npm-publish:
+    name: Publish to npm
+    needs: verify
+    runs-on: ubuntu-latest
+    outputs:
+      peckish_version: ${{ steps.versions.outputs.peckish }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing (OIDC) needs npm >= 11.5.1.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - run: npm ci
+      - run: npm run build
+
+      - id: versions
+        run: |
+          echo "peckish=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "peckish_mcp=$(node -p "require('./packages/mcp/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # No NODE_AUTH_TOKEN: with a trusted publisher configured on npmjs.com and
+      # id-token:write above, npm (>= 11.5.1) authenticates over OIDC and mints
+      # provenance automatically. A token env would make npm try token auth
+      # instead.
+      - name: Publish peckish
+        run: |
+          V="${{ steps.versions.outputs.peckish }}"
+          if npm view "peckish@$V" version >/dev/null 2>&1; then
+            echo "peckish@$V already on npm — skipping"
+          else
+            npm publish --provenance --access public
+          fi
+
+      - name: Publish peckish-mcp
+        working-directory: packages/mcp
+        run: |
+          V="${{ steps.versions.outputs.peckish_mcp }}"
+          if npm view "peckish-mcp@$V" version >/dev/null 2>&1; then
+            echo "peckish-mcp@$V already on npm — skipping"
+          else
+            npm publish --provenance --access public
+          fi
+
+  mcp-registry:
+    name: Publish to MCP Registry
+    needs: npm-publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install mcp-publisher
+        run: |
+          curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Skip if this version is already registered
+        id: check
+        run: |
+          NAME=$(node -p "require('./server.json').name")
+          VER=$(node -p "require('./server.json').version")
+          FOUND=$(curl -s "https://registry.modelcontextprotocol.io/v0.1/servers?search=$NAME" \
+            | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{
+                const j=JSON.parse(d||"{}");
+                const hit=(j.servers||[]).some(s=>{const x=s.server||s; return x.name===process.argv[1] && x.version===process.argv[2];});
+                console.log(hit?"yes":"no");})' "$NAME" "$VER")
+          echo "already=$FOUND" >> "$GITHUB_OUTPUT"
+          echo "$NAME@$VER already registered: $FOUND"
+
+      - name: Authenticate (OIDC)
+        if: steps.check.outputs.already == 'no'
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish
+        if: steps.check.outputs.already == 'no'
+        run: ./mcp-publisher publish
+
+  build-mcpb:
+    name: Build Claude Desktop extension
+    needs: npm-publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Wait for peckish on npm
+        run: |
+          V="${{ needs.npm-publish.outputs.peckish_version }}"
+          for i in $(seq 1 30); do
+            npm view "peckish@$V" version >/dev/null 2>&1 && echo "peckish@$V available" && exit 0
+            echo "waiting for peckish@$V ($i)…"; sleep 10
+          done
+          echo "peckish@$V never appeared on npm"; exit 1
+
+      - run: npm install -g @anthropic-ai/mcpb
+
+      - name: Vendor the published server
+        working-directory: extension
+        run: npm install "peckish@${{ needs.npm-publish.outputs.peckish_version }}" --omit=dev --no-audit --no-fund
+
+      - name: Build manifest and pack
+        working-directory: extension
+        run: |
+          node build-manifest.mjs
+          mcpb validate manifest.json
+          mcpb pack . "peckish-${{ needs.npm-publish.outputs.peckish_version }}.mcpb"
+
+      - name: Verify the bundle actually starts
+        working-directory: extension
+        run: |
+          rm -rf /tmp/mcpb-check && mkdir -p /tmp/mcpb-check
+          unzip -q "peckish-${{ needs.npm-publish.outputs.peckish_version }}.mcpb" -d /tmp/mcpb-check
+          printf '%s\n%s\n%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"elicitation":{}},"clientInfo":{"name":"ci","version":"0"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+            | node /tmp/mcpb-check/server/index.js 2>/dev/null \
+            | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{
+                const L=d.trim().split("\n").map(l=>{try{return JSON.parse(l)}catch{return null}}).filter(Boolean);
+                const n=L.find(l=>l.id===2)?.result?.tools?.length ?? 0;
+                if(!n){console.error("✗ bundled server returned no tools");process.exit(1);}
+                console.log("✓ bundle serves "+n+" tools");})'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcpb
+          path: extension/*.mcpb
+
+  build-dmg:
+    name: Build Mac app
+    needs: npm-publish
+    runs-on: macos-15 # Apple Silicon runner
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Wait for peckish on npm
+        run: |
+          V="${{ needs.npm-publish.outputs.peckish_version }}"
+          for i in $(seq 1 30); do
+            npm view "peckish@$V" version >/dev/null 2>&1 && echo "peckish@$V available" && exit 0
+            echo "waiting for peckish@$V ($i)…"; sleep 10
+          done
+          echo "peckish@$V never appeared on npm"; exit 1
+
+      - name: Install desktop deps with the published server
+        working-directory: desktop
+        run: |
+          npm install --no-audit --no-fund
+          npm install "peckish@${{ needs.npm-publish.outputs.peckish_version }}" --no-audit --no-fund
+
+      # Ad-hoc signed (no Apple Developer ID). The helper assembles the dmg via
+      # hdiutil from a tmp-staged, signed copy so the signature is valid inside
+      # the shipped image regardless of the runner's file-tagging behavior;
+      # users still do the one-time right-click → Open.
+      - name: Build signed dmg
+        working-directory: desktop
+        run: ./build-signed-dmg.sh
+
+      - name: Verify the shipped dmg is validly signed
+        run: |
+          DMG=$(ls desktop/dist/*.dmg)
+          hdiutil attach -nobrowse -quiet "$DMG" -mountpoint /tmp/verify-dmg
+          codesign --verify --deep --strict "/tmp/verify-dmg/Peckish.app"
+          hdiutil detach -quiet /tmp/verify-dmg
+          echo "✓ $DMG signature valid"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: desktop/dist/*.dmg
+
+  release:
+    name: Publish GitHub release
+    needs: [build-mcpb, build-dmg, mcp-registry]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      # Full-featured release, every time:
+      #   • body = the version's CHANGELOG section (enforced by
+      #     check-consistency.mjs) + install/upgrade table + checksums
+      #   • SHA256SUMS.txt attached so downloads are verifiable
+      #     (`shasum -a 256 -c SHA256SUMS.txt`) — we ship an unsigned dmg,
+      #     so checksums are the integrity story
+      #   • auto-generated commit notes appended below the curated body
+      #   • tags containing a hyphen (v0.5.0-rc1) publish as prereleases
+      - name: Publish release with notes + checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          [ "$TAG" = "$GITHUB_REF" ] && TAG="v$(node -p "require('./package.json').version")"
+          VERSION="${TAG#v}"
+
+          mapfile -t FILES < <(find artifacts -type f \( -name '*.dmg' -o -name '*.mcpb' \))
+          printf 'artifacts: %s\n' "${FILES[@]}"
+
+          # Checksums (basename-keyed so users can verify in their download dir)
+          mkdir -p release-staging
+          cp "${FILES[@]}" release-staging/
+          (cd release-staging && shasum -a 256 -- * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+
+          node scripts/release-notes.mjs "$VERSION" release-staging/SHA256SUMS.txt > notes.md
+
+          PRERELEASE_FLAG=""
+          case "$VERSION" in *-*) PRERELEASE_FLAG="--prerelease";; esac
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release-staging/* --clobber
+            gh release edit "$TAG" \
+              --title "Peckish $VERSION" \
+              --notes-file notes.md $PRERELEASE_FLAG
+          else
+            gh release create "$TAG" release-staging/* \
+              --title "Peckish $VERSION" \
+              --notes-file notes.md \
+              --generate-notes $PRERELEASE_FLAG
+          fi

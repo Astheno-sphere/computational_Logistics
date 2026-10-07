@@ -1,0 +1,49 @@
+# ============================================================
+# Bamwor MCP Server — ISOLATED Docker Compose
+#
+# ISOLATION GUARANTEES:
+# - Own network (bamwor-mcp-network), NOT shared with any other stack
+# - NO ports exposed to host
+# - NO volumes shared with existing containers
+# - NO access to any existing database
+# - NO connection to bamwor-network, genwor-network, or any other
+# - All API calls go through public HTTPS (bamwor.com/api/v1)
+# - Own restart policy and memory limits
+#
+# DOES NOT TOUCH:
+# - bamwor.com containers (web, api, db, redis, nginx)
+# - genwor.com containers
+# - n8n, seo-publisher, mapslead, or any other service
+# - Host nginx (ports 80/443)
+# - Any existing DNS, SSL, or Cloudflare config
+# ============================================================
+
+services:
+  bamwor-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bamwor-mcp
+    restart: unless-stopped
+    stdin_open: true
+    environment:
+      - BAMWOR_API_KEY=${BAMWOR_API_KEY:-}
+      - BAMWOR_API_URL=${BAMWOR_API_URL:-https://bamwor.com/api/v1}
+      - NODE_ENV=production
+    networks:
+      - bamwor-mcp-network
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.25'
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+networks:
+  bamwor-mcp-network:
+    driver: bridge
+    # Completely separate network — no connection to any existing network

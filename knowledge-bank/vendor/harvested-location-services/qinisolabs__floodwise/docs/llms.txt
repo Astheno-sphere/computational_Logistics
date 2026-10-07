@@ -1,0 +1,33 @@
+# floodwise
+
+> England flood-risk-by-postcode lookups for AI agents. Returns the Environment Agency's official
+> long-term flood-risk band (High/Medium/Low/Very Low) for the AREA around an England postcode, with
+> per-band address counts and a separate groundwater indication — from official open data (Open
+> Government Licence), not the model's memory. Ships as an MCP server and a typed TypeScript library.
+> By Qiniso — verified, trustworthy data tools for AI agents.
+
+## What it does
+- flood_risk_by_postcode: EA long-term flood-risk band for an England postcode + per-band address counts + groundwater (Possible/Unlikely). Honest "not found" outside England or for unknown postcodes.
+- validate_postcode: deterministic UK postcode format check + outcode/incode split (no lookup).
+
+## Why
+Per-postcode flood risk is exact, curated, quarterly-changing reference data a language model cannot recall; asked anyway it invents a plausible risk level with full confidence. floodwise returns the official EA indication by lookup, or an honest "not found".
+
+## Scope and limits (important)
+- ENGLAND ONLY — Environment Agency data. Not Wales (Natural Resources Wales), Scotland (SEPA) or Northern Ireland (DfI). Valid non-England postcodes return "not found", never a guess.
+- AREA-level, not property-level. The EA states the data is "generally not suitable for property level assessment".
+- LONG-TERM risk (annual chance), not a live flood warning.
+- Not insurance, underwriting, surveying or professional advice. Excludes highway drains, sewers and overland flow; groundwater is separate from the headline band.
+
+## Data
+Environment Agency "Flood risk: postcode search tool data" (England), Open Government Licence v3.0, refreshed ~quarterly. Bands are the highest long-term risk from rivers, sea or surface water for the area around addresses in the postcode. Every response reports datasetVersion and dataset kind (sample vs ea-official). Contains public sector information licensed under the OGL v3.0; © Environment Agency copyright and/or database right.
+
+## Install
+- Local MCP: npx -y floodwise  (tools: flood_risk_by_postcode, validate_postcode)
+- Library: npm install floodwise
+- A hosted edge endpoint is planned (full dataset moves to Cloudflare D1 first).
+
+## Links
+- Repo: https://github.com/qinisolabs/floodwise
+- npm: https://www.npmjs.com/package/floodwise
+- License: Apache-2.0 (code); flood data © Environment Agency, OGL v3.0

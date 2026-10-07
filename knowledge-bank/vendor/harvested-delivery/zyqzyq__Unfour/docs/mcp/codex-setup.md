@@ -1,0 +1,137 @@
+# Codex MCP Setup
+
+Use this guide to build and inspect the local Unfour MCP server for development.
+For an installed release, use [`client-setup.md`](client-setup.md), which
+provides the Codex and Cursor configuration entries.
+
+## Build
+
+From the repository root:
+
+```powershell
+cargo build -p unfour-mcp
+```
+
+The default build includes native SSH transport, so SSH diagnostic, exec, file,
+and directory tools are available. To build without native SSH support:
+
+```powershell
+cargo build -p unfour-mcp --no-default-features
+```
+
+In a no-default-features build, SSH tools remain listed but return an
+unsupported-operation error when remote execution is required.
+
+## Manual Smoke Check
+
+The process waits for one JSON-RPC message per input line. Closing standard
+input shuts it down.
+
+```powershell
+@'
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"manual-check","version":"0.1.0"}}}
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"unfour.workspace.current","arguments":{}}}
+'@ | .\target\debug\unfour-mcp.exe
+```
+
+Start the desktop app once before running this smoke check if the local Unfour
+SQLite database has not been created yet.
+
+## Registry / CI Smoke Check
+
+Registry validation and isolated CI checks can start the real server without a
+desktop-created database:
+
+```powershell
+$env:UNFOUR_MCP_STORAGE_MODE = "ephemeral"
+@'
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"registry-check","version":"0.1.0"}}}
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+'@ | .\target\release\unfour-mcp.exe
+Remove-Item Env:UNFOUR_MCP_STORAGE_MODE
+```
+
+This mode is only for MCP registry validation, CI, protocol smoke tests, and
+isolated integration tests. Do not use it for normal Codex or Cursor usage,
+because its workspace and credential store are intentionally empty and
+in-memory.
+
+## Registry Docker Image
+
+The repository includes a stdio-only image that does not build the desktop or
+install Node/pnpm dependencies:
+
+```bash
+docker build -t unfour-mcp-registry .
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"registry-check","version":"0.1.0"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+  | docker run --rm -i unfour-mcp-registry
+```
+
+The image sets `UNFOUR_MCP_STORAGE_MODE=ephemeral` and exposes no HTTP port;
+MCP messages use standard input/output.
+
+## Codex Configuration
+
+Use the command shown automatically in the app under **Settings → MCP** (the
+"MCP command" value). A Microsoft Store/MSIX release uses the stable
+`unfour-mcp.exe` execution alias. A Standard release uses the absolute path to
+the installed sidecar, and a dev build uses the `target/debug` binary. A dev
+build looks like:
+
+```toml
+[mcp_servers.unfour]
+command = "D:\\project\\Unfour\\apps\\desktop\\target\\debug\\unfour-mcp.exe"
+args = []
+```
+
+On non-Windows platforms, use the absolute path to the platform-specific
+`unfour-mcp` binary shown in Settings → MCP.
+
+## Process Lifetime
+
+The stdio server exits when the client closes stdin, disconnects stdout, or
+sends a termination signal. Idle shutdown is disabled by default so clients
+that retain a completed task's stdio transport can continue using the same MCP
+session later.
+
+Set `UNFOUR_MCP_IDLE_TIMEOUT_SECS` to a positive number to opt into idle
+shutdown after that many seconds without an MCP protocol message. Keep it
+unset, or set it to `0`, to disable idle shutdown. Values above 86,400 seconds
+are capped at one day; invalid values use the disabled default.
+
+## Example Prompts
+
+These examples are individual diagnostic or remediation actions that Codex or
+Cursor can combine with the user into a troubleshooting loop. The server does not
+automatically run a complete root-cause playbook.
+
+```text
+Use the Unfour MCP server to list saved API requests in the current workspace.
+Use the Unfour MCP server to inspect the history entry with id <history-id>.
+Use the Unfour MCP server to list database connections.
+Use the Unfour MCP server to describe the users table for connection <id>.
+Use the Unfour MCP server to run a read-only query: select id, email from users limit 10.
+Use the Unfour MCP server to explain this query on connection <id>: select * from users where email = 'me@example.com'.
+Use the Unfour MCP server to dry-run this database fix on connection <id>: update users set active = true where id = 42.
+Use the Unfour MCP server to list recent workspace activity.
+Use the Unfour MCP server to list workspace-global variables and update the BASE_URL variable.
+Use the Unfour MCP server to list recent SSH commands on this workspace, then draft a reusable deploy task without saving it.
+Use the Unfour MCP server to inspect the saved SSH task with id <task-id>, then run it on connection <id> with the required inputs.
+Use the Unfour MCP server to run the read-only SSH diagnostic command df -h on connection <id>.
+Use the Unfour MCP server to list /var/log on SSH connection <id>.
+Use the Unfour MCP server to read the last 20000 bytes of /var/log/app.log on SSH connection <id>.
+Use the Unfour MCP server to check system health.
+```
+
+For high-risk requests, the first call returns `CONFIRMATION_REQUIRED` with a
+`confirmation_text`. Re-run only after reviewing the target workspace,
+command/SQL/path, and payload, passing `confirm=true` and that exact
+confirmation text.
+
+See `docs/mcp/tools.md` for the current tool list and safety constraints.

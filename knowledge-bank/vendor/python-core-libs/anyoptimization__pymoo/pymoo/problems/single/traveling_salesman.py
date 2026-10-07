@@ -1,0 +1,76 @@
+"""Traveling salesman problem."""
+
+import numpy as np  # noqa: F401
+from scipy.spatial.distance import cdist
+
+from pymoo.core.problem import ElementwiseProblem
+from pymoo.util import default_random_state
+
+
+class TravelingSalesman(ElementwiseProblem):
+    """A two-dimensional traveling salesman problem (TSP).
+
+    Args:
+        cities: Array of cities with 2-dimensional coordinates, where each row
+            represents a city.
+        **kwargs: Additional keyword arguments passed to the parent class.
+    """
+
+    def __init__(self, cities, **kwargs):
+        n_cities, _ = cities.shape
+
+        self.cities = cities
+        self.D = cdist(cities, cities)
+
+        super(TravelingSalesman, self).__init__(n_var=n_cities, n_obj=1, xl=0, xu=n_cities, vtype=int, **kwargs)
+
+    def _evaluate(self, x, out, *args, **kwargs):
+        out["F"] = self.get_route_length(x)
+
+    def get_route_length(self, x):
+        n_cities = len(x)
+        dist = 0
+        for k in range(n_cities - 1):
+            i, j = x[k], x[k + 1]
+            dist += self.D[i, j]
+
+        last, first = x[-1], x[0]
+        dist += self.D[last, first]  # back to the initial city
+        return dist
+
+
+@default_random_state(seed=1)
+def create_random_tsp_problem(n_cities, grid_width=100.0, grid_height=None, random_state=None, **kwargs):
+    grid_height = grid_height if grid_height is not None else grid_width
+    cities = random_state.random((n_cities, 2)) * [grid_width, grid_height]
+    return TravelingSalesman(cities)
+
+
+def visualize(problem, x, fig=None, ax=None, show=True, label=True):
+    from pymoo.visualization.matplotlib import plt
+
+    with plt.style.context("ggplot"):
+        if fig is None or ax is None:
+            fig, ax = plt.subplots()
+
+        # plot cities using scatter plot
+        ax.scatter(problem.cities[:, 0], problem.cities[:, 1], s=250)
+        if label:
+            # annotate cities
+            for i, c in enumerate(problem.cities):
+                ax.annotate(str(i), xy=c, fontsize=10, ha="center", va="center", color="white")
+
+        # plot the line on the path
+        for i in range(len(x)):
+            current = x[i]
+            next_ = x[(i + 1) % len(x)]
+            ax.plot(
+                problem.cities[[current, next_], 0],
+                problem.cities[[current, next_], 1],
+                "r--",
+            )
+
+        fig.suptitle("Route length: %.4f" % problem.get_route_length(x))
+
+        if show:
+            fig.show()

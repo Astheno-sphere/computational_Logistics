@@ -1,0 +1,14 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+# floodwise is a local stdio MCP server published to npm; Smithery launches it via npx.
+
+startCommand:
+  type: stdio
+  configSchema:
+    # floodwise needs no configuration — no API keys, no options.
+    type: object
+    required: []
+    properties: {}
+  commandFunction:
+    # Produces the CLI command Smithery uses to start the server over stdio.
+    |-
+    (config) => ({ command: 'npx', args: ['-y', 'floodwise'] })

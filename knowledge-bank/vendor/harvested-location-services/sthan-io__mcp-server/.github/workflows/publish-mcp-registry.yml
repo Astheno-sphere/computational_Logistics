@@ -1,0 +1,35 @@
+# Publishes server.json to the official MCP Registry (registry.modelcontextprotocol.io).
+#
+# Uses GitHub OIDC from inside this repo, so the registry grants the io.github.sthan-io/*
+# namespace from the workflow's identity. The interactive `mcp-publisher login github`
+# device flow 403s for org namespaces even for org Owners with public membership
+# (modelcontextprotocol/registry#1649, #1537).
+#
+# Runs when a GitHub release is published, or by hand from the Actions tab. The npm
+# packages for the version in server.json must already be on npm, because the registry
+# checks that the package exists.
+name: Publish to MCP Registry
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mcp-publisher
+        run: curl -sL "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+
+      - name: Log in with GitHub OIDC
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server.json
+        run: ./mcp-publisher publish

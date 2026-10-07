@@ -1,0 +1,77 @@
+name: Release
+
+# Tag a version (e.g. `git tag v0.1.1 && git push origin v0.1.1`) to:
+#   1. publish @pedra-ai/mcp to npm (with provenance),
+#   2. publish server.json to the official MCP registry (registry.modelcontextprotocol.io), and
+#   3. build the .mcpb bundle and attach it to a GitHub Release for the tag
+#      (so the Anthropic MCP directory can pick up new versions from Releases).
+#
+# npm publishing uses Trusted Publishing: npm checks this workflow's GitHub
+# OIDC identity (configured on the package's npm settings page: repo
+# pedra-ai/pedra-mcp, workflow release.yml), so there is no token to store or
+# renew. It needs npm >= 11.5.1, hence the npm upgrade step.
+# The MCP registry publish needs no secret — it authenticates with the workflow's
+# GitHub OIDC token, which authorizes the `io.github.pedra-ai/*` namespace.
+# The GitHub Release uses the built-in GITHUB_TOKEN (needs contents: write).
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # create GitHub Release + upload the .mcpb asset
+  id-token: write # npm trusted publishing + provenance, mcp-publisher github-oidc
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm install -g npm@latest
+
+      - run: npm ci
+      - run: npm test
+
+      - name: Publish to npm
+        # No token: npm exchanges the workflow's OIDC identity for a one-off
+        # publish token. setup-node sets a placeholder NODE_AUTH_TOKEN, cleared
+        # here so npm can't try (and fail with a 404) on that instead.
+        run: npm publish --provenance --access public --loglevel verbose
+        env:
+          NODE_AUTH_TOKEN: ""
+
+      - name: Build .mcpb bundle
+        run: npx --yes @anthropic-ai/mcpb pack . "pedra-mcp-${GITHUB_REF_NAME}.mcpb"
+
+      - name: Create GitHub Release with the .mcpb bundle
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "pedra-mcp-${GITHUB_REF_NAME}.mcpb" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes "Bundle (.mcpb) and npm package for ${GITHUB_REF_NAME}. See CHANGELOG.md for details."
+
+      - name: Install mcp-publisher
+        run: |
+          curl -sSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
+            | tar -xz mcp-publisher
+
+      - name: Publish to the official MCP registry
+        # The registry checks the npm version exists; npm can take a minute to
+        # show a fresh publish, so wait for it first.
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          for i in $(seq 1 30); do
+            npm view "@pedra-ai/mcp@${VERSION}" version >/dev/null 2>&1 && break
+            sleep 10
+          done
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

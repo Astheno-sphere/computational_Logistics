@@ -1,0 +1,47 @@
+---
+title: useAsyncEffect – Effect Hook Usage & Examples
+sidebar_label: useAsyncEffect
+description: "useAsyncEffect is a React hook that brings async and await support to useEffect — run async effects with an optional async cleanup, safe against unmount."
+---
+# useAsyncEffect
+
+React useEffect with async await support. Note it don't support generator function
+
+`useAsyncEffect` wraps React's `useEffect` to allow async/await syntax directly inside the effect callback. It accepts an async effect function, an optional async cleanup function, and a dependency list. The hook guards against state updates after unmount by checking the component's mounted status before running the effect.
+
+### When to Use
+
+- Fetching data from an API on mount or when dependencies change, without needing a separate async IIFE inside `useEffect`
+- Running sequential asynchronous operations (e.g., reading from IndexedDB then updating state) with clean syntax
+- Performing async cleanup logic (e.g., closing a connection) when the component unmounts or deps change
+
+### Notes
+
+- **No generator support**: Only `async` functions and plain functions are supported; generator functions are not handled.
+- **Unmount safety**: Internally uses `useMountedState` to skip execution if the component has already unmounted, preventing "state update on unmounted component" warnings.
+- The cleanup function runs synchronously when the effect re-fires or the component unmounts, matching standard `useEffect` cleanup behavior.
+
+## Usage
+
+```tsx live
+function Demo() {
+  const [data, setData] = useState(0);
+
+  useAsyncEffect(
+    async () => {
+      const result = await new Promise<number>((resolve) => {
+        setTimeout(() => {
+          resolve(200);
+        }, 5000);
+      });
+      setData(result);
+    },
+    () => {},
+    [],
+  );
+  return <div>data: {data}</div>;
+};
+
+```
+
+%%API%%

@@ -1,0 +1,76 @@
+Frequently Asked Questions
+==========================
+
+What does "RasterioIOError: file.ecw not recognized as a supported file format." mean?
+--------------------------------------------------------------------------------------
+
+This exception is raised when none of rasterio's format drivers can successfully open the specified dataset. In some cases it might be because the path is malformed, or the file is corrupted. Often, it is because your installation of rasterio does not provide the format driver. `ECW <https://gdal.org/drivers/raster/ecw.html>`__, for example, is an optional format driver and is not provided by the rasterio wheels in the Python Package Index. We'd like to keep the size of wheels to < ~20MB, and that means some GDAL features and format drivers must be left out. Other distribution channels for rasterio, such as conda-forge, may have different and larger sets of format drivers.
+
+To see a list of the format drivers provided by your rasterio installation, run in your shell
+
+.. code-block:: console
+
+    rio env --formats
+
+or, in a python interpreter,
+
+.. code-block:: python
+
+    with rasterio.Env() as env:
+        print(list(env.drivers().items()))
+
+Where is "ERROR 4: Unable to open EPSG support file gcs.csv" coming from and what does it mean?
+-----------------------------------------------------------------------------------------------
+
+The full message is "ERROR 4: Unable to open EPSG support file gcs.csv.  Try
+setting the GDAL_DATA environment variable to point to the directory containing
+EPSG csv files." The GDAL/OGR library prints this text to your process's stdout
+stream when it can not find the gcs.csv data file it needs to interpret spatial
+reference system information stored with a dataset. If you've never seen this
+before, you can summon this message by setting ``GDAL_DATA`` to a bogus value in
+your shell and running a command like ogrinfo:
+
+.. code-block:: console
+
+    $ GDAL_DATA="/path/to/nowhere" ogrinfo example.shp -so example
+    INFO: Open of 'example.shp'
+          using driver 'ESRI Shapefile' successful.
+
+    Layer name: example
+    Geometry: Polygon
+    Feature Count: 67
+    Extent: (-113.564247, 37.068981) - (-104.970871, 41.996277)
+    ERROR 4: Unable to open EPSG support file gcs.csv.  Try setting the GDAL_DATA environment variable to point to the directory containing EPSG csv files.
+
+If you're using GDAL software installed by a package management system like apt
+or yum, or Homebrew, or if you've built and installed it using ``configure;
+make; make install``, you don't need to set the GDAL_DATA environment variable.
+That software has the right directory path built in. If you see this error,
+it's likely a sign that GDAL_DATA is set to a bogus value. Unset GDAL_DATA if
+it exists and see if that eliminates the error condition and the message.
+
+.. important:: Activate your conda environments.
+   The GDAL conda package will set ``GDAL_DATA`` to the proper value if you activate your conda environment. If you don't activate your conda environment, you are likely to see the error message shown above.
+   
+Why can't rasterio find proj.db (rasterio versions < 1.2.0)?
+------------------------------------------------------------
+
+If you see ``rasterio.errors.CRSError: The EPSG code is unknown. PROJ: proj_create_from_database: Cannot find proj.db`` it is because the PROJ library (one of rasterio's dependencies) cannot find its database of projections and coordinate systems. In some installations the ``PROJ_LIB`` (PROJ < 9.1) | ``PROJ_DATA`` (PROJ 9.1+) `environment variable must be set <https://proj.org/usage/environmentvars.html#envvar-PROJ_LIB>`__ for PROJ to work properly.
+
+.. important:: Activate your conda environments.
+   The PROJ conda package will set ``PROJ_LIB`` (PROJ < 9.1) | ``PROJ_DATA`` (PROJ 9.1+) to the proper value if you activate your conda environment. If you don't activate your conda environment, you are likely to see the exception shown above.
+
+Why can't rasterio find proj.db (rasterio from PyPI versions >= 1.2.0)?
+-----------------------------------------------------------------------
+
+Starting with version 1.2.0, rasterio wheels on PyPI include PROJ 7.x and GDAL 3.x. The libraries and modules in these wheels are incompatible with older versions of PROJ that may be installed on your system. If ``PROJ_LIB`` (PROJ < 9.1) | ``PROJ_DATA`` (PROJ 9.1+) is set in your program's environment and points to an older version of PROJ, you must unset this variable. Rasterio will then use the version of PROJ contained in the wheel.
+
+Why aren't vertical (datum) shifts applied when I reproject or transform?
+-------------------------------------------------------------------------
+
+When you reproject or transform between coordinate reference systems that have vertical components, for example from ``EPSG:32634+5773`` to ``EPSG:32634+3855``, PROJ needs a transformation grid to compute the vertical shift. To keep their size small the rasterio wheels on the Python Package Index include only a minimal set of PROJ grids, so the grid required for your transformation may be missing. When the grid is not available PROJ applies a shift of zero and the values are returned unchanged instead of an error being raised.
+
+To make these transformations work you can either let PROJ download grids on demand by setting the ``PROJ_NETWORK`` environment variable to ``ON``, or install the grids locally (for example with PROJ's ``projsync`` program or the ``proj-data`` package) and point ``PROJ_DATA`` at the directory that contains them.
+
+.. note::
+   Other distributions of rasterio, such as the conda-forge packages, may include a more complete set of PROJ grids and apply these shifts without extra configuration.

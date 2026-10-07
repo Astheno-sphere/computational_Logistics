@@ -1,0 +1,81 @@
+############################
+# Pre-commit configuration #
+############################
+
+# Install via `pip install pre-commit`
+
+# This is run as a precondition to commits, run manually via `pre-commit run`
+
+# When adding new hooks, it may make sense to once run
+# `pre-commit run --all-files` as by default only changed files are checked
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        description: Fast Python linter
+      # Run the formatter
+      - id: ruff-format
+        description: Fast Python formatter
+
+  # Notebook formatting with nbQA + ruff
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.9.1
+    hooks:
+      - id: nbqa-ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: nbqa-pyupgrade
+        args: [--py310-plus]
+
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        description: Check yaml files for parseable syntax
+      - id: check-toml
+        description: Check toml files for parseable syntax
+      - id: check-added-large-files
+        description: Prevent large files from being committed
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+        description: Check for files that contain merge conflict strings
+      - id: check-symlinks
+        description: Check for symlinks which do not point to anything
+      - id: trailing-whitespace
+        description: Trim trailing whitespaces
+        exclude: ^test/
+      - id: end-of-file-fixer
+        description: Fix empty lines at ends of files
+        exclude: ^test/
+      - id: detect-private-key
+        description: Detects the presence of private keys
+      - id: check-case-conflict
+        description: Check for files with case-insensitive name conflicts
+      - id: mixed-line-ending
+        description: Ensure consistent line endings
+        args: ['--fix=lf']
+
+# Configuration
+default_language_version:
+  python: python3.13
+
+# Global exclusions
+exclude: |
+  (?x)^(
+      \.git/|
+      \.tox/|
+      \.venv/|
+      venv/|
+      build/|
+      dist/|
+      .*\.egg-info/|
+      __pycache__/|
+      \.pytest_cache/|
+      \.mypy_cache/|
+      \.ruff_cache/|
+      doc/_build/
+  )

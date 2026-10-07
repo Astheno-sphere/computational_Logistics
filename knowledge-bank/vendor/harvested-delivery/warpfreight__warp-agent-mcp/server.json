@@ -1,0 +1,43 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.warpfreight/warp-agent-mcp",
+  "description": "Quote, book, and track LTL, FTL, cargo van, and box-truck freight via the Warp API.",
+  "status": "active",
+  "repository": {
+    "url": "https://github.com/warpfreight/warp-agent-mcp",
+    "source": "github"
+  },
+  "version": "0.20.1",
+  "websiteUrl": "https://wearewarp.com",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "warp-agent-mcp",
+      "version": "0.20.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "WARP_API_KEY",
+          "description": "Warp API key (wak_live_* or wak_test_*). Optional \u2014 the package prefers ~/.warp/config.json populated by `warp-agent signup` or `warp-agent login`.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "WARP_API_URL",
+          "description": "Override the API base URL. Defaults to https://www.wearewarp.com/api/v1/warp (the warp-site proxy that accepts wak_* tokens). Set to https://gw.wearewarp.com/api/v1 for direct gateway access with a raw customer key.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.wearewarp.com/api/mcp"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+# WARNING: the MCP HTTP transport has NO AUTHENTICATION in this release.
+# This manifest is an example of the plumbing, not a recommendation to put
+# MapSmith on the public internet: anyone who reaches this endpoint can run
+# every tool against everything the pod can see. Put it behind your own
+# authenticating proxy, restrict it to a trusted network, or wait for the
+# authenticated remote mode. Set MAPSMITH_ALLOWED_HOSTS to this hostname
+# (see deployment.yaml) or requests will be refused by Host validation.
+# Example Ingress. Adjust host, ingress class and certificate issuer to your cluster.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mapsmith
+  annotations:
+    # cert-manager.io/cluster-issuer: your-issuer
+spec:
+  # ingressClassName: traefik | nginx | ...
+  tls:
+    - hosts:
+        - mapsmith.example.com
+      secretName: mapsmith-tls
+  rules:
+    - host: mapsmith.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mapsmith
+                port:
+                  number: 80

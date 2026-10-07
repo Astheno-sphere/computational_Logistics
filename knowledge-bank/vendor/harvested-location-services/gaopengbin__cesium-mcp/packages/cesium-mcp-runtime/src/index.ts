@@ -1,0 +1,2543 @@
+/**
+ * cesium-mcp-runtime — MCP Server for Cesium
+ *
+ * 通过标准 MCP 协议暴露 Cesium 操控工具，
+ * 通过 WebSocket 桥接到浏览器中的 cesium-mcp-bridge 执行。
+ *
+ * 架构：
+ *   AI Agent ←→ MCP Server (stdio) ←→ WebSocket ←→ Browser (cesium-mcp-bridge)
+ *   Backend  ←→ HTTP POST /api/command  ←→ WebSocket ←→ Browser (cesium-mcp-bridge)
+ */
+import { toNodeHandler } from '@modelcontextprotocol/node'
+import {
+  createMcpHandler,
+  McpServer,
+} from '@modelcontextprotocol/server'
+import type {
+  AnyToolHandler,
+  CallToolResult,
+  McpHttpHandler,
+  StandardSchemaWithJSON,
+  ToolAnnotations,
+} from '@modelcontextprotocol/server'
+import { serveStdio } from '@modelcontextprotocol/server/stdio'
+import { z } from 'zod'
+import { WebSocketServer, WebSocket, type RawData } from 'ws'
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { AsyncLocalStorage } from 'node:async_hooks'
+import { readFileSync, existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+import {
+  createCesiumResourceStore,
+  normalizeCesiumToolLocale,
+  resolveCesiumResourceInput,
+} from 'cesium-mcp-contracts'
+import type {
+  CesiumResourceKind,
+  CesiumResourceStore,
+  JsonSchema,
+} from 'cesium-mcp-contracts'
+import {
+  cesiumRuntimeToolsetDescriptions,
+  cesiumRuntimeToolsets,
+  cesiumRuntimeResourceToolNames,
+  getCesiumRuntimeToolAction,
+  getCesiumRuntimeToolMetadata,
+} from './tool-manifest.js'
+import {
+  createMcpInputSchema,
+  createMcpOutputSchema,
+} from './mcp-schema.js'
+import { attachStructuredContent } from './tool-result.js'
+import {
+  rejectPendingRequestsForClient,
+  resolveBrowserTarget,
+  settlePendingBrowserResponse,
+} from './browser-session-router.js'
+import type { PendingBrowserRequest } from './browser-session-router.js'
+import { authorizeHttp, checkNetworkRequest, createNetworkPolicy } from './network-policy.js'
+import type { NetworkPolicy } from './network-policy.js'
+
+// ==================== WebSocket Bridge ====================
+
+const WS_PORT = parseInt(process.env.CESIUM_WS_PORT ?? '9100')
+const MAX_PORT_RETRIES = 10
+let networkPolicy = createNetworkPolicy({})
+
+function relayHeaders(): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    ...(networkPolicy.token ? { Authorization: `Bearer ${networkPolicy.token}` } : {}),
+  }
+}
+
+/** 按 sessionId 管理已连接的浏览器 */
+const browserClients = new Map<string, WebSocket>()
+
+/** 等待浏览器响应的 pending requests */
+const pendingRequests = new Map<string, PendingBrowserRequest<WebSocket>>()
+
+let requestIdCounter = 0
+let _relayPort = 0 // >0 means relay mode: forward commands to an existing instance
+
+const DEFAULT_SESSION_ID = process.env.DEFAULT_SESSION_ID ?? 'default'
+
+/** URL-level session context for MCP HTTP requests (e.g. /mcp?session=xxx) */
+const _httpSessionStore = new AsyncLocalStorage<string>()
+
+/** Resource payloads are isolated by application-level browser session. */
+const _resourceStores = new Map<string, CesiumResourceStore>()
+
+function resourceSessionId(params: Record<string, unknown>): string {
+  return typeof params.sessionId === 'string'
+    ? params.sessionId
+    : _httpSessionStore.getStore() ?? DEFAULT_SESSION_ID
+}
+
+function resourceStoreFor(params: Record<string, unknown>): CesiumResourceStore {
+  const sessionId = resourceSessionId(params)
+  let store = _resourceStores.get(sessionId)
+  if (!store) {
+    store = createCesiumResourceStore()
+    _resourceStores.set(sessionId, store)
+  }
+  return store
+}
+
+function sendBridgeAction(action: string, params: Record<string, unknown>, timeoutMs = 30000): Promise<unknown> {
+  // Extract sessionId from params for multi-browser routing (transparent to tool handlers)
+  const { sessionId: paramSessionId, ...cleanParams } = params as { sessionId?: string; [k: string]: unknown }
+  // Priority: tool param > URL query (?session=xxx) > default
+  const sessionId = paramSessionId ?? _httpSessionStore.getStore()
+  if (_relayPort > 0) return _sendViaRelay(action, cleanParams, timeoutMs, sessionId)
+  return new Promise((resolve, reject) => {
+    const target = resolveBrowserTarget(
+      browserClients,
+      sessionId,
+      DEFAULT_SESSION_ID,
+      WebSocket.OPEN,
+    )
+    const ws = target.client
+    if (!ws) {
+      const message = sessionId
+        ? `Browser session is not connected: ${sessionId}`
+        : 'No browser connection. Open a CesiumJS page and connect its WebSocket bridge.'
+      reject(new Error(message))
+      return
+    }
+
+    const reqId = `req_${++requestIdCounter}`
+    const timer = setTimeout(() => {
+      pendingRequests.delete(reqId)
+      reject(new Error(`浏览器响应超时（${timeoutMs}ms）`))
+    }, timeoutMs)
+
+    pendingRequests.set(reqId, {
+      client: ws,
+      sessionId: target.sessionId!,
+      resolve,
+      reject,
+      timer,
+    })
+
+    ws.send(JSON.stringify({
+      jsonrpc: '2.0',
+      id: reqId,
+      method: action,
+      params: cleanParams,
+    }))
+  })
+}
+
+function sendToBrowser(toolName: string, params: Record<string, unknown>, timeoutMs = 30000): Promise<unknown> {
+  const action = getCesiumRuntimeToolAction(toolName)
+  const resolvedParams = typeof params.resourceId === 'string'
+    ? resolveCesiumResourceInput(action, params, resourceStoreFor(params))
+    : params
+  return sendBridgeAction(action, resolvedParams, timeoutMs)
+}
+
+/** 将命令推送到指定 session 的浏览器（fire-and-forget，不等待响应） */
+function pushToBrowser(sessionId: string | undefined, command: { action: string; params: Record<string, unknown> }): boolean {
+  if (_relayPort > 0) {
+    _pushViaRelay(sessionId, command)
+    return true
+  }
+  const ws = resolveBrowserTarget(
+    browserClients,
+    sessionId,
+    DEFAULT_SESSION_ID,
+    WebSocket.OPEN,
+  ).client
+  if (!ws) return false
+  ws.send(JSON.stringify({
+    jsonrpc: '2.0',
+    id: `push_${++requestIdCounter}`,
+    method: command.action,
+    params: command.params,
+  }))
+  return true
+}
+
+/** Relay mode: forward sendToBrowser via HTTP POST to existing instance */
+async function _sendViaRelay(action: string, params: Record<string, unknown>, timeoutMs: number, sessionId?: string): Promise<unknown> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const resp = await fetch(`http://127.0.0.1:${_relayPort}/api/relay`, {
+      method: 'POST',
+      headers: relayHeaders(),
+      body: JSON.stringify({ action, params, sessionId }),
+      signal: controller.signal,
+    })
+    const data = await resp.json() as { ok: boolean; result?: unknown; error?: string }
+    if (!data.ok) throw new Error(data.error ?? 'Relay failed')
+    return data.result
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error(`浏览器响应超时（${timeoutMs}ms, via relay）`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/** Relay mode: forward pushToBrowser via HTTP POST to existing instance */
+function _pushViaRelay(sessionId: string | undefined, command: { action: string; params: Record<string, unknown> }) {
+  fetch(`http://127.0.0.1:${_relayPort}/api/command`, {
+    method: 'POST',
+    headers: relayHeaders(),
+    body: JSON.stringify({ sessionId, command }),
+  }).catch(() => { /* fire-and-forget */ })
+}
+
+// Server-side tools: handlers run on Node.js, NOT forwarded to browser bridge
+const SERVER_SIDE_TOOLS = new Set([
+  'geocode',
+  'storeResource',
+  'listResources',
+  'deleteResource',
+])
+
+/** Invoke a server-side tool handler from _toolDefs, return parsed result */
+async function _invokeServerSideTool(action: string, params: Record<string, unknown>): Promise<unknown> {
+  const def = _toolDefs.get(action)
+  if (!def) throw new Error(`Server-side tool "${action}" not found`)
+  const mcpResult = await def.invoke(params)
+  if (mcpResult.structuredContent !== undefined) return mcpResult.structuredContent
+  // Unwrap MCP content format to raw result for HTTP API compatibility
+  const firstContent = mcpResult?.content?.[0]
+  const text = firstContent?.type === 'text' ? firstContent.text : undefined
+  if (text) {
+    try { return JSON.parse(text) } catch { return text }
+  }
+  return mcpResult
+}
+
+export function isViewerRequest(method: string | undefined, url: string | undefined): boolean {
+  if (method !== 'GET') return false
+  const path = new URL(url ?? '/', 'http://localhost').pathname
+  return path === '/' || path === '/index.html'
+}
+
+/** HTTP 请求处理：POST /api/command */
+async function handleHttpRequest(req: IncomingMessage, res: ServerResponse, policy: NetworkPolicy) {
+  if (!authorizeHttp(req, res, policy)) return
+  const requestPath = new URL(req.url ?? '/', 'http://localhost').pathname
+  if (requestPath === '/mcp') {
+    await _handleMcpRequest(req, res, policy)
+    return
+  }
+
+  // CORS
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204)
+    res.end()
+    return
+  }
+
+  if (req.method === 'POST' && req.url?.startsWith('/api/command')) {
+    let body = ''
+    req.on('data', (chunk: Buffer) => { body += chunk.toString() })
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body)
+        const sessionId: string | undefined = payload.sessionId
+        const commands: Array<{ action: string; params: Record<string, unknown> }> =
+          Array.isArray(payload.commands) ? payload.commands : [payload.command]
+
+        let sent = 0
+        for (const cmd of commands) {
+          if (!cmd) continue
+          if (SERVER_SIDE_TOOLS.has(cmd.action) && _toolDefs.has(cmd.action)) {
+            // Server-side tool: invoke handler directly (fire-and-forget)
+            _invokeServerSideTool(cmd.action, {
+              ...cmd.params,
+              ...(sessionId !== undefined ? { sessionId } : {}),
+            }).catch(() => {})
+            sent++
+          } else if (pushToBrowser(sessionId, cmd)) {
+            sent++
+          }
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: true, sent, total: commands.length }))
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }))
+      }
+    })
+    return
+  }
+
+  // POST /api/relay — request-response command relay (used by secondary instances)
+  if (req.method === 'POST' && req.url?.startsWith('/api/relay')) {
+    let body = ''
+    req.on('data', (chunk: Buffer) => { body += chunk.toString() })
+    req.on('end', async () => {
+      try {
+        const { action, params, sessionId } = JSON.parse(body) as { action: string; params: Record<string, unknown>; sessionId?: string }
+        const routedParams = sessionId !== undefined ? { ...params, sessionId } : params ?? {}
+        let result: unknown
+        if (SERVER_SIDE_TOOLS.has(action) && _toolDefs.has(action)) {
+          // Server-side tool: invoke handler directly
+          result = await _invokeServerSideTool(action, routedParams)
+        } else {
+          // Bridge tool: forward to browser
+          result = await sendToBrowser(action, routedParams)
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: true, result }))
+      } catch (err) {
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: false, error: err instanceof Error ? err.message : String(err) }))
+      }
+    })
+    return
+  }
+
+  // GET /api/status — 连接状态
+  if (req.method === 'GET' && req.url?.startsWith('/api/status')) {
+    const sessions = Array.from(browserClients.keys())
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ ok: true, server: 'cesium-mcp-runtime', sessions, connections: sessions.length }))
+    return
+  }
+
+  // GET /api/tools — list enabled tools with JSON Schema
+  if (req.method === 'GET' && req.url?.startsWith('/api/tools')) {
+    // Support ?toolsets=view,layer filtering
+    const parsedToolsUrl = new URL(req.url, 'http://localhost')
+    const tsParam = parsedToolsUrl.searchParams.get('toolsets')?.trim()
+    const allowedTools = tsParam
+      ? new Set(tsParam.split(',').flatMap(s => TOOLSETS[s.trim()] ?? []))
+      : null // null = no filter, show all enabled
+    const tools: Array<{
+      name: string
+      description: string
+      inputSchema: Record<string, unknown>
+      outputSchema?: Record<string, unknown>
+      _meta?: Record<string, unknown>
+    }> = []
+    for (const [name, definition] of _toolDefs.entries()) {
+      if (allowedTools ? !allowedTools.has(name) : !_configuredState.enabledTools.has(name)) continue
+      const jsonSchema = _toolJsonSchemas.get(name) ?? { type: 'object', properties: {} }
+      const toolset = TOOL_TO_TOOLSET.get(name)
+      tools.push({
+        name,
+        description: definition.description,
+        inputSchema: jsonSchema,
+        ...(definition.outputJsonSchema
+          ? { outputSchema: definition.outputJsonSchema }
+          : {}),
+        ...(toolset ? { _meta: { toolset } } : {}),
+      })
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ ok: true, tools }))
+    return
+  }
+
+  // GET /proxy?url=... — CORS proxy for local resources
+  if (req.method === 'GET' && req.url?.startsWith('/proxy')) {
+    const parsed = new URL(req.url, `http://localhost:${WS_PORT}`)
+    const targetUrl = parsed.searchParams.get('url')
+    if (!targetUrl) {
+      res.writeHead(400, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Missing ?url= parameter' }))
+      return
+    }
+    try {
+      const proxyResp = await fetch(targetUrl)
+      const contentType = proxyResp.headers.get('content-type') || 'application/octet-stream'
+      const buffer = Buffer.from(await proxyResp.arrayBuffer())
+      res.writeHead(proxyResp.status, {
+        'Content-Type': contentType,
+      })
+      res.end(buffer)
+    } catch (err) {
+      res.writeHead(502, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: `Proxy failed: ${err instanceof Error ? err.message : String(err)}` }))
+    }
+    return
+  }
+
+  // GET /bridge.js — serve the locally bundled cesium-mcp-bridge (so the viewer always
+  // runs the dist shipped alongside this runtime, not a stale unpkg@latest)
+  if (req.method === 'GET' && req.url === '/bridge.js') {
+    const bundle = _findLocalBridgeBundle()
+    if (bundle) {
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+      })
+      res.end(bundle)
+      return
+    }
+    res.writeHead(404)
+    res.end('// local bridge bundle not found')
+    return
+  }
+
+  // GET / — serve built-in viewer page
+  if (isViewerRequest(req.method, req.url)) {
+    const token = process.env.CESIUM_ION_TOKEN || ''
+    const html = _getViewerHtml(token, Boolean(policy.token))
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+    res.end(html)
+    return
+  }
+
+  res.writeHead(404)
+  res.end('Not Found')
+}
+
+/** Locate the bundled bridge IIFE shipped alongside this runtime (monorepo sibling or npm dep). Cached. */
+let _bridgeBundleCache: string | null | undefined
+function _findLocalBridgeBundle(): string | null {
+  if (_bridgeBundleCache !== undefined) return _bridgeBundleCache
+  const here = dirname(fileURLToPath(import.meta.url))
+  const file = 'cesium-mcp-bridge.browser.global.js'
+  const candidates = [
+    // npm package: the Runtime ships the browser bundle in its own dist.
+    join(here, file),
+    // monorepo: runtime/dist → ../../cesium-mcp-bridge/dist
+    join(here, '..', '..', 'cesium-mcp-bridge', 'dist', file),
+    // npm install: node_modules/cesium-mcp-runtime/dist → node_modules/cesium-mcp-bridge/dist
+    join(here, '..', '..', '..', 'cesium-mcp-bridge', 'dist', file),
+    join(here, '..', 'node_modules', 'cesium-mcp-bridge', 'dist', file),
+  ]
+  for (const c of candidates) {
+    if (existsSync(c)) {
+      _bridgeBundleCache = readFileSync(c, 'utf-8')
+      return _bridgeBundleCache
+    }
+  }
+  _bridgeBundleCache = null
+  return null
+}
+
+/** Built-in viewer HTML served at GET / */
+function _getViewerHtml(token: string, requiresAuth: boolean): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cesium MCP Viewer</title>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.145/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.145/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<script src="/bridge.js" onerror="var s=document.createElement('script');s.src='https://unpkg.com/cesium-mcp-bridge@latest/dist/cesium-mcp-bridge.browser.global.js';document.head.appendChild(s)"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body,#c{width:100%;height:100%;overflow:hidden}
+#s{position:fixed;top:12px;right:12px;z-index:999;padding:6px 12px;border-radius:6px;font:13px/1.4 -apple-system,sans-serif;backdrop-filter:blur(8px);transition:all .3s}
+#auth{position:fixed;top:50px;right:12px;z-index:999;background:#fff;padding:8px;border-radius:6px;font:13px sans-serif}
+.c0{background:rgba(255,170,0,.85);color:#333}
+.c1{background:rgba(0,180,80,.85);color:#fff}
+.c2{background:rgba(220,50,50,.85);color:#fff}
+</style>
+</head>
+<body>
+<div id="c"></div><div id="s" class="c0">Connecting...</div>
+${requiresAuth ? '<form id="auth"><label>Connection token <input id="auth-token" type="password" autocomplete="off" required></label> <button>Connect</button></form>' : ''}
+<script>
+var TOK=${JSON.stringify(token).replace(/</g, '\\u003c')},SE=new URLSearchParams(location.search).get('session')||'default';
+if(TOK)Cesium.Ion.defaultAccessToken=TOK;
+var v=new Cesium.Viewer('c',{terrain:Cesium.Terrain.fromWorldTerrain(),baseLayerPicker:!0,geocoder:!0,animation:!0,timeline:!0});
+var b=new CesiumMcpBridge.CesiumBridge(v),el=document.getElementById('s');
+function conn(){var input=document.getElementById('auth-token'),protocols=[];
+if(input){if(!input.value)return;protocols=['cesium-mcp','cesium-token.'+btoa(String.fromCharCode.apply(null,new TextEncoder().encode(input.value))).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'')]}
+var ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'?session='+encodeURIComponent(SE),protocols);
+ws.onopen=function(){el.className='c1';el.textContent='Connected'};
+ws.onmessage=function(e){var m=JSON.parse(e.data);b.execute({action:m.method,params:m.params||{}}).then(function(r){if(m.id)ws.send(JSON.stringify({id:m.id,result:r||{success:!0}}))})};
+ws.onclose=function(){el.className='c2';el.textContent='Disconnected';if(!input)setTimeout(conn,3000)};
+ws.onerror=function(){ws.close()}}
+var auth=document.getElementById('auth');if(auth){el.textContent='Enter connection token';auth.onsubmit=function(e){e.preventDefault();conn()}}else conn();
+</script>
+</body></html>`
+}
+
+/** Probe a port to check if a cesium-mcp-runtime instance is already running */
+async function _probeExistingInstance(port: number): Promise<boolean> {
+  try {
+    const resp = await fetch(`http://127.0.0.1:${port}/api/status`, { headers: relayHeaders(), signal: AbortSignal.timeout(1500) })
+    if (!resp.ok) return false
+    const data = await resp.json() as { server?: string }
+    return data.server === 'cesium-mcp-runtime'
+  } catch {
+    return false
+  }
+}
+
+/** Try to bind HTTP server to a specific port. Returns true on success. */
+function _tryListen(httpServer: ReturnType<typeof createServer>, port: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const onError = (err: NodeJS.ErrnoException) => {
+      httpServer.removeListener('listening', onListening)
+      if (err.code === 'EADDRINUSE') resolve(false)
+      else { console.error('[cesium-mcp-runtime] HTTP server error:', err.message); resolve(false) }
+    }
+    const onListening = () => {
+      httpServer.removeListener('error', onError)
+      resolve(true)
+    }
+    httpServer.once('error', onError)
+    httpServer.once('listening', onListening)
+    httpServer.listen(port, networkPolicy.host)
+  })
+}
+
+export function createRuntimeHttpServer(policy = createNetworkPolicy({})) {
+  const httpServer = createServer((req, res) => { void handleHttpRequest(req, res, policy) })
+  const wss = new WebSocketServer({
+    server: httpServer,
+    verifyClient: ({ req }, done) => {
+      const error = checkNetworkRequest(req, policy, true)
+      done(!error, error?.status, error?.message)
+    },
+    handleProtocols: protocols => protocols.has('cesium-mcp') ? 'cesium-mcp' : false,
+  })
+
+  // Prevent unhandled error crash when httpServer fails to bind
+  wss.on('error', () => { /* handled by httpServer error listener in _tryListen */ })
+
+  _setupWss(wss)
+  return httpServer
+}
+
+async function startServer() {
+  // Phase 1: check if target port is available
+  const httpServer = createRuntimeHttpServer(networkPolicy)
+
+  if (await _tryListen(httpServer, WS_PORT)) {
+    console.error(`[cesium-mcp-runtime] HTTP + WebSocket server on http://localhost:${WS_PORT}`)
+    console.error('[cesium-mcp-runtime] POST /api/command — 推送地图命令')
+    console.error('[cesium-mcp-runtime] POST /api/relay   — 命令中继（request-response）')
+    console.error('[cesium-mcp-runtime] GET  /api/status  — 连接状态')
+    return
+  }
+
+  // Phase 2: port in use — check if it's another cesium-mcp-runtime
+  httpServer.close()
+  if (await _probeExistingInstance(WS_PORT)) {
+    _relayPort = WS_PORT
+    console.error(`[cesium-mcp-runtime] Port ${WS_PORT} occupied by existing cesium-mcp-runtime — relay mode enabled`)
+    console.error(`[cesium-mcp-runtime] Commands will be forwarded to http://127.0.0.1:${WS_PORT}`)
+    return
+  }
+
+  // Phase 3: port occupied by other service — try incremental ports
+  for (let offset = 1; offset <= MAX_PORT_RETRIES; offset++) {
+    const tryPort = WS_PORT + offset
+    const altServer = createRuntimeHttpServer(networkPolicy)
+    if (await _tryListen(altServer, tryPort)) {
+      console.error(`[cesium-mcp-runtime] Port ${WS_PORT} occupied by another service, using port ${tryPort}`)
+      console.error(`[cesium-mcp-runtime] HTTP + WebSocket server on http://localhost:${tryPort}`)
+      return
+    }
+    altServer.close()
+  }
+
+  console.error(`[cesium-mcp-runtime] Could not find available port (tried ${WS_PORT}-${WS_PORT + MAX_PORT_RETRIES}), WebSocket server disabled`)
+}
+
+function _setupWss(wss: WebSocketServer) {
+  wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+    const sessionId = new URL(req.url ?? '/', 'http://localhost').searchParams.get('session') ?? 'default'
+    const oldWs = browserClients.get(sessionId)
+    if (oldWs && oldWs.readyState === WebSocket.OPEN) {
+      console.error(`[ws] 同名 session=${sessionId} 已存在，关闭旧连接`)
+      oldWs.close(1000, 'replaced by new connection')
+    }
+    console.error(`[ws] 浏览器连接: session=${sessionId}`)
+    browserClients.set(sessionId, ws)
+
+    ws.on('message', (raw: RawData) => {
+      try {
+        const msg = JSON.parse(raw.toString())
+        settlePendingBrowserResponse(pendingRequests, ws, msg)
+      } catch { /* ignore parse errors */ }
+    })
+
+    ws.on('close', () => {
+      console.error(`[ws] 浏览器断开: session=${sessionId}`)
+      if (browserClients.get(sessionId) === ws) browserClients.delete(sessionId)
+      rejectPendingRequestsForClient(
+        pendingRequests,
+        ws,
+        new Error(`Browser session disconnected: ${sessionId}`),
+      )
+    })
+  })
+}
+
+// ==================== MCP Server ====================
+
+declare const __VERSION__: string
+const RUNTIME_VERSION = typeof __VERSION__ === 'string' ? __VERSION__ : '0.0.0-dev'
+
+function createRuntimeMcpServer(): McpServer {
+  return new McpServer({
+    name: 'cesium-mcp-runtime',
+    version: RUNTIME_VERSION,
+    title: 'Cesium MCP Runtime',
+    description: 'AI-powered 3D globe control via MCP — camera, layers, entities, animation, and interaction with CesiumJS.',
+    websiteUrl: 'https://github.com/gaopengbin/cesium-mcp',
+  }, {
+    instructions: 'Cesium MCP Runtime provides tools for controlling a CesiumJS 3D globe via AI. A browser with cesium-mcp-bridge must be connected via WebSocket for command execution. Use view tools (flyTo, setView) to navigate, entity tools to add markers/polygons/models, layer tools to manage GeoJSON/3D Tiles, and animation tools for time-based animations.',
+  })
+}
+
+function registerResources(s: McpServer): void {
+  s.registerResource(
+    'camera',
+    'cesium://scene/camera',
+    { description: '当前相机状态（经纬度、高度、角度）', mimeType: 'application/json' },
+    async () => {
+      try {
+        const result = await sendToBrowser('getView', {})
+        return { contents: [{ uri: 'cesium://scene/camera', text: JSON.stringify(result), mimeType: 'application/json' }] }
+      } catch {
+        return { contents: [{ uri: 'cesium://scene/camera', text: '{"error":"no browser connected"}', mimeType: 'application/json' }] }
+      }
+    },
+  )
+
+  s.registerResource(
+    'layers',
+    'cesium://scene/layers',
+    { description: '当前已加载的图层列表（ID、名称、类型、可见性）', mimeType: 'application/json' },
+    async () => {
+      try {
+        const result = await sendToBrowser('listLayers', {})
+        return { contents: [{ uri: 'cesium://scene/layers', text: JSON.stringify(result), mimeType: 'application/json' }] }
+      } catch {
+        return { contents: [{ uri: 'cesium://scene/layers', text: '{"error":"no browser connected"}', mimeType: 'application/json' }] }
+      }
+    },
+  )
+}
+
+// ==================== Toolsets (工具分组管理) ====================
+
+const TOOLSETS: Readonly<Record<string, readonly string[]>> = cesiumRuntimeToolsets
+
+const TOOLSET_DESCRIPTIONS: Readonly<Record<string, string>> = cesiumRuntimeToolsetDescriptions
+
+const DEFAULT_TOOLSETS = ['view', 'entity', 'layer', 'interaction']
+
+const _tsEnv = process.env.CESIUM_TOOLSETS?.trim()
+const _allMode = _tsEnv === 'all'
+const _configuredToolsets = new Set<string>(
+  _allMode
+    ? Object.keys(TOOLSETS)
+    : _tsEnv
+      ? _tsEnv.split(',').map(s => s.trim()).filter(s => s in TOOLSETS)
+      : DEFAULT_TOOLSETS,
+)
+
+// Reverse map: tool name → toolset name (for _meta injection)
+const TOOL_TO_TOOLSET = new Map<string, string>()
+for (const [setName, tools] of Object.entries(TOOLSETS)) {
+  for (const tool of tools) TOOL_TO_TOOLSET.set(tool, setName)
+}
+
+interface StoredToolDefinition {
+  name: string
+  description: string
+  inputSchema: StandardSchemaWithJSON
+  outputSchema?: StandardSchemaWithJSON
+  outputJsonSchema?: JsonSchema
+  annotations: ToolAnnotations
+  handler: AnyToolHandler
+  invoke: (params: Record<string, unknown>) => Promise<CallToolResult>
+}
+
+interface RuntimeToolState {
+  enabledSets: Set<string>
+  enabledTools: Set<string>
+}
+
+// Store all tool definitions for replay into per-connection/per-request servers.
+const _toolDefs = new Map<string, StoredToolDefinition>()
+const _toolJsonSchemas = new Map<string, JsonSchema>()
+
+// i18n: select locale based on CESIUM_LOCALE env var (default: en)
+const _localeKey = normalizeCesiumToolLocale(process.env.CESIUM_LOCALE)
+
+function _applyToolDef(s: McpServer, definition: StoredToolDefinition): void {
+  const toolset = TOOL_TO_TOOLSET.get(definition.name)
+  s.registerTool(definition.name, {
+    description: definition.description,
+    inputSchema: definition.inputSchema,
+    ...(definition.outputSchema ? { outputSchema: definition.outputSchema } : {}),
+    annotations: definition.annotations,
+    ...(toolset ? { _meta: { toolset } } : {}),
+  }, definition.handler as never)
+}
+
+function withBrowserSessionSchema(
+  schema: JsonSchema,
+  parameterDescriptions: Readonly<Record<string, string>> = {},
+): JsonSchema {
+  const properties = schema.properties && typeof schema.properties === 'object'
+    ? schema.properties as Record<string, JsonSchema>
+    : {}
+  const localizedProperties = Object.fromEntries(
+    Object.entries(properties).map(([name, property]) => [
+      name,
+      parameterDescriptions[name]
+        ? { ...property, description: parameterDescriptions[name] }
+        : property,
+    ]),
+  )
+  return {
+    ...schema,
+    properties: {
+      ...localizedProperties,
+      sessionId: {
+        type: 'string',
+        description: _localeKey === 'zh-CN'
+          ? '目标浏览器 session ID（多浏览器路由，可选）'
+          : 'Target browser session ID for multi-browser routing (optional)',
+      },
+    },
+  }
+}
+
+type LegacyToolHandler<Shape extends z.ZodRawShape> = (
+  params: z.infer<z.ZodObject<Shape>>,
+) => Promise<CallToolResult>
+
+/** Collect a tool definition once; server factories replay it for either protocol era. */
+function _registerTool<Shape extends z.ZodRawShape>(
+  name: string,
+  description: string,
+  inputShape: Shape,
+  annotations: ToolAnnotations,
+  handler: LegacyToolHandler<Shape>,
+): void {
+  let inputSchema: StandardSchemaWithJSON
+  let outputSchema: StandardSchemaWithJSON | undefined
+  let outputJsonSchema: JsonSchema | undefined
+  let jsonSchema: JsonSchema
+
+  // Shared command metadata is canonical in cesium-mcp-contracts.
+  const metadata = getCesiumRuntimeToolMetadata(name, _localeKey)
+  if (metadata) {
+    description = metadata.description
+    annotations = metadata.annotations
+    jsonSchema = withBrowserSessionSchema(
+      metadata.inputSchema,
+      metadata.parameterDescriptions,
+    )
+    inputSchema = createMcpInputSchema(jsonSchema)
+    outputJsonSchema = metadata.outputSchema
+    outputSchema = createMcpOutputSchema(metadata.outputSchema)
+  } else {
+    const schema = z.object({
+      ...inputShape,
+      sessionId: z.string().optional().describe(
+        _localeKey === 'zh-CN'
+          ? '目标浏览器 session ID（多浏览器路由，可选）'
+          : 'Target browser session ID for multi-browser routing (optional)',
+      ),
+    })
+    jsonSchema = z.toJSONSchema(schema) as JsonSchema
+    inputSchema = schema
+  }
+
+  _toolJsonSchemas.set(name, jsonSchema)
+  const invoke = handler as unknown as (
+    params: Record<string, unknown>,
+  ) => Promise<CallToolResult>
+  const normalizedInvoke = metadata
+    ? async (params: Record<string, unknown>) => attachStructuredContent(await invoke(params))
+    : invoke
+
+  _toolDefs.set(name, {
+    name,
+    description,
+    inputSchema,
+    outputSchema,
+    outputJsonSchema,
+    annotations,
+    handler: normalizedInvoke as unknown as AnyToolHandler,
+    invoke: normalizedInvoke,
+  })
+}
+
+function createToolState(toolsets: Iterable<string>): RuntimeToolState {
+  const enabledSets = new Set(toolsets)
+  const enabledTools = new Set<string>()
+  for (const setName of enabledSets) {
+    for (const tool of TOOLSETS[setName] ?? []) enabledTools.add(tool)
+  }
+  return { enabledSets, enabledTools }
+}
+
+const _configuredState = createToolState(_configuredToolsets)
+
+/** Dynamically enable a toolset on one server instance. */
+function enableToolset(
+  s: McpServer,
+  state: RuntimeToolState,
+  setName: string,
+): string[] {
+  const tools = TOOLSETS[setName]
+  if (!tools) return []
+  const added: string[] = []
+  for (const toolName of tools) {
+    if (!state.enabledTools.has(toolName)) {
+      state.enabledTools.add(toolName)
+      const def = _toolDefs.get(toolName)
+      if (def) {
+        _applyToolDef(s, def)
+        added.push(toolName)
+      }
+    }
+  }
+  state.enabledSets.add(setName)
+  return added
+}
+
+// ==================== Tools ====================
+
+// — flyTo
+_registerTool(
+  'flyTo',
+  '飞行到指定经纬度位置（带动画过渡）',
+  {
+    longitude: z.number().describe('经度（-180 ~ 180）'),
+    latitude: z.number().describe('纬度（-90 ~ 90）'),
+    height: z.number().default(50000).describe('相机高度（米），默认 50000'),
+    heading: z.number().default(0).describe('航向角（度），0 为正北'),
+    pitch: z.number().default(-45).describe('俯仰角（度），-90 为正下方'),
+    duration: z.number().default(2).describe('飞行动画时长（秒）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Fly To Location' },
+  async (params) => {
+    const result = await sendToBrowser('flyTo', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addGeoJsonLayer
+_registerTool(
+  'addGeoJsonLayer',
+  '添加 GeoJSON 图层到地图（支持 Point/Line/Polygon，可配置颜色/分级/分类渲染）。data 和 url 二选一',
+  {
+    id: z.string().optional().describe('图层ID（不传则自动生成）'),
+    name: z.string().optional().describe('图层显示名称'),
+    data: z.record(z.string(), z.unknown()).optional().describe('GeoJSON FeatureCollection 对象（与 url 二选一）'),
+    url: z.string().optional().describe('GeoJSON 文件 URL（与 data 二选一，浏览器端 fetch 加载）'),
+    style: z.record(z.string(), z.unknown()).optional().describe('样式配置（color, opacity, pointSize, choropleth, category）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add GeoJSON Layer' },
+  async (params) => {
+    const result = await sendToBrowser('addGeoJsonLayer', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addGeoJsonPrimitive
+_registerTool(
+  'addGeoJsonPrimitive',
+  '高性能加载大规模 GeoJSON 数据（10万+ 要素）。绕过 Entity 系统，直接使用 Primitive 渲染，适合海量数据可视化。data 和 url 二选一',
+  {
+    id: z.string().optional().describe('图层ID（不传则自动生成）'),
+    name: z.string().optional().describe('图层显示名称'),
+    data: z.any().optional().describe('GeoJSON 对象（与 url 二选一）'),
+    url: z.string().optional().describe('GeoJSON 文件 URL（与 data 二选一）'),
+    allowPicking: z.boolean().optional().describe('是否允许拾取（默认 true，关闭可提升性能）'),
+    show: z.boolean().optional().describe('是否显示（默认 true）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add GeoJSON Primitive' },
+  async (params) => {
+    const result = await sendToBrowser('addGeoJsonPrimitive', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addLabel
+_registerTool(
+  'addLabel',
+  '为 GeoJSON 要素添加文本标注（显示属性值）',
+  {
+    data: z.record(z.string(), z.unknown()).describe('GeoJSON FeatureCollection 对象'),
+    field: z.string().describe('用作标注文本的属性字段名（如 "name"、"population"）'),
+    style: z.record(z.string(), z.unknown()).optional().describe('标注样式（font, fillColor, outlineColor, scale 等）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Label' },
+  async (params) => {
+    const result = await sendToBrowser('addLabel', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addHeatmap
+_registerTool(
+  'addHeatmap',
+  '添加热力图图层（基于 GeoJSON 点数据生成热力可视化，贴图到地面）',
+  {
+    data: z.record(z.string(), z.unknown()).describe('GeoJSON Point FeatureCollection'),
+    radius: z.number().default(30).describe('热力影响半径（像素）'),
+    blur: z.number().default(0.85).describe('热力模糊程度 0-1'),
+    maxOpacity: z.number().default(0.8).describe('最大不透明度 0-1'),
+    resolution: z.number().default(512).describe('热力图分辨率（像素）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Heatmap' },
+  async (params) => {
+    const result = await sendToBrowser('addHeatmap', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — removeLayer
+_registerTool(
+  'removeLayer',
+  '从地图上移除指定图层（按图层ID）',
+  { id: z.string().describe('要移除的图层ID（可通过 listLayers 获取）') },
+  { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false, title: 'Remove Layer' },
+  async (params) => {
+    const result = await sendToBrowser('removeLayer', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — clearAll
+_registerTool(
+  'clearAll',
+  '清除地图上的所有图层、实体、动画和轨迹（一键重置场景）',
+  {},
+  { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false, title: 'Clear All' },
+  async () => {
+    const result = await sendToBrowser('clearAll', {})
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setBasemap
+_registerTool(
+  'setBasemap',
+  '切换底图风格',
+  {
+    basemap: z.enum(['dark', 'satellite', 'standard', 'osm', 'arcgis', 'light', 'tianditu_vec', 'tianditu_img', 'amap', 'amap_satellite']).describe('底图类型：dark=暗色, satellite=卫星影像, standard=标准, osm=OpenStreetMap, arcgis=ArcGIS街道, light=浅色, tianditu_vec=天地图矢量, tianditu_img=天地图影像, amap=高德地图, amap_satellite=高德卫星'),
+    token: z.string().optional().describe('底图服务令牌（天地图等需要认证的服务必填）'),
+    url: z.string().optional().describe('自定义URL模板（{x},{y},{z}占位符），提供时忽略basemap参数'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set Basemap' },
+  async (params) => {
+    const result = await sendToBrowser('setBasemap', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — screenshot
+_registerTool(
+  'screenshot',
+  '截取当前地图视图（返回 base64 PNG）',
+  {},
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Screenshot' },
+  async () => {
+    const result = await sendToBrowser('screenshot', {})
+    const structured = result as {
+      success?: boolean
+      data?: { dataUrl?: string; width?: number; height?: number }
+    } | null
+    const screenshot = structured?.data
+    if (screenshot?.dataUrl) {
+      return {
+        content: [{
+          type: 'image' as const,
+          data: screenshot.dataUrl.replace(/^data:image\/\w+;base64,/, ''),
+          mimeType: 'image/png',
+        }],
+        structuredContent: structured as Record<string, unknown>,
+      }
+    }
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — highlight
+_registerTool(
+  'highlight',
+  '高亮指定图层的要素（支持清除恢复原始样式）',
+  {
+    layerId: z.string().optional().describe('图层ID（清除所有高亮时可不传）'),
+    featureIndex: z.number().optional().describe('要素索引（不传则高亮/清除全部）'),
+    color: z.string().default('#FFFF00').describe('高亮颜色（CSS 格式）'),
+    clear: z.boolean().optional().describe('传 true 清除高亮、恢复原始样式'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Highlight' },
+  async (params) => {
+    const result = await sendToBrowser('highlight', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — measure
+_registerTool(
+  'measure',
+  '测量距离或面积（基于坐标计算，可在地图上显示）',
+  {
+    mode: z.enum(['distance', 'area']).describe('测量模式：distance=距离, area=面积'),
+    positions: z.array(z.array(z.number()).min(2).max(3)).min(2).describe('坐标数组 [[lon,lat,alt?], ...]'),
+    showOnMap: z.boolean().optional().default(true).describe('是否在地图上显示测量结果'),
+    id: z.string().optional().describe('自定义测量实体ID'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Measure' },
+  async (params) => {
+    const result = await sendToBrowser('measure', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setView
+_registerTool(
+  'setView',
+  '瞬间切换到指定经纬度视角（无动画）',
+  {
+    longitude: z.number().describe('经度（-180 ~ 180）'),
+    latitude: z.number().describe('纬度（-90 ~ 90）'),
+    height: z.number().optional().default(50000).describe('高度（米）'),
+    heading: z.number().optional().default(0).describe('航向角（度）'),
+    pitch: z.number().optional().default(-90).describe('俯仰角（度）'),
+    roll: z.number().optional().default(0).describe('翻滚角（度）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set View' },
+  async (params) => {
+    const result = await sendToBrowser('setView', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — getView
+_registerTool(
+  'getView',
+  '获取当前相机视角信息（经纬度、高度、角度）',
+  {},
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Get View' },
+  async () => {
+    const result = await sendToBrowser('getView', {})
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  },
+)
+
+// — zoomToExtent
+_registerTool(
+  'zoomToExtent',
+  '缩放到指定地理范围',
+  {
+    west: z.number().describe('西边界经度（度）'),
+    south: z.number().describe('南边界纬度（度）'),
+    east: z.number().describe('东边界经度（度）'),
+    north: z.number().describe('北边界纬度（度）'),
+    duration: z.number().optional().default(2).describe('动画时长（秒）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Zoom to Extent' },
+  async (params) => {
+    const result = await sendToBrowser('zoomToExtent', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addMarker
+_registerTool(
+  'addMarker',
+  '在指定经纬度添加标注点，返回 layerId 供后续操作',
+  {
+    longitude: z.number().describe('经度（-180 ~ 180）'),
+    latitude: z.number().describe('纬度（-90 ~ 90）'),
+    label: z.string().optional().describe('标注文本'),
+    color: z.string().optional().default('#3B82F6').describe('标注颜色（CSS 格式）'),
+    size: z.number().optional().default(12).describe('点大小（像素）'),
+    id: z.string().optional().describe('自定义图层ID（不传则自动生成）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Marker' },
+  async (params) => {
+    const result = await sendToBrowser('addMarker', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addPolyline
+_registerTool(
+  'addPolyline',
+  '在地图上添加折线（路径、线段），返回 entityId',
+  {
+    coordinates: z.array(z.array(z.number())).describe('折线坐标数组 [[lon, lat, height?], ...]'),
+    color: z.string().optional().default('#3B82F6').describe('线条颜色（CSS 格式）'),
+    width: z.number().optional().default(3).describe('线条宽度（像素）'),
+    clampToGround: z.boolean().optional().default(true).describe('是否贴地'),
+    label: z.string().optional().describe('折线标注文本'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Polyline' },
+  async (params) => {
+    const result = await sendToBrowser('addPolyline', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addPolygon
+_registerTool(
+  'addPolygon',
+  '在地图上添加多边形区域（面积、边界），返回 entityId',
+  {
+    coordinates: z.array(z.array(z.number())).describe('多边形外环坐标 [[lon, lat, height?], ...]'),
+    color: z.string().optional().default('#3B82F6').describe('填充颜色（CSS 格式）'),
+    outlineColor: z.string().optional().default('#FFFFFF').describe('描边颜色'),
+    opacity: z.number().optional().default(0.6).describe('填充透明度（0~1）'),
+    extrudedHeight: z.number().optional().describe('拉伸高度（米），可用于创建立体效果'),
+    clampToGround: z.boolean().optional().default(true).describe('是否贴地'),
+    label: z.string().optional().describe('多边形标注文本'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Polygon' },
+  async (params) => {
+    const result = await sendToBrowser('addPolygon', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addModel
+_registerTool(
+  'addModel',
+  '在指定经纬度放置 3D 模型（glTF/GLB），返回 entityId',
+  {
+    longitude: z.number().describe('经度（-180 ~ 180）'),
+    latitude: z.number().describe('纬度（-90 ~ 90）'),
+    height: z.number().optional().default(0).describe('放置高度（米）'),
+    url: z.string().describe('glTF/GLB 模型文件 URL'),
+    scale: z.number().optional().default(1).describe('模型缩放比例'),
+    heading: z.number().optional().default(0).describe('航向角（度），0=正北'),
+    pitch: z.number().optional().default(0).describe('俯仰角（度）'),
+    roll: z.number().optional().default(0).describe('翻滚角（度）'),
+    label: z.string().optional().describe('模型标注文本'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Model' },
+  async (params) => {
+    const result = await sendToBrowser('addModel', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — updateEntity
+_registerTool(
+  'updateEntity',
+  '更新已有实体的属性（位置、颜色、标签、缩放、可见性）',
+  {
+    entityId: z.string().describe('实体ID（addMarker/addPolyline 等返回的 entityId）'),
+    position: z.object({
+      longitude: z.number().describe('经度（-180 ~ 180）'),
+      latitude: z.number().describe('纬度（-90 ~ 90）'),
+      height: z.number().optional().describe('高度（米）'),
+    }).optional().describe('新位置坐标'),
+    label: z.string().optional().describe('新标注文本'),
+    color: z.string().optional().describe('新颜色（CSS 格式）'),
+    scale: z.number().optional().describe('新缩放比例'),
+    show: z.boolean().optional().describe('是否显示'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Update Entity' },
+  async (params) => {
+    const result = await sendToBrowser('updateEntity', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — removeEntity
+_registerTool(
+  'removeEntity',
+  '移除单个实体（通过 entityId）',
+  {
+    entityId: z.string().describe('要移除的实体ID'),
+  },
+  { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false, title: 'Remove Entity' },
+  async (params) => {
+    const result = await sendToBrowser('removeEntity', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — batchAddEntities
+_registerTool(
+  'batchAddEntities',
+  '批量添加多个实体（一次调用创建多个 marker/polyline/polygon/model 等），返回所有 entityId',
+  {
+    entities: z.array(z.object({
+      type: z.enum(['marker', 'polyline', 'polygon', 'model', 'billboard', 'box', 'cylinder', 'ellipse', 'rectangle', 'wall', 'corridor']).describe('实体类型'),
+    }).passthrough()).describe('实体定义数组，每个元素包含 type 字段和该类型所需的参数'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Batch Add Entities' },
+  async (params) => {
+    const result = await sendToBrowser('batchAddEntities', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — queryEntities
+_registerTool(
+  'queryEntities',
+  '查询已有实体 — 按名称、类型、空间范围过滤，返回 entityId/name/type/position 列表',
+  {
+    name: z.string().optional().describe('名称模糊匹配（不区分大小写）'),
+    type: z.enum(['marker', 'polyline', 'polygon', 'model', 'billboard', 'box', 'cylinder', 'ellipse', 'rectangle', 'wall', 'corridor', 'label', 'unknown']).optional().describe('按实体类型过滤'),
+    bbox: z.array(z.number()).length(4).optional().describe('空间范围过滤 [west, south, east, north]（度）'),
+  },
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Query Entities' },
+  async (params) => {
+    const result = await sendToBrowser('queryEntities', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — getEntityProperties
+_registerTool(
+  'getEntityProperties',
+  '获取指定实体的详细属性 — 包括类型、位置、自定义属性和图形属性',
+  {
+    entityId: z.string().describe('实体ID（可通过 queryEntities 获取）'),
+  },
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Get Entity Properties' },
+  async (params) => {
+    const result = await sendToBrowser('getEntityProperties', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — saveViewpoint
+_registerTool(
+  'saveViewpoint',
+  '保存当前视角为书签（名称 → 视角状态），可通过 loadViewpoint 恢复',
+  {
+    name: z.string().describe('书签名称（唯一标识，重复则覆盖）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Save Viewpoint' },
+  async (params) => {
+    const result = await sendToBrowser('saveViewpoint', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — loadViewpoint
+_registerTool(
+  'loadViewpoint',
+  '恢复已保存的视角书签（带飞行动画），返回保存的视角状态',
+  {
+    name: z.string().describe('书签名称'),
+    duration: z.number().optional().default(2).describe('飞行动画时长（秒），0 表示瞬移'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Load Viewpoint' },
+  async (params) => {
+    const result = await sendToBrowser('loadViewpoint', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — listViewpoints
+_registerTool(
+  'listViewpoints',
+  '列出所有已保存的视角书签',
+  {},
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'List Viewpoints' },
+  async () => {
+    const result = await sendToBrowser('listViewpoints', {})
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — exportScene
+_registerTool(
+  'exportScene',
+  '导出当前场景快照 — 包含视角、图层列表、实体列表和时间戳',
+  {},
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Export Scene' },
+  async () => {
+    const result = await sendToBrowser('exportScene', {})
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setLayerVisibility
+_registerTool(
+  'setLayerVisibility',
+  '设置图层可见性',
+  {
+    id: z.string().describe('图层ID'),
+    visible: z.boolean().describe('是否可见'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set Layer Visibility' },
+  async (params) => {
+    const result = await sendToBrowser('setLayerVisibility', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — listLayers
+_registerTool(
+  'listLayers',
+  '获取当前所有图层列表（含 ID、名称、类型、可见性）',
+  {},
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'List Layers' },
+  async () => {
+    const result = await sendToBrowser('listLayers', {})
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  },
+)
+
+// — getLayerSchema
+_registerTool(
+  'getLayerSchema',
+  '获取图层的属性字段结构 — 返回字段名、类型、示例值，适用于 GeoJSON/CZML/KML/3D Tiles 图层',
+  {
+    layerId: z.string().describe('图层ID（可通过 listLayers 获取）'),
+  },
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Get Layer Schema' },
+  async (params) => {
+    const result = await sendToBrowser('getLayerSchema', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  },
+)
+
+// — updateLayerStyle
+const choroplethStyleSchema = z.object({
+  field: z.string().min(1).describe('Property field used for choropleth classification'),
+  breaks: z.array(z.number()).min(2).describe('Ascending class break values; colors length must be breaks length minus one'),
+  colors: z.array(z.string()).min(1).describe('CSS colors for each choropleth interval'),
+}).superRefine((value, ctx) => {
+  if (value.colors.length !== value.breaks.length - 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['colors'],
+      message: 'colors length must equal breaks length minus one',
+    })
+  }
+  for (let i = 1; i < value.breaks.length; i++) {
+    if (value.breaks[i]! <= value.breaks[i - 1]!) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['breaks', i],
+        message: 'breaks must be strictly ascending',
+      })
+    }
+  }
+})
+
+const categoryStyleSchema = z.object({
+  field: z.string().min(1).describe('Property field used for category styling'),
+  colors: z.array(z.string()).min(1).optional().describe('Optional CSS color palette'),
+})
+
+const layerStyleSchema = z.object({
+  color: z.string().optional().describe('CSS color for entity layer features'),
+  opacity: z.number().min(0).max(1).optional().describe('Opacity in range 0-1'),
+  strokeWidth: z.number().min(0).optional().describe('Polyline or polygon outline width'),
+  pointSize: z.number().min(0).optional().describe('Point or billboard size'),
+  randomColor: z.boolean().optional().describe('Apply random colors to original GeoJSON entities'),
+  gradient: z.tuple([z.string(), z.string()]).optional().describe('Two CSS colors used as index gradient'),
+  choropleth: choroplethStyleSchema.optional().describe('GeoJSON choropleth style'),
+  category: categoryStyleSchema.optional().describe('GeoJSON category style'),
+}).superRefine((value, ctx) => {
+  const enabled = [
+    value.choropleth !== undefined,
+    value.category !== undefined,
+    value.randomColor === true,
+    value.gradient !== undefined,
+  ].filter(Boolean).length
+  if (enabled > 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Only one thematic style is allowed: choropleth, category, randomColor, or gradient',
+    })
+  }
+})
+
+const imageryStyleSchema = z.object({
+  alpha: z.number().min(0).max(1).optional().describe('Imagery alpha in range 0-1'),
+  brightness: z.number().optional().describe('Imagery brightness multiplier'),
+  contrast: z.number().optional().describe('Imagery contrast multiplier'),
+  hue: z.number().optional().describe('Imagery hue shift in radians'),
+  saturation: z.number().optional().describe('Imagery saturation multiplier'),
+  gamma: z.number().optional().describe('Imagery gamma correction'),
+}).refine(value => Object.values(value).some(v => v !== undefined), {
+  message: 'At least one imagery style field is required',
+})
+
+const primitiveStyleSchema = z.object({
+  color: z.string().optional().describe('CSS fill color for GeoJSON Primitive materials'),
+  opacity: z.number().min(0).max(1).optional().describe('Fill alpha in range 0-1'),
+  outlineColor: z.string().optional().describe('CSS outline color for GeoJSON Primitive materials'),
+  outlineWidth: z.number().min(0).max(255).optional().describe('Outline width in range 0-255'),
+  pointSize: z.number().min(0).max(255).optional().describe('Point size in range 0-255'),
+  lineWidth: z.number().min(0).max(255).optional().describe('Polyline width in range 0-255'),
+}).refine(value => Object.values(value).some(v => v !== undefined), {
+  message: 'At least one primitive style field is required',
+})
+
+_registerTool(
+  'updateLayerStyle',
+  '修改已有图层的样式（颜色、透明度、标注样式、3D Tiles 样式等）',
+  {
+    layerId: z.string().describe('图层ID'),
+    labelStyle: z.record(z.string(), z.unknown()).optional().describe('标注样式（font, fillColor, outlineColor, outlineWidth, scale 等）'),
+    layerStyle: layerStyleSchema.optional().describe('Entity layer style. Thematic fields are GeoJSON-only and mutually exclusive.'),
+    imageryStyle: imageryStyleSchema.optional().describe('Imagery layer visual style. Visibility is controlled by setLayerVisibility.'),
+    primitiveStyle: primitiveStyleSchema.optional().describe('GeoJSON Primitive material style. Visibility is controlled by setLayerVisibility.'),
+    tileStyle: z.object({
+      color: z.string().optional().describe('3D Tiles 颜色表达式，如 "color(\'red\')" 或条件表达式'),
+      show: z.string().optional().describe('3D Tiles 显示条件表达式，如 "${Height} > 50"'),
+      pointSize: z.string().optional().describe('3D Tiles 点大小表达式'),
+      meta: z.record(z.string(), z.string()).optional().describe('3D Tiles meta 属性'),
+    }).optional().describe('3D Tiles 样式（Cesium3DTileStyle 表达式）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Update Layer Style' },
+  async (params) => {
+    const result = await sendToBrowser('updateLayerStyle', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — playTrajectory
+_registerTool(
+  'playTrajectory',
+  '播放移动轨迹动画',
+  {
+    id: z.string().optional().describe('轨迹图层ID'),
+    name: z.string().optional().describe('轨迹名称'),
+    coordinates: z.array(z.array(z.number())).describe('轨迹坐标数组 [[lon, lat, alt?], ...]'),
+    durationSeconds: z.number().optional().default(10).describe('动画时长（秒）'),
+    trailSeconds: z.number().optional().default(2).describe('尾迹长度（秒）'),
+    label: z.string().optional().describe('移动体标签'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Play Trajectory' },
+  async (params) => {
+    const result = await sendToBrowser('playTrajectory', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — load3dTiles
+_registerTool(
+  'load3dTiles',
+  '加载 3D Tiles 数据集（支持 URL 或 Cesium Ion 资产 ID）',
+  {
+    id: z.string().optional().describe('图层ID'),
+    name: z.string().optional().describe('图层名称'),
+    url: z.string().optional().describe('tileset.json 的 URL（与 ionAssetId 二选一）'),
+    ionAssetId: z.number().optional().describe('Cesium Ion 资产 ID（与 url 二选一）'),
+    maximumScreenSpaceError: z.number().optional().default(16).describe('最大屏幕空间误差（值越小越精细）'),
+    heightOffset: z.number().optional().describe('高度偏移（米）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Load 3D Tiles' },
+  async (params) => {
+    const result = await sendToBrowser('load3dTiles', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — load3dGaussianSplat
+_registerTool(
+  'load3dGaussianSplat',
+  '加载 3D 高斯泼溅（Gaussian Splat）数据集',
+  {
+    id: z.string().optional().describe('图层ID'),
+    name: z.string().optional().describe('图层名称'),
+    url: z.string().describe('高斯泼溅 tileset.json 的 URL'),
+    maximumScreenSpaceError: z.number().optional().default(16).describe('最大屏幕空间误差（值越小越精细）'),
+    show: z.boolean().optional().default(true).describe('是否显示'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Load 3D Gaussian Splat' },
+  async (params) => {
+    const result = await sendToBrowser('load3dGaussianSplat', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — loadTerrain
+_registerTool(
+  'loadTerrain',
+  '加载或切换地形（平坦/ArcGIS/CesiumIon/自定义 URL）',
+  {
+    provider: z.enum(['flat', 'arcgis', 'cesiumion']).describe('地形提供者类型'),
+    url: z.string().optional().describe('自定义地形服务 URL'),
+    cesiumIonAssetId: z.number().optional().describe('Cesium Ion 资产ID（provider=cesiumion 时需要）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Load Terrain' },
+  async (params) => {
+    const result = await sendToBrowser('loadTerrain', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — loadImageryService
+_registerTool(
+  'loadImageryService',
+  '加载影像服务图层（WMS/WMTS/XYZ/ArcGIS MapServer/Cesium Ion）',
+  {
+    id: z.string().optional().describe('图层ID'),
+    name: z.string().optional().describe('图层名称'),
+    url: z.string().optional().describe('影像服务 URL（与 ionAssetId 二选一）'),
+    ionAssetId: z.number().optional().describe('Cesium Ion 影像资产 ID（与 url 二选一）'),
+    serviceType: z.enum(['wms', 'wmts', 'xyz', 'arcgis_mapserver', 'ion']).optional().describe('服务类型（使用 ionAssetId 时可不填）'),
+    layerName: z.string().optional().describe('WMS/WMTS 图层名'),
+    opacity: z.number().optional().default(1.0).describe('透明度（0~1）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Load Imagery Service' },
+  async (params) => {
+    const result = await sendToBrowser('loadImageryService', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// ==================== Camera Tools (融合官方 Camera Server) ====================
+
+// — loadCzml
+_registerTool(
+  'loadCzml',
+  '加载 CZML 时序数据源（CesiumJS 原生格式，支持时变位置/样式/动画）。data 和 url 二选一',
+  {
+    id: z.string().optional().describe('图层ID（不传则自动生成）'),
+    name: z.string().optional().describe('数据源显示名称'),
+    data: z.array(z.unknown()).optional().describe('CZML 数据包数组（与 url 二选一）'),
+    url: z.string().optional().describe('CZML 文件 URL（与 data 二选一，浏览器端 fetch 加载）'),
+    sourceUri: z.string().optional().describe('CZML 中相对引用的基础 URI'),
+    clampToGround: z.boolean().optional().describe('将实体贴地显示'),
+    flyTo: z.boolean().optional().describe('加载后自动飞行到数据范围（默认 true）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Load CZML' },
+  async (params) => {
+    const result = await sendToBrowser('loadCzml', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — loadKml
+_registerTool(
+  'loadKml',
+  '加载 KML/KMZ 数据源（Google Earth 格式）。url 和 data 二选一',
+  {
+    id: z.string().optional().describe('图层ID（不传则自动生成）'),
+    name: z.string().optional().describe('数据源显示名称'),
+    url: z.string().optional().describe('KML/KMZ 文件 URL（与 data 二选一，浏览器端 fetch 加载）'),
+    data: z.string().optional().describe('KML XML 字符串（与 url 二选一）'),
+    sourceUri: z.string().optional().describe('KML 中相对引用的基础 URI'),
+    clampToGround: z.boolean().optional().describe('将实体贴地显示'),
+    flyTo: z.boolean().optional().describe('加载后自动飞行到数据范围（默认 true）'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Load KML/KMZ' },
+  async (params) => {
+    const result = await sendToBrowser('loadKml', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setEdgeDisplayMode
+_registerTool(
+  'setEdgeDisplayMode',
+  '设置 3D Tiles 边缘显示模式（仅表面 / 表面+边缘 / 仅边缘线框）',
+  {
+    tilesetId: z.string().optional().describe('目标图层ID（不传则应用于场景中所有 3D Tiles）'),
+    mode: z.enum(['surfaces_only', 'surfaces_and_edges', 'edges_only']).describe('边缘显示模式：surfaces_only=仅表面, surfaces_and_edges=表面+边缘, edges_only=仅线框'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set Edge Display Mode' },
+  async (params) => {
+    const result = await sendToBrowser('setEdgeDisplayMode', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// ==================== Camera Tools (融合官方 Camera Server) ====================
+_registerTool(
+  'lookAtTransform',
+  'Look at a specific position from a given heading/pitch/range (orbit-style camera)',
+  {
+    longitude: z.number().describe('Target longitude (degrees)'),
+    latitude: z.number().describe('Target latitude (degrees)'),
+    height: z.number().optional().default(0).describe('Target height (meters)'),
+    heading: z.number().optional().default(0).describe('Camera heading (degrees), 0=North'),
+    pitch: z.number().optional().default(-45).describe('Camera pitch (degrees), -90=straight down'),
+    range: z.number().optional().default(1000).describe('Distance from target (meters)'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Look At Transform' },
+  async (params) => {
+    const result = await sendToBrowser('lookAtTransform', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — startOrbit
+_registerTool(
+  'startOrbit',
+  'Start orbiting the camera around the current view center',
+  {
+    speed: z.number().optional().default(0.005).describe('Rotation speed (radians per tick)'),
+    clockwise: z.boolean().optional().default(true).describe('Orbit direction'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Start Orbit' },
+  async (params) => {
+    const result = await sendToBrowser('startOrbit', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — stopOrbit
+_registerTool(
+  'stopOrbit',
+  'Stop the camera orbit animation',
+  {},
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Stop Orbit' },
+  async () => {
+    const result = await sendToBrowser('stopOrbit', {})
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setCameraOptions
+_registerTool(
+  'setCameraOptions',
+  'Configure camera controller options (enable/disable rotation, zoom, tilt, etc.)',
+  {
+    enableRotate: z.boolean().optional().describe('Enable camera rotation'),
+    enableTranslate: z.boolean().optional().describe('Enable camera translation'),
+    enableZoom: z.boolean().optional().describe('Enable camera zoom'),
+    enableTilt: z.boolean().optional().describe('Enable camera tilt'),
+    enableLook: z.boolean().optional().describe('Enable camera look'),
+    minimumZoomDistance: z.number().optional().describe('Minimum zoom distance (meters)'),
+    maximumZoomDistance: z.number().optional().describe('Maximum zoom distance (meters)'),
+    enableInputs: z.boolean().optional().describe('Enable/disable all camera inputs'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set Camera Options' },
+  async (params) => {
+    const result = await sendToBrowser('setCameraOptions', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// ==================== Entity Type Tools (融合官方 Entity Server) ====================
+
+const colorSchema = z.union([
+  z.string().describe('CSS color string (e.g. "#FF0000", "red")'),
+  z.object({ red: z.number().describe('Red channel (0-1)'), green: z.number().describe('Green channel (0-1)'), blue: z.number().describe('Blue channel (0-1)'), alpha: z.number().optional().describe('Alpha channel (0-1)') }).describe('RGBA color object'),
+]).optional()
+
+const materialSchema = z.union([
+  z.string().describe('CSS color string'),
+  z.object({ red: z.number().describe('Red (0-1)'), green: z.number().describe('Green (0-1)'), blue: z.number().describe('Blue (0-1)'), alpha: z.number().optional().describe('Alpha (0-1)') }).describe('RGBA color'),
+  z.object({
+    type: z.enum(['color', 'image', 'checkerboard', 'stripe', 'grid']).describe('Material type'),
+    color: z.union([z.string(), z.object({ red: z.number().describe('Red (0-1)'), green: z.number().describe('Green (0-1)'), blue: z.number().describe('Blue (0-1)'), alpha: z.number().optional().describe('Alpha (0-1)') })]).optional().describe('Base color'),
+    image: z.string().optional().describe('Image URL'),
+    evenColor: z.union([z.string(), z.object({ red: z.number().describe('Red (0-1)'), green: z.number().describe('Green (0-1)'), blue: z.number().describe('Blue (0-1)'), alpha: z.number().optional().describe('Alpha (0-1)') })]).optional().describe('Even color for checkerboard/stripe'),
+    oddColor: z.union([z.string(), z.object({ red: z.number().describe('Red (0-1)'), green: z.number().describe('Green (0-1)'), blue: z.number().describe('Blue (0-1)'), alpha: z.number().optional().describe('Alpha (0-1)') })]).optional().describe('Odd color for checkerboard/stripe'),
+    orientation: z.enum(['horizontal', 'vertical']).optional().describe('Stripe orientation'),
+    cellAlpha: z.number().optional().describe('Cell alpha for grid material'),
+  }).describe('Complex material specification'),
+]).optional()
+
+const orientationSchema = z.object({
+  heading: z.number().describe('Heading (degrees)'),
+  pitch: z.number().describe('Pitch (degrees)'),
+  roll: z.number().describe('Roll (degrees)'),
+}).optional()
+
+const positionDegreesSchema = z.object({
+  longitude: z.number().describe('Longitude (degrees)'),
+  latitude: z.number().describe('Latitude (degrees)'),
+  height: z.number().optional().describe('Height above ground (meters)'),
+})
+
+// — addBillboard
+_registerTool(
+  'addBillboard',
+  'Add a billboard (image icon) at a position on the globe',
+  {
+    longitude: z.number().describe('Longitude (degrees)'),
+    latitude: z.number().describe('Latitude (degrees)'),
+    height: z.number().optional().default(0).describe('Height (meters)'),
+    name: z.string().optional().describe('Billboard name'),
+    image: z.string().describe('Image URL for the billboard'),
+    scale: z.number().optional().default(1.0).describe('Scale factor'),
+    color: colorSchema.describe('Tint color'),
+    pixelOffset: z.object({ x: z.number(), y: z.number() }).optional().describe('Pixel offset from position'),
+    horizontalOrigin: z.enum(['CENTER', 'LEFT', 'RIGHT']).optional().describe('Horizontal origin'),
+    verticalOrigin: z.enum(['CENTER', 'TOP', 'BOTTOM', 'BASELINE']).optional().describe('Vertical origin'),
+    heightReference: z.enum(['NONE', 'CLAMP_TO_GROUND', 'RELATIVE_TO_GROUND']).optional().describe('Height reference'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Billboard' },
+  async (params) => {
+    const result = await sendToBrowser('addBillboard', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addBox
+_registerTool(
+  'addBox',
+  'Add a 3D box entity at a position',
+  {
+    longitude: z.number().describe('Longitude (degrees)'),
+    latitude: z.number().describe('Latitude (degrees)'),
+    height: z.number().optional().default(0).describe('Height (meters)'),
+    name: z.string().optional().describe('Box name'),
+    dimensions: z.object({
+      width: z.number().describe('Width in meters (X)'),
+      length: z.number().describe('Length in meters (Y)'),
+      height: z.number().describe('Height in meters (Z)'),
+    }).describe('Box dimensions'),
+    material: materialSchema.describe('Material (color string, RGBA object, or material spec)'),
+    outline: z.boolean().optional().default(true).describe('Show outline'),
+    outlineColor: colorSchema.describe('Outline color'),
+    fill: z.boolean().optional().default(true).describe('Show fill'),
+    orientation: orientationSchema.describe('Orientation (heading/pitch/roll in degrees)'),
+    heightReference: z.enum(['NONE', 'CLAMP_TO_GROUND', 'RELATIVE_TO_GROUND']).optional().describe('Height reference'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Box' },
+  async (params) => {
+    const result = await sendToBrowser('addBox', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addCorridor
+_registerTool(
+  'addCorridor',
+  'Add a corridor (path with width) entity',
+  {
+    name: z.string().optional().describe('Corridor name'),
+    positions: z.array(positionDegreesSchema).describe('Array of positions along the corridor'),
+    width: z.number().describe('Corridor width in meters'),
+    material: materialSchema.describe('Material'),
+    cornerType: z.enum(['ROUNDED', 'MITERED', 'BEVELED']).optional().describe('Corner type'),
+    height: z.number().optional().describe('Height above ground (meters)'),
+    extrudedHeight: z.number().optional().describe('Extruded height (meters)'),
+    outline: z.boolean().optional().describe('Show outline'),
+    outlineColor: colorSchema.describe('Outline color'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Corridor' },
+  async (params) => {
+    const result = await sendToBrowser('addCorridor', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addCylinder
+_registerTool(
+  'addCylinder',
+  'Add a cylinder or cone entity at a position',
+  {
+    longitude: z.number().describe('Longitude (degrees)'),
+    latitude: z.number().describe('Latitude (degrees)'),
+    height: z.number().optional().default(0).describe('Height (meters)'),
+    name: z.string().optional().describe('Cylinder name'),
+    length: z.number().describe('Cylinder length/height in meters'),
+    topRadius: z.number().describe('Top radius in meters'),
+    bottomRadius: z.number().describe('Bottom radius in meters'),
+    material: materialSchema.describe('Material'),
+    outline: z.boolean().optional().default(true).describe('Show outline'),
+    outlineColor: colorSchema.describe('Outline color'),
+    fill: z.boolean().optional().default(true).describe('Show fill'),
+    orientation: orientationSchema.describe('Orientation (heading/pitch/roll in degrees)'),
+    numberOfVerticalLines: z.number().optional().default(16).describe('Number of vertical lines'),
+    slices: z.number().optional().default(128).describe('Number of slices'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Cylinder' },
+  async (params) => {
+    const result = await sendToBrowser('addCylinder', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addEllipse
+_registerTool(
+  'addEllipse',
+  'Add an ellipse (oval) entity at a position',
+  {
+    longitude: z.number().describe('Center longitude (degrees)'),
+    latitude: z.number().describe('Center latitude (degrees)'),
+    height: z.number().optional().default(0).describe('Height (meters)'),
+    name: z.string().optional().describe('Ellipse name'),
+    semiMajorAxis: z.number().describe('Semi-major axis in meters'),
+    semiMinorAxis: z.number().describe('Semi-minor axis in meters'),
+    material: materialSchema.describe('Material'),
+    extrudedHeight: z.number().optional().describe('Extruded height (meters)'),
+    rotation: z.number().optional().describe('Rotation (radians)'),
+    outline: z.boolean().optional().describe('Show outline'),
+    outlineColor: colorSchema.describe('Outline color'),
+    fill: z.boolean().optional().default(true).describe('Show fill'),
+    stRotation: z.number().optional().describe('Texture rotation (radians)'),
+    numberOfVerticalLines: z.number().optional().describe('Number of vertical lines'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Ellipse' },
+  async (params) => {
+    const result = await sendToBrowser('addEllipse', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addRectangle
+_registerTool(
+  'addRectangle',
+  'Add a rectangle entity defined by geographic bounds',
+  {
+    name: z.string().optional().describe('Rectangle name'),
+    west: z.number().describe('West longitude (degrees)'),
+    south: z.number().describe('South latitude (degrees)'),
+    east: z.number().describe('East longitude (degrees)'),
+    north: z.number().describe('North latitude (degrees)'),
+    material: materialSchema.describe('Material'),
+    height: z.number().optional().describe('Height (meters)'),
+    extrudedHeight: z.number().optional().describe('Extruded height (meters)'),
+    rotation: z.number().optional().describe('Rotation (radians)'),
+    outline: z.boolean().optional().describe('Show outline'),
+    outlineColor: colorSchema.describe('Outline color'),
+    fill: z.boolean().optional().default(true).describe('Show fill'),
+    stRotation: z.number().optional().describe('Texture rotation (radians)'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Rectangle' },
+  async (params) => {
+    const result = await sendToBrowser('addRectangle', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — addWall
+_registerTool(
+  'addWall',
+  'Add a wall entity along a series of positions',
+  {
+    name: z.string().optional().describe('Wall name'),
+    positions: z.array(positionDegreesSchema).describe('Array of positions along the wall'),
+    minimumHeights: z.array(z.number()).optional().describe('Minimum heights at each position'),
+    maximumHeights: z.array(z.number()).optional().describe('Maximum heights at each position'),
+    material: materialSchema.describe('Material'),
+    outline: z.boolean().optional().describe('Show outline'),
+    outlineColor: colorSchema.describe('Outline color'),
+    fill: z.boolean().optional().default(true).describe('Show fill'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Add Wall' },
+  async (params) => {
+    const result = await sendToBrowser('addWall', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// ==================== Animation Tools (融合官方 Animation Server) ====================
+
+// — createAnimation
+_registerTool(
+  'createAnimation',
+  'Create a time-based animation with waypoints (moving entity along a path)',
+  {
+    name: z.string().optional().describe('Animation name'),
+    waypoints: z.array(z.object({
+      longitude: z.number().describe('Longitude (degrees)'),
+      latitude: z.number().describe('Latitude (degrees)'),
+      height: z.number().optional().describe('Height (meters)'),
+      time: z.string().describe('ISO 8601 timestamp'),
+    })).describe('Array of waypoints with positions and timestamps'),
+    modelUri: z.string().optional().describe('glTF/GLB model URL, or preset: cesium_man, cesium_air, ground_vehicle, cesium_drone'),
+    showPath: z.boolean().optional().default(true).describe('Show trail path'),
+    pathWidth: z.number().optional().default(2).describe('Path width (pixels)'),
+    pathColor: z.string().optional().default('#00FF00').describe('Path color (CSS)'),
+    pathLeadTime: z.number().optional().default(0).describe('Path lead time (seconds)'),
+    pathTrailTime: z.number().optional().default(1e10).describe('Path trail time (seconds)'),
+    multiplier: z.number().optional().default(1).describe('Clock speed multiplier'),
+    shouldAnimate: z.boolean().optional().default(true).describe('Auto-start animation'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Create Animation' },
+  async (params) => {
+    const result = await sendToBrowser('createAnimation', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — controlAnimation
+_registerTool(
+  'controlAnimation',
+  'Play or pause the current animation',
+  {
+    action: z.enum(['play', 'pause']).describe('Play or pause'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Control Animation' },
+  async (params) => {
+    const result = await sendToBrowser('controlAnimation', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — removeAnimation
+_registerTool(
+  'removeAnimation',
+  'Remove an animation entity',
+  {
+    entityId: z.string().describe('Entity ID of the animation to remove'),
+  },
+  { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false, title: 'Remove Animation' },
+  async (params) => {
+    const result = await sendToBrowser('removeAnimation', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — listAnimations
+_registerTool(
+  'listAnimations',
+  'List all active animations',
+  {},
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'List Animations' },
+  async () => {
+    const result = await sendToBrowser('listAnimations', {})
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  },
+)
+
+// — updateAnimationPath
+_registerTool(
+  'updateAnimationPath',
+  'Update the visual properties of an animation path',
+  {
+    entityId: z.string().describe('Entity ID of the animation'),
+    width: z.number().optional().describe('New path width (pixels)'),
+    color: z.string().optional().describe('New path color (CSS)'),
+    leadTime: z.number().optional().describe('New lead time (seconds)'),
+    trailTime: z.number().optional().describe('New trail time (seconds)'),
+    show: z.boolean().optional().describe('Show/hide path'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Update Animation Path' },
+  async (params) => {
+    const result = await sendToBrowser('updateAnimationPath', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — trackEntity
+_registerTool(
+  'trackEntity',
+  'Track (follow) an entity with the camera, or stop tracking',
+  {
+    entityId: z.string().optional().describe('Entity ID to track (omit to stop tracking)'),
+    heading: z.number().optional().describe('Camera heading (degrees)'),
+    pitch: z.number().optional().default(-30).describe('Camera pitch (degrees)'),
+    range: z.number().optional().default(500).describe('Camera distance from entity (meters)'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Track Entity' },
+  async (params) => {
+    const result = await sendToBrowser('trackEntity', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — controlClock
+_registerTool(
+  'controlClock',
+  'Configure the Cesium clock (time range, speed, animation state)',
+  {
+    action: z.enum(['configure', 'setTime', 'setMultiplier']).describe('Clock action'),
+    startTime: z.string().optional().describe('ISO 8601 start time (for configure)'),
+    stopTime: z.string().optional().describe('ISO 8601 stop time (for configure)'),
+    currentTime: z.string().optional().describe('ISO 8601 current time (for configure)'),
+    time: z.string().optional().describe('ISO 8601 time to jump to (for setTime)'),
+    multiplier: z.number().optional().describe('Clock speed multiplier (for configure/setMultiplier)'),
+    shouldAnimate: z.boolean().optional().describe('Whether clock should animate (for configure)'),
+    clockRange: z.enum(['UNBOUNDED', 'CLAMPED', 'LOOP_STOP']).optional().describe('Clock range mode (for configure)'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Control Clock' },
+  async (params) => {
+    const result = await sendToBrowser('controlClock', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setGlobeLighting
+_registerTool(
+  'setGlobeLighting',
+  'Enable/disable globe lighting and atmospheric effects',
+  {
+    enableLighting: z.boolean().optional().describe('Enable globe lighting'),
+    dynamicAtmosphereLighting: z.boolean().optional().describe('Enable dynamic atmosphere lighting'),
+    dynamicAtmosphereLightingFromSun: z.boolean().optional().describe('Use sun position for atmosphere lighting'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set Globe Lighting' },
+  async (params) => {
+    const result = await sendToBrowser('setGlobeLighting', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setSceneOptions
+_registerTool(
+  'setSceneOptions',
+  'Configure scene environment (fog, atmosphere, shadows, sun, moon, background color, depth testing)',
+  {
+    fogEnabled: z.boolean().optional().describe('Enable/disable fog'),
+    fogDensity: z.number().optional().describe('Fog density (0.0~1.0, default ~0.0002)'),
+    fogMinimumBrightness: z.number().optional().describe('Minimum fog brightness (0.0~1.0)'),
+    skyAtmosphereShow: z.boolean().optional().describe('Show sky atmosphere'),
+    skyAtmosphereHueShift: z.number().optional().describe('Sky hue shift (-1.0~1.0)'),
+    skyAtmosphereSaturationShift: z.number().optional().describe('Sky saturation shift (-1.0~1.0)'),
+    skyAtmosphereBrightnessShift: z.number().optional().describe('Sky brightness shift (-1.0~1.0)'),
+    groundAtmosphereShow: z.boolean().optional().describe('Show ground atmosphere'),
+    shadowsEnabled: z.boolean().optional().describe('Enable shadows'),
+    shadowsSoftShadows: z.boolean().optional().describe('Use soft shadows'),
+    shadowsDarkness: z.number().optional().describe('Shadow darkness (0.0=no shadow, 1.0=fully dark)'),
+    sunShow: z.boolean().optional().describe('Show the sun'),
+    sunGlowFactor: z.number().optional().describe('Sun glow factor (default 1.0)'),
+    moonShow: z.boolean().optional().describe('Show the moon'),
+    depthTestAgainstTerrain: z.boolean().optional().describe('Enable depth test against terrain (entities behind terrain are hidden)'),
+    backgroundColor: z.string().optional().describe('Scene background color (CSS format, e.g. "#000000")'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set Scene Options' },
+  async (params) => {
+    const result = await sendToBrowser('setSceneOptions', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setPostProcess
+_registerTool(
+  'setPostProcess',
+  'Configure post-processing effects (bloom glow, ambient occlusion SSAO, anti-aliasing FXAA)',
+  {
+    bloom: z.boolean().optional().describe('Enable bloom glow effect'),
+    bloomContrast: z.number().optional().describe('Bloom contrast (default 128)'),
+    bloomBrightness: z.number().optional().describe('Bloom brightness (default -0.3)'),
+    bloomDelta: z.number().optional().describe('Bloom delta (default 1.0)'),
+    bloomSigma: z.number().optional().describe('Bloom sigma (default 3.78)'),
+    bloomStepSize: z.number().optional().describe('Bloom step size (default 5.0)'),
+    bloomGlowOnly: z.boolean().optional().describe('Show only the glow (no base scene)'),
+    ambientOcclusion: z.boolean().optional().describe('Enable ambient occlusion (SSAO)'),
+    aoIntensity: z.number().optional().describe('AO intensity (default 3.0)'),
+    aoBias: z.number().optional().describe('AO bias (default 0.1)'),
+    aoLengthCap: z.number().optional().describe('AO length cap (default 0.26)'),
+    aoStepSize: z.number().optional().describe('AO step size (default 1.95)'),
+    fxaa: z.boolean().optional().describe('Enable FXAA anti-aliasing'),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set Post-Processing' },
+  async (params) => {
+    const result = await sendToBrowser('setPostProcess', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — setIonToken
+_registerTool(
+  'setIonToken',
+  'Set Cesium Ion access token for loading Ion assets (3D Tiles, imagery, terrain). Must be called before loading private Ion resources.',
+  { token: z.string().describe('Cesium Ion access token') },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'Set Ion Token' },
+  async (params: Record<string, unknown>) => {
+    const result = await sendToBrowser('setIonToken', params)
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result ?? { success: true }) }] }
+  },
+)
+
+// — geocode (直接 HTTP 请求 Nominatim，不经过 Bridge)
+let _lastGeocodeTime = 0
+let _proxyDispatcher: object | undefined
+
+// 初始化代理（读取 HTTPS_PROXY / HTTP_PROXY / ALL_PROXY 环境变量）
+const _proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.ALL_PROXY
+if (_proxyUrl) {
+  import('undici').then(({ ProxyAgent }) => {
+    _proxyDispatcher = new ProxyAgent(_proxyUrl)
+  }).catch(() => { /* undici not available, skip proxy */ })
+}
+
+_registerTool(
+  'geocode',
+  '将地址、地标或地名转换为地理坐标（经纬度）。使用 OpenStreetMap Nominatim 免费服务，无需 API Key。',
+  {
+    address: z.string().min(1).describe('地址、地标或地名，例如 "故宫"、"Eiffel Tower"、"东京塔"'),
+    countryCode: z.string().length(2).optional().describe('两位 ISO 国家代码限制搜索范围（如 "CN"、"US"、"JP"）'),
+  },
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true, title: 'Geocode Address' },
+  async ({ address, countryCode }) => {
+    // Rate limiting: Nominatim 要求至少 1 秒间隔
+    const now = Date.now()
+    const wait = 1100 - (now - _lastGeocodeTime)
+    if (wait > 0) await new Promise(r => setTimeout(r, wait))
+    _lastGeocodeTime = Date.now()
+
+    const params = new URLSearchParams({
+      q: address,
+      format: 'json',
+      addressdetails: '1',
+      limit: '1',
+    })
+    if (countryCode) params.set('countrycodes', countryCode)
+
+    const ua = process.env.OSM_USER_AGENT || 'cesium-mcp-runtime/1.0'
+    const fetchOptions: RequestInit & { dispatcher?: object } = {
+      headers: { 'User-Agent': ua },
+    }
+    if (_proxyDispatcher) fetchOptions.dispatcher = _proxyDispatcher
+
+    const resp = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, fetchOptions)
+    if (!resp.ok) {
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ success: false, message: `Nominatim API error: ${resp.status}` }) }], isError: true }
+    }
+    const data = await resp.json() as Array<{
+      lat: string; lon: string; display_name: string;
+      boundingbox?: [string, string, string, string];
+      address?: Record<string, string>;
+    }>
+
+    if (!data.length) {
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ success: false, message: `No results found for: ${address}` }) }] }
+    }
+
+    const item = data[0]!
+    const result = {
+      success: true,
+      longitude: parseFloat(item.lon),
+      latitude: parseFloat(item.lat),
+      displayName: item.display_name,
+      boundingBox: item.boundingbox ? {
+        south: parseFloat(item.boundingbox[0]),
+        north: parseFloat(item.boundingbox[1]),
+        west: parseFloat(item.boundingbox[2]),
+        east: parseFloat(item.boundingbox[3]),
+      } : undefined,
+    }
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  },
+)
+
+// — session-scoped resource handles
+_registerTool(
+  'storeResource',
+  'Store GeoJSON, CZML, or JSON once and return a compact resourceId for later tool calls.',
+  {
+    kind: z.enum(['geojson', 'czml', 'json']),
+    data: z.unknown(),
+    resourceId: z.string().optional(),
+    ttlSeconds: z.number().int().positive().max(86400).optional(),
+  },
+  { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false, title: 'Store Resource' },
+  async (params) => {
+    const result = resourceStoreFor(params).register({
+      kind: params.kind as CesiumResourceKind,
+      data: params.data,
+      resourceId: params.resourceId,
+      ttlMs: params.ttlSeconds ? params.ttlSeconds * 1000 : undefined,
+    })
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  },
+)
+
+_registerTool(
+  'listResources',
+  'List resource metadata for the current browser session without returning payloads.',
+  {},
+  { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false, title: 'List Resources' },
+  async (params) => ({
+    content: [{
+      type: 'text' as const,
+      text: JSON.stringify({ resources: resourceStoreFor(params).list() }),
+    }],
+  }),
+)
+
+_registerTool(
+  'deleteResource',
+  'Delete one session-scoped resource by resourceId.',
+  { resourceId: z.string() },
+  { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false, title: 'Delete Resource' },
+  async (params) => ({
+    content: [{
+      type: 'text' as const,
+      text: JSON.stringify({ removed: resourceStoreFor(params).remove(params.resourceId) }),
+    }],
+  }),
+)
+
+// ==================== Prompts ====================
+
+function registerQuickstartPrompt(s: McpServer): void {
+  s.registerPrompt(
+    'cesium-quickstart',
+    { description: 'Quick reference for using Cesium MCP tools' },
+    async () => ({
+      messages: [{
+        role: 'user' as const,
+        content: {
+          type: 'text' as const,
+          text: `Cesium MCP Quick Start Guide:
+
+1. **Camera**: flyTo(lng, lat) to navigate, setView for instant move, getView to read current position
+2. **Entities**: addMarker for points, addPolygon/addPolyline for shapes, addModel for 3D models
+3. **Layers**: addGeoJsonLayer for vector data, load3dTiles for 3D city models, loadImageryService for WMS/WMTS
+4. **Animation**: createAnimation with waypoints for moving entities, controlAnimation to play/pause
+5. **Interaction**: screenshot to capture view, highlight to emphasize features
+6. **Discovery**: list_toolsets to see available tool groups, enable_toolset to activate more tools
+
+All entity/layer operations return an ID for subsequent updates or removal.`,
+        },
+      }],
+    }),
+  )
+}
+
+// ==================== Meta-tools (Dynamic Discovery) ====================
+
+function registerDiscoveryTools(s: McpServer, state: RuntimeToolState): void {
+  s.registerTool(
+    'list_toolsets',
+    {
+      description: 'List all available tool groups and their enabled status. Call this to discover additional capabilities before asking the user to configure anything.',
+      inputSchema: z.object({}),
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        title: 'List Toolsets',
+      },
+    },
+    async () => {
+      const groups = Object.entries(TOOLSETS).map(([name, tools]) => ({
+        name,
+        description: TOOLSET_DESCRIPTIONS[name] ?? '',
+        tools: tools.length,
+        enabled: state.enabledSets.has(name),
+        toolNames: tools,
+      }))
+      return { content: [{ type: 'text' as const, text: JSON.stringify(groups, null, 2) }] }
+    },
+  )
+
+  s.registerTool(
+    'enable_toolset',
+    {
+      description: 'Enable a tool group to make its tools available. Call list_toolsets first to see available groups.',
+      inputSchema: z.object({
+        toolset: z.string().describe('Name of the toolset to enable (e.g. "camera", "animation", "entity-ext")'),
+      }),
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        title: 'Enable Toolset',
+      },
+    },
+    async ({ toolset }) => {
+      if (!(toolset in TOOLSETS)) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Unknown toolset "${toolset}". Available: ${Object.keys(TOOLSETS).join(', ')}`,
+          }],
+          isError: true,
+        }
+      }
+      if (state.enabledSets.has(toolset)) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Toolset "${toolset}" is already enabled.`,
+          }],
+        }
+      }
+      const added = enableToolset(s, state, toolset)
+      s.sendToolListChanged()
+      return {
+        content: [{
+          type: 'text' as const,
+          text: `Enabled toolset "${toolset}" — ${added.length} new tools available: ${added.join(', ')}`,
+        }],
+      }
+    },
+  )
+}
+
+// ==================== Session Management ====================
+
+function registerSessionTool(s: McpServer): void {
+  s.registerTool(
+    'listSessions',
+    {
+      description: _localeKey === 'zh-CN'
+        ? '列出当前所有已连接的浏览器 session（ID 和连接状态），用于多浏览器路由'
+        : 'List all connected browser sessions (ID and connection state) for multi-browser routing',
+      inputSchema: z.object({}),
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+        title: 'List Sessions',
+      },
+    },
+    async () => {
+      const sessions = Array.from(browserClients.entries()).map(([id, ws]) => ({
+        sessionId: id,
+        connected: ws.readyState === WebSocket.OPEN,
+        isDefault: id === DEFAULT_SESSION_ID,
+      }))
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify(sessions, null, 2),
+        }],
+      }
+    },
+  )
+}
+
+export interface BuildMcpServerOptions {
+  toolsets?: Iterable<string>
+  dynamicDiscovery?: boolean
+  /** Register diagnostic fixtures required by the official MCP conformance suite. */
+  conformance?: boolean
+}
+
+function registerConformanceTools(s: McpServer): void {
+  s.registerTool('test_missing_capability', {
+    description: 'MCP conformance fixture for client capability enforcement',
+    inputSchema: z.object({}),
+  }, async () => ({
+    content: [{ type: 'text', text: 'Sampling capability is available' }],
+  }))
+
+  s.registerTool('test_streaming_elicitation', {
+    description: 'MCP conformance fixture for response stream validation',
+    inputSchema: z.object({}),
+  }, async () => ({
+    content: [{ type: 'text', text: 'Conformance stream completed' }],
+  }))
+
+  s.registerTool('test_logging_tool', {
+    description: 'MCP conformance fixture for log-level validation',
+    inputSchema: z.object({}),
+  }, async () => ({
+    content: [{ type: 'text', text: 'Conformance logging check completed' }],
+  }))
+}
+
+/** Build one isolated MCP server for an HTTP request or stdio connection. */
+export function buildMcpServer(options: BuildMcpServerOptions = {}): McpServer {
+  const state = createToolState(options.toolsets ?? Object.keys(TOOLSETS))
+  const s = createRuntimeMcpServer()
+  registerResources(s)
+  registerQuickstartPrompt(s)
+
+  for (const toolName of state.enabledTools) {
+    const definition = _toolDefs.get(toolName)
+    if (definition) _applyToolDef(s, definition)
+  }
+
+  for (const toolName of cesiumRuntimeResourceToolNames) {
+    const definition = _toolDefs.get(toolName)
+    if (definition) _applyToolDef(s, definition)
+  }
+
+  if (options.dynamicDiscovery) registerDiscoveryTools(s, state)
+  registerSessionTool(s)
+  if (options.conformance ?? process.env.CESIUM_MCP_CONFORMANCE === '1') {
+    registerConformanceTools(s)
+  }
+  return s
+}
+
+// ==================== Streamable HTTP Transport ====================
+
+/**
+ * Create a fresh McpServer instance with all enabled tools replayed.
+ * Used for stateless HTTP transport mode — each request gets its own server.
+ */
+function _createHttpMcpServer(filterToolsets?: Set<string>): McpServer {
+  return buildMcpServer({
+    toolsets: filterToolsets ?? Object.keys(TOOLSETS),
+  })
+}
+
+export function createCesiumMcpHttpHandler(): McpHttpHandler {
+  return createMcpHandler(({ requestInfo }) => {
+    const requestUrl = requestInfo
+      ? new URL(requestInfo.url)
+      : new URL('http://localhost/mcp')
+    const requestedToolsets = requestUrl.searchParams.get('toolsets')?.trim()
+    const filterToolsets = requestedToolsets
+      ? new Set(
+          requestedToolsets
+            .split(',')
+            .map(name => name.trim())
+            .filter(name => name in TOOLSETS),
+        )
+      : undefined
+    return _createHttpMcpServer(filterToolsets)
+  }, {
+    legacy: 'stateless',
+    onerror: error => {
+      console.error(`[cesium-mcp-runtime] MCP HTTP error: ${error.message}`)
+    },
+  })
+}
+
+const _mcpHttpHandler = createCesiumMcpHttpHandler()
+
+const _nodeMcpHandler = toNodeHandler(_mcpHttpHandler, {
+  onerror: error => {
+    console.error(`[cesium-mcp-runtime] MCP Node adapter error: ${error.message}`)
+  },
+})
+
+/**
+ * Handle MCP Streamable HTTP requests for both the 2025-era and 2026-07-28.
+ */
+async function _handleMcpRequest(req: IncomingMessage, res: ServerResponse, policy = networkPolicy) {
+  if (!authorizeHttp(req, res, policy)) return
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    req.headers['access-control-request-headers']
+      ?? 'Content-Type, Authorization, MCP-Protocol-Version, Mcp-Method, Mcp-Name, Mcp-Session-Id',
+  )
+  res.setHeader(
+    'Access-Control-Expose-Headers',
+    'MCP-Protocol-Version, Mcp-Method, Mcp-Name, Mcp-Session-Id',
+  )
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204)
+    res.end()
+    return
+  }
+
+  // Only serve /mcp endpoint
+  const parsedUrl = new URL(req.url ?? '/', 'http://localhost')
+  if (parsedUrl.pathname !== '/mcp') {
+    res.writeHead(404)
+    res.end('Not Found — MCP endpoint is /mcp')
+    return
+  }
+
+  // This is an application-level browser session, not an MCP protocol session.
+  const urlSession = parsedUrl.searchParams.get('session') ?? undefined
+  let parsedBody: unknown
+  if (process.env.CESIUM_MCP_CONFORMANCE === '1' && req.method === 'POST') {
+    const chunks: Buffer[] = []
+    for await (const chunk of req) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    }
+    try {
+      parsedBody = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+    } catch {
+      parsedBody = undefined
+    }
+
+    const request = parsedBody as {
+      id?: string | number | null
+      method?: string
+      params?: { name?: string }
+    } | undefined
+    if (request?.method === 'tools/call' && request.params?.name === 'test_missing_capability') {
+      res.writeHead(400, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({
+        jsonrpc: '2.0',
+        id: request.id ?? null,
+        error: {
+          code: -32021,
+          message: 'Missing required client capabilities: sampling',
+          data: { requiredCapabilities: { sampling: {} } },
+        },
+      }))
+      return
+    }
+  }
+
+  const run = () => _nodeMcpHandler(req, res, parsedBody)
+  if (urlSession) {
+    await _httpSessionStore.run(urlSession, run)
+  } else {
+    await run()
+  }
+}
+
+// ==================== Smithery Sandbox ====================
+
+/**
+ * Smithery 扫描时使用的无副作用服务器实例。
+ * 返回带有相同工具/资源元数据的独立 McpServer，
+ * 不启动 WebSocket，不连接 transport。
+ */
+export function createSandboxServer() {
+  return buildMcpServer({
+    toolsets: Object.keys(TOOLSETS),
+  })
+}
+
+// ==================== 启动 ====================
+
+export async function main(argv: string[] = []) {
+  networkPolicy = createNetworkPolicy(process.env)
+  // Parse CLI arguments
+  const transportArg = _parseArg(argv, '--transport') ?? process.env.MCP_TRANSPORT ?? 'stdio'
+  const mcpPortArg = parseInt(_parseArg(argv, '--port') ?? process.env.MCP_HTTP_PORT ?? '0')
+
+  await startServer()
+
+  if (transportArg === 'http') {
+    // Streamable HTTP transport mode
+    const port = mcpPortArg || WS_PORT + 100 // default: WS_PORT + 100 (e.g. 9200)
+    const mcpHttpServer = createServer(_handleMcpRequest)
+    mcpHttpServer.listen(port, networkPolicy.host, () => {
+      const allToolCount = _toolDefs.size + 1
+      console.error(`[cesium-mcp-runtime] MCP Server running (Streamable HTTP), ${allToolCount} tools available`)
+      console.error(`[cesium-mcp-runtime] MCP endpoint: http://localhost:${port}/mcp`)
+      console.error('[cesium-mcp-runtime] All toolsets enabled for HTTP mode')
+      if (_relayPort > 0) {
+        console.error(`[cesium-mcp-runtime] Relay mode active → commands forwarded to port ${_relayPort}`)
+      }
+    })
+    return
+  }
+
+  // The v2 entry negotiates one protocol era and builds one isolated server.
+  serveStdio(() => buildMcpServer({
+    toolsets: _configuredToolsets,
+    dynamicDiscovery: !_allMode,
+  }))
+  const metaCount = _allMode ? 0 : 2
+  const alwaysAvailableCount = cesiumRuntimeResourceToolNames.length + 1
+  console.error(`[cesium-mcp-runtime] MCP Server running (stdio), ${_configuredState.enabledTools.size + metaCount + alwaysAvailableCount} tools registered (toolsets: ${[..._configuredToolsets].join(', ')})`)
+  if (_relayPort > 0) {
+    console.error(`[cesium-mcp-runtime] Relay mode active → commands forwarded to port ${_relayPort}`)
+  }
+}
+
+/** Parse a CLI argument value: --key value or --key=value */
+function _parseArg(argv: string[], key: string): string | undefined {
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === key && i + 1 < argv.length) return argv[i + 1]
+    if (argv[i]?.startsWith(key + '=')) return argv[i]!.slice(key.length + 1)
+  }
+  return undefined
+}

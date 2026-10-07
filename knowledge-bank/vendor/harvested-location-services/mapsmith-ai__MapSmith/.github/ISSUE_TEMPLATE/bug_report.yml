@@ -1,0 +1,56 @@
+name: Bug report
+description: A wrong result, an error, or a broken run
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: environment-policy
+    attributes:
+      label: Supported environment
+      description: >-
+        Docker (or uvx where wheels work) is the only supported install path —
+        see CONTRIBUTING. Issues that reduce to a broken local GDAL/compiler
+        setup are closed with a pointer to the container.
+      options:
+        - label: I am running the official Docker image or uvx
+  - type: input
+    id: version
+    attributes:
+      label: MapSmith version
+      placeholder: "output of server_info, e.g. 0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: "Claude Desktop 1.x / Cursor / custom (SDK + version)"
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: >-
+        Include the exact tool call (tool name + arguments) or SQL that
+        misbehaved, and what you got back.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Provenance manifest
+      description: >-
+        If a dataset was written, paste the content of its
+        <output>.provenance.json — it carries the exact parameters, CRS
+        decisions and engine versions, and usually answers half the questions.
+      render: json
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Server stderr or client-side MCP logs, if available.
+      render: shell

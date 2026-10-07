@@ -1,0 +1,71 @@
+import { ThemeLayerConfig } from '../../themeLayerConfigApi';
+
+export const propertyInfoConfig: ThemeLayerConfig = {
+  categories: [
+    {
+      id: 'propertyInfo',
+      groupid: 30,
+      name: {
+        nb: 'Eiendom',
+        nn: 'Eigedom',
+        en: 'Properties',
+      },
+    },
+    {
+      id: 'cadastralData',
+      groupid: 31,
+      name: {
+        nb: 'Velg matrikkeldata',
+        nn: 'Vel matrikkeldata',
+        en: 'Select cadastral data',
+      },
+      parentId: 'propertyInfo',
+      wmsUrl: 'https://api.norgeskart.no/v1/matrikkel/wms',
+    },
+  ],
+  layers: [
+    {
+      id: 'addresses',
+      name: {
+        nb: 'Adresser',
+        nn: 'Adresser',
+        en: 'Addresses',
+      },
+      layers: 'matrikkel:MATRIKKELADRESSEWFS,matrikkel:VEGADRESSEWFS',
+      categoryId: 'cadastralData',
+      groupid: 31,
+      legacyId: 'seeiendom.1011',
+      queryable: true,
+      singleImage: true,
+    },
+    {
+      id: 'buildings',
+      name: {
+        nb: 'Bygninger',
+        nn: 'Bygningar',
+        en: 'Buildings',
+      },
+      layers: 'matrikkel:BYGNINGWFS',
+      categoryId: 'cadastralData',
+      groupid: 31,
+      legacyId: 'seeiendom.1012',
+      queryable: true,
+      singleImage: true,
+    },
+    {
+      id: 'borders',
+      name: {
+        nb: 'Teiger og grenser',
+        nn: 'Teigar og grenser',
+        en: 'Plots and borders',
+      },
+      layers: 'matrikkel:TEIGGRENSEWFS,matrikkel:TEIGWFS',
+      categoryId: 'cadastralData',
+      groupid: 31,
+      legacyId: 'seeiendom.1013',
+      queryable: true,
+      styles: ',Matrikkelnummer',
+      singleImage: true,
+    },
+  ],
+};

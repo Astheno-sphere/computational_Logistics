@@ -1,0 +1,85 @@
+{
+  "_description": "NOAA Storm Events category consolidation (41+ event types -> 8 categories)",
+  "_schema_version": "1.0.0",
+  "_last_updated": "2026-01",
+  "_source": "NOAA Storm Events Database",
+
+  "category_map": {
+    "_description": "NOAA event type -> consolidated category",
+
+    "tornadoes": ["Tornado", "Funnel Cloud", "Waterspout"],
+
+    "severe_thunderstorms": [
+      "Thunderstorm Wind", "Hail", "Lightning",
+      "Marine Thunderstorm Wind", "Marine Hail", "Marine Lightning"
+    ],
+
+    "tropical_cyclones": [
+      "Hurricane (Typhoon)", "Hurricane", "Tropical Storm", "Tropical Depression"
+    ],
+
+    "flooding": [
+      "Flash Flood", "Flood", "Coastal Flood", "Storm Surge/Tide",
+      "Lakeshore Flood", "Heavy Rain"
+    ],
+
+    "high_winds": [
+      "High Wind", "Strong Wind", "Marine High Wind",
+      "Marine Strong Wind", "Dust Storm", "Dust Devil"
+    ],
+
+    "winter_weather": [
+      "Blizzard", "Heavy Snow", "Winter Weather", "Winter Storm",
+      "Ice Storm", "Frost/Freeze", "Cold/Wind Chill",
+      "Extreme Cold/Wind Chill", "Sleet", "Freezing Fog", "Lake-Effect Snow"
+    ],
+
+    "extreme_heat": ["Heat", "Excessive Heat"],
+
+    "landslides": ["Debris Flow", "Avalanche"]
+  },
+
+  "excluded_types": {
+    "_description": "Event types excluded from disaster overlays (handled elsewhere or not disasters)",
+    "climate_data": ["Dense Fog", "Dense Smoke", "Drought"],
+    "marine_hazards": ["High Surf", "Rip Current", "Sneakerwave", "Seiche", "Astronomical Low Tide"],
+    "handled_elsewhere": ["Volcanic Ash", "Wildfire"],
+    "other": ["Other"]
+  },
+
+  "category_labels": {
+    "tornadoes": "Tornadoes",
+    "severe_thunderstorms": "Severe Thunderstorms",
+    "tropical_cyclones": "Tropical Cyclones",
+    "flooding": "Flooding",
+    "high_winds": "High Winds",
+    "winter_weather": "Winter Weather",
+    "extreme_heat": "Extreme Heat",
+    "landslides": "Landslides"
+  },
+
+  "category_display_models": {
+    "tornadoes": "track",
+    "severe_thunderstorms": "point-radius",
+    "tropical_cyclones": "track",
+    "flooding": "point-radius",
+    "high_winds": "point-radius",
+    "winter_weather": "point-radius",
+    "extreme_heat": "choropleth",
+    "landslides": "point-radius"
+  },
+
+  "significance_thresholds": {
+    "_description": "Magnitude thresholds for event significance",
+    "hail_inches": 1.0,
+    "wind_mph": 58,
+    "snow_inches": 4
+  },
+
+  "always_significant": [
+    "Tornado", "Funnel Cloud", "Waterspout",
+    "Flash Flood", "Flood", "Coastal Flood", "Lakeshore Flood",
+    "Storm Surge/Tide", "Blizzard", "Debris Flow", "Avalanche",
+    "Hurricane (Typhoon)", "Hurricane", "Tropical Storm"
+  ]
+}

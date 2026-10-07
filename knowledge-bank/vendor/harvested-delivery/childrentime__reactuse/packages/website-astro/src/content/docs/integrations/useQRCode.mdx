@@ -1,0 +1,56 @@
+---
+title: useQRCode – Integrations Hook Usage & Examples
+sidebar_label: useQRCode
+description: "useQRCode is a React hook that generates a QR code data URL from a string — reactively regenerates on input change, with error state."
+---
+# useQRCode
+
+The `useQRCode` hook is a hook that generates a QR code for a given string. It is useful for generating QR codes for things like URLs, email addresses, and more.
+
+`useQRCode` takes a string and optional `QRCodeToDataURLOptions` and returns an object with `qrCode` (a data URL string for the generated QR code image) and `error` (any error that occurred during generation). The QR code is regenerated reactively whenever the input text changes. This hook depends on the [`qrcode`](https://www.npmjs.com/package/qrcode) library.
+
+### When to Use
+
+- Generating shareable QR codes for URLs, contact information, or deep links
+- Building payment or authentication flows that display scannable QR codes
+- Creating printable labels, tickets, or marketing materials with embedded QR codes
+
+### Notes
+
+- **External dependency**: Requires `qrcode@^1` to be installed separately (`npm i qrcode@^1`). The hook will not work without it.
+- **Error handling**: If the input text is invalid or QR code generation fails, the `error` field will contain the error details and `qrCode` will be an empty string.
+- **Customization**: Pass `QRCodeToDataURLOptions` to control output format (e.g., PNG or SVG data URL), error correction level, margin, color, and scale.
+
+## Install
+
+```shell
+npm i qrcode@^1
+```
+
+## Usage
+
+```tsx live
+// import { useQRCode } from "@reactuses/core/useQRCode";
+
+function Demo() {
+  const [text, setText] = useState("https://reactuse.com/");
+  const { qrCode, error } = useQRCode(text);
+
+  return (
+    <div>
+      <input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Enter text to generate QR code"
+      />
+      <br />
+      <br />
+      {error && <div style={{ color: "red" }}>{error}</div>}
+      {qrCode && <img src={qrCode} alt="QR Code" />}
+    </div>
+  );
+};
+
+```
+
+%%API%%

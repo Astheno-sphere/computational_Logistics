@@ -1,0 +1,733 @@
+"""parameters and related helper classes and functions."""
+
+import abc
+import math
+import numbers
+from typing import Any
+
+import pandas as pd
+import scipy as sp
+
+from ..util import get_module_logger
+from .util import NamedObject, NamedObjectMap, Variable
+
+# Created on Jul 14, 2016
+#
+# .. codeauthor::jhkwakkel <j.h.kwakkel (at) tudelft (dot) nl>
+
+__all__ = [
+    "BooleanParameter",
+    "CategoricalParameter",
+    "Category",
+    "Constant",
+    "IntegerParameter",
+    "Parameter",
+    "RealParameter",
+    "parameters_from_csv",
+    "parameters_to_csv",
+]
+_logger = get_module_logger(__name__)
+
+
+class Bound(metaclass=abc.ABCMeta):
+    """Bounds class."""
+
+    def __get__(self, instance, cls):
+        try:
+            bound = instance.__dict__[self.internal_name]
+        except KeyError:
+            bound = self.get_bound(instance)
+            self.__set__(instance, bound)
+        return bound
+
+    def __set__(self, instance, value):
+        instance.__dict__[self.internal_name] = value
+
+    def __set_name__(self, cls, name: str):
+        self.name = name
+        self.internal_name = "_" + name
+
+    @abc.abstractmethod
+    def get_bound(self, instance): ...
+
+
+class UpperBound(Bound):
+    def get_bound(self, instance):
+        bound = instance.dist.ppf(1.0)
+        return bound
+
+
+class LowerBound(Bound):
+    def get_bound(self, owner):
+        ppf_zero = 0
+
+        if isinstance(owner.dist.dist, sp.stats.rv_discrete):  # @UndefinedVariable
+            # ppf at actual zero for rv_discrete gives lower bound - 1
+            # due to a quirk in the scipy.stats implementation
+            # so we use the smallest positive float instead
+            ppf_zero = 5e-324
+
+        bound = owner.dist.ppf(ppf_zero)
+        return bound
+
+
+class Constant(Variable):
+    """Constant class.
+
+    Can be used for any parameter that has to be set to a fixed value
+
+    """
+
+    def __init__(
+        self, name: str, value: Any, variable_name: str | list[str] | None = None
+    ):
+        """Init."""
+        super().__init__(name, variable_name=variable_name)
+        self.value = value
+
+    def __repr__(self, *args, **kwargs):  # noqa: D105
+        return f"{self.__class__.__name__}('{self.name}', {self.value})"
+
+
+class Category(NamedObject):
+    """Category class."""
+
+    def __init__(self, name: str, value: Any):
+        """Init."""
+        super().__init__(name)
+        self.value = value
+
+
+def create_category(cat: Any) -> Category:
+    """Helper function for creating a Category object."""
+    if isinstance(cat, Category):
+        return cat
+    else:
+        return Category(str(cat), cat)
+
+
+class Parameter(Variable, metaclass=abc.ABCMeta):
+    """Base class for any model input parameter.
+
+    Parameters
+    ----------
+    name : str
+    lower_bound : int or float
+    upper_bound : int or float
+    shape : int or tuple
+    resolution : collection
+
+
+    Raises
+    ------
+    ValueError
+        if lower bound is larger than upper bound
+    ValueError
+        if entries in resolution are outside range of lower_bound and
+        upper_bound
+
+    """
+
+    lower_bound = LowerBound()
+    upper_bound = UpperBound()
+    default = None
+
+    @property
+    def resolution(self) -> list | None:
+        """Getter for resolution."""
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, value):
+        """Setter for resolution."""
+        if value:  # noqa: SIM102
+            if (min(value) < self.lower_bound) or (max(value) > self.upper_bound):
+                raise ValueError(
+                    f"Resolution ({value}) not consistent with lower ({self.lower_bound}) and upper bound ({self.upper_bound})."
+                )
+        self._resolution = value
+
+    def __init__(
+        self,
+        name: str,
+        lower_bound,
+        upper_bound,
+        shape: tuple[int] | None = None,
+        resolution=None,
+        default=None,
+        variable_name: str | list[str] | None = None,
+    ):
+        """Init."""
+        super().__init__(name, variable_name=variable_name)
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.shape = shape
+        self.resolution = resolution
+        self.default = default
+        self.dist = None
+        self.uniform = True
+
+    @classmethod
+    def from_dist(cls, name: str, dist: sp.stats.rv_continuous | sp.stats.rv_discrete, **kwargs: Any) -> "Parameter":
+        """Factory method for creating a Parameter from a scipy distribution.
+
+        Alternative constructor for creating a parameter from a frozen
+        scipy.stats distribution directly
+
+        Parameters
+        ----------
+        name : the name for the parameter
+        dist : scipy stats frozen dist
+        **kwargs : valid keyword arguments for Parameter instance
+
+        """
+        assert isinstance(
+            dist, sp.stats._distn_infrastructure.rv_frozen
+        )  # @UndefinedVariable
+        self = cls.__new__(cls)
+        self.dist = dist
+        self.name = name
+        self.resolution = None
+        self.variable_name = None
+        self.uniform = False
+        self.shape = None
+
+        for k, v in kwargs.items():
+            if k in {"default", "resolution", "variable_name", "shape"}:
+                setattr(self, k, v)
+            else:
+                raise ValueError(f"Unknown property {k} for Parameter")
+
+        return self
+
+    def __eq__(self, other):  # noqa: D105
+        if not isinstance(self, other.__class__):
+            return False
+
+        self_keys = set(self.__dict__.keys())
+        other_keys = set(other.__dict__.keys())
+        if self_keys - other_keys:
+            return False
+        else:
+            for key in self_keys:
+                if key != "dist":
+                    if getattr(self, key) != getattr(other, key):
+                        return False
+                else:
+                    # name, parameters
+                    self_dist = getattr(self, key)
+                    other_dist = getattr(other, key)
+                    if self_dist.dist.name != other_dist.dist.name:
+                        return False
+                    if self_dist.args != other_dist.args:
+                        return False
+
+            return True
+
+    def __hash__(self):
+        """Hashing function."""
+        return hash(tuple(self.__dict__.items()))
+
+    def __str__(self):  # noqa: D105
+        return self.name
+
+
+class RealParameter(Parameter):
+    """real valued model input parameter.
+
+    Parameters
+    ----------
+    name : str
+    lower_bound : int or float
+    upper_bound : int or float
+    shape : tuple
+    resolution : iterable
+    variable_name : str, or list of str
+
+    Raises
+    ------
+    ValueError
+        if lower bound is larger than upper bound
+    ValueError
+        if entries in resolution are outside range of lower_bound and
+        upper_bound
+
+    """
+
+    def __init__(
+        self,
+        name: str,
+        lower_bound: float,
+        upper_bound: float,
+        shape: tuple[int] | None = None,
+        resolution=None,
+        default: float | None = None,
+        variable_name: str | list[str] | None = None,
+    ):
+        """Init."""
+        super().__init__(
+            name,
+            lower_bound,
+            upper_bound,
+            shape=shape,
+            resolution=resolution,
+            default=default,
+            variable_name=variable_name,
+        )
+
+        self.dist = sp.stats.uniform(
+            lower_bound, upper_bound - lower_bound
+        )  # @UndefinedVariable
+
+    @classmethod
+    def from_dist(cls, name: str, dist, **kwargs):  # noqa: D102
+        if not isinstance(dist.dist, sp.stats.rv_continuous):  # @UndefinedVariable
+            raise ValueError(
+                f"dist should be instance of rv_continouos, not {dist.dist}"
+            )
+        return super().from_dist(name, dist, **kwargs)
+
+    def __repr__(self):  # noqa: D105
+        if isinstance(self.dist, sp.stats._distn_infrastructure.rv_continuous_frozen):
+            return (
+                f"RealParameter('{self.name}', {self.lower_bound}, {self.upper_bound}, "
+                f"resolution={self.resolution}, default={self.default}, variable_name={self.variable_name})"
+            )
+        else:
+            return super().__repr__()
+
+
+class IntegerParameter(Parameter):
+    """integer valued model input parameter.
+
+    Parameters
+    ----------
+    name : str
+    lower_bound : int
+    upper_bound : int
+    resolution : iterable
+    variable_name : str, or list of str
+
+    Raises
+    ------
+    ValueError
+        if lower bound is larger than upper bound
+    ValueError
+        if entries in resolution are outside range of lower_bound and
+        upper_bound, or not an integer instance
+    ValueError
+        if lower_bound or upper_bound is not an integer instance
+
+    """
+
+    def __init__(
+        self,
+        name,
+        lower_bound: int,
+        upper_bound: int,
+        shape: tuple[int] | None = None,
+        resolution=None,
+        default: int | None = None,
+        variable_name: str | list[str] | None = None,
+    ):
+        """Init."""
+        super().__init__(
+            name,
+            lower_bound,
+            upper_bound,
+            shape=shape,
+            resolution=resolution,
+            default=default,
+            variable_name=variable_name,
+        )
+
+        lb_int = float(lower_bound).is_integer()
+        up_int = float(upper_bound).is_integer()
+
+        if not (lb_int and up_int):
+            raise ValueError(
+                f"Lower bound and upper bound must be integers, not {type(lower_bound)} and {type(upper_bound)}"
+            )
+
+        self.lower_bound = int(lower_bound)
+        self.upper_bound = int(upper_bound)
+
+        self.dist = sp.stats.randint(
+            self.lower_bound, self.upper_bound + 1
+        )  # @UndefinedVariable
+
+        try:
+            for idx, entry in enumerate(self.resolution):
+                if not float(entry).is_integer():
+                    raise ValueError(
+                        f"All entries in resolution should be integers, not {type(entry)}"
+                    )
+                else:
+                    self.resolution[idx] = int(entry)
+        except TypeError:
+            # if self.resolution is None
+            pass
+
+    @classmethod
+    def from_dist(cls, name: str, dist, **kwargs):  # noqa: D102
+        if not isinstance(dist.dist, sp.stats.rv_discrete):  # @UndefinedVariable
+            raise ValueError(f"dist should be instance of rv_discrete, not {dist.dist}")
+        return super().from_dist(name, dist, **kwargs)
+
+    def __repr__(self):  # noqa: D105
+        if isinstance(self.dist, sp.stats._distn_infrastructure.rv_discrete_frozen):
+            return (
+                f"IntegerParameter('{self.name}', {self.lower_bound}, {self.upper_bound}, "
+                f"resolution={self.resolution}, default={self.default}, variable_name={self.variable_name})"
+            )
+        else:
+            return super().__repr__()
+
+
+class CategoricalParameter(IntegerParameter):
+    """categorical model input parameter.
+
+    Parameters
+    ----------
+    name : str
+    categories : collection of obj
+    shape : tuple
+    variable_name : str, or list of str
+    multivalue : boolean
+                 if categories have a set of values, for each variable_name
+                 a different one.
+    # TODO: should multivalue not be a separate class?
+    # TODO: multivalue as label is also horrible
+
+    """
+
+    @property
+    def categories(self):  # noqa: D102
+        return self._categories
+
+    @categories.setter
+    def categories(self, values):
+        self._categories.extend(values)
+
+    def __init__(
+        self,
+        name,
+        categories,
+        shape: tuple[int] | None = None,
+        default=None,
+        variable_name: str | list[str] | None = None,
+        multivalue: bool = False,
+    ):
+        """Init."""
+        lower_bound = 0
+        upper_bound = len(categories) - 1
+
+        if upper_bound == 0:
+            raise ValueError(
+                f"There should be more than 1 category, instead of {len(categories)}"
+            )
+
+        super().__init__(
+            name,
+            lower_bound,
+            upper_bound,
+            shape=shape,
+            resolution=None,
+            default=default,
+            variable_name=variable_name,
+        )
+        cats = [create_category(cat) for cat in categories]
+
+        self._categories = NamedObjectMap(Category)
+
+        self.categories = cats
+        self.resolution = list(range(len(self.categories)))
+        self.multivalue = multivalue
+
+    def index_for_cat(self, category: str) -> int:
+        """Return index of category.
+
+        Parameters
+        ----------
+        category : object
+
+        Returns
+        -------
+        int
+
+
+        """
+        for i, cat in enumerate(self.categories):
+            if cat.name == category:
+                return i
+        raise ValueError(f"Category {category} not found")
+
+    def cat_for_index(self, index: int) -> Category:
+        """Return category given index.
+
+        Parameters
+        ----------
+        index  : int
+
+        Returns
+        -------
+        object
+
+        """
+        return self.categories[index]
+
+    def __repr__(self, *args, **kwargs):  # noqa: D105
+        template1 = "CategoricalParameter('{}', {}, default={})"
+        template2 = "CategoricalParameter('{}', {})"
+
+        if self.default:
+            representation = template1.format(self.name, self.resolution, self.default)
+        else:
+            representation = template2.format(self.name, self.resolution)
+
+        return representation
+
+    def from_dist(self, name: str, dist, **kwargs):  # noqa: D102
+        # TODO:: how to handle this
+        # probably need to pass categories as list and zip
+        # categories to integers implied by dist
+        raise NotImplementedError(
+            "Custom distributions over categories not supported yet"
+        )
+
+
+class BooleanParameter(CategoricalParameter):
+    """boolean model input parameter.
+
+    A BooleanParameter is similar to a CategoricalParameter, except
+    the category values can only be True or False.
+
+    Parameters
+    ----------
+    name : str
+    shape : tuple
+    variable_name : str, or list of str
+
+    """
+
+    def __init__(
+        self,
+        name,
+        shape: tuple[int] | None = None,
+        default: bool | None = None,
+        variable_name: str | list[str] | None = None,
+    ):
+        """Init."""
+        super().__init__(
+            name,
+            shape=shape,
+            categories=[False, True],
+            default=default,
+            variable_name=variable_name,
+        )
+
+    def __repr__(self):  # noqa: D105
+        return (
+            f"BooleanParameter('{self.name}', default={self.default}, "
+            f"variable_name={self.variable_name})"
+        )
+
+
+def parameters_to_csv(parameters, file_name):
+    """Helper function for writing a collection of parameters to a csv file.
+
+    Parameters
+    ----------
+    parameters : collection of Parameter instances
+    file_name :  str
+
+
+    The function iterates over the collection and turns these into a data
+    frame prior to storing them. The resulting csv can be loaded using the
+    parameters_from_csv function. Note that currently we don't store resolution
+    and default attributes.
+
+    """
+    params = {}
+
+    for i, param in enumerate(parameters):
+        if isinstance(param, CategoricalParameter):
+            values = param.resolution
+        else:
+            values = param.lower_bound, param.upper_bound
+
+        dict_repr = dict(enumerate(values))
+        dict_repr["name"] = param.name
+
+        params[i] = dict_repr
+
+    params = pd.DataFrame.from_dict(params, orient="index")
+
+    # for readability it is nice if name is the first column, so let's
+    # ensure this
+    cols = params.columns.tolist()
+    cols.insert(0, cols.pop(cols.index("name")))
+    params = params.reindex(columns=cols)
+
+    # we can now safely write the dataframe to a csv
+    pd.DataFrame.to_csv(params, file_name, index=False)
+
+
+def parameters_from_csv(uncertainties, **kwargs):
+    """Helper function for creating many Parameters based on a DataFrame or csv file.
+
+    Parameters
+    ----------
+    uncertainties : str, DataFrame
+    **kwargs : dict, arguments to pass to pandas.read_csv
+
+    Returns
+    -------
+    list of Parameter instances
+
+
+    This helper function creates uncertainties. It assumes that the
+    DataFrame or csv file has a column titled 'name', optionally a type column
+    {int, real, cat}, can be included as well. the remainder of the columns
+    are handled as values for the parameters. If type is not specified,
+    the function will try to infer type from the values.
+
+    Note that this function does not support the resolution and default kwargs
+    on parameters.
+
+    An example of a csv:
+
+    NAME,TYPE,,,
+    a_real,real,0,1.1,
+    an_int,int,1,9,
+    a_categorical,cat,a,b,c
+
+    this CSV file would result in
+
+    [RealParameter('a_real', 0, 1.1, resolution=[], default=None),
+     IntegerParameter('an_int', 1, 9, resolution=[], default=None),
+     CategoricalParameter('a_categorical', ['a', 'b', 'c'], default=None)]
+
+    """
+    if isinstance(uncertainties, str):
+        uncertainties = pd.read_csv(uncertainties, **kwargs)
+    elif not isinstance(uncertainties, pd.DataFrame):
+        uncertainties = pd.DataFrame.from_dict(uncertainties)
+    else:
+        uncertainties = uncertainties.copy()
+
+    parameter_map = {
+        "int": IntegerParameter,
+        "real": RealParameter,
+        "cat": CategoricalParameter,
+        "bool": BooleanParameter,
+    }
+
+    # check if names column is there
+    if ("NAME" not in uncertainties) and ("name" not in uncertainties):
+        raise IndexError("name column missing")
+    elif "NAME" in uncertainties.columns:
+        names = uncertainties["NAME"]
+        uncertainties.drop(["NAME"], axis=1, inplace=True)
+    else:
+        names = uncertainties["name"]
+        uncertainties.drop(["name"], axis=1, inplace=True)
+
+    # check if type column is there
+    infer_type = False
+    if ("TYPE" not in uncertainties) and ("type" not in uncertainties):
+        infer_type = True
+    elif "TYPE" in uncertainties:
+        types = uncertainties["TYPE"]
+        uncertainties.drop(["TYPE"], axis=1, inplace=True)
+    else:
+        types = uncertainties["type"]
+        uncertainties.drop(["type"], axis=1, inplace=True)
+
+    uncs = []
+    for i, row in uncertainties.iterrows():
+        name = names[i]
+        values = row.values[row.notnull().values]
+        type = None  # @ReservedAssignment
+
+        if infer_type:
+            if len(values) != 2:
+                type = "cat"  # @ReservedAssignment
+            else:
+                l, u = values  # noqa: E741
+
+                if isinstance(l, numbers.Integral) and isinstance(u, numbers.Integral):
+                    type = "int"  # @ReservedAssignment
+                else:
+                    type = "real"  # @ReservedAssignment
+
+        else:
+            type = types[i]  # @ReservedAssignment
+
+            if (type != "cat") and (len(values) != 2):
+                raise ValueError(
+                    f"Too many values specified for {name}, is {values.shape[0]}, should be 2"
+                )
+
+        if type == "cat":
+            uncs.append(parameter_map[type](name, values))
+        else:
+            uncs.append(parameter_map[type](name, *values))
+    return uncs
+
+
+class ParameterMap(NamedObjectMap):
+    """A NamedObjectMap specifically for parameters."""
+
+    def __init__(self) -> None:
+        super().__init__(Parameter)
+
+    @property
+    def latent_parameters(self) -> list[Parameter]:
+        """Return the latent parameters."""
+        parameters = []
+        for parameter in self:
+            if parameter.shape is None:
+                parameters.append(parameter)
+            else:
+                for i in range(math.prod(parameter.shape)):
+                    latent_parameter = parameter.__new__(parameter.__class__)
+                    for k, v in parameter.__dict__.items():
+                        if k == "_name":
+                            v = f"{v}_{i}"  # noqa: PLW2901
+                        setattr(latent_parameter, k, v)
+                    parameters.append(latent_parameter)
+        return parameters
+
+    def copy(self) -> "ParameterMap":
+        copy = self.__class__()
+        copy._data = self._data.copy()
+
+        return copy
+
+
+class ParameterMapDescriptor:
+    """A NamedObjectMapDescriptor specifically for parameters."""
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        try:
+            return getattr(instance, self.internal_name)
+        except AttributeError:
+            mapping = ParameterMap()  # @ReservedAssignment
+            setattr(instance, self.internal_name, mapping)
+            return mapping
+
+    def __set__(self, instance, values):
+        try:
+            mapping = getattr(instance, self.internal_name)  # @ReservedAssignment
+        except AttributeError:
+            mapping = ParameterMap()  # @ReservedAssignment
+            setattr(instance, self.internal_name, mapping)
+
+        mapping.extend(values)
+
+    def __set_name__(self, owner, name):
+        self.name = name
+        self.internal_name = "_" + name

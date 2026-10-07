@@ -1,0 +1,64 @@
+"""Centralized matplotlib imports for pymoo visualization.
+
+This module provides a single point of entry for all matplotlib functionality,
+with graceful handling when matplotlib is not available.
+"""
+
+# Try to import matplotlib and related modules
+try:
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    import matplotlib.colors as colors
+    import matplotlib.cm as cm
+    from matplotlib import animation
+    from matplotlib.collections import LineCollection, PatchCollection
+    from matplotlib.colors import ListedColormap
+
+    _MATPLOTLIB_AVAILABLE = True
+
+    # Export all commonly used matplotlib objects
+    __all__ = [
+        "matplotlib",
+        "plt",
+        "patches",
+        "colors",
+        "cm",
+        "animation",
+        "LineCollection",
+        "PatchCollection",
+        "ListedColormap",
+        "is_available",
+    ]
+
+except ImportError:
+    _MATPLOTLIB_AVAILABLE = False
+
+    class _MatplotlibNotAvailable:
+        """Helper class that raises informative errors when matplotlib is not available."""
+
+        def __getattr__(self, name):
+            raise ImportError(
+                "Visualization features require matplotlib.\nInstall with: pip install pymoo[visualization]"
+            )
+
+        def __call__(self, *args, **kwargs):
+            raise ImportError(
+                "Visualization features require matplotlib.\nInstall with: pip install pymoo[visualization]"
+            )
+
+    # Create placeholder objects that give helpful errors
+    matplotlib = _MatplotlibNotAvailable()  # type: ignore[assignment]
+    plt = _MatplotlibNotAvailable()  # type: ignore[assignment]
+    patches = _MatplotlibNotAvailable()  # type: ignore[assignment]
+    colors = _MatplotlibNotAvailable()  # type: ignore[assignment]
+    cm = _MatplotlibNotAvailable()  # type: ignore[assignment]
+    animation = _MatplotlibNotAvailable()  # type: ignore[assignment]
+    LineCollection = _MatplotlibNotAvailable()  # type: ignore[assignment]
+    PatchCollection = _MatplotlibNotAvailable()  # type: ignore[assignment]
+    ListedColormap = _MatplotlibNotAvailable()  # type: ignore[assignment]
+
+
+def is_available():
+    """Check if matplotlib is available for visualization."""
+    return _MATPLOTLIB_AVAILABLE

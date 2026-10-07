@@ -1,0 +1,59 @@
+# Runtime app requirements are pinned to known-good versions for Railway.
+# Floating upgrades caused builder disk blowups and unstable redeploys.
+
+# Core web framework
+fastapi==0.122.0
+uvicorn==0.38.0
+starlette>=0.41.0  # imported directly by mapmover code (research_corpus, chat_shared);
+                   # currently installed transitively by fastapi==0.122.0 but pinned
+                   # here defensively after the 2026-05-31 transitive-import audit
+                   # to prevent silent removal on a future requirements pin pass.
+
+# Environment and configuration
+python-dotenv==1.2.2
+
+# LLM integration
+anthropic==0.75.0
+
+# HTTP requests
+requests==2.32.5
+boto3==1.42.0
+# NOTE: do NOT add an explicit botocore pin. The 2026-05-31 transitive-import audit
+# flagged botocore as imported but undeclared in code (mapmover/research_corpus.py,
+# mapmover/routes/chat_shared.py). However boto3 1.42.0 strict-pins botocore to
+# `<1.42.0,>=1.41.6`, so any independent botocore pin conflicts with the boto3 pin
+# and breaks the Railway build (verified the hard way 2026-05-31). botocore can't
+# silently drop while boto3 is pinned, so the audit concern doesn't apply here.
+httpx==0.27.2  # used by mapmover/auth_context.py for async Supabase auth verification;
+               # was previously installed as a transitive dep of unpinned anthropic/supabase
+               # but dropped after 2026-05-20 requirements pin, breaking the commercial-access
+               # verifier path and triggering 502s on /api/v1/query/dataset (the 2026-05-19
+               # 402index.io regression).
+
+# Data processing
+pandas==2.3.3
+numpy==2.3.5
+duckdb==1.5.0
+# CVE-2026-25087 is not reachable through this Python/Parquet runtime, but
+# 23.0.1 includes the upstream Arrow IPC memory-safety fix.
+pyarrow==23.0.1
+orjson==3.11.4  # Fast JSON parsing (3-10x faster than stdlib)
+msgpack==1.1.2  # MessagePack serialization (2-5x faster, 30-50% smaller)
+
+# String matching
+rapidfuzz==3.14.3
+
+# Cloud logging and analytics (optional - graceful fallback if not configured)
+
+# Required for country bounds bbox intersection (viewport geometry loading):
+shapely==2.1.2
+# Required for WGS84 geodesic areas in compare_geographies.  Planar degree
+# areas are not valid overlap percentages for global geometry.
+pyproj==3.7.2
+
+# Fairfax LST raster endpoint (reads GeoTIFF pixel data, pure-Python, no native libs):
+tifffile==2026.3.3
+
+# Legacy/Archive tools (not required for main app):
+# geopandas>=0.14.0
+# pyogrio>=0.7.0

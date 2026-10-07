@@ -1,0 +1,18 @@
+# Cloudflare Worker deploy config for the hosted (edge) endpoint.
+# Requires wrangler: `npm i -g wrangler` (or use `npx wrangler`). Deploy: `wrangler deploy`.
+# Free tier: 100k requests/day. wrangler bundles the TS entry (esbuild) and inlines
+# the generated dataset, so no node:fs is needed at the edge.
+#
+# NOTE: the illustrative sample bundles fine. The FULL England dataset (~1.6M
+# postcodes) exceeds the Worker bundle limit — move it to D1/KV before deploying
+# the full hosted endpoint (follow-on). See src/worker.ts.
+name = "floodwise"
+main = "src/worker.ts"
+compatibility_date = "2025-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Regenerate the data module before bundling (same as `npm run gen`).
+[build]
+command = "node scripts/gen-data.mjs"
+
+# After deploy the endpoint is:  https://floodwise.qinisolabs.workers.dev/mcp

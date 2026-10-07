@@ -1,0 +1,141 @@
+---
+title: useDarkMode 用法與示例
+sidebar_label: useDarkMode
+description: "useDarkMode 是一個用於深色與淺色模式切換的 React hook，支援自動 localStorage 持久化，並與 prefers-color-scheme 系統偏好同步。"
+---
+
+# useDarkMode
+
+具有自動數據持久性的深色模式。
+
+`useDarkMode` 提供了簡單的明暗模式切換功能，並自動持久化到 `localStorage`。它回傳一個包含當前主題狀態和切換函式的元組。此 hook 將 CSS 類別名稱（可透過 `classNameDark` 和 `classNameLight` 設定）套用到 `<html>` 元素，並在沒有已儲存值時透過 `prefers-color-scheme` 媒體查詢與使用者的系統偏好同步。它預設尊重系統偏好，但允許使用者覆寫。
+
+### 使用場景
+
+- 為應用程式新增具有自動持久化的深色模式切換
+- 建構一個以使用者系統色彩方案偏好為預設值的主題切換器
+- 將明暗 CSS 類別套用到根元素以實現 CSS 驅動的主題設定
+
+### 注意事項
+
+- **SSR 安全**：在伺服器端渲染時，深色模式狀態回傳 `false`。伺服器上不會存取 DOM 或 localStorage。請參閱下方的 Tips 章節以防止未樣式化內容的閃爍。
+- **持久化**：將偏好儲存在 `localStorage` 中，鍵名為 `"reactuses-color-scheme"`。已儲存的值會在 v6.1.0+ 中自動從舊的布林格式遷移到新的字串格式。
+- **相關 hooks**：如需超越明暗的多主題支援，請參閱 `useColorMode`。如需在不持久化的情況下偵測系統偏好，請參閱 `usePreferredDark` 或 `usePreferredColorScheme`。
+
+## ⚠️ v6.1.0 破壞性變更
+
+**存儲格式已從布爾值更改為字符串值。** 如果你正在从旧版本升级：
+
+- **旧格式**: `true`/`false` 布尔值
+- **新格式**: `"dark"`/`"light"` 字符串值  
+- **自动迁移**: 现有数据将自动迁移
+- **SSR 脚本**: 需要更新以處理字符串比较
+
+<details>
+<summary>迁移指南</summary>
+
+如果你有自定义的 SSR 脚本，请按照下面示例中的方式进行更新。库会自动處理数据迁移，但你的自定义脚本需要在过渡期间處理新旧两种格式。
+
+</details>
+
+## Tips
+
+<details>
+<summary>点击展开</summary>
+对于服务端渲染的应用程序而言，由于无法在服务端獲取到用户的颜色偏好。所以第一次渲染的时候可能会出现闪烁。想要避免此问题，你可以参考一下步骤。
+
+1. 在你的內容渲染前增加一个脚本。
+
+```tsx
+<script
+  dangerouslySetInnerHTML={{
+    // 增加一个自执行的函數
+    __html: `
+          (function () {
+            function setDark(dark) {
+              dark &&  document.documentElement.classList.add('dark');
+            }
+            let store = localStorage.getItem('reactuses-color-scheme');
+            let dark;
+            if(store === null){
+              const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+              dark = darkQuery.matches;
+            }else {
+              // 處理向后兼容性：将旧的布尔值转换为字符串
+              if (store === 'true' || store === 'false') {
+                const boolValue = store === 'true';
+                const stringValue = boolValue ? 'dark' : 'light';
+                localStorage.setItem('reactuses-color-scheme', stringValue);
+                dark = boolValue;
+              } else {
+                // 直接處理字符串值 ('dark' 或 'light')
+                dark = store === 'dark';
+              }
+            }
+            setDark(dark)
+          })();
+      `,
+  }}
+></script>
+```
+
+2. 为了方便统一管理主题颜色，我们推荐使用 `context` 来存储它们。
+
+```tsx
+import { useDarkMode } from "@reactuses/core";
+import React, { createContext, useContext } from "react";
+
+type ThemeContext = { theme: boolean; toggleTheme: () => void };
+
+const ThemeContext = createContext<ThemeContext | undefined>(undefined);
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [dark, toggle] = useDarkMode({
+    classNameDark: "dark",
+    classNameLight: "light",
+    defaultValue: false,
+  });
+
+  return (
+    <ThemeContext.Provider value={{ theme: !!dark, toggleTheme: toggle }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
+}
+```
+
+</details>
+
+## Usage
+
+```tsx live
+
+function Demo() {
+  const [theme, toggleDark] = useDarkMode({
+    classNameDark: "dark",
+    classNameLight: "light",
+    defaultValue: false,
+  });
+
+  return (
+    <div>
+      <div>theme: {theme ? "dark" : "light"}</div>
+      <br />
+      <div>
+        <button onClick={toggleDark}>toggleDark</button>
+      </div>
+    </div>
+  );
+};
+
+```
+
+%%API%%

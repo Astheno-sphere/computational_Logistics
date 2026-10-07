@@ -1,0 +1,1151 @@
+use unfour_core::models::{
+    FlowDefinition, FlowRun, FlowRunInput, FlowRunPage, FlowRunSummary, FlowSummary,
+};
+mod contract;
+mod error;
+mod unified_runtime;
+
+use std::path::Path;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+
+use crate::StorageMode;
+use tokio::runtime::{Builder, Runtime};
+use unfour_command_bus::{CommandBus, CommandBusExtensions, ReadCommand, ReadCommandResult};
+use unfour_core::models::{
+    ApiCollection, ApiEnvironment, ApiRequestInput, ApiResponse, ApiSavedRequest,
+    CredentialCreateInput, CredentialMetadata, DatabaseConnection, DatabaseConnectionInput,
+    DatabaseExportTableInput, DatabaseExportTableResult, DatabaseQueryInput, DatabaseQueryResult,
+    DatabaseSchema, DatabaseTableList, DatabaseTableStructure, DatabaseTableStructureInput,
+    DatabaseTestResult, KeyValue, SshCommandHistoryEntry, SshCommandHistoryQuery, SshConnection,
+    SshConnectionInput, SshDiagnosticInput, SshDiagnosticResult, SshTask, SshTaskCancelInput,
+    SshTaskCleanupInput, SshTaskCleanupResult, SshTaskDetail, SshTaskRun, SshTaskRunInput,
+    SshTaskSaveInput, SshTasksReorderInput, SystemHealth, WorkspaceEnvironment,
+    WorkspaceEnvironmentVariable, WorkspaceVariable, WorkspaceVariableInput,
+};
+
+use unified_runtime::unified_command_bus;
+
+pub use contract::CommandBusAdapter;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CommandBusAdapterError {
+    pub code: &'static str,
+    pub message: &'static str,
+    pub details: serde_json::Value,
+}
+
+pub struct LocalCommandBusAdapter {
+    // Wrapped in an `Option` behind a `Mutex` so `shutdown` can take
+    // ownership of the runtime for a *bounded* shutdown. The default
+    // `Runtime::Drop` blocks until every spawned task finishes, which is what
+    // lets a lingering SSH supervisor / pool keep-alive hang the process after
+    // the stdio loop ends. Taking it out lets us call `shutdown_timeout`.
+    runtime: Mutex<Option<Runtime>>,
+    bus: CommandBus,
+}
+
+type AdapterResult = Result<Arc<LocalCommandBusAdapter>, CommandBusAdapterError>;
+
+impl LocalCommandBusAdapter {
+    pub fn default_storage_read_only() -> AdapterResult {
+        Self::from_command_bus_future(CommandBus::from_existing_default_storage_read_only())
+    }
+
+    /// Opens the Community-compatible storage path without Cloud Sync.
+    ///
+    /// This is retained for explicit Community/test integrations. Production
+    /// mutable MCP must use [`Self::from_storage_mode`] so the unified
+    /// migration and `SyncOutboxHook` are installed.
+    #[deprecated(
+        note = "raw Community/test constructor; use from_storage_mode for production mutable MCP"
+    )]
+    pub fn default_storage() -> AdapterResult {
+        Self::from_command_bus_future(CommandBus::from_existing_default_storage())
+    }
+
+    pub fn from_storage_mode(mode: StorageMode) -> AdapterResult {
+        Self::from_command_bus_future(unified_command_bus(mode))
+    }
+
+    pub fn from_env() -> AdapterResult {
+        Self::from_storage_mode(StorageMode::from_env())
+    }
+
+    pub fn default_storage_with_extensions(extensions: CommandBusExtensions) -> AdapterResult {
+        Self::from_command_bus_future(CommandBus::from_existing_default_storage_with_extensions(
+            extensions,
+        ))
+    }
+
+    pub fn default_database_path() -> Result<std::path::PathBuf, CommandBusAdapterError> {
+        unfour_command_bus::default_database_path()
+            .map_err(|_| CommandBusAdapterError::initialization_failed())
+    }
+
+    pub fn from_storage_dir_read_only(storage_dir: impl AsRef<Path>) -> AdapterResult {
+        Self::from_command_bus_future(CommandBus::from_existing_storage_dir_read_only(storage_dir))
+    }
+
+    /// Opens a raw Community/test storage directory without Cloud Sync.
+    /// Production mutable MCP must use the unified storage-mode constructor.
+    #[deprecated(
+        note = "raw Community/test constructor; use from_storage_mode for production mutable MCP"
+    )]
+    pub fn from_storage_dir(storage_dir: impl AsRef<Path>) -> AdapterResult {
+        Self::from_command_bus_future(CommandBus::from_existing_storage_dir(storage_dir))
+    }
+
+    pub fn from_storage_dir_with_extensions(
+        storage_dir: impl AsRef<Path>,
+        extensions: CommandBusExtensions,
+    ) -> AdapterResult {
+        Self::from_command_bus_future(CommandBus::from_existing_storage_dir_with_extensions(
+            storage_dir,
+            extensions,
+        ))
+    }
+
+    /// Creates an isolated raw test bus without Cloud Sync.
+    /// Production mutable MCP must use `from_storage_mode(StorageMode::Ephemeral)`.
+    #[deprecated(note = "raw test constructor; use from_storage_mode for production mutable MCP")]
+    pub fn ephemeral() -> AdapterResult {
+        Self::from_command_bus_future(CommandBus::ephemeral())
+    }
+
+    fn from_command_bus_future<E>(
+        command_bus: impl std::future::Future<Output = Result<CommandBus, E>>,
+    ) -> AdapterResult {
+        let runtime = Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .map_err(|_| CommandBusAdapterError::initialization_failed())?;
+        let bus = runtime
+            .block_on(command_bus)
+            .map_err(|_| CommandBusAdapterError::initialization_failed())?;
+
+        Ok(Arc::new(Self {
+            runtime: Mutex::new(Some(runtime)),
+            bus,
+        }))
+    }
+}
+
+impl LocalCommandBusAdapter {
+    /// Run a future to completion on the internal multi-thread runtime. Every
+    /// adapter method goes through this so the `Runtime` stays behind an
+    /// interior-mutable `Option`, which lets [`LocalCommandBusAdapter::shutdown`]
+    /// take ownership of it for a bounded shutdown.
+    fn run<F: std::future::Future>(&self, future: F) -> F::Output {
+        let handle = self
+            .runtime
+            .lock()
+            .expect("command-bus runtime lock poisoned")
+            .as_ref()
+            .expect("command-bus runtime already shut down")
+            .handle()
+            .clone();
+        handle.block_on(future)
+    }
+
+    fn run_execution<T>(
+        &self,
+        future: impl std::future::Future<Output = unfour_core::AppResult<T>>,
+    ) -> unfour_core::AppResult<T> {
+        self.run(crate::call_control::bounded(future))
+    }
+
+    /// Cancel all background tokio tasks (SSH supervisors, DB/API pool
+    /// keep-alives, fire-and-forget flush tasks) and stop the runtime, bounded
+    /// so a stuck task can never block process exit. Idempotent: a second call
+    /// is a no-op.
+    ///
+    /// This is the unified shutdown signal for the stdio process: it releases
+    /// SSH sessions, database connections, and the API runtime before the
+    /// adapter is dropped.
+    pub fn shutdown(&self) {
+        let runtime = {
+            self.runtime
+                .lock()
+                .expect("command-bus runtime lock poisoned")
+                .take()
+        };
+
+        if let Some(runtime) = runtime {
+            runtime.shutdown_timeout(Duration::from_secs(2));
+        }
+    }
+}
+
+impl Drop for LocalCommandBusAdapter {
+    fn drop(&mut self) {
+        // Bounded backstop: if `shutdown` was never called (e.g. a panic
+        // before the normal exit path), still guarantee the runtime cannot hang
+        // the process on a lingering background task.
+        if let Ok(guard) = self.runtime.get_mut() {
+            if let Some(runtime) = guard.take() {
+                runtime.shutdown_timeout(Duration::from_secs(2));
+            }
+        }
+    }
+}
+
+impl CommandBusAdapter for LocalCommandBusAdapter {
+    fn get_db_table_structure(
+        &self,
+        input: DatabaseTableStructureInput,
+    ) -> Result<DatabaseTableStructure, CommandBusAdapterError> {
+        self.run_execution(self.bus.database_table_structure(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_database_app_error(
+                    "The table structure operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn export_db_table(
+        &self,
+        input: DatabaseExportTableInput,
+    ) -> Result<DatabaseExportTableResult, CommandBusAdapterError> {
+        self.run_execution(self.bus.database_export_table(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_database_app_error(
+                    "The table export operation failed.",
+                    &e,
+                )
+            })
+    }
+    fn list_flows(&self, workspace_id: &str) -> Result<Vec<FlowSummary>, CommandBusAdapterError> {
+        self.run(self.bus.list_flow_summaries(workspace_id.to_string()))
+            .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn get_flow(
+        &self,
+        workspace_id: &str,
+        flow_id: &str,
+    ) -> Result<FlowDefinition, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .get_flow(workspace_id.to_string(), flow_id.to_string()),
+        )
+        .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn save_flow(&self, input: FlowDefinition) -> Result<FlowDefinition, CommandBusAdapterError> {
+        self.run(self.bus.save_flow(input))
+            .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn delete_flow(
+        &self,
+        workspace_id: &str,
+        flow_id: &str,
+        expected_revision: i64,
+    ) -> Result<(), CommandBusAdapterError> {
+        self.run(self.bus.delete_flow_at_revision(
+            workspace_id.to_string(),
+            flow_id.to_string(),
+            expected_revision,
+        ))
+        .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn run_flow(
+        &self,
+        input: FlowRunInput,
+        expected_revision: i64,
+    ) -> Result<FlowRun, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .run_flow_at_revision(input, Some(expected_revision)),
+        )
+        .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn cancel_flow_run(
+        &self,
+        workspace_id: &str,
+        run_id: &str,
+    ) -> Result<FlowRun, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .cancel_flow_run(workspace_id.to_string(), run_id.to_string()),
+        )
+        .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn list_flow_runs(
+        &self,
+        workspace_id: &str,
+        flow_id: &str,
+    ) -> Result<Vec<FlowRunSummary>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .list_flow_runs(workspace_id.to_string(), flow_id.to_string()),
+        )
+        .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn list_flow_runs_page(
+        &self,
+        workspace_id: &str,
+        flow_id: &str,
+        limit: u32,
+        cursor: Option<&str>,
+    ) -> Result<FlowRunPage, CommandBusAdapterError> {
+        self.run(self.bus.list_flow_runs_page(
+            workspace_id.to_string(),
+            flow_id.to_string(),
+            limit,
+            cursor.map(str::to_owned),
+        ))
+        .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn get_flow_run(
+        &self,
+        workspace_id: &str,
+        run_id: &str,
+    ) -> Result<FlowRun, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .get_flow_run(workspace_id.to_string(), run_id.to_string()),
+        )
+        .map_err(|e| CommandBusAdapterError::from_flow_error(&e))
+    }
+    fn list_db_history(
+        &self,
+        workspace_id: &str,
+        limit: i64,
+    ) -> Result<Vec<unfour_core::models::DbQueryHistoryEntry>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .list_database_query_history(workspace_id.into(), Some(limit)),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_database_app_error("Database history read failed.", &e)
+        })
+    }
+    fn delete_db_connection(
+        &self,
+        workspace_id: &str,
+        connection_id: &str,
+    ) -> Result<(), CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .delete_database_connection(workspace_id.into(), connection_id.into()),
+        )
+        .map(|_| ())
+        .map_err(|e| {
+            CommandBusAdapterError::from_database_app_error(
+                "Database connection deletion failed.",
+                &e,
+            )
+        })
+    }
+    fn delete_ssh_connection(
+        &self,
+        workspace_id: &str,
+        connection_id: &str,
+    ) -> Result<(), CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .delete_ssh_connection(workspace_id.into(), connection_id.into()),
+        )
+        .map(|_| ())
+        .map_err(|e| {
+            CommandBusAdapterError::from_ssh_app_error("SSH connection deletion failed.", &e)
+        })
+    }
+    fn test_ssh_connection(
+        &self,
+        input: SshConnectionInput,
+    ) -> Result<unfour_core::models::SshTestResult, CommandBusAdapterError> {
+        #[cfg(not(feature = "ssh-native"))]
+        {
+            let _ = input;
+            Err(CommandBusAdapterError {
+                code: "COMMAND_BUS_OPERATION_UNSUPPORTED",
+                message: "Native SSH is unavailable.",
+                details: serde_json::json!({}),
+            })
+        }
+        #[cfg(feature = "ssh-native")]
+        self.run_execution(self.bus.test_ssh_connection(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_ssh_app_error("SSH connection test failed.", &e)
+            })
+    }
+    fn get_ssh_host_key(
+        &self,
+        input: unfour_core::models::SshHostKeyInput,
+    ) -> Result<Option<unfour_core::models::SshHostFingerprintInfo>, CommandBusAdapterError> {
+        self.run(self.bus.get_ssh_host_fingerprint(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_ssh_app_error("SSH host fingerprint read failed.", &e)
+            })
+    }
+    fn execute_read(
+        &self,
+        command: ReadCommand,
+    ) -> Result<ReadCommandResult, CommandBusAdapterError> {
+        self.run(self.bus.execute_read(command)).map_err(|e| {
+            CommandBusAdapterError::from_app_error("The command-bus read operation failed.", &e)
+        })
+    }
+
+    fn execute_saved_api_request(
+        &self,
+        request_id: &str,
+        timeout_ms: Option<u64>,
+    ) -> Result<ApiResponse, CommandBusAdapterError> {
+        self.run_execution(self.bus.execute_saved_api_request(request_id, timeout_ms))
+            .map_err(|e| {
+                CommandBusAdapterError::from_app_error(
+                    "The command-bus API send operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn execute_saved_api_request_in_workspace(
+        &self,
+        workspace_id: Option<&str>,
+        request_id: &str,
+        timeout_ms: Option<u64>,
+    ) -> Result<ApiResponse, CommandBusAdapterError> {
+        self.run_execution(self.bus.execute_saved_api_request_in_workspace(
+            workspace_id.map(str::to_string),
+            request_id,
+            timeout_ms,
+        ))
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error("The command-bus API send operation failed.", &e)
+        })
+    }
+
+    fn execute_saved_api_request_with_scripts_in_workspace(
+        &self,
+        workspace_id: Option<&str>,
+        request_id: &str,
+        timeout_ms: Option<u64>,
+        environment_id: Option<&str>,
+    ) -> Result<ApiResponse, CommandBusAdapterError> {
+        let execution_id = unfour_core::id::new_id();
+        let result = self
+            .run(crate::call_control::cooperative(
+                self.bus
+                    .execute_saved_api_request_with_scripts_controlled_in_workspace(
+                        &execution_id,
+                        workspace_id.map(str::to_string),
+                        request_id,
+                        timeout_ms,
+                        environment_id.map(str::to_string),
+                    ),
+                || self.bus.cancel_api_request(&execution_id),
+            ))
+            .map_err(|error| {
+                CommandBusAdapterError::from_app_error(
+                    "The command-bus scripted API send operation failed.",
+                    &error,
+                )
+            })?;
+        match result.response {
+            Some(response) => Ok(response),
+            None if result.http_error.is_some() => Err(CommandBusAdapterError {
+                code: "HTTP_ERROR",
+                message: "The command-bus API send operation failed.",
+                details: serde_json::json!({}),
+            }),
+            None => Err(CommandBusAdapterError {
+                code: "API_SCRIPT_EXECUTION_FAILED",
+                message: "The saved API request pre-request script failed before sending.",
+                details: serde_json::json!({}),
+            }),
+        }
+    }
+
+    fn send_api_request(
+        &self,
+        input: ApiRequestInput,
+    ) -> Result<ApiResponse, CommandBusAdapterError> {
+        self.run_execution(self.bus.send_api_request(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_app_error(
+                    "The command-bus API send operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn send_api_request_in_environment(
+        &self,
+        input: ApiRequestInput,
+        environment_id: Option<&str>,
+    ) -> Result<ApiResponse, CommandBusAdapterError> {
+        self.run_execution(
+            self.bus
+                .send_api_request_in_environment(input, environment_id.map(str::to_string)),
+        )
+        .map_err(|error| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API send operation failed.",
+                &error,
+            )
+        })
+    }
+
+    fn save_api_request(
+        &self,
+        input: ApiRequestInput,
+    ) -> Result<ApiSavedRequest, CommandBusAdapterError> {
+        self.run(self.bus.save_api_request(input)).map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API request save operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn update_api_request(
+        &self,
+        workspace_id: &str,
+        request_id: &str,
+        input: ApiRequestInput,
+    ) -> Result<ApiSavedRequest, CommandBusAdapterError> {
+        self.run(self.bus.update_api_request(
+            workspace_id.to_string(),
+            request_id.to_string(),
+            input,
+        ))
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API request update operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn delete_api_request(
+        &self,
+        workspace_id: &str,
+        request_id: &str,
+    ) -> Result<Vec<ApiSavedRequest>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .delete_api_request(workspace_id.to_string(), request_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API request delete operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn create_api_collection(
+        &self,
+        workspace_id: &str,
+        name: &str,
+    ) -> Result<ApiCollection, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .api_collection_create(workspace_id.to_string(), name.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API collection create operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn update_api_collection(
+        &self,
+        workspace_id: &str,
+        collection_id: &str,
+        name: &str,
+    ) -> Result<ApiCollection, CommandBusAdapterError> {
+        self.run(self.bus.api_collection_rename(
+            workspace_id.to_string(),
+            collection_id.to_string(),
+            name.to_string(),
+        ))
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API collection update operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn delete_api_collection(
+        &self,
+        workspace_id: &str,
+        collection_id: &str,
+    ) -> Result<Vec<ApiCollection>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .api_collection_delete(workspace_id.to_string(), collection_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API collection delete operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn create_api_environment(
+        &self,
+        workspace_id: &str,
+        name: &str,
+    ) -> Result<ApiEnvironment, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .api_environment_create(workspace_id.to_string(), name.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API environment create operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn update_api_environment(
+        &self,
+        workspace_id: &str,
+        environment_id: &str,
+        name: &str,
+        variables: Vec<KeyValue>,
+    ) -> Result<ApiEnvironment, CommandBusAdapterError> {
+        self.run(self.bus.api_environment_update(
+            workspace_id.to_string(),
+            environment_id.to_string(),
+            name.to_string(),
+            variables,
+        ))
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API environment update operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn delete_api_environment(
+        &self,
+        workspace_id: &str,
+        environment_id: &str,
+    ) -> Result<Vec<ApiEnvironment>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .api_environment_delete(workspace_id.to_string(), environment_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API environment delete operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn list_workspace_environments(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Vec<WorkspaceEnvironment>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .workspace_environments_list(workspace_id.to_string()),
+        )
+        .map_err(|error| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus workspace environment read operation failed.",
+                &error,
+            )
+        })
+    }
+
+    fn create_api_environment_variable(
+        &self,
+        workspace_id: &str,
+        environment_id: &str,
+        input: WorkspaceVariableInput,
+    ) -> Result<WorkspaceEnvironmentVariable, CommandBusAdapterError> {
+        self.run(self.bus.workspace_environment_variable_create(
+            workspace_id.to_string(),
+            environment_id.to_string(),
+            input,
+        ))
+        .map_err(|error| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API environment variable create operation failed.",
+                &error,
+            )
+        })
+    }
+
+    fn update_api_environment_variable(
+        &self,
+        workspace_id: &str,
+        environment_id: &str,
+        variable_id: &str,
+        input: WorkspaceVariableInput,
+    ) -> Result<WorkspaceEnvironmentVariable, CommandBusAdapterError> {
+        self.run(self.bus.workspace_environment_variable_update(
+            workspace_id.to_string(),
+            environment_id.to_string(),
+            variable_id.to_string(),
+            input,
+        ))
+        .map_err(|error| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API environment variable update operation failed.",
+                &error,
+            )
+        })
+    }
+
+    fn delete_api_environment_variable(
+        &self,
+        workspace_id: &str,
+        environment_id: &str,
+        variable_id: &str,
+    ) -> Result<Vec<WorkspaceEnvironmentVariable>, CommandBusAdapterError> {
+        self.run(self.bus.workspace_environment_variable_delete(
+            workspace_id.to_string(),
+            environment_id.to_string(),
+            variable_id.to_string(),
+        ))
+        .map_err(|error| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus API environment variable delete operation failed.",
+                &error,
+            )
+        })
+    }
+
+    fn list_db_connections(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Vec<DatabaseConnection>, CommandBusAdapterError> {
+        self.run(self.bus.list_database_connections(workspace_id.to_string()))
+            .map_err(|e| {
+                CommandBusAdapterError::from_database_app_error(
+                    "The command-bus database list operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn list_workspace_variables(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Vec<WorkspaceVariable>, CommandBusAdapterError> {
+        self.run(self.bus.workspace_variables_list(workspace_id.to_string()))
+            .map_err(|e| {
+                CommandBusAdapterError::from_app_error(
+                    "The command-bus workspace variable list operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn replace_workspace_variables(
+        &self,
+        workspace_id: &str,
+        variables: Vec<WorkspaceVariableInput>,
+    ) -> Result<Vec<WorkspaceVariable>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .workspace_variables_replace(workspace_id.to_string(), variables),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus workspace variable replacement failed.",
+                &e,
+            )
+        })
+    }
+
+    fn create_workspace_variable(
+        &self,
+        workspace_id: &str,
+        input: WorkspaceVariableInput,
+    ) -> Result<WorkspaceVariable, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .workspace_variable_create(workspace_id.to_string(), input),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus workspace variable create operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn update_workspace_variable(
+        &self,
+        workspace_id: &str,
+        variable_id: &str,
+        input: WorkspaceVariableInput,
+    ) -> Result<WorkspaceVariable, CommandBusAdapterError> {
+        self.run(self.bus.workspace_variable_update(
+            workspace_id.to_string(),
+            variable_id.to_string(),
+            input,
+        ))
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus workspace variable update operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn delete_workspace_variable(
+        &self,
+        workspace_id: &str,
+        variable_id: &str,
+    ) -> Result<Vec<WorkspaceVariable>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .workspace_variable_delete(workspace_id.to_string(), variable_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus workspace variable delete operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn save_db_connection(
+        &self,
+        input: DatabaseConnectionInput,
+    ) -> Result<DatabaseConnection, CommandBusAdapterError> {
+        self.run(self.bus.save_database_connection(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_database_app_error(
+                    "The command-bus database connection save failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn create_credential(
+        &self,
+        input: CredentialCreateInput,
+    ) -> Result<CredentialMetadata, CommandBusAdapterError> {
+        self.run(self.bus.create_credential(input)).map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus credential create operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn get_db_schema(
+        &self,
+        workspace_id: &str,
+        connection_id: &str,
+    ) -> Result<DatabaseSchema, CommandBusAdapterError> {
+        self.get_db_schema_for_catalog(workspace_id, connection_id, None)
+    }
+
+    fn get_db_schema_for_catalog(
+        &self,
+        workspace_id: &str,
+        connection_id: &str,
+        catalog: Option<&str>,
+    ) -> Result<DatabaseSchema, CommandBusAdapterError> {
+        self.run_execution(self.bus.database_schema(
+            workspace_id.to_string(),
+            connection_id.to_string(),
+            catalog.map(str::to_string),
+        ))
+        .map_err(|e| {
+            CommandBusAdapterError::from_database_app_error(
+                "The command-bus database schema operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn list_db_tables(
+        &self,
+        workspace_id: &str,
+        connection_id: &str,
+        catalog: Option<&str>,
+        schema: Option<&str>,
+        limit: u32,
+    ) -> Result<DatabaseTableList, CommandBusAdapterError> {
+        self.run_execution(self.bus.database_list_tables(
+            workspace_id.to_string(),
+            connection_id.to_string(),
+            catalog.map(str::to_string),
+            schema.map(str::to_string),
+            limit,
+        ))
+        .map_err(|error| {
+            CommandBusAdapterError::from_database_app_error(
+                "The table listing operation failed.",
+                &error,
+            )
+        })
+    }
+
+    fn execute_db_query(
+        &self,
+        input: DatabaseQueryInput,
+    ) -> Result<DatabaseQueryResult, CommandBusAdapterError> {
+        self.run_execution(self.bus.execute_database_query(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_database_app_error(
+                    "The command-bus database query operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn test_db_connection(
+        &self,
+        workspace_id: &str,
+        connection_id: &str,
+    ) -> Result<DatabaseTestResult, CommandBusAdapterError> {
+        self.run_execution(
+            self.bus
+                .test_database_connection(workspace_id.to_string(), connection_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_database_app_error(
+                "The command-bus database connection test failed.",
+                &e,
+            )
+        })
+    }
+
+    fn system_health(&self) -> Result<SystemHealth, CommandBusAdapterError> {
+        self.run(self.bus.system_health()).map_err(|e| {
+            CommandBusAdapterError::from_app_error("The command-bus system health read failed.", &e)
+        })
+    }
+
+    fn run_ssh_diagnostic(
+        &self,
+        input: SshDiagnosticInput,
+    ) -> Result<SshDiagnosticResult, CommandBusAdapterError> {
+        self.run_execution(self.bus.run_ssh_diagnostic(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_ssh_app_error(
+                    "The command-bus SSH diagnostic failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn list_ssh_connections(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Vec<SshConnection>, CommandBusAdapterError> {
+        self.run(self.bus.list_ssh_connections(workspace_id.to_string()))
+            .map_err(|e| {
+                CommandBusAdapterError::from_app_error(
+                    "The command-bus SSH connection list operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn save_ssh_connection(
+        &self,
+        input: SshConnectionInput,
+    ) -> Result<SshConnection, CommandBusAdapterError> {
+        self.run(self.bus.save_ssh_connection(input)).map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH connection save operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn list_ssh_command_history(
+        &self,
+        query: SshCommandHistoryQuery,
+    ) -> Result<Vec<SshCommandHistoryEntry>, CommandBusAdapterError> {
+        self.run(self.bus.list_ssh_command_history(query))
+            .map_err(|e| {
+                CommandBusAdapterError::from_app_error(
+                    "The command-bus SSH command history list operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn run_ssh_command(
+        &self,
+        input: SshDiagnosticInput,
+    ) -> Result<SshDiagnosticResult, CommandBusAdapterError> {
+        self.run_execution(self.bus.run_ssh_command(input))
+            .map_err(|e| {
+                CommandBusAdapterError::from_ssh_app_error(
+                    "The command-bus SSH command failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn list_ssh_tasks(&self, workspace_id: &str) -> Result<Vec<SshTask>, CommandBusAdapterError> {
+        self.run(self.bus.list_ssh_tasks(workspace_id.to_string()))
+            .map_err(|e| {
+                CommandBusAdapterError::from_app_error(
+                    "The command-bus SSH task list operation failed.",
+                    &e,
+                )
+            })
+    }
+
+    fn reorder_ssh_tasks(
+        &self,
+        input: SshTasksReorderInput,
+    ) -> Result<Vec<SshTask>, CommandBusAdapterError> {
+        self.run(self.bus.reorder_ssh_tasks(input)).map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task reorder operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn get_ssh_task(
+        &self,
+        workspace_id: &str,
+        task_id: &str,
+    ) -> Result<SshTaskDetail, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .get_ssh_task(workspace_id.to_string(), task_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task detail operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn save_ssh_task(
+        &self,
+        input: SshTaskSaveInput,
+    ) -> Result<SshTaskDetail, CommandBusAdapterError> {
+        self.run(self.bus.save_ssh_task(input)).map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task save operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn duplicate_ssh_task(
+        &self,
+        workspace_id: &str,
+        task_id: &str,
+    ) -> Result<SshTaskDetail, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .duplicate_ssh_task(workspace_id.to_string(), task_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task duplicate operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn delete_ssh_task(
+        &self,
+        workspace_id: &str,
+        task_id: &str,
+    ) -> Result<(), CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .delete_ssh_task(workspace_id.to_string(), task_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task delete operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn run_ssh_task(&self, input: SshTaskRunInput) -> Result<SshTaskRun, CommandBusAdapterError> {
+        self.run(self.bus.run_ssh_task(input)).map_err(|e| {
+            CommandBusAdapterError::from_ssh_app_error(
+                "The command-bus SSH task execution failed.",
+                &e,
+            )
+        })
+    }
+
+    fn cancel_ssh_task_run(
+        &self,
+        input: SshTaskCancelInput,
+    ) -> Result<SshTaskRun, CommandBusAdapterError> {
+        self.run(self.bus.cancel_ssh_task_run(input)).map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task cancellation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn list_ssh_task_runs(
+        &self,
+        workspace_id: &str,
+        task_id: &str,
+    ) -> Result<Vec<SshTaskRun>, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .list_ssh_task_runs(workspace_id.to_string(), task_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task run list operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn read_ssh_task_run_log(
+        &self,
+        workspace_id: &str,
+        run_id: &str,
+    ) -> Result<String, CommandBusAdapterError> {
+        self.run(
+            self.bus
+                .read_ssh_task_run_log(workspace_id.to_string(), run_id.to_string()),
+        )
+        .map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task log read operation failed.",
+                &e,
+            )
+        })
+    }
+
+    fn clear_ssh_task_runs(
+        &self,
+        input: SshTaskCleanupInput,
+    ) -> Result<SshTaskCleanupResult, CommandBusAdapterError> {
+        self.run(self.bus.clear_ssh_task_runs(input)).map_err(|e| {
+            CommandBusAdapterError::from_app_error(
+                "The command-bus SSH task run cleanup failed.",
+                &e,
+            )
+        })
+    }
+}
+
+#[cfg(test)]
+#[allow(deprecated)]
+#[path = "command_bus_adapter_tests/mod.rs"]
+mod command_bus_adapter_tests;

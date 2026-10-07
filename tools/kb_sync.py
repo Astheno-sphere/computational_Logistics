@@ -31,6 +31,7 @@ SECRET_RE = re.compile(
     r"gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}"
     r"|sk-ant-[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xox[abprs]-[0-9A-Za-z-]{20,}|AIza[0-9A-Za-z_-]{35}"
     r"|[sr]k_live_[0-9A-Za-z]{20,}|npm_[A-Za-z0-9]{36}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}"
+    r"|[sp]k\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}"      # Mapbox access tokens
     r"|-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY")
 
 
@@ -176,6 +177,9 @@ def process(entry):
             res.update(status="unreachable", reason=r.stderr.strip()[-200:], license="?")
             return res
         res["commit"] = run(["git", "rev-parse", "HEAD"], cwd=repo).stdout.strip()
+        res["last_commit"] = run(["git", "log", "-1", "--format=%cs"], cwd=repo).stdout.strip()
+        if entry.get("per_folder"):
+            return per_folder(entry, repo, res)
         spdx, files = detect_license(repo)
         res["license"], res["license_files"] = spdx, files
         status, reason = decide(spdx, entry)
@@ -196,6 +200,33 @@ def process(entry):
                 res.update(status="link-only", reason="%.0f MB exceeds cap; add `include:` paths" % (b / 1e6))
             else:
                 res.update(files=n, bytes=b, skipped=skipped[:50], skipped_count=len(skipped))
+    res["fetched"] = datetime.date.today().isoformat()
+    return res
+
+
+def per_folder(entry, repo, res):
+    """Repos with no root license whose subfolders each carry their own (e.g. anthropics/skills).
+    Each child of `per_folder` is judged on its own license file; only open-source ones are copied."""
+    base = repo / entry["per_folder"]
+    dst_root = KB / "vendor" / entry["category"] / entry["id"]
+    if dst_root.exists():
+        shutil.rmtree(dst_root)
+    folders, n_tot, b_tot = {}, 0, 0
+    for child in sorted(p for p in base.iterdir() if p.is_dir()):
+        spdx, _ = detect_license(child)
+        status, reason = decide(spdx, {})
+        folders[child.name] = {"license": spdx, "status": status}
+        if status == "vendored":
+            n, b, _ = copy_tree(child, dst_root / entry["per_folder"] / child.name, None)
+            n_tot, b_tot = n_tot + n, b_tot + b
+    for p in repo.iterdir():            # root README / notices for context and credit
+        if p.is_file() and (p.name.lower().startswith("readme") or "notice" in p.name.lower()):
+            dst_root.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(p, dst_root / p.name)
+    ok = sum(1 for f in folders.values() if f["status"] == "vendored")
+    res.update(license="per-folder", folders=folders, files=n_tot, bytes=b_tot,
+               status="vendored" if ok else "link-only",
+               reason="%d of %d folders open source; the rest left out" % (ok, len(folders)))
     res["fetched"] = datetime.date.today().isoformat()
     return res
 

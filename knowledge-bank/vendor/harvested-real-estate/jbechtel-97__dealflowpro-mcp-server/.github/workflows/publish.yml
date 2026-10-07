@@ -1,0 +1,71 @@
+name: Publish to npm + MCP Registry
+
+on:
+  release:
+    types: [published]
+  # Manual run: publishes the version in package.json from the branch you pick. Exists so a
+  # failed publish can be retried without deleting and re-creating a release tag.
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # required for both npm provenance and MCP Registry OIDC
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm install
+      - run: npm test
+
+      # npm Trusted Publishing (OIDC): no NPM_TOKEN secret, so nothing to rotate or expire.
+      # npm 2026-10-06: granular tokens that bypass 2FA and publish directly are being
+      # deprecated (removed Jan 2027) and CI is told to use Trusted Publishing. The 9/7
+      # NPM_TOKEN failed this step with EOTP. Trusted publishing needs npm >= 11.5.1 (Node 22
+      # ships 10.x) and a trusted publisher configured on npmjs.com for
+      # jbechtel-97/dealflowpro-mcp-server + workflow file publish.yml.
+      - name: Update npm for trusted publishing
+        run: npm install -g npm@^11.5.1 && npm -v
+      # Idempotent: a retry after a partial failure must not try to publish the same version
+      # twice (npm refuses, and the whole run would fail before the MCP Registry step).
+      - name: Publish to npm (skipped if this version is already there)
+        run: |
+          v=$(node -p "require('./package.json').version")
+          if npm view "dealflowpro-mcp@$v" version >/dev/null 2>&1; then
+            echo "dealflowpro-mcp@$v is already on npm, skipping publish"
+          else
+            npm publish --provenance --access public
+          fi
+
+      # npm now says "your package is being processed and may take a few minutes". The MCP
+      # Registry validates that the npm version exists, so registering immediately fails
+      # with a 404 (seen 2026-10-06 on 1.2.7). Wait for it to be visible first.
+      - name: Wait for the npm version to be visible
+        run: |
+          v=$(node -p "require('./package.json').version")
+          for i in $(seq 1 36); do
+            if npm view "dealflowpro-mcp@$v" version >/dev/null 2>&1; then echo "dealflowpro-mcp@$v is visible on npm"; exit 0; fi
+            echo "waiting for dealflowpro-mcp@$v to appear on npm ($i/36)"; sleep 10
+          done
+          echo "::error::dealflowpro-mcp@$v never appeared on npm"; exit 1
+
+      # Publish updated server.json to the official MCP Registry.
+      # Without this step (added in the 1.2.3 republish window), npm got every
+      # tagged release but the registry stayed stuck on whatever the most recent
+      # manual `mcp-publisher publish` left — 1.0.1 through the 1.1.x/1.2.x series.
+      # GitHub OIDC auth: zero secrets, server.json's `name: io.github.<owner>/...`
+      # binds the publish identity to this repo automatically.
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin mcp-publisher
+          chmod +x /usr/local/bin/mcp-publisher
+
+      - name: Publish to MCP Registry
+        run: |
+          mcp-publisher login github-oidc
+          mcp-publisher publish ./server.json

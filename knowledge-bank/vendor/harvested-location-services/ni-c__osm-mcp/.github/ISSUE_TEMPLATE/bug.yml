@@ -1,0 +1,41 @@
+name: Bug report
+description: Something behaves wrongly or breaks
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 'osm-mcp version'
+      placeholder: '0.1.0 (npm version, docker tag or commit)'
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: Backend service
+      description: >-
+        Which service misbehaves (Nominatim, Photon, OSRM, Overpass, Valhalla,
+        OpenRouteService) — and whether you use the public instance or a
+        self-hosted one.
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: 'Claude Code, Claude Desktop, Codex, MCP Inspector, …'
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you called, what you expected, what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: >-
+        Tool result or stderr. Please redact API keys and private locations —
+        this issue is public.
+      render: text

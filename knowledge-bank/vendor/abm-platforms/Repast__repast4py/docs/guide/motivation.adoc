@@ -1,0 +1,200 @@
+:fn-workflow-covid: footnote:[Ozik, J., Wozniak, J. M., Collier, N., Macal, C. M., & Binois, M. (2021). A population data-driven workflow for COVID-19 modeling and learning. The International Journal of High Performance Computing Applications, 35(5), 483–499. https://doi.org/10.1177/10943420211035164]
+:fn-extreme-scale: footnote:[Ozik, J., Collier, N. T., Wozniak, J. M., Macal, C. M., & An, G. (2018). Extreme-Scale Dynamic Exploration of a Distributed Agent-Based Model With the EMEWS Framework. IEEE Transactions on Computational Social Systems, 5(3), 884–895. https://doi.org/10.1109/TCSS.2018.2859189]
+:fn-r4py: footnote:[Collier, N. T., Ozik, J., & Tatara, E. R. (2020). Experiences in Developing a Distributed Agent-based Modeling Toolkit with Python. 2020 IEEE/ACM 9th Workshop on Python for High-Performance and Scientific Computing (PyHPC), 1–12. https://doi.org/10.1109/PyHPC51966.2020.00006]
+
+== Getting Started
+Repast for Python (Repast4Py) is the newest member of the https://repast.github.io[Repast Suite] of free and open source agent-based modeling and simulation software.
+It builds on https://repast.github.io/repast_hpc.html[Repast HPC], and provides the ability to build large, distributed agent-based models (ABMs) that span multiple processing cores. 
+Distributed ABMs enable the development of complex systems models that capture the scale and relevant details of many problems of societal importance.{wj}{fn-workflow-covid}{wj}{fn-extreme-scale}
+Where Repast HPC is implemented in C++ and is more HPC expert focused, Repast4Py is a Python package and is designed to provide an easier on-ramp for researchers from diverse scientific communities to apply large-scale distributed ABM methods. Repast4Py is released under the BSD-3 open source license, and leverages https://numba.pydata.org[Numba], https://numpy.org[NumPy], and https://pytorch.org[PyTorch] packages, and the Python C API 
+to create a scalable modeling system that can exploit the largest HPC resources and emerging computing architectures. See our paper on Repast4Py for additional information about the design and implementation.{wj}{fn-r4py}
+
+=== Requirements
+
+The default multiprocess distributed version of Repast4Py can run on Linux, macOS and Windows
+provided there is a working MPI implementation installed and mpi4py is supported. On Windows,
+we recommend using the Windows Subsystem for Linux (WSL) and following the Linux install
+instructions. Installation instructions for
+WSL can be found https://docs.microsoft.com/en-us/windows/wsl/install[here].
+
+A native Windows install that does not require MPI or
+a C/C++ compiler is also available. Installation instructions are
+https://repast.github.io/repast4py.site/windows_install.html[here]. 
+This mode can be used to develop models that are amenable to Python's built-in multiprocessing
+or thread-based parallelism, enabling forms of parallelism other than distributed MPI.
+
+NOTE: A non-mpi install is also available for Linux and Mac, but a C/C++
+compiler is currently still required. See <<single_rank_install>>.
+
+Repast4Py also requires PyTorch. On Linux, the default PyTorch wheel on PyPI
+bundles NVIDIA CUDA libraries; if you have no NVIDIA GPU, see
+<<cpu_torch_install>> for installing the smaller CPU-only build
+**before** installing Repast4Py.
+
+==== MPI Installation
+
+Under Linux, MPI can be installed using your OS's package manager. For example, 
+under Ubuntu 24.04 (and thus WSL), the mpich MPI implementation can be installed with:
+
+.Linux and WSL
+[source,bash]
+----
+$ sudo apt install mpich
+----
+
+Installation instructions for MPI on macOS can be found {website}/macos_mpi_install.html[here].
+
+A typical campus cluster, or HPC resource will have MPI and mpi4py installed.
+Check the resource's documentation on available software for more details.
+
+=== Installation
+
+Repast4Py can be downloaded and installed from PyPI using pip. 
+Since Repast4Py includes native MPI {cpp} code that needs to be compiled,
+the C compiler `CC` environment variable must be set
+to the `mpicxx` (or `mpic++`) compiler wrapper provided by your MPI installation.
+Depending on the operating system, the `CXX` variable may also need to be set.
+
+.Linux, macOS, and WSL
+[source,bash]
+----
+env CC=mpicxx CXX=mpicxx pip install repast4py
+----
+
+NOTE: If you see an error message about a missing `python.h` header file when
+installing Repast4Py under Ubuntu (or other Linuxes), you will need to install
+a python dev package using your OS's package manager. For example, assuming
+Python 3.12, `sudo apt install python3.12-dev` will work for Ubuntu.
+
+The preferred install is into a Python virtual environment.
+
+.Linux, macOS, and WSL
+[source,bash]
+----
+$ python3 -m venv path/to/repast4py_venv
+$ source path/to/repast4py_venv/bin/activate
+(repast4py_venv) $ env CC=mpicxx CXX=mpicxx pip install repast4py
+----
+
+The environment only needs to be created once with `python3 -m venv ...`,
+but does need to be sourced in order to be used. For more
+more information see the `venv` Python documenation
+https://docs.python.org/3/library/venv.html[here]
+
+NOTE: Using Repast4Py in a conda environment can have issues. Conda may
+install its own MPI distribution, and its own C/C++ compiler. These
+can conflict with those installed on the host OS. Using a non-conda
+Python virtual environment is recommended.
+
+
+[[single_rank_install]]
+==== No MPI Installation
+
+Repast4Py can also be installed in a *no-mpi* mode that requires neither a
+native MPI installation nor mpi4py.
+
+A C++ compiler and the Python development headers are still required to compile
+Repast4Py's native extensions, but no MPI compiler wrapper is needed. Set the
+`R4PY_NO_MPI` environment variable when installing:
+
+.Linux, macOS, and WSL
+[source,bash]
+----
+env R4PY_NO_MPI=1 pip install repast4py
+----
+
+NOTE: A no-mpi installation can only be run as a single process. Launching it
+across multiple processes (e.g. `mpirun -n 2`) is an error and the program will exit;
+for distributed multi-rank runs use the default installation above with a working
+MPI.
+
+IMPORTANT: Do not install the no-mpi version and the mpi version of Repast4Py in the same Python environment.
+
+[[cpu_torch_install]]
+==== CPU-only PyTorch
+
+Repast4Py uses PyTorch in its value layer raster implementation,
+and the default Linux PyTorch wheels on PyPI with GPU support can be very large
+(e.g. several gigabytes). For models that do not use value layers or for
+non-GPU Linux environments, the CPU-only build can be used.
+
+This is only relevant on Linux. The macOS and Windows wheels on PyPI are CPU-only already.
+A cluster or HPC resource may also provide PyTorch itself, so check the resource's
+documentation before installing your own. Install the
+CPU-only build from PyTorch's own package index _before_ installing Repast4Py:
+
+.Linux and WSL
+[source,bash]
+----
+$ pip install torch --index-url https://download.pytorch.org/whl/cpu
+$ env CC=mpicxx CXX=mpicxx pip install repast4py
+----
+
+The same two steps work for a no-mpi installation,
+substituting `env R4PY_NO_MPI=1 pip install repast4py` for the
+second command.
+
+The CPU-only wheels carry a `+cpu` version suffix that pip prefers over the plain
+version.
+
+To check which build is installed:
+
+.Linux and WSL
+[source,bash]
+----
+$ python -c "import torch; print(torch.__version__)"
+2.14.0+cpu
+----
+
+A `+cpu` suffix is the CPU-only build. A plain version number, or a `+cu...` suffix,
+is a CUDA build.
+
+=== Documentation
+
+* link:./user_guide.html[User's Guide] (This document)
+* {website}/apidoc/index.html[API Docs]
+* {website}/examples/examples.html[Example Models]
+
+=== Contact and Support
+
+* https://github.com/Repast/repast4py/issues[GitHub Issues]
+* https://github.com/Repast/repast4py[GitHub Repository]
+
+
+In addition to filing issues on GitHub, support is also available via
+https://stackoverflow.com/questions/tagged/repast4py[Stack Overflow]. 
+Please use the `repast4py` tag to ensure that we are notified of your question. 
+Software announcements will be made on the 
+http://lists.sourceforge.net/lists/listinfo/repast-interest[repast-interest] mailing list.
+
+Jonathan Ozik is the Repast project lead. Please contact him through 
+the https://www.anl.gov/staff-directory[Argonne Staff Directory] if you
+have project-related questions.
+
+
+== Why Repast4Py?
+Modern high-performance computing (HPC) capabilities have allowed for large-scale computational modeling and experimentation. 
+HPC clusters and supercomputers -- such as those hosted by universities, national laboratories, and cloud computing providers -- can have thousands or more processor cores available, allowing for high concurrency. 
+Even individual CPUs now typically contain multiple cores, which are capable of running concurrently.
+Distributed ABMs attempt to leverage this hardware by distributing an individual simulation over multiple processes running in parallel. 
+
+However, in order to take advantage of these increasingly ubiquitous parallel computing resources, a computational model must first be refashioned to run on multiple processors. 
+Adapting a computational model that was built for a single processor to run on multiple processors can be a nontrivial endeavor, both conceptually and practically.
+Repast4Py aims to ease the transition to distributed ABMs by hiding much of the complexity.
+
+
+=== Distributed computing a natural fit for agent-based modeling
+A typical agent-based simulation consists of a population of agents each of which performs some behavior each timestep or at some frequency.
+In practice, this is often implemented as a loop over the agent population in which each agent executes its behavior. 
+The time it takes to complete the loop depends on the number of agents and the complexity of the behavior.
+By distributing the agent population across multiple processes running in parallel, each process executes its own loop over only a subset of the population, allowing for larger agent populations and more complex behavior.
+
+=== Repast4Py and the broader Repast family
+While Repas4Py is meant to make the development of distributed ABMs easier, we encourage users new to the Repast Suite to look through the different versions of https://repast.github.io/docs.html[Repast] to determine which toolkit is most appropriate for their needs. Of note, we recommend users new to agent-based modeling to first check out https://repast.github.io/repast_simphony.html[Repast Simphony] to develop a better understanding of the concepts behind agent-based modeling and learn how to quickly build such models.
+
+The following sections will provide some conceptual background for a Repast-style simulation, describe how such a simulation is distributed across multiple processes with Repast4Py, and end with providing a few basic tutorials.
+
+
+
+
+

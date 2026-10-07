@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: '0.26'
+    hooks:
+      - id: validate-pyproject
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 9.0.1
+    hooks:
+      - id: isort
+        language_version: python
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.1
+    hooks:
+      - id: mypy
+        language_version: python
+        # No reason to run if only tests have changed. They intentionally break typing.
+        exclude: tests/.*
+        additional_dependencies:
+          - pydantic~=2.0

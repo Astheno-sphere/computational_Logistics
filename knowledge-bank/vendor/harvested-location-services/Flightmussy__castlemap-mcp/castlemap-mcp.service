@@ -1,0 +1,24 @@
+[Unit]
+Description=Castlemap MCP server (read-only Model Context Protocol endpoint over castles.geojson)
+Documentation=https://thecastlemap.com/data/
+After=network.target
+
+[Service]
+# Set ExecStart to your node path (`which node`).
+ExecStart=/usr/bin/node /opt/castlemap-mcp/server.mjs
+Environment=PORT=8891
+Environment=HOST=127.0.0.1
+Environment=CASTLES_GEOJSON=/var/www/castlemap/castles.geojson
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadOnlyPaths=/var/www/castlemap
+RestrictAddressFamilies=AF_INET AF_INET6
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

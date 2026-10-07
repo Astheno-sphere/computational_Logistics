@@ -1,0 +1,138 @@
+"""Tests for the split lookup tools introduced in 0.5.0.
+
+The original single `get_ip_details` tool was split into:
+- `ipinfo_lookup_my_ip()` — no args; the calling client's IP.
+- `ipinfo_lookup_ips(ips, detail="summary")` — list lookup; summary omits heavy blocks.
+
+The legacy alias was removed in 0.6.0.
+"""
+
+from mcp_server_ipinfo.models import IPDetails
+
+
+class TestIpinfoLookupMyIp:
+    """ipinfo_lookup_my_ip() takes no arguments and returns a single IPDetails."""
+
+    async def test_returns_single_details(self, mock_context_with_state):
+        from mcp_server_ipinfo.server import ipinfo_lookup_my_ip
+
+        result = await ipinfo_lookup_my_ip(ctx=mock_context_with_state)
+        assert isinstance(result, IPDetails)
+        # The conftest mock returns 203.0.113.1 for None ip_address.
+        assert str(result.ip) == "203.0.113.1"
+
+    async def test_caches_result(self, mock_context_with_state):
+        from mcp_server_ipinfo.server import ipinfo_lookup_my_ip
+
+        cache = mock_context_with_state.lifespan_context["cache"]
+        await ipinfo_lookup_my_ip(ctx=mock_context_with_state)
+        # The IP returned by the mock should now sit in the cache.
+        cached = await cache.get("203.0.113.1")
+        assert cached is not None
+
+
+class TestIpinfoLookupIps:
+    """ipinfo_lookup_ips returns a list and supports a `detail` toggle."""
+
+    async def test_full_detail_returns_models(self, mock_context_with_state):
+        from mcp_server_ipinfo.server import ipinfo_lookup_ips
+
+        results = await ipinfo_lookup_ips(
+            ips=["8.8.8.8"], detail="full", ctx=mock_context_with_state
+        )
+        assert len(results) == 1
+        assert isinstance(results[0], IPDetails)
+        assert results[0].city == "Mountain View"
+
+    async def test_summary_is_the_default(self, mock_context_with_state):
+        """detail defaults to "summary" (token-lean projected dicts)."""
+        from mcp_server_ipinfo.server import ipinfo_lookup_ips
+
+        results = await ipinfo_lookup_ips(ips=["8.8.8.8"], ctx=mock_context_with_state)
+        assert len(results) == 1
+        # Default summary yields projected dicts, not IPDetails models.
+        assert isinstance(results[0], dict)
+        assert results[0]["city"] == "Mountain View"
+        assert "continent" not in results[0]
+
+    async def test_summary_detail_omits_heavy_blocks(
+        self, mock_context_with_state, sample_ip_details
+    ):
+        """Summary mode OMITS the heavy nested blocks entirely for token savings.
+
+        The blocks are absent from the projected dict (not merely nulled), while
+        full mode keeps the IPDetails model with every field present.
+        """
+        from mcp_server_ipinfo.server import ipinfo_lookup_ips
+
+        cache = mock_context_with_state.lifespan_context["cache"]
+        # Pre-seed cache with rich IPDetails containing the heavy fields.
+        rich = sample_ip_details.model_copy(
+            update={
+                "continent": {"code": "NA", "name": "North America"},
+                "country_flag": {"emoji": "🇺🇸", "unicode": "U+1F1FA U+1F1F8"},
+                "country_currency": {"code": "USD", "symbol": "$"},
+                "isEU": False,
+            }
+        )
+        await cache.set("8.8.8.8", rich)
+
+        full = await ipinfo_lookup_ips(
+            ips=["8.8.8.8"], detail="full", ctx=mock_context_with_state
+        )
+        summary = await ipinfo_lookup_ips(
+            ips=["8.8.8.8"], detail="summary", ctx=mock_context_with_state
+        )
+
+        # Full mode (IPDetails model) preserves the heavy blocks.
+        assert full[0].continent is not None
+        assert full[0].country_flag is not None
+        # Summary mode (projected dict) omits the heavy keys entirely.
+        for heavy in (
+            "continent",
+            "country_flag",
+            "country_flag_url",
+            "country_currency",
+            "abuse",
+            "domains",
+        ):
+            assert heavy not in summary[0], f"{heavy} should be omitted in summary"
+        # Core geolocation fields survive.
+        assert summary[0]["city"] == "Mountain View"
+        assert summary[0]["country"] == "US"
+
+
+class TestRenamedTools:
+    """The remaining two tools are renamed with the ipinfo_ prefix."""
+
+    async def test_ipinfo_check_residential_proxy(self, mock_context_with_state):
+        from mcp_server_ipinfo.server import ipinfo_check_residential_proxy
+
+        result = await ipinfo_check_residential_proxy(
+            ip="142.250.80.46", ctx=mock_context_with_state
+        )
+        assert str(result.ip) == "142.250.80.46"
+        assert result.service == "Luminati"
+
+    async def test_ipinfo_generate_map_url(self, mock_context_with_state):
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from mcp_server_ipinfo.models import MapResult
+        from mcp_server_ipinfo.server import ipinfo_generate_map_url
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "reportUrl": "https://ipinfo.io/map/demo/xyz"
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        with patch("mcp_server_ipinfo.ipinfo.httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post = AsyncMock(
+                return_value=mock_response
+            )
+            result = await ipinfo_generate_map_url(
+                ips=["8.8.8.8", "1.1.1.1"], ctx=mock_context_with_state
+            )
+        assert isinstance(result, MapResult)
+        assert str(result.url) == "https://ipinfo.io/map/demo/xyz"
+        assert result.mapped_ip_count == 2

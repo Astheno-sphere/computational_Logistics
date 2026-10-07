@@ -1,0 +1,104 @@
+[package]
+name = "emem-api-rest"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "HTTP surface for emem agents and humans (REST + MCP JSON-RPC + OpenAPI)"
+
+[dependencies]
+emem-core       = { workspace = true }
+emem-fact       = { workspace = true }
+emem-attest     = { workspace = true }
+emem-trace      = { workspace = true }
+emem-claim      = { workspace = true }
+emem-cache      = { workspace = true }
+emem-storage    = { workspace = true }
+emem-primitives = { workspace = true }
+emem-intent     = { workspace = true }
+emem-mcp        = { workspace = true }
+# The verdict engine. Pure: the responder reuses its policy pipeline and
+# claim detector over local storage, and signs the answer with its own
+# identity rather than standing up a second key and a second log.
+emem-guard      = { workspace = true }
+emem-fetch      = { workspace = true }
+axum            = { workspace = true }
+tower           = { workspace = true, features = ["limit", "load-shed"] }
+tower-http      = { workspace = true }
+tokio           = { workspace = true }
+tokio-stream    = { workspace = true }
+futures-util    = { workspace = true }
+reqwest         = { workspace = true }
+emem-codec      = { workspace = true }
+serde           = { workspace = true }
+serde_json      = { workspace = true }
+thiserror       = { workspace = true }
+data-encoding   = { workspace = true }
+ciborium        = { workspace = true }
+async-trait     = { workspace = true }
+ed25519-dalek   = { workspace = true }
+blake3          = { workspace = true }
+# sha2 is used only for hash-based CSP — sha256 of every inline
+# <script>/<style> body is computed once at startup and embedded in
+# the Content-Security-Policy header so we can drop 'unsafe-inline'.
+# Mozilla Observatory upgrades us from A to A+ once 'unsafe-inline'
+# is gone; security questionnaires also stop flagging it.
+sha2            = "0.10"
+# Vault memory kind (v0.0.8): AEAD-seal secrets at rest. ChaCha20-Poly1305
+# with a per-responder key derived via HKDF-SHA512 from the responder
+# ed25519 secret. Versions pinned to the RustCrypto 0.10/0.12 line that
+# matches the crypto-common 0.1 / generic-array 0.14 ecosystem already in
+# Cargo.lock (no shared-dep bump).
+chacha20poly1305 = "0.10"
+hkdf            = "0.12"
+# OsRng for the per-seal 96-bit nonce (vault).
+rand            = { workspace = true }
+tracing         = { workspace = true }
+sled            = { workspace = true }
+# PNG encoder for the multimodal RGB-scene tool
+# (/v1/cells/{cell64}/scene.png + emem_cell_scene_rgb MCP).
+png             = "0.17"
+# Sentence embedder for the topic router (`/v1/ask` semantic dispatch,
+# replaces the hardcoded TOPIC_KEYWORDS / TOPIC_BANDS / TOPIC_ALGORITHMS
+# tables shipped through 0.0.2).
+#
+# Two backends, switchable at runtime via `EMEM_TOPIC_BACKEND`:
+#
+#   1. `ort` (default) — direct `ort` 2.x + `tokenizers` BERT-style
+#      embedder, no fastembed-rs wrapper. Loads ONNX + tokenizer.json
+#      from a local directory (`EMEM_TOPIC_MODEL_DIR`, default
+#      `<EMEM_DATA>/models/bge-base-en-v1.5`). Defaults to
+#      `BAAI/bge-base-en-v1.5` (110 M params, 768-D, MTEB ~63) but any
+#      BERT/Roberta-family ONNX with input names
+#      `input_ids`/`attention_mask`/`token_type_ids` and a
+#      `last_hidden_state` output works. Pooling = CLS; output is
+#      L2-normalised. Microsoft's bundled CPU ORT (via the
+#      `download-binaries` feature) loads in ~1.2 s and runs the
+#      25-topic centroid pass in ~50 ms total — the CUDA build at
+#      /opt/onnxruntime-1.22.0-cuda12 deadlocks on session create on
+#      this host (verified with isolated /tmp/orttest), so we don't
+#      use it. GPU re-enable goes through a known-good cuda dylib.
+#
+#   2. `model2vec` (fallback) — static-distillation token-lookup
+#      embedder, `minishlab/potion-base-8M`, 256-D, ~32 MB, sub-µs
+#      inference, pure Rust. Used in air-gapped / no-ORT deployments
+#      and as the unit-test backend. `fancy-regex` keeps the build
+#      pure Rust (avoids the libonig C dep).
+ort             = { version = "=2.0.0-rc.12", default-features = false, features = ["ndarray", "std", "api-24", "download-binaries", "tls-rustls"] }
+ort-ndarray     = { package = "ndarray", version = "0.17" }
+tokenizers      = { version = "0.22", default-features = false, features = ["onig"] }
+model2vec-rs    = { version = "0.1", default-features = false, features = ["fancy-regex"] }
+# Static-embedded mdbook docs site. Built tree at `docs/book/` is baked into
+# the signed binary so the docs site travels with the server — same model as
+# the rest of `web/` (see the `include_str!` block in `lib.rs`).
+include_dir     = { version = "0.7", default-features = false }
+
+[dev-dependencies]
+# Fresh ed25519 signing keys for the memory-attester test surface
+# (memory_typing / memory_acl / memory_events tests in lib.rs). The
+# main crate doesn't need rand at runtime — the responder identity is
+# already initialised on boot from a persisted secret.
+rand = { workspace = true }
+# Scratch directories for the topic-router centroid-cache tests, which
+# write real files so the truncation / trailing-byte / wrong-key paths
+# are exercised against the filesystem rather than a mock.
+tempfile = "3"

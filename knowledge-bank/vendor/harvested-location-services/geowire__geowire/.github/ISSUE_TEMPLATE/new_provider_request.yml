@@ -1,0 +1,43 @@
+name: New provider request
+description: Request (or volunteer to build) a new geo data provider
+labels: ["provider", "good first issue"]
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: Provider name
+      placeholder: "Mapbox / Kakao / Naver / Foursquare / HERE / ..."
+    validations:
+      required: true
+  - type: input
+    id: docs
+    attributes:
+      label: API documentation URL
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: Capabilities it should support
+      options:
+        - label: search
+        - label: geocode
+        - label: reverseGeocode
+        - label: getPlace
+        - label: autocomplete
+  - type: dropdown
+    id: auth
+    attributes:
+      label: Authentication
+      options: [none, apiKey, oauth]
+    validations:
+      required: true
+  - type: textarea
+    id: terms
+    attributes:
+      label: Caching / attribution terms
+      description: "Any known constraints? (e.g. can't cache raw responses, attribution string required, place-ID storage rules)"
+  - type: checkboxes
+    id: volunteer
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to build this myself (see CONTRIBUTING.md — "Write a provider in 30 minutes")

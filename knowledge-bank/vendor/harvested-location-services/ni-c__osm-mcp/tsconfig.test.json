@@ -1,0 +1,23 @@
+{
+  "// why": [
+    "tsconfig.json builds dist/ and therefore includes only src/. That leaves",
+    "test/ compiled by nothing: vitest transpiles it without typechecking, so a",
+    "new field on Config arrives undefined in every test server and no tool",
+    "says a word. `npm run typecheck` uses this file to check both trees",
+    "without emitting."
+  ],
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "rootDir": ".",
+    "allowJs": true
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "scripts/**/*",
+    "*.config.ts",
+    "*.config.js"
+  ]
+}

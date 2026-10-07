@@ -1,0 +1,167 @@
+"""
+
+Calculation of willingness to pay
+=================================
+
+We calculate and plot willingness to pay.
+Details about this example are available in Section 4 of `Bierlaire (2018)
+Calculating indicators with PandasBiogeme
+<http://transp-or.epfl.ch/documents/technicalReports/Bier18a.pdf>`_
+
+Michel Bierlaire, EPFL
+Sat Jun 28 2025, 21:00:12
+
+"""
+
+import sys
+
+import numpy as np
+import pandas as pd
+from IPython.core.display_functions import display
+from biogeme.biogeme import BIOGEME
+from biogeme.results_processing import EstimationResults
+
+try:
+    import matplotlib.pyplot as plt
+
+    can_plot = True
+except ModuleNotFoundError:
+    can_plot = False
+from biogeme.expressions import Derive
+from biogeme.data.optima import read_data, normalized_weight
+from scenarios import scenario
+
+# %%
+# Obtain the specification for the default scenario
+# The definition of the scenarios is available in ``scenarios.py``.
+v, _, _, _ = scenario()
+
+v_pt = v[0]
+v_car = v[1]
+
+# %%
+# Calculation of the willingness to pay using derivatives.
+wtp_pt_time = Derive(v_pt, 'TimePT') / Derive(v_pt, 'MarginalCostPT')
+wtp_car_time = Derive(v_car, 'TimeCar') / Derive(v_car, 'CostCarCHF')
+
+# %%
+# Formulas to simulate.
+simulate = {
+    'weight': normalized_weight,
+    'WTP PT time': wtp_pt_time,
+    'WTP CAR time': wtp_car_time,
+}
+
+# %%
+# Read the data
+database = read_data()
+
+# %%
+# Create the Biogeme object.
+the_biogeme = BIOGEME(database, simulate)
+
+# %%
+# Read the estimation results from the file.
+try:
+    results = EstimationResults.from_yaml_file(
+        filename='saved_results/b02estimation.yaml'
+    )
+except FileNotFoundError:
+    sys.exit(
+        'Run first the script b02estimation.py in order to generate '
+        'the file b02estimation.yaml.'
+    )
+
+# %%
+# `simulated_values` is a Pandas dataframe with the same number of rows as
+# the database, and as many columns as formulas to simulate.
+simulated_values = the_biogeme.simulate(results.get_beta_values())
+display(simulated_values)
+
+# %%
+# Note the multiplication by 60 to have the valus of time per hour and not per minute.
+wtpcar = (60 * simulated_values['WTP CAR time'] * simulated_values['weight']).mean()
+
+# %%
+# Calculate confidence intervals
+b = results.get_betas_for_sensitivity_analysis()
+
+# %%
+# Returns data frame containing, for each simulated value, the left
+# and right bounds of the confidence interval calculated by simulation.
+left, right = the_biogeme.confidence_intervals(b, 0.9)
+
+# %%
+# Lower bounds of the confidence intervals
+display(left)
+# %%
+# Upper bounds of the confidence intervals
+display(right)
+
+# %%
+# Lower and upper bounds of the willingness to pay.
+wtpcar_left = (60 * left['WTP CAR time'] * left['weight']).mean()
+wtpcar_right = (60 * right['WTP CAR time'] * right['weight']).mean()
+print(
+    f'Average WTP for car: {wtpcar:.3g} ' f'CI:[{wtpcar_left:.3g}, {wtpcar_right:.3g}]'
+)
+
+# %%
+# In this specific case, there are only two distinct values in the
+# population: for workers and non workers
+print(
+    'Unique values:      ',
+    [f'{i:.3g}' for i in 60 * simulated_values['WTP CAR time'].unique()],
+)
+
+
+# %%
+# Function calculating the willingness to pay for a group.
+def wtp_for_subgroup(the_filter: 'pd.Series[np.bool_]') -> tuple[float, float, float]:
+    """
+    Check the value for groups of the population. Define a function that
+    works for any filter to avoid repeating code.
+
+    :param the_filter: pandas filter
+
+    :return: willingness-to-pay for car and confidence interval
+    """
+    size = the_filter.sum()
+    sim = simulated_values[the_filter]
+    total_weight = sim['weight'].sum()
+    weight = sim['weight'] * size / total_weight
+    _wtpcar = (60 * sim['WTP CAR time'] * weight).mean()
+    _wtpcar_left = (60 * left[the_filter]['WTP CAR time'] * weight).mean()
+    _wtpcar_right = (60 * right[the_filter]['WTP CAR time'] * weight).mean()
+    return _wtpcar, _wtpcar_left, _wtpcar_right
+
+
+# %%
+# Full time workers.
+a_filter = database.dataframe['OccupStat'] == 1
+w, l, r = wtp_for_subgroup(a_filter)
+print(f'WTP car for workers: {w:.3g} CI:[{l:.3g}, {r:.3g}]')
+
+# %%
+# Females.
+a_filter = database.dataframe['Gender'] == 2
+w, l, r = wtp_for_subgroup(a_filter)
+print(f'WTP car for females: {w:.3g} CI:[{l:.3g}, {r:.3g}]')
+
+# %%
+# Males.
+a_filter = database.dataframe['Gender'] == 1
+w, l, r = wtp_for_subgroup(a_filter)
+print(f'WTP car for males  : {w:.3g} CI:[{l:.3g}, {r:.3g}]')
+
+# %%
+# We plot the distribution of WTP in the population. In this case,
+# there are only two values
+if can_plot:
+    plt.hist(
+        60 * simulated_values['WTP CAR time'],
+        weights=simulated_values['weight'],
+    )
+    plt.xlabel('WTP (CHF/hour)')
+    plt.ylabel('Individuals')
+    plt.show()

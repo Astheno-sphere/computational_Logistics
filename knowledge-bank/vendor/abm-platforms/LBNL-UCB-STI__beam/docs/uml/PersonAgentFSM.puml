@@ -1,0 +1,59 @@
+@startuml
+
+scale 1000 width
+skinparam stateBorderColor #black
+skinparam stateFontStyle bold
+skinparam arrowColor #black
+
+' BeamAgent: States '
+state Uninitialized #grey
+Uninitialized: InitializeTrigger
+
+state Initialized #grey
+Initialized: ActivityStartTrigger
+
+'BeamAgent Transitions'
+[*] --> Uninitialized
+Uninitialized -> Initialized
+
+''''''''''''''''''''''''''
+' PersonAgent States'
+''''''''''''''''''''''''''
+state PerformingActivity #eb1921
+PerformingActivity: ActivityEndTrigger
+
+state ChoosingMode #eb1921
+ChoosingMode: BeginModeChoiceTrigger
+ChoosingMode: FinalizeModeChoiceTrigger
+
+state Traveling #eb1921{
+
+    state Waiting #eb1921{
+        Waiting: PersonDepartureTrigger
+        Waiting: PassengerScheduleEmptyTrigger
+        Waiting: NotifyLegStartTrigger
+    }
+
+    state Moving #eb1921{
+        Moving: NotifyLegEndTrigger
+    }
+
+    [*] --> Waiting
+    Waiting --> PerformingActivity
+    Waiting --> Waiting
+    Waiting --> Moving
+    Moving --> Moving
+    Moving --> Waiting
+    Moving --> PerformingActivity
+}
+
+''''''''''''''''''''''''''
+' PersonAgent Transitions'
+''''''''''''''''''''''''''
+Initialized --> PerformingActivity
+PerformingActivity --> ChoosingMode
+Traveling --> PerformingActivity
+ChoosingMode --> ChoosingMode
+ChoosingMode --> Waiting
+
+@enduml

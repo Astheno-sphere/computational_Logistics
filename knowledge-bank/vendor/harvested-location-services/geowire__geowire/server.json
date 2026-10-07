@@ -1,0 +1,60 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.geowire/geowire",
+  "description": "Place search, directions, isochrones & area analysis across 10 map providers. No API key to start.",
+  "repository": {
+    "url": "https://github.com/geowire/geowire",
+    "source": "github"
+  },
+  "version": "0.6.2",
+  "websiteUrl": "https://github.com/geowire/geowire",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@geowirehq/mcp",
+      "version": "0.6.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "GOOGLE_MAPS_API_KEY",
+          "description": "Optional. Enables the Google Maps Platform provider (BYOK). Without it, GeoWire runs OpenStreetMap-only with no key required.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "YELP_API_KEY",
+          "description": "Optional. Enables Yelp Fusion for US/Western business data — ratings, reviews, price, categories.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "CENSUS_API_KEY",
+          "description": "Optional (free). Enables US Census demographics (population, median age, household income) for area analysis.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "FOURSQUARE_API_KEY",
+          "description": "Optional. Enables Foursquare global POI data — categories, photos, popularity.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "GEOWIRE_INTERNAL_CSV",
+          "description": "Optional. Path to a CSV of your own places to register as a priority provider.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "GEOWIRE_CONFIG",
+          "description": "Optional. Path to a geowire.config.yaml for advanced routing/budget/provider settings.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}

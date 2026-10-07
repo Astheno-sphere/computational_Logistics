@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Zornade MCP</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        max-width: 42rem;
+        margin: 4rem auto;
+        padding: 0 1.25rem;
+        line-height: 1.55;
+      }
+      code, pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.95em;
+      }
+      pre {
+        background: rgba(127, 127, 127, 0.12);
+        padding: 0.85rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      h1 { margin-bottom: 0.25rem; }
+      .muted { opacity: 0.7; }
+      a { color: inherit; }
+    </style>
+  </head>
+  <body>
+    <h1>Zornade MCP</h1>
+    <p class="muted">
+      Model Context Protocol server for Italian cadastral data, geocoding and
+      administrative lists. Powered by the
+      <a href="https://api.zornade.com">Zornade API v2</a>.
+    </p>
+
+    <h2>Endpoint</h2>
+    <pre>https://mcp.zornade.com/mcp</pre>
+
+    <h2>Authentication</h2>
+    <p>
+      A free Zornade API key (<code>zrn_...</code>, from
+      <a href="https://app.zornade.com/api">app.zornade.com/api</a>) must be
+      sent as <code>x-api-key</code> header, <code>Authorization: Bearer</code>,
+      or <code>?api_key=</code> query parameter.
+    </p>
+
+    <h2>Tools</h2>
+    <pre>zornade_geocode_search   Forward geocoding (ANNCSU streets)
+zornade_geocode_reverse  Reverse geocoding by coordinates
+zornade_parcel_by_id     Enriched cadastral parcel profile
+zornade_parcel_locate    Parcels by point(s) or bounding box
+zornade_parcel_search    Parcels by comune, foglio, label
+zornade_admin_lists      Regions, provinces, municipalities</pre>
+
+    <h2>Connect (Claude Code)</h2>
+    <pre>claude mcp add zornade -t http https://mcp.zornade.com/mcp \
+  --header "x-api-key: zrn_YOUR_KEY"</pre>
+
+    <h2>Test</h2>
+    <pre>curl -X POST https://mcp.zornade.com/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "x-api-key: zrn_YOUR_KEY" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'</pre>
+
+    <p class="muted">
+      Documentation:
+      <a href="https://api.zornade.com">api.zornade.com</a> ·
+      <a href="https://app.zornade.com/api">API keys</a>
+    </p>
+  </body>
+</html>

@@ -1,0 +1,125 @@
+[project]
+name = "pymoo"
+description = "Multi-Objective Optimization in Python"
+authors = [{ name = "Julian Blank", email = "blankjul@outlook.com" }]
+readme = "README.rst"
+license = "Apache-2.0"
+classifiers = [
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
+    'Topic :: Scientific/Engineering',
+    'Topic :: Scientific/Engineering :: Artificial Intelligence',
+    'Topic :: Scientific/Engineering :: Mathematics',
+]
+keywords = ["optimization"]
+dynamic = ["version"]
+urls = { homepage = "https://pymoo.org" }
+requires-python = ">= 3.10"
+dependencies = [
+    "numpy>=1.19.3",
+    "scipy>=1.1",
+    "moocore>=0.3.1",
+    "autograd>=1.4",
+    "cma>=3.4.0",
+    "matplotlib>=3",
+    "alive_progress>=3.0",
+    "Deprecated>=1.2",
+]
+
+[build-system]
+# Build against numpy>=2.0: its C-ABI is backward-compatible, so a single wheel
+# loads on runtime numpy >=1.19 AND 2.x. An unpinned build numpy could compile
+# against 2.x while a 1.x runtime silently falls back to slow pure-Python.
+requires = ["setuptools>=77", "numpy>=2.0.0", "Cython>=0.29"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = { attr = "pymoo.version.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pymoo*"]
+
+# Docstrings: google convention (types live in annotations, not duplicated in
+# docstrings). Migrating numpy -> google module-by-module; the docs build renders
+# both via sphinx napoleon during the transition.
+[tool.ruff]
+line-length = 120
+# Whole-project (target-less `ruff check`/`format`) scopes to the package, matching
+# mypy's files=["pymoo"]; the non-source trees aren't part of the quality gate.
+# Per-file `pyclawd check <file>` still works on any explicitly-passed path.
+extend-exclude = ["docs", "examples", "tests", "benchmark", "pymoo/vendor"]
+
+[tool.ruff.lint]
+extend-select = ["D"]
+# Enforce docstring *style* (D2xx/D4xx) + module/package descriptions (D100/D104,
+# = the one-line-per-file convention). Do NOT mandate a docstring on every class/
+# method/function/init/magic — that's a separate "document the whole API" effort.
+ignore = ["D101", "D102", "D103", "D105", "D107"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+# The gate runs `mypy pymoo` (whole package, ~315 files). A bare module target
+# (files=["pymoo"]) collapses to the top module and checks only one file, so the
+# package is passed explicitly via typecheck_cmd. explicit_package_bases + mypy_path
+# keep module resolution stable.
+explicit_package_bases = true
+mypy_path = "."
+
+[project.optional-dependencies]
+dev = [
+    "numba",
+    "pytest",
+    "pytest-xdist",
+    # pyclawd provides the golden behavior-regression plugin (auto-registered via
+    # its pytest11 entry point): `@pytest.mark.golden` + return-capture, run as
+    # `pyclawd golden`. See tests/test_golden.py and the `golden` marker.
+    "pyclawd",
+    # pytest-xvfb auto-starts a virtual display when $DISPLAY is unset, so the
+    # live-animation examples (pyrecorder/opencv cv2.imshow) run headlessly in CI.
+    # Requires the system `xvfb` binary (apt-get install xvfb) — not a pip dep.
+    "pytest-xvfb",
+    "nbformat",
+    "jupyter",
+    "pyrecorder",
+    "optproblems",
+    "pandas",
+    "ipython",
+    "ipykernel",
+]
+parallelization = [
+    "joblib",
+    "dask[distributed]",
+    "ray[default]",
+]
+others = [
+    "optuna",
+    # comocma provides COMO-CMA-ES (pymoo.algorithms.moo.como_cmaes.COMOCMAES),
+    # a competitive multi-objective CMA-ES; imported lazily only when used.
+    "comocma",
+]
+visualization = [
+    # matplotlib (static plots) is already a core dependency; this extra adds the
+    # optional animation / video / live-streaming visualization backend.
+    "pyrecorder",
+]
+full = [
+    "numba",
+    "scikit-learn",
+    "pandas",
+    "pymoo[parallelization]",
+    "pymoo[others]",
+    "pymoo[visualization]",
+]
+
+

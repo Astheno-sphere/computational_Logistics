@@ -1,0 +1,343 @@
+{
+  "_description": "Centralized unit conversion reference for data display",
+  "_note": "Used when user requests data in different units than stored. Values are multipliers: stored_value * factor = target_value",
+  "_last_updated": "2026-01-16",
+  "_currency_note": "Currency conversions NOT included - exchange rates are time-dependent. See currencies_scraped.json for country->currency mapping. Future: exchange_rates data source with historical rates for time-aware conversion.",
+
+  "categories": {
+    "distance": {
+      "base_unit": "km",
+      "units": ["km", "mi", "m", "ft", "nmi"]
+    },
+    "area": {
+      "base_unit": "sq_km",
+      "units": ["sq_km", "sq_mi", "hectares", "acres", "sq_m"]
+    },
+    "mass": {
+      "_note": "Ambiguous 'ton' defaults to short_tons (US). Use 'metric ton' or 'tonne' for tonnes, 'long ton' for imperial.",
+      "base_unit": "kg",
+      "units": ["kg", "lb", "tonnes", "short_tons", "long_tons", "g", "oz"]
+    },
+    "volume": {
+      "_note": "barrels = oil barrels (42 US gallons). Not beer/wine barrels.",
+      "base_unit": "liters",
+      "units": ["liters", "gallons_us", "gallons_uk", "cubic_m", "barrels"]
+    },
+    "temperature": {
+      "base_unit": "celsius",
+      "units": ["celsius", "fahrenheit", "kelvin"],
+      "special": true
+    },
+    "energy": {
+      "base_unit": "joules",
+      "units": ["joules", "kwh", "btu", "mtoe", "exajoules", "twh"]
+    },
+    "emissions": {
+      "base_unit": "tonnes_co2",
+      "units": ["tonnes_co2", "kg_co2", "mt_co2", "gt_co2"]
+    },
+    "rate": {
+      "_note": "Rate conversions are context-dependent (days vary by month/year). Use derived_metric_units for per_capita.",
+      "base_unit": "per_year",
+      "units": ["per_year", "per_month", "per_day", "per_capita"],
+      "special": true
+    },
+    "currency": {
+      "_note": "Requires time-series exchange rates - not static multipliers",
+      "base_unit": "USD",
+      "units": ["USD", "EUR", "GBP", "JPY", "CNY", "local"],
+      "special": true,
+      "reference_file": "currencies_scraped.json",
+      "future_data_source": "exchange_rates"
+    }
+  },
+
+  "conversions": {
+    "distance": {
+      "km_to_mi": 0.621371,
+      "mi_to_km": 1.60934,
+      "km_to_m": 1000,
+      "m_to_km": 0.001,
+      "km_to_ft": 3280.84,
+      "ft_to_km": 0.0003048,
+      "km_to_nmi": 0.539957,
+      "nmi_to_km": 1.852,
+      "mi_to_m": 1609.34,
+      "mi_to_ft": 5280,
+      "m_to_ft": 3.28084,
+      "ft_to_m": 0.3048
+    },
+    "area": {
+      "sq_km_to_sq_mi": 0.386102,
+      "sq_mi_to_sq_km": 2.58999,
+      "sq_km_to_hectares": 100,
+      "hectares_to_sq_km": 0.01,
+      "sq_km_to_acres": 247.105,
+      "acres_to_sq_km": 0.00404686,
+      "sq_km_to_sq_m": 1000000,
+      "sq_m_to_sq_km": 0.000001,
+      "hectares_to_acres": 2.47105,
+      "acres_to_hectares": 0.404686,
+      "sq_mi_to_acres": 640,
+      "acres_to_sq_mi": 0.0015625
+    },
+    "mass": {
+      "kg_to_lb": 2.20462,
+      "lb_to_kg": 0.453592,
+      "kg_to_g": 1000,
+      "g_to_kg": 0.001,
+      "kg_to_oz": 35.274,
+      "oz_to_kg": 0.0283495,
+      "tonnes_to_kg": 1000,
+      "kg_to_tonnes": 0.001,
+      "tonnes_to_lb": 2204.62,
+      "lb_to_tonnes": 0.000453592,
+      "tonnes_to_short_tons": 1.10231,
+      "short_tons_to_tonnes": 0.907185,
+      "tonnes_to_long_tons": 0.984207,
+      "long_tons_to_tonnes": 1.01605,
+      "short_tons_to_lb": 2000,
+      "long_tons_to_lb": 2240
+    },
+    "volume": {
+      "liters_to_gallons_us": 0.264172,
+      "gallons_us_to_liters": 3.78541,
+      "liters_to_gallons_uk": 0.219969,
+      "gallons_uk_to_liters": 4.54609,
+      "liters_to_cubic_m": 0.001,
+      "cubic_m_to_liters": 1000,
+      "barrels_to_liters": 158.987,
+      "liters_to_barrels": 0.00628981,
+      "barrels_to_gallons_us": 42,
+      "gallons_us_to_barrels": 0.0238095
+    },
+    "energy": {
+      "joules_to_kwh": 0.000000277778,
+      "kwh_to_joules": 3600000,
+      "joules_to_btu": 0.000947817,
+      "btu_to_joules": 1055.06,
+      "kwh_to_btu": 3412.14,
+      "btu_to_kwh": 0.000293071,
+      "mtoe_to_exajoules": 0.041868,
+      "exajoules_to_mtoe": 23.8846,
+      "mtoe_to_kwh": 11630000000,
+      "kwh_to_mtoe": 0.0000000000860,
+      "twh_to_mtoe": 0.086,
+      "mtoe_to_twh": 11.63
+    },
+    "emissions": {
+      "tonnes_co2_to_kg_co2": 1000,
+      "kg_co2_to_tonnes_co2": 0.001,
+      "tonnes_co2_to_mt_co2": 0.000001,
+      "mt_co2_to_tonnes_co2": 1000000,
+      "tonnes_co2_to_gt_co2": 0.000000001,
+      "gt_co2_to_tonnes_co2": 1000000000,
+      "mt_co2_to_gt_co2": 0.001,
+      "gt_co2_to_mt_co2": 1000
+    }
+  },
+
+  "temperature_formulas": {
+    "_note": "Temperature requires formulas, not simple multipliers",
+    "celsius_to_fahrenheit": "F = C * 9/5 + 32",
+    "fahrenheit_to_celsius": "C = (F - 32) * 5/9",
+    "celsius_to_kelvin": "K = C + 273.15",
+    "kelvin_to_celsius": "C = K - 273.15",
+    "fahrenheit_to_kelvin": "K = (F - 32) * 5/9 + 273.15",
+    "kelvin_to_fahrenheit": "F = (K - 273.15) * 9/5 + 32"
+  },
+
+  "unit_aliases": {
+    "_note": "Map common variations to canonical unit names. WARNING: 'ton' defaults to US short_tons (2000 lb). For metric tonnes use 'metric ton' or 'tonne'.",
+    "kilometer": "km",
+    "kilometers": "km",
+    "kilometre": "km",
+    "kilometres": "km",
+    "mile": "mi",
+    "miles": "mi",
+    "meter": "m",
+    "meters": "m",
+    "metre": "m",
+    "metres": "m",
+    "foot": "ft",
+    "feet": "ft",
+    "nautical mile": "nmi",
+    "nautical miles": "nmi",
+
+    "square kilometer": "sq_km",
+    "square kilometers": "sq_km",
+    "square kilometre": "sq_km",
+    "square kilometres": "sq_km",
+    "sq km": "sq_km",
+    "km2": "sq_km",
+    "km^2": "sq_km",
+    "square mile": "sq_mi",
+    "square miles": "sq_mi",
+    "sq mi": "sq_mi",
+    "mi2": "sq_mi",
+    "mi^2": "sq_mi",
+    "hectare": "hectares",
+    "acre": "acres",
+    "square meter": "sq_m",
+    "square meters": "sq_m",
+    "m2": "sq_m",
+    "m^2": "sq_m",
+
+    "kilogram": "kg",
+    "kilograms": "kg",
+    "kilo": "kg",
+    "kilos": "kg",
+    "pound": "lb",
+    "pounds": "lb",
+    "lbs": "lb",
+    "tonne": "tonnes",
+    "metric ton": "tonnes",
+    "metric tons": "tonnes",
+    "metric tonne": "tonnes",
+    "metric tonnes": "tonnes",
+    "ton": "short_tons",
+    "tons": "short_tons",
+    "short ton": "short_tons",
+    "us ton": "short_tons",
+    "us tons": "short_tons",
+    "long ton": "long_tons",
+    "imperial ton": "long_tons",
+    "gram": "g",
+    "grams": "g",
+    "ounce": "oz",
+    "ounces": "oz",
+
+    "liter": "liters",
+    "litre": "liters",
+    "litres": "liters",
+    "l": "liters",
+    "gallon": "gallons_us",
+    "gallons": "gallons_us",
+    "us gallon": "gallons_us",
+    "us gallons": "gallons_us",
+    "uk gallon": "gallons_uk",
+    "uk gallons": "gallons_uk",
+    "imperial gallon": "gallons_uk",
+    "imperial gallons": "gallons_uk",
+    "cubic meter": "cubic_m",
+    "cubic meters": "cubic_m",
+    "cubic metre": "cubic_m",
+    "m3": "cubic_m",
+    "m^3": "cubic_m",
+    "barrel": "barrels",
+    "bbl": "barrels",
+
+    "celsius": "celsius",
+    "centigrade": "celsius",
+    "c": "celsius",
+    "fahrenheit": "fahrenheit",
+    "f": "fahrenheit",
+    "kelvin": "kelvin",
+    "k": "kelvin",
+
+    "kilowatt hour": "kwh",
+    "kilowatt hours": "kwh",
+    "kw-h": "kwh",
+    "joule": "joules",
+    "j": "joules",
+    "british thermal unit": "btu",
+    "btus": "btu",
+    "million tonnes oil equivalent": "mtoe",
+    "exajoule": "exajoules",
+    "ej": "exajoules",
+    "terawatt hour": "twh",
+    "terawatt hours": "twh",
+
+    "co2": "tonnes_co2",
+    "carbon dioxide": "tonnes_co2",
+    "megatonne": "mt_co2",
+    "megatonnes": "mt_co2",
+    "mt": "mt_co2",
+    "gigatonne": "gt_co2",
+    "gigatonnes": "gt_co2",
+    "gt": "gt_co2",
+
+    "dollar": "USD",
+    "dollars": "USD",
+    "us dollar": "USD",
+    "us dollars": "USD",
+    "usd": "USD",
+    "euro": "EUR",
+    "euros": "EUR",
+    "eur": "EUR",
+    "british pound": "GBP",
+    "british pounds": "GBP",
+    "pound sterling": "GBP",
+    "gbp": "GBP",
+    "yen": "JPY",
+    "japanese yen": "JPY",
+    "jpy": "JPY",
+    "yuan": "CNY",
+    "renminbi": "CNY",
+    "rmb": "CNY",
+    "cny": "CNY"
+  },
+
+  "display_formats": {
+    "_note": "Preferred display formatting for each unit",
+    "km": {"symbol": "km", "decimals": 1},
+    "mi": {"symbol": "mi", "decimals": 1},
+    "m": {"symbol": "m", "decimals": 0},
+    "ft": {"symbol": "ft", "decimals": 0},
+    "sq_km": {"symbol": "km2", "decimals": 1},
+    "sq_mi": {"symbol": "mi2", "decimals": 1},
+    "hectares": {"symbol": "ha", "decimals": 0},
+    "acres": {"symbol": "acres", "decimals": 0},
+    "kg": {"symbol": "kg", "decimals": 2},
+    "lb": {"symbol": "lb", "decimals": 2},
+    "tonnes": {"symbol": "t", "decimals": 2},
+    "short_tons": {"symbol": "tons", "decimals": 2},
+    "liters": {"symbol": "L", "decimals": 1},
+    "gallons_us": {"symbol": "gal", "decimals": 1},
+    "barrels": {"symbol": "bbl", "decimals": 0},
+    "celsius": {"symbol": "C", "decimals": 1},
+    "fahrenheit": {"symbol": "F", "decimals": 1},
+    "kelvin": {"symbol": "K", "decimals": 1},
+    "kwh": {"symbol": "kWh", "decimals": 2},
+    "twh": {"symbol": "TWh", "decimals": 2},
+    "mtoe": {"symbol": "Mtoe", "decimals": 2},
+    "exajoules": {"symbol": "EJ", "decimals": 2},
+    "tonnes_co2": {"symbol": "tCO2", "decimals": 2},
+    "mt_co2": {"symbol": "MtCO2", "decimals": 3},
+    "gt_co2": {"symbol": "GtCO2", "decimals": 3},
+    "USD": {"symbol": "$", "decimals": 2, "prefix": true},
+    "EUR": {"symbol": "E", "decimals": 2, "prefix": true},
+    "GBP": {"symbol": "L", "decimals": 2, "prefix": true},
+    "JPY": {"symbol": "Y", "decimals": 0, "prefix": true},
+    "CNY": {"symbol": "Y", "decimals": 2, "prefix": true}
+  },
+
+  "derived_metric_units": {
+    "_note": "Standard units for derived calculations",
+    "per_capita": {
+      "description": "Value per person",
+      "denominator_unit": "count",
+      "result_suffix": "per person"
+    },
+    "density": {
+      "description": "Value per square kilometer",
+      "denominator_unit": "sq_km",
+      "result_suffix": "per km2"
+    },
+    "per_1000": {
+      "description": "Value per 1000 people",
+      "denominator_unit": "count",
+      "multiplier": 1000,
+      "result_suffix": "per 1000"
+    },
+    "per_gdp": {
+      "description": "Value per dollar of GDP",
+      "denominator_unit": "USD",
+      "result_suffix": "per $"
+    },
+    "intensity": {
+      "description": "Emissions per unit of energy or GDP",
+      "variants": ["co2_per_kwh", "co2_per_gdp"]
+    }
+  }
+}

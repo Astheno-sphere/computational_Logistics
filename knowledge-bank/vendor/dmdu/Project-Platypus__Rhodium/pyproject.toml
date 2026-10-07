@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools >= 63.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Rhodium"
+description = "Robust decision making and exploratory modelling in Python"
+authors = [
+  { name="David Hadka", email="dhadka@users.noreply.github.com" },
+]
+readme = "README.md"
+license = { file="COPYING" }
+requires-python = ">= 3.8"
+dependencies = [
+  "numpy<=1.26.4",
+  "seaborn<=0.13.2",
+  "scikit-learn<=1.5.0",
+  "mplcursors<=0.5.3",
+  "pydot<=2.0.0",
+  "SALib<=1.4.6.1",
+  "pandas",
+  "platypus-opt",
+  "prim"
+]
+dynamic = ["version"]  # Version is read from rhodium/__init__.py
+
+[project.urls]
+"Homepage" = "https://github.com/Project-Platypus/Rhodium"
+"Bug Tracker" = "https://github.com/Project-Platypus/Rhodium/issues"
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "flake8",
+  "flake8-pyproject",
+  "rhodium[examples]"
+]
+openmdao = [
+  "openmdao"
+]
+examples = [
+  "pandas[excel]",
+  "pyper<=1.1.2",
+  "rhodium[windows]"
+]
+windows = [
+  "pywin32 ; platform_system == 'Windows'"
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "rhodium.__version__"}
+
+[tool.pytest.ini_options]
+addopts = "-rA -p no:faulthandler"  # Disable the fault handler to fix https://stackoverflow.com/questions/57523762/pytest-windows-fatal-exception-code-0x8001010d
+testpaths = ["rhodium"]
+
+[tool.flake8]
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "examples/Languages/C/src",
+  "examples"  # TODO: Remove this exclusion once examples are updated
+]
+extend-ignore = [
+  "E302",  # Expected 2 blank lines, found N
+  "E305",  # Expected 2 blank lines after class or function definition, found N
+  "E501",  # Line too long (N > 79 characters)
+  "E741",  # Do not use variables named 'I', 'O', or 'l'
+  "F824",  # `global FOO` is unused: name is never assigned in scope
+]
+per-file-ignores = [
+  "__init__.py:F401",  # Module imported but unused
+]

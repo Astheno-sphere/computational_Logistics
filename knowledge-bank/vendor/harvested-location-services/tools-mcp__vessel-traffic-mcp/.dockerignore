@@ -1,0 +1,40 @@
+# Keep secrets, captures, and local artifacts out of the build context.
+# Anything listed here CANNOT be COPY'd into the image even by accident.
+
+.git
+.gitignore
+.github
+
+node_modules
+dist
+coverage
+state
+
+# Secrets and credential overlays
+.env
+.env.*
+!.env.example
+config/credential-profiles.local.json
+config/credential-profiles.*.local.json
+
+# Logs, raw captures, and HAR files
+*.log
+*.har
+captures
+captures/raw
+captures/private
+fixtures/captures/raw
+fixtures/captures/*.private.json
+
+# Tests, docs, and dev tooling are not needed at runtime
+test
+docs
+scripts
+README.md
+CONTRIBUTING.md
+SECURITY.md
+AGENTS.md
+LICENSE
+*.md
+Dockerfile
+.dockerignore

@@ -1,0 +1,520 @@
+# English translations for AgentSociety 2 package.
+# Copyright (C) 2026, FIBLAB
+# This file is distributed under the same license as the AgentSociety 2
+# package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: AgentSociety 2 2.6.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-23 12:39+0800\n"
+"PO-Revision-Date: 2026-03-06 00:10+0800\n"
+"Last-Translator: AgentSociety Team\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../custom_modules.rst:2
+msgid "自定义模块"
+msgstr "Custom Modules"
+
+#: ../../custom_modules.rst:4
+msgid "AgentSociety 2 支持创建和注册自定义智能体和环境模块， 允许您使用自己的模拟组件扩展平台。"
+msgstr ""
+"AgentSociety 2 supports creating and registering custom agent and "
+"environment modules, allowing you to extend the platform with your own "
+"simulation components."
+
+#: ../../custom_modules.rst:8
+msgid "概述"
+msgstr "Overview"
+
+#: ../../custom_modules.rst:10
+msgid "自定义模块系统允许您："
+msgstr "The custom module system allows you to:"
+
+#: ../../custom_modules.rst:12
+msgid "创建具有专门行为的自定义智能体类"
+msgstr "Create custom agent classes with specialized behaviors"
+
+#: ../../custom_modules.rst:13
+msgid "创建具有特定领域工具的自定义环境模块"
+msgstr "Create custom environment modules with domain-specific tools"
+
+#: ../../custom_modules.rst:14
+msgid "通过 API 自动发现和注册模块"
+msgstr "Automatically discover and register modules through API"
+
+#: ../../custom_modules.rst:15
+msgid "使用自动生成的测试脚本测试自定义模块"
+msgstr "Test custom modules with auto-generated test scripts"
+
+#: ../../custom_modules.rst:16
+msgid "与现有 AgentSociety 框架无缝集成"
+msgstr "Seamlessly integrate with existing AgentSociety framework"
+
+#: ../../custom_modules.rst:17
+msgid "通过 Progressive Disclosure workflow 持久化需求、设计和验证产物"
+msgstr ""
+"Persist requirements, design, and validation artifacts through the "
+"Progressive Disclosure workflow"
+
+#: ../../custom_modules.rst:20
+msgid "目录结构"
+msgstr "Directory Structure"
+
+#: ../../custom_modules.rst:22
+msgid "自定义模块放置在工作区内的 ``custom/`` 目录中::"
+msgstr ""
+"Custom modules are placed in the ``custom/`` directory within your "
+"workspace::"
+
+#: ../../custom_modules.rst:37
+msgid "创建自定义智能体"
+msgstr "Create Custom Agents"
+
+#: ../../custom_modules.rst:39
+msgid ""
+"所有自定义智能体必须继承 ``AgentBase``。智能体是 workspace 绑定的无状态 record：状态在 ``restore()``"
+" 里恢复、在 ``to_workspace()`` 里写回；详见 :doc:`agents`。"
+msgstr ""
+"All custom agents must inherit from ``AgentBase``. Agents are workspace-"
+"bound stateless records: state is restored in ``restore()`` and written "
+"back in ``to_workspace()``; see :doc:`agents`."
+
+#: ../../custom_modules.rst:79
+msgid "必需方法"
+msgstr "Required Methods"
+
+#: ../../custom_modules.rst:84 ../../custom_modules.rst:237
+msgid "Method"
+msgstr "Method"
+
+#: ../../custom_modules.rst:85 ../../custom_modules.rst:175
+#: ../../custom_modules.rst:238
+msgid "Description"
+msgstr "Description"
+
+#: ../../custom_modules.rst:86
+msgid "``mcp_description()``"
+msgstr "``mcp_description()``"
+
+#: ../../custom_modules.rst:87
+msgid "返回模块描述（类方法，建议覆盖；``AgentBase``/``EnvBase`` 有默认描述）"
+msgstr ""
+"Return module description (class method, recommended to override; "
+"``AgentBase``/``EnvBase`` has default description)"
+
+#: ../../custom_modules.rst:88
+msgid "``ask()``"
+msgstr "``ask()``"
+
+#: ../../custom_modules.rst:89
+msgid "回答环境的问题（必须实现）"
+msgstr "Answer questions from the environment"
+
+#: ../../custom_modules.rst:90
+msgid "``step()``"
+msgstr "``step()``"
+
+#: ../../custom_modules.rst:91
+msgid "执行一个模拟步骤（必须实现）"
+msgstr "Execute one simulation step"
+
+#: ../../custom_modules.rst:92
+msgid "``to_workspace()``"
+msgstr ""
+
+#: ../../custom_modules.rst:93
+msgid "把动态状态写回 workspace（必须实现）"
+msgstr "Write dynamic state back to the workspace (required)."
+
+#: ../../custom_modules.rst:94
+msgid "``restore()``"
+msgstr "``step()``"
+
+#: ../../custom_modules.rst:95
+msgid "在 ``await super().restore(...)`` 之后恢复自定义状态（推荐覆盖）"
+msgstr ""
+"Restore custom state after ``await super().restore(...)`` (recommended "
+"override)."
+
+#: ../../custom_modules.rst:98
+msgid "创建自定义环境"
+msgstr "Create Custom Environments"
+
+#: ../../custom_modules.rst:100
+msgid "自定义环境必须继承 ``EnvBase`` 并使用 ``@tool`` 装饰器注册方法："
+msgstr ""
+"Custom environments must inherit from ``EnvBase`` and use the ``@tool`` "
+"decorator to register methods:"
+
+#: ../../custom_modules.rst:146
+msgid "现实兼容约束"
+msgstr "reality compatibility constraints"
+
+#: ../../custom_modules.rst:148
+msgid "生成的自定义环境模块仍然必须遵循当前仓库的真实兼容约束："
+msgstr ""
+"The generated custom environment module must still follow the actual "
+"compatibility constraints of the current repository:"
+
+#: ../../custom_modules.rst:150
+msgid "文件必须位于 ``custom/envs/*.py``"
+msgstr "File must be located at ``custom/envs/*.py``"
+
+#: ../../custom_modules.rst:151
+msgid "类定义必须直接位于该文件中，不能只做 re-export"
+msgstr ""
+"The class definition must be located directly in this file, it cannot "
+"just be re-exported"
+
+#: ../../custom_modules.rst:152
+msgid "注册 key 继续使用 ``class_name``"
+msgstr "Register key to continue using ``class_name``"
+
+#: ../../custom_modules.rst:153
+msgid "至少存在一个合法 ``@tool``"
+msgstr "There is at least one legal ``@tool``"
+
+#: ../../custom_modules.rst:154
+msgid "``step()`` 必须存在"
+msgstr "``step()`` must be present"
+
+#: ../../custom_modules.rst:155
+msgid "默认应支持无参实例化 ``cls()``"
+msgstr "Parameterless instantiation should be supported by default ``cls()``"
+
+#: ../../custom_modules.rst:156
+msgid "若模块需要观察能力，应提供 ``@tool(readonly=True, kind='observe')`` 观察工具"
+msgstr ""
+"If the module needs observation capability, provide an "
+"``@tool(readonly=True, kind='observe')`` observation tool"
+
+#: ../../custom_modules.rst:157
+msgid "建议提供信息完整的 ``mcp_description()`` ；未覆盖时会显示基类默认描述"
+msgstr ""
+"Providing an informative ``mcp_description()`` is recommended; if not "
+"overridden, the base class default description is displayed"
+
+#: ../../custom_modules.rst:158
+msgid ""
+"若模块带动态内存态且希望支持中断续跑，应覆盖 ``to_workspace`` 和 ``restore``。使用 ``--resume`` "
+"时，模块应能从 ``state/ENV_STATE.json`` 恢复状态（见 :doc:`env_modules` 的 「状态持久化与 "
+"resume」）。"
+msgstr ""
+"If the module has dynamic in-memory state and should support interrupted "
+"runs, override ``to_workspace`` and ``restore``. When ``--resume`` is "
+"used, the module should be able to restore state from "
+"``state/ENV_STATE.json``; see \"State persistence and resume\" in "
+":doc:`env_modules`."
+
+#: ../../custom_modules.rst:164
+msgid "扫描器会跳过路径中包含 ``examples/`` 的文件（示例仅供参考，不参与注册）。"
+msgstr ""
+"The scanner will skip files containing ``examples/`` in the path (the "
+"example is for reference only and does not participate in registration)."
+
+#: ../../custom_modules.rst:167
+msgid "@tool 装饰器"
+msgstr "@tool Decorator"
+
+#: ../../custom_modules.rst:169
+msgid "``@tool`` 装饰器将方法注册为智能体可访问的工具："
+msgstr "The ``@tool`` decorator registers methods as tools accessible to agents:"
+
+#: ../../custom_modules.rst:174
+msgid "Parameter"
+msgstr "Parameter"
+
+#: ../../custom_modules.rst:176
+msgid "``readonly=True``"
+msgstr "``readonly=True``"
+
+#: ../../custom_modules.rst:177
+msgid "工具不修改环境状态"
+msgstr "Tool does not modify environment state"
+
+#: ../../custom_modules.rst:178
+msgid "``readonly=False``"
+msgstr "``readonly=False``"
+
+#: ../../custom_modules.rst:179
+msgid "工具可以修改环境状态"
+msgstr "Tool can modify environment state"
+
+#: ../../custom_modules.rst:180
+msgid "``kind=\"observe\"``"
+msgstr "``kind=\"observe\"``"
+
+#: ../../custom_modules.rst:181
+msgid "观察工具（单个 agent_id 参数，readonly=True）"
+msgstr "Observation tool (single agent_id parameter, readonly=True)"
+
+#: ../../custom_modules.rst:182
+msgid "``kind=\"statistics\"``"
+msgstr "``kind=\"statistics\"``"
+
+#: ../../custom_modules.rst:183
+msgid "统计工具（无参数，readonly=True）"
+msgstr "Statistics tool (no parameters, readonly=True)"
+
+#: ../../custom_modules.rst:184
+msgid "``kind=None``"
+msgstr "``kind=None``"
+
+#: ../../custom_modules.rst:185
+msgid "常规工具（任何参数，可以是 readonly=False）"
+msgstr "Regular tool (any parameters, can be readonly=False)"
+
+#: ../../custom_modules.rst:188
+msgid "注册自定义模块"
+msgstr "Registering Custom Modules"
+
+#: ../../custom_modules.rst:190
+msgid "创建自定义模块后，使用 API 注册它们："
+msgstr "After creating custom modules, register them using the API:"
+
+#: ../../custom_modules.rst:192
+msgid "**扫描并注册**"
+msgstr "**Scan and Register**"
+
+#: ../../custom_modules.rst:200
+msgid "**列出已注册的模块**"
+msgstr "**List Registered Modules**"
+
+#: ../../custom_modules.rst:206
+msgid "**测试自定义模块**"
+msgstr "**Test Custom Modules**"
+
+#: ../../custom_modules.rst:214
+msgid "**创建或恢复 workflow run**"
+msgstr "**Create or restore workflow run**"
+
+#: ../../custom_modules.rst:222
+msgid "**验证 workflow run**"
+msgstr "**Validate workflow run**"
+
+#: ../../custom_modules.rst:231
+msgid "API 端点"
+msgstr "API Endpoints"
+
+#: ../../custom_modules.rst:236
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: ../../custom_modules.rst:239
+msgid "``/api/v1/custom/scan``"
+msgstr "``/api/v1/custom/scan``"
+
+#: ../../custom_modules.rst:240 ../../custom_modules.rst:243
+#: ../../custom_modules.rst:246 ../../custom_modules.rst:255
+#: ../../custom_modules.rst:258
+msgid "POST"
+msgstr "POST"
+
+#: ../../custom_modules.rst:241
+msgid "扫描并注册自定义模块"
+msgstr "Scan and register custom modules"
+
+#: ../../custom_modules.rst:242
+msgid "``/api/v1/custom/test``"
+msgstr "``/api/v1/custom/test``"
+
+#: ../../custom_modules.rst:244
+msgid "测试自定义模块"
+msgstr "Test custom modules"
+
+#: ../../custom_modules.rst:245
+msgid "``/api/v1/custom/clean``"
+msgstr "``/api/v1/custom/clean``"
+
+#: ../../custom_modules.rst:247
+msgid "清理自定义模块配置"
+msgstr "Clean custom module configuration"
+
+#: ../../custom_modules.rst:248
+msgid "``/api/v1/custom/list``"
+msgstr "``/api/v1/custom/list``"
+
+#: ../../custom_modules.rst:249 ../../custom_modules.rst:252
+msgid "GET"
+msgstr "GET"
+
+#: ../../custom_modules.rst:250
+msgid "列出已注册的自定义模块"
+msgstr "List registered custom modules"
+
+#: ../../custom_modules.rst:251
+msgid "``/api/v1/custom/status``"
+msgstr "``/api/v1/custom/status``"
+
+#: ../../custom_modules.rst:253
+msgid "获取模块状态概述"
+msgstr "Get module status overview"
+
+#: ../../custom_modules.rst:254
+msgid "``/api/v1/custom/workflow/runs``"
+msgstr "``/api/v1/custom/workflow/runs``"
+
+#: ../../custom_modules.rst:256
+msgid "创建或恢复自定义环境 workflow run"
+msgstr "Create or restore a custom environment workflow run"
+
+#: ../../custom_modules.rst:257
+#, python-brace-format
+msgid "``/api/v1/custom/workflow/runs/{run_id}/validate``"
+msgstr "``/api/v1/custom/workflow/runs/{run_id}/validate``"
+
+#: ../../custom_modules.rst:259
+msgid "执行 scanner/tester/registry 的端到端校验"
+msgstr "Perform end-to-end verification of scanner/tester/registry"
+
+#: ../../custom_modules.rst:262
+msgid "示例"
+msgstr "Examples"
+
+#: ../../custom_modules.rst:264
+msgid "示例智能体和环境可在 ``custom/`` 目录中找到："
+msgstr "Example agents and environments can be found in the ``custom/`` directory:"
+
+#: ../../custom_modules.rst:266
+msgid "``custom/agents/examples/simple_agent.py`` - 基本智能体示例"
+msgstr "``custom/agents/examples/simple_agent.py`` - Basic agent example"
+
+#: ../../custom_modules.rst:267
+msgid "``custom/agents/examples/advanced_agent.py`` - 具有记忆和情绪的智能体"
+msgstr ""
+"``custom/agents/examples/advanced_agent.py`` - Agent with memory and "
+"emotions"
+
+#: ../../custom_modules.rst:268
+msgid "``custom/envs/examples/simple_env.py`` - 计数器环境"
+msgstr "``custom/envs/examples/simple_env.py`` - Counter environment"
+
+#: ../../custom_modules.rst:269
+msgid "``custom/envs/examples/advanced_env.py`` - 资源管理环境"
+msgstr "``custom/envs/examples/advanced_env.py`` - Resource management environment"
+
+#: ../../custom_modules.rst:271
+msgid "这些示例演示了创建自定义模块的最佳实践。"
+msgstr "These examples demonstrate best practices for creating custom modules."
+
+#: ../../custom_modules.rst:274
+msgid "配置"
+msgstr "Configuration"
+
+#: ../../custom_modules.rst:276
+msgid "设置 ``WORKSPACE_PATH`` 环境变量以指向您的工作区："
+msgstr ""
+"Set the ``WORKSPACE_PATH`` environment variable to point to your "
+"workspace:"
+
+#: ../../custom_modules.rst:282
+msgid "或添加到您的 ``.env`` 文件："
+msgstr "Or add to your ``.env`` file:"
+
+#: ../../custom_modules.rst:288
+msgid "此设置告诉系统在哪里找到 ``custom/`` 目录。"
+msgstr "This setting tells the system where to find the ``custom/`` directory."
+
+#: ../../custom_modules.rst:291
+msgid "最佳实践"
+msgstr "Best Practices"
+
+#: ../../custom_modules.rst:293
+msgid "**命名约定**"
+msgstr "**Naming Conventions**"
+
+#: ../../custom_modules.rst:295
+msgid "智能体类名应以 ``Agent`` 结尾"
+msgstr "Agent class names should end with ``Agent``"
+
+#: ../../custom_modules.rst:296
+msgid "环境类名应以 ``Env`` 结尾"
+msgstr "Environment class names should end with ``Env``"
+
+#: ../../custom_modules.rst:297
+msgid "文件名应使用小写字母和下划线：``my_agent.py``"
+msgstr "File names should use lowercase letters and underscores: ``my_agent.py``"
+
+#: ../../custom_modules.rst:299
+msgid "**错误处理**"
+msgstr "**Error Handling**"
+
+#: ../../custom_modules.rst:301
+msgid "返回有意义的错误消息"
+msgstr "Return meaningful error messages"
+
+#: ../../custom_modules.rst:302
+msgid "对关键路径保留必要日志，便于复盘与定位问题"
+msgstr ""
+"Keep necessary logs on critical paths to facilitate review and problem "
+"location."
+
+#: ../../custom_modules.rst:304
+msgid "**状态管理**"
+msgstr "**State Management**"
+
+#: ../../custom_modules.rst:306
+msgid "使用 ``restore()`` 从 workspace 恢复状态，使用 ``to_workspace()`` 写回动态状态"
+msgstr ""
+"Use ``restore()`` to restore state from the workspace and "
+"``to_workspace()`` to write dynamic state back."
+
+#: ../../custom_modules.rst:307
+msgid ""
+"自定义 Agent 覆盖 ``restore()`` 时应先调用 ``await super().restore(...)``，以绑定 "
+"workspace、技能运行时和服务句柄"
+msgstr ""
+"When a custom Agent overrides ``restore()``, it should first call ``await"
+" super().restore(...)`` to bind the workspace, skill runtime, and service"
+" handles."
+
+#: ../../custom_modules.rst:308
+msgid "在回放中记录重要的状态更改"
+msgstr "Record important state changes in replay"
+
+#: ../../custom_modules.rst:309
+msgid "保持状态可序列化（JSON 兼容）"
+msgstr "Keep state serializable (JSON compatible)"
+
+#: ../../custom_modules.rst:311
+msgid "**工具设计**"
+msgstr "**Tool Design**"
+
+#: ../../custom_modules.rst:313
+msgid "对只读观察使用 ``kind=\"observe\"``"
+msgstr "Use ``kind=\"observe\"`` for read-only observations"
+
+#: ../../custom_modules.rst:314
+msgid "对聚合数据使用 ``kind=\"statistics\"``"
+msgstr "Use ``kind=\"statistics\"`` for aggregated data"
+
+#: ../../custom_modules.rst:315
+msgid "对操作使用 ``kind=None`` 和 ``readonly=False``"
+msgstr "Use ``kind=None`` and ``readonly=False`` for operations"
+
+#: ../../custom_modules.rst:316
+msgid "生成后优先通过 workflow 产物中的 ``validation_report.json`` 定位失败原因"
+msgstr ""
+"After generation, priority is given to locating the failure reason "
+"through ``validation_report.json`` in the workflow product."
+
+#~ msgid ""
+#~ "若模块带动态内存态且希望支持中断续跑（``--resume``），应覆盖 "
+#~ "``to_workspace()``/``restore()`` 写入 "
+#~ "``state/ENV_STATE.json``（见 :doc:`env_modules` 的「状态持久化与 "
+#~ "resume」）"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "若模块带动态内存态且希望支持中断续跑（``--resume``），应覆盖 ``to_workspace()`` 和"
+#~ " ``restore()``，并把状态写入 ``state/ENV_STATE.json``（见 "
+#~ ":doc:`env_modules` 的 「状态持久化与 resume」）"
+#~ msgstr ""

@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 590" width="960" height="590" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3b4252"/>
+    </marker>
+    <style>
+      .band { fill: #f4f6f8; stroke: #d0d6dd; }
+      .bandlabel { font-size: 10.5px; font-weight: 700; fill: #5a6573; letter-spacing: 0.08em; }
+      .box { fill: #ffffff; stroke: #3b4252; stroke-width: 1.2; }
+      .core { fill: #eef5ee; stroke: #2e6b36; stroke-width: 1.4; }
+      .dm { fill: #fdf3e7; stroke: #a8620f; stroke-width: 1.4; }
+      .t { font-size: 13px; font-weight: 700; fill: #1f2933; }
+      .s { font-size: 10.5px; fill: #3e4c59; }
+      .ln { stroke: #3b4252; stroke-width: 1.3; fill: none; marker-end: url(#a); }
+    </style>
+  </defs>
+  <rect width="960" height="590" fill="#ffffff"/>
+  <text x="20" y="30" font-size="17" font-weight="700" fill="#1f2933">Asthenosphere: modelling framework</text>
+  <text x="20" y="49" class="s">Behaviour estimated from choice data drives an agent-based model, which is explored across futures and policy packages to find robust pathways to a 2050 target.</text>
+
+  <!-- bands: label on its own line, boxes below -->
+  <rect x="12" y="62" width="936" height="96" rx="6" class="band"/>
+  <text x="24" y="78" class="bandlabel">EVIDENCE</text>
+  <rect x="12" y="166" width="936" height="96" rx="6" class="band"/>
+  <text x="24" y="182" class="bandlabel">BEHAVIOUR</text>
+  <rect x="12" y="270" width="936" height="114" rx="6" class="band"/>
+  <text x="24" y="286" class="bandlabel">SIMULATION</text>
+  <rect x="12" y="392" width="936" height="96" rx="6" class="band"/>
+  <text x="24" y="408" class="bandlabel">DECISION UNDER DEEP UNCERTAINTY</text>
+  <rect x="12" y="496" width="936" height="82" rx="6" class="band"/>
+  <text x="24" y="512" class="bandlabel">INTERFACES</text>
+
+  <!-- column A: x 24-444 | column B: x 464-684 | column C: x 704-936 -->
+  <!-- evidence -->
+  <rect x="24" y="88" width="420" height="58" rx="4" class="box"/>
+  <text x="36" y="109" class="t">Travel surveys</text>
+  <text x="36" y="127" class="s">revealed preference (national travel survey, RVU) and stated-choice experiments</text>
+  <rect x="464" y="88" width="220" height="58" rx="4" class="box"/>
+  <text x="476" y="109" class="t">Networks and terrain</text>
+  <text x="476" y="127" class="s">OpenStreetMap, DEM, NVDB, GTFS</text>
+  <rect x="704" y="88" width="232" height="58" rx="4" class="box"/>
+  <text x="716" y="109" class="t">Population and fleet</text>
+  <text x="716" y="127" class="s">zones, commutes, vehicle stock, shares</text>
+
+  <!-- behaviour -->
+  <rect x="24" y="192" width="420" height="58" rx="4" class="core"/>
+  <text x="36" y="213" class="t">dcm-estimate · discrete choice</text>
+  <text x="36" y="231" class="s">MNL (Biogeme) checked by independent MLE; value of time; covariance</text>
+  <rect x="704" y="192" width="232" height="58" rx="4" class="box"/>
+  <text x="716" y="213" class="t">Calibration</text>
+  <text x="716" y="231" class="s">constants to base-year shares</text>
+
+  <!-- simulation -->
+  <rect x="24" y="296" width="420" height="76" rx="4" class="core"/>
+  <text x="36" y="317" class="t">abm-transport · agents, 2025-2050</text>
+  <text x="36" y="335" class="s">fleet turnover and EV adoption with peer effects; daily mode choice from</text>
+  <text x="36" y="351" class="s">estimated utilities; congestion feedback (BPR, successive averages);</text>
+  <text x="36" y="367" class="s">outcomes: mode shares, car km, CO2, consumer surplus</text>
+  <rect x="464" y="296" width="220" height="76" rx="4" class="box"/>
+  <text x="476" y="317" class="t">osm-network</text>
+  <text x="476" y="335" class="s">road graph, grades, travel time,</text>
+  <text x="476" y="351" class="s">EV energy with regeneration,</text>
+  <text x="476" y="367" class="s">least-energy routes</text>
+  <rect x="704" y="296" width="232" height="76" rx="4" class="box"/>
+  <text x="716" y="317" class="t">vrp-solve · opt-model</text>
+  <text x="716" y="335" class="s">freight and service operations:</text>
+  <text x="716" y="351" class="s">VRP, LP/MIP; PyVRP, OR-Tools,</text>
+  <text x="716" y="367" class="s">Gurobi, CPLEX, HiGHS</text>
+
+  <!-- decision -->
+  <rect x="24" y="418" width="912" height="58" rx="4" class="dm"/>
+  <text x="36" y="439" class="t">dmdu-explore · EMA Workbench</text>
+  <text x="36" y="457" class="s">ensemble of futures (technology, prices, telework, behaviour) × policy packages → robustness to the 2050 target → PRIM scenario discovery → backcasting: lever conditions and milestones</text>
+
+  <!-- interfaces -->
+  <rect x="24" y="522" width="200" height="42" rx="4" class="box"/>
+  <text x="36" y="541" class="t">Claude Code plugin</text>
+  <text x="36" y="556" class="s">skills, agents, router</text>
+  <rect x="244" y="522" width="200" height="42" rx="4" class="box"/>
+  <text x="256" y="541" class="t">MCP server</text>
+  <text x="256" y="556" class="s">any MCP host</text>
+  <rect x="464" y="522" width="220" height="42" rx="4" class="box"/>
+  <text x="476" y="541" class="t">Grasshopper / Rhino</text>
+  <text x="476" y="556" class="s">Hops components, data trees</text>
+  <rect x="704" y="522" width="232" height="42" rx="4" class="box"/>
+  <text x="716" y="541" class="t">Knowledge bank</text>
+  <text x="716" y="556" class="s">license-checked open-source references</text>
+
+  <!-- flows -->
+  <path d="M234,146 L234,190" class="ln"/>
+  <path d="M820,146 L820,190" class="ln"/>
+  <path d="M574,146 L574,294" class="ln"/>
+  <path d="M444,221 L702,221" class="ln"/>
+  <path d="M234,250 L234,294" class="ln"/>
+  <path d="M820,250 L820,262 L454,262 L454,284 L380,284 L380,294" class="ln"/>
+  <path d="M464,334 L446,334" class="ln"/>
+  <path d="M684,334 L702,334" class="ln"/>
+  <path d="M330,372 L330,416" class="ln"/>
+</svg>

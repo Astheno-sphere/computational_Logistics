@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daily Mobility Benchmark</title>
+  <meta name="description" content="Daily Mobility Benchmark — 48-slot multi-agent daily rhythm simulation" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚌</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+</head>
+
+<body>
+  <!-- ─── Top Navigation ─── -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <span class="nav-logo" aria-hidden="true">⬡</span>
+        <div class="nav-title-group">
+          <h1 class="nav-title">Daily Mobility <span class="nav-badge">Benchmark</span></h1>
+          <p class="nav-subtitle">48 时段 · 30 分钟步长 · 多智能体日常出行仿真</p>
+        </div>
+      </div>
+      <div class="nav-controls">
+        <div class="nav-select-wrap">
+          <label class="sr-only" for="agent-select">Agent</label>
+          <select id="agent-select"></select>
+        </div>
+        <div class="nav-status" id="run-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">连接中…</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Summary Cards ─── -->
+  <section class="summary" id="summary-section">
+    <div class="summary-inner">
+      <div class="kpi-card kpi-progress">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg></div>
+        <div class="kpi-body">
+          <p class="kpi-label">仿真进度</p>
+          <p class="kpi-value" id="kpi-progress">0 / 48</p>
+          <div class="kpi-bar">
+            <div class="kpi-bar-fill" id="kpi-bar-fill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-clock">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg></div>
+        <div class="kpi-body">
+          <p class="kpi-label">仿真时刻</p>
+          <p class="kpi-value" id="kpi-clock">—</p>
+          <p class="kpi-sub" id="kpi-step">引擎步 —</p>
+        </div>
+      </div>
+      <div class="kpi-card kpi-hunger">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8h1a4 4 0 010 8h-1" />
+            <path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" />
+            <line x1="6" y1="1" x2="6" y2="4" />
+            <line x1="10" y1="1" x2="10" y2="4" />
+            <line x1="14" y1="1" x2="14" y2="4" />
+          </svg></div>
+        <div class="kpi-body">
+          <p class="kpi-label">当前饥饿度</p>
+          <p class="kpi-value" id="kpi-hunger">—</p>
+          <p class="kpi-sub" id="kpi-meals">已记餐 — 次</p>
+        </div>
+      </div>
+      <div class="kpi-card kpi-env">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg></div>
+        <div class="kpi-body">
+          <p class="kpi-label">活动记录</p>
+          <p class="kpi-value" id="kpi-env">0</p>
+          <p class="kpi-sub" id="kpi-env-fail">失败 0 次</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Main Grid ─── -->
+  <main class="main-grid">
+
+    <!-- Needs Curves -->
+    <section class="card card-chart">
+      <div class="card-header">
+        <div class="card-title-group">
+          <h2 class="card-title">生理需求曲线</h2>
+          <p class="card-desc">饥饿 / 精力 / 压力 · 48 时段</p>
+        </div>
+        <div class="card-legend-inline">
+          <span class="cline cline-hunger">饥饿</span>
+          <span class="cline cline-energy">精力</span>
+          <span class="cline cline-stress">压力</span>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="needs-chart"></canvas>
+      </div>
+      <div class="card-footer">
+        <span class="card-footer-label">里程碑</span>
+        <div class="milestone-tags" id="milestone-legend"></div>
+      </div>
+    </section>
+
+    <!-- Location: schematic / Beijing map -->
+    <section class="card card-map">
+      <div class="card-header">
+        <div class="card-title-group">
+          <h2 class="card-title">位置与轨迹</h2>
+          <p class="card-desc" id="map-view-desc">示意图 · 蓝色虚线=通勤/路程中 · 同地环形展开</p>
+        </div>
+        <div class="map-view-toggle" role="tablist" aria-label="地图视图">
+          <button type="button" class="view-tab active" data-map-view="schematic" role="tab"
+            aria-selected="true">示意图</button>
+          <button type="button" class="view-tab" data-map-view="geo" role="tab" aria-selected="false">北京地图</button>
+        </div>
+      </div>
+      <div class="map-controls" id="schematic-controls">
+        <button type="button" class="ctrl-btn" id="schematic-play" title="自动播放">▶ 播放</button>
+        <button type="button" class="ctrl-btn" id="schematic-step-back">◀</button>
+        <button type="button" class="ctrl-btn" id="schematic-step-fwd">▶</button>
+        <label class="slider-wrap">
+          <span class="slider-label" id="schematic-slider-label">Slot 1</span>
+          <input type="range" id="schematic-slider" min="0" max="47" value="0" />
+        </label>
+        <label class="follow-toggle">
+          <input type="checkbox" id="schematic-follow-live" checked />
+          跟随实时
+        </label>
+      </div>
+      <div class="map-canvas map-canvas-dual">
+        <div id="schematic-pane" class="map-pane map-pane-active" aria-hidden="false">
+          <svg id="schematic" viewBox="0 0 400 260" aria-label="位置示意图"></svg>
+        </div>
+        <div id="geo-map-pane" class="map-pane" aria-hidden="true">
+          <div id="geo-map" aria-label="北京地图轨迹"></div>
+          <p class="geo-map-hint">底图可切换：高德标准 / 高德影像 / OpenStreetMap</p>
+        </div>
+      </div>
+      <div class="map-status" id="schematic-status">等待数据…</div>
+      <div class="card-footer">
+        <div class="legend-row" id="schematic-legend-row"></div>
+      </div>
+    </section>
+
+    <!-- Daily Schedule -->
+    <section class="card card-schedule">
+      <div class="card-header">
+        <div class="card-title-group">
+          <h2 class="card-title">日计划表</h2>
+          <p class="card-desc" id="schedule-desc">来自 rhythm · 日初生成 · 按 social norm 执行</p>
+        </div>
+        <div class="schedule-meta" id="schedule-meta"></div>
+      </div>
+      <p class="schedule-diary" id="schedule-diary">—</p>
+      <div class="schedule-table-scroll">
+        <table class="schedule-table" id="schedule-table">
+          <thead>
+            <tr>
+              <th>时段</th>
+              <th>活动</th>
+              <th>餐次</th>
+              <th>规范说明</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Timeline -->
+    <section class="card card-timeline">
+      <div class="card-header">
+        <div class="card-title-group">
+          <h2 class="card-title">计划 · 意图 · 位置</h2>
+          <p class="card-desc">每列=计划+意图+位置 · 不一致列淡橙框 · 悬停看详情</p>
+        </div>
+        <div class="card-legend-inline" id="timeline-legend-inline"></div>
+      </div>
+      <div class="timeline-scroll">
+        <div class="timeline-inner">
+          <svg class="milestone-connectors" id="milestone-connectors" aria-hidden="true"></svg>
+          <div class="milestone-ruler" id="milestone-markers"></div>
+          <div class="timeline-grid timeline-grid-stacked">
+            <div class="tl-stack-labels" aria-hidden="true">
+              <span class="tl-tag tl-tag-plan">计划</span>
+              <span class="tl-tag">意图</span>
+              <span class="tl-tag tl-tag-loc">位置</span>
+            </div>
+            <div class="tl-slot-columns" id="timeline-slot-columns"></div>
+          </div>
+          <div class="tl-timeaxis" id="time-axis"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Agent Activity Log -->
+    <section class="card card-env">
+      <div class="card-header">
+        <div class="card-title-group">
+          <h2 class="card-title">Agent 活动记录</h2>
+          <p class="card-desc">环境 · 观察 · Codegen · 技能 · 移动计划 · LLM 决策 · Harness · 问卷</p>
+        </div>
+      </div>
+      <div class="env-toolbar" id="env-filters">
+        <button type="button" class="env-btn active" data-preset="key">关键</button>
+        <button type="button" class="env-btn" data-preset="all">全部</button>
+        <button type="button" class="env-btn" data-preset="fail">仅失败</button>
+        <span class="env-sep"></span>
+        <label class="activity-search-wrap">
+          <span class="sr-only">搜索</span>
+          <input type="search" id="activity-search" placeholder="搜索摘要/详情…" autocomplete="off" />
+        </label>
+      </div>
+      <div class="activity-slot-toolbar" id="activity-slot-toolbar">
+        <span class="activity-slot-label">时段</span>
+        <select id="activity-slot-from" aria-label="起始时段">
+          <option value="">全部</option>
+        </select>
+        <span class="activity-slot-sep">—</span>
+        <select id="activity-slot-to" aria-label="结束时段">
+          <option value="">全部</option>
+        </select>
+        <button type="button" class="env-btn" id="activity-slot-use-selected">选中时段</button>
+        <button type="button" class="env-btn" id="activity-slot-clear">清除</button>
+        <label class="activity-slot-follow">
+          <input type="checkbox" id="activity-slot-follow" />
+          跟随时间轴选中
+        </label>
+      </div>
+      <div class="activity-cat-toolbar" id="activity-cat-filters"></div>
+      <div class="env-summary" id="env-summary"></div>
+      <div class="env-list-scroll">
+        <ul id="env-calls-list" class="env-list"></ul>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── Drawer ─── -->
+  <aside id="detail-drawer" class="drawer hidden" aria-hidden="true">
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <div class="drawer-panel">
+      <header class="drawer-header">
+        <div>
+          <p class="drawer-eyebrow">问卷溯源</p>
+          <h2 class="drawer-title" id="drawer-title">Slot —</h2>
+        </div>
+        <button type="button" class="drawer-close" id="drawer-close" aria-label="Close">×</button>
+      </header>
+      <div class="drawer-body" id="drawer-body"></div>
+    </div>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="geo_map.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

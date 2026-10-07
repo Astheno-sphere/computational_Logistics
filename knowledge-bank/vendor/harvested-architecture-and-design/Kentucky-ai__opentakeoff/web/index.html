@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href="https://opentakeoff.kentucky-ai.com/" />
+    <meta name="description" content="Free, open-source construction & flooring takeoff — the first engine an AI agent can drive natively over MCP. Trace plans, get quantities, no account." />
+    <title>OpenTakeoff — free, AI-native takeoff for construction & flooring</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://opentakeoff.kentucky-ai.com" />
+    <meta property="og:title" content="OpenTakeoff — the first takeoff canvas built for people and AI agents" />
+    <meta property="og:description" content="A free, open-source PDF takeoff canvas. Trace plans and get quantities yourself, or point an AI agent at the same engine over MCP. Runs entirely in your browser, no account." />
+    <meta property="og:image" content="https://opentakeoff.kentucky-ai.com/og-card.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="640" />
+    <meta property="og:image:alt" content="OpenTakeoff — three patient rooms traced wall to wall in wood and a VCT room on a real floor finish plan, 743.4 SF of wood flooring counted." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="OpenTakeoff — the first takeoff canvas built for people and AI agents" />
+    <meta name="twitter:description" content="A free, open-source PDF takeoff canvas. Trace plans and get quantities yourself, or point an AI agent at the same engine over MCP. Runs entirely in your browser, no account." />
+    <meta name="twitter:image" content="https://opentakeoff.kentucky-ai.com/og-card.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "OpenTakeoff",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "Construction Estimating Software",
+        "operatingSystem": "Any (runs in a web browser)",
+        "url": "https://opentakeoff.kentucky-ai.com",
+        "description": "Free, open-source PDF takeoff software for construction and flooring estimating. The first takeoff engine an AI agent can drive natively over the Model Context Protocol (MCP), with the same measuring math and provenance as a human at the canvas.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "isAccessibleForFree": true,
+        "license": "https://github.com/Kentucky-ai/opentakeoff/blob/main/LICENSE",
+        "keywords": "construction takeoff, flooring takeoff, construction estimating, quantity takeoff, quantity surveying, preconstruction, construction management, AEC software, AI agent, model context protocol, MCP, AI-native construction",
+        "creator": {
+          "@type": "Organization",
+          "name": "Kentucky AI",
+          "url": "https://kentucky-ai.com"
+        },
+        "sameAs": [
+          "https://github.com/Kentucky-ai/opentakeoff",
+          "https://www.npmjs.com/package/opentakeoff-mcp"
+        ]
+      }
+    </script>
+    <meta name="theme-color" content="#f4efe0" />
+    <!-- Theme-before-paint. External (not inline) so the app can ship a strict
+         CSP with script-src 'self' — see public/theme-init.js and public/_headers.
+         Must stay render-blocking (no async/defer) to run before first paint. -->
+    <script src="/theme-init.js"></script>
+    <!-- Cloudflare Web Analytics: privacy-first page-view beacon (no cookies, no
+         fingerprinting, no PII). The token is public by design. Its origin is
+         allowed in public/_headers script-src; connect-src is already open. -->
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "3f37c88a39dc47e79a5304c38ccf68f3"}'></script>
+    <!-- The static page inside #root is for readers that run no JavaScript —
+         most AI crawlers, and anyone with scripts off. React replaces it on
+         mount; where scripts run it never paints (no flash before the app). -->
+    <style>
+      @media (scripting: enabled) { .ot-static { display: none; } }
+      .ot-static { max-width: 720px; margin: 0 auto; padding: 40px 20px; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; color: #172031; }
+    </style>
+  </head>
+  <body>
+    <!-- Netlify deploy-time form definition; React owns the visible dialog. -->
+    <form name="premium-interest" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input name="email" />
+      <input name="name" />
+      <input name="company" />
+      <input name="role" />
+      <input name="bot-field" />
+      <input name="request-id" />
+      <input name="form-revision" />
+      <input name="consent-revision" />
+      <input name="source" />
+    </form>
+    <div id="root"><div class="ot-static">
+      <h1>OpenTakeoff</h1>
+      <p>OpenTakeoff is a free, open-source (Apache-2.0) construction takeoff engine. A person measures plans in this browser canvas; an AI agent drives the same geometry and quantity math over MCP. Every measurement records its scale, its method, and whether a person or an agent made it.</p>
+      <p>This page is the takeoff app itself, and it needs JavaScript.</p>
+      <h2>For an estimator</h2>
+      <p>Drag in a PDF, image or <code>.zip</code> plan set; there is no account and opening a plan uploads nothing. Set the scale per sheet, trace rooms under the finish tags from the architect's schedule, and get SF, SY, LF and EA, waste-adjusted order quantities, a supporting-materials buy list, roll-goods cuts with seams, and CSV, Excel and marked-PDF exports. <a href="https://github.com/Kentucky-ai/opentakeoff/blob/main/docs/USER_GUIDE.md">User manual</a></p>
+      <h2>For an AI agent</h2>
+      <p><code>npx -y opentakeoff-mcp</code> puts the engine on stdio for any MCP client (Claude Code: <code>claude mcp add opentakeoff -- npx -y opentakeoff-mcp</code>). The agent opens the plan, adopts the scale, measures rooms on the wall faces, checks its work on a rendered overlay, and exports a marked planset; its work stays pending until a person approves it in this canvas. <a href="https://github.com/Kentucky-ai/opentakeoff/blob/main/docs/AGENT_GUIDE.md">Agent manual</a> · <a href="https://github.com/Kentucky-ai/opentakeoff/blob/main/mcp/README.md">MCP tool reference</a></p>
+      <p><a href="https://github.com/Kentucky-ai/opentakeoff">Source on GitHub</a> · <a href="/llms.txt">llms.txt</a> · <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a></p>
+    </div></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

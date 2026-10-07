@@ -1,0 +1,40 @@
+{
+  "manifest_version": "0.3",
+  "name": "floodwise",
+  "display_name": "floodwise — England flood risk by postcode",
+  "version": "0.1.0",
+  "description": "England flood-risk by postcode for AI agents — official Environment Agency open data, not guesses.",
+  "long_description": "Look up the long-term flood-risk band (High / Medium / Low / Very Low) for an England postcode, straight from official Environment Agency open data (Open Government Licence) — or an honest \"not found\" outside England. All data is bundled, so it works fully offline with no key and no setup. Area-level and long-term (not property-level or live); not insurance or planning advice.",
+  "author": {
+    "name": "Qiniso",
+    "url": "https://github.com/qinisolabs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qinisolabs/floodwise"
+  },
+  "homepage": "https://qinisolabs.github.io/floodwise",
+  "documentation": "https://qinisolabs.github.io/floodwise",
+  "support": "https://github.com/qinisolabs/floodwise/issues",
+  "license": "Apache-2.0",
+  "privacy_policies": ["https://qinisolabs.github.io/privacy.html"],
+  "keywords": ["flood-risk", "environment-agency", "uk-postcode", "england", "insurance"],
+  "server": {
+    "type": "node",
+    "entry_point": "server/server.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/server.js"],
+      "env": {}
+    }
+  },
+  "tools": [
+    { "name": "flood_risk_by_postcode", "description": "Get the long-term flood-risk band for an England postcode." },
+    { "name": "validate_postcode", "description": "Check a UK postcode's format." }
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "node": ">=18.0.0" }
+  }
+}

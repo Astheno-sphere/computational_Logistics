@@ -1,0 +1,47 @@
+name: Feature Request
+description: Propose a new tool or improvement.
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: vertical
+    attributes:
+      label: Tool vertical
+      options:
+        - map_layer_management
+        - data_management
+        - geometry_analysis
+        - coordinate_reference_projection
+        - raster_operations
+        - vision_analytics
+        - export_layout
+        - editing_topology
+        - network_analysis
+        - spatial_statistics
+        - new vertical
+    validations:
+      required: true
+  - type: input
+    id: arcpy-function
+    attributes:
+      label: ArcPy function
+      description: Which arcpy function should this wrap?
+      placeholder: "arcpy.analysis.GenerateNearTable"
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: >
+        What workflow does this enable? What would you ask Claude
+        to do that currently requires manual ArcGIS Pro steps?
+    validations:
+      required: true
+  - type: checkboxes
+    id: destructive
+    attributes:
+      label: Mutation safety
+      options:
+        - label: >
+            This tool mutates its input dataset and should require
+            confirm: true.

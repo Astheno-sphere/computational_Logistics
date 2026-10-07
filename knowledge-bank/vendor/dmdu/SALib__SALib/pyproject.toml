@@ -1,0 +1,95 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "SALib"
+dynamic = ["version"]
+description = "Tools for global sensitivity analysis. Contains Sobol', Morris, FAST, DGSM, PAWN, HDMR, Moment Independent and fractional factorial methods"
+readme = "README.rst"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+  { name = "Jon Herman" },
+  { name = "Will Usher" },
+  { name = "Takuya Iwanaga" },
+]
+maintainers = [
+  { name = "SALib contributors" },
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.14",
+  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "numpy>=2.0",
+  "scipy>=1.9.3",
+  "matplotlib>=3.5",
+  "pandas>=2.0",
+  "multiprocess",
+]
+
+[project.optional-dependencies]
+distributed = [
+    "pathos>=0.3.2",
+]
+
+test = [
+    "SALib[distributed]",
+    "pytest",
+    "pytest-cov",
+]
+
+doc = [
+    "sphinx",
+    "myst_parser",
+    "numpydoc",
+    "pydata-sphinx-theme>=0.15.2"
+]
+
+dev = [
+    "SALib[distributed]",
+    "SALib[test]",
+    "SALib[doc]",
+    "pre-commit>=4.3.0",
+    "ipython",
+    "hatch",
+]
+
+[project.scripts]
+salib = "SALib.scripts.salib:main"
+
+[project.urls]
+Documentation = "https://salib.readthedocs.io"
+"Source code" = "https://github.com/SALib/SALib"
+
+[tool.hatch]
+version.source = "vcs"
+build.targets.sdist.exclude = [
+  ".github",
+  "docs",
+  "examples",
+  "paper",
+  "tests",
+  "*.md",
+  "*.rst",
+  "*.yml",
+  "*.cff",
+  ".*",
+]
+
+[tool.pytest.ini_options]
+addopts = "--durations 10"
+testpaths = [
+    "tests",
+]

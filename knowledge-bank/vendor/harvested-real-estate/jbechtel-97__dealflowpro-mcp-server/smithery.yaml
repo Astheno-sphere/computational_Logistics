@@ -1,0 +1,16 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      DFP_API_KEY:
+        type: string
+        description: "Your DealFlowPro API key (starts with dfp_sk_). Get one at https://dealflowpro.io/api/"
+    required:
+      - DFP_API_KEY
+  commandFunction: |-
+    (config) => ({
+      command: 'node',
+      args: ['index.js'],
+      env: { DFP_API_KEY: config.DFP_API_KEY }
+    })

@@ -1,0 +1,29 @@
+name: Dependency Review
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/agentsociety2/**"
+      - "extension/**"
+      - "frontend/**"
+      - "uv.lock"
+      - "pyproject.toml"
+
+jobs:
+  dependency-review:
+    name: Review AgentSociety2 dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Dependency review
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

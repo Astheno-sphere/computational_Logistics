@@ -1,0 +1,144 @@
+# Standalone manifests for partelisto-mcp — applied directly with `kubectl apply -f k8s/`, NOT via
+# the helm-microservices chart. That chart's values-production.yaml is local/gitignored and has an
+# in-progress teammate change sitting in it; a `helm upgrade` from that tree would deploy that WIP
+# alongside this service. These resources are independent of that Helm release (separate Ingress,
+# separate TLS secret) so applying/updating them never touches it.
+#
+# Update flow for a new image: bump the `image:` tag below and re-apply this file. No other service's
+# manifests need to change.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: partelisto-mcp
+  namespace: targetgrps-microservices
+  labels:
+    app: partelisto-mcp
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: partelisto-mcp
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: partelisto-mcp
+    spec:
+      containers:
+        - name: partelisto-mcp
+          image: ghcr.io/targetgrps/partelisto-mcp:0.1.0-rc.19
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+          # No Gateway/Keycloak env vars: appsettings.json already carries the correct prod values
+          # (https://api-gateway.targetgrps.com, https://auth.partelisto.es/realms/partelisto,
+          # audience partelisto-mcp) and this service has no other secrets to inject.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp
+      imagePullSecrets:
+        - name: targetgrps-microservices-regcred
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir: {}
+          name: tmp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: partelisto-mcp
+  namespace: targetgrps-microservices
+  labels:
+    app: partelisto-mcp
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: partelisto-mcp
+---
+# Its own Ingress + TLS cert (letsencrypt-prod, http01 — same cluster issuer the shared ingress uses),
+# deliberately not a new host entry on targetgrps-microservices-ingress, for the reason at the top of
+# this file. Requires a DNS A record: mcp.partelisto.es -> the same load-balancer IP as the other hosts
+# (`kubectl get ingress targetgrps-microservices-ingress -n targetgrps-microservices` shows it).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: partelisto-mcp-ingress
+  namespace: targetgrps-microservices
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/acme-challenge-type: http01
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mcp.partelisto.es
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: partelisto-mcp
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - mcp.partelisto.es
+      secretName: partelisto-mcp-tls

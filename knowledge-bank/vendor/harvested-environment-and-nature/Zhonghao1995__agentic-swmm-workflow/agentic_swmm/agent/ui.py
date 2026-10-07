@@ -1,0 +1,377 @@
+from __future__ import annotations
+
+import enum
+import sys
+import threading
+import time
+from pathlib import Path
+from typing import IO, Any
+
+from agentic_swmm.agent import tui_chrome as _chrome
+from agentic_swmm.agent import ui_colors
+from agentic_swmm.utils.paths import repo_root
+
+
+_PROMPT = "aiswmm>"
+_INDENT = " " * (len(_PROMPT) + 1)  # match "aiswmm> " spacing
+
+
+def agent_say(text: str) -> None:
+    """Print an agent line. Only the first non-empty line gets the
+    ``aiswmm>`` prefix; subsequent lines are indented to align with it
+    (PRD_runtime user story 7).
+    """
+    # The executor's tool spinner lives on the current terminal line
+    # WITHOUT a newline (it repaints in place across the whole turn).
+    # Printing over it glued the frame to the output ("[/]
+    # list_skillsaiswmm> [1] ..."; user live test 2026-08-09). Erase
+    # the live frame first so every agent line starts at column 0.
+    _clear_active_spinner_line()
+    if not text:
+        print(_styled_prompt())
+        return
+    lines = text.splitlines() or [text]
+    first = True
+    for line in lines:
+        if not line:
+            # Preserve blank lines as a bare indent so paragraphs hold
+            # together visually.
+            print(_INDENT.rstrip())
+            continue
+        if first:
+            print(f"{_styled_prompt()} {line}")
+            first = False
+        else:
+            print(f"{_INDENT}{line}")
+
+
+def _styled_prompt() -> str:
+    return ui_colors.colorize(_PROMPT, ui_colors.FG_BLUE)
+
+
+# ---------------------------------------------------------------------------
+# Retro-chrome err / wrn builders (PRD-TUI-REDESIGN).
+#
+# Public re-exports of ``tui_chrome.err`` / ``tui_chrome.wrn`` plus a
+# pair of stderr-emitting wrappers (``say_err``, ``say_wrn``) so the
+# rest of the agent can replace any ad-hoc ``print("Error: ...")`` /
+# ``print("Warning: ...")`` patterns with the canonical chrome
+# vocabulary in one line. Under plain mode (``AISWMM_TUI=plain``)
+# both the prefix and the colour are stripped automatically.
+# ---------------------------------------------------------------------------
+
+
+def err(msg: str) -> str:
+    """Return ``[ERR] msg`` in error red. See :func:`tui_chrome.err`."""
+    return _chrome.err(msg)
+
+
+def wrn(msg: str) -> str:
+    """Return ``[WRN] msg`` in warn amber. See :func:`tui_chrome.wrn`."""
+    return _chrome.wrn(msg)
+
+
+def say_err(msg: str, *, stream: IO[str] | None = None) -> None:
+    """Print ``[ERR] msg`` to stderr (or ``stream`` if provided).
+
+    Replaces the ad-hoc ``print(f"Error: {msg}", file=sys.stderr)``
+    pattern. Plain-mode opt-out is inherited from ``tui_chrome``.
+    """
+    out = stream if stream is not None else sys.stderr
+    print(err(msg), file=out, flush=True)
+
+
+def say_wrn(msg: str, *, stream: IO[str] | None = None) -> None:
+    """Print ``[WRN] msg`` to stderr (or ``stream`` if provided).
+
+    Replaces the ad-hoc ``print(f"Warning: {msg}", file=sys.stderr)``
+    pattern. Plain-mode opt-out is inherited from ``tui_chrome``.
+    """
+    out = stream if stream is not None else sys.stderr
+    print(wrn(msg), file=out, flush=True)
+
+
+def display_path(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(repo_root().resolve()))
+    except ValueError:
+        return str(path)
+
+
+def compact_plan(plan: list[Any]) -> str:
+    if not plan:
+        return "no tool calls"
+    return " -> ".join(str(call.name) for call in plan)
+
+
+# ---------------------------------------------------------------------------
+# Spinner (PRD_runtime user story 8 + PRD_product_ux_overhaul UX-3)
+# ---------------------------------------------------------------------------
+
+
+class SpinnerState(enum.Enum):
+    """High-level states a ``Spinner`` can advertise.
+
+    Issue #58 (UX-3): the spinner gained a state enum so it can be
+    reused beyond per-tool progress. ``THINKING`` covers the silent
+    5-30s window inside ``Planner.run`` while we wait on the
+    LLM; ``RUNNING`` is the existing per-tool behaviour; ``WAITING``
+    is reserved for future user-confirmation pauses; ``DONE`` and
+    ``FAILED`` are the terminal markers when a Spinner finishes.
+    """
+
+    THINKING = "thinking"
+    RUNNING = "running"
+    WAITING = "waiting"
+    DONE = "done"
+    FAILED = "failed"
+
+
+class Spinner:
+    """Single-line carriage-return spinner for tool / LLM progress.
+
+    On a TTY ``stdout`` the spinner overwrites the previous line with
+    ``\\r`` so 10 tool calls do not produce 20 scroll lines. On a
+    non-TTY stream (CI logs, captured stdout, redirected files) it
+    falls back to one newline-terminated line per ``update`` /
+    ``finish`` so existing log scrapers stay readable.
+
+    For ``state=SpinnerState.THINKING`` (issue #58), the spinner runs
+    a background ticker that advances the frame every ~120 ms so the
+    user sees motion while the planner blocks on the LLM. On non-TTY
+    the ticker is a no-op — only the entry line is emitted.
+
+    Usage::
+
+        with Spinner("plot_run") as spinner:
+            ...
+            spinner.update("inspect_plot_options")
+
+        with Spinner("Thinking…", state=SpinnerState.THINKING):
+            response = provider.respond_with_tools(...)
+    """
+
+    _FRAMES = ("[/]", "[\\]", "[|]", "[-]")
+    _TICK_SECONDS = 0.12
+    # THINKING-state verbs cycled on the single status line so the long
+    # (5-30s) LLM wait reads as live progress instead of a frozen label.
+    # Cadence is deliberately calm (~_VERB_TICKS * _TICK_SECONDS ≈ 1.2s per
+    # verb) to avoid flicker.
+    _THINKING_VERBS = ("Thinking", "Reasoning", "Planning", "Analyzing", "Working")
+    _VERB_TICKS = 10
+
+    def __init__(
+        self,
+        label: str,
+        stream: IO[str] | None = None,
+        *,
+        state: SpinnerState = SpinnerState.RUNNING,
+    ) -> None:
+        self.label = label
+        self.state = state
+        self.stream = stream if stream is not None else sys.stdout
+        self._frame = 0
+        # THINKING verb cycling state — see _advance.
+        self._tick_count = 0
+        self._verb_index = 0
+        self._is_tty = self._stream_is_tty(self.stream)
+        self._closed = False
+        self._started_at = time.monotonic()
+        # Background ticker — only used for THINKING on a TTY.
+        self._stop_event: threading.Event | None = None
+        self._ticker: threading.Thread | None = None
+        self._lock = threading.Lock()
+
+    def __enter__(self) -> "Spinner":
+        self._render()
+        if self._is_tty:
+            # Both states animate now: THINKING cycles verbs, RUNNING
+            # keeps the glyph moving and shows elapsed time so a silent
+            # multi-minute tool (swmm run, audit, report) reads as
+            # alive instead of hung (BUG-4, user live test 2026-08-09).
+            self._start_ticker()
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.finish()
+
+    def update(self, label: str) -> None:
+        with self._lock:
+            if label != self.label:
+                self._started_at = time.monotonic()
+            self.label = label
+            self._frame = (self._frame + 1) % len(self._FRAMES)
+            self._render()
+
+    def pause(self) -> None:
+        """Stop the ticker without closing: the tool finished and the
+        planner's THINKING spinner takes over the line. Without this,
+        both tickers repaint the same line in a flicker fight (seen
+        live after the RUNNING ticker landed, 2026-08-09)."""
+        self._stop_ticker()
+
+    def resume(self) -> None:
+        """Restart the ticker for the next tool (no-op off-TTY/closed)."""
+        if self._is_tty and not self._closed and self._ticker is None:
+            self._start_ticker()
+
+    def finish(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        self._stop_ticker()
+        if self._is_tty:
+            # ``\n`` would freeze the last frame into scrollback; CR +
+            # erase-line wipes the frame in place so the next print
+            # lands on a blank line.
+            try:
+                self.stream.write(ui_colors.CLEAR_LINE)
+                self.stream.flush()
+            except Exception:  # pragma: no cover - best effort
+                pass
+
+    def _render(self) -> None:
+        if self._closed:
+            return
+        frame = self._FRAMES[self._frame]
+        elapsed = time.monotonic() - self._started_at
+        suffix = ""
+        if elapsed >= 5:
+            minutes, seconds = divmod(int(elapsed), 60)
+            suffix = f" — {minutes}m{seconds:02d}s" if minutes else f" — {seconds}s"
+        if self._is_tty:
+            line = f"\r{frame} {self.label}{suffix}"
+        else:
+            line = f"{frame} {self.label}{suffix}\n"
+        try:
+            self.stream.write(line)
+            self.stream.flush()
+        except Exception:  # pragma: no cover - best effort
+            pass
+
+    # -- ticker (THINKING only) --------------------------------------------
+
+    def _start_ticker(self) -> None:
+        self._stop_event = threading.Event()
+        self._ticker = threading.Thread(target=self._tick_loop, daemon=True)
+        self._ticker.start()
+
+    def _stop_ticker(self) -> None:
+        if self._stop_event is not None:
+            self._stop_event.set()
+        if self._ticker is not None:
+            self._ticker.join(timeout=1.0)
+        self._stop_event = None
+        self._ticker = None
+
+    def _advance(self) -> None:
+        """Advance one animation tick: spin the glyph and, for THINKING,
+        rotate the verb on a calm cadence so the single status line reads as
+        live progress instead of a frozen "Thinking…". RUNNING/other states
+        keep their caller-set label (e.g. the current tool name)."""
+        self._frame = (self._frame + 1) % len(self._FRAMES)
+        if self.state is SpinnerState.THINKING:
+            self._tick_count += 1
+            if self._tick_count % self._VERB_TICKS == 0:
+                self._verb_index = (self._verb_index + 1) % len(self._THINKING_VERBS)
+                self.label = self._THINKING_VERBS[self._verb_index] + "…"
+
+    def _tick_loop(self) -> None:
+        assert self._stop_event is not None
+        while not self._stop_event.wait(self._TICK_SECONDS):
+            with self._lock:
+                if self._closed:
+                    return
+                self._advance()
+                self._render()
+
+    @staticmethod
+    def _stream_is_tty(stream: IO[str]) -> bool:
+        isatty = getattr(stream, "isatty", None)
+        if isatty is None:
+            return False
+        try:
+            return bool(isatty())
+        except (AttributeError, ValueError):
+            return False
+
+
+# ---------------------------------------------------------------------------
+# Live tool status seam (SWMMCanada UX polish)
+# ---------------------------------------------------------------------------
+# The executor owns one per-run RUNNING spinner; long-blocking tool handlers
+# (e.g. fetch_swmm_from_canada polling a multi-minute upstream build) have no
+# handle on it. This module-level seam lets a handler repaint the live status
+# line without threading a spinner through 56 handler signatures. Outside an
+# agent run (CLI verbs, tests) there is no active spinner and updates are
+# silent no-ops. Updates are deduped so a non-TTY stream (one line per
+# update) is not spammed by identical poll ticks.
+
+_active_tool_spinner: Spinner | None = None
+_last_tool_status: str | None = None
+
+
+def set_active_tool_spinner(spinner: Spinner | None) -> None:
+    """Register (or clear, with ``None``) the executor's per-tool spinner."""
+    global _active_tool_spinner, _last_tool_status
+    _active_tool_spinner = spinner
+    _last_tool_status = None
+
+
+def _clear_active_spinner_line() -> None:
+    """Erase the live spinner frame so a fresh print starts clean."""
+    spinner = _active_tool_spinner
+    if spinner is None:
+        return
+    try:
+        if spinner._is_tty and not spinner._closed:
+            spinner.stream.write(ui_colors.CLEAR_LINE)
+            spinner.stream.flush()
+    except Exception:  # pragma: no cover - decoration must never break output
+        pass
+
+
+def pause_active_spinner_for_prompt() -> None:
+    """Stop the live spinner's ticker AND wipe its frame so an input()
+    prompt owns a clean line at column 0.
+
+    Without this, ``permissions.request_approval`` printed its
+    ``Run tool? [Y/n]`` right after the live spinner frame (no newline)
+    and the RUNNING ticker kept repainting the line head with the
+    growing elapsed suffix, leaving the cursor stranded mid-text
+    ("…— 10stch_swmm_from_canada? [Y/n]"; user live test 2026-08-09).
+    """
+    spinner = _active_tool_spinner
+    if spinner is None:
+        return
+    try:
+        spinner.pause()
+        if spinner._is_tty and not spinner._closed:
+            spinner.stream.write(ui_colors.CLEAR_LINE)
+            spinner.stream.flush()
+    except Exception:  # pragma: no cover - prompt must never break on chrome
+        pass
+
+
+def resume_active_spinner_after_prompt() -> None:
+    """Restart the spinner ticker once the prompt has been answered."""
+    spinner = _active_tool_spinner
+    if spinner is None:
+        return
+    try:
+        spinner.resume()
+    except Exception:  # pragma: no cover - prompt must never break on chrome
+        pass
+
+
+def update_tool_status(text: str) -> None:
+    """Best-effort live status update from inside a blocking tool handler."""
+    global _last_tool_status
+    spinner = _active_tool_spinner
+    if spinner is None or text == _last_tool_status:
+        return
+    _last_tool_status = text
+    try:
+        spinner.update(text)
+    except Exception:  # pragma: no cover - progress must never break a tool
+        pass

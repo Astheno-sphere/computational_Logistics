@@ -1,0 +1,33 @@
+name: Deploy MkDocs site
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install MkDocs and theme
+        run: |
+          pip install mkdocs mkdocs-material
+
+      - name: Generate LLM discovery files
+        run: python scripts/generate_llms.py
+
+      - name: Build and Deploy to gh-pages
+        run: |
+          mkdocs gh-deploy --force

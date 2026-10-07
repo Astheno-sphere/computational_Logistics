@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vessel Traffic MCP - ship tracking MCP for ChatGPT, Codex, Claude, and Gemini</title>
+    <meta
+      name="description"
+      content="Vessel Traffic MCP is a read-only Model Context Protocol server for vessel AIS, ship tracking, maritime schedules, and BYOK provider workflows in ChatGPT, Codex, Claude, and Gemini."
+    >
+    <meta
+      name="keywords"
+      content="vessel AIS MCP, ship tracking MCP, maritime MCP, ChatGPT MCP, Codex MCP, Claude MCP, Gemini MCP, MarineTraffic MCP, VesselFinder MCP, BYOK AIS"
+    >
+    <link rel="canonical" href="https://tools-mcp.github.io/vessel-traffic-mcp/">
+    <meta property="og:title" content="Vessel Traffic MCP">
+    <meta
+      property="og:description"
+      content="Read-only MCP server for vessel identity, AIS-style positions, port calls, carrier schedules, and BYOK maritime providers."
+    >
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tools-mcp.github.io/vessel-traffic-mcp/">
+    <meta property="og:image" content="https://tools-mcp.github.io/vessel-traffic-mcp/marketing/assets/map-ui-ever-given.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #18212f;
+        --muted: #5d6674;
+        --line: #d9e1ea;
+        --panel: #ffffff;
+        --paper: #f7f9fb;
+        --navy: #12385f;
+        --teal: #08736d;
+        --green: #2e7d32;
+        --amber: #9a5a00;
+        --code: #101923;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--teal);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      header,
+      main,
+      footer {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      header {
+        padding: 24px 0 28px;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+
+      .brand img {
+        width: 36px;
+        height: 36px;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        font-size: 14px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
+        gap: 32px;
+        align-items: center;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        color: var(--navy);
+        font-size: clamp(36px, 5vw, 68px);
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 28px;
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+
+      .lead {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 19px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 22px 0;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--ink);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .button.primary {
+        border-color: var(--teal);
+        background: var(--teal);
+        color: white;
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .tag {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel);
+        padding: 5px 9px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      figure {
+        margin: 0;
+      }
+
+      figure img {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #eef3f7;
+        box-shadow: 0 18px 50px rgba(18, 56, 95, 0.16);
+      }
+
+      figcaption {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      section {
+        padding: 34px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 18px;
+      }
+
+      .card p,
+      .narrow p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .install-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      pre {
+        overflow: auto;
+        margin: 12px 0 0;
+        border-radius: 8px;
+        background: var(--code);
+        color: #eef6f8;
+        padding: 14px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #edf4f4;
+        color: var(--navy);
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .status {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 3px 8px;
+        background: #e8f5e9;
+        color: var(--green);
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      .warning {
+        border-left: 4px solid var(--amber);
+        background: #fff8ea;
+        padding: 14px 16px;
+        color: #4d3a18;
+      }
+
+      footer {
+        padding: 28px 0 48px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 860px) {
+        .hero,
+        .grid,
+        .install-grid {
+          grid-template-columns: 1fr;
+        }
+
+        nav {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "Vessel Traffic MCP",
+        "description": "Read-only Model Context Protocol server for vessel AIS, ship tracking, maritime schedules, and BYOK provider workflows.",
+        "codeRepository": "https://github.com/tools-mcp/vessel-traffic-mcp",
+        "license": "https://github.com/tools-mcp/vessel-traffic-mcp/blob/main/LICENSE",
+        "programmingLanguage": "TypeScript",
+        "runtimePlatform": "Node.js 22+",
+        "applicationCategory": "DeveloperTool",
+        "keywords": [
+          "vessel AIS MCP",
+          "ship tracking MCP",
+          "ChatGPT MCP",
+          "Codex MCP",
+          "Claude MCP",
+          "Gemini MCP",
+          "MarineTraffic MCP",
+          "VesselFinder MCP",
+          "BYOK maritime data"
+        ],
+        "url": "https://tools-mcp.github.io/vessel-traffic-mcp/",
+        "downloadUrl": "https://www.npmjs.com/package/@tools-mcp/vessel-traffic-mcp",
+        "isAccessibleForFree": true
+      }
+    </script>
+  </head>
+  <body>
+    <header>
+      <nav aria-label="Primary">
+        <a class="brand" href="https://github.com/tools-mcp/vessel-traffic-mcp">
+          <img src="https://raw.githubusercontent.com/tools-mcp/vessel-traffic-mcp/main/assets/logo-400.png" alt="" width="36" height="36">
+          <span>Vessel Traffic MCP</span>
+        </a>
+        <div class="nav-links">
+          <a href="#install">Install</a>
+          <a href="#agents">Agents</a>
+          <a href="#tools">Tools</a>
+          <a href="#prompt">Prompt</a>
+          <a href="https://github.com/tools-mcp/vessel-traffic-mcp">GitHub</a>
+        </div>
+      </nav>
+
+      <div class="hero">
+        <div>
+          <p class="status">Read-only MCP server</p>
+          <h1>Ship tracking MCP for AI agents</h1>
+          <p class="lead">
+            Vessel Traffic MCP gives ChatGPT, Codex, Claude, Gemini, and other
+            Model Context Protocol clients a normalized way to resolve vessel
+            names, AIS-style positions, port calls, carrier schedules, vessel
+            schedules, and delay context.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="#install">Install in an agent</a>
+            <a class="button" href="https://github.com/tools-mcp/vessel-traffic-mcp">View repository</a>
+            <a class="button" href="https://www.npmjs.com/package/@tools-mcp/vessel-traffic-mcp">npm package</a>
+          </div>
+          <div class="tag-row" aria-label="Search phrases">
+            <span class="tag">vessel AIS MCP</span>
+            <span class="tag">ship tracking MCP</span>
+            <span class="tag">ChatGPT MCP</span>
+            <span class="tag">Codex MCP</span>
+            <span class="tag">Claude MCP</span>
+            <span class="tag">Gemini MCP</span>
+            <span class="tag">MarineTraffic BYOK</span>
+          </div>
+        </div>
+        <figure>
+          <img
+            src="marketing/assets/map-ui-ever-given.png"
+            alt="Vessel Traffic MCP map UI showing an EVER GIVEN vessel result with source attribution"
+            width="860"
+            height="520"
+          >
+          <figcaption>
+            Local fixture/demo UI. Live coverage depends on configured public or BYOK providers.
+          </figcaption>
+        </figure>
+      </div>
+    </header>
+
+    <main>
+      <section id="agents">
+        <h2>What agents can do after MCP setup</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Resolve vessel names</h3>
+            <p>
+              Convert names, MMSI, IMO, callsigns, and B/L-style text into
+              ranked vessel candidates with confidence and confirmation flags.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Find positions and tracks</h3>
+            <p>
+              Query latest known positions, recent tracks, area results, and
+              port calls with source.provider, source.landingUrl, freshness,
+              coverage, and caveats.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Check shipping schedules</h3>
+            <p>
+              Search carrier schedules by port pair, vessel, carrier, cargo
+              type, and date windows, then compare planned and estimated events.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="install">
+        <h2>Install snippets for assistant clients</h2>
+        <div class="install-grid">
+          <article class="card">
+            <h3>Claude Desktop, Claude Code, Cursor, VS Code, generic stdio</h3>
+            <pre><code>{
+  "mcpServers": {
+    "vessel-traffic-mcp": {
+      "command": "npx",
+      "args": ["-y", "@tools-mcp/vessel-traffic-mcp"],
+      "env": {
+        "VESSEL_MCP_TRANSPORT": "stdio",
+        "VESSEL_MCP_ENABLE_PUBLIC_PROVIDERS": "myshiptracking,tradlinx,aisfriends"
+      }
+    }
+  }
+}</code></pre>
+          </article>
+          <article class="card">
+            <h3>Codex CLI</h3>
+            <pre><code>codex mcp add vesselTraffic -- npx -y @tools-mcp/vessel-traffic-mcp</code></pre>
+            <pre><code>[mcp_servers.vessel-traffic-mcp]
+command = "npx"
+args = ["-y", "@tools-mcp/vessel-traffic-mcp"]
+
+[mcp_servers.vessel-traffic-mcp.env]
+VESSEL_MCP_TRANSPORT = "stdio"
+VESSEL_MCP_ENABLE_PUBLIC_PROVIDERS = "myshiptracking,tradlinx,aisfriends"</code></pre>
+          </article>
+          <article class="card">
+            <h3>ChatGPT or OpenAI remote MCP</h3>
+            <pre><code>{
+  "type": "mcp",
+  "server_label": "vessel_traffic",
+  "server_url": "https://&lt;your-public-host&gt;/mcp",
+  "require_approval": "never",
+  "allowed_tools": ["search", "fetch", "vessel_search", "vessel_position"]
+}</code></pre>
+            <p>
+              A remote endpoint must be HTTPS and reachable by the OpenAI
+              product you connect. Use OAuth or bearer auth when exposing
+              private or paid-provider profiles.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Gemini CLI or Gemini Code Assist</h3>
+            <pre><code>{
+  "mcpServers": {
+    "vessel-traffic-mcp": {
+      "command": "npx",
+      "args": ["-y", "@tools-mcp/vessel-traffic-mcp"],
+      "env": {
+        "VESSEL_MCP_TRANSPORT": "stdio",
+        "VESSEL_MCP_ENABLE_PUBLIC_PROVIDERS": "myshiptracking,tradlinx,aisfriends"
+      },
+      "timeout": 30000
+    }
+  }
+}</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section id="prompt">
+        <h2>Golden prompt for tool selection</h2>
+        <div class="card">
+          <pre><code>Use Vessel Traffic MCP. What is the current known position of EVER GIVEN?
+Resolve the vessel first if needed, then include:
+- source.provider
+- source.landingUrl
+- observedAt and retrievedAt
+- freshnessSeconds
+- confidence and coverage caveats
+- a short note that this is not for safety-critical navigation</code></pre>
+        </div>
+      </section>
+
+      <section id="tools">
+        <h2>Agent-readable MCP tools</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Need</th>
+              <th>Tools</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Search/fetch connector flow</td>
+              <td><code>search</code>, <code>fetch</code></td>
+              <td>Read-only wrappers for search-style MCP clients and deep-research workflows.</td>
+            </tr>
+            <tr>
+              <td>Vessel identity</td>
+              <td><code>vessel_search</code>, <code>vessel_name_resolve</code>, <code>document_vessel_lookup</code></td>
+              <td>Ranks MMSI/IMO candidates and marks ambiguous results.</td>
+            </tr>
+            <tr>
+              <td>AIS-style movement</td>
+              <td><code>vessel_position</code>, <code>vessel_area</code>, <code>vessel_track</code>, <code>port_calls</code></td>
+              <td>Returns source, timestamp, freshness, coverage, and confidence metadata.</td>
+            </tr>
+            <tr>
+              <td>Schedules</td>
+              <td><code>carrier_schedule_search</code>, <code>vessel_schedule</code>, <code>schedule_delay_predict</code></td>
+              <td>Carrier and vessel schedule surfaces with source attribution.</td>
+            </tr>
+            <tr>
+              <td>Provider setup</td>
+              <td><code>provider_status</code>, <code>data_sources</code>, <code>credential_profiles</code>, <code>provider_onboarding</code></td>
+              <td>Shows safe manual BYOK setup. It never creates accounts or issues credentials.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Public references</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Repository</h3>
+            <p><a href="https://github.com/tools-mcp/vessel-traffic-mcp">github.com/tools-mcp/vessel-traffic-mcp</a></p>
+          </article>
+          <article class="card">
+            <h3>MCP Registry</h3>
+            <p><a href="https://registry.modelcontextprotocol.io/?q=io.github.tools-mcp%2Fvessel-traffic-mcp">io.github.tools-mcp/vessel-traffic-mcp</a></p>
+          </article>
+          <article class="card">
+            <h3>Agent briefs</h3>
+            <p>
+              <a href="https://github.com/tools-mcp/vessel-traffic-mcp/blob/main/llms.txt">llms.txt</a>
+              and
+              <a href="https://github.com/tools-mcp/vessel-traffic-mcp/blob/main/llms-install.md">llms-install.md</a>
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="warning">
+          Vessel Traffic MCP is read-only. It does not bypass paywalls,
+          authentication, CAPTCHA, bot defenses, or provider terms. Paid and
+          commercial providers are Bring Your Own Key. AIS-style data can be
+          stale or incomplete and must not be used for safety-critical
+          navigation.
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        MIT licensed. Maintained at
+        <a href="https://github.com/tools-mcp/vessel-traffic-mcp">tools-mcp/vessel-traffic-mcp</a>.
+        Static page for agent discovery and search indexing.
+      </p>
+    </footer>
+  </body>
+</html>

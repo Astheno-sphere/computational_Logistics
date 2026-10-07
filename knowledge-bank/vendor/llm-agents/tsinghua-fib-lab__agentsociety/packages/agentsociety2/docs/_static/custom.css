@@ -1,0 +1,87 @@
+/* 品牌 logo：浅色侧栏压暗贴近 rgb(0,0,136)；深色侧栏转为浅色，避免与背景糊成一片 */
+
+.sidebar-brand .sidebar-logo,
+.sidebar-brand img,
+.mobile-header a img,
+.mobile-header .sidebar-logo {
+  filter: brightness(0.54) saturate(0.68) hue-rotate(6deg) contrast(1.06);
+}
+
+body[data-theme="dark"] .sidebar-brand .sidebar-logo,
+body[data-theme="dark"] .sidebar-brand img,
+body[data-theme="dark"] .mobile-header a img,
+body[data-theme="dark"] .mobile-header .sidebar-logo {
+  filter: brightness(0) saturate(100%) invert(88%) sepia(12%) saturate(850%)
+    hue-rotate(203deg) brightness(108%) contrast(98%)
+    drop-shadow(0 0 2px rgba(246, 244, 255, 0.42));
+}
+
+@media (prefers-color-scheme: dark) {
+  body[data-theme="auto"] .sidebar-brand .sidebar-logo,
+  body[data-theme="auto"] .sidebar-brand img,
+  body[data-theme="auto"] .mobile-header a img,
+  body[data-theme="auto"] .mobile-header .sidebar-logo {
+    filter: brightness(0) saturate(100%) invert(88%) sepia(12%) saturate(850%)
+      hue-rotate(203deg) brightness(108%) contrast(98%)
+      drop-shadow(0 0 2px rgba(246, 244, 255, 0.42));
+  }
+}
+
+/* 侧栏品牌：主标题 + 版本/副文案分行 */
+.sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.12rem;
+  margin-top: 0.15rem;
+}
+
+.sidebar-brand-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  color: var(--color-sidebar-brand-text);
+}
+
+.sidebar-brand-meta {
+  font-size: 0.7rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--color-sidebar-caption-text);
+  letter-spacing: 0.02em;
+}
+
+/* 正文版式：中文长文可读性、版心与列表间距 */
+article[role="main"] {
+  line-height: 1.72;
+  font-size: 0.98rem;
+}
+
+article[role="main"] p + p {
+  margin-top: 0.65em;
+}
+
+.article-container {
+  max-width: 50rem;
+}
+
+article[role="main"] ul,
+article[role="main"] ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.75em;
+}
+
+article[role="main"] li + li {
+  margin-top: 0.28em;
+}
+
+.content h1,
+.content h2 {
+  letter-spacing: -0.015em;
+  margin-top: 1.35em;
+}
+
+.content h1 {
+  margin-top: 0.15em;
+}

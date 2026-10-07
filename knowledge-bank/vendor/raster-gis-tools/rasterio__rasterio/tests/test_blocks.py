@@ -1,0 +1,215 @@
+from functools import partial
+import os.path
+import shutil
+import subprocess
+import tempfile
+import unittest
+
+import numpy as np
+import pytest
+
+import rasterio
+from rasterio import windows
+from rasterio.errors import RasterBlockError
+from rasterio.profiles import default_gtiff_profile
+
+
+class WindowTest(unittest.TestCase):
+    def test_window_shape_None_start(self):
+        self.assertEqual(rasterio.windows.shape(((None, 4), (None, 102))), (4, 102))
+
+    def test_window_shape_None_stop(self):
+        self.assertEqual(
+            rasterio.windows.shape(((10, None), (10, None)), 100, 90), (90, 80)
+        )
+
+    def test_window_shape_positive(self):
+        self.assertEqual(rasterio.windows.shape(((0, 4), (1, 102))), (4, 101))
+
+    def test_window_shape_negative(self):
+        self.assertEqual(
+            rasterio.windows.shape(((-10, None), (-10, None)), 100, 90), (10, 10)
+        )
+        self.assertEqual(
+            rasterio.windows.shape(((~0, None), (~0, None)), 100, 90), (1, 1)
+        )
+        self.assertEqual(
+            rasterio.windows.shape(((None, ~0), (None, ~0)), 100, 90), (99, 89)
+        )
+
+    def test_eval(self):
+        self.assertEqual(
+            rasterio.windows.evaluate(((-10, None), (-10, None)), 100, 90),
+            windows.Window.from_slices((90, 100), (80, 90)),
+        )
+        self.assertEqual(
+            rasterio.windows.evaluate(((None, -10), (None, -10)), 100, 90),
+            windows.Window.from_slices((0, 90), (0, 80)),
+        )
+
+
+def test_window_index():
+    idx = rasterio.windows.window_index(((0, 4), (1, 12)))
+    assert len(idx) == 2
+    r, c = idx
+    assert r.start == 0
+    assert r.stop == 4
+    assert c.start == 1
+    assert c.stop == 12
+    arr = np.ones((20, 20))
+    assert arr[idx].shape == (4, 11)
+
+
+class RasterBlocksTest(unittest.TestCase):
+    def test_blocks(self):
+        with rasterio.open("tests/data/RGB.byte.tif") as s:
+            self.assertEqual(len(s.block_shapes), 3)
+            self.assertEqual(s.block_shapes, [(3, 791), (3, 791), (3, 791)])
+            itr = s.block_windows(1)
+            (j, i), first = next(itr)
+            self.assertEqual((j, i), (0, 0))
+            self.assertEqual(first, windows.Window.from_slices((0, 3), (0, 791)))
+            itr = s.block_windows()
+            (j, i), first = next(itr)
+            self.assertEqual((j, i), (0, 0))
+            self.assertEqual(first, windows.Window.from_slices((0, 3), (0, 791)))
+            (j, i), second = next(itr)
+            self.assertEqual((j, i), (1, 0))
+            self.assertEqual(second, windows.Window.from_slices((3, 6), (0, 791)))
+            (j, i), last = list(itr)[~0]
+            self.assertEqual((j, i), (239, 0))
+            self.assertEqual(last, windows.Window.from_slices((717, 718), (0, 791)))
+
+    def test_block_coverage(self):
+        with rasterio.open("tests/data/RGB.byte.tif") as s:
+            self.assertEqual(
+                s.width * s.height,
+                sum(w.width * w.height for ji, w in s.block_windows(1)),
+            )
+
+
+class WindowReadTest(unittest.TestCase):
+    def test_read_window(self):
+        with rasterio.open("tests/data/RGB.byte.tif") as s:
+            windows = s.block_windows(1)
+            ji, first_window = next(windows)
+            first_block = s.read(1, window=first_window)
+            self.assertEqual(first_block.dtype, rasterio.ubyte)
+            self.assertEqual(first_block.shape, rasterio.windows.shape(first_window))
+
+
+class WindowWriteTest(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    @pytest.mark.gdalbin
+    def test_write_window(self):
+        name = os.path.join(self.tempdir, "test_write_window.tif")
+        a = np.ones((50, 50), dtype=rasterio.ubyte) * 127
+        with rasterio.open(
+            name, "w", driver="GTiff", width=100, height=100, count=1, dtype=a.dtype
+        ) as s:
+            s.write(a, indexes=1, window=windows.Window(10, 30, 50, 50))
+        # subprocess.call(["open", name])
+        info = subprocess.check_output(["gdalinfo", "-stats", name])
+        self.assertTrue(
+            "Minimum=0.000, Maximum=127.000, "
+            "Mean=31.750, StdDev=54.993" in info.decode("utf-8"),
+            info,
+        )
+
+
+def test_block_windows_unfiltered(path_rgb_byte_tif):
+    """Get all block windows"""
+    with rasterio.open(path_rgb_byte_tif) as src:
+        assert len(list(src.block_windows())) == 240
+
+
+def test_block_windows_filtered_all(path_rgb_byte_tif):
+    """Get all block windows using filter"""
+    with rasterio.open(path_rgb_byte_tif) as src:
+        w, s, e, n = src.bounds
+        focus_window = src.window(w, s, e, n)
+        filter_func = partial(windows.intersect, focus_window)
+        itr = ((ij, win) for ij, win in src.block_windows() if filter_func(win))
+        assert len(list(itr)) == 240
+
+
+def test_block_windows_filtered_one(path_rgb_byte_tif):
+    """Get the first block windows using filter"""
+    with rasterio.open(path_rgb_byte_tif) as src:
+        w, s, e, n = src.bounds
+        focus_window = src.window(w, n - 1.0, w + 1.0, n)
+        filter_func = partial(windows.intersect, focus_window)
+        itr = ((ij, win) for ij, win in src.block_windows() if filter_func(win))
+        assert next(itr) == ((0, 0), windows.Window.from_slices((0, 3), (0, 791)))
+        with pytest.raises(StopIteration):
+            next(itr)
+
+
+def test_block_windows_filtered_none(path_rgb_byte_tif):
+    """Get no block windows using filter"""
+    with rasterio.open(path_rgb_byte_tif) as src:
+        w, s, e, n = src.bounds
+        focus_window = src.window(w - 100.0, n + 1.0, w - 1.0, n + 100.0)
+        filter_func = partial(windows.intersect, focus_window)
+        itr = ((ij, win) for ij, win in src.block_windows() if filter_func(win))
+        with pytest.raises(StopIteration):
+            next(itr)
+
+
+def test_block_size_tiff(path_rgb_byte_tif):
+    """Without compression a TIFF's blocks are all the same size"""
+    with rasterio.open(path_rgb_byte_tif) as src:
+        block_windows = list(src.block_windows())
+        sizes = [src.block_size(1, i, j) for (i, j), w in block_windows]
+        assert sizes.count(2373) == 1
+        assert sizes.count(7119) == len(block_windows) - 1
+
+
+def test_block_size_exception():
+    """A JPEG has no TIFF metadata and no API for block size"""
+    with pytest.raises(RasterBlockError):
+        with rasterio.open("tests/data/389225main_sw_1965_1024.jpg") as src:
+            src.block_size(1, 0, 0)
+
+
+def test_block_window_tiff(path_rgb_byte_tif):
+    """Block window accessors are consistent"""
+    with rasterio.open(path_rgb_byte_tif) as src:
+        for (i, j), w in src.block_windows():
+            assert src.block_window(1, i, j) == w
+
+
+@pytest.mark.parametrize("blocksize", [32, 256, 1024])
+def test_block_windows_bigger_blocksize(tmpdir, blocksize):
+    """Ensure that block sizes greater than raster size are ok"""
+    tempfile = str(tmpdir.join("test.tif"))
+    profile = default_gtiff_profile.copy()
+    profile.update(
+        height=16, width=16, count=1, blockxsize=blocksize, blockysize=blocksize
+    )
+    with rasterio.open(tempfile, "w", **profile) as dst:
+        assert all((blocksize, blocksize) == (h, w) for (h, w) in dst.block_shapes)
+        for ij, window in dst.block_windows():
+            dst.write(np.ones((1, 1), dtype="uint8"), 1, window=window)
+
+    with rasterio.open(tempfile) as dst:
+        assert list(dst.block_windows()) == [((0, 0), windows.Window(0, 0, 16, 16))]
+        assert (dst.read(1) == 1).all()
+
+
+@pytest.mark.parametrize(
+    "blocksizes",
+    [{"blockxsize": 33, "blockysize": 32}, {"blockxsize": 32, "blockysize": 33}],
+)
+def test_odd_blocksize_error(tmpdir, blocksizes):
+    """For a tiled TIFF block sizes must be multiples of 16"""
+    tempfile = str(tmpdir.join("test.tif"))
+    profile = default_gtiff_profile.copy()
+    profile.update(height=64, width=64, count=1, **blocksizes)
+    with pytest.raises(RasterBlockError):
+        rasterio.open(tempfile, "w", **profile)

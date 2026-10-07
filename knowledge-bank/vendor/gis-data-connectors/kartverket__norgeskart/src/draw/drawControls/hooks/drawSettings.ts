@@ -1,0 +1,411 @@
+import { MaterialSymbol } from '@kvib/react';
+import { FeatureCollection, GeoJsonProperties } from 'geojson';
+import { getDefaultStore, useAtom, useAtomValue } from 'jotai';
+import { Feature, Overlay } from 'ol';
+import GeoJSON from 'ol/format/GeoJSON.js';
+import { Circle, Geometry, Point } from 'ol/geom';
+import VectorSource from 'ol/source/Vector';
+import { Fill, Stroke, Style } from 'ol/style';
+import CircleStyle from 'ol/style/Circle';
+import { v4 as uuidv4 } from 'uuid';
+import { mapAtom } from '../../../map/atoms';
+import {
+  drawEnabledAtom,
+  drawTypeAtom,
+  selectedFeatureAtom,
+  showMeasurementsAtom,
+} from '../../../settings/draw/atoms';
+import { useDrawActionsState } from '../../../settings/draw/drawActions/drawActionsHooks';
+import { removeUrlParameter } from '../../../shared/utils/urlUtils';
+import {
+  clearStaticOverlaysForFeature,
+  enableFeatureMeasurementOverlay,
+} from '../drawUtils';
+
+import { ProjectionIdentifier } from '../../../map/projections/types';
+import {
+  getCircleRadiusFromProperties,
+  getOverlayIconFromProperties,
+  getStyleFromProperties,
+} from '../../dialogs/import/utils';
+import { getFeatureIcon } from '../../utils/featureUtils';
+import { isDrawIconFilled } from '../drawUtils';
+import { getDrawInteraction, getSelectInteraction } from './mapInterations';
+import { getDrawLayer } from './mapLayers';
+
+export const MEASUREMNT_OVERLAY_PREFIX = 'measurement-overlay-';
+export const INTERACTIVE_OVERLAY_PREFIX = 'interactive-overlay-';
+export const INTERACTIVE_MEASUREMNT_OVERLAY_ID =
+  'interactive-measurement-tooltip';
+export const ICON_OVERLAY_PREFIX = 'icon-overlay-';
+export const MEASUREMNT_ELEMENT_PREFIX = 'measurement-tooltip-';
+
+export type FeatureMoveDetail = {
+  featureId: string;
+  geometryBeforeMove: Geometry;
+  geometryAfterMove: Geometry;
+};
+
+export type PointIcon = {
+  icon: MaterialSymbol;
+  color: string;
+  size: number;
+};
+
+export type DrawType =
+  'Point' | 'Polygon' | 'LineString' | 'Circle' | 'Move' | 'Text';
+
+const useDrawSettings = () => {
+  const map = useAtomValue(mapAtom);
+  const drawType = useAtomValue(drawTypeAtom);
+  const drawEnabled = useAtomValue(drawEnabledAtom);
+  const [showMeasurements, setShowMeasurements] = useAtom(showMeasurementsAtom);
+
+  const { addDrawAction, resetActions } = useDrawActionsState();
+  const mapProjection = map.getView().getProjection().getCode();
+  const getDrawnFeatures = () => {
+    return getDrawLayer()?.getSource()?.getFeatures() as
+      Feature<Geometry>[] | undefined;
+  };
+
+  const getDrawType = () => {
+    const select = getSelectInteraction();
+    const draw = getDrawInteraction();
+    if (select) {
+      return 'Move';
+    }
+    if (!draw) {
+      return null;
+    }
+    return draw['type_'] as DrawType | null;
+  };
+
+  const getSizeFromProperties = (props: GeoJsonProperties): number | null => {
+    const sizeFromProps = props?.style?.regularshape.radius as number | null;
+    return sizeFromProps ? sizeFromProps / 3 : null;
+  };
+
+  const getIconPropertiesFromArchiveSolution = (
+    props: GeoJsonProperties,
+  ): PointIcon | null => {
+    const numberOfPoints = props?.style?.regularshape?.points;
+    if (numberOfPoints == null) {
+      return null;
+    }
+    switch (numberOfPoints) {
+      case 64: //This is circle. don't question it.
+        return {
+          icon: 'circle',
+          color: props?.style.regularshape.fill?.color ?? '#000000',
+          size: getSizeFromProperties(props) ?? 1,
+        };
+      case 3:
+        return {
+          icon: 'change_history',
+          color: props?.style.regularshape.fill?.color ?? '#000000',
+          size: getSizeFromProperties(props) ?? 1,
+        };
+      case 4:
+        return {
+          icon: 'square',
+          color: props?.style.regularshape.fill?.color ?? '#000000',
+          size: getSizeFromProperties(props) ?? 1,
+        };
+      default:
+        return null;
+    }
+  };
+
+  const removeDrawnFeatureById = (featureId: string) => {
+    const drawLayer = getDrawLayer();
+    const drawSource = drawLayer.getSource() as VectorSource | null;
+    if (!drawSource) {
+      console.warn('no draw source');
+      return;
+    }
+    const feature = drawSource.getFeatureById(featureId);
+    if (feature) {
+      clearStaticOverlaysForFeature(feature);
+      const iconOverlay = map.getOverlayById(
+        `${ICON_OVERLAY_PREFIX}${featureId}`,
+      );
+      if (iconOverlay) {
+        iconOverlay.getElement()?.remove();
+        map.removeOverlay(iconOverlay);
+      }
+
+      drawSource.removeFeature(feature);
+    }
+  };
+
+  const addFeature = (feature: Feature) => {
+    const drawLayer = getDrawLayer();
+    const drawSource = drawLayer.getSource() as VectorSource | null;
+    if (!drawSource) {
+      console.warn('no draw source');
+      return;
+    }
+    drawSource.addFeature(feature);
+    if (showMeasurements) {
+      enableFeatureMeasurementOverlay(feature);
+    }
+    const iconProps = getFeatureIcon(feature);
+    if (iconProps) {
+      addIconOverlayToPointFeature(feature, iconProps);
+    }
+  };
+
+  const setDrawLayerFeatures = (
+    featureCollection: FeatureCollection,
+    sourceProjection: ProjectionIdentifier,
+    overwrite: boolean = false,
+  ) => {
+    const drawLayer = getDrawLayer();
+    const drawSource = drawLayer.getSource() as VectorSource | null;
+    if (!drawSource) {
+      console.warn('no draw source');
+      return;
+    }
+    const hasExistingFeatures = drawSource.getFeatures().length > 0;
+    if (hasExistingFeatures && !overwrite) {
+      console.warn('Draw source already has features');
+      return;
+    }
+
+    const geojsonReader = new GeoJSON();
+
+    const featuresToAddWithStyle: Feature<Geometry>[] = [];
+
+    featureCollection.features.forEach((feature) => {
+      const geometryOriginalProjection = geojsonReader.readFeature(
+        feature.geometry,
+      );
+      if (Array.isArray(geometryOriginalProjection)) {
+        geometryOriginalProjection.forEach((geom) => {
+          const transformedGeometry = geom
+            .getGeometry()
+            ?.transform(sourceProjection, mapProjection);
+          const featureStyle = getStyleFromProperties(feature.properties);
+          if (transformedGeometry) {
+            const newFeature = new Feature({
+              geometry: transformedGeometry,
+            });
+            const featureId = uuidv4();
+            newFeature.setId(featureId);
+            if (featureStyle) {
+              newFeature.setStyle(featureStyle);
+            }
+            featuresToAddWithStyle.push(newFeature);
+          }
+        });
+      } else {
+        const transformedGeometry = geometryOriginalProjection
+          .getGeometry()
+          ?.transform(sourceProjection, mapProjection);
+        const featureStyle = getStyleFromProperties(feature.properties);
+        const overlayIcon =
+          getOverlayIconFromProperties(feature.properties) ||
+          getIconPropertiesFromArchiveSolution(feature.properties);
+        const circleRadius = getCircleRadiusFromProperties(feature.properties);
+
+        if (transformedGeometry) {
+          let newFeature;
+          if (circleRadius != null && transformedGeometry instanceof Point) {
+            newFeature = new Feature({
+              geometry: new Circle(
+                transformedGeometry.getCoordinates(),
+                circleRadius,
+              ),
+            });
+          } else {
+            newFeature = new Feature({
+              geometry: transformedGeometry,
+            });
+          }
+
+          const featureId = uuidv4();
+          newFeature.setId(featureId);
+          if (featureStyle) {
+            newFeature.setStyle(featureStyle);
+          }
+          if (overlayIcon) {
+            newFeature.setProperties({
+              overlayIcon: overlayIcon,
+            });
+          }
+          featuresToAddWithStyle.push(newFeature);
+        }
+      }
+    });
+    drawSource.clear();
+    drawSource.addFeatures(featuresToAddWithStyle);
+    featuresToAddWithStyle.forEach((f) => {
+      const iconProps = f.getProperties()['overlayIcon'];
+      if (iconProps != null && f.getGeometry() instanceof Point) {
+        addIconOverlayToPointFeature(f, iconProps);
+      }
+    });
+
+    if (showMeasurements) {
+      featuresToAddWithStyle.forEach((feature) => {
+        enableFeatureMeasurementOverlay(feature);
+      });
+    }
+  };
+
+  const undoLast = () => {
+    const drawInteraction = getDrawInteraction();
+    if (!drawInteraction) {
+      console.warn('no drawinteraction found');
+      return;
+    }
+    drawInteraction.removeLastPoint();
+  };
+
+  const deleteSelected = () => {
+    const selectInteraction = getSelectInteraction();
+    if (!selectInteraction) {
+      return;
+    }
+
+    const drawLayerSource = getDrawLayer()?.getSource() as VectorSource | null;
+    if (!drawLayerSource) {
+      return;
+    }
+
+    selectInteraction.getFeatures().forEach((feature) => {
+      clearStaticOverlaysForFeature(feature);
+      const overlay = map.getOverlayById(
+        `${ICON_OVERLAY_PREFIX}${feature.getId()}`,
+      );
+
+      if (overlay) {
+        map.removeOverlay(overlay);
+      }
+      drawLayerSource.removeFeature(feature);
+    });
+    addDrawAction({
+      type: 'DELETE',
+      details: {
+        features: selectInteraction
+          .getFeatures()
+          .getArray()
+          .map((f) => {
+            const featureToCopy = f.clone();
+            featureToCopy.setId(f.getId());
+            return featureToCopy;
+          }),
+      },
+    });
+  };
+
+  const clearDrawing = async () => {
+    setShowMeasurements(false);
+    const overlays = [...map.getOverlays().getArray()];
+    overlays.forEach((overlay) => {
+      if (overlay == null) {
+        return;
+      }
+      const overlayId = overlay.getId();
+      if (
+        typeof overlayId === 'string' &&
+        (overlayId.startsWith(ICON_OVERLAY_PREFIX) ||
+          overlayId.startsWith(MEASUREMNT_OVERLAY_PREFIX) ||
+          overlayId.startsWith(INTERACTIVE_OVERLAY_PREFIX))
+      ) {
+        overlay.getElement()?.remove();
+        map.removeOverlay(overlay);
+      }
+    });
+    const drawLayer = getDrawLayer();
+    const source = drawLayer.getSource() as VectorSource;
+    source.clear();
+    resetActions();
+    removeUrlParameter('drawing');
+  };
+
+  const abortDrawing = () => {
+    const drawInteraction = getDrawInteraction();
+    if (drawInteraction) {
+      drawInteraction.abortDrawing();
+    }
+  };
+
+  return {
+    drawEnabled,
+    drawType,
+    removeDrawnFeatureById,
+    addFeature,
+    setDrawLayerFeatures,
+    undoLast,
+    abortDrawing,
+    deleteSelected,
+    clearDrawing,
+    getDrawLayer,
+    getDrawnFeatures,
+    getDrawType,
+  };
+};
+
+export { useDrawSettings };
+
+export const addIconOverlayToPointFeature = (
+  feature: Feature,
+  icon: PointIcon,
+) => {
+  const point = feature.getGeometry();
+  if (!point || !(point instanceof Point)) {
+    return;
+  }
+  const map = getDefaultStore().get(mapAtom);
+  const featureId = feature.getId();
+  const pointCoordinates = point.getCoordinates();
+  const elm = document.createElement('i');
+  elm.classList.add('material-symbols-rounded');
+  elm.style.color = icon.color;
+  elm.style.fontSize = `${icon.size * 10}px`;
+  elm.style.userSelect = 'none';
+  elm.style.pointerEvents = 'none';
+  elm.textContent = icon.icon;
+  if (isDrawIconFilled(icon.icon)) {
+    elm.style.fontVariationSettings = '"FILL" 1, "wght" 300, "GRAD" 0';
+  }
+
+  if (feature === getDefaultStore().get(selectedFeatureAtom)) {
+    elm.style.border = '2px solid black';
+  }
+  const overlayId = `${ICON_OVERLAY_PREFIX}${featureId}`;
+  const existingOverlay = map.getOverlayById(overlayId);
+  if (existingOverlay) {
+    existingOverlay.getElement()?.remove();
+    map.removeOverlay(existingOverlay);
+  }
+
+  const overlay = new Overlay({
+    element: elm,
+    position: pointCoordinates,
+    positioning: 'center-center',
+    stopEvent: false,
+    id: overlayId,
+  });
+  map.addOverlay(overlay);
+  point.setProperties({
+    overlayIcon: icon,
+  });
+  feature.on('change', () => {
+    const geom = feature.getGeometry();
+    if (geom && geom instanceof Point) {
+      const coords = geom.getCoordinates();
+      overlay.setPosition(coords);
+    }
+  });
+  feature.setStyle(
+    new Style({
+      image: new CircleStyle({
+        radius: icon.size * 5, //To make the overlay area easier to click on
+        fill: new Fill({ color: 'transparent' }),
+        stroke: new Stroke({ color: 'transparent', width: 0 }),
+      }),
+    }),
+  );
+};

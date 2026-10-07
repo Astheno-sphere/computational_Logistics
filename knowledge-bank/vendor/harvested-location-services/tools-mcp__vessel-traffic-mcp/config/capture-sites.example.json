@@ -1,0 +1,319 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-15T00:00:00.000Z",
+  "sourceDoc": "docs/provider-catalog.md",
+  "notes": [
+    "Safe, terms-review-pending site profile examples for maritime web-only capture candidates.",
+    "Every profile defaults to termsReviewStatus=\"needs-terms-review\" so the gateRunner refuses live drivers until a human reviews provider terms.",
+    "allowedOrigins are canonical scheme://host pairs that match the public marketing/landing/api docs page; raw login or account-management endpoints are not listed.",
+    "forbiddenActions list generic destructive or session-altering URL fragments that must never be reached during capture.",
+    "sessionLossIndicators are conservative defaults (login redirects, 401/403, WWW-Authenticate challenge, session_expired error markers) lifted from <api-capture-checkout>/docs/LOCAL_AGENT_HARNESS.md."
+  ],
+  "profiles": [
+    {
+      "version": 1,
+      "id": "marinetraffic.web",
+      "displayName": "MarineTraffic / Kpler (web)",
+      "providerId": "marinetraffic",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://www.marinetraffic.com/",
+      "allowedOrigins": [
+        "https://www.marinetraffic.com",
+        "https://servicedocs.marinetraffic.com"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/account", "description": "account-management surface (login/profile/billing)" },
+        { "pattern": "/users/login", "description": "interactive login form submission" },
+        { "pattern": "/users/logout", "description": "session logout endpoint" },
+        { "pattern": "/users/signup", "description": "registration flow" },
+        { "pattern": "/billing", "description": "billing and subscription management" },
+        { "pattern": "/saved-searches", "description": "saved-search mutation surface" },
+        { "pattern": "/fleet", "description": "fleet-management mutation surface" },
+        { "pattern": "/api/exportvessel", "description": "paid export endpoints; require BYOK API path, not capture" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/users/login", "description": "redirected to MarineTraffic login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" },
+        { "kind": "response-header", "pattern": "WWW-Authenticate", "description": "auth challenge header" },
+        { "kind": "response-body", "pattern": "session_expired", "description": "session expired marker" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 4000,
+        "maxStepsPerRun": 20,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Operator must read and accept https://servicedocs.marinetraffic.com/ terms before flipping termsReviewStatus.",
+        "Prefer the BYOK MarineTraffic Services API over web capture for production data."
+      ]
+    },
+    {
+      "version": 1,
+      "id": "vesselfinder.web",
+      "displayName": "VesselFinder (web)",
+      "providerId": "vesselfinder",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://www.vesselfinder.com/",
+      "allowedOrigins": [
+        "https://www.vesselfinder.com",
+        "https://api.vesselfinder.com"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/login", "description": "interactive login form submission" },
+        { "pattern": "/logout", "description": "session logout endpoint" },
+        { "pattern": "/register", "description": "registration flow" },
+        { "pattern": "/account", "description": "account-management surface" },
+        { "pattern": "/billing", "description": "billing surface" },
+        { "pattern": "/api/pub", "description": "paid pub API; use BYOK adapter instead of capture" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/login", "description": "redirected to VesselFinder login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" },
+        { "kind": "response-header", "pattern": "WWW-Authenticate", "description": "auth challenge header" },
+        { "kind": "response-body", "pattern": "Sign in required", "description": "VesselFinder sign-in prompt" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 4000,
+        "maxStepsPerRun": 20,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Live capture must be backed by a paid VesselFinder account and operator-confirmed terms.",
+        "Prefer the official api.vesselfinder.com REST endpoints with a BYOK key over web capture."
+      ]
+    },
+    {
+      "version": 1,
+      "id": "myshiptracking.web",
+      "displayName": "MyShipTracking (web)",
+      "providerId": "myshiptracking",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://www.myshiptracking.com/",
+      "allowedOrigins": [
+        "https://www.myshiptracking.com",
+        "https://api.myshiptracking.com"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/login", "description": "interactive login form submission" },
+        { "pattern": "/logout", "description": "session logout endpoint" },
+        { "pattern": "/register", "description": "registration flow" },
+        { "pattern": "/account", "description": "account-management surface" },
+        { "pattern": "/billing", "description": "billing surface" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/login", "description": "redirected to MyShipTracking login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" },
+        { "kind": "response-body", "pattern": "Please log in", "description": "login-required marker" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 5000,
+        "maxStepsPerRun": 12,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Trial keys exist; prefer the BYOK REST API over capturing the web UI.",
+        "Operator must validate that capture is allowed by the active subscription tier."
+      ]
+    },
+    {
+      "version": 1,
+      "id": "fleetmon.web",
+      "displayName": "FleetMon / Kpler (web)",
+      "providerId": "fleetmon",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://www.fleetmon.com/",
+      "allowedOrigins": [
+        "https://www.fleetmon.com"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/login", "description": "interactive login form submission" },
+        { "pattern": "/logout", "description": "session logout endpoint" },
+        { "pattern": "/register", "description": "registration flow" },
+        { "pattern": "/account", "description": "account-management surface" },
+        { "pattern": "/billing", "description": "billing surface" },
+        { "pattern": "/fleet/", "description": "fleet-management mutation surface" },
+        { "pattern": "/api/p1", "description": "paid v1 API; use BYOK adapter instead of capture" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/login", "description": "redirected to FleetMon login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" },
+        { "kind": "response-header", "pattern": "WWW-Authenticate", "description": "auth challenge header" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 5000,
+        "maxStepsPerRun": 12,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Commercial maritime intelligence; capture only with operator-confirmed contract terms.",
+        "Default routing should prefer Kpler/FleetMon BYOK API over UI scraping."
+      ]
+    },
+    {
+      "version": 1,
+      "id": "tradlinx-schedule.web",
+      "displayName": "Tradelinx Schedule (web)",
+      "providerId": "tradlinx-schedule",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://www.tradlinx.com/ko/schedule?tab=fcl",
+      "allowedOrigins": [
+        "https://api.tradlinx.com",
+        "https://app.tradlinx.com",
+        "https://www.tradlinx.com"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/login", "description": "interactive login form submission" },
+        { "pattern": "/logout", "description": "session logout endpoint" },
+        { "pattern": "/signup", "description": "registration flow" },
+        { "pattern": "/register", "description": "registration flow" },
+        { "pattern": "/account", "description": "account-management surface" },
+        { "pattern": "/billing", "description": "billing surface" },
+        { "pattern": "/payment", "description": "payment/subscription management surface" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/login", "description": "redirected to Tradelinx login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" },
+        { "kind": "response-body", "pattern": "로그인", "description": "Korean login-required marker" },
+        { "kind": "response-body", "pattern": "captcha", "description": "CAPTCHA/challenge marker" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 5000,
+        "maxStepsPerRun": 12,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Capture target is public FCL/LCL schedule lookup only; source URL must be retained in sanitized fixtures and MCP responses.",
+        "If Cloudflare/CAPTCHA/403 cannot be resolved by a normal browser session, skip capture and record the reason."
+      ]
+    },
+    {
+      "version": 1,
+      "id": "vesselapi.web",
+      "displayName": "VesselAPI (web)",
+      "providerId": "vesselapi",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://vesselapi.com/",
+      "allowedOrigins": [
+        "https://vesselapi.com"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/login", "description": "interactive login form submission" },
+        { "pattern": "/logout", "description": "session logout endpoint" },
+        { "pattern": "/register", "description": "registration flow" },
+        { "pattern": "/account", "description": "account-management surface" },
+        { "pattern": "/billing", "description": "billing surface" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/login", "description": "redirected to VesselAPI login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 5000,
+        "maxStepsPerRun": 10,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Web-only candidate while the BYOK adapter is in discovery; prefer trial REST API over capture once available."
+      ]
+    },
+    {
+      "version": 1,
+      "id": "datadocked.web",
+      "displayName": "Data Docked (web)",
+      "providerId": "datadocked",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://datadocked.com/",
+      "allowedOrigins": [
+        "https://datadocked.com"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/login", "description": "interactive login form submission" },
+        { "pattern": "/logout", "description": "session logout endpoint" },
+        { "pattern": "/register", "description": "registration flow" },
+        { "pattern": "/account", "description": "account-management surface" },
+        { "pattern": "/billing", "description": "billing surface" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/login", "description": "redirected to Data Docked login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 5000,
+        "maxStepsPerRun": 10,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Discovery candidate; capture only after operator validates subscription terms."
+      ]
+    },
+    {
+      "version": 1,
+      "id": "poseidon-ais.web",
+      "displayName": "Poseidon AIS (web)",
+      "providerId": "poseidon-ais",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://poseidonais.com/",
+      "allowedOrigins": [
+        "https://poseidonais.com"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/login", "description": "interactive login form submission" },
+        { "pattern": "/logout", "description": "session logout endpoint" },
+        { "pattern": "/register", "description": "registration flow" },
+        { "pattern": "/account", "description": "account-management surface" },
+        { "pattern": "/billing", "description": "billing surface" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/login", "description": "redirected to Poseidon AIS login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 5000,
+        "maxStepsPerRun": 10,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Discovery candidate; web capture is a placeholder until BYOK adapter coverage is decided."
+      ]
+    },
+    {
+      "version": 1,
+      "id": "ais-now.web",
+      "displayName": "ais.now (web)",
+      "providerId": "ais-now",
+      "termsReviewStatus": "needs-terms-review",
+      "baseUrl": "https://ais.now/",
+      "allowedOrigins": [
+        "https://ais.now"
+      ],
+      "forbiddenActions": [
+        { "pattern": "/login", "description": "interactive login form submission" },
+        { "pattern": "/logout", "description": "session logout endpoint" },
+        { "pattern": "/register", "description": "registration flow" },
+        { "pattern": "/account", "description": "account-management surface" },
+        { "pattern": "/billing", "description": "billing surface" }
+      ],
+      "sessionLossIndicators": [
+        { "kind": "url-redirect", "pattern": "/login", "description": "redirected to ais.now login page" },
+        { "kind": "status-code", "pattern": "401", "description": "unauthenticated response" },
+        { "kind": "status-code", "pattern": "403", "description": "forbidden / session lost" }
+      ],
+      "pacing": {
+        "minStepIntervalMs": 6000,
+        "maxStepsPerRun": 8,
+        "maxConcurrent": 1
+      },
+      "notes": [
+        "Coverage and terms unverified; live capture is gated until operator confirms acceptable-use policy."
+      ]
+    }
+  ]
+}

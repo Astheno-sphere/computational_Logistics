@@ -1,0 +1,219 @@
+"""Helper functions and classes for logging in the workbench.
+
+It is modeled on the default `logging approach that comes with
+Python <https://docs.python.org/library/logging.html>`_.
+This logging system will also work in case of multiprocessing.
+
+"""
+
+import inspect
+import logging
+from contextlib import contextmanager
+from functools import wraps
+from logging import DEBUG, INFO
+
+# Created on 23 dec. 2010
+#
+# .. codeauthor:: jhkwakkel <j.h.kwakkel (at) tudelft (dot) nl>
+
+__all__ = [
+    "DEBUG",
+    "DEFAULT_LEVEL",
+    "INFO",
+    "LOGGER_NAME",
+    "get_module_logger",
+    "get_rootlogger",
+    "log_to_stderr",
+    "method_logger",
+    "temporary_filter",
+]
+LOGGER_NAME = "EMA"
+DEFAULT_LEVEL = DEBUG
+INFO = INFO  #  noqa PLW0127
+
+
+def create_module_logger(name: str | None = None) -> logging.Logger:
+    """Create a module logger with the given name."""
+    if name is None:
+        frm = inspect.stack()[1]
+        mod = inspect.getmodule(frm[0])
+        name = mod.__name__
+    logger = logging.getLogger(f"{LOGGER_NAME}.{name}")
+
+    _module_loggers[name] = logger
+    return logger
+
+
+def get_module_logger(name: str) -> logging.Logger:
+    """Return a module logger with the given name."""
+    try:
+        logger = _module_loggers[name]
+    except KeyError:
+        logger = create_module_logger(name)
+
+    return logger
+
+
+_rootlogger = None
+_module_loggers = {}
+_logger = get_module_logger(__name__)
+
+LOG_FORMAT = "[%(processName)s/%(levelname)s] %(message)s"
+
+
+class TemporaryFilter(logging.Filter):
+    """Helper class to temporarily log messages."""
+
+    def __init__(self, *args, level: int = 0, func_name: str | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.level = level
+        self.func_name = func_name
+
+    def filter(self, record) -> bool:
+        """Filter out the message."""
+        if self.func_name and self.func_name == record.funcName:
+            return True
+
+        return record.levelno > self.level
+
+
+@contextmanager
+def temporary_filter(
+    name: str | list[str] = LOGGER_NAME,
+    level: int | list[int] = 0,
+    func_name: str | list[str] | None = None,
+):
+    """Temporary filter log message.
+
+    Parameters
+    ----------
+    name : str or list of str, optional
+           logger on which to apply the filter.
+    level: int, or list of int, optional
+           don't log message of this level or lower
+    func_name : str or list of str, optional
+            don't log message of this function
+
+    all modules have their own unique logger
+    (e.g. ema_workbench.analysis.prim)
+
+    """
+    # TODO:: probably all three should be optionally a list so you
+    # might filter multiple log message from different functions
+    names = [name] if isinstance(name, str) else name
+    levels = [level] if isinstance(level, int) else level
+    func_names = (
+        [func_name] if (isinstance(func_name, str) or func_name is None) else func_name
+    )
+
+    # get logger
+    # add filter
+    max_length = max(len(names), len(levels), len(func_names))
+
+    # make a list equal lengths?
+    if len(names) < max_length:
+        names = [name] * max_length
+    if len(levels) < max_length:
+        levels = [level] * max_length
+    if len(func_names) < max_length:
+        func_names = [func_name] * max_length
+
+    filters = {}
+    for name, level, func_name in zip(names, levels, func_names):
+        logger = get_module_logger(name)
+        filter = TemporaryFilter(
+            level=level, func_name=func_name
+        )  # @ReservedAssignment
+
+        if logger == _logger:
+            # root logger, add filter to handler rather than logger
+            # because filters don't propagate for some unclear reason
+            for handler in logger.handlers:
+                handler.addFilter(filter)
+                filters[filter] = handler
+        else:
+            logger.addFilter(filter)
+            filters[filter] = logger
+
+    yield
+
+    for k, v in filters.items():
+        v.removeFilter(k)
+
+
+def method_logger(name: str) -> callable:
+    """Wrap method so that every call to it is logged."""
+    logger = get_module_logger(name)
+    classname = inspect.getouterframes(inspect.currentframe())[1][3]
+
+    def real_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # hack, because log is applied to methods, we can get
+            # object instance as first arguments in args
+            logger.debug(f"calling {func.__name__} on {classname}")
+            res = func(*args, **kwargs)
+            logger.debug(f"completed calling {func.__name__} on {classname}")
+            return res
+
+        return wrapper
+
+    return real_decorator
+
+
+def get_rootlogger() -> logging.Logger:
+    """Returns root logger used by the EMA workbench.
+
+    Returns
+    -------
+    the logger of the EMA workbench
+
+    """
+    global _rootlogger  # noqa PLW0603
+
+    if not _rootlogger:
+        _rootlogger = logging.getLogger(LOGGER_NAME)
+        _rootlogger.handlers = []
+        _rootlogger.addHandler(logging.NullHandler())
+        _rootlogger.setLevel(DEBUG)
+
+    return _rootlogger
+
+
+def log_to_stderr(level: int | None = None, pass_root_logger_level: bool = False) -> logging.Logger:
+    """Turn on logging and add a handler which prints to stderr.
+
+    Parameters
+    ----------
+    level : int
+            minimum level of the messages that will be logged
+    pas_root_logger_level: bool, optional. Default False
+            if true, all module loggers will be set to the
+            same logging level as the root logger.
+            Recommended True when using the MPIEvaluator.
+
+    """
+    if not level:
+        level = DEFAULT_LEVEL
+
+    logger = get_rootlogger()
+
+    # avoid creation of multiple stream handlers for logging to console
+    for entry in logger.handlers:
+        if (isinstance(entry, logging.StreamHandler)) and (
+            entry.formatter._fmt == LOG_FORMAT
+        ):
+            return logger
+
+    formatter = logging.Formatter(LOG_FORMAT)
+    handler = logging.StreamHandler()
+    handler.setLevel(level)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.propagate = False
+
+    if pass_root_logger_level:
+        for _, mod_logger in _module_loggers.items():
+            mod_logger.setLevel(level)
+
+    return logger

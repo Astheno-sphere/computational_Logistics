@@ -1,0 +1,69 @@
+name: Generate Changelog
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to generate release notes for (leave empty for latest)"
+        required: false
+        type: string
+permissions:
+  contents: write
+# Serialise with build_qgis_plugin.yml: both touch the same GitHub Release for a tag via
+# softprops/action-gh-release. A shared, tag-scoped concurrency group (repo-wide by name)
+# prevents them racing to create the release, which fails the loser with "already_exists".
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate changelog (fallback for tags without curated notes)
+        uses: orhun/git-cliff-action@v4
+        id: cliff
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: CHANGES.md
+
+      - name: Prefer curated notes from RELEASE_NOTES.md
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          # Extract the section headed "# <tag> Release Notes", up to the next version heading.
+          awk -v tag="$TAG" '
+            $0 ~ "^# " tag "([ ]|$)" { found = 1; next }
+            found && /^# v[0-9]/ { found = 0 }
+            found { print }
+          ' RELEASE_NOTES.md > SECTION.md
+          if [ -s SECTION.md ]; then
+            echo "Publishing curated notes from RELEASE_NOTES.md for $TAG"
+            cp SECTION.md CHANGES.md
+          else
+            echo "No RELEASE_NOTES.md section for $TAG; using the generated changelog"
+          fi
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          body_path: CHANGES.md
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.tag, 'a') || contains(steps.tag.outputs.tag, 'b') }}

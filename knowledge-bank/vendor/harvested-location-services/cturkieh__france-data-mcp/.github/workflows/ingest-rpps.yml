@@ -1,0 +1,129 @@
+# .github/workflows/ingest-rpps.yml
+name: Ingest RPPS Annuaire Sante ANS
+
+on:
+  schedule:
+    # 5th of the month, 04:00 UTC. ANS regenerates the RPPS extract monthly
+    # (typically published on the 1st-3rd). Day-5 catches the freshest version
+    # while leaving FINESS (1st/15th) and Ameli (Mondays) their own slots.
+    - cron: "0 4 5 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Forcer la ré-ingestion même si le fichier RPPS est identique au dernier run (bypass court-circuit SHA256). Run complet ~57 min + swap atomique. À utiliser pour réappliquer le cache BAN géocodé jamais posé."
+        type: boolean
+        default: false
+
+# Never run on pull_request - secrets are not available there, by design.
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ingest-rpps
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    # RPPS is ~818 MB CSV / ~2.28 M rows + 35 K commune fetch. Durée RÉELLE
+    # du cron en prod : 54 → 57 → 60 min entre 2026-05 et 2026-09 (COPY ~18
+    # min + enrichment FINESS ~4 min + ban_join ~33-35 min + matviews ~1 min),
+    # et le CSV ANS grossit de ~15 K lignes/mois. L'ancien budget de 60 min a
+    # TUÉ le run 2026-08-05 (#30981501695) en plein ban_join, AVANT le swap :
+    # mois perdu en silence (statut `cancelled` ≠ `failure` → aucune issue,
+    # aucun email, aucune ligne ingest_log). Le run 2026-09-05 (#33954453629)
+    # a swappé à 59 min 59 s puis a été tué 5 s après → drain BAN auto skippé.
+    # 120 min = ×2 la durée observée ; GitHub facture le temps réel, pas le
+    # budget, donc aucun surcoût en fonctionnement normal. Garde-fou :
+    # `scripts/ingest/workflows-alerting.test.ts` (parité avec `RPPS_JOB_BUDGET_MINUTES`
+    # dans `scripts/ingest/rpps.ts`, qui émet un préavis de dérive à 60 % du budget).
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v6
+        with:
+          # Node 22 for native WebSocket - aligned with FINESS / Ameli workflows.
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run RPPS ingestion
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Input booléen typé du workflow_dispatch (jamais du texte libre) →
+          # "1" si coché, sinon "0". Cron planifié = inputs absent → falsy → "0".
+          # ⚠️ NE JAMAIS remplacer `inputs.force` par `github.event.inputs.force` :
+          # ce dernier STRINGIFIE le booléen → la string "false" est TRUTHY en
+          # expression Actions → `"false" && '1'` = '1' → force à CHAQUE cron
+          # (run 57 min + swap non voulus). Le contexte `inputs` PRÉSERVE le
+          # booléen (doc GitHub Actions) — c'est load-bearing, ne pas toucher.
+          FORCE_REINGEST: ${{ inputs.force && '1' || '0' }}
+        run: pnpm ingest:rpps
+
+      # Alerte ops : adresses restant à géocoder (BAN) après ce run — logique
+      # partagée RPPS/Ameli dans la composite action. `continue-on-error` :
+      # une notif KO ne re-rouge jamais un cron déjà réussi (swap fait).
+      - name: Notify pending BAN geocoding
+        if: success()
+        continue-on-error: true
+        uses: ./.github/actions/notify-pending-geocode
+        with:
+          source: rpps
+          supabase-url: ${{ secrets.SUPABASE_URL }}
+          supabase-service-role-key: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          resend-api-key: ${{ secrets.RESEND_API_KEY }}
+          email-to: ${{ vars.NOTIFY_EMAIL_TO || 'cturkieh@gmail.com' }}
+          email-from: ${{ vars.NOTIFY_EMAIL_FROM || 'France Data MCP <onboarding@resend.dev>' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # Vigie « run vert mais donnée malade » : run `partial` (canary/matview)
+      # ou source TARIE (skips same_checksum au-delà de la cadence attendue).
+      # `success()` : ne s'évalue que sur un cron réussi (le failed/cancelled a
+      # son step) ; `continue-on-error` : une notif KO ne re-rouge jamais un
+      # cron déjà réussi (swap fait). Cf. `.github/actions/notify-ingest-anomaly`.
+      - name: Notify ingest anomaly
+        if: success()
+        continue-on-error: true
+        uses: ./.github/actions/notify-ingest-anomaly
+        with:
+          source: rpps
+          supabase-url: ${{ secrets.SUPABASE_URL }}
+          supabase-service-role-key: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          resend-api-key: ${{ secrets.RESEND_API_KEY }}
+          email-to: ${{ vars.NOTIFY_EMAIL_TO || 'cturkieh@gmail.com' }}
+          email-from: ${{ vars.NOTIFY_EMAIL_FROM || 'France Data MCP <onboarding@resend.dev>' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # Alerte LOUD sur échec OU run tué. `cancelled()` est load-bearing : un
+      # `timeout-minutes` atteint met le job en `cancelled`, PAS `failure` —
+      # avec `failure()` seul, le run 2026-08-05 tué à 60 min (swap non fait,
+      # mois perdu) n'a produit NI issue NI email. Détail et wording :
+      # `.github/actions/notify-ingest-failure`.
+      - name: Alert on failure or cancelled run
+        if: failure() || cancelled()
+        uses: ./.github/actions/notify-ingest-failure
+        with:
+          source-label: RPPS
+          ingest-log-source: rpps
+          issue-labels: ingestion-failure,rpps
+          killed-hint: "Un run RPPS tué sort en `cancelled` : le drain BAN auto (`ban-backfill-rpps.yml`, gardé sur conclusion == success) N'A PAS été déclenché → le lancer à la main via workflow_dispatch (idempotent). Le swap a PEUT-ÊTRE eu lieu (run 2026-09-05 : swap à 59:59 puis tué 5 s après) : comparer la fraîcheur de `rpps` vs `rpps_previous` (`pg_stat_user_tables.last_analyze`) AVANT de relancer l'ingestion."
+          failure-modes: "RPPS_CSV_URL stale (resource id rotated, override via env if needed), unmatched_locality > 8% (INSEE drift), structural anomaly > 1% (column rename), row count out of [1.8M, 2.6M] bounds (format change)."
+          job-status: ${{ job.status }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          resend-api-key: ${{ secrets.RESEND_API_KEY }}
+          email-to: ${{ vars.NOTIFY_EMAIL_TO || 'cturkieh@gmail.com' }}
+          email-from: ${{ vars.NOTIFY_EMAIL_FROM || 'France Data MCP <onboarding@resend.dev>' }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

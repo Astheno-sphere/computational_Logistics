@@ -1,0 +1,49 @@
+# Build-context exclusions only. Each section matches what Dockerfile stages actually COPY.
+# Nothing here removes runtime capabilities from the final image unless the Dockerfile
+# never installed it in the first place.
+
+.dockerignore
+
+# VCS / CI metadata (not COPY'd)
+.git/
+.gitignore
+.gitlab-ci.yml
+.gitmodules
+.github/
+
+# Local virtualenvs and Python caches
+.venv/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+*.egg-info/
+
+# Generic build / log output at repo root
+build/
+cache/
+dist/
+log/
+test/
+examples/
+agentsociety/_dist
+
+# User workspace artefacts (usually absent from git; safe to skip in context)
+agentsociety_data/
+hypothesis_*/
+
+# Legacy Python packages — final image only `uv pip install -e packages/agentsociety2`
+packages/agentsociety/
+packages/agentsociety-community/
+packages/agentsociety-benchmark/
+
+# Frontend is not referenced by Dockerfile today; skip its node_modules + dist only
+frontend/node_modules/
+frontend/dist/
+
+# Extension: sources are COPY'd explicitly; skip generated / installed artefacts
+extension/node_modules/
+extension/out/
+extension/*.vsix
+extension/.vscode-test/

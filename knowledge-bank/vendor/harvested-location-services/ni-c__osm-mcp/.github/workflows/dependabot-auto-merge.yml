@@ -1,0 +1,54 @@
+# Do NOT add this workflow without branch protection requiring the CI checks:
+# `gh pr merge --auto` merges as soon as nothing blocks it, so without required
+# checks this would merge every patch bump before a single test has run.
+name: Dependabot auto-merge
+
+# Queues low-risk Dependabot updates for merge once CI is green, so routine patch
+# and minor bumps do not need a manual click each week.
+#
+# Safety rests on two things:
+#   * `main` requires the CI checks, so `--auto` waits for tests, CodeQL and the
+#     container scan instead of merging immediately.
+#   * The condition is written positively: only updates Dependabot explicitly labels
+#     patch or minor are queued. Majors — and anything whose update type cannot be
+#     determined — stay manual rather than slipping through.
+#
+# github_actions bumps are also excluded, for a different reason: they edit files
+# under .github/workflows/, and merging such a PR requires the `workflow` scope,
+# which the Actions GITHUB_TOKEN can never have. GitHub accepts the queued
+# auto-merge and then leaves it pending forever without any error, so these PRs
+# just sat there looking about to merge. Better to be explicit: they stay manual.
+#
+# /docs is excluded on purpose. Its build runs in docs.yml, which is path filtered
+# and therefore cannot be a required check on every PR — so auto-merge would not wait
+# for it, and a bad VitePress bump could reach the published site unseen. That is one
+# PR a week at most; it can have a human look.
+
+on: pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Queue for merge
+        if: |
+          steps.metadata.outputs.package-ecosystem != 'github_actions' &&
+          steps.metadata.outputs.directory != '/docs' &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-minor')
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,1750 @@
+Version,
+ 9.6.0;                    !- version identifier
+
+!-   ==========================================
+!-   =========  SIMULATION PARAMETERS =========
+!-   ==========================================
+
+
+OutputControl:Table:Style,
+ CommaAndHTML,             !- column separator
+ None;                     !- unit conversion
+
+Output:Variable,
+ *,                        !- key value
+ AFN Zone Infiltration Sensible Heat Gain Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ AFN Zone Infiltration Sensible Heat Loss Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Surface Average Face Conduction Heat Transfer Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Surface Window Heat Gain Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Surface Window Heat Loss Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Water Use Equipment Heating Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Water Use Equipment Zone Latent Gain Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Water Use Equipment Zone Sensible Heat Gain Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Electric Equipment Electricity Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Electric Equipment Total Heating Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Gas Equipment NaturalGas Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Gas Equipment Total Heating Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Ideal Loads Supply Air Total Cooling Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Ideal Loads Supply Air Total Heating Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Ideal Loads Zone Total Cooling Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Ideal Loads Zone Total Heating Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Infiltration Total Heat Gain Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Infiltration Total Heat Loss Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Lights Electricity Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone People Total Heating Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Ventilation Fan Electricity Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Ventilation Total Heat Gain Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Ventilation Total Heat Loss Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Variable,
+ *,                        !- key value
+ Zone Windows Total Transmitted Solar Radiation Energy, !- name
+ Monthly;                  !- frequency
+
+Output:Table:SummaryReports,
+ AllSummary;               !- report 0
+
+Output:SQLite,
+ SimpleAndTabular;         !- option type
+
+Output:VariableDictionary,
+ IDF,                      !- key field
+ Unsorted;                 !- sort option
+
+Output:Surfaces:List,
+ Details;                  !- report type
+
+SimulationControl,
+ Yes,                      !- do zone sizing
+ Yes,                      !- do system sizing
+ Yes,                      !- do plant sizing
+ No,                       !- run for sizing periods
+ Yes;                      !- run for run periods
+
+ShadowCalculation,
+ PolygonClipping,          !- calculation method
+ Periodic,                 !- calculation update method
+ 30,                       !- calculation frequency
+ 15000;                    !- maximum figures
+
+Timestep,
+ 4;                        !- timesteps per hour
+
+RunPeriod,
+ CustomRunPeriod,          !- name
+ 1,                        !- start month
+ 1,                        !- start day
+ 2017,                     !- start year
+ 12,                       !- end month
+ 31,                       !- end day
+ 2017,                     !- end year
+ Sunday,                   !- start day of week
+ Yes,                      !- use weather file holidays
+ Yes;                      !- use weather file daylight savings
+
+SizingPeriod:DesignDay,
+  Boston Logan IntL Arpt Ann Htg 99.6% Condns DB,              !- Name
+  1,                                                           !- Month
+  21,                                                          !- Day of Month
+  WinterDesignDay,                                             !- Day Type
+  -13.6,                                                       !- Max Dry-Bulb Temp {C}
+  0.0,                                                         !- Daily Dry-Bulb Temp Range {C}
+  DefaultMultipliers,                                          !- Dry-Bulb Temp Range Modifier Type
+  ,                                                            !- Dry-Bulb Temp Range Modifier Schedule Name
+  Wetbulb,                                                     !- Humidity Condition Type
+  -13.6,                                                       !- Wetbulb/Dewpoint at Max Dry-Bulb {C}
+  ,                                                            !- Humidity Indicating Day Schedule Name
+  ,                                                            !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
+  ,                                                            !- Enthalpy at Maximum Dry-Bulb {J/kg}
+  ,                                                            !- Daily Wet-Bulb Temperature Range {deltaC}
+  101253.0,                                                    !- Barometric Pressure {Pa}
+  7.2,                                                         !- Wind Speed {m/s}
+  320.0,                                                       !- Wind Direction {Degrees; N=0, S=180}
+  No,                                                          !- Rain {Yes/No}
+  No,                                                          !- Snow on ground {Yes/No}
+  No,                                                          !- Daylight Savings Time Indicator {Yes/No}
+  ASHRAEClearSky,                                              !- Solar Model Indicator
+  ,                                                            !- Beam Solar Day Schedule Name
+  ,                                                            !- Diffuse Solar Day Schedule Name
+  ,                                                            !- ASHRAE Clear Sky Beam Optical Depth (taub)
+  ,                                                            !- ASHRAE Clear Sky Diffuse Optical Depth (taud)
+  0.0;                                                         !- Clearness (0.0 to 1.2)
+
+
+
+SizingPeriod:DesignDay,
+  Boston Logan IntL Arpt Ann Hum_n 99.6% Condns DP=>MCDB,      !- Name
+  1,                                                           !- Month
+  21,                                                          !- Day of Month
+  WinterDesignDay,                                             !- Day Type
+  -12.0,                                                       !- Max Dry-Bulb Temp {C}
+  0.0,                                                         !- Daily Dry-Bulb Temp Range {C}
+  DefaultMultipliers,                                          !- Dry-Bulb Temp Range Modifier Type
+  ,                                                            !- Dry-Bulb Temp Range Modifier Schedule Name
+  Dewpoint,                                                    !- Humidity Condition Type
+  -24.4,                                                       !- Wetbulb/Dewpoint at Max Dry-Bulb {C}
+  ,                                                            !- Humidity Indicating Day Schedule Name
+  ,                                                            !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
+  ,                                                            !- Enthalpy at Maximum Dry-Bulb {J/kg}
+  ,                                                            !- Daily Wet-Bulb Temperature Range {deltaC}
+  101253.0,                                                    !- Barometric Pressure {Pa}
+  7.2,                                                         !- Wind Speed {m/s}
+  320.0,                                                       !- Wind Direction {Degrees; N=0, S=180}
+  No,                                                          !- Rain {Yes/No}
+  No,                                                          !- Snow on ground {Yes/No}
+  No,                                                          !- Daylight Savings Time Indicator {Yes/No}
+  ASHRAEClearSky,                                              !- Solar Model Indicator
+  ,                                                            !- Beam Solar Day Schedule Name
+  ,                                                            !- Diffuse Solar Day Schedule Name
+  ,                                                            !- ASHRAE Clear Sky Beam Optical Depth (taub)
+  ,                                                            !- ASHRAE Clear Sky Diffuse Optical Depth (taud)
+  0.0;                                                         !- Clearness (0.0 to 1.2)
+
+
+
+SizingPeriod:DesignDay,
+  Boston Logan IntL Arpt Ann Htg Wind 99.6% Condns WS=>MCDB,   !- Name
+  1,                                                           !- Month
+  21,                                                          !- Day of Month
+  WinterDesignDay,                                             !- Day Type
+  2.1,                                                         !- Max Dry-Bulb Temp {C}
+  0.0,                                                         !- Daily Dry-Bulb Temp Range {C}
+  DefaultMultipliers,                                          !- Dry-Bulb Temp Range Modifier Type
+  ,                                                            !- Dry-Bulb Temp Range Modifier Schedule Name
+  Wetbulb,                                                     !- Humidity Condition Type
+  2.1,                                                         !- Wetbulb/Dewpoint at Max Dry-Bulb {C}
+  ,                                                            !- Humidity Indicating Day Schedule Name
+  ,                                                            !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
+  ,                                                            !- Enthalpy at Maximum Dry-Bulb {J/kg}
+  ,                                                            !- Daily Wet-Bulb Temperature Range {deltaC}
+  101253.0,                                                    !- Barometric Pressure {Pa}
+  14.1,                                                        !- Wind Speed {m/s}
+  320.0,                                                       !- Wind Direction {Degrees; N=0, S=180}
+  No,                                                          !- Rain {Yes/No}
+  No,                                                          !- Snow on ground {Yes/No}
+  No,                                                          !- Daylight Savings Time Indicator {Yes/No}
+  ASHRAEClearSky,                                              !- Solar Model Indicator
+  ,                                                            !- Beam Solar Day Schedule Name
+  ,                                                            !- Diffuse Solar Day Schedule Name
+  ,                                                            !- ASHRAE Clear Sky Beam Optical Depth (taub)
+  ,                                                            !- ASHRAE Clear Sky Diffuse Optical Depth (taud)
+  0.0;                                                         !- Clearness (0.0 to 1.2)
+
+
+
+SizingPeriod:DesignDay,
+  Boston Logan IntL Arpt Ann Clg .4% Condns DB=>MWB,           !- Name
+  7,                                                           !- Month
+  21,                                                          !- Day of Month
+  SummerDesignDay,                                             !- Day Type
+  32.7,                                                        !- Max Dry-Bulb Temp {C}
+  8.4,                                                         !- Daily Dry-Bulb Temp Range {C}
+  DefaultMultipliers,                                          !- Dry-Bulb Temp Range Modifier Type
+  ,                                                            !- Dry-Bulb Temp Range Modifier Schedule Name
+  Wetbulb,                                                     !- Humidity Condition Type
+  22.9,                                                        !- Wetbulb/Dewpoint at Max Dry-Bulb {C}
+  ,                                                            !- Humidity Indicating Day Schedule Name
+  ,                                                            !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
+  ,                                                            !- Enthalpy at Maximum Dry-Bulb {J/kg}
+  ,                                                            !- Daily Wet-Bulb Temperature Range {deltaC}
+  101253.0,                                                    !- Barometric Pressure {Pa}
+  6.3,                                                         !- Wind Speed {m/s}
+  270.0,                                                       !- Wind Direction {Degrees; N=0, S=180}
+  No,                                                          !- Rain {Yes/No}
+  No,                                                          !- Snow on ground {Yes/No}
+  No,                                                          !- Daylight Savings Time Indicator {Yes/No}
+  ASHRAETau,                                                   !- Solar Model Indicator
+  ,                                                            !- Beam Solar Day Schedule Name
+  ,                                                            !- Diffuse Solar Day Schedule Name
+  0.488,                                                       !- ASHRAE Clear Sky Beam Optical Depth (taub)
+  1.95;                                                        !- ASHRAE Clear Sky Diffuse Optical Depth (taud)
+
+
+
+SizingPeriod:DesignDay,
+  Boston Logan IntL Arpt Ann Clg .4% Condns WB=>MDB,           !- Name
+  7,                                                           !- Month
+  21,                                                          !- Day of Month
+  SummerDesignDay,                                             !- Day Type
+  30.2,                                                        !- Max Dry-Bulb Temp {C}
+  8.4,                                                         !- Daily Dry-Bulb Temp Range {C}
+  DefaultMultipliers,                                          !- Dry-Bulb Temp Range Modifier Type
+  ,                                                            !- Dry-Bulb Temp Range Modifier Schedule Name
+  Wetbulb,                                                     !- Humidity Condition Type
+  24.6,                                                        !- Wetbulb/Dewpoint at Max Dry-Bulb {C}
+  ,                                                            !- Humidity Indicating Day Schedule Name
+  ,                                                            !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
+  ,                                                            !- Enthalpy at Maximum Dry-Bulb {J/kg}
+  ,                                                            !- Daily Wet-Bulb Temperature Range {deltaC}
+  101253.0,                                                    !- Barometric Pressure {Pa}
+  6.3,                                                         !- Wind Speed {m/s}
+  270.0,                                                       !- Wind Direction {Degrees; N=0, S=180}
+  No,                                                          !- Rain {Yes/No}
+  No,                                                          !- Snow on ground {Yes/No}
+  No,                                                          !- Daylight Savings Time Indicator {Yes/No}
+  ASHRAETau,                                                   !- Solar Model Indicator
+  ,                                                            !- Beam Solar Day Schedule Name
+  ,                                                            !- Diffuse Solar Day Schedule Name
+  0.488,                                                       !- ASHRAE Clear Sky Beam Optical Depth (taub)
+  1.95;                                                        !- ASHRAE Clear Sky Diffuse Optical Depth (taud)
+
+
+
+SizingPeriod:DesignDay,
+  Boston Logan IntL Arpt Ann Clg .4% Condns DP=>MDB,           !- Name
+  7,                                                           !- Month
+  21,                                                          !- Day of Month
+  SummerDesignDay,                                             !- Day Type
+  27.3,                                                        !- Max Dry-Bulb Temp {C}
+  8.4,                                                         !- Daily Dry-Bulb Temp Range {C}
+  DefaultMultipliers,                                          !- Dry-Bulb Temp Range Modifier Type
+  ,                                                            !- Dry-Bulb Temp Range Modifier Schedule Name
+  Dewpoint,                                                    !- Humidity Condition Type
+  22.8,                                                        !- Wetbulb/Dewpoint at Max Dry-Bulb {C}
+  ,                                                            !- Humidity Indicating Day Schedule Name
+  ,                                                            !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
+  ,                                                            !- Enthalpy at Maximum Dry-Bulb {J/kg}
+  ,                                                            !- Daily Wet-Bulb Temperature Range {deltaC}
+  101253.0,                                                    !- Barometric Pressure {Pa}
+  6.3,                                                         !- Wind Speed {m/s}
+  270.0,                                                       !- Wind Direction {Degrees; N=0, S=180}
+  No,                                                          !- Rain {Yes/No}
+  No,                                                          !- Snow on ground {Yes/No}
+  No,                                                          !- Daylight Savings Time Indicator {Yes/No}
+  ASHRAETau,                                                   !- Solar Model Indicator
+  ,                                                            !- Beam Solar Day Schedule Name
+  ,                                                            !- Diffuse Solar Day Schedule Name
+  0.488,                                                       !- ASHRAE Clear Sky Beam Optical Depth (taub)
+  1.95;                                                        !- ASHRAE Clear Sky Diffuse Optical Depth (taud)
+
+
+
+SizingPeriod:DesignDay,
+  Boston Logan IntL Arpt Ann Clg .4% Condns Enth=>MDB,         !- Name
+  7,                                                           !- Month
+  21,                                                          !- Day of Month
+  SummerDesignDay,                                             !- Day Type
+  30.6,                                                        !- Max Dry-Bulb Temp {C}
+  8.4,                                                         !- Daily Dry-Bulb Temp Range {C}
+  DefaultMultipliers,                                          !- Dry-Bulb Temp Range Modifier Type
+  ,                                                            !- Dry-Bulb Temp Range Modifier Schedule Name
+  Enthalpy,                                                    !- Humidity Condition Type
+  ,                                                            !- Wetbulb/Dewpoint at Max Dry-Bulb {C}
+  ,                                                            !- Humidity Indicating Day Schedule Name
+  ,                                                            !- Humidity Ratio at Maximum Dry-Bulb {kgWater/kgDryAir}
+  74100.0,                                                     !- Enthalpy at Maximum Dry-Bulb {J/kg}
+  ,                                                            !- Daily Wet-Bulb Temperature Range {deltaC}
+  101253.0,                                                    !- Barometric Pressure {Pa}
+  6.3,                                                         !- Wind Speed {m/s}
+  270.0,                                                       !- Wind Direction {Degrees; N=0, S=180}
+  No,                                                          !- Rain {Yes/No}
+  No,                                                          !- Snow on ground {Yes/No}
+  No,                                                          !- Daylight Savings Time Indicator {Yes/No}
+  ASHRAETau,                                                   !- Solar Model Indicator
+  ,                                                            !- Beam Solar Day Schedule Name
+  ,                                                            !- Diffuse Solar Day Schedule Name
+  0.488,                                                       !- ASHRAE Clear Sky Beam Optical Depth (taub)
+  1.95;                                                        !- ASHRAE Clear Sky Diffuse Optical Depth (taud)
+
+
+
+Sizing:Parameters,
+ 1.25,                     !- heating factor
+ 1.15;                     !- cooling factor
+
+GlobalGeometryRules,
+ UpperLeftCorner,          !- starting vertex position
+ Counterclockwise,         !- vertex entry direction
+ Relative;                 !- coordinate system
+
+Building,
+ Building,                 !- name
+ 0.0,                      !- clockwise north axis
+ City,                     !- terrain
+ ,                         !- loads convergence tolerance
+ ,                         !- temperature convergence tolerance
+ FullExterior;             !- solar distribution
+
+Site:WaterMainsTemperature,
+ Correlation,              !- calculation method
+ ,                         !- schedule
+ 12,                       !- average temperature
+ 4;                        !- delta temperature
+
+!-   =======================================
+!-   ================ MODEL ================
+!-   =======================================
+
+
+!-   ========= SCHEDULE TYPE LIMITS =========
+
+
+ScheduleTypeLimits,
+ Temperature,              !- name
+ -273.15,                  !- lower limit value
+ ,                         !- upper limit value
+ Continuous,               !- numeric type
+ Temperature;              !- unit type
+
+ScheduleTypeLimits,
+ Activity Level,           !- name
+ 0.0,                      !- lower limit value
+ ,                         !- upper limit value
+ Continuous,               !- numeric type
+ ActivityLevel;            !- unit type
+
+ScheduleTypeLimits,
+ Fractional,               !- name
+ 0.0,                      !- lower limit value
+ 1.0,                      !- upper limit value
+ Continuous,               !- numeric type
+ Dimensionless;            !- unit type
+
+!-   ============== SCHEDULES ==============
+
+
+Schedule:Year,
+ Hospital BLDG_EQUIP_SCH,  !- schedule name
+ Fractional,               !- schedule type limits
+ Hospital BLDG_EQUIP_SCH_Week 1, !- week schedule name 1
+ 1,                        !- start month 1
+ 1,                        !- start day 1
+ 12,                       !- end month 1
+ 31;                       !- end day 1
+
+Schedule:Week:Daily,
+ Hospital BLDG_EQUIP_SCH_Week 1, !- name
+ Hospital BLDG_EQUIP_SCH_Default, !- sunday
+ Hospital BLDG_EQUIP_SCH_Wkdy, !- monday
+ Hospital BLDG_EQUIP_SCH_Wkdy, !- tuesday
+ Hospital BLDG_EQUIP_SCH_Wkdy, !- wednesday
+ Hospital BLDG_EQUIP_SCH_Wkdy, !- thursday
+ Hospital BLDG_EQUIP_SCH_Wkdy, !- friday
+ Hospital BLDG_EQUIP_SCH_Sat, !- saturday
+ Hospital BLDG_EQUIP_SCH_Default, !- holiday
+ Hospital BLDG_EQUIP_SCH_SmrDsn, !- summer design day
+ Hospital BLDG_EQUIP_SCH_WntrDsn, !- winter design day
+ Hospital BLDG_EQUIP_SCH_Default, !- custom day 1
+ Hospital BLDG_EQUIP_SCH_Default; !- custom day 2
+
+Schedule:Day:Interval,
+ Hospital BLDG_EQUIP_SCH_Default, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 08:00,                    !- time 1 {hh:mm}
+ 0.2619511698,             !- value until time 1
+ 16:00,                    !- time 2 {hh:mm}
+ 0.3492682264,             !- value until time 2
+ 24:00,                    !- time 3 {hh:mm}
+ 0.2619511698;             !- value until time 3
+
+Schedule:Day:Interval,
+ Hospital BLDG_EQUIP_SCH_SmrDsn, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 1.0;                      !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital BLDG_EQUIP_SCH_WntrDsn, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 0.0;                      !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital BLDG_EQUIP_SCH_Sat, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 07:00,                    !- time 1 {hh:mm}
+ 0.3492682264,             !- value until time 1
+ 08:00,                    !- time 2 {hh:mm}
+ 0.4870009145,             !- value until time 2
+ 18:00,                    !- time 3 {hh:mm}
+ 0.63310118885,            !- value until time 3
+ 24:00,                    !- time 4 {hh:mm}
+ 0.3492682264;             !- value until time 4
+
+Schedule:Day:Interval,
+ Hospital BLDG_EQUIP_SCH_Wkdy, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 07:00,                    !- time 1 {hh:mm}
+ 0.3492682264,             !- value until time 1
+ 08:00,                    !- time 2 {hh:mm}
+ 0.6818012803,             !- value until time 2
+ 16:00,                    !- time 3 {hh:mm}
+ 0.8766016461,             !- value until time 3
+ 22:00,                    !- time 4 {hh:mm}
+ 0.584401097,              !- value until time 4
+ 23:00,                    !- time 5 {hh:mm}
+ 0.5239023396,             !- value until time 5
+ 24:00,                    !- time 6 {hh:mm}
+ 0.3492682264;             !- value until time 6
+
+Schedule:Year,
+ Hospital BLDG_OCC_SCH,    !- schedule name
+ Fractional,               !- schedule type limits
+ Hospital BLDG_OCC_SCH_Week 1, !- week schedule name 1
+ 1,                        !- start month 1
+ 1,                        !- start day 1
+ 12,                       !- end month 1
+ 31;                       !- end day 1
+
+Schedule:Week:Daily,
+ Hospital BLDG_OCC_SCH_Week 1, !- name
+ Hospital BLDG_OCC_SCH_Default, !- sunday
+ Hospital BLDG_OCC_SCH_Wkdy, !- monday
+ Hospital BLDG_OCC_SCH_Wkdy, !- tuesday
+ Hospital BLDG_OCC_SCH_Wkdy, !- wednesday
+ Hospital BLDG_OCC_SCH_Wkdy, !- thursday
+ Hospital BLDG_OCC_SCH_Wkdy, !- friday
+ Hospital BLDG_OCC_SCH_Sat, !- saturday
+ Hospital BLDG_OCC_SCH_Default, !- holiday
+ Hospital BLDG_OCC_SCH_SmrDsn, !- summer design day
+ Hospital BLDG_OCC_SCH_WntrDsn, !- winter design day
+ Hospital BLDG_OCC_SCH_Default, !- custom day 1
+ Hospital BLDG_OCC_SCH_Default; !- custom day 2
+
+Schedule:Day:Interval,
+ Hospital BLDG_OCC_SCH_Default, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 08:00,                    !- time 1 {hh:mm}
+ 0.0,                      !- value until time 1
+ 16:00,                    !- time 2 {hh:mm}
+ 0.05,                     !- value until time 2
+ 24:00,                    !- time 3 {hh:mm}
+ 0.0;                      !- value until time 3
+
+Schedule:Day:Interval,
+ Hospital BLDG_OCC_SCH_SmrDsn, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 1.0;                      !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital BLDG_OCC_SCH_WntrDsn, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 0.0;                      !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital BLDG_OCC_SCH_Sat, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 07:00,                    !- time 1 {hh:mm}
+ 0.0,                      !- value until time 1
+ 08:00,                    !- time 2 {hh:mm}
+ 0.1,                      !- value until time 2
+ 09:00,                    !- time 3 {hh:mm}
+ 0.3,                      !- value until time 3
+ 17:00,                    !- time 4 {hh:mm}
+ 0.4,                      !- value until time 4
+ 19:00,                    !- time 5 {hh:mm}
+ 0.1,                      !- value until time 5
+ 24:00,                    !- time 6 {hh:mm}
+ 0.0;                      !- value until time 6
+
+Schedule:Day:Interval,
+ Hospital BLDG_OCC_SCH_Wkdy, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 07:00,                    !- time 1 {hh:mm}
+ 0.0,                      !- value until time 1
+ 08:00,                    !- time 2 {hh:mm}
+ 0.1,                      !- value until time 2
+ 09:00,                    !- time 3 {hh:mm}
+ 0.5,                      !- value until time 3
+ 17:00,                    !- time 4 {hh:mm}
+ 0.8,                      !- value until time 4
+ 18:00,                    !- time 5 {hh:mm}
+ 0.5,                      !- value until time 5
+ 20:00,                    !- time 6 {hh:mm}
+ 0.3,                      !- value until time 6
+ 22:00,                    !- time 7 {hh:mm}
+ 0.2,                      !- value until time 7
+ 24:00,                    !- time 8 {hh:mm}
+ 0.0;                      !- value until time 8
+
+Schedule:Year,
+ Hospital INFIL_SCH_PNNL,  !- schedule name
+ Fractional,               !- schedule type limits
+ Hospital INFIL_SCH_PNNL_Week 1, !- week schedule name 1
+ 1,                        !- start month 1
+ 1,                        !- start day 1
+ 12,                       !- end month 1
+ 31;                       !- end day 1
+
+Schedule:Week:Daily,
+ Hospital INFIL_SCH_PNNL_Week 1, !- name
+ Hospital INFIL_SCH_PNNL_Default, !- sunday
+ Hospital INFIL_SCH_PNNL_Sat|Wkdy, !- monday
+ Hospital INFIL_SCH_PNNL_Sat|Wkdy, !- tuesday
+ Hospital INFIL_SCH_PNNL_Sat|Wkdy, !- wednesday
+ Hospital INFIL_SCH_PNNL_Sat|Wkdy, !- thursday
+ Hospital INFIL_SCH_PNNL_Sat|Wkdy, !- friday
+ Hospital INFIL_SCH_PNNL_Sat|Wkdy, !- saturday
+ Hospital INFIL_SCH_PNNL_Default, !- holiday
+ Hospital INFIL_SCH_PNNL_SmrDsn, !- summer design day
+ Hospital INFIL_SCH_PNNL_WntrDsn, !- winter design day
+ Hospital INFIL_SCH_PNNL_Default, !- custom day 1
+ Hospital INFIL_SCH_PNNL_Default; !- custom day 2
+
+Schedule:Day:Interval,
+ Hospital INFIL_SCH_PNNL_Default, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 0.25;                     !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital INFIL_SCH_PNNL_SmrDsn, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 0.25;                     !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital INFIL_SCH_PNNL_WntrDsn, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 0.25;                     !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital INFIL_SCH_PNNL_Sat|Wkdy, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 0.25;                     !- value until time 1
+
+Schedule:Year,
+ Hospital ACTIVITY_SCH,    !- schedule name
+ Activity Level,           !- schedule type limits
+ Hospital ACTIVITY_SCH_Week 1, !- week schedule name 1
+ 1,                        !- start month 1
+ 1,                        !- start day 1
+ 12,                       !- end month 1
+ 31;                       !- end day 1
+
+Schedule:Week:Daily,
+ Hospital ACTIVITY_SCH_Week 1, !- name
+ Hospital ACTIVITY_SCH_Default, !- sunday
+ Hospital ACTIVITY_SCH_Default, !- monday
+ Hospital ACTIVITY_SCH_Default, !- tuesday
+ Hospital ACTIVITY_SCH_Default, !- wednesday
+ Hospital ACTIVITY_SCH_Default, !- thursday
+ Hospital ACTIVITY_SCH_Default, !- friday
+ Hospital ACTIVITY_SCH_Default, !- saturday
+ Hospital ACTIVITY_SCH_Default, !- holiday
+ Hospital ACTIVITY_SCH_SmrDsn, !- summer design day
+ Hospital ACTIVITY_SCH_WntrDsn, !- winter design day
+ Hospital ACTIVITY_SCH_Default, !- custom day 1
+ Hospital ACTIVITY_SCH_Default; !- custom day 2
+
+Schedule:Day:Interval,
+ Hospital ACTIVITY_SCH_Default, !- schedule name
+ Activity Level,           !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 120.0;                    !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital ACTIVITY_SCH_SmrDsn, !- schedule name
+ Activity Level,           !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 120.0;                    !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital ACTIVITY_SCH_WntrDsn, !- schedule name
+ Activity Level,           !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 120.0;                    !- value until time 1
+
+Schedule:Year,
+ Hospital BLDG_LIGHT_OFFICE_SCH, !- schedule name
+ Fractional,               !- schedule type limits
+ Hospital BLDG_LIGHT_OFFICE_SCH_Week 1, !- week schedule name 1
+ 1,                        !- start month 1
+ 1,                        !- start day 1
+ 12,                       !- end month 1
+ 31;                       !- end day 1
+
+Schedule:Week:Daily,
+ Hospital BLDG_LIGHT_OFFICE_SCH_Week 1, !- name
+ Hospital BLDG_LIGHT_OFFICE_SCH_Default, !- sunday
+ Hospital BLDG_LIGHT_OFFICE_SCH_Wkdy, !- monday
+ Hospital BLDG_LIGHT_OFFICE_SCH_Wkdy, !- tuesday
+ Hospital BLDG_LIGHT_OFFICE_SCH_Wkdy, !- wednesday
+ Hospital BLDG_LIGHT_OFFICE_SCH_Wkdy, !- thursday
+ Hospital BLDG_LIGHT_OFFICE_SCH_Wkdy, !- friday
+ Hospital BLDG_LIGHT_OFFICE_SCH_Sat, !- saturday
+ Hospital BLDG_LIGHT_OFFICE_SCH_Default, !- holiday
+ Hospital BLDG_LIGHT_OFFICE_SCH_SmrDsn, !- summer design day
+ Hospital BLDG_LIGHT_OFFICE_SCH_WntrDsn, !- winter design day
+ Hospital BLDG_LIGHT_OFFICE_SCH_Default, !- custom day 1
+ Hospital BLDG_LIGHT_OFFICE_SCH_Default; !- custom day 2
+
+Schedule:Day:Interval,
+ Hospital BLDG_LIGHT_OFFICE_SCH_Default, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 08:00,                    !- time 1 {hh:mm}
+ 0.05,                     !- value until time 1
+ 16:00,                    !- time 2 {hh:mm}
+ 0.1,                      !- value until time 2
+ 24:00,                    !- time 3 {hh:mm}
+ 0.05;                     !- value until time 3
+
+Schedule:Day:Interval,
+ Hospital BLDG_LIGHT_OFFICE_SCH_SmrDsn, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 1.0;                      !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital BLDG_LIGHT_OFFICE_SCH_WntrDsn, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 0.0;                      !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital BLDG_LIGHT_OFFICE_SCH_Sat, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 07:00,                    !- time 1 {hh:mm}
+ 0.1,                      !- value until time 1
+ 08:00,                    !- time 2 {hh:mm}
+ 0.2,                      !- value until time 2
+ 18:00,                    !- time 3 {hh:mm}
+ 0.4,                      !- value until time 3
+ 24:00,                    !- time 4 {hh:mm}
+ 0.1;                      !- value until time 4
+
+Schedule:Day:Interval,
+ Hospital BLDG_LIGHT_OFFICE_SCH_Wkdy, !- schedule name
+ Fractional,               !- schedule type limits
+ No,                       !- interpolate to timestep
+ 07:00,                    !- time 1 {hh:mm}
+ 0.1,                      !- value until time 1
+ 08:00,                    !- time 2 {hh:mm}
+ 0.5,                      !- value until time 2
+ 16:00,                    !- time 3 {hh:mm}
+ 0.9,                      !- value until time 3
+ 23:00,                    !- time 4 {hh:mm}
+ 0.3,                      !- value until time 4
+ 24:00,                    !- time 5 {hh:mm}
+ 0.1;                      !- value until time 5
+
+Schedule:Year,
+ Hospital HTGSETP_SCH,     !- schedule name
+ Temperature,              !- schedule type limits
+ Hospital HTGSETP_SCH_Week 1, !- week schedule name 1
+ 1,                        !- start month 1
+ 1,                        !- start day 1
+ 12,                       !- end month 1
+ 31;                       !- end day 1
+
+Schedule:Week:Daily,
+ Hospital HTGSETP_SCH_Week 1, !- name
+ Hospital HTGSETP_SCH_Default, !- sunday
+ Hospital HTGSETP_SCH_Default, !- monday
+ Hospital HTGSETP_SCH_Default, !- tuesday
+ Hospital HTGSETP_SCH_Default, !- wednesday
+ Hospital HTGSETP_SCH_Default, !- thursday
+ Hospital HTGSETP_SCH_Default, !- friday
+ Hospital HTGSETP_SCH_Default, !- saturday
+ Hospital HTGSETP_SCH_Default, !- holiday
+ Hospital HTGSETP_SCH_SmrDsn, !- summer design day
+ Hospital HTGSETP_SCH_WntrDsn, !- winter design day
+ Hospital HTGSETP_SCH_Default, !- custom day 1
+ Hospital HTGSETP_SCH_Default; !- custom day 2
+
+Schedule:Day:Interval,
+ Hospital HTGSETP_SCH_Default, !- schedule name
+ Temperature,              !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 21.0;                     !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital HTGSETP_SCH_SmrDsn, !- schedule name
+ Temperature,              !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 21.0;                     !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital HTGSETP_SCH_WntrDsn, !- schedule name
+ Temperature,              !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 21.0;                     !- value until time 1
+
+Schedule:Year,
+ Hospital CLGSETP_SCH,     !- schedule name
+ Temperature,              !- schedule type limits
+ Hospital CLGSETP_SCH_Week 1, !- week schedule name 1
+ 1,                        !- start month 1
+ 1,                        !- start day 1
+ 12,                       !- end month 1
+ 31;                       !- end day 1
+
+Schedule:Week:Daily,
+ Hospital CLGSETP_SCH_Week 1, !- name
+ Hospital CLGSETP_SCH_Default, !- sunday
+ Hospital CLGSETP_SCH_Default, !- monday
+ Hospital CLGSETP_SCH_Default, !- tuesday
+ Hospital CLGSETP_SCH_Default, !- wednesday
+ Hospital CLGSETP_SCH_Default, !- thursday
+ Hospital CLGSETP_SCH_Default, !- friday
+ Hospital CLGSETP_SCH_Default, !- saturday
+ Hospital CLGSETP_SCH_Default, !- holiday
+ Hospital CLGSETP_SCH_SmrDsn, !- summer design day
+ Hospital CLGSETP_SCH_WntrDsn, !- winter design day
+ Hospital CLGSETP_SCH_Default, !- custom day 1
+ Hospital CLGSETP_SCH_Default; !- custom day 2
+
+Schedule:Day:Interval,
+ Hospital CLGSETP_SCH_Default, !- schedule name
+ Temperature,              !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 24.0;                     !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital CLGSETP_SCH_SmrDsn, !- schedule name
+ Temperature,              !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 24.0;                     !- value until time 1
+
+Schedule:Day:Interval,
+ Hospital CLGSETP_SCH_WntrDsn, !- schedule name
+ Temperature,              !- schedule type limits
+ No,                       !- interpolate to timestep
+ 24:00,                    !- time 1 {hh:mm}
+ 24.0;                     !- value until time 1
+
+Schedule:Constant,
+ Always On,                !- schedule name
+ Fractional,               !- schedule type limits
+ 1.0;                      !- value
+
+!-   ============== MATERIALS ==============
+
+
+Material:NoMass,
+ Typical Insulation-R4,    !- name
+ MediumSmooth,             !- roughness
+ 0.70444073524,            !- r-value {m2-K/W}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+WindowMaterial:Gas,
+ AIR 13MM,                 !- name
+ Air,                      !- gas type
+ 0.0127;                   !- thickness {m}
+
+Material:NoMass,
+ Typical Insulation-R24,   !- name
+ MediumSmooth,             !- roughness
+ 4.22664441144,            !- r-value {m2-K/W}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material,
+ Metal Roof Surface,       !- name
+ Smooth,                   !- roughness
+ 0.0008,                   !- thickness {m}
+ 45.2497187436,            !- conductivity {W/m-K}
+ 7824.01788949,            !- density {kg/m3}
+ 499.677608007,            !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+WindowMaterial:Glazing,
+ Generic Low-e Glass,      !- name
+ SpectralAverage,          !- optical data type
+ ,                         !- spectral data set name
+ 0.006,                    !- thickness {m}
+ 0.45,                     !- solar transmittance
+ 0.36,                     !- solar reflectance front
+ 0.36,                     !- solar reflectance back
+ 0.71,                     !- visible transmittance
+ 0.21,                     !- visible reflectance front
+ 0.21,                     !- visible reflectance back
+ 0.0,                      !- infrared_transmittance
+ 0.84,                     !- emissivity front
+ 0.047,                    !- emissivity back
+ 1.0,                      !- conductivity {W/m-K}
+ 1.0,                      !- dirt correction factor
+ No;                       !- solar diffusing
+
+Material,
+ F08 Metal surface,        !- name
+ Smooth,                   !- roughness
+ 0.0008,                   !- thickness {m}
+ 45.2497187436,            !- conductivity {W/m-K}
+ 7824.01788949,            !- density {kg/m3}
+ 499.677608007,            !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+WindowMaterial:Glazing,
+ Glass_2027F_LayerAvg,     !- name
+ SpectralAverage,          !- optical data type
+ ,                         !- spectral data set name
+ 0.004,                    !- thickness {m}
+ 0.369744,                 !- solar transmittance
+ 0.4700695,                !- solar reflectance front
+ 0.340935,                 !- solar reflectance back
+ 0.765222,                 !- visible transmittance
+ 0.0546,                   !- visible reflectance front
+ 0.073741,                 !- visible reflectance back
+ 0.0,                      !- infrared_transmittance
+ 0.03675,                  !- emissivity front
+ 0.84,                     !- emissivity back
+ 0.999331244338,           !- conductivity {W/m-K}
+ 1.0,                      !- dirt correction factor
+ No;                       !- solar diffusing
+
+Material,
+ Generic LW Concrete,      !- name
+ MediumRough,              !- roughness
+ 0.1,                      !- thickness {m}
+ 0.53,                     !- conductivity {W/m-K}
+ 1280.0,                   !- density {kg/m3}
+ 840.0,                    !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.8,                      !- solar absorptance
+ 0.8;                      !- visible absorptance
+
+Material,
+ Generic Ceiling Air Gap,  !- name
+ Smooth,                   !- roughness
+ 0.1,                      !- thickness {m}
+ 0.556,                    !- conductivity {W/m-K}
+ 1.28,                     !- density {kg/m3}
+ 1000.0,                   !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material,
+ 8 in. Concrete Block Basement Wall, !- name
+ MediumRough,              !- roughness
+ 0.2032,                   !- thickness {m}
+ 1.32511322999,            !- conductivity {W/m-K}
+ 1842.00421171,            !- density {kg/m3}
+ 911.411957005,            !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material,
+ Generic Wall Air Gap,     !- name
+ Smooth,                   !- roughness
+ 0.1,                      !- thickness {m}
+ 0.667,                    !- conductivity {W/m-K}
+ 1.28,                     !- density {kg/m3}
+ 1000.0,                   !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+WindowMaterial:Glazing,
+ REF D CLEAR 6MM,          !- name
+ SpectralAverage,          !- optical data type
+ ,                         !- spectral data set name
+ 0.006,                    !- thickness {m}
+ 0.429,                    !- solar transmittance
+ 0.308,                    !- solar reflectance front
+ 0.379,                    !- solar reflectance back
+ 0.334,                    !- visible transmittance
+ 0.453,                    !- visible reflectance front
+ 0.505,                    !- visible reflectance back
+ 0.0,                      !- infrared_transmittance
+ 0.84,                     !- emissivity front
+ 0.82,                     !- emissivity back
+ 0.899398119904,           !- conductivity {W/m-K}
+ 1.0,                      !- dirt correction factor
+ No;                       !- solar diffusing
+
+Material,
+ Generic Gypsum Board,     !- name
+ MediumSmooth,             !- roughness
+ 0.0127,                   !- thickness {m}
+ 0.16,                     !- conductivity {W/m-K}
+ 800.0,                    !- density {kg/m3}
+ 1090.0,                   !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.5,                      !- solar absorptance
+ 0.5;                      !- visible absorptance
+
+Material,
+ 8 in. Normalweight Concrete Floor, !- name
+ MediumRough,              !- roughness
+ 0.2032,                   !- thickness {m}
+ 2.30845517442,            !- conductivity {W/m-K}
+ 2322.00530923,            !- density {kg/m3}
+ 831.463539724,            !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material,
+ Generic 25mm Insulation,  !- name
+ MediumRough,              !- roughness
+ 0.05,                     !- thickness {m}
+ 0.03,                     !- conductivity {W/m-K}
+ 43.0,                     !- density {kg/m3}
+ 1210.0,                   !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+WindowMaterial:Glazing,
+ CLEAR 6MM,                !- name
+ SpectralAverage,          !- optical data type
+ ,                         !- spectral data set name
+ 0.006,                    !- thickness {m}
+ 0.775,                    !- solar transmittance
+ 0.071,                    !- solar reflectance front
+ 0.071,                    !- solar reflectance back
+ 0.881,                    !- visible transmittance
+ 0.08,                     !- visible reflectance front
+ 0.08,                     !- visible reflectance back
+ 0.0,                      !- infrared_transmittance
+ 0.84,                     !- emissivity front
+ 0.84,                     !- emissivity back
+ 0.899398119904,           !- conductivity {W/m-K}
+ 1.0,                      !- dirt correction factor
+ No;                       !- solar diffusing
+
+Material,
+ Roof Membrane,            !- name
+ VeryRough,                !- roughness
+ 0.0095,                   !- thickness {m}
+ 0.159892999094,           !- conductivity {W/m-K}
+ 1121.29256382,            !- density {kg/m3}
+ 1459.05861538,            !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+WindowMaterial:Glazing,
+ Glass_2052_LayerAvg,      !- name
+ SpectralAverage,          !- optical data type
+ ,                         !- spectral data set name
+ 0.00837,                  !- thickness {m}
+ 0.507767,                 !- solar transmittance
+ 0.05422805,               !- solar reflectance front
+ 0.05449309,               !- solar reflectance back
+ 0.586833,                 !- visible transmittance
+ 0.05805,                  !- visible reflectance front
+ 0.058397,                 !- visible reflectance back
+ 0.0,                      !- infrared_transmittance
+ 0.84,                     !- emissivity front
+ 0.84,                     !- emissivity back
+ 0.999331244338,           !- conductivity {W/m-K}
+ 1.0,                      !- dirt correction factor
+ No;                       !- solar diffusing
+
+Material,
+ Generic Painted Metal,    !- name
+ Smooth,                   !- roughness
+ 0.0015,                   !- thickness {m}
+ 45.0,                     !- conductivity {W/m-K}
+ 7690.0,                   !- density {kg/m3}
+ 410.0,                    !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.5,                      !- solar absorptance
+ 0.5;                      !- visible absorptance
+
+Material,
+ Generic 25mm Wood,        !- name
+ MediumSmooth,             !- roughness
+ 0.0254,                   !- thickness {m}
+ 0.15,                     !- conductivity {W/m-K}
+ 608.0,                    !- density {kg/m3}
+ 1630.0,                   !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.5,                      !- solar absorptance
+ 0.5;                      !- visible absorptance
+
+Material:NoMass,
+ Typical Insulation-R7,    !- name
+ MediumSmooth,             !- roughness
+ 1.23277128667,            !- r-value {m2-K/W}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material:NoMass,
+ Typical Insulation-R2,    !- name
+ MediumSmooth,             !- roughness
+ 0.35222036762,            !- r-value {m2-K/W}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material,
+ 5/8 in. Gypsum Board,     !- name
+ MediumSmooth,             !- roughness
+ 0.0159,                   !- thickness {m}
+ 0.159892999094,           !- conductivity {W/m-K}
+ 800.001829191,            !- density {kg/m3}
+ 1089.29718546,            !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material,
+ 25mm Stucco,              !- name
+ Smooth,                   !- roughness
+ 0.0254,                   !- thickness {m}
+ 0.719518495923,           !- conductivity {W/m-K}
+ 1856.00424372,            !- density {kg/m3}
+ 839.458381452,            !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material:NoMass,
+ Typical Insulation-R31,   !- name
+ MediumSmooth,             !- roughness
+ 5.45941569811,            !- r-value {m2-K/W}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material,
+ Generic Acoustic Tile,    !- name
+ MediumSmooth,             !- roughness
+ 0.02,                     !- thickness {m}
+ 0.06,                     !- conductivity {W/m-K}
+ 368.0,                    !- density {kg/m3}
+ 590.0,                    !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.2,                      !- solar absorptance
+ 0.2;                      !- visible absorptance
+
+Material,
+ Generic HW Concrete,      !- name
+ MediumRough,              !- roughness
+ 0.2,                      !- thickness {m}
+ 1.95,                     !- conductivity {W/m-K}
+ 2240.0,                   !- density {kg/m3}
+ 900.0,                    !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.8,                      !- solar absorptance
+ 0.8;                      !- visible absorptance
+
+Material,
+ Generic Roof Membrane,    !- name
+ MediumRough,              !- roughness
+ 0.01,                     !- thickness {m}
+ 0.16,                     !- conductivity {W/m-K}
+ 1120.0,                   !- density {kg/m3}
+ 1460.0,                   !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.65,                     !- solar absorptance
+ 0.65;                     !- visible absorptance
+
+WindowMaterial:Gas,
+ Gap_1_W_0_0038,           !- name
+ Air,                      !- gas type
+ 0.0038;                   !- thickness {m}
+
+WindowMaterial:Gas,
+ Generic Window Air Gap,   !- name
+ Air,                      !- gas type
+ 0.0127;                   !- thickness {m}
+
+Material,
+ Generic Brick,            !- name
+ MediumRough,              !- roughness
+ 0.1,                      !- thickness {m}
+ 0.9,                      !- conductivity {W/m-K}
+ 1920.0,                   !- density {kg/m3}
+ 790.0,                    !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.65,                     !- solar absorptance
+ 0.65;                     !- visible absorptance
+
+WindowMaterial:Glazing,
+ Generic Clear Glass,      !- name
+ SpectralAverage,          !- optical data type
+ ,                         !- spectral data set name
+ 0.006,                    !- thickness {m}
+ 0.77,                     !- solar transmittance
+ 0.07,                     !- solar reflectance front
+ 0.07,                     !- solar reflectance back
+ 0.88,                     !- visible transmittance
+ 0.08,                     !- visible reflectance front
+ 0.08,                     !- visible reflectance back
+ 0.0,                      !- infrared_transmittance
+ 0.84,                     !- emissivity front
+ 0.84,                     !- emissivity back
+ 1.0,                      !- conductivity {W/m-K}
+ 1.0,                      !- dirt correction factor
+ No;                       !- solar diffusing
+
+Material:NoMass,
+ Typical Insulation-R17,   !- name
+ MediumSmooth,             !- roughness
+ 2.99387312477,            !- r-value {m2-K/W}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material,
+ Generic 50mm Insulation,  !- name
+ MediumRough,              !- roughness
+ 0.05,                     !- thickness {m}
+ 0.03,                     !- conductivity {W/m-K}
+ 43.0,                     !- density {kg/m3}
+ 1210.0,                   !- specific heat {J/kg-K}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.7;                      !- visible absorptance
+
+Material:NoMass,
+ Typical Carpet Pad,       !- name
+ VeryRough,                !- roughness
+ 0.216479987152,           !- r-value {m2-K/W}
+ 0.9,                      !- thermal absorptance
+ 0.7,                      !- solar absorptance
+ 0.8;                      !- visible absorptance
+
+WindowMaterial:Glazing,
+ REF B CLEAR HI 6MM,       !- name
+ SpectralAverage,          !- optical data type
+ ,                         !- spectral data set name
+ 0.006,                    !- thickness {m}
+ 0.24,                     !- solar transmittance
+ 0.16,                     !- solar reflectance front
+ 0.32,                     !- solar reflectance back
+ 0.3,                      !- visible transmittance
+ 0.16,                     !- visible reflectance front
+ 0.29,                     !- visible reflectance back
+ 0.0,                      !- infrared_transmittance
+ 0.84,                     !- emissivity front
+ 0.6,                      !- emissivity back
+ 0.899398119904,           !- conductivity {W/m-K}
+ 1.0,                      !- dirt correction factor
+ No;                       !- solar diffusing
+
+!-   ============ CONSTRUCTIONS ============
+
+
+Construction,
+ Generic Single Pane,      !- name
+ Generic Clear Glass;      !- layer 1
+
+Construction,
+ Generic Interior Wall,    !- name
+ Generic Gypsum Board,     !- layer 1
+ Generic Wall Air Gap,     !- layer 2
+ Generic Gypsum Board;     !- layer 3
+
+Construction,
+ Generic Exposed Floor,    !- name
+ Generic Painted Metal,    !- layer 1
+ Generic Ceiling Air Gap,  !- layer 2
+ Generic 50mm Insulation,  !- layer 3
+ Generic LW Concrete;      !- layer 4
+
+Construction,
+ Generic Roof,             !- name
+ Generic Roof Membrane,    !- layer 1
+ Generic 50mm Insulation,  !- layer 2
+ Generic LW Concrete,      !- layer 3
+ Generic Ceiling Air Gap,  !- layer 4
+ Generic Acoustic Tile;    !- layer 5
+
+Construction:AirBoundary,
+ Generic Air Boundary,     !- construction name
+ None;                     !- air exchange method
+
+Construction,
+ Typical IEAD Roof-R32,    !- name
+ Roof Membrane,            !- layer 1
+ Typical Insulation-R31,   !- layer 2
+ Metal Roof Surface;       !- layer 3
+
+Construction,
+ Generic Interior Floor,   !- name
+ Generic Acoustic Tile,    !- layer 1
+ Generic Ceiling Air Gap,  !- layer 2
+ Generic LW Concrete;      !- layer 3
+
+Construction,
+ Generic Double Pane,      !- name
+ Generic Low-e Glass,      !- layer 1
+ Generic Window Air Gap,   !- layer 2
+ Generic Clear Glass;      !- layer 3
+
+Construction,
+ Typical Insulated Metal Door-R2, !- name
+ F08 Metal surface,        !- layer 1
+ Typical Insulation-R2;    !- layer 2
+
+Construction,
+ Generic Exterior Wall,    !- name
+ Generic Brick,            !- layer 1
+ Generic LW Concrete,      !- layer 2
+ Generic 50mm Insulation,  !- layer 3
+ Generic Wall Air Gap,     !- layer 4
+ Generic Gypsum Board;     !- layer 5
+
+Construction,
+ Typical Insulated Steel Framed Exterior Floor-R27, !- name
+ 25mm Stucco,              !- layer 1
+ 5/8 in. Gypsum Board,     !- layer 2
+ Typical Insulation-R24,   !- layer 3
+ 5/8 in. Gypsum Board,     !- layer 4
+ Typical Carpet Pad;       !- layer 5
+
+Construction,
+ Generic Underground Wall, !- name
+ Generic 50mm Insulation,  !- layer 1
+ Generic HW Concrete,      !- layer 2
+ Generic Wall Air Gap,     !- layer 3
+ Generic Gypsum Board;     !- layer 4
+
+Construction,
+ Generic Interior Ceiling, !- name
+ Generic LW Concrete,      !- layer 1
+ Generic Ceiling Air Gap,  !- layer 2
+ Generic Acoustic Tile;    !- layer 3
+
+Construction,
+ Generic Ground Slab,      !- name
+ Generic 50mm Insulation,  !- layer 1
+ Generic HW Concrete;      !- layer 2
+
+Construction,
+ Generic Exterior Door,    !- name
+ Generic Painted Metal,    !- layer 1
+ Generic 25mm Insulation,  !- layer 2
+ Generic Painted Metal;    !- layer 3
+
+Construction,
+ Typical Insulated Steel Framed Exterior Wall-R19, !- name
+ 25mm Stucco,              !- layer 1
+ 5/8 in. Gypsum Board,     !- layer 2
+ Typical Insulation-R17,   !- layer 3
+ 5/8 in. Gypsum Board;     !- layer 4
+
+Construction,
+ Typical Insulated Carpeted 8in Slab Floor-R5, !- name
+ Typical Insulation-R4,    !- layer 1
+ 8 in. Normalweight Concrete Floor, !- layer 2
+ Typical Carpet Pad;       !- layer 3
+
+Construction,
+ Typical Overhead Door-R2, !- name
+ Typical Insulation-R2;    !- layer 1
+
+Construction,
+ Generic Interior Door,    !- name
+ Generic 25mm Wood;        !- layer 1
+
+Construction,
+ Generic Underground Roof, !- name
+ Generic 50mm Insulation,  !- layer 1
+ Generic HW Concrete,      !- layer 2
+ Generic Ceiling Air Gap,  !- layer 3
+ Generic Acoustic Tile;    !- layer 4
+
+Construction,
+ Window_U_0.50_SHGC_0.40_Skylight_Frame_Width_0.430_in, !- name
+ Glass_2052_LayerAvg,      !- layer 1
+ Gap_1_W_0_0038,           !- layer 2
+ Glass_2027F_LayerAvg;     !- layer 3
+
+Construction,
+ U 0.44 SHGC 0.26 Dbl Ref-B-H Clr 6mm/13mm Air, !- name
+ REF B CLEAR HI 6MM,       !- layer 1
+ AIR 13MM,                 !- layer 2
+ CLEAR 6MM;                !- layer 3
+
+Construction,
+ U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- name
+ REF D CLEAR 6MM,          !- layer 1
+ AIR 13MM,                 !- layer 2
+ CLEAR 6MM;                !- layer 3
+
+Construction,
+ Typical Insulated Basement Mass Wall-R8, !- name
+ Typical Insulation-R7,    !- layer 1
+ 8 in. Concrete Block Basement Wall; !- layer 2
+! 
+!-   ============ HVAC SYSTEMS ============
+! 
+! 
+! HVACTemplate:Zone:IdealLoadsAirSystem,
+!  HospitalShoeBox_dd3546aa, !- zone name
+!  2013::Hospital::HospitalOffice_Setpoint..HospitalShoeBox_dd3546aa, !- template thermostat name
+!  ,                         !- availability schedule
+!  50.0,                     !- heating supply air temp {C}
+!  13.0,                     !- cooling supply air temp {C}
+!  ,                         !- max heating supply air hr {kg-H2O/kg-air}
+!  ,                         !- min cooling supply air hr {kg-H2O/kg-air}
+!  LimitCapacity,            !- heating limit
+!  ,                         !- max heating fow rate {m3/s}
+!  Autosize,                 !- max sensible heat capacity
+!  LimitFlowRateAndCapacity, !- cooling limit
+!  Autosize,                 !- max cooling fow rate {m3/s}
+!  Autosize,                 !- max total cooling capacity
+!  ,                         !- heating availability schedule
+!  ,                         !- cooling availability schedule
+!  None,                     !- dehumidification type
+!  ,                         !- cooling shr
+!  ,                         !- dehumidification setpoint
+!  None,                     !- humidification type
+!  ,                         !- humidification setpoint
+!  DetailedSpecification,    !- outdoor air method
+!  ,                         !- oa per person
+!  ,                         !- oa per area
+!  ,                         !- oa per zone
+!  2013::Hospital::HospitalOffice_Ventilation..HospitalShoeBox_dd3546aa, !- outdoor air object name
+!  None,                     !- demand controlled vent type
+!  DifferentialDryBulb,      !- economizer type
+!  None,                     !- heat recovery type
+!  0.0,                      !- sensible heat recovery effectiveness
+!  0.0;                      !- latent heat recovery effectiveness
+
+!-   ============ ZONE GEOMETRY ============
+
+
+!-   ________ZONE:Hospital Shoe Box________
+
+
+Zone,
+ HospitalShoeBox_dd3546aa; !- name
+
+People,
+ 2013::Hospital::HospitalOffice_People..HospitalShoeBox_dd3546aa, !- name
+ HospitalShoeBox_dd3546aa, !- zone name
+ Hospital BLDG_OCC_SCH,    !- occupancy schedule name
+ People/Area,              !- occupancy method
+ ,                         !- number of people {ppl}
+ 0.0752397662078,          !- people per floor area {ppl/m2}
+ ,                         !- floor area per person {m2/ppl}
+ 0.3,                      !- radiant fration
+ autocalculate,            !- sensible heat fraction
+ Hospital ACTIVITY_SCH;    !- activity schedule name
+
+Lights,
+ 2013::Hospital::HospitalOffice_Lighting..HospitalShoeBox_dd3546aa, !- name
+ HospitalShoeBox_dd3546aa, !- zone name
+ Hospital BLDG_LIGHT_OFFICE_SCH, !- schedule name
+ Watts/Area,               !- lighting level method
+ ,                         !- lighting power level {W}
+ 8.826398,                 !- lighting per floor area {W/m2}
+ ,                         !- lighting per person {W/ppl}
+ 0.0,                      !- return air fraction
+ 0.7,                      !- radiant fration
+ 0.2;                      !- visible fraction
+
+ElectricEquipment,
+ 2013::Hospital::HospitalOffice_Electric..HospitalShoeBox_dd3546aa, !- name
+ HospitalShoeBox_dd3546aa, !- zone name
+ Hospital BLDG_EQUIP_SCH,  !- schedule name
+ Watts/Area,               !- equipment level method
+ ,                         !- equipment power level {W}
+ 11.84029,                 !- equipment per floor area {W/m2}
+ ,                         !- equipment per person {W/ppl}
+ 0.0,                      !- latent fraction
+ 0.5,                      !- radiant fration
+ 0.0;                      !- lost fraction
+
+ZoneInfiltration:DesignFlowRate,
+ 2013::Hospital::HospitalOffice_Infiltration..HospitalShoeBox_dd3546aa, !- name
+ HospitalShoeBox_dd3546aa, !- zone name
+ Hospital INFIL_SCH_PNNL,  !- schedule name
+ Flow/ExteriorArea,        !- flow rate method
+ ,                         !- flow rate {m3/s}
+ ,                         !- flow per floor area {m3/s-m2}
+ 0.000226568,              !- flow per exterior area {m3/s-m2}
+ ,                         !- air changes per hour {1/hr}
+ 1.0,                      !- constant term coefficient
+ 0.0,                      !- temperature term coefficient
+ 0.0,                      !- velocity term coefficient
+ ;                         !- velocity squared term coefficient
+
+DesignSpecification:OutdoorAir,
+ 2013::Hospital::HospitalOffice_Ventilation..HospitalShoeBox_dd3546aa, !- name
+ Sum,                      !- flow rate method
+ 0.002359735,              !- flow per person {m3/s-person}
+ 0.0003048,                !- flow per floor area {m3/s-m2}
+ 0.0,                      !- flow per zone {m3/s}
+ 0.0,                      !- air changes per hour {1/hr}
+ ;                         !- outdoor air schedule name
+! 
+! HVACTemplate:Thermostat,
+!  2013::Hospital::HospitalOffice_Setpoint..HospitalShoeBox_dd3546aa, !- name
+!  Hospital HTGSETP_SCH,     !- heating setpoint schedule
+!  ,                         !- heating setpoint {C}
+!  Hospital CLGSETP_SCH,     !- cooling setpoint schedule
+!  ;                         !- cooling setpoint {C}
+
+BuildingSurface:Detailed,
+ Face_d4d3a0bc,            !- name
+ Wall,                     !- surface type
+ Typical Insulated Steel Framed Exterior Wall-R19, !- construction name
+ HospitalShoeBox_dd3546aa, !- zone name
+ ,                         !- space name
+ Outdoors,                 !- boundary condition
+ ,                         !- boundary condition object
+ SunExposed,               !- sun exposure
+ WindExposed,              !- wind exposure
+ Autocalculate,            !- view factor to ground
+ 4,                        !- number of vertices
+ 5.000, 12.071, 3.000,
+ 5.000, 12.071, 0.000,
+ -2.071, 5.000, 0.000,
+ -2.071, 5.000, 3.000;
+
+FenestrationSurface:Detailed,
+ Face_d4d3a0bc_Glz0,       !- name
+ Window,                   !- surface type
+ U 0.48 SHGC 0.40 Dbl Ref-D Clr 6mm/13mm, !- construction name
+ Face_d4d3a0bc,            !- building surface name
+ ,                         !- boundary condition object
+ Autocalculate,            !- view factor to ground
+ ,                         !- frame and divider name
+ 1,                        !- multiplier
+ 4,                        !- number of vertices
+ 3.701, 10.772, 2.449,
+ 3.701, 10.772, 0.551,
+ -0.772, 6.299, 0.551,
+ -0.772, 6.299, 2.449;
+
+BuildingSurface:Detailed,
+ Face_2387f6b0,            !- name
+ Wall,                     !- surface type
+ Generic Interior Wall,    !- construction name
+ HospitalShoeBox_dd3546aa, !- zone name
+ ,                         !- space name
+ Adiabatic,                !- boundary condition
+ ,                         !- boundary condition object
+ NoSun,                    !- sun exposure
+ NoWind,                   !- wind exposure
+ autocalculate,            !- view factor to ground
+ 4,                        !- number of vertices
+ 5.000, -2.071, 3.000,
+ 5.000, -2.071, 0.000,
+ 12.071, 5.000, 0.000,
+ 12.071, 5.000, 3.000;
+
+BuildingSurface:Detailed,
+ Face_cb691404,            !- name
+ Wall,                     !- surface type
+ Generic Interior Wall,    !- construction name
+ HospitalShoeBox_dd3546aa, !- zone name
+ ,                         !- space name
+ Adiabatic,                !- boundary condition
+ ,                         !- boundary condition object
+ NoSun,                    !- sun exposure
+ NoWind,                   !- wind exposure
+ autocalculate,            !- view factor to ground
+ 4,                        !- number of vertices
+ 12.071, 5.000, 3.000,
+ 12.071, 5.000, 0.000,
+ 5.000, 12.071, 0.000,
+ 5.000, 12.071, 3.000;
+
+BuildingSurface:Detailed,
+ Face_f6d57489,            !- name
+ Wall,                     !- surface type
+ Generic Interior Wall,    !- construction name
+ HospitalShoeBox_dd3546aa, !- zone name
+ ,                         !- space name
+ Adiabatic,                !- boundary condition
+ ,                         !- boundary condition object
+ NoSun,                    !- sun exposure
+ NoWind,                   !- wind exposure
+ autocalculate,            !- view factor to ground
+ 4,                        !- number of vertices
+ -2.071, 5.000, 3.000,
+ -2.071, 5.000, 0.000,
+ 5.000, -2.071, 0.000,
+ 5.000, -2.071, 3.000;
+
+BuildingSurface:Detailed,
+ Face_ebdc4db4,            !- name
+ Floor,                    !- surface type
+ Generic Interior Floor,   !- construction name
+ HospitalShoeBox_dd3546aa, !- zone name
+ ,                         !- space name
+ Adiabatic,                !- boundary condition
+ ,                         !- boundary condition object
+ NoSun,                    !- sun exposure
+ NoWind,                   !- wind exposure
+ autocalculate,            !- view factor to ground
+ 4,                        !- number of vertices
+ 12.071, 5.000, 0.000,
+ 5.000, -2.071, 0.000,
+ -2.071, 5.000, 0.000,
+ 5.000, 12.071, 0.000;
+
+BuildingSurface:Detailed,
+ Face_cc394a5a,            !- name
+ Ceiling,                  !- surface type
+ Generic Interior Ceiling, !- construction name
+ HospitalShoeBox_dd3546aa, !- zone name
+ ,                         !- space name
+ Adiabatic,                !- boundary condition
+ ,                         !- boundary condition object
+ NoSun,                    !- sun exposure
+ NoWind,                   !- wind exposure
+ autocalculate,            !- view factor to ground
+ 4,                        !- number of vertices
+ -2.071, 5.000, 3.000,
+ 5.000, -2.071, 3.000,
+ 12.071, 5.000, 3.000,
+ 5.000, 12.071, 3.000;
+! 
+! -------------------------------------------------------------
+! New objects created from ExpandObjects
+! -------------------------------------------------------------
+! 
+
+ThermostatSetpoint:DualSetpoint,
+  2013::Hospital::HospitalOffice_Setpoint..HospitalShoeBox_dd3546aa Dual SP Control,  !- Name
+  Hospital HTGSETP_SCH,                                    !- Heating Setpoint Temperature Schedule Name
+  Hospital CLGSETP_SCH;                                    !- Cooling Setpoint Temperature Schedule Name
+
+ScheduleTypeLimits,
+  HVACTemplate Any Number;                                 !- Name
+
+Schedule:Compact,
+  HVACTemplate-Always 4,                                   !- Name
+  HVACTemplate Any Number,                                 !- Schedule Type Limits Name
+  Through: 12/31,                                          !- Field 1
+  For: AllDays,                                            !- Field 2
+  Until: 24:00,                                            !- Field 3
+  4;                                                       !- Field 4
+
+ZoneControl:Thermostat,
+  HospitalShoeBox_dd3546aa Thermostat,                     !- Name
+  HospitalShoeBox_dd3546aa,                                !- Zone or ZoneList Name
+  HVACTemplate-Always 4,                                   !- Control Type Schedule Name
+  ThermostatSetpoint:DualSetpoint,                         !- Control Object Type
+  2013::Hospital::HospitalOffice_Setpoint..HospitalShoeBox_dd3546aa Dual SP Control;  !- Control Name
+
+Sizing:Zone,
+  HospitalShoeBox_dd3546aa,                                !- Zone or ZoneList Name
+  SupplyAirTemperature,                                    !- Zone Cooling Design Supply Air Temperature Input Method
+  13.0,                                                    !- Zone Cooling Design Supply Air Temperature {C}
+  ,                                                        !- Zone Cooling Design Supply Air Temperature Difference {delta C}
+  SupplyAirTemperature,                                    !- Zone Heating Design Supply Air Temperature Input Method
+  50.0,                                                    !- Zone Heating Design Supply Air Temperature {C}
+  ,                                                        !- Zone Heating Design Supply Air Temperature Difference {delta C}
+  0.0077,                                                  !- Zone Cooling Design Supply Air Humidity Ratio {kg-H20/kg-air}
+  0.0156,                                                  !- Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}
+  2013::Hospital::HospitalOffice_Ventilation..HospitalShoeBox_dd3546aa,  !- Design Specification Outdoor Air Object Name
+  ,                                                        !- Zone Heating Sizing Factor
+  ,                                                        !- Zone Cooling Sizing Factor
+  DesignDay,                                               !- Cooling Design Air Flow Method
+  0,                                                       !- Cooling Design Air Flow Rate {m3/s}
+  ,                                                        !- Cooling Minimum Air Flow per Zone Floor Area {m3/s-m2}
+  ,                                                        !- Cooling Minimum Air Flow {m3/s}
+  0,                                                       !- Cooling Minimum Air Flow Fraction {}
+  DesignDay,                                               !- Heating Design Air Flow Method
+  0,                                                       !- Heating Design Air Flow Rate {m3/s}
+  ,                                                        !- Heating Maximum Air Flow per Zone Floor Area {m3/s-m2}
+  ,                                                        !- Heating Maximum Air Flow {m3/s}
+  0,                                                       !- Heating Maximum Air Flow Fraction {}
+  ;                                                        !- Design Specification Zone Air Distribution Object Name
+
+ZoneHVAC:EquipmentConnections,
+  HospitalShoeBox_dd3546aa,                                !- Zone Name
+  HospitalShoeBox_dd3546aa Equipment,                      !- Zone Conditioning Equipment List Name
+  HospitalShoeBox_dd3546aa Ideal Loads Supply Inlet,       !- Zone Air Inlet Node or NodeList Name
+  ,                                                        !- Zone Air Exhaust Node or NodeList Name
+  HospitalShoeBox_dd3546aa Zone Air Node,                  !- Zone Air Node Name
+  HospitalShoeBox_dd3546aa Return Outlet;                  !- Zone Return Air Node Name
+
+ZoneHVAC:EquipmentList,
+  HospitalShoeBox_dd3546aa Equipment,                      !- Name
+  SequentialLoad,                                          !- Load Distribution Scheme
+  ZoneHVAC:IdealLoadsAirSystem,                            !- Zone Equipment Object Type
+  HospitalShoeBox_dd3546aa Ideal Loads Air System,         !- Zone Equipment Name
+  1,                                                       !- Zone Equipment Cooling Sequence
+  1,                                                       !- Zone Equipment Heating or No-Load Sequence
+  ,                                                        !- Zone Equipment Sequential Cooling Fraction Schedule Name
+  ;                                                        !- Zone Equipment Sequential Heating Fraction Schedule Name
+
+ZoneHVAC:IdealLoadsAirSystem,
+  HospitalShoeBox_dd3546aa Ideal Loads Air System,         !- Name
+  ,                                                        !- Availability Schedule Name
+  HospitalShoeBox_dd3546aa Ideal Loads Supply Inlet,       !- Zone Supply Air Node Name
+  ,                                                        !- Zone Exhaust Air Node Name
+  ,                                                        !- System Inlet Air Node Name
+  50.0,                                                    !- Maximum Heating Supply Air Temperature [C]
+  13.0,                                                    !- Minimum Cooling Supply Air Temperature [C]
+  0.0156,                                                  !- Maximum Heating Supply Air Humidity Ratio [kg-H20/kg-air]
+  0.0077,                                                  !- Minimum Cooling Supply Air Humidity Ratio [kg-H20/kg-air]
+  LimitCapacity,                                           !- Heating Limit
+  ,                                                        !- Maximum Heating Air Flow Rate {m3/s}
+  Autosize,                                                !- Maximum Sensible Heating Capacity {m3/s}
+  LimitFlowRateAndCapacity,                                !- Cooling Limit
+  Autosize,                                                !- Maximum Cooling Air Flow Rate {m3/s}
+  Autosize,                                                !- Maximum Total Cooling Capacity {m3/s}
+  ,                                                        !- Heating Availability Schedule Name
+  ,                                                        !- Cooling Availability Schedule Name
+  None,                                                    !- Dehumidification Control Type
+  0.7,                                                     !- Cooling Sensible Heat Ratio
+  None,                                                    !- Humidification Control Type
+  2013::Hospital::HospitalOffice_Ventilation..HospitalShoeBox_dd3546aa,  !- Design Specification Outdoor Air Object Name
+  HospitalShoeBox_dd3546aa Ideal Loads Outdoor Air Inlet,  !- Outdoor Air Inlet Node Name
+  None,                                                    !- Demand Controlled Ventilation Type
+  DifferentialDryBulb,                                     !- Outdoor Air Economizer Type
+  None,                                                    !- Heat Recovery Type
+  0.0,                                                     !- Sensible Heat Recovery Effectiveness
+  0.0;                                                     !- Latent Heat Recovery Effectiveness

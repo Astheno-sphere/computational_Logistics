@@ -1,0 +1,176 @@
+/**
+ * Docs theme: variable overrides plus the diagram styles the default theme has
+ * no equivalent for.
+ */
+
+:root {
+  /**
+   * brand-3 fills solid buttons that carry white text, so it has to clear 4.5:1
+   * on its own — VitePress's default #6366f1 only reaches 4.45:1.
+   */
+  --vp-c-brand-1: #4338ca;
+  --vp-c-brand-2: #3730a3;
+  --vp-c-brand-3: #4f46e5;
+  --vp-c-brand-soft: rgba(99, 102, 241, 0.14);
+
+  /* The default dimmed colour of the language tag on code blocks is below 4.5:1. */
+  --vp-code-lang-color: var(--vp-c-text-2);
+
+  --vp-c-tip-1: var(--vp-c-brand-1);
+  --vp-c-tip-2: var(--vp-c-brand-2);
+  --vp-c-tip-3: var(--vp-c-brand-3);
+  --vp-c-tip-soft: var(--vp-c-brand-soft);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #6366f1 30%, #06b6d4);
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #6366f1 40%, #06b6d4 80%);
+  --vp-home-hero-image-filter: blur(48px);
+
+  /* Diagram palette, mirrored for dark mode below. */
+  --diagram-bg: #ffffff;
+  --diagram-line: #cbd5e1;
+  --diagram-node: #f8fafc;
+  --diagram-node-border: #94a3b8;
+  --diagram-accent: #4f46e5;
+  --diagram-accent-soft: rgba(99, 102, 241, 0.12);
+  --diagram-muted: #64748b;
+}
+
+.dark {
+  --vp-c-brand-1: #a5b4fc;
+  --vp-c-brand-2: #c7d2fe;
+  --vp-c-brand-3: #4f46e5;
+  --vp-c-brand-soft: rgba(129, 140, 248, 0.18);
+  --vp-code-lang-color: var(--vp-c-text-2);
+
+  --diagram-bg: transparent;
+  --diagram-line: #475569;
+  --diagram-node: rgba(148, 163, 184, 0.08);
+  --diagram-node-border: #64748b;
+  --diagram-accent: #a5b4fc;
+  --diagram-accent-soft: rgba(129, 140, 248, 0.14);
+  --diagram-muted: #94a3b8;
+}
+
+/* ---------------------------------------------------------------- diagrams */
+
+/**
+ * Inline SVG rather than a diagram-as-code plugin: the drawings are few and
+ * hand-tuned, and this keeps the docs build free of an extra toolchain. They
+ * follow the theme through CSS variables instead of baked-in colours.
+ */
+.diagram {
+  margin: 24px 0;
+  padding: 20px 16px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: var(--diagram-bg);
+  overflow-x: auto;
+}
+
+.diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 520px;
+  margin: 0 auto;
+}
+
+.diagram .node {
+  fill: var(--diagram-node);
+  stroke: var(--diagram-node-border);
+  stroke-width: 1.25;
+}
+
+.diagram .node-accent {
+  fill: var(--diagram-accent-soft);
+  stroke: var(--diagram-accent);
+  stroke-width: 1.5;
+}
+
+.diagram .edge {
+  stroke: var(--diagram-line);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.diagram .edge-accent {
+  stroke: var(--diagram-accent);
+  stroke-width: 1.75;
+  fill: none;
+}
+
+.diagram .edge-dashed {
+  stroke-dasharray: 5 4;
+}
+
+/**
+ * Marker contents render in their own context, so they inherit neither the
+ * referencing path's stroke nor its class. Colour them here instead.
+ */
+.diagram marker path {
+  fill: var(--diagram-line);
+  stroke: none;
+}
+
+.diagram marker.accent path {
+  fill: var(--diagram-accent);
+}
+
+.diagram text {
+  fill: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-base);
+  font-size: 13px;
+}
+
+.diagram .label-mono {
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+}
+
+.diagram .label-muted {
+  fill: var(--diagram-muted);
+  font-size: 11.5px;
+}
+
+.diagram .label-title {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.diagram figcaption {
+  margin-top: 12px;
+  color: var(--vp-c-text-2);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ----------------------------------------------------------------- tweaks */
+
+.vp-doc table {
+  display: table;
+  width: 100%;
+}
+
+/**
+ * Custom-block titles default to uppercase, which reads badly for the
+ * sentence-style titles used throughout these pages.
+ */
+.vp-doc .custom-block-title {
+  text-transform: none;
+}
+
+/**
+ * The terminal recording is sized by whatever the tape recorded, so it only lines
+ * up with the diagram above it by luck — VitePress merely caps an image at
+ * max-width, so anything narrower than the content column stops short of the right
+ * edge. Pin it to the column and give it the same rounded frame as the diagram so
+ * the two read as a pair.
+ */
+.vp-doc img[src$='demo.gif'] {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+}

@@ -1,0 +1,66 @@
+package org.eqasim.core.analysis.pt;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.Collection;
+
+import org.matsim.core.utils.io.IOUtils;
+
+public class PublicTransportLegWriter {
+	final private Collection<PublicTransportLegItem> trips;
+	final private String delimiter;
+
+	public PublicTransportLegWriter(Collection<PublicTransportLegItem> trips, String delimiter) {
+		this.trips = trips;
+		this.delimiter = delimiter;
+	}
+
+	public void write(String outputPath) throws IOException {
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputPath);
+
+		writer.write(formatHeader() + "\n");
+		writer.flush();
+
+		for (PublicTransportLegItem trip : trips) {
+			writer.write(formatTrip(trip) + "\n");
+			writer.flush();
+		}
+
+		writer.flush();
+		writer.close();
+	}
+
+	private String formatHeader() {
+		return String.join(delimiter, new String[] { //
+				"person_id", //
+				"person_trip_id", //
+				"leg_index", //
+				"access_stop_id", //
+				"egress_stop_id", //
+				"transit_line_id", //
+				"transit_route_id",
+				"departure_id", //
+				"access_area_id", //
+				"egress_area_id", //
+				"transit_mode", //
+				"boarding_time", //
+		});
+	}
+
+	private String formatTrip(PublicTransportLegItem trip) {
+		return String.join(delimiter, new String[] { //
+				trip.personId.toString(), //
+				String.valueOf(trip.personTripId), //
+				String.valueOf(trip.legIndex), //
+				trip.accessStopId == null ? "" : trip.accessStopId.toString(), //
+				trip.egressStopId == null ? "" : trip.egressStopId.toString(), //
+				trip.transitLineId == null ? "" : trip.transitLineId.toString(), //
+				trip.transitRouteId == null ? "" : trip.transitRouteId.toString(),
+				trip.departureId == null ? "" : trip.departureId.toString(), //
+				trip.accessAreaId == null ? "" : trip.accessAreaId.toString(), //
+				trip.egressAreaId == null ? "" : trip.egressAreaId.toString(), //
+				trip.transitMode == null ? "" : trip.transitMode, //
+				String.valueOf(trip.boardingTime)
+		});
+	}
+}

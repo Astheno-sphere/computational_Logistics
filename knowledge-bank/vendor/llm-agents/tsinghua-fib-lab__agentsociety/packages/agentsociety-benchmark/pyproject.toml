@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentsociety-benchmark"
+version = "0.1.4"
+description = "A tool for benchmark your agent design in different scenarios."
+authors = [
+    { name = "Yuwei Yan", email = "yyan791@connect.hkust-gz.edu.cn" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "agentsociety>=1.5.0rc3",
+    "click>=8.0.0",
+    "requests>=2.25.0",
+    "pyyaml>=6.0",
+    "gitpython>=3.1.0",
+    "pathlib2>=2.3.0",
+    "datasets>=2.18.0",
+    "huggingface-hub>=0.20.0",
+    "tqdm>=4.64.0",
+]
+
+[project.scripts]
+asbench = "agentsociety_benchmark.cli.main:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentsociety_benchmark"]
