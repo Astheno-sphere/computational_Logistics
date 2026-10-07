@@ -1,0 +1,80 @@
+# Notebook-related checks
+
+name: Notebooks
+
+on:
+  # Relevant PRs
+  pull_request:
+    paths:
+    - "**.ipynb"
+  # Allow manual runs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Format all notebooks.
+  nbfmt:
+    name: Notebook format
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      with:
+        fetch-depth: 0  # Get *full* history
+        persist-credentials: false
+    - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
+    - name: Fetch main branch
+      run: git fetch -u origin main:main
+    - name: Check notebook formatting
+      run: |
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          # Only check notebooks modified in this pull request
+          base_commit=$(git merge-base HEAD ${{ github.event.pull_request.base.sha }})
+          readarray -t changed_notebooks < <(git diff --name-only "${base_commit}...HEAD" "*.ipynb")
+        else
+          # Manual run, check everything
+          readarray -t changed_notebooks < <(find . -name '*.ipynb')
+        fi
+        if [[ ${#changed_notebooks[@]} == 0 ]]; then
+          echo "No notebooks modified in this pull request."
+          exit 0
+        else
+          echo "Check formatting with nbfmt:"
+          python3 tools/nbfmt_cli.py --test "${changed_notebooks[@]}"
+        fi
+
+  nblint:
+    name: Notebook lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      with:
+        fetch-depth: 0  # Get *full* history
+        persist-credentials: false
+    - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
+    - name: Fetch main branch
+      run: git fetch -u origin main:main
+
+    # Lint for all notebooks
+    - name: Lint notebooks
+      run: |
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          # Only check notebooks modified in this pull request
+          base_commit=$(git merge-base HEAD ${{ github.event.pull_request.base.sha }})
+          readarray -t changed_notebooks < <(git diff --name-only "${base_commit}...HEAD" "*.ipynb")
+        else
+          # Manual run, check everything
+          readarray -t changed_notebooks < <(find . -name '*.ipynb')
+        fi
+
+        if [[ ${#changed_notebooks[@]} == 0 ]]; then
+          echo "No notebooks modified in this pull request."
+          exit 0
+        else
+          echo "Lint check with nblint:"
+          python3 tools/nblint_cli.py \
+            --repo=google-gemini/cookbook \
+            --branch=main \
+            "${changed_notebooks[@]}"
+        fi

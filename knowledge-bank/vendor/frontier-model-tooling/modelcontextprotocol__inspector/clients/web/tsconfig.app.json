@@ -1,0 +1,85 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2023",
+    "useDefineForClassFields": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "types": ["vite/client", "node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    /* Path aliases. `react` / `react-dom` redirects let core/ source files
+     * (which live above clients/web/node_modules) resolve those bare imports
+     * during `tsc -b`. We point at the @types declaration packages so the
+     * imports type-check; Vite's `dedupe` handles the runtime resolution —
+     * see vite.config.ts.
+     *
+     * Two prefixes, and the difference is ownership rather than style. A
+     * `./node_modules/...` mapping names a package this client declares — the
+     * `@types/*` packages, `vitest`, `yaml`. A `../../node_modules/...` one
+     * names a package declared only in the root manifest (#2195), which is
+     * every runtime dependency `core/` imports. Those must be spelled out:
+     * `chokidar` in particular is still present under `clients/web` as a
+     * transitive copy of Vite's, so a `./node_modules` mapping resolves the
+     * client's copy at compile time while Vitest and the shipped bundle both
+     * resolve the root's. Same version today, and a silent skew tomorrow.
+     *
+     * Paths are relative to this config file (no `baseUrl` — deprecated in
+     * TypeScript 6 / removed in 7).
+     */
+    "paths": {
+      "@inspector/core/*": ["../../core/*"],
+      "react": ["./node_modules/@types/react"],
+      "react-dom": ["./node_modules/@types/react-dom"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
+      "pino": ["../../node_modules/pino"],
+      "hono": ["../../node_modules/hono"],
+      "hono/streaming": [
+        "../../node_modules/hono/dist/types/helper/streaming/index"
+      ],
+      "@hono/node-server": ["../../node_modules/@hono/node-server"],
+      "atomically": ["../../node_modules/atomically"],
+      "chokidar": ["../../node_modules/chokidar"],
+      "@napi-rs/keyring": ["../../node_modules/@napi-rs/keyring"],
+      "zod": ["../../node_modules/zod"],
+      "zod/v4": ["../../node_modules/zod/v4"],
+      "open": ["../../node_modules/open"],
+      "react-syntax-highlighter/dist/esm/prism-light": [
+        "./src/types/react-syntax-highlighter-prism-light"
+      ],
+      "react-syntax-highlighter/dist/esm/styles/prism/tomorrow": [
+        "./src/types/react-syntax-highlighter-style"
+      ],
+      "react-syntax-highlighter/dist/esm/languages/prism/*": [
+        "./src/types/react-syntax-highlighter-grammar"
+      ]
+    }
+  },
+  "include": ["src", "../../core/**/*.ts"],
+  "exclude": [
+    "src/**/*.stories.tsx",
+    "src/**/*.stories.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.test.ts",
+    "src/test/**",
+    "../../core/**/*.test.ts",
+    "../../core/**/*.test.tsx",
+    "../../core/**/__tests__/**"
+  ]
+}

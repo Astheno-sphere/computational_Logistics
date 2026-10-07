@@ -1,0 +1,1681 @@
+/**
+ * OAuth Test Server Infrastructure
+ *
+ * Provides OAuth 2.1 authorization server functionality for test servers.
+ * Integrates with Express apps to add OAuth endpoints and Bearer token verification.
+ */
+
+import crypto from "node:crypto";
+import type { Request, Response } from "express";
+import express from "express";
+import type { ServerConfig } from "./composable-test-server.js";
+import { ExternalAccessTokenValidator } from "./test-server-oauth-jwt.js";
+
+type OAuthRequest = Request & {
+  oauthToken?: string;
+  oauthTokenScopes?: string[];
+};
+
+/**
+ * OAuth configuration from ServerConfig
+ */
+export type OAuthConfig = NonNullable<ServerConfig["oauth"]>;
+
+export function getOAuthMode(
+  config: OAuthConfig,
+): "combined" | "protected-resource" {
+  return config.mode ?? "combined";
+}
+
+const PATH_VALIDATION_BASE = "http://config.invalid";
+
+/**
+ * True for a path that resolves under its own origin — the only shape safe to
+ * use as both an Express route and a `resource_metadata` value.
+ *
+ * A leading-slash check is not enough: `//other-host/doc` and `/\other-host/doc`
+ * both re-point the origin when resolved against the request base (the URL
+ * parser folds a backslash into a slash for special schemes), while Express
+ * still registers the route locally — so the server would advertise a document
+ * it does not serve (Copilot). Comparing the resolved href against the literal
+ * also rejects anything the parser would rewrite (spaces, unescaped
+ * characters), which an Express route would not match either.
+ *
+ * A query or fragment is rejected for the same reason from the other
+ * direction: `href` preserves both, so `/doc?v=1` and `/doc#s` would pass the
+ * comparison above, yet Express matches on the path alone (and treats `?` as a
+ * pattern character) and a fragment is never sent on the wire at all — so the
+ * advertised URL could not reach the registered route (Copilot).
+ */
+export function isOriginRelativePath(value: unknown): value is string {
+  if (typeof value !== "string" || !value.startsWith("/")) {
+    return false;
+  }
+  try {
+    const resolved = new URL(value, PATH_VALIDATION_BASE);
+    return (
+      resolved.origin === PATH_VALIDATION_BASE &&
+      resolved.search === "" &&
+      resolved.hash === "" &&
+      resolved.href === `${PATH_VALIDATION_BASE}${value}`
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The configured metadata path, validated. Throws at server-setup time rather
+ * than serving a route that contradicts the challenge — the JSON-config path
+ * is validated earlier by `load-config`, so this covers a `ServerConfig`
+ * built programmatically.
+ */
+function resourceMetadataPath(config: OAuthConfig): string | undefined {
+  const path = config.resourceMetadataPath;
+  if (path === undefined) {
+    return undefined;
+  }
+  if (!isOriginRelativePath(path)) {
+    throw new Error(
+      `oauth.resourceMetadataPath must be an origin-relative path (got ${JSON.stringify(path)})`,
+    );
+  }
+  return path;
+}
+
+/**
+ * The path the RFC 8414 authorization-server metadata document is served from,
+ * validated the same way `resourceMetadataPath` is. Defaults to the well-known
+ * location; `asMetadataPath` moves it (see the field's doc comment).
+ */
+function asMetadataPath(config: OAuthConfig): string {
+  const path = config.asMetadataPath;
+  if (path === undefined) {
+    return "/.well-known/oauth-authorization-server";
+  }
+  if (!isOriginRelativePath(path)) {
+    throw new Error(
+      `oauth.asMetadataPath must be an origin-relative path (got ${JSON.stringify(path)})`,
+    );
+  }
+  return path;
+}
+
+/**
+ * Where the CIMD client metadata document is served from, validated the same
+ * way the two metadata paths above are — and for a sharper reason than either.
+ * This path is not merely advertised: it becomes the document's own
+ * `client_id`, so a value such as `//other-host/doc` would publish a client id
+ * naming a host this server does not control, and `/doc?version=1` would
+ * publish one that cannot reach the route Express registered (Copilot).
+ */
+function clientMetadataPath(config: OAuthConfig): string {
+  const path = config.clientMetadataPath;
+  if (path === undefined) {
+    return "/client-metadata.json";
+  }
+  if (!isOriginRelativePath(path)) {
+    throw new Error(
+      `oauth.clientMetadataPath must be an origin-relative path (got ${JSON.stringify(path)})`,
+    );
+  }
+  return path;
+}
+
+/**
+ * The `WWW-Authenticate` challenge sent with every 401.
+ *
+ * RFC 9728 §5.1: a resource server advertises where its protected-resource
+ * metadata lives via the `resource_metadata` parameter. Only emitted when the
+ * config moves that document off the well-known path — otherwise the bare
+ * `Bearer` challenge keeps the existing fixtures byte-identical.
+ */
+function bearerChallenge(config: OAuthConfig, req: Request): string {
+  const path = resourceMetadataPath(config);
+  if (!path) {
+    return "Bearer";
+  }
+  const requestBaseUrl = `${req.protocol}://${req.get("host")}`;
+  return `Bearer resource_metadata="${new URL(path, requestBaseUrl).href}"`;
+}
+
+/**
+ * The OAuth endpoints a fixture can be told to stall.
+ *
+ * One name per call that #2319 put an `AbortSignal.timeout` on, plus
+ * `authorize` for completeness. They are named for the *call* rather than the
+ * path because two of them share `/oauth/token` (exchange and refresh are the
+ * same endpoint with a different `grant_type`), and because the path of the
+ * protected-resource document is itself configurable.
+ */
+export const STALLABLE_OAUTH_ENDPOINTS = [
+  "protected-resource-metadata",
+  "as-metadata",
+  "authorize",
+  "token",
+  "revoke",
+  "register",
+] as const;
+
+export type StallableOAuthEndpoint = (typeof STALLABLE_OAUTH_ENDPOINTS)[number];
+
+/**
+ * The largest delay `setTimeout` can actually schedule. Past `2 ** 31 - 1` the
+ * delay overflows a 32-bit signed integer and Node falls back to **1ms**, so an
+ * over-large `stallMs` would produce an *immediate* answer — the opposite of
+ * what the fixture author asked for. Mirrors `MAX_TIMER_DELAY_MS` in
+ * `core/auth/requestTimeout.ts`, which exists for the same reason.
+ */
+export const MAX_STALL_MS = 2_147_483_647;
+
+/**
+ * Render a rejected config value for an error message.
+ *
+ * ⚠️ `JSON.stringify` returns the string `"null"` for `NaN` and `Infinity` — the
+ * two values most likely to reach the `stallMs` check — so an error built with
+ * it names the wrong offending value and sends the reader looking for a `null`
+ * they did not write (Copilot). Strings keep their quotes, which is what makes
+ * `"600"` distinguishable from `600` in the message.
+ */
+function describeValue(value: unknown): string {
+  if (typeof value === "number" && !Number.isFinite(value))
+    return String(value);
+  return JSON.stringify(value) ?? String(value);
+}
+
+export function isStallableOAuthEndpoint(
+  value: unknown,
+): value is StallableOAuthEndpoint {
+  return (STALLABLE_OAUTH_ENDPOINTS as readonly unknown[]).includes(value);
+}
+
+/** How a stallable endpoint is addressed: its path, and the methods it serves. */
+export interface StallTarget {
+  path: string;
+  methods: readonly string[];
+}
+
+/**
+ * Where each stallable endpoint lives, for this config.
+ *
+ * Two of these are configurable, so the map is built per config rather than
+ * hardcoded: the protected-resource document moves with `resourceMetadataPath`
+ * and the AS metadata with `asMetadataPath`. Getting either wrong would make
+ * the stall silently never match, which is the one failure this fixture must
+ * not have — a test would then read as "the timeout did not fire". Every entry
+ * is covered by a real-request test for exactly that reason.
+ *
+ * ⚠️ **The method is part of the identity, not decoration.** Both configurable
+ * paths are caller-supplied, so a config may legitimately point one of them at
+ * a path another endpoint already uses — `asMetadataPath: "/oauth/token"` is
+ * valid. Keyed on path alone, selecting `token` would then also stall the
+ * metadata GET and selecting `as-metadata` would stall the token POST, which
+ * breaks the per-call contract this option exists to provide (Copilot).
+ *
+ * `authorize` serves both GET (the consent page) and POST (the submission), so
+ * it carries both: stalling "the authorize call" means either direction.
+ */
+/**
+ * Does this config actually serve `endpoint`?
+ *
+ * Mirrors the route registration in `setupOAuthRoutes` / `setupMetadataEndpoints`
+ * exactly — the protected-resource document is always served, everything else
+ * on the local AS exists only in `combined` mode, and two routes carry their own
+ * feature flags. Kept adjacent to `stallTargetsFor` so the two stay in step: a
+ * new OAuth route needs an entry in both.
+ */
+export function servesEndpoint(
+  config: OAuthConfig,
+  endpoint: StallableOAuthEndpoint,
+): boolean {
+  const combined = getOAuthMode(config) === "combined";
+  switch (endpoint) {
+    case "protected-resource-metadata":
+      return true;
+    case "as-metadata":
+    case "authorize":
+    case "token":
+      return combined;
+    case "revoke":
+      return combined && config.supportRevocation !== false;
+    case "register":
+      return combined && config.supportDCR === true;
+  }
+}
+
+export function stallTargetsFor(
+  config: OAuthConfig,
+): Record<StallableOAuthEndpoint, StallTarget> {
+  return {
+    "protected-resource-metadata": {
+      path:
+        resourceMetadataPath(config) ?? "/.well-known/oauth-protected-resource",
+      methods: ["GET"],
+    },
+    "as-metadata": { path: asMetadataPath(config), methods: ["GET"] },
+    authorize: { path: "/oauth/authorize", methods: ["GET", "POST"] },
+    token: { path: "/oauth/token", methods: ["POST"] },
+    revoke: { path: "/oauth/revoke", methods: ["POST"] },
+    register: { path: "/oauth/register", methods: ["POST"] },
+  };
+}
+
+/**
+ * How many requests are currently parked in a stall on one server.
+ *
+ * A test waits on this to know a request was actually **accepted and parked**,
+ * instead of sleeping and hoping. That distinction is the whole point of the
+ * teardown test: a fixed sleep that lost the race would stop the server before
+ * the request arrived, the fetch would then reject because the server closed,
+ * and the test would pass without ever exercising `closeAllConnections()` on an
+ * established request (Copilot).
+ *
+ * ⚠️ **Per server, deliberately not a module-level counter.** A module global
+ * was tried first and failed under Vitest, which can load this module more than
+ * once: the middleware incremented one copy while the test polled another, and
+ * the wait timed out with the fixture working perfectly. Hanging the state off
+ * the server instance the test already holds makes module identity irrelevant —
+ * and scopes the count to one fixture, which is what a caller means anyway.
+ */
+export interface StallRegistry {
+  parked: number;
+}
+
+export function createStallRegistry(): StallRegistry {
+  return { parked: 0 };
+}
+
+/**
+ * Accept a request on a configured endpoint and withhold its response.
+ *
+ * ⚠️ **This deliberately calls neither `next()` nor any `res` method.** That is
+ * the whole point: the socket is accepted and established, the client's fetch
+ * is pending, and nothing ever answers — which is the state #2319 describes and
+ * the one a `fetch` stub cannot reproduce. A stub rejects or resolves on the
+ * client side; only a real server holding a real socket exercises the
+ * `AbortSignal.timeout` that #2319 added.
+ *
+ * With `stallMs > 0` it answers late instead of never, by handing control back
+ * to the real route after the delay — so one fixture covers both "slower than
+ * the budget" and "never".
+ *
+ * **Teardown is already safe and this relies on it rather than re-implementing
+ * it.** `TestServerHttp.stop()` calls `httpServer.closeAllConnections?.()`,
+ * which destroys an established socket whether or not a response was ever
+ * written. A withheld response therefore cannot hang a suite at teardown —
+ * `stalls the token endpoint and still stops cleanly` pins that, because it is
+ * the property most likely to be broken by a future change to the stop path.
+ */
+export function createOAuthStallMiddleware(
+  config: OAuthConfig,
+  registry?: StallRegistry,
+): express.RequestHandler | null {
+  // ⚠️ Validate the CONTAINER before its contents. A JSON/YAML config is only
+  // cast, so `stallEndpoints` can arrive as a string, `null`, or an object with
+  // a `length`. A bare `.length === 0` check accepts `""` and `{ length: 0 }`
+  // and silently returns "no stalling configured" — the precise misconfiguration
+  // this startup validation exists to catch — while a non-empty string fails
+  // later with an incidental `.filter is not a function` (Copilot).
+  if (
+    config.stallEndpoints !== undefined &&
+    !Array.isArray(config.stallEndpoints)
+  ) {
+    throw new Error(
+      `oauth.stallEndpoints must be an array (got ${JSON.stringify(config.stallEndpoints)}).`,
+    );
+  }
+  const requested = config.stallEndpoints ?? [];
+  if (requested.length === 0) return null;
+
+  const unknown = requested.filter((e) => !isStallableOAuthEndpoint(e));
+  if (unknown.length > 0) {
+    // Loud, not ignored: a typo would otherwise produce a fixture that answers
+    // normally, and a test asserting a timeout would fail pointing at the
+    // timeout rather than at the config.
+    throw new Error(
+      `Unknown oauth.stallEndpoints entry: ${unknown.map((e) => JSON.stringify(e)).join(", ")}. ` +
+        `Expected one of: ${STALLABLE_OAUTH_ENDPOINTS.join(", ")}.`,
+    );
+  }
+
+  // ⚠️ `stallMs` needs validating for the same reason `stallEndpoints` does, and
+  // more urgently: a JSON/YAML config is only *cast* to its interface, so
+  // anything can arrive here. Unchecked, a negative or non-numeric value makes
+  // `stallMs > 0` false and silently becomes a PERMANENT stall, and a value past
+  // the 32-bit timer range overflows and fires almost immediately — both of
+  // which read as "the timeout behaved strangely" rather than "the config is
+  // wrong" (Copilot).
+  // ⚠️ `?? 0` would turn an explicit `stallMs: null` from a config file into a
+  // valid 0 and skip every check below, silently producing a permanent stall.
+  // Only an OMITTED value gets the default; `null` falls through to the
+  // finite-number check and is rejected (Copilot).
+  const rawStallMs = config.stallMs === undefined ? 0 : config.stallMs;
+  if (
+    typeof rawStallMs !== "number" ||
+    !Number.isFinite(rawStallMs) ||
+    rawStallMs < 0 ||
+    rawStallMs > MAX_STALL_MS
+  ) {
+    throw new Error(
+      `oauth.stallMs must be a finite number between 0 and ${MAX_STALL_MS} (got ${describeValue(config.stallMs)}).`,
+    );
+  }
+
+  // ⚠️ Refuse to stall a route this config does not actually serve. The stall
+  // middleware runs BEFORE Express routing, so it will happily hold a request
+  // for an endpoint that would otherwise 404 — turning a contradictory fixture
+  // (`supportDCR: false` with `stallEndpoints: ["register"]`) into a hanging
+  // registration endpoint rather than a configuration error, and inviting a
+  // timeout test that passes for entirely the wrong reason (Copilot).
+  const unavailable = requested.filter(
+    (endpoint) => !servesEndpoint(config, endpoint),
+  );
+  if (unavailable.length > 0) {
+    throw new Error(
+      `oauth.stallEndpoints names ${unavailable.map((e) => JSON.stringify(e)).join(", ")}, ` +
+        `which this config does not serve (mode=${getOAuthMode(config)}, ` +
+        `supportDCR=${String(config.supportDCR ?? false)}, ` +
+        `supportRevocation=${String(config.supportRevocation !== false)}). ` +
+        "Stalling a route that would otherwise 404 produces a hang that reads as a timeout.",
+    );
+  }
+
+  const targets = stallTargetsFor(config);
+  // `${METHOD} ${path}` rather than a path set — see `stallTargetsFor`.
+  const stalled = new Set(
+    requested.flatMap((endpoint) => {
+      const { path, methods } = targets[endpoint];
+      return methods.map((method) => `${method} ${path}`);
+    }),
+  );
+  const stallMs = rawStallMs;
+
+  return (req: Request, res: Response, next: express.NextFunction) => {
+    // `req.path`, never `req.url`: the latter carries the query string, which
+    // every authorize request has, so matching on it would silently stop
+    // hitting `authorize` while every bare-path endpoint kept working.
+    if (!stalled.has(`${req.method} ${req.path}`)) {
+      next();
+      return;
+    }
+
+    if (registry) registry.parked += 1;
+    // One decrement per request, whichever way it ends: answered late, or the
+    // socket destroyed under it. Without this the counter only ever rises and
+    // a later "wait until parked" would pass instantly on a stale count.
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
+      if (registry) registry.parked -= 1;
+    };
+    res.on("close", release);
+
+    if (stallMs > 0) {
+      const timer = setTimeout(() => {
+        release();
+        next();
+      }, stallMs);
+      // Release the timer if the client gives up first, so a stalled fixture
+      // cannot keep the event loop alive past the test that used it.
+      res.on("close", () => clearTimeout(timer));
+      return;
+    }
+    // Answer never. The socket stays established and idle until the client's
+    // own timeout fires or the server destroys it on stop.
+  };
+}
+
+/**
+ * Set up OAuth routes on an Express application
+ * This adds all OAuth endpoints (authorization, token, metadata, etc.)
+ *
+ * @param app - Express application
+ * @param config - OAuth configuration
+ */
+export function setupOAuthRoutes(
+  app: express.Application,
+  config: OAuthConfig,
+  stallRegistry?: StallRegistry,
+): void {
+  // Ahead of every OAuth route, so a stalled endpoint is withheld before any
+  // handler can answer it — including the metadata documents, which are
+  // registered first.
+  const stall = createOAuthStallMiddleware(config, stallRegistry);
+  if (stall) app.use(stall);
+
+  setupMetadataEndpoints(app, config);
+
+  if (getOAuthMode(config) === "combined") {
+    setupAuthorizationEndpoint(app, config);
+    setupTokenEndpoint(app, config);
+    if (config.supportRevocation !== false) {
+      setupRevocationEndpoint(app, config);
+    }
+    if (config.supportDCR) {
+      setupDCREndpoint(app);
+    }
+  }
+}
+
+/**
+ * Create Bearer token verification middleware
+ * Returns 401 if token is missing or invalid when requireAuth is true
+ *
+ * @param config - OAuth configuration
+ * @returns Express middleware function
+ */
+export function createBearerTokenMiddleware(
+  config: OAuthConfig,
+): express.RequestHandler {
+  const mode = getOAuthMode(config);
+  const externalValidator =
+    mode === "protected-resource"
+      ? new ExternalAccessTokenValidator(config)
+      : undefined;
+
+  return async (req: Request, res: Response, next: express.NextFunction) => {
+    if (!config.requireAuth) {
+      return next();
+    }
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      // Return 401 - the SDK's transport should detect this and throw an error
+      // For streamable-http, the SDK checks response status and throws StreamableHTTPError with code 401
+      res.status(401);
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("WWW-Authenticate", bearerChallenge(config, req));
+      // Return a JSON-RPC error response format that the SDK will recognize
+      res.json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32603,
+          message: "Unauthorized: Missing or invalid Bearer token (401)",
+        },
+        id: null,
+      });
+      return;
+    }
+
+    const token = authHeader.substring(7); // Remove "Bearer " prefix
+
+    let valid: boolean;
+    let grantedScopes: string[] = [];
+    if (mode === "protected-resource") {
+      try {
+        const validated =
+          await externalValidator!.validateAccessTokenWithScopes(token);
+        valid = validated.valid;
+        grantedScopes = validated.scopes;
+      } catch {
+        valid = false;
+      }
+    } else {
+      valid = isValidToken(token);
+      if (valid) {
+        grantedScopes = getAccessTokenScopes(token);
+      }
+    }
+
+    if (!valid) {
+      // Return 401 - the SDK's transport should detect this and throw an error
+      res.status(401);
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("WWW-Authenticate", bearerChallenge(config, req));
+      // Return a JSON-RPC error response format that the SDK will recognize
+      res.json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32603,
+          message: "Unauthorized: Invalid or expired token (401)",
+        },
+        id: null,
+      });
+      return;
+    }
+
+    // Attach token info to request for use in handlers
+    const oauthReq = req as OAuthRequest;
+    oauthReq.oauthToken = token;
+    oauthReq.oauthTokenScopes = grantedScopes;
+    next();
+  };
+}
+
+/**
+ * Set up OAuth metadata endpoints (RFC 8414)
+ */
+function setupMetadataEndpoints(
+  app: express.Application,
+  config: OAuthConfig,
+): void {
+  const scopes = config.scopesSupported || ["mcp"];
+  const mode = getOAuthMode(config);
+
+  if (mode === "combined") {
+    // OAuth Authorization Server Metadata (local AS)
+    app.get(asMetadataPath(config), (req: Request, res: Response) => {
+      const requestBaseUrl = `${req.protocol}://${req.get("host")}`;
+      const actualIssuerUrl = config.issuerUrl ?? new URL(requestBaseUrl);
+      const metadata = {
+        // RFC 8414 §3.3: the issuer MUST be identical to the base URL the
+        // well-known path was appended to — i.e. no trailing slash. SDK v2's
+        // client enforces this exactly (IssuerMismatchError otherwise).
+        issuer: actualIssuerUrl.href.replace(/\/$/, ""),
+        authorization_endpoint: new URL("/oauth/authorize", actualIssuerUrl)
+          .href,
+        token_endpoint: new URL("/oauth/token", actualIssuerUrl).href,
+        scopes_supported: scopes,
+        response_types_supported: ["code"],
+        grant_types_supported: ["authorization_code", "refresh_token"],
+        code_challenge_methods_supported: ["S256"],
+        token_endpoint_auth_methods_supported: ["client_secret_basic", "none"],
+        // RFC 9207 / SEP-2468: advertise iss on authorization responses so
+        // clients must validate (and our e2e can exercise reject paths).
+        authorization_response_iss_parameter_supported: true,
+        ...(config.supportRevocation !== false && {
+          // RFC 7009 (#2144). Advertised by default so the in-repo servers
+          // exercise the Inspector's revocation leg; set
+          // `oauth.supportRevocation: false` to reproduce an authorization
+          // server that offers none, where the Inspector must do nothing.
+          revocation_endpoint: new URL("/oauth/revoke", actualIssuerUrl).href,
+          revocation_endpoint_auth_methods_supported: [
+            "client_secret_basic",
+            "none",
+          ],
+        }),
+        ...(config.supportDCR && {
+          registration_endpoint: new URL("/oauth/register", actualIssuerUrl)
+            .href,
+        }),
+        ...(config.supportCIMD && {
+          client_id_metadata_document_supported: true,
+        }),
+      };
+
+      res.json(metadata);
+    });
+  }
+
+  // CIMD client metadata document (SEP-991). The `client_id` in a CIMD flow is
+  // a URL the authorization server dereferences, so a fixture that advertises
+  // `client_id_metadata_document_supported` without hosting a document
+  // anywhere is only half a fixture — it needs a second host to be usable at
+  // all. Serving it here makes a CIMD run self-contained.
+  //
+  // Gated on `supportCIMD` as well as on the document's presence: advertising
+  // a client this server would then refuse to honour is worse than serving
+  // nothing.
+  if (config.supportCIMD && config.clientMetadata) {
+    const doc = config.clientMetadata;
+    const metadataPath = clientMetadataPath(config);
+    app.get(metadataPath, (req: Request, res: Response) => {
+      // Derived from the request rather than from `issuerUrl`, so the
+      // document's own `client_id` always equals the URL it was fetched from
+      // — which is what CIMD requires, and what stays true if the server
+      // walked to another port on EADDRINUSE.
+      //
+      // `originalUrl` rather than the registered route, so a client id that
+      // carries a query string (`/client-metadata.json?profile=a`) still gets
+      // a document whose `client_id` is byte-identical to the URL that was
+      // fetched. Answering with the bare route instead would hand back a
+      // document that fails the very equality CIMD turns on (Copilot).
+      const requestBaseUrl = `${req.protocol}://${req.get("host")}`;
+      res.json({
+        client_id: new URL(req.originalUrl, requestBaseUrl).href,
+        client_name: doc.clientName ?? "MCP Inspector (CIMD test fixture)",
+        redirect_uris: doc.redirectUris,
+        // CIMD clients are public and authenticate with nothing; the server's
+        // own CIMD branch assumes exactly this (no client_secret is issued).
+        token_endpoint_auth_method: "none",
+        grant_types: ["authorization_code", "refresh_token"],
+        response_types: ["code"],
+        ...(doc.scope ? { scope: doc.scope } : {}),
+      });
+    });
+  }
+
+  // OAuth Protected Resource Metadata. `resourceMetadataPath` moves the
+  // document off the well-known path entirely (rather than serving both), so
+  // a client that ignores the advertised `resource_metadata` URL gets a 404
+  // — see the field's doc comment.
+  app.get(
+    resourceMetadataPath(config) ?? "/.well-known/oauth-protected-resource",
+    (req: Request, res: Response) => {
+      const requestBaseUrl = `${req.protocol}://${req.get("host")}`;
+      const resourceUrl = config.resource ?? new URL("/", requestBaseUrl).href;
+      const localAsUrl = (
+        config.issuerUrl ?? new URL(requestBaseUrl)
+      ).href.replace(/\/$/, "");
+      const authorizationServers =
+        mode === "protected-resource"
+          ? (config.authorizationServers ?? [])
+          : [localAsUrl];
+      const metadata = {
+        resource: resourceUrl,
+        authorization_servers: authorizationServers.map((url) =>
+          url.replace(/\/$/, ""),
+        ),
+        scopes_supported: scopes,
+      };
+
+      res.json(metadata);
+    },
+  );
+}
+
+/**
+ * Set up OAuth authorization endpoint.
+ * Shows a simple consent page so users know they reached the test authorization server.
+ */
+function setupAuthorizationEndpoint(
+  app: express.Application,
+  config: OAuthConfig,
+): void {
+  app.get("/oauth/authorize", async (req: Request, res: Response) => {
+    const parsed = await parseAuthorizationRequest(req.query, config);
+    if (!parsed.ok) {
+      res.status(parsed.status).json(parsed.body);
+      return;
+    }
+
+    res.type("html").send(renderOAuthConsentPage(parsed.value));
+  });
+
+  app.post(
+    "/oauth/authorize",
+    express.urlencoded({ extended: true }),
+    async (req: Request, res: Response) => {
+      const parsed = await parseAuthorizationRequest(req.body, config);
+      if (!parsed.ok) {
+        res.status(parsed.status).json(parsed.body);
+        return;
+      }
+
+      const requestBaseUrl = `${req.protocol}://${req.get("host")}`;
+      const issuer = (config.issuerUrl ?? new URL(requestBaseUrl)).href.replace(
+        /\/$/,
+        "",
+      );
+      completeAuthorizationRedirect(res, parsed.value, issuer);
+    },
+  );
+}
+
+interface AuthorizationRequestParams {
+  clientId: string;
+  redirectUri: string;
+  responseType: string;
+  scope?: string;
+  state?: string;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
+}
+
+type AuthorizationRequestResult =
+  | { ok: true; value: AuthorizationRequestParams }
+  | { ok: false; status: number; body: Record<string, unknown> };
+
+async function parseAuthorizationRequest(
+  input: Record<string, unknown>,
+  config: OAuthConfig,
+): Promise<AuthorizationRequestResult> {
+  const client_id = input.client_id;
+  const redirect_uri = input.redirect_uri;
+  const response_type = input.response_type;
+  const scope = input.scope;
+  const state = input.state;
+  const code_challenge = input.code_challenge;
+  const code_challenge_method = input.code_challenge_method;
+
+  if (
+    typeof client_id !== "string" ||
+    typeof redirect_uri !== "string" ||
+    typeof response_type !== "string"
+  ) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        error: "invalid_request",
+        error_description: "Missing required parameters",
+      },
+    };
+  }
+
+  if (response_type !== "code") {
+    return {
+      ok: false,
+      status: 400,
+      body: { error: "unsupported_response_type" },
+    };
+  }
+
+  const client = await findClient(client_id, config);
+  if (!client) {
+    return { ok: false, status: 400, body: { error: "invalid_client" } };
+  }
+
+  if (client.redirectUris && !client.redirectUris.includes(redirect_uri)) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        error: "invalid_request",
+        error_description: "Invalid redirect_uri",
+      },
+    };
+  }
+
+  if (
+    typeof code_challenge_method === "string" &&
+    code_challenge_method !== "S256"
+  ) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        error: "invalid_request",
+        error_description: "Unsupported code_challenge_method",
+      },
+    };
+  }
+
+  return {
+    ok: true,
+    value: {
+      clientId: client_id,
+      redirectUri: redirect_uri,
+      responseType: response_type,
+      ...(typeof scope === "string" ? { scope } : {}),
+      ...(typeof state === "string" ? { state } : {}),
+      ...(typeof code_challenge === "string"
+        ? { codeChallenge: code_challenge }
+        : {}),
+      ...(typeof code_challenge_method === "string"
+        ? { codeChallengeMethod: code_challenge_method }
+        : {}),
+    },
+  };
+}
+
+function completeAuthorizationRedirect(
+  res: Response,
+  params: AuthorizationRequestParams,
+  issuer: string,
+): void {
+  const authCode = generateAuthorizationCode();
+  storeAuthorizationCode(authCode, {
+    clientId: params.clientId,
+    redirectUri: params.redirectUri,
+    codeChallenge: params.codeChallenge,
+    scope: params.scope,
+  });
+
+  const redirectUrl = new URL(params.redirectUri);
+  redirectUrl.searchParams.set("code", authCode);
+  if (params.state) {
+    redirectUrl.searchParams.set("state", params.state);
+  }
+  // RFC 9207: iss must match metadata `issuer` (no trailing slash).
+  redirectUrl.searchParams.set("iss", issuer);
+  res.redirect(redirectUrl.href);
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderOAuthConsentPage(params: AuthorizationRequestParams): string {
+  const scopeList = parseScopeString(params.scope);
+  const scopeItems =
+    scopeList.length > 0
+      ? scopeList
+          .map((scope) => `<li><code>${escapeHtml(scope)}</code></li>`)
+          .join("")
+      : "<li><em>No scopes requested</em></li>";
+
+  const hiddenFields = [
+    ["client_id", params.clientId],
+    ["redirect_uri", params.redirectUri],
+    ["response_type", params.responseType],
+    ...(params.scope ? [["scope", params.scope] as const] : []),
+    ...(params.state ? [["state", params.state] as const] : []),
+    ...(params.codeChallenge
+      ? [["code_challenge", params.codeChallenge] as const]
+      : []),
+    ...(params.codeChallengeMethod
+      ? [["code_challenge_method", params.codeChallengeMethod] as const]
+      : []),
+  ]
+    .map(
+      ([name, value]) =>
+        `<input type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(value)}" />`,
+    )
+    .join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Authorize — MCP test server</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 32rem; line-height: 1.5; }
+    h1 { font-size: 1.25rem; }
+    code { background: #f4f4f5; padding: 0.1rem 0.25rem; border-radius: 0.25rem; }
+    ul { padding-left: 1.25rem; }
+    button { font: inherit; padding: 0.5rem 1rem; margin-right: 0.5rem; cursor: pointer; }
+    .primary { background: #228be6; color: white; border: 1px solid #1c7ed6; border-radius: 0.25rem; }
+    .muted { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Authorize MCP Inspector</h1>
+  <p class="muted">You were redirected to the <strong>local composable test authorization server</strong>.</p>
+  <p>Client: <code>${escapeHtml(params.clientId)}</code></p>
+  <p>Requested scopes:</p>
+  <ul>${scopeItems}</ul>
+  <form method="post" action="/oauth/authorize">
+    ${hiddenFields}
+    <button type="submit" class="primary">Authorize</button>
+  </form>
+</body>
+</html>`;
+}
+
+/**
+ * Set up OAuth token endpoint
+ */
+function setupTokenEndpoint(
+  app: express.Application,
+  config: OAuthConfig,
+): void {
+  app.post(
+    "/oauth/token",
+    express.urlencoded({ extended: true }),
+    async (req: Request, res: Response) => {
+      const {
+        grant_type,
+        code,
+        redirect_uri,
+        client_id: bodyClientId,
+        code_verifier,
+        refresh_token,
+      } = req.body;
+
+      // Extract client_id from either body (client_secret_post) or Authorization header (client_secret_basic)
+      let client_id = bodyClientId;
+      let client_secret: string | undefined;
+
+      // Check Authorization header for client_secret_basic
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Basic ")) {
+        const credentials = Buffer.from(authHeader.slice(6), "base64").toString(
+          "utf-8",
+        );
+        const [id, secret] = credentials.split(":", 2);
+        client_id = id;
+        client_secret = secret;
+      }
+
+      if (grant_type === "authorization_code") {
+        // Authorization code flow
+        if (!code || !redirect_uri || !client_id) {
+          res.status(400).json({
+            error: "invalid_request",
+            error_description: "Missing required parameters",
+          });
+          return;
+        }
+
+        const authCodeData = getAuthorizationCode(code);
+        if (!authCodeData) {
+          res.status(400).json({
+            error: "invalid_grant",
+            error_description: "Invalid or expired authorization code",
+          });
+          return;
+        }
+
+        // Verify client
+        const client = await findClient(client_id, config);
+        if (!client || client.clientId !== authCodeData.clientId) {
+          res.status(400).json({ error: "invalid_client" });
+          return;
+        }
+
+        // Verify client secret if provided (for client_secret_basic)
+        if (
+          client_secret &&
+          client.clientSecret &&
+          client.clientSecret !== client_secret
+        ) {
+          res.status(400).json({ error: "invalid_client" });
+          return;
+        }
+
+        // Verify redirect_uri
+        if (authCodeData.redirectUri !== redirect_uri) {
+          res.status(400).json({
+            error: "invalid_grant",
+            error_description: "Redirect URI mismatch",
+          });
+          return;
+        }
+
+        // Verify PKCE code verifier
+        if (authCodeData.codeChallenge) {
+          if (!code_verifier) {
+            res.status(400).json({
+              error: "invalid_request",
+              error_description: "code_verifier required",
+            });
+            return;
+          }
+          // Proper PKCE verification: code_challenge should be base64url(SHA256(code_verifier))
+          const hash = crypto
+            .createHash("sha256")
+            .update(code_verifier)
+            .digest();
+          // Convert to base64url (replace + with -, / with _, remove padding)
+          const expectedChallenge = hash
+            .toString("base64")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=/g, "");
+          if (authCodeData.codeChallenge !== expectedChallenge) {
+            res.status(400).json({
+              error: "invalid_grant",
+              error_description: "Invalid code_verifier",
+            });
+            return;
+          }
+        }
+
+        // Generate access token
+        const tokenScope =
+          authCodeData.scope || config.scopesSupported?.[0] || "mcp";
+        const accessToken = generateAccessToken(tokenScope, client_id);
+        const tokenExpiration = config.tokenExpirationSeconds || 3600;
+
+        const response: {
+          access_token: string;
+          token_type: string;
+          expires_in: number;
+          scope: string;
+          refresh_token?: string;
+        } = {
+          access_token: accessToken,
+          token_type: "Bearer",
+          expires_in: tokenExpiration,
+          scope: tokenScope,
+        };
+
+        // Add refresh token if supported
+        if (config.supportRefreshTokens !== false) {
+          const refreshToken = generateRefreshToken();
+          response.refresh_token = refreshToken;
+          storeRefreshToken(refreshToken, {
+            clientId: client_id,
+            scope: authCodeData.scope,
+            accessTokens: new Set([accessToken]),
+          });
+        }
+
+        res.json(response);
+      } else if (grant_type === "refresh_token") {
+        // Refresh token flow
+        if (!refresh_token || !client_id) {
+          res.status(400).json({ error: "invalid_request" });
+          return;
+        }
+
+        const refreshTokenData = getRefreshToken(refresh_token);
+        if (!refreshTokenData || refreshTokenData.clientId !== client_id) {
+          res.status(400).json({ error: "invalid_grant" });
+          return;
+        }
+
+        const tokenScope =
+          refreshTokenData.scope || config.scopesSupported?.[0] || "mcp";
+        const accessToken = generateAccessToken(tokenScope, client_id);
+        // Keep the grant linkage current so a later revocation of this refresh
+        // token also kills the access token it just minted.
+        refreshTokenData.accessTokens.add(accessToken);
+        const tokenExpiration = config.tokenExpirationSeconds || 3600;
+
+        res.json({
+          access_token: accessToken,
+          token_type: "Bearer",
+          expires_in: tokenExpiration,
+          scope: tokenScope,
+        });
+      } else {
+        res.status(400).json({ error: "unsupported_grant_type" });
+      }
+    },
+  );
+}
+
+/**
+ * RFC 7009 token revocation (#2144).
+ *
+ * Deliberately faithful on the two points the Inspector depends on, both of
+ * which are easy to get wrong in a fixture:
+ *
+ * - **§2.2 — an unknown token is a success.** A client revoking a token the
+ *   server has already expired must not be told it failed, so the only 400 here
+ *   is a structurally invalid request (no `token` at all).
+ * - **§2.1 — revoking a refresh token also invalidates its access tokens.**
+ *   That is why the Inspector sends one request naming the refresh token, and a
+ *   fixture that ignored the linkage would let a regression through silently.
+ *
+ * Client authentication is **enforced**, not merely accepted. RFC 7009 §2.1
+ * requires it of a confidential client, and a fixture that skipped the check
+ * would answer 200 to a request carrying no `Authorization` header at all — at
+ * which point the end-to-end test claiming to prove the Inspector authenticates
+ * correctly proves nothing. Both RFC 6749 §2.3.1 forms are accepted (Basic and
+ * the request body), as is a public client identifying itself by `client_id`.
+ */
+function setupRevocationEndpoint(
+  app: express.Application,
+  config: OAuthConfig,
+): void {
+  app.post(
+    "/oauth/revoke",
+    express.urlencoded({ extended: true }),
+    async (req: Request, res: Response) => {
+      const token: unknown = req.body?.token;
+      if (typeof token !== "string" || token === "") {
+        res.status(400).json({ error: "invalid_request" });
+        return;
+      }
+
+      const clientId = await authenticateRevocationClient(req, config);
+      if (clientId === null) {
+        res
+          .status(401)
+          .set("WWW-Authenticate", 'Basic realm="revoke"')
+          .json({ error: "invalid_client" });
+        return;
+      }
+
+      // §2.1: only the client the token was issued to may revoke it. A token
+      // belonging to someone else is left alone — and still answered 200, per
+      // §2.2, since the response must not tell one client whether another's
+      // token exists.
+      const refreshTokenData = refreshTokens.get(token);
+      if (refreshTokenData) {
+        if (refreshTokenData.clientId === clientId) {
+          for (const accessToken of refreshTokenData.accessTokens) {
+            forgetAccessToken(accessToken);
+          }
+          refreshTokens.delete(token);
+        }
+      } else if (accessTokenClients.get(token) === clientId) {
+        forgetAccessToken(token);
+      }
+
+      // §2.2: 200 whether or not the token was known to us.
+      res.status(200).end();
+    },
+  );
+}
+
+/** Drop an access token and everything recorded about it. */
+function forgetAccessToken(token: string): void {
+  accessTokens.delete(token);
+  accessTokenScopes.delete(token);
+  accessTokenClients.delete(token);
+}
+
+/**
+ * Authenticate the caller of `/oauth/revoke` (RFC 7009 §2.1) and return the
+ * `client_id` it authenticated as, or `null` when it did not authenticate.
+ *
+ * Credentials may arrive either way RFC 6749 §2.3.1 allows — an `Authorization:
+ * Basic` header or `client_id`/`client_secret` in the form body — because the
+ * Inspector picks between them from the metadata, and a fixture that only read
+ * one would silently pass a request whose credentials went to the other place.
+ *
+ * A request naming no client at all is rejected: the Inspector always sends at
+ * least `client_id` once it holds any client information, so an unidentified
+ * request means it lost track of its credentials.
+ */
+async function authenticateRevocationClient(
+  req: Request,
+  config: OAuthConfig,
+): Promise<string | null> {
+  let clientId: string | undefined;
+  let clientSecret: string | undefined;
+
+  const authorization = req.get("authorization");
+  if (authorization?.startsWith("Basic ")) {
+    const decoded = Buffer.from(
+      authorization.slice("Basic ".length),
+      "base64",
+    ).toString("utf8");
+    const separator = decoded.indexOf(":");
+    if (separator === -1) return null;
+    // RFC 6749 §2.3.1: each half is form-urlencoded before the colon, so the
+    // server decodes each half after splitting on it. Decoding is what makes a
+    // credential containing a reserved character (`:` in the id, `%` or `/` in
+    // the secret) survive the round trip.
+    //
+    // A malformed escape makes `decodeURIComponent` throw, which Express would
+    // turn into a 500 — so a bad credential would be reported as a server
+    // fault rather than as the `invalid_client` 401 this endpoint means.
+    try {
+      clientId = formUrlDecode(decoded.slice(0, separator));
+      clientSecret = formUrlDecode(decoded.slice(separator + 1));
+    } catch {
+      return null;
+    }
+  } else {
+    const bodyId: unknown = req.body?.client_id;
+    const bodySecret: unknown = req.body?.client_secret;
+    if (typeof bodyId === "string") clientId = bodyId;
+    if (typeof bodySecret === "string") clientSecret = bodySecret;
+  }
+
+  if (!clientId) return null;
+  const client = await findClient(clientId, config);
+  if (!client) return null;
+  // A client registered with a secret must present it; a public one must not be
+  // asked for one it never had.
+  const ok =
+    client.clientSecret === undefined || clientSecret === client.clientSecret;
+  return ok ? clientId : null;
+}
+
+/**
+ * Decode one half of a Basic credential the way a compliant authorization
+ * server does — the `application/x-www-form-urlencoded` algorithm RFC 6749
+ * §2.3.1 names, not `decodeURIComponent`.
+ *
+ * The distinction is the whole point of this helper, and #2222 is what it cost
+ * to learn: this fixture used to decode with `decodeURIComponent`, the exact
+ * inverse of the encoder it was testing. The round trip then succeeded for
+ * **every** input — so no test here could have failed on an encoding mistake,
+ * and the suite's apparent coverage of client authentication was really a
+ * statement that the encoder is self-consistent. (The encoder was in fact
+ * fine; that was established by reasoning and a sweep over the code-point
+ * space, not by anything this fixture asserted, which is the gap being
+ * closed.)
+ *
+ * A form-urldecoder reads a bare `+` as a space, so that substitution happens
+ * **before** percent-decoding; doing it after would turn a legitimate escaped
+ * `%2B` into a space too. `%20` still decodes to a space, which is why the
+ * Inspector's `encodeURIComponent` output — which escapes `+` and spaces both,
+ * and never emits a bare `+` — round-trips through this decoder unchanged.
+ *
+ * `decodeURIComponent` remains the right primitive for the percent half, and it
+ * still throws on a malformed escape — which the caller catches, keeping a bad
+ * credential a 401 rather than an Express 500.
+ */
+function formUrlDecode(value: string): string {
+  return decodeURIComponent(value.replace(/\+/g, "%20"));
+}
+
+/**
+ * Set up Dynamic Client Registration endpoint
+ */
+function setupDCREndpoint(app: express.Application): void {
+  app.post("/oauth/register", express.json(), (req: Request, res: Response) => {
+    const { redirect_uris, client_name, scope } = req.body;
+
+    if (
+      !redirect_uris ||
+      !Array.isArray(redirect_uris) ||
+      redirect_uris.length === 0
+    ) {
+      res.status(400).json({ error: "invalid_client_metadata" });
+      return;
+    }
+
+    dcrRequests.push({ redirect_uris: [...redirect_uris] });
+
+    // Generate client ID and secret
+    const clientId = generateClientId();
+    const clientSecret = generateClientSecret();
+
+    // Store registered client
+    registerClient(clientId, {
+      clientSecret,
+      redirectUris: redirect_uris,
+      clientName: client_name,
+      scope,
+    });
+
+    res.status(201).json({
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uris,
+      ...(client_name && { client_name }),
+      ...(scope && { scope }),
+    });
+  });
+}
+
+// In-memory storage for test server (simplified - not production-ready)
+interface AuthorizationCodeData {
+  clientId: string;
+  redirectUri: string;
+  codeChallenge?: string;
+  scope?: string;
+  expiresAt: number;
+}
+
+interface RefreshTokenData {
+  clientId: string;
+  scope?: string;
+  /**
+   * Access tokens minted under the same grant. RFC 7009 §2.1 says an
+   * authorization server asked to revoke a refresh token SHOULD also invalidate
+   * the access tokens issued from it, and the Inspector relies on exactly that
+   * — it sends one request naming the refresh token and expects both halves to
+   * die. A fixture that dropped only the refresh token would let a client that
+   * leaves live access tokens behind pass. (#2144)
+   */
+  accessTokens: Set<string>;
+}
+
+interface RegisteredClient {
+  clientSecret?: string;
+  redirectUris: string[];
+  clientName?: string;
+  scope?: string;
+}
+
+const authorizationCodes = new Map<string, AuthorizationCodeData>();
+const accessTokens = new Set<string>();
+/** Granted OAuth scope string per access token (space-separated). */
+const accessTokenScopes = new Map<string, string>();
+/**
+ * Owning `client_id` per access token. RFC 7009 §2.1 requires an authorization
+ * server to verify that a token being revoked was issued to the requesting
+ * client, and without this the fixture had no way to tell — so any registered
+ * client could revoke another's access token. (#2144)
+ */
+const accessTokenClients = new Map<string, string>();
+const refreshTokens = new Map<string, RefreshTokenData>();
+const registeredClients = new Map<string, RegisteredClient>();
+
+/** Recorded DCR request bodies (redirect_uris) for tests that verify both URLs are registered. */
+const dcrRequests: Array<{ redirect_uris: string[] }> = [];
+
+/**
+ * Check if a string is a valid URL
+ */
+function isUrl(str: string): boolean {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch client metadata document from URL (for CIMD)
+ */
+async function fetchClientMetadata(metadataUrl: string): Promise<{
+  redirect_uris: string[];
+  token_endpoint_auth_method?: string;
+  grant_types?: string[];
+  response_types?: string[];
+  client_name?: string;
+  client_uri?: string;
+  scope?: string;
+} | null> {
+  try {
+    const response = await fetch(metadataUrl);
+    if (!response.ok) {
+      return null;
+    }
+    const metadata = await response.json();
+    return metadata;
+  } catch {
+    return null;
+  }
+}
+
+async function findClient(
+  clientId: string,
+  config: OAuthConfig,
+): Promise<{
+  clientId: string;
+  clientSecret?: string;
+  redirectUris?: string[];
+} | null> {
+  // Check static clients first
+  if (config.staticClients) {
+    const staticClient = config.staticClients.find(
+      (c) => c.clientId === clientId,
+    );
+    if (staticClient) {
+      return {
+        clientId: staticClient.clientId,
+        clientSecret: staticClient.clientSecret,
+        redirectUris: staticClient.redirectUris,
+      };
+    }
+  }
+
+  // Check registered clients (DCR)
+  if (registeredClients.has(clientId)) {
+    const client = registeredClients.get(clientId)!;
+    return {
+      clientId,
+      clientSecret: client.clientSecret,
+      redirectUris: client.redirectUris,
+    };
+  }
+
+  // Check CIMD: if client_id is a URL and CIMD is supported, fetch metadata
+  if (config.supportCIMD && isUrl(clientId)) {
+    const metadata = await fetchClientMetadata(clientId);
+    if (
+      metadata &&
+      metadata.redirect_uris &&
+      Array.isArray(metadata.redirect_uris)
+    ) {
+      // For CIMD, the client_id is the URL itself, and there's no client_secret
+      // (CIMD uses token_endpoint_auth_method: "none" typically)
+      return {
+        clientId, // The URL is the client_id
+        clientSecret: undefined, // CIMD typically doesn't use secrets
+        redirectUris: metadata.redirect_uris,
+      };
+    }
+  }
+
+  return null;
+}
+
+function generateAuthorizationCode(): string {
+  return `test_auth_code_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+}
+
+function storeAuthorizationCode(
+  code: string,
+  data: Omit<AuthorizationCodeData, "expiresAt">,
+): void {
+  authorizationCodes.set(code, {
+    ...data,
+    expiresAt: Date.now() + 60000, // 1 minute expiration
+  });
+}
+
+function getAuthorizationCode(code: string): AuthorizationCodeData | null {
+  const data = authorizationCodes.get(code);
+  if (!data) {
+    return null;
+  }
+
+  // Check expiration
+  if (Date.now() > data.expiresAt) {
+    authorizationCodes.delete(code);
+    return null;
+  }
+
+  // Delete after use (authorization codes are single-use)
+  authorizationCodes.delete(code);
+  return data;
+}
+
+function generateAccessToken(scope?: string, clientId?: string): string {
+  const token = `test_access_token_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+  accessTokens.add(token);
+  accessTokenScopes.set(token, scope?.trim() || "mcp");
+  if (clientId !== undefined) accessTokenClients.set(token, clientId);
+  return token;
+}
+
+function generateRefreshToken(): string {
+  return `test_refresh_token_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+}
+
+function storeRefreshToken(token: string, data: RefreshTokenData): void {
+  refreshTokens.set(token, data);
+}
+
+function getRefreshToken(token: string): RefreshTokenData | null {
+  return refreshTokens.get(token) || null;
+}
+
+function generateClientId(): string {
+  return `test_client_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+}
+
+function generateClientSecret(): string {
+  return `test_secret_${Math.random().toString(36).substring(2, 15)}`;
+}
+
+function registerClient(clientId: string, client: RegisteredClient): void {
+  registeredClients.set(clientId, client);
+}
+
+function isValidToken(token: string): boolean {
+  // Simplified token validation for test server
+  // In production, verify JWT signature, expiration, etc.
+  return accessTokens.has(token);
+}
+
+function parseScopeString(scope: string | undefined): string[] {
+  if (!scope?.trim()) {
+    return [];
+  }
+  return scope.trim().split(/\s+/).filter(Boolean);
+}
+
+/** Test helper: mint an access token with the given granted scopes. */
+export function mintTestAccessToken(scope: string): string {
+  return generateAccessToken(scope);
+}
+
+/** Granted scopes for a test-server access token (empty when unknown). */
+export function getAccessTokenScopes(token: string): string[] {
+  return parseScopeString(accessTokenScopes.get(token));
+}
+
+export interface ScopeRequirementRegistry {
+  tools: Map<string, string[]>;
+  resources: Map<string, string[]>;
+  prompts: Map<string, string[]>;
+  resourceTemplates: Map<string, string[]>;
+}
+
+function resourceUriMatchesTemplate(uri: string, uriTemplate: string): boolean {
+  const brace = uriTemplate.indexOf("{");
+  const prefix = brace >= 0 ? uriTemplate.slice(0, brace) : uriTemplate;
+  return uri.startsWith(prefix);
+}
+
+/** Build lookup tables from merged ServerConfig capability definitions. */
+export function buildScopeRequirementRegistry(
+  config: ServerConfig,
+): ScopeRequirementRegistry {
+  const registry: ScopeRequirementRegistry = {
+    tools: new Map(),
+    resources: new Map(),
+    prompts: new Map(),
+    resourceTemplates: new Map(),
+  };
+
+  for (const tool of config.tools ?? []) {
+    if (tool.requiredScopes?.length) {
+      registry.tools.set(tool.name, tool.requiredScopes);
+    }
+  }
+  for (const resource of config.resources ?? []) {
+    if (resource.requiredScopes?.length) {
+      registry.resources.set(resource.uri, resource.requiredScopes);
+    }
+  }
+  for (const prompt of config.prompts ?? []) {
+    if (prompt.requiredScopes?.length) {
+      registry.prompts.set(prompt.name, prompt.requiredScopes);
+    }
+  }
+  for (const template of config.resourceTemplates ?? []) {
+    if (template.requiredScopes?.length) {
+      registry.resourceTemplates.set(
+        template.uriTemplate,
+        template.requiredScopes,
+      );
+    }
+  }
+
+  return registry;
+}
+
+export function scopeRequirementRegistryHasEntries(
+  registry: ScopeRequirementRegistry,
+): boolean {
+  return (
+    registry.tools.size > 0 ||
+    registry.resources.size > 0 ||
+    registry.prompts.size > 0 ||
+    registry.resourceTemplates.size > 0
+  );
+}
+
+function parseMcpOperation(body: unknown): {
+  method?: string;
+  target?: string;
+} {
+  if (!body || typeof body !== "object") {
+    return {};
+  }
+  const rpc = body as Record<string, unknown>;
+  const method = typeof rpc.method === "string" ? rpc.method : undefined;
+  const params =
+    rpc.params && typeof rpc.params === "object"
+      ? (rpc.params as Record<string, unknown>)
+      : undefined;
+
+  if (method === "tools/call" && typeof params?.name === "string") {
+    return { method, target: params.name };
+  }
+  if (method === "resources/read" && typeof params?.uri === "string") {
+    return { method, target: params.uri };
+  }
+  if (method === "prompts/get" && typeof params?.name === "string") {
+    return { method, target: params.name };
+  }
+
+  return { method };
+}
+
+function tokenHasRequiredScopes(
+  granted: string[],
+  required: string[],
+): boolean {
+  const grantedSet = new Set(granted);
+  return required.every((scope) => grantedSet.has(scope));
+}
+
+/**
+ * Enforce per-capability OAuth scopes after bearer validation.
+ * Returns 403 + insufficient_scope when the token is valid but lacks scope.
+ */
+export function createScopeCheckMiddleware(
+  registry: ScopeRequirementRegistry,
+): express.RequestHandler {
+  return (req: Request, res: Response, next: express.NextFunction) => {
+    const oauthReq = req as OAuthRequest;
+    const token = oauthReq.oauthToken;
+    if (!token) {
+      return next();
+    }
+
+    const { method, target } = parseMcpOperation(req.body);
+    if (!method || !target) {
+      return next();
+    }
+
+    let requiredScopes: string[] | undefined;
+    if (method === "tools/call") {
+      requiredScopes = registry.tools.get(target);
+    } else if (method === "resources/read") {
+      requiredScopes = registry.resources.get(target);
+      if (!requiredScopes?.length) {
+        for (const [uriTemplate, scopes] of registry.resourceTemplates) {
+          if (resourceUriMatchesTemplate(target, uriTemplate)) {
+            requiredScopes = scopes;
+            break;
+          }
+        }
+      }
+    } else if (method === "prompts/get") {
+      requiredScopes = registry.prompts.get(target);
+    }
+
+    if (!requiredScopes?.length) {
+      return next();
+    }
+
+    const granted = oauthReq.oauthTokenScopes ?? getAccessTokenScopes(token);
+    if (tokenHasRequiredScopes(granted, requiredScopes)) {
+      return next();
+    }
+
+    const grantedSet = new Set(granted);
+    const missingScopes = requiredScopes.filter(
+      (scope) => !grantedSet.has(scope),
+    );
+    const scopeHeader = missingScopes.join(" ") || requiredScopes.join(" ");
+    res.status(403);
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader(
+      "WWW-Authenticate",
+      `Bearer error="insufficient_scope", scope="${scopeHeader}"`,
+    );
+    res.json({
+      jsonrpc: "2.0",
+      error: {
+        code: -32603,
+        message: `Forbidden: insufficient scope (403). Required: ${scopeHeader}`,
+      },
+      id: null,
+    });
+    return;
+  };
+}
+
+/**
+ * Clear all OAuth test data (useful for test cleanup)
+ */
+export function clearOAuthTestData(): void {
+  authorizationCodes.clear();
+  accessTokens.clear();
+  accessTokenScopes.clear();
+  refreshTokens.clear();
+  registeredClients.clear();
+  dcrRequests.length = 0;
+}
+
+/**
+ * Returns recorded DCR request bodies (redirect_uris) for tests that verify
+ * redirect URI registration.
+ */
+export function getDCRRequests(): Array<{ redirect_uris: string[] }> {
+  return dcrRequests;
+}
+
+/**
+ * Invalidate a single access token (remove from valid set).
+ * Used by E2E tests to simulate expired/revoked access token while keeping
+ * refresh_token valid, so 401 → auth() → refresh → retry can be exercised.
+ */
+export function invalidateAccessToken(token: string): void {
+  accessTokens.delete(token);
+  accessTokenScopes.delete(token);
+}

@@ -1,0 +1,139 @@
+import {
+  ActionIcon,
+  Alert,
+  Button,
+  Divider,
+  Group,
+  Stack,
+  Table,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
+import { ClearButton } from "../../elements/ClearButton/ClearButton";
+import type { Root } from "@modelcontextprotocol/client";
+import { listRowKey } from "../../../utils/listRowKey";
+
+export type RootDraft = { name: string; uri: string };
+
+export interface RootsTableProps {
+  roots: Root[];
+  newRootDraft: RootDraft;
+  onRemoveRoot: (uri: string) => void;
+  onNewRootDraftChange: (draft: RootDraft) => void;
+  onAddRoot: () => void;
+  onBrowse: () => void;
+}
+
+const HintText = Text.withProps({
+  size: "sm",
+  c: "dimmed",
+});
+
+const RemoveIcon = ActionIcon.withProps({
+  color: "red",
+  variant: "subtle",
+});
+
+const AddRootButton = Button.withProps({
+  variant: "light",
+  fullWidth: true,
+});
+
+export function RootsTable({
+  roots,
+  newRootDraft,
+  onRemoveRoot,
+  onNewRootDraftChange,
+  onAddRoot,
+  onBrowse,
+}: RootsTableProps) {
+  return (
+    <Stack gap="md">
+      <Title order={4}>Roots Configuration</Title>
+      <HintText>Filesystem roots exposed to the connected server:</HintText>
+
+      {roots.length > 0 && (
+        <Table>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Name</Table.Th>
+              <Table.Th>URI</Table.Th>
+              <Table.Th>Actions</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {/* Keyed on position as well as URI: nothing dedupes the roots
+                list, so the same URI can appear twice and collide (#2206). */}
+            {roots.map((root, index) => (
+              <Table.Tr key={listRowKey(root.uri, index)}>
+                <Table.Td>{root.name}</Table.Td>
+                <Table.Td>{root.uri}</Table.Td>
+                <Table.Td>
+                  <RemoveIcon onClick={() => onRemoveRoot(root.uri)}>
+                    X
+                  </RemoveIcon>
+                </Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
+      )}
+
+      <AddRootButton onClick={onAddRoot}>+ Add Root</AddRootButton>
+
+      <Divider />
+
+      <Title order={5}>Add New Root:</Title>
+      <TextInput
+        label="Name"
+        value={newRootDraft.name}
+        onChange={(e) =>
+          onNewRootDraftChange({
+            ...newRootDraft,
+            name: e.currentTarget.value,
+          })
+        }
+        rightSectionPointerEvents="auto"
+        rightSection={
+          newRootDraft.name ? (
+            <ClearButton
+              onClick={() =>
+                onNewRootDraftChange({ ...newRootDraft, name: "" })
+              }
+            />
+          ) : null
+        }
+      />
+      <TextInput
+        label="URI"
+        value={newRootDraft.uri}
+        onChange={(e) =>
+          onNewRootDraftChange({
+            ...newRootDraft,
+            uri: e.currentTarget.value,
+          })
+        }
+        rightSectionPointerEvents="auto"
+        rightSection={
+          newRootDraft.uri ? (
+            <ClearButton
+              onClick={() => onNewRootDraftChange({ ...newRootDraft, uri: "" })}
+            />
+          ) : null
+        }
+      />
+      <Group justify="flex-end">
+        <Button variant="light" onClick={onBrowse}>
+          Browse
+        </Button>
+        <Button onClick={onAddRoot}>Add</Button>
+      </Group>
+
+      <Alert variant="warning" title="Warning">
+        Roots give the server access to these directories. Only add directories
+        you trust the server to access.
+      </Alert>
+    </Stack>
+  );
+}

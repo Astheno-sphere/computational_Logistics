@@ -1,0 +1,1960 @@
+import { describe, expect, it, jest, test } from "bun:test";
+import {
+  extractTriggerTimestamp,
+  resolveTriggerTimestamp,
+  extractOriginalTitle,
+  extractOriginalBody,
+  fetchGitHubData,
+  filterCommentsToTriggerTime,
+  filterReviewsToTriggerTime,
+  isBodySafeToUse,
+} from "../src/github/data/fetcher";
+import type { ParsedGitHubContext } from "../src/github/context";
+import {
+  createMockContext,
+  mockIssueCommentContext,
+  mockPullRequestCommentContext,
+  mockPullRequestReviewContext,
+  mockPullRequestReviewCommentContext,
+  mockPullRequestOpenedContext,
+  mockIssueOpenedContext,
+  mockIssueAssignedContext,
+  mockIssueLabeledContext,
+} from "./mockContext";
+import type { GitHubComment, GitHubReview } from "../src/github/types";
+
+describe("extractTriggerTimestamp", () => {
+  it("should extract timestamp from IssueCommentEvent", () => {
+    const context = mockIssueCommentContext;
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T12:30:00Z");
+  });
+
+  it("should extract timestamp from PullRequestReviewEvent", () => {
+    const context = mockPullRequestReviewContext;
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T15:30:00Z");
+  });
+
+  it("should extract timestamp from PullRequestReviewCommentEvent", () => {
+    const context = mockPullRequestReviewCommentContext;
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T16:45:00Z");
+  });
+
+  it("should extract created_at timestamp from pull_request opened event", () => {
+    const context = mockPullRequestOpenedContext;
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T14:00:00Z");
+  });
+
+  it("should extract updated_at timestamp from pull_request synchronize event", () => {
+    const context: ParsedGitHubContext = {
+      ...mockPullRequestOpenedContext,
+      eventAction: "synchronize",
+      payload: {
+        ...(mockPullRequestOpenedContext.payload as any),
+        action: "synchronize",
+      },
+    };
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T14:05:00Z");
+  });
+
+  it("should extract updated_at timestamp from pull_request edited event", () => {
+    const context: ParsedGitHubContext = {
+      ...mockPullRequestOpenedContext,
+      eventAction: "edited",
+      payload: {
+        ...(mockPullRequestOpenedContext.payload as any),
+        action: "edited",
+      },
+    };
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T14:05:00Z");
+  });
+
+  it("should extract created_at timestamp from issues opened event", () => {
+    const context = mockIssueOpenedContext;
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T10:30:00Z");
+  });
+
+  it("should fall back to updated_at for issues labeled event", () => {
+    const context = mockIssueLabeledContext;
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T11:30:00Z");
+  });
+
+  it("should fall back to updated_at for issues assigned event", () => {
+    const context = mockIssueAssignedContext;
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T11:00:00Z");
+  });
+
+  it("should fall back to created_at for issues labeled event without updated_at", () => {
+    const context = createMockContext({
+      eventName: "issues",
+      eventAction: "labeled",
+      payload: {
+        action: "labeled",
+        issue: {
+          number: 1,
+          title: "test",
+          body: "test",
+          created_at: "2024-01-15T08:00:00Z",
+        },
+      } as any,
+      entityNumber: 1,
+      isPR: false,
+    });
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T08:00:00Z");
+  });
+
+  it("should fall back to created_at for pull_request synchronize event without updated_at", () => {
+    const context = createMockContext({
+      eventName: "pull_request",
+      eventAction: "synchronize",
+      payload: {
+        action: "synchronize",
+        pull_request: {
+          number: 1,
+          title: "test",
+          body: "test",
+          created_at: "2024-01-15T08:30:00Z",
+        },
+      } as any,
+      entityNumber: 1,
+      isPR: true,
+    });
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBe("2024-01-15T08:30:00Z");
+  });
+
+  it("should return undefined for issues event without timestamps", () => {
+    const context = createMockContext({
+      eventName: "issues",
+      eventAction: "labeled",
+      payload: {
+        action: "labeled",
+        issue: {
+          number: 1,
+          title: "test",
+          body: "test",
+        },
+      } as any,
+      entityNumber: 1,
+      isPR: false,
+    });
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBeUndefined();
+  });
+
+  it("should handle missing timestamp fields gracefully", () => {
+    const context = createMockContext({
+      eventName: "issue_comment",
+      payload: {
+        comment: {
+          // No created_at field
+          id: 123,
+          body: "test",
+        },
+      } as any,
+    });
+    const timestamp = extractTriggerTimestamp(context);
+    expect(timestamp).toBeUndefined();
+  });
+});
+
+describe("resolveTriggerTimestamp", () => {
+  const createEventsOctokits = (events: any[]) => {
+    const paginate = jest.fn().mockResolvedValue(events);
+    return {
+      octokits: {
+        rest: {
+          paginate,
+          issues: { listEvents: jest.fn() },
+        },
+        graphql: jest.fn(),
+      } as any,
+      paginate,
+    };
+  };
+
+  it("should use the labeled event time for issues labeled event", async () => {
+    const { octokits, paginate } = createEventsOctokits([
+      {
+        event: "labeled",
+        label: { name: "other-label" },
+        created_at: "2024-01-15T10:45:00Z",
+      },
+      {
+        event: "labeled",
+        label: { name: "claude-task" },
+        created_at: "2024-01-15T10:50:00Z",
+      },
+      {
+        event: "labeled",
+        label: { name: "claude-task" },
+        created_at: "2024-01-15T11:45:00Z",
+      },
+      {
+        event: "assigned",
+        assignee: { login: "claude-bot" },
+        created_at: "2024-01-15T11:50:00Z",
+      },
+    ]);
+
+    const timestamp = await resolveTriggerTimestamp(
+      mockIssueLabeledContext,
+      octokits,
+    );
+
+    expect(timestamp).toBe("2024-01-15T11:45:00Z");
+    expect(paginate).toHaveBeenCalledWith(octokits.rest.issues.listEvents, {
+      owner: "test-owner",
+      repo: "test-repo",
+      issue_number: 1234,
+      per_page: 100,
+    });
+  });
+
+  it("should use the assigned event time for issues assigned event", async () => {
+    const { octokits } = createEventsOctokits([
+      {
+        event: "assigned",
+        assignee: { login: "someone-else" },
+        created_at: "2024-01-15T10:40:00Z",
+      },
+      {
+        event: "assigned",
+        assignee: { login: "claude-bot" },
+        created_at: "2024-01-15T11:05:00Z",
+      },
+    ]);
+
+    const timestamp = await resolveTriggerTimestamp(
+      mockIssueAssignedContext,
+      octokits,
+    );
+
+    expect(timestamp).toBe("2024-01-15T11:05:00Z");
+  });
+
+  it("should ignore a matching event that predates the issue's updated_at", async () => {
+    // A match older than the payload's updated_at is a previous
+    // labeling, not the one that fired this webhook.
+    const { octokits } = createEventsOctokits([
+      {
+        event: "labeled",
+        label: { name: "claude-task" },
+        created_at: "2024-01-15T10:50:00Z",
+      },
+    ]);
+
+    const timestamp = await resolveTriggerTimestamp(
+      mockIssueLabeledContext,
+      octokits,
+    );
+
+    expect(timestamp).toBe("2024-01-15T11:30:00Z");
+  });
+
+  it("should fall back to updated_at when no matching labeled event exists", async () => {
+    const { octokits } = createEventsOctokits([
+      {
+        event: "labeled",
+        label: { name: "unrelated" },
+        created_at: "2024-01-15T10:45:00Z",
+      },
+    ]);
+
+    const timestamp = await resolveTriggerTimestamp(
+      mockIssueLabeledContext,
+      octokits,
+    );
+
+    expect(timestamp).toBe("2024-01-15T11:30:00Z");
+  });
+
+  it("should fall back to updated_at when the events lookup fails", async () => {
+    const octokits = {
+      rest: {
+        paginate: jest.fn().mockRejectedValue(new Error("API failure")),
+        issues: { listEvents: jest.fn() },
+      },
+      graphql: jest.fn(),
+    } as any;
+
+    const timestamp = await resolveTriggerTimestamp(
+      mockIssueAssignedContext,
+      octokits,
+    );
+
+    expect(timestamp).toBe("2024-01-15T11:00:00Z");
+  });
+
+  it("should fall back to created_at when updated_at is also missing", async () => {
+    const context = createMockContext({
+      eventName: "issues",
+      eventAction: "labeled",
+      payload: {
+        action: "labeled",
+        label: { name: "claude-task" },
+        issue: {
+          number: 1,
+          title: "test",
+          body: "test",
+          created_at: "2024-01-15T08:00:00Z",
+        },
+      } as any,
+      entityNumber: 1,
+      isPR: false,
+    });
+    const { octokits } = createEventsOctokits([]);
+
+    const timestamp = await resolveTriggerTimestamp(context, octokits);
+
+    expect(timestamp).toBe("2024-01-15T08:00:00Z");
+  });
+
+  it("should use created_at for issues opened event without an API call", async () => {
+    const { octokits, paginate } = createEventsOctokits([]);
+
+    const timestamp = await resolveTriggerTimestamp(
+      mockIssueOpenedContext,
+      octokits,
+    );
+
+    expect(timestamp).toBe("2024-01-15T10:30:00Z");
+    expect(paginate).not.toHaveBeenCalled();
+  });
+
+  it("should use created_at for pull_request opened event without an API call", async () => {
+    const { octokits, paginate } = createEventsOctokits([]);
+
+    const timestamp = await resolveTriggerTimestamp(
+      mockPullRequestOpenedContext,
+      octokits,
+    );
+
+    expect(timestamp).toBe("2024-01-15T14:00:00Z");
+    expect(paginate).not.toHaveBeenCalled();
+  });
+
+  it("should use the existing comment timestamp for issue_comment events", async () => {
+    const { octokits, paginate } = createEventsOctokits([]);
+
+    const timestamp = await resolveTriggerTimestamp(
+      mockIssueCommentContext,
+      octokits,
+    );
+
+    expect(timestamp).toBe("2024-01-15T12:30:00Z");
+    expect(paginate).not.toHaveBeenCalled();
+  });
+});
+
+describe("extractOriginalTitle", () => {
+  it("should extract title from IssueCommentEvent on PR", () => {
+    const title = extractOriginalTitle(mockPullRequestCommentContext);
+    expect(title).toBe("Fix: Memory leak in user service");
+  });
+
+  it("should extract title from PullRequestReviewEvent", () => {
+    const title = extractOriginalTitle(mockPullRequestReviewContext);
+    expect(title).toBe("Refactor: Improve error handling in API layer");
+  });
+
+  it("should extract title from PullRequestReviewCommentEvent", () => {
+    const title = extractOriginalTitle(mockPullRequestReviewCommentContext);
+    expect(title).toBe("Performance: Optimize search algorithm");
+  });
+
+  it("should extract title from pull_request event", () => {
+    const title = extractOriginalTitle(mockPullRequestOpenedContext);
+    expect(title).toBe("Feature: Add user authentication");
+  });
+
+  it("should extract title from issues event", () => {
+    const title = extractOriginalTitle(mockIssueOpenedContext);
+    expect(title).toBe("Bug: Application crashes on startup");
+  });
+
+  it("should return undefined for event without title", () => {
+    const context = createMockContext({
+      eventName: "issue_comment",
+      payload: {
+        comment: {
+          id: 123,
+          body: "test",
+        },
+      } as any,
+    });
+    const title = extractOriginalTitle(context);
+    expect(title).toBeUndefined();
+  });
+});
+
+describe("extractOriginalBody", () => {
+  it("should extract body from IssueCommentEvent on PR", () => {
+    const body = extractOriginalBody(mockPullRequestCommentContext);
+    expect(body).toBe("This PR fixes the memory leak issue reported in #788");
+  });
+
+  it("should extract body from PullRequestReviewEvent", () => {
+    const body = extractOriginalBody(mockPullRequestReviewContext);
+    expect(body).toBe(
+      "This PR improves error handling across all API endpoints",
+    );
+  });
+
+  it("should extract body from PullRequestReviewCommentEvent", () => {
+    const body = extractOriginalBody(mockPullRequestReviewCommentContext);
+    expect(body).toBe(
+      "This PR optimizes the search algorithm for better performance",
+    );
+  });
+
+  it("should extract body from pull_request event", () => {
+    const body = extractOriginalBody(mockPullRequestOpenedContext);
+    expect(body).toBe(
+      "## Summary\n\nThis PR adds JWT-based authentication to the API.\n\n## Changes\n\n- Added auth middleware\n- Added login endpoint\n- Added JWT token generation\n\n/claude please review the security aspects",
+    );
+  });
+
+  it("should extract body from issues event", () => {
+    const body = extractOriginalBody(mockIssueOpenedContext);
+    expect(body).toBe(
+      "## Description\n\nThe application crashes immediately after launching.\n\n## Steps to reproduce\n\n1. Install the app\n2. Launch it\n3. See crash\n\n/claude please help me fix this",
+    );
+  });
+
+  it("should return undefined for event without body", () => {
+    const context = createMockContext({
+      eventName: "issue_comment",
+      payload: {
+        comment: {
+          id: 123,
+          body: "test",
+        },
+      } as any,
+    });
+    const body = extractOriginalBody(context);
+    expect(body).toBeUndefined();
+  });
+});
+
+describe("filterCommentsToTriggerTime", () => {
+  const createMockComment = (
+    createdAt: string,
+    updatedAt?: string,
+    lastEditedAt?: string,
+  ): GitHubComment => ({
+    id: String(Math.random()),
+    databaseId: String(Math.random()),
+    body: "Test comment",
+    author: { login: "test-user" },
+    createdAt,
+    updatedAt,
+    lastEditedAt,
+    isMinimized: false,
+  });
+
+  const triggerTime = "2024-01-15T12:00:00Z";
+
+  describe("comment creation time filtering", () => {
+    it("should include comments created before trigger time", () => {
+      const comments = [
+        createMockComment("2024-01-15T11:00:00Z"),
+        createMockComment("2024-01-15T11:30:00Z"),
+        createMockComment("2024-01-15T11:59:59Z"),
+      ];
+
+      const filtered = filterCommentsToTriggerTime(comments, triggerTime);
+      expect(filtered.length).toBe(3);
+      expect(filtered).toEqual(comments);
+    });
+
+    it("should exclude comments created after trigger time", () => {
+      const comments = [
+        createMockComment("2024-01-15T12:00:01Z"),
+        createMockComment("2024-01-15T13:00:00Z"),
+        createMockComment("2024-01-16T00:00:00Z"),
+      ];
+
+      const filtered = filterCommentsToTriggerTime(comments, triggerTime);
+      expect(filtered.length).toBe(0);
+    });
+
+    it("should handle exact timestamp match (at trigger time)", () => {
+      const comment = createMockComment("2024-01-15T12:00:00Z");
+      const filtered = filterCommentsToTriggerTime([comment], triggerTime);
+      // Comments created exactly at trigger time should be excluded for security
+      expect(filtered.length).toBe(0);
+    });
+  });
+
+  describe("comment edit time filtering", () => {
+    it("should include comments edited before trigger time", () => {
+      const comments = [
+        createMockComment("2024-01-15T10:00:00Z", "2024-01-15T11:00:00Z"),
+        createMockComment(
+          "2024-01-15T10:00:00Z",
+          undefined,
+          "2024-01-15T11:30:00Z",
+        ),
+        createMockComment(
+          "2024-01-15T10:00:00Z",
+          "2024-01-15T11:00:00Z",
+          "2024-01-15T11:30:00Z",
+        ),
+      ];
+
+      const filtered = filterCommentsToTriggerTime(comments, triggerTime);
+      expect(filtered.length).toBe(3);
+      expect(filtered).toEqual(comments);
+    });
+
+    it("should exclude comments edited after trigger time", () => {
+      const comments = [
+        createMockComment("2024-01-15T10:00:00Z", "2024-01-15T13:00:00Z"),
+        createMockComment(
+          "2024-01-15T10:00:00Z",
+          undefined,
+          "2024-01-15T13:00:00Z",
+        ),
+        createMockComment(
+          "2024-01-15T10:00:00Z",
+          "2024-01-15T11:00:00Z",
+          "2024-01-15T13:00:00Z",
+        ),
+      ];
+
+      const filtered = filterCommentsToTriggerTime(comments, triggerTime);
+      expect(filtered.length).toBe(0);
+    });
+
+    it("should prioritize lastEditedAt over updatedAt", () => {
+      const comment = createMockComment(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T13:00:00Z", // updatedAt after trigger
+        "2024-01-15T11:00:00Z", // lastEditedAt before trigger
+      );
+
+      const filtered = filterCommentsToTriggerTime([comment], triggerTime);
+      // lastEditedAt takes precedence, so this should be included
+      expect(filtered.length).toBe(1);
+      expect(filtered[0]).toBe(comment);
+    });
+
+    it("should handle comments without edit timestamps", () => {
+      const comment = createMockComment("2024-01-15T10:00:00Z");
+      expect(comment.updatedAt).toBeUndefined();
+      expect(comment.lastEditedAt).toBeUndefined();
+
+      const filtered = filterCommentsToTriggerTime([comment], triggerTime);
+      expect(filtered.length).toBe(1);
+      expect(filtered[0]).toBe(comment);
+    });
+
+    it("should exclude comments edited exactly at trigger time", () => {
+      const comments = [
+        createMockComment("2024-01-15T10:00:00Z", "2024-01-15T12:00:00Z"), // updatedAt exactly at trigger
+        createMockComment(
+          "2024-01-15T10:00:00Z",
+          undefined,
+          "2024-01-15T12:00:00Z",
+        ), // lastEditedAt exactly at trigger
+      ];
+
+      const filtered = filterCommentsToTriggerTime(comments, triggerTime);
+      expect(filtered.length).toBe(0);
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should return all comments when no trigger time provided", () => {
+      const comments = [
+        createMockComment("2024-01-15T10:00:00Z"),
+        createMockComment("2024-01-15T13:00:00Z"),
+        createMockComment("2024-01-16T00:00:00Z"),
+      ];
+
+      const filtered = filterCommentsToTriggerTime(comments, undefined);
+      expect(filtered.length).toBe(3);
+      expect(filtered).toEqual(comments);
+    });
+
+    it("should handle millisecond precision", () => {
+      const comments = [
+        createMockComment("2024-01-15T12:00:00.001Z"), // After trigger by 1ms
+        createMockComment("2024-01-15T11:59:59.999Z"), // Before trigger
+      ];
+
+      const filtered = filterCommentsToTriggerTime(comments, triggerTime);
+      expect(filtered.length).toBe(1);
+      expect(filtered[0]?.createdAt).toBe("2024-01-15T11:59:59.999Z");
+    });
+
+    it("should handle various ISO timestamp formats", () => {
+      const comments = [
+        createMockComment("2024-01-15T11:00:00Z"),
+        createMockComment("2024-01-15T11:00:00.000Z"),
+        createMockComment("2024-01-15T11:00:00+00:00"),
+      ];
+
+      const filtered = filterCommentsToTriggerTime(comments, triggerTime);
+      expect(filtered.length).toBe(3);
+    });
+  });
+});
+
+describe("filterReviewsToTriggerTime", () => {
+  const createMockReview = (
+    submittedAt: string,
+    updatedAt?: string,
+    lastEditedAt?: string,
+  ): GitHubReview => ({
+    id: String(Math.random()),
+    databaseId: String(Math.random()),
+    author: { login: "reviewer" },
+    body: "Test review",
+    state: "APPROVED",
+    submittedAt,
+    updatedAt,
+    lastEditedAt,
+    comments: { nodes: [] },
+  });
+
+  const triggerTime = "2024-01-15T12:00:00Z";
+
+  describe("review submission time filtering", () => {
+    it("should include reviews submitted before trigger time", () => {
+      const reviews = [
+        createMockReview("2024-01-15T11:00:00Z"),
+        createMockReview("2024-01-15T11:30:00Z"),
+        createMockReview("2024-01-15T11:59:59Z"),
+      ];
+
+      const filtered = filterReviewsToTriggerTime(reviews, triggerTime);
+      expect(filtered.length).toBe(3);
+      expect(filtered).toEqual(reviews);
+    });
+
+    it("should exclude reviews submitted after trigger time", () => {
+      const reviews = [
+        createMockReview("2024-01-15T12:00:01Z"),
+        createMockReview("2024-01-15T13:00:00Z"),
+        createMockReview("2024-01-16T00:00:00Z"),
+      ];
+
+      const filtered = filterReviewsToTriggerTime(reviews, triggerTime);
+      expect(filtered.length).toBe(0);
+    });
+
+    it("should handle exact timestamp match", () => {
+      const review = createMockReview("2024-01-15T12:00:00Z");
+      const filtered = filterReviewsToTriggerTime([review], triggerTime);
+      // Reviews submitted exactly at trigger time should be excluded for security
+      expect(filtered.length).toBe(0);
+    });
+  });
+
+  describe("review edit time filtering", () => {
+    it("should include reviews edited before trigger time", () => {
+      const reviews = [
+        createMockReview("2024-01-15T10:00:00Z", "2024-01-15T11:00:00Z"),
+        createMockReview(
+          "2024-01-15T10:00:00Z",
+          undefined,
+          "2024-01-15T11:30:00Z",
+        ),
+        createMockReview(
+          "2024-01-15T10:00:00Z",
+          "2024-01-15T11:00:00Z",
+          "2024-01-15T11:30:00Z",
+        ),
+      ];
+
+      const filtered = filterReviewsToTriggerTime(reviews, triggerTime);
+      expect(filtered.length).toBe(3);
+      expect(filtered).toEqual(reviews);
+    });
+
+    it("should exclude reviews edited after trigger time", () => {
+      const reviews = [
+        createMockReview("2024-01-15T10:00:00Z", "2024-01-15T13:00:00Z"),
+        createMockReview(
+          "2024-01-15T10:00:00Z",
+          undefined,
+          "2024-01-15T13:00:00Z",
+        ),
+        createMockReview(
+          "2024-01-15T10:00:00Z",
+          "2024-01-15T11:00:00Z",
+          "2024-01-15T13:00:00Z",
+        ),
+      ];
+
+      const filtered = filterReviewsToTriggerTime(reviews, triggerTime);
+      expect(filtered.length).toBe(0);
+    });
+
+    it("should prioritize lastEditedAt over updatedAt", () => {
+      const review = createMockReview(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T13:00:00Z", // updatedAt after trigger
+        "2024-01-15T11:00:00Z", // lastEditedAt before trigger
+      );
+
+      const filtered = filterReviewsToTriggerTime([review], triggerTime);
+      // lastEditedAt takes precedence, so this should be included
+      expect(filtered.length).toBe(1);
+      expect(filtered[0]).toBe(review);
+    });
+
+    it("should handle reviews without edit timestamps", () => {
+      const review = createMockReview("2024-01-15T10:00:00Z");
+      expect(review.updatedAt).toBeUndefined();
+      expect(review.lastEditedAt).toBeUndefined();
+
+      const filtered = filterReviewsToTriggerTime([review], triggerTime);
+      expect(filtered.length).toBe(1);
+      expect(filtered[0]).toBe(review);
+    });
+
+    it("should exclude reviews edited exactly at trigger time", () => {
+      const reviews = [
+        createMockReview("2024-01-15T10:00:00Z", "2024-01-15T12:00:00Z"), // updatedAt exactly at trigger
+        createMockReview(
+          "2024-01-15T10:00:00Z",
+          undefined,
+          "2024-01-15T12:00:00Z",
+        ), // lastEditedAt exactly at trigger
+      ];
+
+      const filtered = filterReviewsToTriggerTime(reviews, triggerTime);
+      expect(filtered.length).toBe(0);
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should return all reviews when no trigger time provided", () => {
+      const reviews = [
+        createMockReview("2024-01-15T10:00:00Z"),
+        createMockReview("2024-01-15T13:00:00Z"),
+        createMockReview("2024-01-16T00:00:00Z"),
+      ];
+
+      const filtered = filterReviewsToTriggerTime(reviews, undefined);
+      expect(filtered.length).toBe(3);
+      expect(filtered).toEqual(reviews);
+    });
+  });
+});
+
+describe("isBodySafeToUse", () => {
+  const triggerTime = "2024-01-15T12:00:00Z";
+
+  const createMockContextData = (
+    createdAt: string,
+    updatedAt?: string,
+    lastEditedAt?: string,
+  ) => ({
+    createdAt,
+    updatedAt,
+    lastEditedAt,
+  });
+
+  describe("body edit time validation", () => {
+    it("should return true when body was never edited", () => {
+      const contextData = createMockContextData("2024-01-15T10:00:00Z");
+      expect(isBodySafeToUse(contextData, triggerTime)).toBe(true);
+    });
+
+    it("should return true when body was edited before trigger time", () => {
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T11:00:00Z",
+        "2024-01-15T11:30:00Z",
+      );
+      expect(isBodySafeToUse(contextData, triggerTime)).toBe(true);
+    });
+
+    it("should return false when body was edited after trigger time (using updatedAt)", () => {
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T13:00:00Z",
+      );
+      expect(isBodySafeToUse(contextData, triggerTime)).toBe(false);
+    });
+
+    it("should return false when body was edited after trigger time (using lastEditedAt)", () => {
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        undefined,
+        "2024-01-15T13:00:00Z",
+      );
+      expect(isBodySafeToUse(contextData, triggerTime)).toBe(false);
+    });
+
+    it("should return false when body was edited exactly at trigger time", () => {
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T12:00:00Z",
+      );
+      expect(isBodySafeToUse(contextData, triggerTime)).toBe(false);
+    });
+
+    it("should prioritize lastEditedAt over updatedAt", () => {
+      // updatedAt is after trigger, but lastEditedAt is before - should be safe
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T13:00:00Z", // updatedAt after trigger
+        "2024-01-15T11:00:00Z", // lastEditedAt before trigger
+      );
+      expect(isBodySafeToUse(contextData, triggerTime)).toBe(true);
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should return true when no trigger time is provided (backward compatibility)", () => {
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T13:00:00Z", // Would normally fail
+        "2024-01-15T14:00:00Z", // Would normally fail
+      );
+      expect(isBodySafeToUse(contextData, undefined)).toBe(true);
+    });
+
+    it("should handle millisecond precision correctly", () => {
+      // Edit 1ms after trigger - should be unsafe
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T12:00:00.001Z",
+      );
+      expect(isBodySafeToUse(contextData, triggerTime)).toBe(false);
+    });
+
+    it("should handle edit 1ms before trigger - should be safe", () => {
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T11:59:59.999Z",
+      );
+      expect(isBodySafeToUse(contextData, triggerTime)).toBe(true);
+    });
+
+    it("should handle various ISO timestamp formats", () => {
+      const contextData1 = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T11:00:00Z",
+      );
+      const contextData2 = createMockContextData(
+        "2024-01-15T10:00:00+00:00",
+        "2024-01-15T11:00:00+00:00",
+      );
+      const contextData3 = createMockContextData(
+        "2024-01-15T10:00:00.000Z",
+        "2024-01-15T11:00:00.000Z",
+      );
+
+      expect(isBodySafeToUse(contextData1, triggerTime)).toBe(true);
+      expect(isBodySafeToUse(contextData2, triggerTime)).toBe(true);
+      expect(isBodySafeToUse(contextData3, triggerTime)).toBe(true);
+    });
+  });
+
+  describe("security scenarios", () => {
+    it("should detect race condition attack - body edited between trigger and processing", () => {
+      // Simulates: Owner triggers @claude at 12:00, attacker edits body at 12:00:30
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z", // Issue created
+        "2024-01-15T12:00:30Z", // Body edited after trigger
+      );
+      expect(isBodySafeToUse(contextData, "2024-01-15T12:00:00Z")).toBe(false);
+    });
+
+    it("should allow body that was stable at trigger time", () => {
+      // Body was last edited well before the trigger
+      const contextData = createMockContextData(
+        "2024-01-15T10:00:00Z",
+        "2024-01-15T10:30:00Z",
+        "2024-01-15T10:30:00Z",
+      );
+      expect(isBodySafeToUse(contextData, "2024-01-15T12:00:00Z")).toBe(true);
+    });
+  });
+});
+
+describe("fetchGitHubData integration with time filtering", () => {
+  it("should filter comments based on trigger time when provided", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          issue: {
+            number: 123,
+            title: "Test Issue",
+            body: "Issue body",
+            author: { login: "author" },
+            comments: {
+              nodes: [
+                {
+                  id: "1",
+                  databaseId: "1",
+                  body: "Comment before trigger",
+                  author: { login: "user1" },
+                  createdAt: "2024-01-15T11:00:00Z",
+                  updatedAt: "2024-01-15T11:00:00Z",
+                },
+                {
+                  id: "2",
+                  databaseId: "2",
+                  body: "Comment after trigger",
+                  author: { login: "user2" },
+                  createdAt: "2024-01-15T13:00:00Z",
+                  updatedAt: "2024-01-15T13:00:00Z",
+                },
+                {
+                  id: "3",
+                  databaseId: "3",
+                  body: "Comment before but edited after",
+                  author: { login: "user3" },
+                  createdAt: "2024-01-15T11:00:00Z",
+                  updatedAt: "2024-01-15T13:00:00Z",
+                  lastEditedAt: "2024-01-15T13:00:00Z",
+                },
+              ],
+            },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: false,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+    });
+
+    // Should only include the comment created before trigger time
+    expect(result.comments.length).toBe(1);
+    expect(result.comments[0]?.id).toBe("1");
+    expect(result.comments[0]?.body).toBe("Comment before trigger");
+  });
+
+  it("should filter comments using the resolved issues labeled event time", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          issue: {
+            number: 1234,
+            title: "Test Issue",
+            body: "Issue body",
+            author: { login: "author" },
+            comments: {
+              nodes: [
+                {
+                  id: "1",
+                  databaseId: "1",
+                  body: "Comment before label",
+                  author: { login: "user1" },
+                  createdAt: "2024-01-15T10:00:00Z",
+                  updatedAt: "2024-01-15T10:00:00Z",
+                },
+                {
+                  id: "2",
+                  databaseId: "2",
+                  body: "Comment created after label",
+                  author: { login: "user2" },
+                  createdAt: "2024-01-15T12:00:00Z",
+                  updatedAt: "2024-01-15T12:00:00Z",
+                },
+                {
+                  id: "3",
+                  databaseId: "3",
+                  body: "Comment edited after label",
+                  author: { login: "user3" },
+                  createdAt: "2024-01-15T10:00:00Z",
+                  updatedAt: "2024-01-15T12:00:00Z",
+                  lastEditedAt: "2024-01-15T12:00:00Z",
+                },
+                {
+                  id: "4",
+                  databaseId: "4",
+                  body: "Latest comment before label",
+                  author: { login: "user4" },
+                  createdAt: "2024-01-15T11:30:00Z",
+                  updatedAt: "2024-01-15T11:30:00Z",
+                },
+              ],
+            },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: {
+        paginate: jest.fn().mockResolvedValue([
+          {
+            event: "labeled",
+            label: { name: "claude-task" },
+            created_at: "2024-01-15T11:45:00Z",
+          },
+        ]),
+        issues: { listEvents: jest.fn() },
+      },
+    };
+
+    // The issues (labeled) webhook has no trigger comment; the boundary is
+    // the labeled event's own timestamp from the issue event history.
+    const triggerTime = await resolveTriggerTimestamp(
+      mockIssueLabeledContext,
+      mockOctokits as any,
+    );
+    expect(triggerTime).toBe("2024-01-15T11:45:00Z");
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "1234",
+      isPR: false,
+      triggerUsername: "trigger-user",
+      triggerTime,
+    });
+
+    // Comments created before the label are kept (including the most
+    // recent one); comments created or edited after it are excluded.
+    expect(result.comments.map((c) => c.id)).toEqual(["1", "4"]);
+  });
+
+  it("should filter PR reviews based on trigger time", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 456,
+            title: "Test PR",
+            body: "PR body",
+            author: { login: "author" },
+            comments: { nodes: [] },
+            files: { nodes: [] },
+            reviews: {
+              nodes: [
+                {
+                  id: "1",
+                  databaseId: "1",
+                  author: { login: "reviewer1" },
+                  body: "Review before trigger",
+                  state: "APPROVED",
+                  submittedAt: "2024-01-15T11:00:00Z",
+                  comments: { nodes: [] },
+                },
+                {
+                  id: "2",
+                  databaseId: "2",
+                  author: { login: "reviewer2" },
+                  body: "Review after trigger",
+                  state: "CHANGES_REQUESTED",
+                  submittedAt: "2024-01-15T13:00:00Z",
+                  comments: { nodes: [] },
+                },
+                {
+                  id: "3",
+                  databaseId: "3",
+                  author: { login: "reviewer3" },
+                  body: "Review before but edited after",
+                  state: "COMMENTED",
+                  submittedAt: "2024-01-15T11:00:00Z",
+                  updatedAt: "2024-01-15T13:00:00Z",
+                  lastEditedAt: "2024-01-15T13:00:00Z",
+                  comments: { nodes: [] },
+                },
+              ],
+            },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: {
+        pulls: {
+          listFiles: jest.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "456",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+    });
+
+    // Only the review submitted before the trigger and not edited afterward
+    // reaches the prompt. The review submitted after the trigger and the one
+    // edited after the trigger are dropped (TOCTOU protection), matching the
+    // issue/PR comment and body handling.
+    expect(result.reviewData?.nodes?.length).toBe(1);
+    expect(result.reviewData?.nodes?.[0]?.databaseId).toBe("1");
+
+    // Only that surviving review's body is queued for image download.
+    const reviewsInMap = Object.keys(result.imageUrlMap).filter((key) =>
+      key.startsWith("review_body"),
+    );
+    expect(reviewsInMap.length).toBeLessThanOrEqual(1);
+  });
+
+  it("should filter review comments based on trigger time", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 789,
+            title: "Test PR",
+            body: "PR body",
+            author: { login: "author" },
+            comments: { nodes: [] },
+            files: { nodes: [] },
+            reviews: {
+              nodes: [
+                {
+                  id: "1",
+                  databaseId: "1",
+                  author: { login: "reviewer" },
+                  body: "Review body",
+                  state: "COMMENTED",
+                  submittedAt: "2024-01-15T11:00:00Z",
+                  comments: {
+                    nodes: [
+                      {
+                        id: "10",
+                        databaseId: "10",
+                        body: "Review comment before",
+                        author: { login: "user1" },
+                        createdAt: "2024-01-15T11:30:00Z",
+                      },
+                      {
+                        id: "11",
+                        databaseId: "11",
+                        body: "Review comment after",
+                        author: { login: "user2" },
+                        createdAt: "2024-01-15T12:30:00Z",
+                      },
+                      {
+                        id: "12",
+                        databaseId: "12",
+                        body: "Review comment edited after",
+                        author: { login: "user3" },
+                        createdAt: "2024-01-15T11:30:00Z",
+                        lastEditedAt: "2024-01-15T12:30:00Z",
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: {
+        pulls: {
+          listFiles: jest.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "789",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+    });
+
+    // The review itself is pre-trigger and kept, but its inline comments are
+    // filtered to trigger time: the comment created after the trigger (id 11)
+    // and the one edited after the trigger (id 12) are dropped, leaving only
+    // the pre-trigger comment (id 10).
+    expect(result.reviewData?.nodes?.length).toBe(1);
+    const reviewCommentIds =
+      result.reviewData?.nodes?.[0]?.comments?.nodes?.map((c) => c.databaseId);
+    expect(reviewCommentIds).toEqual(["10"]);
+  });
+
+  it("should filter reviews by both trigger time and actor", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 321,
+            title: "Test PR",
+            body: "PR body",
+            author: { login: "author" },
+            comments: { nodes: [] },
+            files: { nodes: [] },
+            reviews: {
+              nodes: [
+                {
+                  id: "1",
+                  databaseId: "1",
+                  author: { login: "reviewer1" },
+                  body: "Pre-trigger human review",
+                  state: "APPROVED",
+                  submittedAt: "2024-01-15T11:00:00Z",
+                  comments: { nodes: [] },
+                },
+                {
+                  id: "2",
+                  databaseId: "2",
+                  // GraphQL returns the bare login for App actors plus
+                  // __typename: "Bot". It does NOT append a "[bot]" suffix the
+                  // way REST does, so this mirrors a real payload.
+                  author: { __typename: "Bot", login: "scanner" },
+                  body: "Pre-trigger bot review",
+                  state: "COMMENTED",
+                  submittedAt: "2024-01-15T11:00:00Z",
+                  comments: { nodes: [] },
+                },
+                {
+                  id: "3",
+                  databaseId: "3",
+                  author: { login: "reviewer3" },
+                  body: "Post-trigger human review",
+                  state: "CHANGES_REQUESTED",
+                  submittedAt: "2024-01-15T13:00:00Z",
+                  comments: { nodes: [] },
+                },
+              ],
+            },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: {
+        pulls: {
+          listFiles: jest.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "321",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+      excludeCommentsByActor: "*[bot]",
+    });
+
+    // The trigger-time and actor filters compose: the pre-trigger human review
+    // is kept, the pre-trigger bot review is dropped by actor, and the
+    // post-trigger human review is dropped by trigger time.
+    expect(result.reviewData?.nodes?.map((r) => r.databaseId)).toEqual(["1"]);
+  });
+
+  it("should handle backward compatibility when no trigger time provided", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          issue: {
+            number: 999,
+            title: "Test Issue",
+            body: "Issue body",
+            author: { login: "author" },
+            comments: {
+              nodes: [
+                {
+                  id: "1",
+                  databaseId: "1",
+                  body: "Old comment",
+                  author: { login: "user1" },
+                  createdAt: "2024-01-15T11:00:00Z",
+                },
+                {
+                  id: "2",
+                  databaseId: "2",
+                  body: "New comment",
+                  author: { login: "user2" },
+                  createdAt: "2024-01-15T13:00:00Z",
+                },
+                {
+                  id: "3",
+                  databaseId: "3",
+                  body: "Edited comment",
+                  author: { login: "user3" },
+                  createdAt: "2024-01-15T11:00:00Z",
+                  lastEditedAt: "2024-01-15T13:00:00Z",
+                },
+              ],
+            },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "999",
+      isPR: false,
+      triggerUsername: "trigger-user",
+      // No triggerTime provided
+    });
+
+    // Without trigger time, all comments should be included
+    expect(result.comments.length).toBe(3);
+  });
+
+  it("should handle timezone variations in timestamps", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          issue: {
+            number: 321,
+            title: "Test Issue",
+            body: "Issue body",
+            author: { login: "author" },
+            comments: {
+              nodes: [
+                {
+                  id: "1",
+                  databaseId: "1",
+                  body: "Comment with UTC",
+                  author: { login: "user1" },
+                  createdAt: "2024-01-15T11:00:00Z",
+                },
+                {
+                  id: "2",
+                  databaseId: "2",
+                  body: "Comment with offset",
+                  author: { login: "user2" },
+                  createdAt: "2024-01-15T11:00:00+00:00",
+                },
+                {
+                  id: "3",
+                  databaseId: "3",
+                  body: "Comment with milliseconds",
+                  author: { login: "user3" },
+                  createdAt: "2024-01-15T11:00:00.000Z",
+                },
+              ],
+            },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "321",
+      isPR: false,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+    });
+
+    // All three comments should be included as they're all before trigger time
+    expect(result.comments.length).toBe(3);
+  });
+
+  it("should exclude issue body when edited after trigger time (TOCTOU protection)", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          issue: {
+            number: 555,
+            title: "Test Issue",
+            body: "Malicious body edited after trigger",
+            author: { login: "attacker" },
+            createdAt: "2024-01-15T10:00:00Z",
+            updatedAt: "2024-01-15T12:30:00Z", // Edited after trigger
+            lastEditedAt: "2024-01-15T12:30:00Z", // Edited after trigger
+            comments: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "555",
+      isPR: false,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+    });
+
+    // The body should be excluded from image processing due to TOCTOU protection
+    // We can verify this by checking that issue_body is NOT in the imageUrlMap keys
+    const hasIssueBodyInMap = Array.from(result.imageUrlMap.keys()).some(
+      (key) => key.includes("issue_body"),
+    );
+    expect(hasIssueBodyInMap).toBe(false);
+  });
+
+  it("should include issue body when not edited after trigger time", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          issue: {
+            number: 666,
+            title: "Test Issue",
+            body: "Safe body not edited after trigger",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            updatedAt: "2024-01-15T11:00:00Z", // Edited before trigger
+            lastEditedAt: "2024-01-15T11:00:00Z", // Edited before trigger
+            comments: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "666",
+      isPR: false,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+    });
+
+    // The contextData should still contain the body
+    expect(result.contextData.body).toBe("Safe body not edited after trigger");
+  });
+
+  it("should exclude PR body when edited after trigger time (TOCTOU protection)", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 777,
+            title: "Test PR",
+            body: "Malicious PR body edited after trigger",
+            author: { login: "attacker" },
+            baseRefName: "main",
+            headRefName: "feature",
+            headRefOid: "abc123",
+            isCrossRepository: false,
+            headRepository: { owner: { login: "testowner" }, name: "testrepo" },
+            createdAt: "2024-01-15T10:00:00Z",
+            updatedAt: "2024-01-15T12:30:00Z", // Edited after trigger
+            lastEditedAt: "2024-01-15T12:30:00Z", // Edited after trigger
+            additions: 10,
+            deletions: 5,
+            state: "OPEN",
+            commits: { totalCount: 1, nodes: [] },
+            files: { nodes: [] },
+            comments: { nodes: [] },
+            reviews: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "777",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+    });
+
+    // The body should be excluded from image processing due to TOCTOU protection
+    const hasPrBodyInMap = Array.from(result.imageUrlMap.keys()).some((key) =>
+      key.includes("pr_body"),
+    );
+    expect(hasPrBodyInMap).toBe(false);
+  });
+
+  it("should use originalTitle when provided instead of fetched title", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 123,
+            title: "Fetched Title From GraphQL",
+            body: "PR body",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            additions: 10,
+            deletions: 5,
+            state: "OPEN",
+            commits: { totalCount: 1, nodes: [] },
+            files: { nodes: [] },
+            comments: { nodes: [] },
+            reviews: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      originalTitle: "Original Title From Webhook",
+    });
+
+    expect(result.contextData.title).toBe("Original Title From Webhook");
+  });
+
+  it("should use fetched title when originalTitle is not provided", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 123,
+            title: "Fetched Title From GraphQL",
+            body: "PR body",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            additions: 10,
+            deletions: 5,
+            state: "OPEN",
+            commits: { totalCount: 1, nodes: [] },
+            files: { nodes: [] },
+            comments: { nodes: [] },
+            reviews: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: true,
+      triggerUsername: "trigger-user",
+    });
+
+    expect(result.contextData.title).toBe("Fetched Title From GraphQL");
+  });
+
+  it("should use original title from webhook even if title was edited after trigger", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 123,
+            title: "Edited Title (from GraphQL)",
+            body: "PR body",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            lastEditedAt: "2024-01-15T12:30:00Z", // Edited after trigger
+            additions: 10,
+            deletions: 5,
+            state: "OPEN",
+            commits: { totalCount: 1, nodes: [] },
+            files: { nodes: [] },
+            comments: { nodes: [] },
+            reviews: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+      originalTitle: "Original Title (from webhook at trigger time)",
+    });
+
+    expect(result.contextData.title).toBe(
+      "Original Title (from webhook at trigger time)",
+    );
+  });
+
+  it("should use originalBody when provided instead of fetched body", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 123,
+            title: "Test PR",
+            body: "Malicious body injected after trigger",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            additions: 10,
+            deletions: 5,
+            state: "OPEN",
+            commits: { totalCount: 1, nodes: [] },
+            files: { nodes: [] },
+            comments: { nodes: [] },
+            reviews: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      originalBody: "Original safe body from webhook",
+    });
+
+    expect(result.contextData.body).toBe("Original safe body from webhook");
+  });
+
+  it("should use fetched body when originalBody is not provided", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 123,
+            title: "Test PR",
+            body: "Fetched body from GraphQL",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            additions: 10,
+            deletions: 5,
+            state: "OPEN",
+            commits: { totalCount: 1, nodes: [] },
+            files: { nodes: [] },
+            comments: { nodes: [] },
+            reviews: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: true,
+      triggerUsername: "trigger-user",
+    });
+
+    expect(result.contextData.body).toBe("Fetched body from GraphQL");
+  });
+
+  it("should use original body from webhook even if body was edited after trigger (TOCTOU prevention)", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 123,
+            title: "Test PR",
+            body: "Malicious body (edited after trigger via GraphQL)",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            lastEditedAt: "2024-01-15T12:30:00Z", // Edited after trigger
+            additions: 10,
+            deletions: 5,
+            state: "OPEN",
+            commits: { totalCount: 1, nodes: [] },
+            files: { nodes: [] },
+            comments: { nodes: [] },
+            reviews: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+      originalBody: "Original safe body (from webhook at trigger time)",
+    });
+
+    // Body should be from webhook, not the malicious GraphQL-fetched version
+    expect(result.contextData.body).toBe(
+      "Original safe body (from webhook at trigger time)",
+    );
+  });
+
+  it("should handle null originalBody by setting body to empty string", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          issue: {
+            number: 123,
+            title: "Test Issue",
+            body: "Some body from GraphQL",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            state: "OPEN",
+            labels: { nodes: [] },
+            comments: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: false,
+      triggerUsername: "trigger-user",
+      originalBody: null,
+    });
+
+    // null originalBody means the issue had no body at trigger time
+    expect(result.contextData.body).toBe("");
+  });
+
+  it("should use null originalBody over malicious GraphQL body edited after trigger", async () => {
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          issue: {
+            number: 123,
+            title: "Test Issue",
+            body: "Malicious body added after trigger",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            lastEditedAt: "2024-01-15T12:30:00Z", // Edited after trigger
+            state: "OPEN",
+            labels: { nodes: [] },
+            comments: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: jest.fn() as any,
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "123",
+      isPR: false,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+      originalBody: null,
+    });
+
+    // Webhook says no body at trigger time — attacker-added GraphQL body must not be used
+    expect(result.contextData.body).toBe("");
+  });
+
+  it("should not crash when GraphQL returns null files for a very large PR", async () => {
+    // GitHub declines to compute the diff for very large PRs: `files` comes
+    // back as null (with no errors entry) and `changedFiles` is misreported
+    // as 0. The fetch must degrade gracefully instead of throwing.
+    const mockOctokits = {
+      graphql: jest.fn().mockResolvedValue({
+        repository: {
+          pullRequest: {
+            number: 7912,
+            title: "Very large PR",
+            body: "PR body",
+            author: { login: "author" },
+            createdAt: "2024-01-15T10:00:00Z",
+            state: "OPEN",
+            labels: { nodes: [] },
+            comments: { nodes: [] },
+            files: null,
+            reviews: { nodes: [] },
+          },
+        },
+        user: { login: "trigger-user" },
+      }),
+      rest: {
+        pulls: {
+          listFiles: jest.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    };
+
+    const result = await fetchGitHubData({
+      octokits: mockOctokits as any,
+      repository: "test-owner/test-repo",
+      prNumber: "7912",
+      isPR: true,
+      triggerUsername: "trigger-user",
+      triggerTime: "2024-01-15T12:00:00Z",
+    });
+
+    // No file list is available, so the PR is processed without file-level context.
+    expect(result.changedFiles).toEqual([]);
+    expect(result.changedFilesWithSHA).toEqual([]);
+  });
+});
+
+describe("filterCommentsByActor", () => {
+  test("filters out excluded actors", () => {
+    const comments = [
+      { author: { login: "user1" }, body: "comment1" },
+      { author: { login: "bot[bot]" }, body: "comment2" },
+      { author: { login: "user2" }, body: "comment3" },
+    ];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    const filtered = filterCommentsByActor(comments, "", "*[bot]");
+    expect(filtered).toHaveLength(2);
+    expect(filtered.map((c: any) => c.author.login)).toEqual([
+      "user1",
+      "user2",
+    ]);
+  });
+
+  test("includes only specified actors", () => {
+    const comments = [
+      { author: { login: "user1" }, body: "comment1" },
+      { author: { login: "user2" }, body: "comment2" },
+      { author: { login: "user3" }, body: "comment3" },
+    ];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    const filtered = filterCommentsByActor(comments, "user1,user2", "");
+    expect(filtered).toHaveLength(2);
+    expect(filtered.map((c: any) => c.author.login)).toEqual([
+      "user1",
+      "user2",
+    ]);
+  });
+
+  test("returns all when no filters", () => {
+    const comments = [
+      { author: { login: "user1" }, body: "comment1" },
+      { author: { login: "user2" }, body: "comment2" },
+    ];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    const filtered = filterCommentsByActor(comments, "", "");
+    expect(filtered).toHaveLength(2);
+  });
+
+  test("exclusion takes priority", () => {
+    const comments = [
+      { author: { login: "user1" }, body: "comment1" },
+      { author: { login: "user2" }, body: "comment2" },
+    ];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    const filtered = filterCommentsByActor(comments, "user1,user2", "user1");
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].author.login).toBe("user2");
+  });
+
+  test("filters multiple bot types", () => {
+    const comments = [
+      { author: { login: "user1" }, body: "comment1" },
+      { author: { login: "dependabot[bot]" }, body: "comment2" },
+      { author: { login: "renovate[bot]" }, body: "comment3" },
+      { author: { login: "user2" }, body: "comment4" },
+    ];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    const filtered = filterCommentsByActor(comments, "", "*[bot]");
+    expect(filtered).toHaveLength(2);
+    expect(filtered.map((c: any) => c.author.login)).toEqual([
+      "user1",
+      "user2",
+    ]);
+  });
+
+  test("filters specific bot only", () => {
+    const comments = [
+      { author: { login: "dependabot[bot]" }, body: "comment1" },
+      { author: { login: "renovate[bot]" }, body: "comment2" },
+      { author: { login: "user1" }, body: "comment3" },
+    ];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    const filtered = filterCommentsByActor(comments, "", "dependabot[bot]");
+    expect(filtered).toHaveLength(2);
+    expect(filtered.map((c: any) => c.author.login)).toEqual([
+      "renovate[bot]",
+      "user1",
+    ]);
+  });
+
+  test("handles empty comment array", () => {
+    const comments: any[] = [];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    const filtered = filterCommentsByActor(comments, "user1", "");
+    expect(filtered).toHaveLength(0);
+  });
+
+  test("does not crash on comments from deleted (null-author) accounts", () => {
+    // GitHub's GraphQL returns author: null for comments whose account was
+    // deleted. With an exclude filter set (the exact `*[bot]` config we
+    // recommend), the null author must not throw when dereferenced.
+    const comments = [
+      { author: { login: "user1" }, body: "comment1" },
+      { author: null, body: "from a deleted account" },
+      { author: { login: "bot[bot]" }, body: "comment3" },
+    ];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    const filtered = filterCommentsByActor(comments, "", "*[bot]");
+    // ghost comment is retained (it matches no exclude pattern); the bot is dropped.
+    expect(filtered).toHaveLength(2);
+    expect(filtered.map((c: any) => c.body)).toEqual([
+      "comment1",
+      "from a deleted account",
+    ]);
+  });
+
+  test("treats null author as the 'ghost' login for include/exclude", () => {
+    const comments = [
+      { author: null, body: "from a deleted account" },
+      { author: { login: "user1" }, body: "comment2" },
+    ];
+
+    const { filterCommentsByActor } = require("../src/github/data/fetcher");
+    // Excluding "ghost" removes the deleted-account comment.
+    expect(filterCommentsByActor(comments, "", "ghost")).toHaveLength(1);
+    expect(filterCommentsByActor(comments, "", "ghost")[0].body).toBe(
+      "comment2",
+    );
+    // Including only "ghost" keeps just the deleted-account comment.
+    const onlyGhost = filterCommentsByActor(comments, "ghost", "");
+    expect(onlyGhost).toHaveLength(1);
+    expect(onlyGhost[0].body).toBe("from a deleted account");
+  });
+});
