@@ -1,0 +1,241 @@
+# Copyright 2024 DeepMind Technologies Limited.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""A prefab containing the three key questions actor."""
+
+from collections.abc import Callable, Mapping, Sequence
+import dataclasses
+from typing import Any
+
+from concordia.agents import entity_agent_with_logging
+from concordia.associative_memory import basic_associative_memory
+from concordia.components import agent as agent_components
+from concordia.language_model import language_model
+from concordia.typing import entity_component
+from concordia.typing import prefab as prefab_lib
+
+_DEFAULT_OBSERVATION_HISTORY_LENGTH = 1_000_000
+_DEFAULT_SITUATION_PERCEPTION_HISTORY_LENGTH = 25
+_DEFAULT_SELF_PERCEPTION_HISTORY_LENGTH = 1_000_000
+_DEFAULT_PERSON_BY_SITUATION_HISTORY_LENGTH = 5
+
+
+@dataclasses.dataclass
+class Entity(prefab_lib.Prefab):
+  """A prefab implementing a basic actor entity."""
+
+  supports_extra_components = True
+
+  description: str = (  # pyrefly: ignore[bad-override]
+      'An entity that makes decisions by asking '
+      '"What situation am I in right now?", "What kind of person am I?", and '
+      '"What would a person like me do in a situation like this?"'
+  )
+  params: Mapping[str, Any] = dataclasses.field(
+      default_factory=lambda: {
+          'name': 'Alice',
+          'goal': '',
+          'extra_components': {},
+          'extra_components_index': {},
+          'randomize_choices': True,
+          'prefix_entity_name': True,
+          'observation_history_length': _DEFAULT_OBSERVATION_HISTORY_LENGTH,
+          'situation_perception_history_length': (
+              _DEFAULT_SITUATION_PERCEPTION_HISTORY_LENGTH
+          ),
+          'self_perception_history_length': (
+              _DEFAULT_SELF_PERCEPTION_HISTORY_LENGTH
+          ),
+          'person_by_situation_history_length': (
+              _DEFAULT_PERSON_BY_SITUATION_HISTORY_LENGTH
+          ),
+      }
+  )
+
+  def build(
+      self,
+      model: language_model.LanguageModel,
+      memory_bank: basic_associative_memory.AssociativeMemoryBank,
+      *,
+      act_component: entity_component.ActingComponent | None = None,
+      act_component_factory: (
+          Callable[[Sequence[str]], entity_component.ActingComponent] | None
+      ) = None,
+  ) -> entity_agent_with_logging.EntityAgentWithLogging:
+    """Build an entity.
+
+    Args:
+      model: The language model to use.
+      memory_bank: The memory bank to use.
+      act_component: Optional runtime acting policy, e.g. HumanActComponent. All
+        context components, including LLM-backed perceptions, memory and
+        logging, are unchanged. Omit to use the normal ConcatActComponent.
+      act_component_factory: Optional runtime factory receiving the exact prefab
+        context order. Use for an order-aware replacement policy. Cannot be
+        combined with act_component.
+
+    Returns:
+      An entity.
+    """
+    self.check_extra_components()
+    if act_component is not None and act_component_factory is not None:
+      raise ValueError(
+          'Provide act_component or act_component_factory, not both.'
+      )
+
+    entity_name = self.params.get('name', 'Alice')
+    entity_goal = self.params.get('goal', '')
+    randomize_choices = self.params.get('randomize_choices', True)
+    prefix_entity_name = self.params.get('prefix_entity_name', True)
+    observation_history_length = self.params.get(
+        'observation_history_length', _DEFAULT_OBSERVATION_HISTORY_LENGTH
+    )
+    situation_perception_history_length = self.params.get(
+        'situation_perception_history_length',
+        _DEFAULT_SITUATION_PERCEPTION_HISTORY_LENGTH,
+    )
+    self_perception_history_length = self.params.get(
+        'self_perception_history_length',
+        _DEFAULT_SELF_PERCEPTION_HISTORY_LENGTH,
+    )
+    person_by_situation_history_length = self.params.get(
+        'person_by_situation_history_length',
+        _DEFAULT_PERSON_BY_SITUATION_HISTORY_LENGTH,
+    )
+
+    memory_key = agent_components.memory.DEFAULT_MEMORY_COMPONENT_KEY
+    memory = agent_components.memory.AssociativeMemory(memory_bank=memory_bank)
+
+    instructions_key = 'Instructions'
+    instructions = agent_components.instructions.Instructions(
+        agent_name=entity_name,
+        pre_act_label='\nInstructions',
+    )
+
+    observation_to_memory_key = 'Observation'
+    observation_to_memory = agent_components.observation.ObservationToMemory()
+
+    observation_key = (
+        agent_components.observation.DEFAULT_OBSERVATION_COMPONENT_KEY
+    )
+    observation = agent_components.observation.LastNObservations(
+        history_length=observation_history_length,  # pyrefly: ignore[bad-argument-type]
+        pre_act_label=(
+            '\nEvents so far (ordered from least recent to most recent)'
+        ),
+    )
+
+    # Create the goal component early so perception components can reference it.
+    if entity_goal:
+      goal_key = 'Goal'
+      overarching_goal = agent_components.constant.Constant(
+          state=entity_goal, pre_act_label='\nGoal'
+      )
+    else:
+      goal_key = None
+      overarching_goal = None
+
+    # When a goal is set, include it in the perception components so the
+    # intermediate reasoning chain (not just the final action prompt)
+    # explicitly considers the agent's goal.
+    goal_components = [goal_key] if goal_key else []
+
+    situation_perception_key = 'SituationPerception'
+    situation_perception = (
+        agent_components.question_of_recent_memories.SituationPerception(
+            model=model,
+            num_memories_to_retrieve=situation_perception_history_length,
+            components=goal_components,
+            pre_act_label=(
+                f'\nQuestion: What situation is {entity_name} in right now?'
+                '\nAnswer'
+            ),
+        )
+    )
+    self_perception_key = 'SelfPerception'
+    self_perception = (
+        agent_components.question_of_recent_memories.SelfPerception(
+            model=model,
+            num_memories_to_retrieve=self_perception_history_length,
+            components=goal_components
+            + [
+                situation_perception_key,
+            ],
+            pre_act_label=(
+                f'\nQuestion: What kind of person is {entity_name}?\nAnswer'
+            ),
+        )
+    )
+
+    person_by_situation_key = 'PersonBySituation'
+    person_by_situation = agent_components.question_of_recent_memories.PersonBySituation(
+        model=model,
+        num_memories_to_retrieve=person_by_situation_history_length,
+        components=goal_components
+        + [
+            self_perception_key,
+            situation_perception_key,
+        ],
+        pre_act_label=(
+            f'\nQuestion: What would a person like {entity_name} do in '
+            'a situation like this?\nAnswer'
+        ),
+    )
+
+    components_of_agent = {
+        instructions_key: instructions,
+        observation_to_memory_key: observation_to_memory,
+        self_perception_key: self_perception,
+        situation_perception_key: situation_perception,
+        person_by_situation_key: person_by_situation,
+        observation_key: observation,
+        memory_key: memory,
+    }
+
+    component_order = list(components_of_agent.keys())
+
+    if overarching_goal is not None:
+      components_of_agent[goal_key] = overarching_goal  # pyrefly: ignore[unsupported-operation]
+      # Place goal after the instructions.
+      component_order.insert(1, goal_key)  # pyrefly: ignore[bad-argument-type]
+
+    # Use the same extra-component contract as the minimal entity prefab.
+    self.validate_extra_components(components_of_agent)
+    extra_components = self.params.get('extra_components', {})
+    extra_indices = self.params.get('extra_components_index', {})
+    for key, component in extra_components.items():
+      index = extra_indices.get(key, len(component_order))
+      components_of_agent[key] = component
+      if key in component_order:
+        component_order.remove(key)
+      component_order.insert(index, key)
+
+    if act_component_factory is not None:
+      act_component = act_component_factory(tuple(component_order))
+    elif act_component is None:
+      act_component = agent_components.concat_act_component.ConcatActComponent(
+          model=model,
+          component_order=component_order,
+          randomize_choices=randomize_choices,  # pyrefly: ignore[bad-argument-type]
+          prefix_entity_name=prefix_entity_name,  # pyrefly: ignore[bad-argument-type]
+      )
+
+    agent = entity_agent_with_logging.EntityAgentWithLogging(
+        agent_name=entity_name,
+        act_component=act_component,
+        context_components=components_of_agent,
+        measurements=self.params.get('measurements'),  # pyrefly: ignore[bad-argument-type]
+    )
+
+    return agent
