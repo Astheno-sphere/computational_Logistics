@@ -85,6 +85,6 @@ Read the server code before connecting it: it runs with your permissions.
 | `ahujasid__blender-mcp` | urban-design-mcp | MIT | py | 16 | uvx / pip |  | Blender MCP |
 | `crystaldba__postgres-mcp` | urban-design-mcp | MIT | py | 8 | uvx / pip |  | Postgres/PostGIS MCP |
 | `JotaDeRodriguez__Bonsai_mcp` | urban-design-mcp | MIT | py | 18 | uvx / pip |  | Blender/Bonsai IFC MCP |
-| `mapbox__mcp-server` | urban-design-mcp | MIT | ts | 15 | npx / node |  | Mapbox MCP |
+| `mapbox__mcp-server` | urban-design-mcp | MIT | ts | 15 | npx / node | 2026-10-06 | Mapbox MCP |
 | `mcp-servers-for-revit__mcp-servers-for-revit` | urban-design-mcp | MIT | ts | 26 | see README |  | Revit MCP |
 | `neka-nat__freecad-mcp` | urban-design-mcp | MIT | py | ? | uvx / pip |  | FreeCAD MCP |

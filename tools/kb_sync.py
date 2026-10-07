@@ -31,6 +31,7 @@ SECRET_RE = re.compile(
     r"gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}"
     r"|sk-ant-[A-Za-z0-9_-]{20,}|sk-(?:proj-)?[A-Za-z0-9_-]{32,}|xox[abprs]-[0-9A-Za-z-]{20,}|AIza[0-9A-Za-z_-]{35}"
     r"|[sr]k_live_[0-9A-Za-z]{20,}|npm_[A-Za-z0-9]{36}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}"
+    r"|[sp]k\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}"      # Mapbox access tokens
     r"|-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY")
 
 
