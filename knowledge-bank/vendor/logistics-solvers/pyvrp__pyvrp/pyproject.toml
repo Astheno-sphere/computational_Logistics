@@ -1,0 +1,200 @@
+[project]
+name = "pyvrp"
+version = "1.0.0a0"
+description = "A state-of-the-art vehicle routing problem solver."
+authors = [
+    { name = "Niels Wouda", email = "nielswouda@gmail.com" },
+    { name = "Leon Lan", email = "leon.lanyidong@gmail.com" },
+    { name = "Wouter Kool", email = "wouter.kool@ortec.com" },
+]
+license = "MIT"
+license-files = ["LICENSE.md"]
+readme = "README.md"
+keywords = [
+    "vehicle routing problem",
+    "vrp",
+    "metaheuristic",
+    "logistics",
+    "optimization",
+    "optimisation",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.15.2; python_version < '3.12'",
+    "numpy>=1.26.0; python_version >= '3.12'",
+    "matplotlib>=2.2.0",
+    "vrplib>=1.4.0",
+    "tqdm>=4.64.1",
+]
+
+[project.urls]
+homepage = "https://pyvrp.org/"
+documentation = "https://pyvrp.org/"
+source = "https://github.com/PyVRP/PyVRP"
+issues = "https://github.com/PyVRP/PyVRP/issues"
+
+
+[project.scripts]
+pyvrp = "pyvrp.cli:main"
+
+
+[dependency-groups]
+build = [
+    "meson>=1.0.0",
+    "ninja>=1.11.1",
+    "gcovr>=8.6",
+    "docblock>=0.1.8",
+]
+
+dev = [
+    "pre-commit>=2.20.0",
+    "pytest>=6.0.0",
+    "pytest-cov>=6.1.1",
+    "pytest-codspeed>=2.2.1",
+    "pytest-xdist>=3.6.1",
+    "pytest-sugar>=1.0.0",
+    "codecov",
+]
+
+docs = [
+    "sphinx>=7.3.0,<8.2.0",
+    "nbsphinx>=0.8.9",
+    "ipython>=8.6.0",
+    "numpydoc>=1.5.0",
+    "sphinx-immaterial>=0.11.12",
+]
+
+examples = [
+    "jupyter>=1.0.0",
+    "tabulate>=0.9.0",
+]
+
+
+[tool.uv]
+exclude-newer = "P7D"
+default-groups = ["build", "dev"]
+package = true
+
+
+[tool.ruff]
+line-length = 79
+
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "I", "NPY", "PYI", "Q", "RET", "RSE", "RUF", "SLF", "SIM", "TC"
+]
+
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+known-first-party = ["pyvrp", "tests"]
+
+
+[tool.mypy]
+ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov",
+    "--cov-report=xml",
+    "--cov-report=term-missing",
+    "--numprocesses=auto",
+]
+testpaths = "tests"
+
+
+[tool.coverage.run]
+omit = [
+    "buildtools/*.py",  # build scripts
+    "pyvrp/show_versions.py",  # only prints debug information
+    "pyvrp/cli.py",  # tested in other ways than unit tests
+    ".venv/*",
+    "benchmarks/*",
+    "docs/*",
+    "tests/*",
+]
+
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "@abstract",
+    "if TYPE_CHECKING:",
+]
+
+
+[tool.cibuildwheel]
+# We do not support old Python versions and somewhat uncommon platforms.
+build = "cp311-* cp312-* cp313-* cp314-*"
+skip = "*_ppc64le *_i686 *_s390x *-win32"
+build-frontend = "build"
+test-groups = ["dev"]
+test-sources = ["tests"]
+test-command = "pytest ./tests -v"
+
+
+[tool.cibuildwheel.windows]
+before-build = "pip install delvewheel"
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
+
+
+[tool.cibuildwheel.macos.environment]
+MACOSX_DEPLOYMENT_TARGET = "13.3"
+
+
+[tool.cibuildwheel.pyodide]
+build-frontend = "pyodide-build"
+repair-wheel-command = "pyodide auditwheel repair --output-dir {dest_dir} {wheel}"
+# Build chain sets PTHREAD_POOL_SIZE, but that's only supported by JavaScript
+# builds and unused otherwise (so we need to allow unused arguments).
+environment.CXXFLAGS = "-Wno-error=unused-command-line-argument"
+# The pyodide builds can only test with the Agg backend. With that backend we 
+# get significant layout shifts, so we skip the plot tests for pyodide.
+test-command = "pytest -k \"not test_plotting\" ./tests -v"
+
+
+[tool.poetry]
+include = [
+    { path = "benchmarks/", format = "sdist" },
+    { path = "docs/source", format = "sdist" },
+    { path = "notebooks/", format = "sdist" },
+    { path = "tests/", format = "sdist" },
+
+    { path = "pyvrp/cpp", format = "sdist"},
+    { path = "meson.build", format = "sdist" },
+    { path = "buildtools/*.py", format = "sdist" },
+    { path = "subprojects/*.wrap", format = "sdist" },
+
+    { path = "pyvrp/**/*.so", format = "wheel" },
+    { path = "pyvrp/**/*.pyd", format = "wheel" },
+]
+exclude = [
+    "pyvrp/cpp",
+]
+packages = [
+    { include = "pyvrp" },
+]
+
+
+[tool.poetry.build]
+generate-setup-file = false
+script = "buildtools/build_wrapper.py"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "meson", "ninja", "docblock"]
+build-backend = "poetry.core.masonry.api"

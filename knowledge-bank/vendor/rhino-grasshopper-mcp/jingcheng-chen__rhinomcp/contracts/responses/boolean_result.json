@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "boolean_result.json",
+  "title": "BooleanOperation Response",
+  "description": "Result of a boolean union, difference, or intersection: either the committed objects, or, for a dry_run, the metrics a real run would produce with no document change.",
+  "oneOf": [
+    {
+      "type": "object",
+      "description": "Committed result: the ids of the objects the operation created.",
+      "properties": {
+        "result_ids": { "$ref": "../common/definitions.json#/$defs/guidArray" },
+        "count": { "type": "integer", "minimum": 0 },
+        "message": { "type": "string" }
+      },
+      "required": ["result_ids", "count", "message"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "description": "Dry_run preview: the predicted result metrics, with nothing added to or removed from the document.",
+      "properties": {
+        "dry_run": { "const": true },
+        "would_succeed": { "type": "boolean" },
+        "count": { "type": "integer", "minimum": 0 },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "valid": { "type": "boolean" },
+              "reason": { "type": "string" },
+              "is_solid": { "type": "boolean" },
+              "volume": { "type": "number" },
+              "area": { "type": "number" },
+              "bounding_box": { "$ref": "../common/definitions.json#/$defs/boundingBox" }
+            },
+            "required": ["valid", "is_solid", "bounding_box"],
+            "additionalProperties": false
+          }
+        },
+        "message": { "type": "string" }
+      },
+      "required": ["dry_run", "would_succeed", "count", "results", "message"],
+      "additionalProperties": false
+    }
+  ]
+}

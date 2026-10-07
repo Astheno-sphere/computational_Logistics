@@ -1,0 +1,1 @@
+jsdoc out\js_apidocs\rh3dm_temp.js README.md -c jsdoc.conf -t C:\Users\sbaer\AppData\Roaming\npm\node_modules\docdash

@@ -1,0 +1,770 @@
+import logging
+
+import numpy as np
+import pytest
+from numpy.testing import assert_, assert_allclose, assert_equal
+
+from pyvrp import (
+    Activity,
+    Client,
+    ClientGroup,
+    CostEvaluator,
+    Depot,
+    Location,
+    ProblemData,
+    RandomNumberGenerator,
+    Route,
+    Solution,
+    VehicleType,
+)
+from pyvrp.search import (
+    InsertOptionalClient,
+    LocalSearch,
+    PerturbationManager,
+    PerturbationParams,
+    Relocate1,
+    RelocatePickup,
+    RelocateWithDepot,
+    RemoveAdjacentDepot,
+    RemoveOptionalClient,
+    ReplaceGroup,
+    Swap11,
+    compute_neighbours,
+)
+from pyvrp.search._search import LocalSearch as cpp_LocalSearch
+from tests.helpers import read_solution
+from tests.markers import skip_if_release
+
+
+def test_local_search_returns_same_solution_with_empty_neighbourhood(ok_small):
+    """
+    Tests that calling the local search when it only has binary operators and
+    an empty neighbourhood is a no-op: since the binary operators respect the
+    neighbourhood definition, they cannot do anything with an empty
+    neighbourhood.
+    """
+    cost_evaluator = CostEvaluator([20], 6, 0)
+    rng = RandomNumberGenerator(seed=42)
+
+    empty = {Activity(f"C{idx}"): [] for idx in range(ok_small.num_clients)}
+    ls = LocalSearch(ok_small, rng, empty)
+    ls.add_operator(Relocate1(ok_small))
+    ls.add_operator(Swap11(ok_small))
+
+    # The search is completed after one iteration due to the empty
+    # neighbourhood. This also prevents moves involving empty routes,
+    # which are not explicitly forbidden by the empty neighbourhood.
+    sol = Solution.make_random(ok_small, rng)
+    assert_equal(ls(sol, cost_evaluator, exhaustive=True), sol)
+
+
+def test_local_search_call_perturbs_solution(ok_small):
+    """
+    Tests that calling local search perturbs a solution.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    neighbours = compute_neighbours(ok_small)
+    ls = LocalSearch(ok_small, rng, neighbours)
+
+    sol = Solution.make_random(ok_small, rng)
+    cost_eval = CostEvaluator([1], 1, 0)
+
+    # The local search should perturb the solution even though no node
+    # operators are added.
+    perturbed = ls(sol, cost_eval)
+    assert_(perturbed != sol)
+
+
+def test_get_set_neighbours(ok_small):
+    """
+    Tests that getting and setting the local search's granular neighbourhood
+    works as expected. For more details, see the tests for the SearchSpace in
+    ``test_SearchSpace.py``, which handle validation.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    empty = {Activity(f"C{idx}"): [] for idx in range(ok_small.num_clients)}
+    ls = LocalSearch(ok_small, rng, empty)
+    assert_equal(ls.neighbours, empty)
+
+    new_neighbours = compute_neighbours(ok_small)
+    assert_(new_neighbours != empty)
+
+    ls.neighbours = new_neighbours
+    assert_equal(ls.neighbours, new_neighbours)
+
+
+def test_reoptimize_changed_objective_timewarp_OkSmall(ok_small):
+    """
+    This test reproduces a bug where loadSolution in LocalSearch.cpp would
+    reset the timewarp for a route to 0 if the route was not changed. This
+    would cause improving moves with a smaller timewarp not to be considered
+    because the current cost doesn't count the current time warp.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    sol = Solution(ok_small, [[0, 1, 2, 3]])
+
+    # We restrict neighbours to C0 -> C1, so the only feasible move is changing
+    # [C0, C1, C2, C3] into [C1, C0, C2, C3] or moving one of the nodes into a
+    # new route. Since those solutions have larger distance but smaller time
+    # warp, they are considered improving sufficiently large time warp penalty.
+    data = ok_small
+    neighbours = {Activity(f"C{idx}"): [] for idx in range(data.num_clients)}
+    neighbours[Activity("C0")] = [Activity("C1")]
+
+    ls = LocalSearch(ok_small, rng, neighbours)
+    ls.add_operator(Relocate1(ok_small))
+
+    # With 0 timewarp penalty, the solution should not change since
+    # the solution [C1, C0, C2, C3] has larger distance.
+    improved_sol = ls(sol, CostEvaluator([0], 0, 0), exhaustive=True)
+    assert_equal(sol, improved_sol)
+
+    # Now doing it again with a large TW penalty, we must find the alternative
+    # solution. Previously caching caused the  current time warp to be computed
+    # as zero, and the move was then evaluated as worse.
+    cost_evaluator_tw = CostEvaluator([0], 1_000, 0)
+    improved_sol = ls(sol, cost_evaluator_tw, exhaustive=True)
+    improved_cost = cost_evaluator_tw.penalised_cost(improved_sol)
+    assert_(improved_cost < cost_evaluator_tw.penalised_cost(sol))
+
+
+def test_prize_collecting(prize_collecting):
+    """
+    Tests that local search works on a small prize-collecting instance.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    cost_evaluator = CostEvaluator([1], 1, 0)
+
+    sol = Solution.make_random(prize_collecting, rng)
+    sol_cost = cost_evaluator.penalised_cost(sol)
+
+    neighbours = compute_neighbours(prize_collecting)
+    ls = LocalSearch(prize_collecting, rng, neighbours)
+    ls.add_operator(Relocate1(prize_collecting))
+    ls.add_operator(Swap11(prize_collecting))
+
+    improved = ls(sol, cost_evaluator, exhaustive=True)
+    improved_cost = cost_evaluator.penalised_cost(improved)
+
+    assert_(improved.num_clients() < prize_collecting.num_clients)
+    assert_(improved_cost < sol_cost)
+
+
+def test_cpp_shuffle_results_in_different_solution(rc208):
+    """
+    Tests that calling shuffle changes the evaluation order, which can well
+    result in different solutions generated from the same initial solution.
+    """
+    rng = RandomNumberGenerator(seed=42)
+
+    perturbation = PerturbationManager(rc208)
+    ls = cpp_LocalSearch(rc208, compute_neighbours(rc208), perturbation)
+    ls.add_operator(Relocate1(rc208))
+    ls.add_operator(Swap11(rc208))
+
+    cost_evaluator = CostEvaluator([1], 1, 0)
+    sol = Solution.make_random(rc208, rng)
+
+    # LocalSearch is deterministic, so two calls with the same base
+    # solution should result in the same improved solution.
+    improved1 = ls(sol, cost_evaluator)
+    improved2 = ls(sol, cost_evaluator)
+    assert_(improved1 == improved2)
+
+    # But the shuffle method changes the order in which moves are evaluated,
+    # which should result in a very different search trajectory.
+    ls.shuffle(rng)
+    improved3 = ls(sol, cost_evaluator)
+    assert_(improved3 != improved1)
+
+
+def test_vehicle_types_are_preserved_for_locally_optimal_solutions(rc208):
+    """
+    Tests that a solution that is already locally optimal returns the same
+    solution, particularly w.r.t. the underlying vehicles. This exercises an
+    issue where loading the solution in the local search did not preserve the
+    vehicle types.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    neighbours = compute_neighbours(rc208)
+
+    ls = cpp_LocalSearch(rc208, neighbours, PerturbationManager(rc208))
+    ls.add_operator(Relocate1(rc208))
+    ls.add_operator(Swap11(rc208))
+
+    cost_evaluator = CostEvaluator([1], 1, 0)
+    sol = Solution.make_random(rc208, rng)
+
+    improved = ls(sol, cost_evaluator, exhaustive=True)
+
+    # Now make the instance heterogeneous and update the local search.
+    data = rc208.replace(
+        vehicle_types=[
+            VehicleType(25, capacity=[10_000]),
+            VehicleType(25, capacity=[10_000]),
+        ]
+    )
+
+    ls = cpp_LocalSearch(data, neighbours, PerturbationManager(data))
+    ls.add_operator(Relocate1(data))
+    ls.add_operator(Swap11(data))
+
+    # Update the improved (locally optimal) solution with vehicles of type 1.
+    routes = []
+    for route in improved.routes():
+        activities = route.schedule()[1:-1]  # exclude start and end depots
+        routes.append(Route(data, activities, 1))
+    improved = Solution(data, routes)
+
+    # This should not find any further improvements and thus not change the
+    # solution.
+    further_improved = ls(improved, cost_evaluator, exhaustive=True)
+    assert_equal(further_improved, improved)
+
+
+def test_bugfix_vehicle_type_offsets(ok_small):
+    """
+    See https://github.com/PyVRP/PyVRP/pull/292 for details. This exercises a
+    fix to a bug that would crash local search due to an incorrect internal
+    mapping of vehicle types to route indices if the next vehicle type had
+    more vehicles than the previous.
+    """
+    data = ok_small.replace(
+        vehicle_types=[
+            VehicleType(1, capacity=[10]),
+            VehicleType(2, capacity=[10]),
+        ]
+    )
+
+    perturbation = PerturbationManager(data)
+    ls = cpp_LocalSearch(data, compute_neighbours(data), perturbation)
+    ls.add_operator(Relocate1(data))
+
+    cost_evaluator = CostEvaluator([1], 1, 0)
+
+    current = Solution(data, [Route(data, [0, 2], 1), Route(data, [1, 3], 1)])
+    current_cost = cost_evaluator.penalised_cost(current)
+
+    improved = ls(current, cost_evaluator, exhaustive=True)
+    improved_cost = cost_evaluator.penalised_cost(improved)
+
+    assert_(improved_cost <= current_cost)
+
+
+def test_no_op_results_in_same_solution(ok_small):
+    """
+    Tests that calling local search without first adding any operators is a
+    no-op, and returns the same solution as the one that was given to it.
+    """
+    rng = RandomNumberGenerator(seed=42)
+
+    # Empty local search does not actually search anything, so it should return
+    # the exact same solution as what was passed in.
+    ls = LocalSearch(
+        ok_small,
+        rng,
+        compute_neighbours(ok_small),
+        PerturbationManager(ok_small, PerturbationParams(0, 0)),  # disabled
+    )
+
+    cost_eval = CostEvaluator([1], 1, 0)
+    sol = Solution.make_random(ok_small, rng)
+
+    assert_equal(ls(sol, cost_eval, exhaustive=False), sol)
+    assert_equal(ls(sol, cost_eval, exhaustive=True), sol)
+
+
+def test_local_search_completes_incomplete_solutions(ok_small_prizes):
+    """
+    Tests that the local search object improve solutions that are incomplete,
+    and returns a completed solution. Passing an incomplete solution should
+    return a completed solution after search.
+    """
+    rng = RandomNumberGenerator(seed=42)
+
+    ls = LocalSearch(ok_small_prizes, rng, compute_neighbours(ok_small_prizes))
+    ls.add_operator(Relocate1(ok_small_prizes))
+
+    cost_eval = CostEvaluator([1], 1, 0)
+    sol = Solution(ok_small_prizes, [[1], [2, 3]])
+    assert_(not sol.is_complete())  # C0 is required but not visited
+
+    new_sol = ls(sol, cost_eval, exhaustive=True)
+    assert_(new_sol.is_complete())
+
+
+def test_mutually_exclusive_group_not_in_solution(
+    ok_small_mutually_exclusive_groups,
+):
+    """
+    Tests that the local search inserts a client from the mutually exclusive
+    group if the entire group is missing from the solution.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    neighbours = compute_neighbours(ok_small_mutually_exclusive_groups)
+
+    ls = LocalSearch(ok_small_mutually_exclusive_groups, rng, neighbours)
+    ls.add_operator(InsertOptionalClient(ok_small_mutually_exclusive_groups))
+
+    sol = Solution(ok_small_mutually_exclusive_groups, [[3]])
+    assert_equal(sol.num_missing_groups(), 1)
+
+    improved = ls(sol, CostEvaluator([20], 6, 0))
+    assert_equal(improved.num_missing_groups(), 0)
+
+
+def test_swap_if_improving_mutually_exclusive_group(
+    ok_small_mutually_exclusive_groups,
+):
+    """
+    Tests that we swap a client (C0) in a mutually exclusive group when another
+    client (C2) in the group is better to have.
+    """
+    data = ok_small_mutually_exclusive_groups
+    rng = RandomNumberGenerator(seed=42)
+    neighbours = compute_neighbours(data)
+    perturbation = PerturbationManager(data, PerturbationParams(0, 0))
+
+    ls = LocalSearch(data, rng, neighbours, perturbation)
+    ls.add_operator(ReplaceGroup(data))
+
+    cost_eval = CostEvaluator([20], 6, 0)
+    sol = Solution(data, [[0, 3]])
+    improved = ls(sol, cost_eval, exhaustive=True)
+    assert_(cost_eval.penalised_cost(improved) < cost_eval.penalised_cost(sol))
+
+    routes = improved.routes()
+    assert_equal(improved.num_routes(), 1)
+    assert_equal(str(routes[0]), "C2 C3")
+
+
+def test_no_op_multi_trip_instance(ok_small_multiple_trips):
+    """
+    Tests that loading and exporting a multi-trip instance correctly returns an
+    equivalent solution when no operators are available.
+    """
+    data = ok_small_multiple_trips
+
+    rng = RandomNumberGenerator(seed=42)
+    neighbours = {Activity(f"C{idx}"): [] for idx in range(data.num_clients)}
+    ls = LocalSearch(
+        data,
+        rng,
+        neighbours,
+        PerturbationManager(data, PerturbationParams(0, 0)),  # disabled
+    )
+
+    activities = map(Activity, ["C0", "C1", "D0", "C2", "C3"])
+    route = Route(data, activities, 0)
+
+    sol = Solution(data, [route])
+    cost_eval = CostEvaluator([20], 6, 0)
+    assert_equal(ls(sol, cost_eval), sol)
+
+
+def test_local_search_inserts_reload_depots(ok_small_multiple_trips):
+    """
+    Tests that the local search routine inserts a reload depot when that is
+    beneficial.
+    """
+    rng = RandomNumberGenerator(seed=2)
+    neighbours = compute_neighbours(ok_small_multiple_trips)
+
+    ls = LocalSearch(ok_small_multiple_trips, rng, neighbours)
+    ls.add_operator(RelocateWithDepot(ok_small_multiple_trips))
+
+    sol = Solution(ok_small_multiple_trips, [[0, 1, 2, 3]])
+    assert_(sol.has_excess_load())
+
+    cost_eval = CostEvaluator([1_000], 0, 0)
+    improved = ls(sol, cost_eval)
+
+    assert_(not improved.has_excess_load())
+    assert_(cost_eval.penalised_cost(improved) < cost_eval.penalised_cost(sol))
+
+    assert_equal(improved.num_routes(), 1)
+    assert_equal(improved.num_trips(), 2)
+    assert_(not improved.has_excess_load())
+
+
+def test_local_search_removes_useless_reload_depots(ok_small_multiple_trips):
+    """
+    Tests that the local search removes useless reload depots from the given
+    solution.
+    """
+    data = ok_small_multiple_trips
+    rng = RandomNumberGenerator(seed=2)
+    ls = LocalSearch(
+        data,
+        rng,
+        compute_neighbours(data),
+        PerturbationManager(data, PerturbationParams(0, 0)),  # disabled
+    )
+    ls.add_operator(RemoveAdjacentDepot(data))
+
+    route1 = Route(data, [Activity(des) for des in ["C0", "D0", "C2"]], 0)
+    route2 = Route(data, [Activity(des) for des in ["C1", "C3"]], 0)
+    sol = Solution(data, [route1, route2])
+
+    cost_eval = CostEvaluator([1_000], 0, 0)
+    improved = ls(sol, cost_eval, exhaustive=True)
+    assert_(cost_eval.penalised_cost(improved) < cost_eval.penalised_cost(sol))
+
+    # The local search should have removed the reload depot from the first
+    # route, because that was not providing any value.
+    routes = improved.routes()
+    assert_equal(str(routes[0]), "C0 C2")
+    assert_equal(str(routes[1]), "C1 C3")
+
+
+def test_search_statistics(ok_small):
+    """
+    Tests that the local search's search statistics return meaningful
+    information about the number of evaluated and improving moves.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    ls = LocalSearch(
+        ok_small,
+        rng,
+        compute_neighbours(ok_small),
+        PerturbationManager(ok_small, PerturbationParams(0, 0)),  # disabled
+    )
+
+    op = Relocate1(ok_small)
+    ls.add_operator(op)
+
+    # No solution is yet loaded/improved, so all these numbers should be zero.
+    stats = ls.statistics
+    assert_equal(stats.num_moves, 0)
+    assert_equal(stats.num_improving, 0)
+    assert_equal(stats.num_updates, 0)
+
+    # Load and improve a random solution. This should result in a non-zero
+    # number of moves.
+    rnd_sol = Solution.make_random(ok_small, rng)
+    cost_eval = CostEvaluator([1], 1, 1)
+    improved = ls(rnd_sol, cost_eval, exhaustive=True)
+
+    stats = ls.statistics
+    assert_(stats.num_moves > 0)
+    assert_(stats.num_improving > 0)
+    assert_(stats.num_updates >= stats.num_improving)
+
+    # Since we have only a single operator, the number of moves and the number
+    # of improving moves should match what the operator tracks.
+    assert_equal(stats.num_moves, op.statistics.num_evaluations)
+    assert_equal(stats.num_improving, op.statistics.num_applications)
+
+    # The improved solution is already locally optimal, so it cannot be further
+    # improved by the local search. The number of improving moves should thus
+    # be zero after another attempt.
+    ls(improved, cost_eval, exhaustive=True)
+
+    stats = ls.statistics
+    assert_(stats.num_moves > 0)
+    assert_equal(stats.num_improving, 0)
+    assert_equal(stats.num_updates, 0)
+
+
+def test_operators_property(ok_small):
+    """
+    Tests adding and accessing operators to the LocalSearch object.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    ls = LocalSearch(ok_small, rng, compute_neighbours(ok_small))
+
+    # The local search has not yet been equipped with operators, so it should
+    # start empty.
+    assert_equal(len(ls.unary_operators), 0)
+    assert_equal(len(ls.binary_operators), 0)
+
+    # Now we add a binary operator. The local search does not take ownership,
+    # so its only operator should be the exact object we just created.
+    op = Relocate1(ok_small)
+    ls.add_operator(op)
+    assert_equal(len(ls.unary_operators), 0)
+    assert_equal(len(ls.binary_operators), 1)
+    assert_(ls.binary_operators[0] is op)
+
+    # And similarly for a unary operator.
+    op = RemoveAdjacentDepot(ok_small)
+    ls.add_operator(op)
+    assert_equal(len(ls.unary_operators), 1)
+    assert_equal(len(ls.binary_operators), 1)
+    assert_(ls.unary_operators[0] is op)
+
+
+@pytest.mark.parametrize(
+    ("instance", "exp_clients"),
+    [
+        # {0, 1, 2, 3} are all required clients.
+        ("ok_small", {0, 1, 2, 3}),
+        # 2 from required group {0, 1, 2}, 3 is a required client.
+        ("ok_small_mutually_exclusive_groups", {2, 3}),
+    ],
+)
+def test_inserts_required_missing(instance, exp_clients: set[int], request):
+    """
+    Tests that the local search inserts all missing clients and groups, if
+    those are currently missing from the solution.
+    """
+    data = request.getfixturevalue(instance)
+    rng = RandomNumberGenerator(seed=42)
+    perturbation = PerturbationManager(data, PerturbationParams(1, 1))
+    ls = LocalSearch(data, rng, compute_neighbours(data), perturbation)
+    ls.add_operator(Relocate1(data))
+
+    sol = Solution(data, [])
+    assert_(not sol.is_complete())
+
+    cost_eval = CostEvaluator([20], 6, 0)
+    improved = ls(sol, cost_eval)
+    assert_(improved.is_complete())
+
+    client_visits = {
+        activity.idx
+        for route in improved.routes()
+        for activity in route
+        if activity.is_client()
+    }
+    assert_equal(client_visits, exp_clients)
+
+
+def test_local_search_exhaustive(rc208):
+    """
+    Tests calling the local search with the optional ``exhaustive`` argument
+    for a complete evaluation.
+    """
+    rng = RandomNumberGenerator(seed=2)
+    ls = LocalSearch(rc208, rng, compute_neighbours(rc208))
+    ls.add_operator(Relocate1(rc208))
+
+    init = Solution.make_random(rc208, rng)
+    cost_eval = CostEvaluator([20], 6, 0)
+
+    # The returned solution by default evaluates only around perturbed,
+    # promising clients. That is not a full search. But when exhaustive is
+    # explicitly is explicitly set, a full search must be done. The resulting
+    # solution should be better than what's returned after perturbation,
+    # because a full search evaluates many more moves.
+    perturbed = ls(init, cost_eval, exhaustive=False)
+    exhaustive = ls(init, cost_eval, exhaustive=True)
+
+    perturbed_cost = cost_eval.penalised_cost(perturbed)
+    exhaustive_cost = cost_eval.penalised_cost(exhaustive)
+    assert_(exhaustive_cost < perturbed_cost)
+
+    # Both should also be better than the initial, random solution.
+    init_cost = cost_eval.penalised_cost(init)
+    assert_(perturbed_cost < init_cost)
+    assert_(exhaustive_cost < init_cost)
+
+
+def test_local_search_inserts_into_empty_solutions():
+    """
+    Tests that the local search inserts into empty solutions.
+    """
+    data = ProblemData(
+        locations=[Location(0, 0)],
+        clients=[
+            Client(0, prize=1_000, required=False),  # high prizes make
+            Client(0, prize=1_000, required=False),  # inserting worthwhile
+        ],
+        depots=[Depot(0)],
+        vehicle_types=[VehicleType()],
+        distance_matrices=[np.zeros((1, 1), dtype=int)],
+        duration_matrices=[np.zeros((1, 1), dtype=int)],
+    )
+
+    rng = RandomNumberGenerator(seed=2)
+    cost_eval = CostEvaluator([], 0, 0)
+    ls = LocalSearch(data, rng, compute_neighbours(data))
+    ls.add_operator(InsertOptionalClient(data))
+
+    empty = Solution(data, [])
+    assert_equal(empty.num_clients(), 0)
+    assert_allclose(empty.uncollected_prizes(), 2_000)
+
+    # Start from the empty solution and check that the improved solution is no
+    # longer empty - the local search should have inserted the missing clients.
+    sol = ls(empty, cost_eval, exhaustive=True)
+    assert_equal(sol.num_clients(), 2)
+    assert_allclose(sol.uncollected_prizes(), 0)
+
+
+def test_does_not_insert_optional_groups():
+    """
+    Tests that the local search does not insert optional groups, and in fact
+    completely removes those if that's more beneficial.
+    """
+    matrix = np.ones((3, 3), dtype=int)
+    np.fill_diagonal(matrix, 0)
+
+    # Instance with all optional clients, that are in turn part of an optional
+    # group. The group isn't worth visiting since that incurs distance cost,
+    # and there is no prize to be obtained.
+    data = ProblemData(
+        locations=[Location(0, 0), Location(0, 0), Location(0, 0)],
+        clients=[
+            Client(location=1, group=0, required=False),
+            Client(location=2, group=0, required=False),
+        ],
+        depots=[Depot(location=0)],
+        vehicle_types=[VehicleType()],
+        distance_matrices=[matrix],
+        duration_matrices=[matrix],
+        groups=[ClientGroup([0, 1], required=False)],
+    )
+
+    rng = RandomNumberGenerator(seed=2)
+    ls = LocalSearch(data, rng, compute_neighbours(data))
+    ls.add_operator(InsertOptionalClient(data))
+    ls.add_operator(RemoveOptionalClient(data))
+
+    # Start with the group present. After local search, the solution should be
+    # empty because the group is not worth keeping around.
+    sol = Solution(data, [[1]])
+    cost_eval = CostEvaluator([], 0, 0)
+    improved = ls(sol, cost_eval, exhaustive=True)
+    assert_equal(improved.num_clients(), 0)
+
+
+def test_removes_useless_consecutive_depots(ok_small_multiple_trips):
+    """
+    Tests that the local search removes consecutive visits to the same reload
+    depot.
+    """
+    veh_type = ok_small_multiple_trips.vehicle_type(0).replace(max_reloads=2)
+    data = ok_small_multiple_trips.replace(vehicle_types=[veh_type])
+
+    rng = RandomNumberGenerator(seed=2)
+    ls = LocalSearch(data, rng, compute_neighbours(data))
+    ls.add_operator(RemoveAdjacentDepot(data))
+
+    # Set up a route with an empty trip, so a consecutive reload depot visit.
+    route = Route(data, map(Activity, ["C1", "D0", "D0", "C2"]), 0)
+    assert_equal(str(route), "C1 | | C2")
+
+    # The local search should remove this consecutive depot visit.
+    sol = Solution(data, [route])
+    cost_eval = CostEvaluator([1], 1, 1)
+    improved = ls(sol, cost_eval, exhaustive=True)
+    assert_(" | | " not in str(improved))
+
+
+def test_insert_missing_groups_and_clients(ok_small_mutually_exclusive_groups):
+    """
+    Tests that the local search establishes basic structural feasibility, by
+    inserting required groups and clients if they are missing.
+    """
+    data = ok_small_mutually_exclusive_groups
+    sol = Solution(data, [])
+    assert_(not sol.is_complete())
+    assert_equal(sol.num_missing_clients(), 1)
+    assert_equal(sol.num_missing_groups(), 1)
+
+    rng = RandomNumberGenerator(seed=42)
+    cost_eval = CostEvaluator([0], 0, 0)
+    ls = LocalSearch(data, rng, compute_neighbours(data))
+    ls.add_operator(Relocate1(data))  # does not insert clients
+
+    new = ls(sol, cost_eval, exhaustive=True)  # disable perturbation
+    assert_(new.is_complete())
+    assert_equal(new.num_missing_clients(), 0)
+    assert_equal(new.num_missing_groups(), 0)
+
+
+@skip_if_release
+def test_debug_logs_on_bks(rc208, caplog):
+    """
+    Tests that the local search logs various relevant statements in debug mode.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    ls = LocalSearch(rc208, rng, compute_neighbours(rc208))
+    ls.add_operator(Relocate1(rc208))
+
+    bks = read_solution("data/RC208.sol", rc208)
+    cost_eval = CostEvaluator([1_000], 1_000, 0)
+
+    with caplog.at_level(logging.DEBUG, logger="pyvrp.search"):
+        ls(bks, cost_eval, exhaustive=False)
+
+    expected = [
+        "Applying local search (exhaustive=false)",
+        "Entering search loop (step=0).",
+        "Entering search loop (step=1).",  # after reinserting required clients
+        "Completed local search: improving=0",  # bks, so no improvements
+    ]
+
+    for record, exp_msg in zip(caplog.records, expected):
+        assert_equal(record.levelno, logging.DEBUG)
+        assert_(exp_msg in record.message)
+
+
+@skip_if_release
+def test_debug_operator_logs(prize_collecting, caplog):
+    """
+    Tests that the debug logs also contain information about improvements found
+    by the operators.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    neighbourhood = compute_neighbours(prize_collecting)
+    ls = LocalSearch(prize_collecting, rng, neighbourhood)
+    ls.add_operator(Relocate1(prize_collecting))
+
+    sol = Solution.make_random(prize_collecting, rng)
+    cost_eval = CostEvaluator([1_000], 1_000, 0)
+
+    with caplog.at_level(logging.DEBUG, logger="pyvrp.search"):
+        ls(sol, cost_eval, exhaustive=True)
+
+    # A few expected debug records, and the indices they should occupy in the
+    # captured logs list.
+    expected = [
+        (0, "Applying local search (exhaustive=true)."),
+        (2, "Applying operator Relocate1 to U=9 and V=48 (delta=-300)."),
+        (-2, "Entering search loop (step=3)."),
+        (-1, "Completed local search: improving=71, updates=71, moves=5671."),
+    ]
+
+    for idx, exp_msg in expected:
+        assert_equal(caplog.records[idx].message, exp_msg)
+
+
+def test_shipment_structural_feasibility(small_shipments):
+    """
+    Tests that the LocalSearch restores structural feasibility for instances
+    with required shipments.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    neighbourhood = compute_neighbours(small_shipments)
+    ls = LocalSearch(small_shipments, rng, neighbourhood)
+    ls.add_operator(Relocate1(small_shipments))  # does not insert shipments
+
+    empty = Solution(small_shipments, [])
+    assert_equal(empty.num_shipments(), 0)
+    assert_(not empty.is_complete())
+
+    cost_eval = CostEvaluator([0], 0, 0)
+    complete = ls(empty, cost_eval, exhaustive=True)  # disable perturbation
+    assert_equal(complete.num_shipments(), 4)
+    assert_(complete.is_complete())
+
+
+def test_shipment_improves_over_random(small_shipments):
+    """
+    Smoke test that checks the local search is able to improve a random
+    shipment solution.
+    """
+    rng = RandomNumberGenerator(seed=42)
+    neighbourhood = compute_neighbours(small_shipments)
+    ls = LocalSearch(small_shipments, rng, neighbourhood)
+    ls.add_operator(RelocatePickup(small_shipments))
+
+    rnd_sol = Solution.make_random(small_shipments, rng)
+    cost_eval = CostEvaluator([1], 1, 0)
+    improved = ls(rnd_sol, cost_eval)
+
+    improved_cost = cost_eval.penalised_cost(improved)
+    rnd_cost = cost_eval.penalised_cost(rnd_sol)
+    assert_(improved_cost < rnd_cost)

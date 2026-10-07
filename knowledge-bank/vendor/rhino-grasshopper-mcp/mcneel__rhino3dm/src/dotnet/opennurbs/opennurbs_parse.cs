@@ -1,0 +1,912 @@
+#pragma warning disable 1591
+using System;
+using Microsoft.Win32;
+
+namespace Rhino.Input
+{
+  /// <summary> Parse strings to numbers, distances and angles </summary>
+  public class StringParser
+  {
+    /// <summary>
+    /// Parse a string for a length value.
+    /// Expression can include complex expressions
+    /// Simplest version of Length parsing
+    /// </summary>
+    /// <param name="expression">
+    ///  [In] The string to parse   
+    /// </param>
+    /// <param name="parse_settings_in">
+    ///  [In] Determines what input will be parsed 
+    /// </param>
+    /// <param name="output_unit_system">
+    ///  [In] Output value is in this unit system 
+    /// </param>
+    /// <param name="value_out">
+    ///  [Out] The length value result 
+    /// </param>
+    /// <returns> 
+    /// Count of characters parsed or 0 for failure
+    /// </returns>
+    /// <since>6.0</since>
+    public static int ParseLengthExpession(
+      string expression,
+      StringParserSettings parse_settings_in,
+      UnitSystem output_unit_system,
+      out double value_out)
+    {
+      if(null == expression)
+        throw new ArgumentNullException();
+
+      IntPtr settings_in_ptr = parse_settings_in.ConstPointer();
+      UnitSystem parsed_unit_system = UnitSystem.None;
+      value_out = RhinoMath.UnsetValue;
+
+      int rc = UnsafeNativeMethods.ON_Parse_LengthExpression(
+        expression,
+        0,
+        -1,
+        settings_in_ptr,
+        output_unit_system,
+        ref value_out,
+        IntPtr.Zero, 
+        ref parsed_unit_system);
+
+      GC.KeepAlive(parse_settings_in);
+      return rc;
+    }
+
+    /// <summary>
+    /// Parse a string for a length value.
+    /// Expression can include complex expressions
+    /// Most complex version of length parsing
+    /// </summary>
+    /// <param name="expression">
+    ///  [In] The string to parse   </param>
+    /// <param name="start_offset">
+    ///  [In] Offset position in string to start parsing  </param>
+    /// <param name="expression_length"> 
+    ///  [In] Maximum length of string to parse.
+    ///  -1 means parse to a terminating character or end of string 
+    /// </param>
+    /// <param name="parse_settings_in">
+    ///  [In] Determines what input will be parsed </param>
+    ///  If trig functions are included in the expression, 
+    ///  the angle unit system must be set correctly
+    /// <param name="output_unit_system">
+    ///  [In] Output value is returned in this unit system </param>
+    /// <param name="value_out">
+    ///  [Out] The length value result </param>
+    /// <param name="parse_results">
+    ///  [Out] Describes the results of the parse operation </param>
+    /// <param name="parsed_unit_system">
+    ///  [Out] If a unit system name was found in the string, it is returned here.
+    ///  The output value is in the unit system specified in output_unit_system
+    /// </param>
+    /// <returns>
+    ///  Returns the count of characters that were parsed or 0 if the operation was unsuccessful
+    /// </returns>
+    /// <since>6.0</since>
+    public static int ParseLengthExpession(
+      string expression,
+      int start_offset,
+      int expression_length,
+      StringParserSettings parse_settings_in,
+      UnitSystem output_unit_system,
+      out double value_out,
+      ref StringParserSettings parse_results,
+      ref UnitSystem parsed_unit_system
+      )
+    {
+      if(null == expression)
+        throw new ArgumentNullException();
+
+      IntPtr settings_in_ptr = parse_settings_in.ConstPointer();
+      IntPtr settings_out_ptr = null == parse_results ? IntPtr.Zero : parse_results.NonConstPointer();
+      value_out = RhinoMath.UnsetValue;
+      parsed_unit_system = UnitSystem.None;
+
+      int rc = UnsafeNativeMethods.ON_Parse_LengthExpression(
+        expression,
+        start_offset,
+        expression_length,
+        settings_in_ptr,
+        output_unit_system,
+        ref value_out,
+        settings_out_ptr,
+        ref parsed_unit_system);
+
+      GC.KeepAlive(parse_settings_in);
+      GC.KeepAlive(parse_results);
+      return rc;
+    }
+
+    /// <since>6.0</since>
+    public static bool ParseAngleExpressionDegrees(
+      string expression,
+      out double angle_degrees
+      )
+    {
+      IntPtr settings_in_ptr = StringParserSettings.ParseSettingsDegrees.ConstPointer();
+      angle_degrees = RhinoMath.UnsetValue;
+      AngleUnitSystem parsed_unit_system = AngleUnitSystem.None;
+
+
+      int rc = UnsafeNativeMethods.ON_Parse_AngleExpression(
+        expression, 0, -1,
+        settings_in_ptr,
+        AngleUnitSystem.Degrees,
+        ref angle_degrees,
+        IntPtr.Zero,
+        ref parsed_unit_system);
+
+      return 0 < rc;
+    }
+
+    /// <since>6.0</since>
+    public static bool ParseAngleExpressionRadians(
+      string expression,
+      out double angle_radians
+      )
+    {
+      IntPtr settings_in_ptr = StringParserSettings.ParseSettingsRadians.ConstPointer();
+      angle_radians = RhinoMath.UnsetValue;
+      AngleUnitSystem parsed_unit_system = AngleUnitSystem.None;
+
+      int rc = UnsafeNativeMethods.ON_Parse_AngleExpression(
+        expression, 0, -1,
+        settings_in_ptr,
+        AngleUnitSystem.Radians,
+        ref angle_radians,
+        IntPtr.Zero,
+        ref parsed_unit_system);
+
+      return 0 < rc;
+    }
+
+    /// <since>6.0</since>
+    public static int ParseAngleExpession(
+      string expression,
+      int start_offset,
+      int expression_length,
+      StringParserSettings parse_settings_in,
+      AngleUnitSystem output_angle_unit_system,
+      out double value_out,
+      ref StringParserSettings parse_results,
+      ref AngleUnitSystem parsed_unit_system
+      )
+    {
+      if(null == expression)
+        throw new ArgumentNullException();
+      IntPtr settings_in_ptr = parse_settings_in.ConstPointer();
+      IntPtr settings_out_ptr = null == parse_results ? IntPtr.Zero : parse_results.NonConstPointer();
+      parsed_unit_system = AngleUnitSystem.None;
+      value_out = RhinoMath.UnsetValue;
+
+      int rc = UnsafeNativeMethods.ON_Parse_AngleExpression(
+        expression,
+        start_offset,
+        expression_length,
+        settings_in_ptr,
+        output_angle_unit_system,
+        ref value_out,
+        settings_out_ptr,
+        ref parsed_unit_system);
+
+      GC.KeepAlive(parse_settings_in);
+      GC.KeepAlive(parse_results);
+      return rc;
+    }
+    
+    /// <summary>
+    /// Parse a string expression to get a number
+    /// </summary>
+    /// <param name="expression">
+    ///  String to parse
+    /// </param>
+    /// <param name="max_count">
+    ///  Maximum number of characters to parse 
+    /// </param>
+    /// <param name="settings_in">
+    ///  Determines what input will be parsed 
+    /// </param>
+    /// <param name="settings_out">
+    ///  Reports the results of the parse operation 
+    /// </param>
+    /// <param name="answer">
+    ///  The number result of the parse operation 
+    /// </param>
+    /// <returns>
+    /// Count of characters in expression parsed
+    /// if ParseNumber() returns 0, parse was unsuccessful
+    /// </returns>
+    /// <since>6.0</since>
+    public static int ParseNumber(
+      string expression,
+      int max_count,
+      StringParserSettings settings_in,
+      ref StringParserSettings settings_out,
+      out double answer
+      )
+    {
+      if(null == expression)
+        throw new ArgumentNullException();
+      if(null == settings_in)
+        throw new ArgumentNullException();
+      answer = RhinoMath.UnsetValue;
+
+      int rc = 0;
+      IntPtr settings_ptr = settings_in.ConstPointer();
+      IntPtr results_ptr = null == settings_out ? IntPtr.Zero : settings_out.NonConstPointer();
+      rc = UnsafeNativeMethods.ON_ParseDouble(expression, max_count, settings_ptr, results_ptr, ref answer);
+      GC.KeepAlive(settings_in);
+      GC.KeepAlive(settings_out);
+      return rc;
+    }
+  }
+
+  /// <summary> Parameters for parsing strings </summary>
+  public class StringParserSettings : IDisposable
+  {
+    private readonly bool m_is_const;
+    private IntPtr m_ptr_parse_settings; // ON_ParseSettings*
+
+    /// <since>6.0</since>
+    public StringParserSettings()
+    {
+      m_ptr_parse_settings = UnsafeNativeMethods.ON_ParseSettings_New();
+      m_is_const = false;
+    }
+
+    internal StringParserSettings(IntPtr pConstParseSettings)
+    {
+      m_is_const = true;
+      m_ptr_parse_settings = pConstParseSettings;
+      GC.SuppressFinalize(this);
+    }
+
+    internal IntPtr ConstPointer()
+    {
+      return m_ptr_parse_settings;
+    }
+
+    internal IntPtr NonConstPointer()
+    {
+      return m_is_const ? IntPtr.Zero : m_ptr_parse_settings;
+    }
+
+    ~StringParserSettings()
+    {
+      Dispose(false);
+    }
+
+    /// <since>6.0</since>
+    public void Dispose()
+    {
+      Dispose(true);
+      GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (m_ptr_parse_settings != IntPtr.Zero && !m_is_const)
+        UnsafeNativeMethods.ON_ParseSettings_Delete(m_ptr_parse_settings);
+
+      m_ptr_parse_settings = IntPtr.Zero;
+    }
+
+    /// <summary>
+    /// - The default settings parse just about everything in
+    ///   a reasonable way.  
+    /// - Any angle values with unspecified units will be
+    ///   treated as radians. Angles without units can be
+    ///   encountered while parsing formulas, lengths and 
+    ///   points and need to be thoughtfully considered in
+    ///   most parsing situations.
+    /// </summary>
+    /// <since>6.0</since>
+    public static StringParserSettings DefaultParseSettings { get; } = new StringParserSettings(UnsafeNativeMethods.ON_ParseSettings_DefaultSettings());
+
+    /// <summary>
+    /// - The default settings parse just about everything in
+    ///   a reasonable way.
+    /// - Any angle values with unspecified units will be
+    ///   treated as radians.Angles without units can be
+    ///   encountered while parsing formulas, lengths and
+    ///   points and need to be thoughtfully considered in
+    ///   most parsing situations.
+    /// </summary>
+    /// <since>6.0</since>
+    public static StringParserSettings ParseSettingsRadians { get; } = new StringParserSettings(UnsafeNativeMethods.ON_ParseSettings_DefaultSettingsInRadians());
+
+    /// <summary>
+    /// - The default settings parse just about everything in
+    ///   a reasonable way.
+    /// - Any angle values with unspecified units will be
+    ///   treated as degrees.Angles without units can be
+    ///  encountered while parsing formulas, lengths and
+    ///  points and need to be thoughtfully considered in
+    ///   most parsing situations.
+    /// </summary>
+    /// <since>6.0</since>
+    public static StringParserSettings ParseSettingsDegrees { get; } = new StringParserSettings(UnsafeNativeMethods.ON_ParseSettings_DefaultSettingsInDegrees()); 
+
+    /// <summary>
+    /// - The integer settings parse and optional unary + or unary - and
+    ///   then parses one or more digits.Parsing stops after the last digit.
+    /// </summary>
+    /// <since>6.0</since>
+    public static StringParserSettings ParseSettingsIntegerNumber { get; } = new StringParserSettings(UnsafeNativeMethods.ON_ParseSettings_IntegerNumberSettings());
+
+    /// <summary>
+    /// - The rational number settings parse and optional unary + or unary -
+    ///   and then parse one or more digits.If a rational number fraction
+    ///   bar follows the last digit in the numerator, then it is parsed
+    ///   and an integer denominator is parsed.The denominator cannot
+    ///   have a unary + or - preceding the digits.Parsing stops after
+    ///   the last digit in the denominator.
+    /// </summary>
+    /// <since>6.0</since>
+    public static StringParserSettings ParseSettingsRationalNumber
+    {
+      get { return new StringParserSettings(UnsafeNativeMethods.ON_ParseSettings_RationalNumberSettings()); }
+    }
+
+    /// <summary>
+    /// - The double number settings parse and optional unary + or unary -
+    ///   and then parse a number that can be integer, decimal, or
+    ///   scientific e notation.
+    /// </summary>
+    /// <since>6.0</since>
+    public static StringParserSettings ParseSettingsDoubleNumber { get; } = new StringParserSettings(UnsafeNativeMethods.ON_ParseSettings_DoubleNumberSettings());
+
+    /// <summary>
+    /// - The real number settings parse and optional unary + or unary -
+    ///   and then parse a number that can be integer, decimal, 
+    ///   scientific e notation or pi.
+    /// </summary>
+    /// <since>6.0</since>
+    public static StringParserSettings ParseSettingsRealNumber { get; } = new StringParserSettings(UnsafeNativeMethods.ON_ParseSettings_RealNumberSettings());
+
+    /// <summary>
+    /// - ON_ParseSetting::FalseSettings has all parsing options
+    ///   set to false.
+    /// - A common use of ON_ParseSettings FalseSettings is to initialize
+    ///   ON_ParseSettings classes that are used to report what happened
+    ///   during parsing.Any parsing results value set to true after
+    ///   parsing indicates that type of parsing occurred.
+    /// </summary>
+    /// <since>6.0</since>
+    public static StringParserSettings ParseSettingsEmpty { get; } = new StringParserSettings(UnsafeNativeMethods.ON_ParseSettings_EmptySettings());
+
+    /// <since>6.0</since>
+    public AngleUnitSystem DefaultAngleUnitSystem
+    {
+      get
+      {
+        AngleUnitSystem rc = UnsafeNativeMethods.ON_ParseSettings_GetDefaultAngleUnitSystem(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetDefaultAngleUnitSystem(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public UnitSystem DefaultLengthUnitSystem
+    {
+      get
+      {
+        UnitSystem rc = UnsafeNativeMethods.ON_ParseSettings_GetDefaultLengthUnitSystem(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetDefaultLengthUnitSystem(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public void SetAllFieldsToFalse()
+    {
+      UnsafeNativeMethods.ON_ParseSettings_SetAllToFalse(NonConstPointer());
+      GC.KeepAlive(this);
+    }
+
+    /// <since>6.0</since>
+    public void SetAllExpressionSettingsToFalse()
+    {
+      UnsafeNativeMethods.ON_ParseSettings_SetAllExpressionSettingsToFalse(NonConstPointer());
+      GC.KeepAlive(this);
+    }
+
+    #region properties
+
+    /// <since>6.0</since>
+    public bool ParseLeadingWhiteSpace
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseLeadingWhiteSpace(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseLeadingWhiteSpace(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseArithmeticExpression
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseArithmeticExpression(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseArithmeticExpression(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseMathFunctions
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseMathFunctions(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseMathFunctions(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseExplicitFormulaExpression
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseExplicitFormulaExpression(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseExplicitFormulaExpression(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseUnaryMinus
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseUnaryMinus(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseUnaryMinus(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseUnaryPlus
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseUnaryPlus(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseUnaryPlus(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseSignificandIntegerPart
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseSignificandIntegerPart(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseSignificandIntegerPart(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseSignificandFractionalPart
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseSignificandFractionalPart(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseSignificandFractionalPart(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseSignificandDigitSeparators
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseSignificandDigitSeparators(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseSignificandDigitSeparators(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseScientificENotation
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseScientificENotation(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseScientificENotation(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseDAsExponentInScientificENotation
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseDAsExponentInScientificENotation(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseDAsExponentInScientificENotation(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseFullStopAsDecimalPoint
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseFullStopAsDecimalPoint(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseFullStopAsDecimalPoint(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseFullStopAsDigitSeparator
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseFullStopAsDigitSeparator(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseFullStopAsDigitSeparator(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseCommaAsDecimalPoint
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseCommaAsDecimalPoint(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseCommaAsDecimalPoint(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseCommaAsDigitSeparator
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseCommaAsDigitSeparator(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseCommaAsDigitSeparator(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseSpaceAsDigitSeparator
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseSpaceAsDigitSeparator(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseSpaceAsDigitSeparator(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseHyphenMinusAsNumberDash
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseHyphenMinusAsNumberDash(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseHyphenMinusAsNumberDash(NonConstPointer(), value);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseHyphenAsNumberDash
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseHyphenAsNumberDash(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseHyphenAsNumberDash(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseRationalNumber
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseRationalNumber(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseRationalNumber(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParsePi
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParsePi(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParsePi(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseMultiplication
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseMultiplication(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseMultiplication(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseDivision
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseDivision(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseDivision(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseAddition
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseAddition(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseAddition(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseSubtraction
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseSubtraction(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseSubtraction(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParsePairedParentheses
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParsePairedParentheses(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParsePairedParentheses(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseIntegerDashFraction
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseIntegerDashFraction(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseIntegerDashFraction(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseFeetInches
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseFeetInches(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseFeetInches(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseArcDegreesMinutesSeconds
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseArcDegreesMinutesSeconds(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseArcDegreesMinutesSeconds(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    public bool ParseSurveyorsNotation
+    {
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_ParseSettings_ParseSurveyorsNotation(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetParseSurveyorsNotation(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <since>6.0</since>
+    [CLSCompliant(false)]
+    public uint PreferedLocaleId
+    {
+      get
+      {
+        uint rc = UnsafeNativeMethods.ON_ParseSettings_PreferedLocaleId(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        UnsafeNativeMethods.ON_ParseSettings_SetPreferedLocaleId(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    #endregion properties
+  }
+}
+

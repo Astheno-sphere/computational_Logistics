@@ -1,0 +1,524 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [8.35.0] - 2026.09.15
+
+Final 8.35.0 release, built against the released openNURBS 8.35 (v8.35.26251.13001). Final .NET/C sync from the released Rhino 8.35 branch, which completes the template-authoring accessor set — the values needed to author Rhino templates headlessly that previously had no managed accessor and were silently dropped from generated files.
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.32.2...8.35.0
+
+### Added
+
+- (dotnet) Template-authoring accessors on `File3dmSettings`: current defaults `CurrentColor` / `CurrentPlotColor` / `CurrentWireDensity` / `CurrentLayerId` / `CurrentDimensionStyleId` / `CurrentTextStyleId` / `CurrentHatchPatternId` / `CurrentLinePatternId` / `CurrentRenderMaterialId`; render-mesh settings `MeshingParameters` / `CustomRenderMeshingParameters` / `AnalysisMeshingParameters`; plus `ActiveViewId`, `GridDefaults`, `LinetypeDisplayScale`, `SaveTextureBitmapsInFile`, and `InstanceDefinitionLinkUpdate`.
+- (dotnet) Template-authoring accessors on `ViewInfo`: `DisplayModeId`, `ViewType`, `RenderingSize`, `LockedProjection`, `ShowConstructionGrid` / `ShowConstructionAxes` / `ShowConstructionZAxis`, and `GetPageSettings()` / `SetPageSettings(...)` (with a new `PageSettings` type: page number, page size, margins, printer name).
+- (dotnet) `ViewportInfo.Id` now has a setter — needed to author a viewport with a specific id so a model's active-view reference resolves. The existing "no approved way to change the id once set" warning still applies to a viewport already in a document.
+- (dotnet) `DimensionStyle.UnitSystem` — get/set the dimension style's unit system.
+
+## [8.35.0-beta3] - 2026.08.27
+
+Pre-release closing out several long-standing GitHub issues: TypeScript definitions for the module factory options and Draco, Python stub gaps, in-place `Point3d.Transform` in Python, and .NET assembly version attributes generated from the package version.
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.35.0-beta2...8.35.0-beta3
+
+### Added
+
+- (py) `Vector3d.Transform(xform)` — transforms the vector in place (and returns it), mirroring RhinoCommon.
+- (py) Type stubs for `Polyline.CreateFromPoints` (both overloads), `DracoCompression` and `DracoCompressionOptions`. Fixes #707.
+- (js) `rhino3dm.d.ts`: the module factory now accepts the Emscripten module options (`rhino3dm(options?: RhinoModuleOptions)`), so passing `locateFile` to control where `rhino3dm.wasm` is loaded from type-checks. Documented in `docs/javascript/RHINO3DM.JS.md`. Fixes #706, #674.
+
+### Fixed
+
+- (py) `Point3d.Transform(xform)` now transforms the point in place as documented (RhinoCommon semantics). It still returns the point, so code that relied on the old copy-returning behavior keeps working. Fixes #695.
+- (js) `rhino3dm.d.ts`: `DracoCompression.decompressByteArray(buffer)` and `decompressBase64String(encoded)` now declare their parameters. Fixes #703.
+- (dotnet) `Rhino3dm.dll` assembly version attributes (`AssemblyVersion`, `AssemblyFileVersion`, `AssemblyInformationalVersion`) are now generated from the package `<Version>` instead of a hand-maintained literal that had gone stale (8.32.2.0). Fixes #589.
+
+## [8.35.0-beta2] - 2026.08.27
+
+Pre-release adding native Windows ARM64 Python wheels. No library code changes since 8.35.0-beta1; the compiled .NET, JavaScript, and existing Python artifacts are equivalent.
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.35.0-beta1...8.35.0-beta2
+
+### Added
+
+- (py) Native Windows ARM64 wheels (`win_arm64`) for Python 3.11–3.14, built on GitHub's `windows-11-arm` runners. `setup.py` now selects the MSVC `ARM64` platform when running under a native ARM64 CPython instead of always targeting `x64`. RH3DM-205.
+
+## [8.35.0-beta1] - 2026.08.24
+
+Pre-release built against the openNURBS 8.35 RC. Synced the .NET/C layer from the Rhino 8.35 branch, primarily to pick up the canonical template-authoring APIs, and brought the JavaScript/Python annotation bindings to parity with .NET.
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.32.2...8.35.0-beta1
+
+### Added
+
+- (dotnet) `ViewInfo.GetConstructionPlane()` / `SetConstructionPlane(ConstructionPlane)` — read/write a view's full construction plane, including grid settings (grid/snap spacing, line count, thick-line frequency, depth buffering).
+- (dotnet) `ViewInfo.Maximized`, `ViewInfo.GetWindowPosition(...)` / `SetWindowPosition(...)` — the view window's relative position (0..1 fractions) and maximized state, so authored views don't open stacked.
+- (dotnet) `File3dmSettings.ModelDistanceDisplayMode` / `PageDistanceDisplayMode` (`Rhino.UI.DistanceDisplayMode`) and `ModelDistanceDisplayPrecision` / `PageDistanceDisplayPrecision` — how model/page-space distances are displayed.
+- (dotnet) `Font.FromRichTextProperties(richTextFontName, bold, italic, underlined, strikethrough)` — create a font by its rich-text family name, preserving the name even when the font isn't installed. Backed by `ON_Font::FontFromRichTextProperties`.
+- (dotnet) `ObjectAttributes.EnableCustomMeshingParameters` — get/set whether an object uses custom render-mesh parameters.
+- (js/py) Annotation support brought to parity with the .NET binding (RH3DM-204). `AnnotationBase` now exposes the effective dimension style and per-object overrides:
+  - `getDimensionStyle(parentDimStyle)` — the effective dimension style with per-object overrides folded in.
+  - `getTextHeight(parentDimStyle)` / `setTextHeight(...)` and `getDimensionScale(parentDimStyle)` / `setDimensionScale(...)` — the per-object text height and model space scale shown in Rhino's Properties panel.
+  - `getBoundingBox(parentDimStyle)` — a valid annotation bounding box (the inherited `GeometryBase.getBoundingBox()` returns an invalid box for annotations).
+  - `hasPropertyOverrides`, `isPropertyOverridden(field)`, `clearPropertyOverrides()`, `setOverrideDimStyle(overrideStyle)`.
+  - `getFont(parentDimStyle)` / `setFont(...)`, mask properties (`getMaskEnabled`/`getMaskColorSource`/`getMaskFrame`/`getMaskColor`/`getMaskOffset` and setters), `getDimensionLengthDisplay` / `getAlternateDimensionLengthDisplay` (and setters), `textRotationRadians`/`textRotationDegrees`.
+  - `setRichText(rtfText, dimstyle)`, `runReplace(...)`, `textHasRtfFormatting`, and static `plainTextToRtf(str)`.
+  - Each per-object accessor takes the parent dimension style explicitly; get it from `File3dm.DimStyles.FindId(annotation.DimensionStyleId)`.
+- (js/py) `DimensionStyle.dimensionScale` — the model space scale (RhinoCommon `DimensionStyle.DimensionScale`).
+- (js) `DimensionStyle.isFieldOverridden(field)` / `setFieldOverride(field)` / `clearFieldOverride(field)` and the `DimensionStyleField` enum (previously Python-only).
+- (js/py) New enums: `MaskType`, `MaskFrame`, `LengthDisplay`.
+
+## [8.32.2] - 2026.08.18
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.32.1...8.32.2
+
+### Added
+
+- (dotnet) `ViewInfo.ConstructionPlane` — get/set a view's construction plane. Views authored with rhino3dm can now set the per-view CPlane (e.g. world ZX for Front, world YZ for Right) instead of leaving the default World-XY; Rhino uses the stored plane on open and does not re-derive it. RH3DM-197.
+
+### Fixed
+
+- (js) bumped the max memory limit to 16gb for WASM64
+
+## [8.32.1] - 2026.07.29
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.32.0...8.32.1
+
+### Added
+
+- (js) `PointCloud.toThreejsBuffers()` — a zero-copy typed-array export (position, plus color/normal when present), mirroring `Mesh.toThreejsBuffers()` for faster large point-cloud loading in the three.js 3DMLoader.
+
+## [8.32.0] - 2026.07.28
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.17.0...8.32.0
+
+### Added
+
+- (py, js) SubD read API: `SubDVertex`, `SubDEdge`, and `SubDFace` classes exposing control-net points, surface points, vertex/edge tags (including crease), edge/face counts, and connectivity (`VertexFrom`/`VertexTo`, `VertexAt`/`EdgeAt`/`FaceAt`, `Next`/`Previous`); `SubD.Vertices`/`Edges`/`Faces` lists with counts and find-by-id; and `SubDVertexTag` / `SubDEdgeTag` enums. RH3DM-178, RH3DM-177, RH3DM-176, RH3DM-175, RH3DM-169 #725
+- (py) Brep topology wrapper classes and bindings (topology faces, edges, loops, trims, vertices), with tests. #713 @jchkoch, #723
+- (dotnet, py, js) Cached texture coordinates via ONX_Model (headless): `Mesh.SetCachedTextureCoordinatesFromMaterial(file3dm, objectId, material)` and `Mesh.GetCachedTextureCoordinatesFromTexture(file3dm, objectId, texture)` — the rhino3dm counterparts to RhinoCommon's `RhinoObject`-based overloads. RH3DM-170
+- (py, js) Reading decals; decals now use the OpenNURBS `shared_ptr<ON_Decal>` API. RH3DM-192
+- (py, js) `GeometryBase.GetTightBoundingBox`. RH3DM-188
+- (js) Zero-copy typed-array mesh export path for faster large-model loading. RH3DM-191
+- (py, js) `Intersection.SphereSphere` and `Intersection.PlaneSphere`.
+- (py, js) New enums: `ObjectType`, `UnitSystem`, `MeshType`, `TextureType`, `CoordinateSystem`, `ComponentIndexType`, `ObjectMaterialSource`, `ObjectColorSource`, `ObjectMode`, `ObjectLinetypeSource`, `ObjectPlotColorSource`, `ObjectPlotWeightSource`, `ObjectDecoration`, `CurveOrientation`.
+- (py, js) Missing setters added to `Layer`; fixed `File3dmObjectTable.AddPolyline`.
+- (dotnet, py) Experimental RhinoCore / RhinoDoc bindings via nanobind (WIP). #696 #697 #698
+- (py, js) `Material.SetTexture(texture)` — a generic texture setter that respects the texture's own `TextureType`, so any PBR channel (roughness, metallic, emission, etc.) can be assigned, not just bitmap/bump/environment/transparency. #720 @aidannewsome
+- (js) `attributes` arguments added to the TypeScript definitions. #693
+- (py) Improved stubs, including `File3dmLayerTable`. #690 #708 @StudioWEngineers
+
+### Changed
+
+- Updated OpenNURBS (synced from the Rhino 8.x branch).
+- (py, js) `__str__`/`__repr__` for point and vector types moved out of the `__init__.py` monkey-patch and into the bindings. RH3DM-180
+- Updated pybind11 to 3.0.4, nanobind to 2.7.0, and emscripten to 5.0.7. #699
+- (py) Added a Python 3.14 build target.
+- (dotnet) Windows CI agents updated to windows-2022. #715
+- (dotnet) Suppressed the SYSLIB0011 (BinaryFormatter) warning-as-error, mirroring RhinoCommon.
+
+### Fixed
+
+- (dotnet) `File3dm.Settings.PageAbsoluteTolerance` setter silently set `PageRelativeTolerance` instead — setting the page absolute tolerance was a no-op and corrupted the relative tolerance. RH3DM-195
+- (js) `memory access out of bounds` crash when adding instance definitions whose objects carry meshes. RH3DM-193
+- (py) Blender/Linux segfault caused by a zlib symbol clash; zlib/OpenNURBS symbols are now hidden. #714 #717
+- (py, js, dotnet) zlib C4081 MSVC warning, via `ON_CMAKE_BUILD`. RH3DM-179
+- (py, js) `File3dmLayerTable.FindId`/`FindName` returned the default layer (never `None`) when no layer matched, and `FindIndex` returned it instead of raising — they used the OpenNURBS `LayerFrom*` helpers, which fall back to `m_default_layer` on a miss. They now use `ComponentFrom*` and check for an empty reference. #692 @StudioWEngineers
+- (py, js) `Material.SetBumpTexture`/`SetEnvironmentTexture`/`SetTransparencyTexture` (the `Texture` overloads) wrote the texture with the `bitmap` type instead of the intended channel type — the shared helper hard-coded `bitmap_texture`.
+
+### Removed
+
+- (py) Removed macOS-13 CI runners.
+- (py) Dropped the Python 3.8 build target (3.8 reached end-of-life in October 2024 and is no longer shipped by the `manylinux_2_28` images). `python_requires` is now `>=3.9`.
+
+## [8.17.0] - 2025.03.12
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.9.0...8.17.0
+
+## [8.17.0-beta1] - 2025.03.07
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.17.0-beta...8.17.0-beta1
+
+### Added
+
+- (py) Added aarch64 builds for linux #683
+- (py) Added macos-15 builds #684
+
+### Changed
+
+- (dotnet) arm64 linux build now runs on ubuntu 24.04-arm runner #686
+
+## [8.17.0-beta] - 2025.03.05
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.9.0...8.17.0-beta
+
+### Added
+
+- (js, py) DimensionStyle.Id
+- (js, py) Several delete methods for File3dm Tables: File3dmMaterialTable::Delete, BND_File3dmLayerTable::Delete, BND_File3dmDimStyleTable::Delete
+- (js, py) Added tests for various ::Delete methods.
+- (js, py) Extrusion::CreateWithPlane #636
+- (js, py) BND_Bitmap also inherits from Common object and now exposes an Id property.
+- (js, py) DimensionStyle now has an Id property
+- (js, py) File3dm.ObjectTable.AddPoint now supports attributes #665 @StudioWEngineers
+- (js, py) File3dm.ObjectTable.AddLine now supports attributes #666 @StudioWEngineers
+- (js) Layer.Index #655
+- (js) BND_PointCloud::CreateFromThreeJSON #642  @pedrocortesark
+- (js) Added several methods and properties for Planes #568
+- (js) Layer.index
+- (js) Mesh.CreateFromThreeJSON inclides vertex color information
+- (js) calling rhino.Version will now return the openNURBS version the library is built against
+- (py) Improved stubs. WIP. #668, #669, #682 and #685 @StudioWEngineers
+- (py) Added python 3.13 target #654
+- (py) BND_MeshingParameters::Decode now supports more properties
+- (py) Exposed a LightStyle enum which was previously only used internally
+
+### Changed
+
+- (py) switching from pybind11 to nanobind. WIP. This affects a lot of the src/binding files, which now include many `#if defined()`. When the switch is complete these will be cleaned up. This involved adding conditions for methods that returned BND_TUPLE and adding new methods for where we were using TUPLES as arrays. For this release, we still use pybind11.
+- (py) BrepVertex.EdgeIndices() now returns a list
+- (py) Curve.DerivitiveAt() now returns a list
+- (py) File3dmObjectTable now accepts negative indexing #651 @StudioWEngineers
+- (js) File3dm.objects().deleteItem(id) -> File3dm.objects().delete(id)
+- (dotnet) Linux release builds in an Amazon Linux 2023 container
+
+### Fixed
+
+- (py) uuid conversion in c++ was broken
+- (js, py) Changes to ViewInfo.Viewport would not set.
+- (js) BND_Mesh::CreateFromThreeJSON did not pay attention to vertex colors #641
+- (js) BND_PointCloud::CreateFromThreeJSON did not pay attention to RGBA (4 channel) colors #641
+
+### Removed
+
+- (py) GitHub is deprecating macos-12 runners, so they have been removed from the python builds
+
+
+## [8.9.0] - 2024.07.19
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.6.1...8.9.0
+
+See changes in 8.9.0-beta.
+
+### Fixed
+
+- (js) AnnotationBase objects would be undefined due to new cast to Text in the bindings but no Text class exposed to emscripten
+
+## [8.9.0-beta] - 2024.07.12
+
+diff: https://github.com/mcneel/rhino3dm/compare/8.6.1...8.9.0-beta
+
+### Added
+ - (py, js) CachedTextureCoordinates class
+ - (py, js) Mesh.SetCachedTextureCoordinates and Mesh.GetCachedTextureCoordinates
+ - (py, js) TextureMapping.HasId and TextureMapping.Id
+ - (py, js) Added many Annotation classes and enums [#627](https://github.com/mcneel/rhino3dm/pull/627) @jesterKing
+ - (all) A series of automated tests have been added and are run on all ci builds
+
+ ### Changed
+ - Updated OpenNURBS to v8.9 diff: https://github.com/mcneel/opennurbs/compare/v8.6.24101.05001...update-1718616159-8.9
+ - (py, js) Several methods that take in arrays/lists of points have been updated to either be overloaded and take `Point3dList` and `std::vector<T>` (for py) or `emscripten::val` and the type is checked in cpp (for js). This means the SDK is not broken and users can pass in language specific lists / arrays of points. [#620](https://github.com/mcneel/rhino3dm/issues/620), [#616](https://github.com/mcneel/rhino3dm/issues/616)
+ - (py) x86_64 Linux builds are now build using the manylinux_2_28_x86_64 docker image
+
+
+ ### Fixed
+ - (py, js) Polyline.CreateFromPoints now works [#616](https://github.com/mcneel/rhino3dm/issues/616)
+ - (js) None of the PointCloud.AddRange* methods were working in js. This is fixed. [#620](https://github.com/mcneel/rhino3dm/issues/620)
+ - (py, js) Polyline.GetSegments() always returned an extra NULL at the end of the segment array. [#623](https://github.com/mcneel/rhino3dm/issues/623)
+ - (py) Universal builds for native library on macos. (#617)[https://github.com/mcneel/rhino3dm/pull/617] @jesterKing
+
+ ### Removed
+ - (py, dotnet) GitHub has deprecated building on macos-11 so from this point forward we will not build python wheels for macos-11. macos-14 will be used to build the dotnet library for macos.
+ - (dotnet) GitHub deprecated actions that run on node.js < 20 which means that we cannot build on Amazon Linux 2 in with ci workflow. For now the ci linux build uses ubuntu-latest.
+
+## [8.6.1] - 2024.05.10
+diff: https://github.com/mcneel/rhino3dm/compare/8.6.0...8.6.1
+
+### Added
+- (py) macos 14 arm64 python wheels
+
+### Fixed
+- (js) Regenerated js files that load wasm as those checked into src were outdated.
+
+## [8.6.0] - 2024.04.12
+diff: https://github.com/mcneel/rhino3dm/compare/8.4.0...8.6.0
+
+## [8.6.0-beta1] - 2024.04.05
+diff: https://github.com/mcneel/rhino3dm/compare/8.4.0...8.6.0-beta1
+
+### Added
+- (py, js) CommonObject.IsValidWithLog that returns a tuple {bool valid, string log} [#598](https://github.com/mcneel/rhino3dm/issues/598)
+- (dotnet, py, js) Material.RenderMaterialInstanceId [#596](https://github.com/mcneel/rhino3dm/issues/596)
+- (py, js) InstanceDefinitionTable.Add [#436](https://github.com/mcneel/rhino3dm/issues/436) (see Changed below for consequential changes related to this)
+- (py, js) File3dmObjectTable.AddInstanceObject()
+- (py, js) EmbeddedFile.SetFilename.
+- (js) EmbeddedFile.WasmFromByteArray() to add embedded from a js Uint8Array. [#523](https://github.com/mcneel/rhino3dm/issues/523)
+- (py) EmbeddedFile.Read()
+
+### Changed
+- (js) js docs now use typedoc for generating documentation from `src/js/rhino3dm.d.ts` [#594](https://github.com/mcneel/rhino3dm/issues/594)
+- (js, py) InstanceDefinitionTable.Add(idef) is now InstanceDefinitionTable.AddInstanceDefinition(idef). This aligns dotnet, js, and py InstanceDefinitionTable.Add method args.
+- (py, js) EmbeddedFile.FileName is no longer read only and is Filename for py and fileName for js.
+
+### Fixed
+- (py, js) File3dmObjectTable.AddSurface was incorrectly calling File3dmObjectTable.AddSphere
+
+## [8.6.0-beta] - 2024.03.15
+diff: https://github.com/mcneel/rhino3dm/compare/8.4.0...8.6.0-beta
+
+### Added
+- (py, js) Added Annotation.PlainTextWithFields
+
+### Fixed
+- (dotnet, py, js) Annotation.PlainText, PlanTextWithFields, and RichText was returning empty strings, or gibberish across all languages and platforms. [#585](https://github.com/mcneel/rhino3dm/issues/585)
+
+## [8.4.0] - 2024.02.19
+diff: https://github.com/mcneel/rhino3dm/compare/8.0.1...8.4.0
+
+### Added
+- (py) added macos-12 to python builds
+- (dotnet) File3dm.EarthAnchorPoint [#554](https://github.com/mcneel/rhino3dm/issues/554)
+- (dotnet) Added File3dmMaterialTable.AddMaterial() that returns an index [#547](https://github.com/mcneel/rhino3dm/issues/547)
+- (dotnet) Added File3dmGroupTable.Add() that returns an index [#417](https://github.com/mcneel/rhino3dm/issues/417)
+- (py, js) File3dmObjectTable.Add( file3dmobject ) that returns an index [#517](https://github.com/mcneel/rhino3dm/issues/517)
+- (dotnet) Sync'ed with Rhino DotNetSDK 8.4 and OpenNURBS 8.4
+    - Include RevSurface.IsTransposed [#578](https://github.com/mcneel/rhino3dm/issues/578)
+
+### Changed
+- (py, js) Mesh::CreateFromSubDControlNet now has a second bool argument. If true, the resulting subd will include texture coordinates. [#573](https://github.com/mcneel/rhino3dm/issues/573)
+- (py, js) Changed File3dmMaterialTable.Add() to return an int [#547](https://github.com/mcneel/rhino3dm/issues/547)
+
+
+## [8.0.1] - 2023-11-17
+
+### Changed
+- (js) added -Oz flag for workflow_release builds resulting in a smaller size .wasm file (appx 3mb down from 10mb)
+
+### Notes
+- Using 8.0.1 because the js version was published as 8.0.0 then deprecated.
+
+## [8.0.0-beta3] - 2023-09-10
+diff: https://github.com/mcneel/rhino3dm/pull/567/files
+
+### Added
+- (dotnet) Added -l/--library flag to the build scripts for building only the native library.
+- (dotnet) Added linux arm64 build in release workflow
+- (dotnet) Build now generates XML documentation (#425)
+- (dotnet) Added Extrusion.SetMesh() (#544)
+- (js, py) Added Polyline.Append(points)
+- (js, py) Added BrepFace.OrientationIsReversed property (#419)
+- (js) Added Curve.createControlPointCurve static function
+- (js) Added File3dm.Objects.AddPolyline (#559)
+- (js) Added ViewInfo.Viewport (#302)
+
+### Changed
+- (py) Pypi release now includes manylinux bdist wheels cp38 - cp311 (#565)
+
+### Fixed
+- (dotnet) some runtime native libraries were corrupted (not dynamic libraries) due to packaging process. This should be fixed
+
+## [8.0.0-beta2] - 2023-08-31
+diff: https://github.com/mcneel/rhino3dm/pull/561/files
+### Added
+- (.net, js, py) RDK objects for ground plane, dithering, linear workflow, safe frame, skylight, sun, render channels, post effects, decals, render environments, render content, mesh modifiers
+- (js, py) Polyline GetSegments and SegmentAt #534
+- (js, py) NurbsCurve ConvertSpanToBezier
+- (js, py) BrepVertex Index, EdgeCount, EdgeIndices
+- (js, py) BrepVertexList Count, GetVertex
+- (js, py) Brep Vertices
+- (js, py) NurbsSurface OrderU, OrderV, KnotsU, KnotsV, Control Points, Points
+- (js, py) ON_4fColor bindings
+- (js, py) PBR BaseColor, EmissionColor, subsurfaceScatteringColor getter and setter
+- (js) Vector2d bindings
+- (js, py) Texture Id, Type, and Enabled getter and setter
+- (js, py) SetMesh BrepFace and Extrusions
+- (js) tryConvertBrep for Brep
+- (js, py) Material.ToPhysicallyBased()
+- (js, py) LineType bindings [@coditect](https://github.com/coditect)
+- (js, py) BND_GroupTable Delete [@coditect](https://github.com/coditect)
+- (js, py) BND_Xform methods and properties [@coditect](https://github.com/coditect)
+- (js, py) additional file3dm properties [@coditect](https://github.com/coditect)
+- (js, py) DateTime bindings [@coditect](https://github.com/coditect)
+- (.net, js, py) Texture Repeat, Offset, and Rotation properties
+- (js, py) Several methods related to PointClouds and values ( Add(point, value), etc )
+- (js) toList() for NurbsSurfaceKnotList and NurbsCurveKnotList
+
+### Changed
+- (js) All File3dm table count are properties whereas before they were functions
+- (js) PolyCurve Append methods are now appendArc, appendLine, and appendCurve. Related to #550
+- (py) Updated PyBind11 from 2.9.1 to 2.11.1
+- (js) CI builds for rhino3dm.js include debug information for debugging with Chrome. Hence, the resulting wasm file is much larger (40+mb) than the release build. This is triggered in the setup step with the -d or --debug flag: `python3 script/setup.py -p js -d`
+- (js, py) bnd_anotationbase.cpp renamed to bnd_anotationbase.cpp
+
+### Fixed
+- (js, py) BND_Box.PointAt returned incorrect coordinates. #556
+- (js) any method returning std::vector would be undefined. This was switched to return BND_TUPLE. No adverse effects on python build. #553
+- (js) emscripten does not support overloaded ctors or methods that have the same number of arguments. This means many of the bindings had unusable ctors or methods. We've fixed this by giving each element a unique name (in the case of methods) or creating uniquely named static ctors. This will create some additional challenges for the documentation, but will result in more available ctors and methods. Meshes, ArcCurve, PolyCurve, Transforms, and several other objects were affected by this change. #550
+- (js, py) BND_PointCloud::Add4 add color twice and does nothing with normal #551
+
+## [8.0.0-beta.1] - 2023-04-17
+### Added
+- (.net) linux-arm64 native lib
+
+### fixed
+- (.net) linux-amd64 now loads in amazonlinux
+
+## [8.0.0-beta] - 2023-03-22
+### Added
+- (js) ci and release builds include minified js and d.ts
+- Updated rhino3dm to be based on the Rhino 8 version of OpenNURBS
+- (py) Linux version now includes draco support
+- (py) Added Line.Transform, Brep.TryConvertBrep
+- (py) Added 3.11 support
+- (.net) Added macOS arm64 (Apple Silicon) builds
+- (.net) Addded .net 7.0 support
+
+### Removed
+
+- (py) Removed python 2.7 support
+
+### Changed
+- (js, py) Use draco 1.5.4
+- (js) Fixed some issues in typescript binding generation
+
+## [7.15.0] - 2022-03-23
+### Added
+- (js, py) Added ViewportInfo.TargetPoint
+- (js, py) Added BrepFace.CreateExtrusion
+- (.net) Added two new Hatch creation routines (CreateFromBrep and Create). The Create version takes curve loop inputs to create the hatch.
+
+### Changed
+- Updated opennurbs source to be based on Rhino 7.15 version
+
+## [7.14.2] - 2022-03-22
+### Added
+- (js, py) Added Circle.Plane and Circle.BoundingBox properties; Circle.IsInPlane and Circle.Transform functions
+- (py) Added Curve.ClosedCurveOrientation overload supporting an input plane. Added Curve.DerivativeAt
+- (py) Added Vector3d.IsParallelTo and VectorAngle functions
+- (py) Added Transform.Multiply as well as access properties to all values in the transform
+- (.net) Add Curve.JoinCurves, Ellipse.Center, Ellipse.FocalDistance, ArcArc and CircleCircle intersections, NurbsCurve.Append
+- (js, py) Added ModelComponent.DataCRC, ModelComponent.IsSystemComponent, ModelComponent.ClearId
+- (py) Apple Silicon builds possible
+
+### Changed
+- Updated opennurbs source to be based on Rhino 7.14 version
+
+## [7.11.0] - 2021-10-21
+### Added
+- (.net) Added Quaternion.GetRotation
+
+### Changed
+- Updated opennurbs source to be based on Rhino 7.11 version
+
+## [7.7.0] - 2021-07-02
+### Added
+- (js, py) Circle.ClosestParameter, Light.GetSpotLightRadii, MeshFaceList.GetFaceVertices, MeshFaceList.GetFaceCenter, Sphere.ClosestParameter from [@fraguada](https://github.com/fraguada)
+
+### Changed
+- (js) BezierCurve.toNurbsCurve changed ToNurbsCurve to toNurbsCurve to stay consistent with function naming in library
+### Fixed
+- (js) File3dm.strings table was always reporting a count of 0 [@fraguada](https://github.com/fraguada)
+- (py) Point3d.Transform was not callable
+
+## [7.6.0] - 2021-05-28
+### Added
+- (js, py) AnnotationBase.RichText and PlainText properties
+- (js, py) Arc.AngleDomain, StartAngle, EndAngle, StartAngleRadians, EndAngleRadians properties
+- (js, py) Arc.ClosestParameter function
+- (js, py) BezierCurve.ToNurbsCurve and Split function
+- (js, py) Surface.SetDomain, GetSpanVector, IsoCurve, GetSurfaceParameterFromNurbsFormParameter, and GetNurbsFormParameterFromSurfaceParameter functions
+- (js, py) Curve.TangentAtStart and TangentAtEnd properties
+- (js, py) Curve.FrameAt, GetCurveParameterFromNurbsFormParameter, and GetNurbsFormParameterFromCurveParameter functions
+
+### Changed
+- Adjusted version number of library to be based on the underlying Rhino version that source is based on
+- Use pybind11 2.6.1 for python compile
+
+## [0.16.1] - 2021-05-25
+### Fixed
+- (js) Bumped version to 0.16.1 to fix missing file in npm distribution (javascript only)
+
+## [0.16.0] - 2021-05-24
+### Added
+- (js, py) EarthAnchorPoint class
+- (js, py) Surface.FrameAt function from [@fraguada](https://github.com/fraguada)
+- (js, py) InstanceDefinition.SourceArchive and InstanceDefinition.UpdateType properties from [@s3ththompson](https://github.com/s3ththompson)
+- (js, py) MeshTextureCoordinateList.Add function from [@GeertArien](https://github.com/GeertArien)
+- (.NET) Updated all .NET classes/functions to match what has been added up to Rhino 7.6
+- (js, py) Surface.Domain function from [@fraguada](https://github.com/fraguada)
+- (js, py) File3dmLayerTable.AddLayer function
+- (js, py) CommonObject.IsValid property
+
+### Fixed
+- (py) docgen generates a better typehint file for python to improve autocomplete in IDEs
+- (js) Got web assembly compilation to work on Windows from [@kovacsv](https://github.com/kovacsv)
+- (js) Fixed File3dm.ToByteArray memory corruption from [@kovacsv](https://github.com/kovacsv)
+- (js, py) Get correct vertex colors from Draco compressed mesh from [@pearswj](https://github.com/pearswj)
+- (.NET) Win32 native dlls included in nuget package
+
+### Changed
+- Based on public opennurbs from Rhino 7.6
+- docgen now based on .NET 5 from [@pearswj](https://github.com/pearswj)
+- Use emscripten 2.0.10 for web assembly compile from [@pearswj](https://github.com/pearswj)
+
+## [0.14.0] - 2020-12-16
+### Added
+- (js/py) ViewInfo constructor
+- (js/py) File3dmGroupTable.GroupMembers function
+- (js/py) Transform.Translation, Scale and Mirror functions
+- (js/py) BrepFace.DuplicateFace and BrepFace.DuplicateSutrface functions
+- (js/py) Interval(double, double) constructor from [@pearswj](https://github.com/pearswj)
+- (js/py) File3dm.Destroy function
+- (js/py) Material.CompareAppearance function
+- (js) Mesh.toThreejsJSONMerged function
+
+### Changed
+- Based on public opennurbs from Rhino 7.1
+- Use pybind11 2.6.1 for python compile
+- (py/js) Improve pointer tracking for CommonObject classes
+
+## [0.13.0] - 2020-09-11
+### Added
+- (js/py) LightStyle enum
+- (js/py) Light.LightStyle, Ambient, Diffuse and Specular properties
+- (js/py) Mesh.CreateFromSubDControlNet function
+- (js/py) Mesh.HasPrincipleCurvatures property
+- (js/py) SubD class
+- (js) PointCloud.toThreejsJSON function from [@fraguada](https://github.com/fraguada)
+
+### Fixed
+- (js) Mesh.thThreejsJSON function includes vertex colors when available from [@fraguada](https://github.com/fraguada)
+
+### Changed
+- Based on public opennurbs from Rhino 7.0
+
+## [0.12.0] - 2020-06-27
+## [0.11.0] - 2020-03-03
+## [0.10.0] - 2020-01-29
+## [0.9.0] - 2019-12-20
+## [0.8.1] - 2019-10-30
+## [0.8.0] - 2019-10-30
+## [0.7.3] - 2019-10-11
+## [0.7.2] - 2019-10-05
+## [0.7.1] - 2019-09-05
+## [0.7.0] - 2019-09-03
+## [0.6.0] - 2019-09-01
+## [0.5.0] - 2019-08-16
+## [0.4.0] - 2019-04-29
+## [0.3.1] - 2019-04-16
+## [0.3.0] - 2019-04-10
+## [0.2.1] - 2019-03-26
+## [0.2.0] - 2019-03-26
+## [0.1.9] - 2019-03-22
+## [0.1.8] - 2019-02-13
+## [0.1.7] - 2019-01-17
+## [0.1.6] - 2019-01-11
+## [0.1.5] - 2019-01-04
+## [0.1.4] - 2018-12-06
+## [0.1.3] - 2018-12-03
+## [0.1.2] - 2018-12-01
+## [0.1.1] - 2018-11-28
+## [0.1.0] - 2018-11-06
+

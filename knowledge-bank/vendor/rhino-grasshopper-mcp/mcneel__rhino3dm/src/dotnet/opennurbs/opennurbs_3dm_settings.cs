@@ -1,0 +1,4142 @@
+using System;
+using System.ComponentModel;
+using System.IO;
+using Rhino.Geometry;
+using Rhino.Render.PostEffects;
+using Rhino.Runtime.InteropWrappers;
+using System.Collections.Generic;
+
+// Most of these should not need to be wrapped. Some of their
+// functionality is merged into other wrapper classes
+namespace Rhino.DocObjects
+{
+  /// <summary>
+  /// What a view in a document's view table is: a model view, a layout page, a detail
+  /// nested inside a layout, or one of Rhino's special editor views.
+  /// </summary>
+  /// <since>8.36</since>
+  public enum ViewType
+  {
+    /// <summary>A standard 3d model space view.</summary>
+    ModelView = 0,
+    /// <summary>A layout, a.k.a. "paper space". Must be an orthographic top view.</summary>
+    PageView = 1,
+    /// <summary>A model view nested inside another view - a layout detail.</summary>
+    NestedView = 2,
+    /// <summary>The UV editor's special view port.</summary>
+    UVEditorView = 3,
+    /// <summary>The block editor's special view port.</summary>
+    BlockEditorView = 4,
+  }
+
+  /// <summary>
+  /// The paper size and margins of a layout, in millimeters. Only meaningful for a view
+  /// whose <see cref="ViewInfo.ViewType"/> is <see cref="ViewType.PageView"/>.
+  /// </summary>
+  /// <since>8.36</since>
+  public class PageSettings
+  {
+    /// <summary>The page number of this layout.</summary>
+    /// <since>8.36</since>
+    public int PageNumber { get; set; }
+
+    /// <summary>Paper width in millimeters.</summary>
+    /// <since>8.36</since>
+    public double WidthMillimeters { get; set; }
+
+    /// <summary>Paper height in millimeters.</summary>
+    /// <since>8.36</since>
+    public double HeightMillimeters { get; set; }
+
+    /// <summary>Left margin in millimeters.</summary>
+    /// <since>8.36</since>
+    public double LeftMarginMillimeters { get; set; }
+
+    /// <summary>Right margin in millimeters.</summary>
+    /// <since>8.36</since>
+    public double RightMarginMillimeters { get; set; }
+
+    /// <summary>Top margin in millimeters.</summary>
+    /// <since>8.36</since>
+    public double TopMarginMillimeters { get; set; }
+
+    /// <summary>Bottom margin in millimeters.</summary>
+    /// <since>8.36</since>
+    public double BottomMarginMillimeters { get; set; }
+
+    /// <summary>Name of the printer this layout targets, if any.</summary>
+    /// <since>8.36</since>
+    public string PrinterName { get; set; } = string.Empty;
+  }
+
+  /// <summary>
+  /// Default grid settings for a document
+  /// </summary>
+  public class ConstructionPlaneGridDefaults
+  {
+    internal static ConstructionPlaneGridDefaults FromConstPointer(IntPtr ptrConstructionPlaneDefaults)
+    {
+      ConstructionPlaneGridDefaults defaults = new ConstructionPlaneGridDefaults();
+      double gridSpacing = defaults.GridSpacing;
+      double snapSpacing = defaults.SnapSpacing;
+      int gridLineCount = defaults.GridLineCount;
+      int gridThickFrequency = defaults.GridThickFrequency;
+      bool showGrid = defaults.ShowGrid;
+      bool showGridAxes = defaults.ShowGridAxes;
+      bool showWorldAxes = defaults.ShowWorldAxes;
+      UnsafeNativeMethods.ON_3dmConstructionPlaneGridDefaults_Get(ptrConstructionPlaneDefaults, ref gridSpacing, ref snapSpacing, ref gridLineCount,
+        ref gridThickFrequency, ref showGrid, ref showGridAxes, ref showWorldAxes);
+      defaults.GridSpacing = gridSpacing;
+      defaults.SnapSpacing = snapSpacing;
+      defaults.GridLineCount = gridLineCount;
+      defaults.GridThickFrequency = gridThickFrequency;
+      defaults.ShowGrid = showGrid;
+      defaults.ShowGridAxes = showGridAxes;
+      defaults.ShowWorldAxes = showWorldAxes;
+      return defaults;
+    }
+
+    internal void SetupNativePointer(IntPtr ptrConstructionPlaneDefaults)
+    {
+      UnsafeNativeMethods.ON_3dmConstructionPlaneGridDefaults_Set(ptrConstructionPlaneDefaults, GridSpacing, SnapSpacing, GridLineCount,
+        GridThickFrequency, ShowGrid, ShowGridAxes, ShowWorldAxes);
+    }
+
+    /// <summary>Distance between grid lines</summary>
+    /// <since>8.13</since>
+    public double GridSpacing { get; set; } = 1.0;
+
+    /// <summary>
+    /// When grid snap is enabled, the distance between snap points. Typically
+    /// this is the same distance as grid spacing
+    /// </summary>
+    /// <since>8.13</since>
+    public double SnapSpacing { get; set; } = 1.0;
+
+    /// <summary>Number of grid lines in each direction</summary>
+    /// <since>8.13</since>
+    public int GridLineCount { get; set; } = 70;
+
+    /// <summary>
+    /// This line frequency. 0: none, 1: all lines are thick, 2: every other is
+    /// thick, ...
+    /// </summary>
+    /// <since>8.13</since>
+    public int GridThickFrequency { get; set; } = 5;
+
+    /// <summary>Show the grid</summary>
+    /// <since>8.13</since>
+    public bool ShowGrid { get; set; } = true;
+
+    /// <summary>Show the grid axes</summary>
+    /// <since>8.13</since>
+    public bool ShowGridAxes { get; set; } = true;
+
+    /// <summary>Show the world axes icon in the corner</summary>
+    /// <since>8.13</since>
+    public bool ShowWorldAxes { get; set; } = true;
+  }
+
+  // Can't add a cref to an XML comment here since the NamedConstructionPlaneTable
+  // is not included in the OpenNURBS flavor build of RhinoCommon
+
+  /// <summary>
+  /// Represents a construction plane inside the document.
+  /// <para>Use Rhino.DocObjects.Tables.NamedConstructionPlaneTable
+  /// methods and indexers to add and access a <see cref="ConstructionPlane"/>.</para>
+  /// </summary>
+  public class ConstructionPlane
+  {
+    internal static ConstructionPlane FromIntPtr(IntPtr pConstructionPlane)
+    {
+      if (IntPtr.Zero == pConstructionPlane)
+        return null;
+      var rc = new ConstructionPlane();
+      using (var sh = new StringHolder())
+      {
+        IntPtr ptr_string = sh.NonConstPointer();
+        UnsafeNativeMethods.ON_3dmConstructionPlane_Copy(pConstructionPlane,
+                                                         ref rc.m_plane,
+                                                         ref rc.m_grid_spacing,
+                                                         ref rc.m_snap_spacing,
+                                                         ref rc.m_grid_line_count,
+                                                         ref rc.m_grid_thick_frequency,
+                                                         ref rc.m_bDepthBuffered,
+                                                         ptr_string);
+        rc.m_name = sh.ToString();
+      }
+      return rc;
+    }
+
+    internal IntPtr CopyToNative()
+    {
+      IntPtr ptr_cplane = UnsafeNativeMethods.ON_3dmConstructionPlane_New(ref m_plane,
+                                                                        m_grid_spacing,
+                                                                        m_snap_spacing,
+                                                                        m_grid_line_count,
+                                                                        m_grid_thick_frequency,
+                                                                        m_bDepthBuffered,
+                                                                        m_name);
+      return ptr_cplane;
+    }
+
+    internal Plane m_plane;
+    internal double m_grid_spacing;
+    private double m_snap_spacing;
+    internal int m_grid_line_count;
+    internal int m_grid_thick_frequency;
+    internal bool m_bDepthBuffered;
+    private string m_name;
+
+    internal bool m_bShowGrid;
+    internal bool m_bShowAxes;
+    internal bool m_bShowZAxis;
+    System.Drawing.Color m_thick_line_color;
+    System.Drawing.Color m_grid_x_color;
+    System.Drawing.Color m_grid_y_color;
+    System.Drawing.Color m_grid_z_color;
+
+    #region ON_3dmConstructionPlane
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="ConstructionPlane"/>.
+    /// </summary>
+    /// <since>5.0</since>
+    public ConstructionPlane()
+    {
+      m_plane = Plane.WorldXY;
+      m_grid_spacing = 1.0;
+      m_grid_line_count = 70;
+      m_grid_thick_frequency = 5;
+      m_bDepthBuffered = true;
+      m_bShowGrid = true;
+      m_bShowAxes = true;
+      m_bShowZAxis = false;
+#if RHINO_SDK
+      ThinLineColor = ApplicationSettings.AppearanceSettings.GridThinLineColor;
+      m_thick_line_color = ApplicationSettings.AppearanceSettings.GridThickLineColor;
+      m_grid_x_color = ApplicationSettings.AppearanceSettings.GridXAxisLineColor;
+      m_grid_y_color = ApplicationSettings.AppearanceSettings.GridYAxisLineColor;
+      m_grid_z_color = ApplicationSettings.AppearanceSettings.GridZAxisLineColor;
+#endif
+    }
+
+    /// <summary>
+    /// Gets or sets the geometric plane to use for construction.
+    /// </summary>
+    /// <since>5.0</since>
+    public Plane Plane
+    {
+      get { return m_plane; }
+      set { m_plane = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets the distance between grid lines.
+    /// </summary>
+    /// <since>5.0</since>
+    public double GridSpacing
+    {
+      get { return m_grid_spacing; }
+      set { m_grid_spacing = value; }
+    }
+
+    /// <summary>
+    /// when "grid snap" is enabled, the distance between snap points.
+    /// Typically this is the same distance as grid spacing.
+    /// </summary>
+    /// <since>5.0</since>
+    public double SnapSpacing
+    {
+      get { return m_snap_spacing; }
+      set { m_snap_spacing = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets the total amount of grid lines in each direction.
+    /// </summary>
+    /// <since>5.0</since>
+    public int GridLineCount
+    {
+      get { return m_grid_line_count; }
+      set { m_grid_line_count = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets the recurrence of a wider line on the grid.
+    /// <para>0: No lines are thick, all are drawn thin.</para>
+    /// <para>1: All lines are thick.</para>
+    /// <para>2: Every other line is thick.</para>
+    /// <para>3: One line in three lines is thick (and two are thin).</para>
+    /// <para>4: ...</para>
+    /// </summary>
+    /// <since>5.0</since>
+    public int ThickLineFrequency
+    {
+      get { return m_grid_thick_frequency; }
+      set { m_grid_thick_frequency = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the grid is drawn on top of geometry.
+    /// <para>false=grid is always drawn behind 3d geometry</para>
+    /// <para>true=grid is drawn at its depth as a 3d plane and grid lines obscure things behind the grid.</para>
+    /// </summary>
+    /// <since>5.0</since>
+    public bool DepthBuffered
+    {
+      get { return m_bDepthBuffered; }
+      set { m_bDepthBuffered = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets the name of the construction plane.
+    /// </summary>
+    /// <since>5.0</since>
+    public string Name
+    {
+      get
+      {
+        return m_name;
+      }
+      set
+      {
+        m_name = value;
+      }
+    }
+    #endregion
+
+    #region display extras
+    internal int[] ArgbColors()
+    {
+      int[] rc = new int[5];
+      rc[0] = ThinLineColor.ToArgb();
+      rc[1] = m_thick_line_color.ToArgb();
+      rc[2] = m_grid_x_color.ToArgb();
+      rc[3] = m_grid_y_color.ToArgb();
+      rc[4] = m_grid_z_color.ToArgb();
+      return rc;
+    }
+
+    /// <summary>
+    /// Gets or sets whether the grid itself should be visible. 
+    /// </summary>
+    /// <since>5.0</since>
+    public bool ShowGrid
+    {
+      get { return m_bShowGrid; }
+      set { m_bShowGrid = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the axes of the grid should be visible.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool ShowAxes
+    {
+      get { return m_bShowAxes; }
+      set { m_bShowAxes = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the Z axis of the grid should be visible.
+    /// </summary>
+    /// <since>6.0</since>
+    public bool ShowZAxis
+    {
+      get { return m_bShowZAxis; }
+      set { m_bShowZAxis = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets the color of the thinner, less prominent line.
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Color ThinLineColor { get; set; }
+
+    /// <summary>
+    /// Gets or sets the color of the thicker, wider line.
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Color ThickLineColor
+    {
+      get { return m_thick_line_color; }
+      set { m_thick_line_color = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets the color of the grid X-axis mark.
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Color GridXColor
+    {
+      get { return m_grid_x_color; }
+      set { m_grid_x_color = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets the color of the grid Y-axis mark.
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Color GridYColor
+    {
+      get { return m_grid_y_color; }
+      set { m_grid_y_color = value; }
+    }
+
+    /// <summary>
+    /// Gets or sets the color of the grid Z-axis mark.
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Color GridZColor
+    {
+      get { return m_grid_z_color; }
+      set { m_grid_z_color = value; }
+    }
+    #endregion
+  }
+
+  //public class ON_3dmViewPosition { }
+  //public class ON_3dmViewTraceImage { }
+  //public class ON_3dmWallpaperImage { }
+  //public class ON_3dmPageSettings { }
+
+  /// <summary>
+  /// The different focal blur modes of the ViewInfo
+  /// </summary>
+  /// <since>6.0</since>
+  [CLSCompliant(false)]
+  public enum ViewInfoFocalBlurModes : uint
+  {
+    /// <summary> No focal blur </summary>
+    None,
+    /// <summary>Auto-focus on selected objects</summary>
+    Automatic,
+    /// <summary>Fully manual focus</summary>
+    Manual
+  };
+
+
+  /// <summary>
+  /// Represents the name and orientation of a View (and named view).
+  /// <para>views can be thought of as cameras.</para>
+  /// </summary>
+  public class ViewInfo : IDisposable // ON_3dmView
+  {
+    private IntPtr m_ptr; // ON_3dmView*
+    internal object m_parent;
+
+    // for when parent is File3dm
+    private readonly Guid m_id = Guid.Empty;
+    readonly bool m_named_view_table;
+
+    private readonly bool m_dontdelete;
+
+    /// <summary>
+    /// Create a default ViewInfo instance
+    /// </summary>
+    /// <since>8.2</since>
+    public ViewInfo()
+    {
+      m_parent = null;
+      m_named_view_table = false;
+      m_ptr = UnsafeNativeMethods.ON_3dmView_New(IntPtr.Zero);
+      // 02 Nov 2023 S. Baer (RH-70610)
+      // TODO: I hate double negatives like m_dontdelete. They are hard to quickly
+      // grasp. We should switch this to a variable like m_performDelete.
+      m_dontdelete = false;
+    }
+
+#if RHINO_SDK
+    private int m_index = -1;
+    internal ViewInfo(RhinoDoc doc, int index)
+    {
+      m_parent = doc;
+      m_index = index;
+    }
+#endif
+
+    internal ViewInfo(FileIO.File3dm parent, Guid id, IntPtr ptr, bool namedViewTable)
+    {
+      m_parent = parent;
+      m_id = id;
+      m_ptr = ptr;
+      m_named_view_table = namedViewTable;
+    }
+
+    internal ViewInfo(IntPtr ptr, bool dontDelete)
+    {
+      m_parent = null;
+      m_named_view_table = false;
+      m_ptr = ptr;
+      m_dontdelete = dontDelete;
+    }
+
+#if RHINO_SDK
+    /// <summary>
+    /// Access to the ViewInfo for given RhinoViewport
+    /// </summary>
+    /// <param name="rhinoViewPort"></param>
+    /// <since>6.0</since>
+    public ViewInfo(Display.RhinoViewport rhinoViewPort)
+    {
+      m_parent = null;
+      m_named_view_table = false;
+      m_index = -1;
+      m_ptr = UnsafeNativeMethods.CRhinoViewport_View(rhinoViewPort.ConstPointer());
+      GC.KeepAlive(rhinoViewPort);
+      m_dontdelete = true;
+    }
+
+    /// <summary>
+    /// Construct the ViewInfo for active viewport of given doc.
+    /// </summary>
+    /// <param name="docRuntimeSerialNumber">Runtime serial number of the
+    /// document to query for the active viewport</param>
+    /// <since>6.0</since>
+    [CLSCompliant(false)]
+    public ViewInfo(uint docRuntimeSerialNumber)
+    {
+      var doc = RhinoDoc.FromRuntimeSerialNumber(docRuntimeSerialNumber);
+      var view_info = new ViewInfo(doc.Views.ActiveView.ActiveViewport);
+      m_parent = null;
+      m_named_view_table = false;
+      m_index = -1;
+      m_ptr = view_info.ConstPointer();
+      m_dontdelete = true;
+    }
+#endif
+
+    internal IntPtr ConstPointer()
+    {
+      if (m_ptr != IntPtr.Zero)
+        return m_ptr;
+
+      if (m_parent is FileIO.File3dm parent_file)
+      {
+        IntPtr ptr_const_parent_file = parent_file.ConstPointer();
+        return UnsafeNativeMethods.ONX_Model_ViewPointer(ptr_const_parent_file, m_id, m_ptr, m_named_view_table);
+      }
+#if RHINO_SDK
+      if (m_index >= 0)
+      {
+        if (m_parent is RhinoDoc doc)
+          return UnsafeNativeMethods.CRhinoDocProperties_GetNamedView(doc.RuntimeSerialNumber, m_index);
+      }
+#endif
+      throw new Runtime.DocumentCollectedException();
+    }
+
+    internal IntPtr NonConstPointer()
+    {
+      if (m_parent is FileIO.File3dm parent_file)
+      {
+        IntPtr ptr_const_parent_file = parent_file.ConstPointer();
+        return UnsafeNativeMethods.ONX_Model_ViewPointer(ptr_const_parent_file, m_id, m_ptr, m_named_view_table);
+      }
+
+      if (m_ptr == IntPtr.Zero)
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        m_ptr = UnsafeNativeMethods.ON_3dmView_New(ptr_const_this);
+        GC.KeepAlive(this);
+#if RHINO_SDK
+        m_index = -1;
+        m_parent = null;
+#endif
+      }
+      return m_ptr;
+    }
+
+    /// <summary>
+    /// Passively reclaims unmanaged resources when the class user did not explicitly call Dispose().
+    /// </summary>
+    ~ViewInfo() { Dispose(false); }
+
+    /// <summary>
+    /// Actively reclaims unmanaged resources that this instance uses.
+    /// </summary>
+    /// <since>5.0</since>
+    public void Dispose()
+    {
+      Dispose(true);
+      GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// For derived class implementers.
+    /// <para>This method is called with argument true when class user calls Dispose(), while with argument false when
+    /// the Garbage Collector invokes the finalizer, or Finalize() method.</para>
+    /// <para>You must reclaim all used unmanaged resources in both cases, and can use this chance to call Dispose on disposable fields if the argument is true.</para>
+    /// <para>Also, you must call the base virtual method within your overriding method.</para>
+    /// </summary>
+    /// <param name="disposing">true if the call comes from the Dispose() method; false if it comes from the Garbage Collector finalizer.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+      if (IntPtr.Zero != m_ptr && !(m_parent is FileIO.File3dm))
+      {
+        if (!m_dontdelete)
+        {
+          UnsafeNativeMethods.ON_3dmView_Delete(m_ptr);
+        }
+      }
+      m_ptr = IntPtr.Zero;
+    }
+
+    /// <summary>
+    /// Gets or sets the name of the view.
+    /// </summary>
+    /// <since>5.0</since>
+    public string Name
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        using (var sh = new StringHolder())
+        {
+          IntPtr ptr_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmView_NameGet(ptr_const_this, ptr_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_NameSet(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the view window is maximized in the frame window.
+    /// Together with the window position (see <see cref="GetWindowPosition"/>) this
+    /// is stored in the 3dm file and controls the viewport layout when the file is
+    /// opened.
+    /// </summary>
+    /// <since>9.0</since>
+    public bool Maximized
+    {
+      get
+      {
+        int maximized = 0;
+        double left = 0, right = 0, top = 0, bottom = 0;
+        UnsafeNativeMethods.ON_3dmView_GetWindowPosition(ConstPointer(), ref maximized, ref left, ref right, ref top, ref bottom);
+        GC.KeepAlive(this);
+        return maximized != 0;
+      }
+      set
+      {
+        GetWindowPosition(out var left, out var right, out var top, out var bottom);
+        UnsafeNativeMethods.ON_3dmView_SetWindowPosition(NonConstPointer(), value ? 1 : 0, left, right, top, bottom);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets the position of the view window in the frame window, expressed as
+    /// fractions (0 to 1) of the frame window size.
+    /// </summary>
+    /// <param name="left">Left edge fraction.</param>
+    /// <param name="right">Right edge fraction.</param>
+    /// <param name="top">Top edge fraction.</param>
+    /// <param name="bottom">Bottom edge fraction.</param>
+    /// <since>9.0</since>
+    public void GetWindowPosition(out double left, out double right, out double top, out double bottom)
+    {
+      int maximized = 0;
+      double l = 0, r = 0, t = 0, b = 0;
+      UnsafeNativeMethods.ON_3dmView_GetWindowPosition(ConstPointer(), ref maximized, ref l, ref r, ref t, ref b);
+      GC.KeepAlive(this);
+      left = l; right = r; top = t; bottom = b;
+    }
+
+    /// <summary>
+    /// Sets the position of the view window in the frame window, expressed as
+    /// fractions (0 to 1) of the frame window size. The <see cref="Maximized"/>
+    /// state is preserved.
+    /// </summary>
+    /// <param name="left">Left edge fraction.</param>
+    /// <param name="right">Right edge fraction.</param>
+    /// <param name="top">Top edge fraction.</param>
+    /// <param name="bottom">Bottom edge fraction.</param>
+    /// <since>9.0</since>
+    public void SetWindowPosition(double left, double right, double top, double bottom)
+    {
+      var maximized = Maximized;
+      UnsafeNativeMethods.ON_3dmView_SetWindowPosition(NonConstPointer(), maximized ? 1 : 0, left, right, top, bottom);
+      GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Gets the view's construction plane, including its grid settings: grid and snap
+    /// spacing, grid line count, thick-line frequency, and depth buffering.
+    /// </summary>
+    /// <returns>A copy of the view's construction plane.</returns>
+    /// <since>8.35</since>
+    public ConstructionPlane GetConstructionPlane()
+    {
+      IntPtr const_ptr_this = ConstPointer();
+      IntPtr ptr_cplane = UnsafeNativeMethods.ON_3dmView_GetConstructionPlaneObject(const_ptr_this);
+      var rc = ConstructionPlane.FromIntPtr(ptr_cplane);
+      UnsafeNativeMethods.ON_3dmConstructionPlane_Delete(ptr_cplane);
+      // ON_3dmConstructionPlane has no grid/axis visibility of its own - those flags live on
+      // the view - so carry them across, otherwise ConstructionPlane.ShowGrid and ShowAxes
+      // always read back as their managed defaults no matter what the file says.
+      rc.ShowGrid = ShowConstructionGrid;
+      rc.ShowAxes = ShowConstructionAxes;
+      GC.KeepAlive(this);
+      return rc;
+    }
+
+    /// <summary>
+    /// Sets the view's construction plane, including its grid settings.
+    /// </summary>
+    /// <param name="constructionPlane">The construction plane to store on the view.</param>
+    /// <since>8.35</since>
+    public void SetConstructionPlane(ConstructionPlane constructionPlane)
+    {
+      if (constructionPlane == null)
+        throw new ArgumentNullException(nameof(constructionPlane));
+      IntPtr ptr_this = NonConstPointer();
+      IntPtr ptr_cplane = constructionPlane.CopyToNative();
+      UnsafeNativeMethods.ON_3dmView_SetConstructionPlaneObject(ptr_this, ptr_cplane);
+      UnsafeNativeMethods.ON_3dmConstructionPlane_Delete(ptr_cplane);
+      GC.KeepAlive(this);
+      // see GetConstructionPlane: these two live on the view, not on the construction plane,
+      // and were silently dropped before
+      ShowConstructionGrid = constructionPlane.ShowGrid;
+      ShowConstructionAxes = constructionPlane.ShowAxes;
+    }
+
+    /// <summary>
+    /// Returns a unique id if this is a named view otherwise an empty Guid.
+    /// </summary>
+    /// <since>7.28</since>
+    public Guid NamedViewId
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        Guid id = UnsafeNativeMethods.ON_3dmView_NamedViewId(const_ptr_this);
+        GC.KeepAlive(this);
+        return id;
+      }
+      // <since>8.36</since>
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_SetNamedViewId(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// The id of the display mode this view opens in - wireframe, shaded, rendered, or any
+    /// custom display mode. <see cref="Rhino.Display.DisplayModeDescription"/> holds the
+    /// standard ids. A nil id means the view has no display mode of its own and opens in
+    /// wireframe, which is what every template generated without this property did.
+    /// </summary>
+    /// <since>8.36</since>
+    public Guid DisplayModeId
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        Guid rc = UnsafeNativeMethods.ON_3dmView_GetDisplayModeId(const_ptr_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_SetDisplayModeId(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Whether this view is a model view, a layout page, a nested (detail) view, or one of
+    /// the special editor views. A page view must be an orthographic top view; see
+    /// <see cref="PageSettings"/> for its paper size.
+    /// </summary>
+    /// <since>8.36</since>
+    public Rhino.DocObjects.ViewType ViewType
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmView_GetViewType(const_ptr_this);
+        GC.KeepAlive(this);
+        return (Rhino.DocObjects.ViewType)rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_SetViewType(ptr_this, (int)value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    bool GetViewBool(UnsafeNativeMethods.View3dmBool which)
+    {
+      IntPtr const_ptr_this = ConstPointer();
+      bool rc = UnsafeNativeMethods.ON_3dmView_GetBool(const_ptr_this, which);
+      GC.KeepAlive(this);
+      return rc;
+    }
+
+    void SetViewBool(UnsafeNativeMethods.View3dmBool which, bool value)
+    {
+      IntPtr ptr_this = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmView_SetBool(ptr_this, which, value);
+      GC.KeepAlive(this);
+    }
+
+    /// <summary>Whether the construction plane grid is drawn in this view.</summary>
+    /// <since>8.36</since>
+    public bool ShowConstructionGrid
+    {
+      get => GetViewBool(UnsafeNativeMethods.View3dmBool.ShowConstructionGrid);
+      set => SetViewBool(UnsafeNativeMethods.View3dmBool.ShowConstructionGrid, value);
+    }
+
+    /// <summary>Whether the construction plane x and y axes are drawn in this view.</summary>
+    /// <since>8.36</since>
+    public bool ShowConstructionAxes
+    {
+      get => GetViewBool(UnsafeNativeMethods.View3dmBool.ShowConstructionAxes);
+      set => SetViewBool(UnsafeNativeMethods.View3dmBool.ShowConstructionAxes, value);
+    }
+
+    /// <summary>Whether the construction plane z axis is drawn in this view.</summary>
+    /// <since>8.36</since>
+    public bool ShowConstructionZAxis
+    {
+      get => GetViewBool(UnsafeNativeMethods.View3dmBool.ShowConstructionZAxis);
+      set => SetViewBool(UnsafeNativeMethods.View3dmBool.ShowConstructionZAxis, value);
+    }
+
+    /// <summary>Whether the world axes icon is drawn in the corner of this view.</summary>
+    /// <since>8.36</since>
+    public bool ShowWorldAxes
+    {
+      get => GetViewBool(UnsafeNativeMethods.View3dmBool.ShowWorldAxes);
+      set => SetViewBool(UnsafeNativeMethods.View3dmBool.ShowWorldAxes, value);
+    }
+
+    /// <summary>Whether the view's projection is locked against changes.</summary>
+    /// <since>8.36</since>
+    public bool LockedProjection
+    {
+      get => GetViewBool(UnsafeNativeMethods.View3dmBool.LockedProjection);
+      set => SetViewBool(UnsafeNativeMethods.View3dmBool.LockedProjection, value);
+    }
+
+    /// <summary>The pixel size this view renders at.</summary>
+    /// <since>8.36</since>
+    public System.Drawing.Size RenderingSize
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        int width = 0, height = 0;
+        UnsafeNativeMethods.ON_3dmView_GetRenderingSize(const_ptr_this, ref width, ref height);
+        GC.KeepAlive(this);
+        return new System.Drawing.Size(width, height);
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_SetRenderingSize(ptr_this, value.Width, value.Height);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets the paper size and margins of this view. Only meaningful when
+    /// <see cref="ViewType"/> is <see cref="ViewType.PageView"/>.
+    /// </summary>
+    /// <since>8.36</since>
+    public PageSettings GetPageSettings()
+    {
+      IntPtr const_ptr_this = ConstPointer();
+      int page_number = 0;
+      double width = 0, height = 0, left = 0, right = 0, top = 0, bottom = 0;
+      var rc = new PageSettings();
+      using (var sh = new StringHolder())
+      {
+        UnsafeNativeMethods.ON_3dmView_GetPageSettings(const_ptr_this, ref page_number,
+          ref width, ref height, ref left, ref right, ref top, ref bottom, sh.NonConstPointer());
+        rc.PrinterName = sh.ToString();
+      }
+      GC.KeepAlive(this);
+      rc.PageNumber = page_number;
+      rc.WidthMillimeters = width;
+      rc.HeightMillimeters = height;
+      rc.LeftMarginMillimeters = left;
+      rc.RightMarginMillimeters = right;
+      rc.TopMarginMillimeters = top;
+      rc.BottomMarginMillimeters = bottom;
+      return rc;
+    }
+
+    /// <summary>
+    /// Sets the paper size and margins of this view. Set <see cref="ViewType"/> to
+    /// <see cref="ViewType.PageView"/> as well, or the page settings are ignored.
+    /// </summary>
+    /// <since>8.36</since>
+    public void SetPageSettings(PageSettings pageSettings)
+    {
+      if (pageSettings == null)
+        throw new ArgumentNullException(nameof(pageSettings));
+      IntPtr ptr_this = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmView_SetPageSettings(ptr_this, pageSettings.PageNumber,
+        pageSettings.WidthMillimeters, pageSettings.HeightMillimeters,
+        pageSettings.LeftMarginMillimeters, pageSettings.RightMarginMillimeters,
+        pageSettings.TopMarginMillimeters, pageSettings.BottomMarginMillimeters,
+        pageSettings.PrinterName);
+      GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Get filename for wallpaper set to this view, if any.
+    /// </summary>
+    /// <since>6.0</since>
+    public string WallpaperFilename
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        using (var sh = new StringHolder())
+        {
+          IntPtr ptr_sh = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmView_WallpaperGetFilename(ptr_const_this, ptr_sh);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// True if wallpaper (if any) is to be shown in gray scale in this view.
+    /// </summary>
+    /// <since>6.0</since>
+    public bool ShowWallpaperInGrayScale
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        bool rc = UnsafeNativeMethods.ON_3dmView_WallpaperGetGrayScale(const_ptr_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// True if wallpaper (if any) is to be hidden from this view.
+    /// </summary>
+    /// <since>6.0</since>
+    public bool WallpaperHidden
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        bool rc = UnsafeNativeMethods.ON_3dmView_WallpaperGetHidden(const_ptr_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the Focal blur distance of the active viewport
+    /// </summary>
+    /// <since>6.0</since>
+    public double FocalBlurDistance
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        double rc = UnsafeNativeMethods.ON_3dmView_FocalBlurDistance_Get(const_ptr_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_FocalBlurDistance_Set(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the Focal blur aperture of the active viewport
+    /// </summary>
+    /// <since>6.0</since>
+    public double FocalBlurAperture
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        double rc = UnsafeNativeMethods.ON_3dmView_FocalBlurAperture_Get(const_ptr_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_FocalBlurAperture_Set(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the Focal blur jitter of the active viewport
+    /// </summary>
+    /// <since>6.0</since>
+    public double FocalBlurJitter
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        double rc = UnsafeNativeMethods.ON_3dmView_FocalBlurJitter_Get(const_ptr_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_FocalBlurJitter_Set(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+
+    /// <summary>
+    /// Gets or sets the Focal blur sample count of the active viewport
+    /// </summary>
+    /// <since>6.0</since>
+    [CLSCompliant(false)]
+    public uint FocalBlurSampleCount
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        uint rc = UnsafeNativeMethods.ON_3dmView_FocalBlurSampleCount_Get(const_ptr_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_FocalBlurSampleCount_Set(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the Focal blur mode of the active viewport
+    /// </summary>
+    /// <since>6.0</since>
+    [CLSCompliant(false)]
+    public ViewInfoFocalBlurModes FocalBlurMode
+    {
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+        uint blur_mode = UnsafeNativeMethods.ON_3dmView_FocalBlurMode_Get(const_ptr_this);
+        GC.KeepAlive(this);
+        if (blur_mode == 0)
+          return ViewInfoFocalBlurModes.None;
+        if (blur_mode == 1)
+          return ViewInfoFocalBlurModes.Automatic;
+        if (blur_mode == 2)
+          return ViewInfoFocalBlurModes.Manual;
+
+        return ViewInfoFocalBlurModes.None;
+      }
+
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        uint blur_mode = 0;
+
+        if (value == ViewInfoFocalBlurModes.None)
+          blur_mode = 0;
+        if (value == ViewInfoFocalBlurModes.Automatic)
+          blur_mode = 1;
+        if (value == ViewInfoFocalBlurModes.Manual)
+          blur_mode = 2;
+
+        UnsafeNativeMethods.ON_3dmView_FocalBlurMode_Set(ptr_this, blur_mode);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// How a view will interact with clipping planes
+    /// </summary>
+    /// <since>8.0</since>
+    public DocObjects.ViewSectionBehavior SectionBehavior
+    {
+      get
+      {
+        IntPtr constPtrThis = ConstPointer();
+        DocObjects.ViewSectionBehavior rc = (ViewSectionBehavior)UnsafeNativeMethods.ON_3dmView_GetSectionBehavior(constPtrThis);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptrThis = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmView_SetSectionBehavior(ptrThis, (int)value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Returns a list of clipping plane Ids associated with this view.
+    /// </summary>
+    /// <since>8.15</since>
+    public Guid[] ClippingPlanesIds
+    {
+      get
+      {
+        IntPtr constPtrThis = ConstPointer();
+
+        var ptrArray = new SimpleArrayIntPtr();
+
+        UnsafeNativeMethods.ON_3dmView_GetClippingPlanes(constPtrThis, ptrArray.NonConstPointer() );
+
+        var outList = new List<Guid>();
+
+        foreach (var ptr in ptrArray.ToArray())
+        {
+          outList.Add(UnsafeNativeMethods.ON_ClippingPlaneInfo_GetPlaneId(ptr));
+        }
+        GC.KeepAlive(this);
+        GC.KeepAlive(ptrArray);
+        return outList.ToArray();
+      }
+    }
+
+    /// <summary>
+    /// Returns a list of ClippingPlaneSurfaces for this view.
+    /// </summary>
+    /// <returns></returns>
+    /// <since>8.17</since>
+    public ClippingPlaneSurface[] ClippingPlaneSurfaces()
+    {
+      using (var ptrArray = new SimpleArrayIntPtr())
+      {
+        UnsafeNativeMethods.ON_3dmView_GetClippingPlanes(ConstPointer(), ptrArray.NonConstPointer());
+
+        var outList = new List<ClippingPlaneSurface>();
+
+        var ptrArrayArray = ptrArray.ToArray();
+
+        foreach (var ptr in ptrArrayArray)
+        {
+          var plane = new Geometry.Plane();
+          UnsafeNativeMethods.ON_ClippingPlaneInfo_GetPlane(ptr, ref plane);
+
+          var cps = new ClippingPlaneSurface(plane);
+
+          cps.PlaneDepth = UnsafeNativeMethods.ON_ClippingPlaneInfo_GetDepth(ptr);
+          cps.PlaneDepthEnabled = UnsafeNativeMethods.ON_ClippingPlaneInfo_GetDepthEnabled(ptr);
+
+          outList.Add(cps);
+
+          UnsafeNativeMethods.ON_ClippingPlaneInfo_Delete(ptr);
+        }
+
+        return outList.ToArray();
+      }
+    }
+
+    ViewportInfo m_viewport;
+
+    /// <summary>
+    /// Gets the viewport, or viewing frustum, associated with this view.
+    /// </summary>
+    /// <since>5.0</since>
+    public ViewportInfo Viewport
+    {
+      get
+      {
+        return m_viewport ?? (m_viewport = new ViewportInfo(this));
+      }
+    }
+    internal IntPtr ConstViewportPointer()
+    {
+      IntPtr ptr_const_this = ConstPointer();
+      return UnsafeNativeMethods.ON_3dmView_ViewportPointer(ptr_const_this);
+    }
+    internal IntPtr NonConstViewportPointer()
+    {
+      IntPtr ptr_this = NonConstPointer();
+      return UnsafeNativeMethods.ON_3dmView_ViewportPointer(ptr_this);
+    }
+  }
+
+  /// <summary>
+  /// Contains information about the model's position in latitude, longitude,
+  /// and elevation for GIS mapping applications.
+  /// </summary>
+  public class EarthAnchorPoint : IDisposable
+  {
+    IntPtr m_ptr; // ON_EarthAnchorPoint*
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EarthAnchorPoint"/> class.
+    /// </summary>
+    /// <since>5.0</since>
+    public EarthAnchorPoint()
+    {
+      m_ptr = UnsafeNativeMethods.ON_EarthAnchorPoint_New();
+    }
+
+    internal EarthAnchorPoint(IntPtr ptr)
+    {
+      m_ptr = ptr;
+    }
+
+    internal EarthAnchorPoint(Rhino.FileIO.File3dm file3dm)
+    {
+      m_ptr = UnsafeNativeMethods.ONX_Model_GetEarthAnchorPoint(file3dm.ConstPointer());
+    }
+
+#if RHINO_SDK
+    internal EarthAnchorPoint(RhinoDoc doc)
+    {
+      m_ptr = UnsafeNativeMethods.CRhinoDocProperties_GetEarthAnchorPoint(doc.RuntimeSerialNumber);
+    }
+#endif
+    internal IntPtr ConstPointer()
+    {
+      return m_ptr;
+    }
+    IntPtr NonConstPointer()
+    {
+      return m_ptr;
+    }
+
+    /// <summary>
+    /// Passively reclaims unmanaged resources when the class user did not explicitly call Dispose().
+    /// </summary>
+    ~EarthAnchorPoint() { Dispose(false); }
+
+    /// <summary>
+    /// Actively reclaims unmanaged resources that this instance uses.
+    /// </summary>
+    /// <since>5.0</since>
+    public void Dispose()
+    {
+      Dispose(true);
+      GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// For derived class implementers.
+    /// <para>This method is called with argument true when class user calls Dispose(), while with argument false when
+    /// the Garbage Collector invokes the finalizer, or Finalize() method.</para>
+    /// <para>You must reclaim all used unmanaged resources in both cases, and can use this chance to call Dispose on disposable fields if the argument is true.</para>
+    /// <para>Also, you must call the base virtual method within your overriding method.</para>
+    /// </summary>
+    /// <param name="disposing">true if the call comes from the Dispose() method; false if it comes from the Garbage Collector finalizer.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+      if (IntPtr.Zero != m_ptr)
+      {
+        UnsafeNativeMethods.ON_EarthAnchorPoint_Delete(m_ptr);
+      }
+      m_ptr = IntPtr.Zero;
+    }
+
+    double GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble which)
+    {
+      IntPtr ptr_const_this = ConstPointer();
+      double rc = UnsafeNativeMethods.ON_EarthAnchorPoint_GetDouble(ptr_const_this, which);
+      GC.KeepAlive(this);
+      return rc;
+    }
+    void SetDouble(UnsafeNativeMethods.EarthAnchorPointDouble which, double val)
+    {
+      IntPtr ptr_this = NonConstPointer();
+      UnsafeNativeMethods.ON_EarthAnchorPoint_SetDouble(ptr_this, which, val);
+      GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// Gets or sets a point latitude on earth, in degrees.
+    /// +90 = north pole, 0 = equator, -90 = south pole.
+    /// </summary>
+    /// <since>5.0</since>
+    public double EarthBasepointLatitude
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.EarthBasepointLatitude); }
+      set { SetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.EarthBasepointLatitude, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets the point longitude on earth, in degrees.
+    /// </summary>
+    /// <since>5.0</since>
+    public double EarthBasepointLongitude
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.EarthBasepointLongitude); }
+      set { SetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.EarthBasepointLongitude, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets the point elevation on earth, in meters.
+    /// </summary>
+    /// <since>5.0</since>
+    public double EarthBasepointElevation
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.EarthBasepointElevation); }
+      set { SetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.EarthBasepointElevation, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating the zero level convention relating to a location on Earth.
+    /// </summary>
+    /// <since>8.5</since>
+    public EarthCoordinateSystem EarthBasepointElevationCoordinateSystem
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        EarthCoordinateSystem rc = (EarthCoordinateSystem)UnsafeNativeMethods.ON_EarthAnchorPoint_GetEarthCoordinateSystem(ptr_const_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_SetEarthCoordinateSystem(ptr_this, (int)value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating the zero level convention relating to a location on Earth.
+    /// </summary>
+    /// <since>5.0</since>
+    [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Please use EarthBasepointElevationCoordinateSystem property")]
+    public BasepointZero EarthBasepointElevationZero
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        BasepointZero rc = (BasepointZero)UnsafeNativeMethods.ON_EarthAnchorPoint_GetEarthBasepointElevationZero(ptr_const_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_SetEarthBasepointElevationZero(ptr_this, (int)value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets Keyhole Markup Language (KML) orientation heading angle in degrees.
+    /// </summary>
+    /// <since>7.11</since>
+    public double KMLOrientationHeadingAngleDegrees
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.KMLOrientationHeadingAngleDegrees); }
+    }
+
+    /// <summary>
+    /// Gets Keyhole Markup Language (KML) orientation tilt angle in degrees.
+    /// </summary>
+    /// <since>7.11</since>
+    public double KMLOrientationTiltAngleDegrees
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.KMLOrientationTiltAngleDegrees); }
+    }
+
+    /// <summary>
+    /// Gets Keyhole Markup Language (KML) orientation roll angle in degrees.
+    /// </summary>
+    /// <since>7.11</since>
+    public double KMLOrientationRollAngleDegrees
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.KMLOrientationRollAngleDegrees); }
+    }
+
+    /// <summary>
+    /// Gets Keyhole Markup Language (KML) orientation heading angle in radians.
+    /// </summary>
+    /// <since>7.11</since>
+    public double KMLOrientationHeadingAngleRadians
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.KMLOrientationHeadingAngleRadians); }
+    }
+
+    /// <summary>
+    /// Gets Keyhole Markup Language (KML) orientation tilt angle in degrees.
+    /// </summary>
+    /// <since>7.11</since>
+    public double KMLOrientationTiltAngleRadians
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.KMLOrientationTiltAngleRadians); }
+    }
+
+    /// <summary>
+    /// Gets Keyhole Markup Language (KML) orientation roll angle in degrees.
+    /// </summary>
+    /// <since>7.11</since>
+    public double KMLOrientationRollAngleRadians
+    {
+      get { return GetDouble(UnsafeNativeMethods.EarthAnchorPointDouble.KMLOrientationRollAngleRadians); }
+    }
+
+    /// <summary>Corresponding model point in model coordinates.</summary>
+    /// <since>5.0</since>
+    public Point3d ModelBasePoint
+    {
+      get
+      {
+        Point3d rc = new Point3d(0, 0, 0);
+        IntPtr ptr_const_this = ConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_ModelBasePoint(ptr_const_this, false, ref rc);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_ModelBasePoint(ptr_this, true, ref value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>Earth directions in model coordinates.</summary>
+    /// <since>5.0</since>
+    public Vector3d ModelNorth
+    {
+      get
+      {
+        Vector3d rc = new Vector3d(0, 0, 0);
+        IntPtr ptr_const_this = ConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_ModelDirection(ptr_const_this, true, false, ref rc);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_ModelDirection(ptr_this, true, true, ref value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>Earth directions in model coordinates.</summary>
+    /// <since>5.0</since>
+    public Vector3d ModelEast
+    {
+      get
+      {
+        Vector3d rc = new Vector3d(0, 0, 0);
+        IntPtr ptr_const_this = ConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_ModelDirection(ptr_const_this, false, false, ref rc);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_ModelDirection(ptr_this, false, true, ref value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    // Identification information about this location
+    //ON_UUID    m_id;           // unique id for this anchor point
+
+    /// <summary>
+    /// Gets or sets the short form of the identifying information about this location.
+    /// </summary>
+    /// <since>5.0</since>
+    public string Name
+    {
+      get
+      {
+        using (var sh = new StringHolder())
+        {
+          IntPtr ptr_const_this = ConstPointer();
+          IntPtr ptr_this = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_EarthAnchorPoint_GetString(ptr_const_this, true, ptr_this);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_SetString(ptr_this, true, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the long form of the identifying information about this location.
+    /// </summary>
+    /// <since>5.0</since>
+    public string Description
+    {
+      get
+      {
+        using (var sh = new StringHolder())
+        {
+          IntPtr ptr_const_this = ConstPointer();
+          IntPtr ptr_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_EarthAnchorPoint_GetString(ptr_const_this, false, ptr_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_EarthAnchorPoint_SetString(ptr_this, false, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    //ON_wString m_url;
+    //ON_wString m_url_tag;      // UI link text for m_url
+
+    /// <summary>
+    /// Checks if the earth location is set or not.
+    /// </summary>
+    /// <returns>Boolean value, true if set else false</returns>
+    /// <since>6.0</since>
+    public bool EarthLocationIsSet()
+    {
+      IntPtr const_ptr_this = ConstPointer();
+      bool is_set = UnsafeNativeMethods.ON_EarthAnchorPoint_EarthLocationIsSet(const_ptr_this);
+      GC.KeepAlive(this);
+      return is_set;
+    }
+
+    /// <summary>
+    /// Checks if the model location is set or not.
+    /// </summary>
+    /// <returns>Boolean value, true if set else false</returns>
+    /// <since>8.5</since>
+    public bool ModelLocationIsSet()
+    {
+      IntPtr const_ptr_this = ConstPointer();
+      bool is_set = UnsafeNativeMethods.ON_EarthAnchorPoint_ModelLocationIsSet(const_ptr_this);
+      GC.KeepAlive(this);
+      return is_set;
+    }
+
+    /// <summary>
+    /// Returns a plane in model coordinates whose X axis points East,
+    /// Y axis points North and Z axis points Up. The origin
+    /// is set to ModelBasepoint.
+    /// </summary>
+    /// <returns>A plane value. This might be invalid on error.</returns>
+    /// <since>5.0</since>
+    public Plane GetModelCompass()
+    {
+      Plane rc = Plane.Unset;
+      IntPtr ptr_const_this = ConstPointer();
+      UnsafeNativeMethods.ON_EarthAnchorPoint_GetModelCompass(ptr_const_this, ref rc);
+      GC.KeepAlive(this);
+      return rc;
+    }
+
+    /// <summary>
+    /// Gets a transformation from model coordinates to earth coordinates.
+    /// This transformation assumes the model is small enough that
+    /// the curvature of the earth can be ignored.
+    /// </summary>
+    /// <param name="modelUnitSystem">The model unit system.</param>
+    /// <returns>
+    /// Transform on success. Invalid Transform on error.
+    /// </returns>
+    /// <remarks>
+    /// If M is a point in model coordinates and E = model_to_earth*M,
+    /// then 
+    ///   E.x = latitude in decimal degrees
+    ///   E.y = longitude in decimal degrees
+    ///   E.z = elevation in meters above mean sea level
+    /// Because the earth is not flat, there is a small amount of error
+    /// when using a linear transformation to calculate oblate spherical 
+    /// coordinates.  This error is small.  If the distance from P to M
+    /// is d meters, then the approximation error is
+    /// latitude error  &lt;=
+    /// longitude error &lt;=
+    /// elevation error &lt;= 6379000*((1 + (d/6356000)^2)-1) meters
+    /// 
+    /// In particular, if every point in the model is within 1000 meters of
+    /// the m_model_basepoint, then the maximum approximation errors are
+    /// latitude error  &lt;=
+    /// longitude error &lt;=
+    /// elevation error &lt;= 8 centimeters.
+    /// </remarks>
+    /// <since>5.0</since>
+    public Transform GetModelToEarthTransform(UnitSystem modelUnitSystem)
+    {
+      Transform rc = Transform.Unset;
+      IntPtr ptr_const_this = ConstPointer();
+      UnsafeNativeMethods.ON_EarthAnchorPoint_GetModelToEarthTransform(ptr_const_this, modelUnitSystem, ref rc);
+      GC.KeepAlive(this);
+      return rc;
+    }
+
+    /// <summary> Returns the earth anchor plane </summary>
+    /// <param name="anchorNorth"></param>
+    /// <returns>A plane value.</returns>
+    /// <since>6.0</since>
+    public Plane GetEarthAnchorPlane(out Vector3d anchorNorth)
+    {
+      Plane plane = new Plane();
+
+      Vector3d anchor_east = ModelEast;
+      anchorNorth = ModelNorth;
+
+      // Keeps original vector length if feasible
+      double east_len = anchor_east.Length;
+      double north_len = anchorNorth.Length;
+
+      plane.ZAxis = Vector3d.CrossProduct(anchor_east, anchorNorth);
+
+      if (plane.ZAxis.IsTiny())
+      {
+        // Recompute a valid North and East vector
+        if (!anchorNorth.IsTiny())
+        {
+          // north and east are equal or east is tiny
+          anchor_east = -PerpVectOnXYPlane(anchorNorth);
+          east_len = north_len;
+        }
+        else if (!anchor_east.IsTiny())
+        {
+          // north and east are equal or north is tiny
+          anchorNorth = PerpVectOnXYPlane(anchor_east);
+          north_len = east_len;
+        }
+        else
+        {
+          // both are identity
+          anchor_east = Vector3d.XAxis;
+          east_len = 1.0;
+          anchorNorth = Vector3d.YAxis;
+          north_len = 1.0;
+        }
+
+        plane.ZAxis = Vector3d.CrossProduct(anchor_east, anchorNorth);
+      }
+
+      plane.XAxis = PerpVectOnXYPlane(plane.ZAxis);
+      plane.YAxis = Vector3d.CrossProduct(plane.ZAxis, plane.XAxis);
+
+      // Restores original vector length if were valid
+      plane.XAxis *= east_len;
+      plane.YAxis *= north_len;
+      plane.ZAxis *= east_len * north_len;
+
+      plane.Origin = ModelBasePoint;
+      plane.UpdateEquation();
+
+      return plane;
+    }
+
+    private Vector3d PerpVectOnXYPlane(Vector3d vec)
+    {
+      Vector2d vec_xy = new Vector2d(vec.X, vec.Y);
+      if (vec_xy.IsTiny())
+      {
+        return new Vector3d(vec.Z, 0.0, -vec.X);
+      }
+      return new Vector3d(-vec.Y, vec.X, 0.0);
+    }
+  }
+
+  /// <summary>
+  /// Specifies enumerated constants used to indicate the zero level convention relating to a location on Earth.
+  /// <para>This is used in conjunction with the <see cref="EarthAnchorPoint"/> class.</para>
+  /// </summary>
+  /// <since>5.0</since>
+  /// <deprecated>8.6</deprecated>
+  [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Please use EarthCoordinateSystem")]
+  public enum BasepointZero
+  {
+    /// <summary>
+    /// The ground level is the convention for 0.
+    /// </summary>
+    GroundLevel = 0,
+
+    /// <summary>
+    /// The mean sea level is the convention for 0.
+    /// </summary>
+    MeanSeaLevel = 1,
+
+    /// <summary>
+    /// The center of the planet is the convention for 0.
+    /// </summary>
+    CenterOfEarth = 2,
+  }
+
+  /// <summary>
+  /// Contains information used by the Animation Tools to create sun, season,
+  /// turntable and fly through animations.
+  /// </summary>
+  public class AnimationProperties : IDisposable
+  {
+    IntPtr m_ptr = IntPtr.Zero; // ON_3dmAnimationProperties*
+    readonly bool m_delete = true;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AnimationProperties"/> class.
+    /// </summary>
+    /// <since>6.11</since>
+    public AnimationProperties()
+    {
+      m_ptr = UnsafeNativeMethods.ON_3dmAnimationProperties_New(IntPtr.Zero);
+    }
+
+    /// <summary> Initialize new instance of the AnimationProperties class. </summary>
+    /// <param name="source">If not null, settings are copied from source</param>
+    /// <since>6.11</since>
+    public AnimationProperties(AnimationProperties source)
+    {
+      m_ptr = UnsafeNativeMethods.ON_3dmAnimationProperties_New(source.ConstPointer());
+      GC.KeepAlive(source);
+    }
+
+#if RHINO_SDK
+    internal AnimationProperties(RhinoDoc doc)
+    {
+      IntPtr ptrConst = UnsafeNativeMethods.ON_3dmAnimationProperties_ConstPointer(doc.RuntimeSerialNumber);
+      m_ptr = UnsafeNativeMethods.ON_3dmAnimationProperties_New(ptrConst);
+    }
+#endif
+
+    internal AnimationProperties(IntPtr ptr)
+    {
+      m_ptr = ptr;
+      m_delete = false;
+    }
+
+    internal IntPtr ConstPointer()
+    {
+      return m_ptr;
+    }
+
+    IntPtr NonConstPointer()
+    {
+      return m_ptr;
+    }
+
+    /// <summary>
+    /// Passively reclaims unmanaged resources when the class user did not explicitly call Dispose().
+    /// </summary>
+    ~AnimationProperties() { Dispose(false); }
+
+    /// <summary>
+    /// Actively reclaims unmanaged resources that this instance uses.
+    /// </summary>
+    /// <since>6.11</since>
+    public void Dispose()
+    {
+      Dispose(true);
+      GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// For derived class implementers.
+    /// <para>This method is called with argument true when class user calls Dispose(), while with argument false when
+    /// the Garbage Collector invokes the finalizer, or Finalize() method.</para>
+    /// <para>You must reclaim all used unmanaged resources in both cases, and can use this chance to call Dispose on disposable fields if the argument is true.</para>
+    /// <para>Also, you must call the base virtual method within your overriding method.</para>
+    /// </summary>
+    /// <param name="disposing">true if the call comes from the Dispose() method; false if it comes from the Garbage Collector finalizer.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+      if ((IntPtr.Zero != m_ptr) && m_delete)
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_Delete(m_ptr);
+      }
+      m_ptr = IntPtr.Zero;
+    }
+
+    /// <summary>
+    /// Constants that define the mode of the animation tools.
+    /// </summary>
+    /// <since>6.11</since>
+    [CLSCompliant(false)]
+    public enum CaptureTypes : uint
+    {
+      /// <summary> Camera and target movement along separate path curves </summary>
+      Path = UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Path,
+      /// <summary> Rotate a view around the target. </summary>
+      Turntable = UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Turntable,
+      /// <summary> Camera and target movement along a path curve </summary>
+      Flythrough = UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Flythrough,
+      /// <summary> Sun movement through a specified calendar day  </summary>
+      DaySunStudy = UnsafeNativeMethods.AnimationPropertiesCaptureTypes.DaySunStudy,
+      /// <summary> Sun movement through a specified week, month, or year </summary>
+      SeasonalSunStudy = UnsafeNativeMethods.AnimationPropertiesCaptureTypes.SeasonalSunStudy,
+      /// <summary> No capture type specified </summary>
+      None = UnsafeNativeMethods.AnimationPropertiesCaptureTypes.None
+    };
+
+    /// <summary>
+    /// Gets or sets the capture type of the animation.
+    /// </summary>
+    /// <since>6.11</since>
+    [CLSCompliant(false)]
+    public CaptureTypes CaptureType
+    {
+      get
+      {
+        var type = UnsafeNativeMethods.ON_3dmAnimationProperties_CaptureType(ConstPointer());
+        GC.KeepAlive(this);
+        if (UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Path == type)
+        {
+          return CaptureTypes.Path;
+        }
+        else
+        if (UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Turntable == type)
+        {
+          return CaptureTypes.Turntable;
+        }
+        else
+        if (UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Flythrough == type)
+        {
+          return CaptureTypes.Flythrough;
+        }
+        else
+        if (UnsafeNativeMethods.AnimationPropertiesCaptureTypes.DaySunStudy == type)
+        {
+          return CaptureTypes.DaySunStudy;
+        }
+        else
+        if (UnsafeNativeMethods.AnimationPropertiesCaptureTypes.SeasonalSunStudy == type)
+        {
+          return CaptureTypes.SeasonalSunStudy;
+        }
+        else
+        {
+          return CaptureTypes.None;
+        }
+      }
+
+      set
+      {
+        if (CaptureTypes.DaySunStudy == value)
+        {
+          UnsafeNativeMethods.ON_3dmAnimationProperties_SetCaptureType(NonConstPointer(), UnsafeNativeMethods.AnimationPropertiesCaptureTypes.DaySunStudy);
+        }
+        else
+        if (CaptureTypes.Flythrough == value)
+        {
+          UnsafeNativeMethods.ON_3dmAnimationProperties_SetCaptureType(NonConstPointer(), UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Flythrough);
+        }
+        else
+        if (CaptureTypes.Path == value)
+        {
+          UnsafeNativeMethods.ON_3dmAnimationProperties_SetCaptureType(NonConstPointer(), UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Path);
+        }
+        else
+        if (CaptureTypes.SeasonalSunStudy == value)
+        {
+          UnsafeNativeMethods.ON_3dmAnimationProperties_SetCaptureType(NonConstPointer(), UnsafeNativeMethods.AnimationPropertiesCaptureTypes.SeasonalSunStudy);
+        }
+        else
+        if (CaptureTypes.Turntable == value)
+        {
+          UnsafeNativeMethods.ON_3dmAnimationProperties_SetCaptureType(NonConstPointer(), UnsafeNativeMethods.AnimationPropertiesCaptureTypes.Turntable);
+        }
+        else
+        {
+          UnsafeNativeMethods.ON_3dmAnimationProperties_SetCaptureType(NonConstPointer(), UnsafeNativeMethods.AnimationPropertiesCaptureTypes.None);
+        }
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the file extension of the saved frames created by the animation.
+    /// </summary>
+    /// <since>6.11</since>
+    public string FileExtension
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetFileExtension(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmAnimationProperties_FileExtension(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the capture method of the animation which is either preview or full.
+    /// </summary>
+    /// <since>6.11</since>
+    public string CaptureMethod
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetCaptureMethod(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmAnimationProperties_CaptureMethod(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the viewport that will be captured.
+    /// </summary>
+    /// <since>6.11</since>
+    public string ViewportName
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetViewportName(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmAnimationProperties_ViewportName(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the name of the animation sequence.
+    /// </summary>
+    /// <since>6.11</since>
+    public string AnimationName
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetHtmlFileName(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmAnimationProperties_HtmlFileName(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the ID of the view display mode (wireframe, shaded...).
+    /// </summary>
+    /// <since>6.11</since>
+    public Guid DisplayMode
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetDisplayMode(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        Guid rc = UnsafeNativeMethods.ON_3dmAnimationProperties_DisplayMode(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets points of the camera path.
+    /// </summary>
+    /// <since>6.11</since>
+    public Point3d[] CameraPoints
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetCameraPoints(ConstPointer(),value.Length, value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+
+        using (var output_points = new SimpleArrayPoint3d())
+        {
+          IntPtr output_points_ptr = output_points.NonConstPointer();
+
+          UnsafeNativeMethods.ON_3dmAnimationProperties_CameraPoints(const_ptr_this, output_points_ptr);
+          GC.KeepAlive(this);
+          return output_points.ToArray();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets points of the target path.
+    /// </summary>
+    /// <since>6.11</since>
+    public Point3d[] TargetPoints
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetTargetPoints(ConstPointer(), value.Length, value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        IntPtr const_ptr_this = ConstPointer();
+
+        using (var output_points = new SimpleArrayPoint3d())
+        {
+          IntPtr output_points_ptr = output_points.NonConstPointer();
+
+          UnsafeNativeMethods.ON_3dmAnimationProperties_TargetPoints(const_ptr_this, output_points_ptr);
+          GC.KeepAlive(this);
+          return output_points.ToArray();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the number of frames to be captured.
+    /// </summary>
+    /// <since>6.11</since>
+    public int FrameCount
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetFrameCount(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_FrameCount(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the current frame during animation record.
+    /// </summary>
+    /// <since>7.12</since>
+    public int CurrentFrame
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetCurrentFrame(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_CurrentFrame(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the object ID of the camera path.
+    /// </summary>
+    /// <since>6.11</since>
+    public Guid CameraPathId
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetCameraPathId(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        Guid rc = UnsafeNativeMethods.ON_3dmAnimationProperties_CameraPathId(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the object ID of the target path.
+    /// </summary>
+    /// <since>6.11</since>
+    public Guid TargetPathId
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetTargetPathId(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        Guid rc = UnsafeNativeMethods.ON_3dmAnimationProperties_TargetPathId(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the latitude for sun animations in the range of -90 to +90.
+    /// </summary>
+    /// <since>6.11</since>
+    public double Latitude
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetLatitude(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        double rc = UnsafeNativeMethods.ON_3dmAnimationProperties_Latitude(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the longitude for sun animations in the range of -180 to +180.
+    /// </summary>
+    /// <since>6.11</since>
+    public double Longitude
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetLongitude(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        double rc = UnsafeNativeMethods.ON_3dmAnimationProperties_Longitude(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the world angle corresponding to North in degrees.
+    /// This angle is zero along the x-axis and increases anticlockwise.
+    /// </summary>
+    /// <since>6.11</since>
+    public double NorthAngle
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetNorthAngle(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        double rc = UnsafeNativeMethods.ON_3dmAnimationProperties_NorthAngle(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the start day for seasonal/one day sun animation in the range 1 to 31.
+    /// </summary>
+    /// <since>6.11</since>
+    public int StartDay
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetStartDay(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_StartDay(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the start month for seasonal/one day sun animation in the range 1 to 12.
+    /// </summary>
+    /// <since>6.11</since>
+    public int StartMonth
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetStartMonth(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_StartMonth(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the start year for seasonal/one day sun animation in the range 1800 to 2199.
+    /// </summary>
+    /// <since>6.11</since>
+    public int StartYear
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetStartYear(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_StartYear(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the start hour for seasonal/one day sun animation in the range 0 to 23.
+    /// </summary>
+    /// <since>6.11</since>
+    public int StartHour
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetStartHour(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_StartHour(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the start minutes for seasonal/one day sun animation in the range 0 to 59.
+    /// </summary>
+    /// <since>6.11</since>
+    public int StartMinutes
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetStartMinutes(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_StartMinutes(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the start seconds for seasonal/one day sun animation in the range 0 to 59.
+    /// </summary>
+    /// <since>6.11</since>
+    public int StartSeconds
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetStartSeconds(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_StartSeconds(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the end day for seasonal day sun animation in the range 1 to 31.
+    /// </summary>
+    /// <since>6.11</since>
+    public int EndDay
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetEndDay(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_EndDay(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the end month for seasonal day sun animation in the range 1 to 12.
+    /// </summary>
+    /// <since>6.11</since>
+    public int EndMonth
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetEndMonth(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_EndMonth(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the end year for seasonal day sun animation in the range 1800 to 2199.
+    /// </summary>
+    /// <since>6.11</since>
+    public int EndYear
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetEndYear(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_EndYear(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the end hour for one day sun animation in the range 0 to 23.
+    /// </summary>
+    /// <since>6.11</since>
+    public int EndHour
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetEndHour(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_EndHour(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the end minutes for one day sun animation in the range 0 to 59.
+    /// </summary>
+    /// <since>6.11</since>
+    public int EndMinutes
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetEndMinutes(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_EndMinutes(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the end seconds for one day sun animation in the range 0 to 59.
+    /// </summary>
+    /// <since>6.11</since>
+    public int EndSeconds
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetEndSeconds(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_EndSeconds(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the days between captured frames for seasonal sun animation.
+    /// </summary>
+    /// <since>6.11</since>
+    public int DaysBetweenFrames
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetDaysBetweenFrames(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_DaysBetweenFrames(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the minutes between captured frames for one day sun animation.
+    /// </summary>
+    /// <since>6.11</since>
+    public int MinutesBetweenFrames
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetMinutesBetweenFrames(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_MinutesBetweenFrames(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Internal value used while previewing animation.
+    /// </summary>
+    /// <since>6.11</since>
+    public int LightIndex
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetLightIndex(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        int rc = UnsafeNativeMethods.ON_3dmAnimationProperties_LightIndex(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the location for the saved frames.
+    /// </summary>
+    /// <since>6.11</since>
+    public string FolderName
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetFolderName(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmAnimationProperties_FolderName(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the HTML file name. This property is the same as <see cref="AnimationName"/>.
+    /// </summary>
+    /// <since>7.12</since>
+    public string HtmlFileName
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetHtmlFileName(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmAnimationProperties_HtmlFileName(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Return HTML file path consisting of FolderName and HtmlFileName.
+    ///
+    /// To change this set FolderName and HtmlFileName.
+    /// </summary>
+    /// <since>7.12</since>
+    public string HtmlFullPath => Path.ChangeExtension(Path.Combine(FolderName, HtmlFileName), ".html");
+
+    /// <summary>
+    /// Gets or sets the full path to the saved frames of an animation.
+    /// </summary>
+    /// <since>6.11</since>
+    public string[] Images
+    {
+      set
+      {
+        IntPtr pStrings = UnsafeNativeMethods.ON_StringArray_New();
+        foreach (string v in value)
+          UnsafeNativeMethods.ON_StringArray_Append(pStrings, v);
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetImages(NonConstPointer(), pStrings);
+        UnsafeNativeMethods.ON_StringArray_Delete(pStrings);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var list = new ClassArrayString())
+        {
+          var ptr_list = list.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmAnimationProperties_Images(ConstPointer(), ptr_list);
+          GC.KeepAlive(this);
+          return list.ToArray();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the dates that are calculated for seasonal/one day sun animations.
+    /// </summary>
+    /// <since>6.11</since>
+    public string[] Dates
+    {
+      set
+      {
+        IntPtr pStrings = UnsafeNativeMethods.ON_StringArray_New();
+        foreach (string v in value)
+          UnsafeNativeMethods.ON_StringArray_Append(pStrings, v);
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetDates(NonConstPointer(), pStrings);
+        UnsafeNativeMethods.ON_StringArray_Delete(pStrings);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var list = new ClassArrayString())
+        {
+          var ptr_list = list.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmAnimationProperties_Dates(ConstPointer(), ptr_list);
+          GC.KeepAlive(this);
+          return list.ToArray();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to capture a frame in rendered mode.
+    /// </summary>
+    /// <since>6.11</since>
+    public bool RenderFull
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetRenderFull(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_3dmAnimationProperties_RenderFull(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to capture a frame in preview rendered mode.
+    /// </summary>
+    /// <since>6.11</since>
+    public bool RenderPreview
+    {
+      set
+      {
+        UnsafeNativeMethods.ON_3dmAnimationProperties_SetRenderPreview(NonConstPointer(), value);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        bool rc = UnsafeNativeMethods.ON_3dmAnimationProperties_RenderPreview(ConstPointer());
+        GC.KeepAlive(this);
+        return rc;
+      }
+    }
+  }
+}
+
+namespace Rhino.Render
+{
+  /// <summary> Contains settings used in rendering. </summary>
+  public class RenderSettings : Runtime.CommonObject
+  {
+    // Only one of the following 3 members is used in any given situation.
+#if RHINO_SDK
+    private readonly RhinoDoc m_doc;           // Only used in the document case.
+#endif
+    private readonly FileIO.File3dm m_file3dm; // Only used in the File3dm case.
+
+    //New for V6, rendering source (render directly from a NamedView or Snapshot)
+    //https://mcneel.myjetbrains.com/youtrack/issue/RH-39593
+    /// <summary>
+    /// Rendering source (render directly from a NamedView or Snapshot)
+    /// </summary>
+    /// <since>6.1</since>
+    [CLSCompliant(false)]
+    public enum RenderingSources : uint
+    {
+      /// <summary>
+      /// Get the rendering view from the currently active viewport (as in all previous versions of Rhino)
+      /// </summary>
+      ActiveViewport,
+      /// <summary>
+      ///  Get the rendering view from the named viewport (see NamedViewport below)
+      /// </summary>
+      SpecificViewport,
+      /// <summary>
+      /// Get the rendering view from a specific named view (see NamedView below)
+      /// </summary>
+      NamedView,
+      /// <summary>
+      /// Before rendering, restore the Snapshot specified in Snapshot below, then render.
+      /// </summary>
+      SnapShot
+    };
+
+    /// <summary> Initialize new instance of the RenderSettings class. </summary>
+    /// <param name="source">If not null, settings are copied from source.</param>
+    /// <since>6.0</since>
+    public RenderSettings(RenderSettings source)
+    {
+      var const_ptr_source = source == null ? IntPtr.Zero : source.ConstPointer();
+      IntPtr ptr_this = UnsafeNativeMethods.ON_3dmRenderSettings_New(const_ptr_source);
+      ConstructNonConstObject(ptr_this);
+      GC.KeepAlive(source);
+    }
+
+    /// <summary> Initialize a new instance of the RenderSettings class.</summary>
+    /// <since>5.0</since>
+    public RenderSettings()
+    {
+      IntPtr ptr_this = UnsafeNativeMethods.ON_3dmRenderSettings_New(IntPtr.Zero);
+      ConstructNonConstObject(ptr_this);
+    }
+
+#if RHINO_SDK
+    internal RenderSettings(RhinoDoc doc)
+    {
+      m_doc = doc;
+      ConstructConstObject(m_doc, -1);
+    }
+#endif
+
+    internal RenderSettings(FileIO.File3dm f)
+    {
+      m_file3dm = f;
+      ConstructConstObject(m_file3dm, -1);
+    }
+
+    internal RenderSettings(IntPtr nativePtr, bool do_not_delete=false)
+    {
+      ConstructNonConstObject(nativePtr);
+
+      if (do_not_delete)
+      {
+        DoNotDestructOnDispose();
+      }
+    }
+
+    internal override IntPtr _InternalGetConstPointer() // Returns pointer to ON_3dmRenderSettings.
+    {
+#if RHINO_SDK
+      if (m_doc != null)
+      {
+        return UnsafeNativeMethods.ON_3dmRenderSettings_ConstPointer(m_doc.RuntimeSerialNumber);
+      }
+#endif
+      if (m_file3dm != null)
+      {
+        var ptrModel = m_file3dm.ConstPointer();
+        return UnsafeNativeMethods.ON_3dmRenderSettings_ConstPointer_ONX_Model(ptrModel);
+      }
+
+      return NonConstPointer();
+    }
+
+    /// <summary>
+    /// Makes a free-floating copy of the object.
+    /// </summary>
+    /// <since>8.0</since>
+    public RenderSettings Duplicate()
+    {
+      var const_ptr_this = ConstPointer();
+      var native = UnsafeNativeMethods.ON_3dmRenderSettings_New(const_ptr_this);
+      RenderSettings rc = new RenderSettings(native);
+      GC.KeepAlive(this);
+      return rc;
+    }
+
+    internal override IntPtr _InternalDuplicate(out bool applymempressure)
+    {
+      applymempressure = false;
+      IntPtr const_ptr_this = ConstPointer();
+      return UnsafeNativeMethods.ON_3dmRenderSettings_New(const_ptr_this);
+    }
+
+    internal void Commit()
+    {
+      // If this class is already const then bail.
+      if (!IsNonConst)
+        return;
+
+#if RHINO_SDK
+      if (m_doc != null)
+      {
+        // This class is associated with a document so commit the settings change.
+        m_doc.RenderSettings = this;
+
+        // Delete the current settings pointer. The next time it's accessed by NonConstPointer() or
+        // ConstPointer() it will make a copy of the document's render settings.
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_Object_Delete(ptr_this);
+        ChangeToConstObject(m_doc);
+      }
+#endif
+      if (m_file3dm != null)
+      {
+        // This class is associated with a file3dm so commit the settings change.
+        IntPtr ptr_this = ConstPointer();
+        UnsafeNativeMethods.ON_3dmRenderSettings_ONX_Model_Commit(ptr_this, m_file3dm.NonConstPointer());
+      }
+      GC.KeepAlive(this);
+    }
+
+    System.Drawing.Color GetColor(UnsafeNativeMethods.RenderSettingColor which)
+    {
+      IntPtr ptr_const_this = ConstPointer();
+      int argb = UnsafeNativeMethods.ON_3dmRenderSettings_GetColor(ptr_const_this, which);
+      GC.KeepAlive(this);
+      return System.Drawing.Color.FromArgb(argb);
+    }
+
+    void SetColor(UnsafeNativeMethods.RenderSettingColor which, System.Drawing.Color c)
+    {
+      IntPtr ptr_this = NonConstPointer();
+      int argb = c.ToArgb();
+      UnsafeNativeMethods.ON_3dmRenderSettings_SetColor(ptr_this, which, argb);
+      GC.KeepAlive(this);
+      Commit();
+    }
+
+    /// <summary>
+    /// Gets or sets the ambient light color used in rendering.
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Color AmbientLight
+    {
+      get { return GetColor(UnsafeNativeMethods.RenderSettingColor.AmbientLight); }
+      set { SetColor(UnsafeNativeMethods.RenderSettingColor.AmbientLight, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets the background top color used in rendering.
+    /// <para>Sets also the background color if a solid background color is set.</para>
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Color BackgroundColorTop
+    {
+      get { return GetColor(UnsafeNativeMethods.RenderSettingColor.BackgroundColorTop); }
+      set { SetColor(UnsafeNativeMethods.RenderSettingColor.BackgroundColorTop, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets the background bottom color used in rendering.
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Color BackgroundColorBottom
+    {
+      get { return GetColor(UnsafeNativeMethods.RenderSettingColor.BackgroundColorBottom); }
+      set { SetColor(UnsafeNativeMethods.RenderSettingColor.BackgroundColorBottom, value); }
+    }
+
+    bool GetBool(UnsafeNativeMethods.RenderSettingBool which)
+    {
+      IntPtr ptr_const_this = ConstPointer();
+      bool rc = UnsafeNativeMethods.ON_3dmRenderSettings_GetBool(ptr_const_this, which);
+      GC.KeepAlive(this);
+      return rc;
+    }
+    void SetBool(UnsafeNativeMethods.RenderSettingBool which, bool b)
+    {
+      IntPtr ptr_this = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmRenderSettings_SetBool(ptr_this, which, b);
+      GC.KeepAlive(this);
+      Commit();
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to render using lights that are on layers that are off.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool UseHiddenLights
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.UseHiddenLights); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.UseHiddenLights, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to render using depth cues.
+    /// <para>These are clues to help the perception of position and orientation of objects in the image.</para>
+    /// </summary>
+    /// <since>5.0</since>
+    public bool DepthCue
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.DepthCue); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.DepthCue, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to render using flat shading.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool FlatShade
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.FlatShade); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.FlatShade, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to render back faces.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool RenderBackfaces
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.RenderBackFaces); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.RenderBackFaces, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to instruct the rendering engine to show points.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool RenderPoints
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.RenderPoints); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.RenderPoints, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to instruct the rendering engine to show curves.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool RenderCurves
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.RenderCurves); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.RenderCurves, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to instruct the rendering engine to show isocurves.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool RenderIsoparams
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.RenderIsoparams); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.RenderIsoparams, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to instruct the rendering engine to show mesh edges.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool RenderMeshEdges
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.RenderMeshEdges); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.RenderMeshEdges, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to instruct the rendering engine to show annotations,
+    /// such as linear dimensions or angular dimensions.
+    /// </summary>
+    /// <since>5.0</since>
+    public bool RenderAnnotations
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.RenderAnnotation); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.RenderAnnotation, value); }
+    }
+
+    int GetInt(UnsafeNativeMethods.RenderSettingInt which)
+    {
+      IntPtr ptr_const_this = ConstPointer();
+      int rc = UnsafeNativeMethods.ON_3dmRenderSettings_GetInt(ptr_const_this, which);
+      GC.KeepAlive(this);
+      return rc;
+    }
+    void SetInt(UnsafeNativeMethods.RenderSettingInt which, int i)
+    {
+      IntPtr ptr_this = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmRenderSettings_SetInt(ptr_this, which, i);
+      GC.KeepAlive(this);
+      Commit();
+    }
+
+    /// <summary>
+    /// Gets or sets anti-alias level, used for render quality
+    /// </summary>
+    /// <since>5.0</since>
+    public AntialiasLevel AntialiasLevel
+    {
+      get { return (AntialiasLevel)GetInt(UnsafeNativeMethods.RenderSettingInt.AntialiasStyle); }
+      set { SetInt(UnsafeNativeMethods.RenderSettingInt.AntialiasStyle, (int)value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to use the resolution of the
+    /// viewport being rendered or ImageSize when rendering
+    /// </summary>
+    /// <since>5.0</since>
+    public bool UseViewportSize
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.UseViewportSize); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.UseViewportSize, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to scale the wallpaper in the
+    /// background or not. This is meaningful only if the viewport has a wallpaper
+    /// and render settings are set to render Wallpaper into the background.
+    /// </summary>
+    /// <since>6.0</since>
+    public bool ScaleBackgroundToFit
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.ScaleBackgroundToFit); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.ScaleBackgroundToFit, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets whether rendering should be done with transparent background.
+    /// </summary>
+    /// <since>6.0</since>
+    public bool TransparentBackground
+    {
+      get { return GetBool(UnsafeNativeMethods.RenderSettingBool.TransparentBackground); }
+      set { SetBool(UnsafeNativeMethods.RenderSettingBool.TransparentBackground, value); }
+    }
+
+    /// <summary>
+    /// unit system to use when converting image pixel size and DPI information
+    /// into a print size.  Default = inches
+    /// </summary>
+    /// <since>5.11</since>
+    public UnitSystem ImageUnitSystem
+    {
+      get
+      {
+        var pointer = ConstPointer();
+        UnitSystem rc = UnsafeNativeMethods.ON_3dmRenderSettings_GetUnitSystem(pointer);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        var pointer = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmRenderSettings_SetUnitSystem(pointer, value);
+        GC.KeepAlive(this);
+        Commit();
+      }
+    }
+    /// <summary>
+    /// Number of dots/inch (dots=pixels) to use when printing and saving
+    /// bitmaps. The default is 72.0 dots/inch.
+    /// </summary>
+    /// <since>5.11</since>
+    public double ImageDpi
+    {
+      get
+      {
+        var pointer = ConstPointer();
+        double rc = UnsafeNativeMethods.ON_3dmRenderSettings_GetImageDpi(pointer);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        var pointer = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmRenderSettings_SetImageDpi(pointer, value);
+        GC.KeepAlive(this);
+        Commit();
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating the size of the rendering result if
+    /// UseViewportSize is set to false.  If UseViewportSize is set to true,
+    /// then this value is ignored.
+    /// </summary>
+    /// <since>5.0</since>
+    public System.Drawing.Size ImageSize
+    {
+      get
+      {
+        int width = GetInt(UnsafeNativeMethods.RenderSettingInt.ImageWidth);
+        int height = GetInt(UnsafeNativeMethods.RenderSettingInt.ImageHeight);
+        return new System.Drawing.Size(width, height);
+      }
+      set
+      {
+        SetInt(UnsafeNativeMethods.RenderSettingInt.ImageWidth, value.Width);
+        SetInt(UnsafeNativeMethods.RenderSettingInt.ImageHeight, value.Height);
+      }
+    }
+
+    /// <summary>
+    /// 0=none, 1=normal, 2=best.
+    /// </summary>
+    /// <since>5.0</since>
+    public int ShadowmapLevel
+    {
+      get { return GetInt(UnsafeNativeMethods.RenderSettingInt.ShadowmapStyle); }
+      set { SetInt(UnsafeNativeMethods.RenderSettingInt.ShadowmapStyle, value); }
+    }
+
+    /// <summary>
+    /// How the viewport's background should be filled.
+    /// </summary>
+    /// <since>5.0</since>
+    public Display.BackgroundStyle BackgroundStyle
+    {
+      get { return (Display.BackgroundStyle)GetInt(UnsafeNativeMethods.RenderSettingInt.BackgroundStyle); }
+      set { SetInt(UnsafeNativeMethods.RenderSettingInt.BackgroundStyle, (int)value); }
+    }
+
+    /// <summary>
+    /// If this object is associated with a document, this gets the document linear workflow.
+    /// If this object is associated with a File3dm, this gets the File3dm's linear workflow.
+    /// Otherwise it gets a 'free-floating' linear workflow object.
+    /// </summary>
+    /// <since>6.0</since>
+    public LinearWorkflow LinearWorkflow
+    {
+      get
+      {
+#if RHINO_SDK
+        if (m_doc != null)
+          return new LinearWorkflow(m_doc);
+#endif
+        if (m_file3dm != null)
+          return new LinearWorkflow(m_file3dm);
+
+        var cpp = ConstPointer();
+        var native_ptr = UnsafeNativeMethods.ON_3dmRenderSettings_GetLinearWorkflow(cpp);
+        GC.KeepAlive(this);
+        return new LinearWorkflow(native_ptr);
+      }
+    }
+
+    /// <summary>
+    /// If this object is associated with a document, this gets the document dithering.
+    /// If this object is associated with a File3dm, this gets the File3dm's dithering.
+    /// Otherwise it gets a 'free-floating' dithering object.
+    /// </summary>
+    /// <since>6.0</since>
+    public Dithering Dithering
+    {
+      get
+      {
+#if RHINO_SDK
+        if (m_doc != null)
+          return new Dithering(m_doc);
+#endif
+        if (m_file3dm != null)
+          return new Dithering(m_file3dm);
+
+        var cpp = ConstPointer();
+        var native_ptr = UnsafeNativeMethods.ON_3dmRenderSettings_GetDithering(cpp);
+        GC.KeepAlive(this);
+        return new Dithering(native_ptr);
+      }
+    }
+
+    /// <summary>
+    /// If this object is associated with a document, this gets the document render channels.
+    /// Otherwise it gets a 'free-floating' render channels object.
+    /// </summary>
+    /// <since>7.0</since>
+    public RenderChannels RenderChannels
+    {
+      get
+      {
+#if RHINO_SDK
+        if (m_doc != null)
+          return new RenderChannels(m_doc);
+#endif
+        if (m_file3dm != null)
+          return new RenderChannels(m_file3dm);
+
+        var cpp = ConstPointer();
+        var native_ptr = UnsafeNativeMethods.ON_3dmRenderSettings_GetRenderChannels(cpp);
+        GC.KeepAlive(this);
+        return new RenderChannels(native_ptr);
+      }
+    }
+
+    /// <summary>
+    /// If this object is associated with a document, this gets the document ground plane.
+    /// If this object is associated with a File3dm, this gets the File3dm's ground plane.
+    /// Otherwise it gets a 'free-floating' ground plane object.
+    /// </summary>
+    /// <since>8.0</since>
+    public GroundPlane GroundPlane
+    {
+      get
+      {
+#if RHINO_SDK
+        if (m_doc != null)
+          return new GroundPlane(m_doc);
+#endif
+        if (m_file3dm != null)
+          return new GroundPlane(m_file3dm);
+
+        var cpp = ConstPointer();
+        var native_ptr = UnsafeNativeMethods.ON_3dmRenderSettings_GetGroundPlane(cpp);
+        GC.KeepAlive(this);
+        return new GroundPlane(native_ptr);
+      }
+    }
+
+    /// <summary>
+    /// If this object is associated with a document, this gets the document safe-frame.
+    /// If this object is associated with a File3dm, this gets the File3dm's safe-frame.
+    /// Otherwise it gets a 'free-floating' safe-frame object.
+    /// </summary>
+    /// <since>8.0</since>
+    public SafeFrame SafeFrame
+    {
+      get
+      {
+#if RHINO_SDK
+        if (m_doc != null)
+          return new SafeFrame(m_doc);
+#endif
+        if (m_file3dm != null)
+          return new SafeFrame(m_file3dm);
+
+        var cpp = ConstPointer();
+        var native_ptr = UnsafeNativeMethods.ON_3dmRenderSettings_GetSafeFrame(cpp);
+        GC.KeepAlive(this);
+        return new SafeFrame(native_ptr);
+      }
+    }
+
+    /// <summary>
+    /// If this object is associated with a document, this gets the document skylight.
+    /// If this object is associated with a File3dm, this gets the File3dm's skylight.
+    /// Otherwise it gets a 'free-floating' skylight object.
+    /// </summary>
+    /// <since>8.0</since>
+    public Skylight Skylight
+    {
+      get
+      {
+#if RHINO_SDK
+        if (m_doc != null)
+          return new Skylight(m_doc);
+#endif
+        if (m_file3dm != null)
+          return new Skylight(m_file3dm);
+
+        var cpp = ConstPointer();
+        var native_ptr = UnsafeNativeMethods.ON_3dmRenderSettings_GetSkylight(cpp);
+        GC.KeepAlive(this);
+        return new Skylight(native_ptr);
+      }
+    }
+
+    /// <summary>
+    /// If this object is associated with a document, this gets the document sun.
+    /// If this object is associated with a File3dm, this gets the File3dm's sun.
+    /// Otherwise it gets a 'free-floating' sun object.
+    /// </summary>
+    /// <since>8.0</since>
+    public Sun Sun
+    {
+      get
+      {
+#if RHINO_SDK
+        if (m_doc != null)
+          return new Sun(m_doc);
+#endif
+        if (m_file3dm != null)
+          return new Sun(m_file3dm);
+
+        var cpp = ConstPointer();
+        var native_ptr = UnsafeNativeMethods.ON_3dmRenderSettings_GetSun(cpp);
+        GC.KeepAlive(this);
+        return new Sun(native_ptr);
+      }
+    }
+
+    /// <summary>
+    /// The usage of a render environment.
+    /// </summary>
+    /// <since>8.0</since>
+    public enum EnvironmentUsage // Matches ON_3dmRenderSettings::EnvironmentUsage
+    {
+      /// <summary>
+      /// Specifies the 360 background environment.
+      /// </summary>
+      Background,
+
+      /// <summary>
+      /// Specifies the custom reflective environment. Also used for refraction.
+      /// </summary>
+      Reflection,
+
+      /// <summary>
+      /// Specifies the custom skylighting environment.
+      /// </summary>
+      Skylighting,
+    };
+
+    /// <summary>
+    /// The purpose a render environment is being used for.
+    /// </summary>
+    /// <since>8.0</since>
+    public enum EnvironmentPurpose // Matches ON_3dmRenderSettings::EnvironmentPurpose
+    {
+      /// <summary>
+      /// Used to directly get and set the environment instance id.
+      /// </summary>
+      Standard,
+
+      /// <summary>
+      /// Used to get the environment instance id to be used for actual rendering.
+      /// </summary>
+      ForRendering,
+    };
+
+    /// <summary>
+    /// For usage background, this checks if the background style is set to 'Environment'.
+    /// For reflection and skylighting, it checks if the relevant custom override is enabled. 
+    /// </summary>
+    /// <since>8.0</since>
+    public bool RenderEnvironmentOverride(EnvironmentUsage usage)
+    {
+      var rs = ConstPointer();
+      bool rc = UnsafeNativeMethods.ON_3dmRenderSettings_GetRenderEnvironmentOverride(rs, (int)usage);
+      GC.KeepAlive(this);
+      return rc;
+    }
+
+    /// <summary>
+    /// Set the given environment override on/off. Only works for usage Reflection and Skylighting.
+    /// </summary>
+    /// <since>8.0</since>
+    public void SetRenderEnvironmentOverride(EnvironmentUsage usage, bool on)
+    {
+      var rs = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmRenderSettings_SetRenderEnvironmentOverride(rs, (int)usage, on);
+      GC.KeepAlive(this);
+      Commit();
+    }
+
+    /// <summary>
+    /// Get the id of the render environment for a particular usage.
+    /// If usage is Background and the background mode is set to 'Solid Color' or 'Gradient'
+    /// (i.e., not 'Environment'), then Guid.Empty will be returned.
+    /// </summary>
+    /// <since>8.0</since>
+    public Guid RenderEnvironmentId(EnvironmentUsage usage, EnvironmentPurpose purpose)
+    {
+      var rs = ConstPointer();
+      Guid rc = UnsafeNativeMethods.ON_3dmRenderSettings_GetRenderEnvironment(rs, (int)usage, (int)purpose);
+      GC.KeepAlive(this);
+      return rc;
+    }
+
+    /// <summary>
+    /// Set the id of the render environment for a particular usage.
+    /// Passing Guid.Empty for usage Skylighting or Reflection will turn the override for that usage off.
+    /// </summary>
+    /// <since>8.0</since>
+    public void SetRenderEnvironmentId(EnvironmentUsage usage, Guid guid)
+    {
+      var rs = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmRenderSettings_SetRenderEnvironment(rs, (int)usage, ref guid);
+      GC.KeepAlive(this);
+      Commit();
+    }
+
+#if RHINO_SDK
+    /// <summary>
+    /// Get the render environment for a particular usage. Only works if this render settings is in a document.
+    /// If usage is Background and the background mode is set to 'Solid Color' or 'Gradient'
+    /// (i.e., not 'Environment'), then null will be returned.
+    /// </summary>
+    /// <since>8.0</since>
+    public RenderEnvironment RenderEnvironment(EnvironmentUsage usage, EnvironmentPurpose purpose)
+    {
+      if (m_doc == null)
+        return null;
+
+      var id = RenderEnvironmentId(usage, purpose);
+      return m_doc.RenderEnvironments.Find(id);
+    }
+
+    /// <summary>
+    /// Set the render environment for a particular usage.
+    /// Passing null for usage Skylighting or Reflection will turn the override for that usage off.
+    /// </summary>
+    /// <since>8.0</since>
+    public void SetRenderEnvironment(EnvironmentUsage usage, RenderEnvironment env)
+    {
+      if (m_doc != null)
+      {
+        var guid = (env != null) ? env.Id : Guid.Empty;
+        SetRenderEnvironmentId(usage, guid); // Does Commit().
+      }
+    }
+#endif
+
+    /// <summary>
+    /// If this object is associated with a document, this gets the document post effect data collection.
+    /// If this object is associated with a File3dm, this gets the File3dm's post effect data collection.
+    /// Otherwise it gets a 'free-floating' post effect data collection object.
+    /// </summary>
+    /// <since>8.0</since>
+    public PostEffectCollection PostEffects
+    {
+      get
+      {
+#if RHINO_SDK
+        if (m_doc != null)
+          return new PostEffectCollection(m_doc);
+#endif
+        if (m_file3dm != null)
+          return new PostEffectCollection(m_file3dm);
+
+        var cpp = ConstPointer();
+        var native_ptr = UnsafeNativeMethods.ON_3dmRenderSettings_GetPostEffects(cpp);
+        GC.KeepAlive(this);
+        return new PostEffectCollection(native_ptr);
+      }
+    }
+
+    /// <summary>
+    /// Get or set the given named view
+    /// </summary>
+    /// <since>6.1</since>
+    public string NamedView
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmSettings_SetNamedView(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmSettings_GetNamedView(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Set or get the given snapshot view
+    /// </summary>
+    /// <since>6.1</since>
+    public string Snapshot
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmSettings_SetSnapshot(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmSettings_GetSnapshot(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Set or get the given specific viewport
+    /// </summary>
+    /// <since>6.1</since>
+    public string SpecificViewport
+    {
+      set
+      {
+        var sh = new Rhino.Runtime.InteropWrappers.StringWrapper(value);
+        var p_string = sh.ConstPointer;
+        UnsafeNativeMethods.ON_3dmSettings_SetSpecificViewport(NonConstPointer(), p_string);
+        GC.KeepAlive(this);
+      }
+
+      get
+      {
+        using (var sh = new Rhino.Runtime.InteropWrappers.StringHolder())
+        {
+          var p_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmSettings_GetSpecificViewport(ConstPointer(), p_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the render source <see cref="RenderingSources"/> enumeration.
+    /// </summary>
+    /// <since>6.1</since>
+    [CLSCompliant(false)]
+    public RenderingSources RenderSource
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetRenderingSource(ptr_const_this);
+        GC.KeepAlive(this);
+        return (RenderingSources)rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        int set_val = (int)value;
+        UnsafeNativeMethods.ON_3dmSettings_SetRenderingSource(ptr_this, set_val);
+        GC.KeepAlive(this);
+      }
+    }
+
+    //ON_wString m_background_bitmap_filename;
+    //int m_shadowmap_width;
+    //int m_shadowmap_height;
+    //double m_shadowmap_offset;
+
+    // Flags that are used to determine which render settings a render
+    // plugin uses, and which ones the display pipeline should use.
+    // Note: Render plugins set these, and they don't need to persist
+    //       in the document...Also, when set, they turn OFF their
+    //       corresponding setting in the Display Attributes Manager's
+    //       UI pages for "Rendered" mode.
+    //bool    m_bUsesAmbientAttr;
+    //bool    m_bUsesBackgroundAttr;
+    //bool    m_bUsesBackfaceAttr;
+    //bool    m_bUsesPointsAttr;
+    //bool    m_bUsesCurvesAttr;
+    //bool    m_bUsesIsoparmsAttr;
+    //bool    m_bUsesMeshEdgesAttr;
+    //bool    m_bUsesAnnotationAttr;
+    //bool    m_bUsesHiddenLightsAttr;
+  }
+}
+
+namespace Rhino.Display
+{
+  /// <summary>
+  /// Constants that define how the background of a viewport should be filled.
+  /// </summary>
+  /// <since>5.0</since>
+  public enum BackgroundStyle
+  {
+    /// <summary>Single solid color fill.</summary>
+    SolidColor = 0,
+    /// <summary>Simple image background wallpaper.</summary>
+    WallpaperImage = 1,
+    /// <summary>Two color top/bottom color gradient.</summary>
+    Gradient = 2,
+    /// <summary>Using a Render Environment.</summary>
+    Environment = 3
+  }
+
+}
+
+namespace Rhino.FileIO
+{
+  /// <summary> General settings in a 3dm file. </summary>
+  public class File3dmSettings
+  {
+    readonly File3dm m_parent;
+    internal File3dmSettings(File3dm parent)
+    {
+      m_parent = parent;
+    }
+
+    internal IntPtr ConstPointer()
+    {
+      IntPtr ptr_const_parent = m_parent.ConstPointer();
+      return UnsafeNativeMethods.ONX_Model_3dmSettingsPointer(ptr_const_parent);
+    }
+    internal IntPtr NonConstPointer()
+    {
+      IntPtr ptr_parent = m_parent.NonConstPointer();
+      return UnsafeNativeMethods.ONX_Model_3dmSettingsPointer(ptr_parent);
+    }
+
+    /// <summary>
+    /// Gets or sets a Uniform Resource Locator (URL) direction for the model.
+    /// </summary>
+    /// <since>5.0</since>
+    public string ModelUrl
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        using (var sh = new StringHolder())
+        {
+          IntPtr ptr_string = sh.NonConstPointer();
+          UnsafeNativeMethods.ON_3dmSettings_GetModelUrl(ptr_const_this, ptr_string);
+          GC.KeepAlive(this);
+          return sh.ToString();
+        }
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetModelUrl(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the model base point that is used when the file is read as an instance definition.
+    /// <para>This point is mapped to the origin in the instance definition.</para>
+    /// </summary>
+    /// <since>5.0</since>
+    public Point3d ModelBasepoint
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        Point3d rc = new Point3d();
+        UnsafeNativeMethods.ON_3dmSettings_GetModelBasepoint(ptr_const_this, ref rc);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetModelBasepoint(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    double GetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble which)
+    {
+      IntPtr ptr_const_this = ConstPointer();
+      double rc = UnsafeNativeMethods.ON_3dmSettings_GetDouble(ptr_const_this, which);
+      GC.KeepAlive(this);
+      return rc;
+    }
+    void SetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble which, double val)
+    {
+      IntPtr ptr_this = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmSettings_SetDouble(ptr_this, which, val);
+      GC.KeepAlive(this);
+    }
+
+    /// <summary>Gets or sets the model space absolute tolerance.</summary>
+    /// <since>5.0</since>
+    public double ModelAbsoluteTolerance
+    {
+      get { return GetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.ModelAbsTol); }
+      set { SetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.ModelAbsTol, value); }
+    }
+    /// <summary>Gets or sets the model space angle tolerance.</summary>
+    /// <since>5.0</since>
+    public double ModelAngleToleranceRadians
+    {
+      get { return GetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.ModelAngleTol); }
+      set { SetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.ModelAngleTol, value); }
+    }
+    /// <summary>Gets or sets the model space angle tolerance.</summary>
+    /// <since>5.0</since>
+    public double ModelAngleToleranceDegrees
+    {
+      get
+      {
+        double rc = ModelAngleToleranceRadians;
+        rc = RhinoMath.ToDegrees(rc);
+        return rc;
+      }
+      set
+      {
+        double radians = RhinoMath.ToRadians(value);
+        ModelAngleToleranceRadians = radians;
+      }
+    }
+    /// <summary>Gets or sets the model space relative tolerance.</summary>
+    /// <since>5.0</since>
+    public double ModelRelativeTolerance
+    {
+      get { return GetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.ModelRelTol); }
+      set { SetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.ModelRelTol, value); }
+    }
+    /// <summary>Gets or sets the page space absolute tolerance.</summary>
+    /// <since>5.0</since>
+    public double PageAbsoluteTolerance
+    {
+      get { return GetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.PageAbsTol); }
+      set { SetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.PageAbsTol, value); }
+    }
+    /// <summary>Gets or sets the page space angle tolerance.</summary>
+    /// <since>5.0</since>
+    public double PageAngleToleranceRadians
+    {
+      get { return GetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.PageAngleTol); }
+      set { SetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.PageAngleTol, value); }
+    }
+    /// <summary>Gets or sets the page space angle tolerance.</summary>
+    /// <since>5.0</since>
+    public double PageAngleToleranceDegrees
+    {
+      get
+      {
+        double rc = PageAngleToleranceRadians;
+        rc = RhinoMath.ToDegrees(rc);
+        return rc;
+      }
+      set
+      {
+        double radians = RhinoMath.ToRadians(value);
+        PageAngleToleranceRadians = radians;
+      }
+    }
+    /// <summary>Gets or sets the page space relative tolerance.</summary>
+    /// <since>5.0</since>
+    public double PageRelativeTolerance
+    {
+      get { return GetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.PageRelTol); }
+      set { SetDouble(UnsafeNativeMethods.UnitsTolerancesSettingsDouble.PageRelTol, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets the model unit system, using <see cref="Rhino.UnitSystem"/> enumeration.
+    /// </summary>
+    /// <since>5.0</since>
+    public UnitSystem ModelUnitSystem
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetSetUnitSystem(ptr_const_this, true, false, 0);
+        GC.KeepAlive(this);
+        return (UnitSystem)rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        int set_val = (int)value;
+        UnsafeNativeMethods.ON_3dmSettings_GetSetUnitSystem(ptr_this, true, true, set_val);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the page unit system, using <see cref="Rhino.UnitSystem"/> enumeration.
+    /// </summary>
+    /// <since>5.0</since>
+    public UnitSystem PageUnitSystem
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetSetUnitSystem(ptr_const_this, false, false, 0);
+        GC.KeepAlive(this);
+        return (UnitSystem)rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        int set_val = (int)value;
+        UnsafeNativeMethods.ON_3dmSettings_GetSetUnitSystem(ptr_this, false, true, set_val);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the model space distance display mode (decimal, feet, or feet and inches).
+    /// </summary>
+    /// <since>9.0</since>
+    public Rhino.UI.DistanceDisplayMode ModelDistanceDisplayMode
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetDistanceDisplayMode(ptr_const_this, model: true);
+        GC.KeepAlive(this);
+        return (Rhino.UI.DistanceDisplayMode)rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetDistanceDisplayMode(ptr_this, model: true, (int)value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the page space distance display mode (decimal, feet, or feet and inches).
+    /// </summary>
+    /// <since>9.0</since>
+    public Rhino.UI.DistanceDisplayMode PageDistanceDisplayMode
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetDistanceDisplayMode(ptr_const_this, model: false);
+        GC.KeepAlive(this);
+        return (Rhino.UI.DistanceDisplayMode)rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetDistanceDisplayMode(ptr_this, model: false, (int)value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the model space distance display precision. In decimal mode this is the
+    /// number of decimal places; in fractional modes the denominator is (1/2)^precision.
+    /// Valid values are &gt;= 0 and &lt;= 7.
+    /// </summary>
+    /// <since>9.0</since>
+    public int ModelDistanceDisplayPrecision
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetDistanceDisplayPrecision(ptr_const_this, model: true);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetDistanceDisplayPrecision(ptr_this, model: true, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// Gets or sets the page space distance display precision. In decimal mode this is the
+    /// number of decimal places; in fractional modes the denominator is (1/2)^precision.
+    /// Valid values are &gt;= 0 and &lt;= 7.
+    /// </summary>
+    /// <since>9.0</since>
+    public int PageDistanceDisplayPrecision
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetDistanceDisplayPrecision(ptr_const_this, model: false);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetDistanceDisplayPrecision(ptr_this, model: false, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    private Rhino.Render.RenderSettings m_rs;
+
+    /// <summary>
+    /// Gets or sets the render settings.
+    /// </summary>
+    /// <since>8.0</since>
+    public Rhino.Render.RenderSettings RenderSettings
+    {
+      get
+      {
+        if (m_rs == null)
+        {
+          m_rs = new Rhino.Render.RenderSettings(m_parent);
+        }
+
+        return m_rs;
+      }
+    }
+
+    // ---- template authoring (RH-96388) -------------------------------------------------
+    // A byte-level comparison of the generated Rhino 9 templates against the hand-authored
+    // Rhino 8 ones showed these ON_3dmSettings members had no managed accessor, so a
+    // rebuilt template dropped every one of them to a default.
+
+    Guid GetUuid(UnsafeNativeMethods.Settings3dmUuid which)
+    {
+      IntPtr ptr_const_this = ConstPointer();
+      Guid rc = UnsafeNativeMethods.ON_3dmSettings_GetUuid(ptr_const_this, which);
+      GC.KeepAlive(this);
+      return rc;
+    }
+
+    void SetUuid(UnsafeNativeMethods.Settings3dmUuid which, Guid value)
+    {
+      IntPtr ptr_this = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmSettings_SetUuid(ptr_this, which, value);
+      GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// The viewport id of the view that is active when the model is opened. When this is nil
+    /// Rhino activates the first view in the view table.
+    /// </summary>
+    /// <since>8.36</since>
+    public Guid ActiveViewId
+    {
+      get => GetUuid(UnsafeNativeMethods.Settings3dmUuid.ActiveViewId);
+      set => SetUuid(UnsafeNativeMethods.Settings3dmUuid.ActiveViewId, value);
+    }
+
+    /// <summary>The id of the layer new objects are created on.</summary>
+    /// <since>8.36</since>
+    public Guid CurrentLayerId
+    {
+      get => GetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentLayerId);
+      set => SetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentLayerId, value);
+    }
+
+    /// <summary>The id of the current render material.</summary>
+    /// <since>8.36</since>
+    public Guid CurrentRenderMaterialId
+    {
+      get => GetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentRenderMaterialId);
+      set => SetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentRenderMaterialId, value);
+    }
+
+    /// <summary>The id of the current line pattern (linetype).</summary>
+    /// <since>8.36</since>
+    public Guid CurrentLinePatternId
+    {
+      get => GetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentLinePatternId);
+      set => SetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentLinePatternId, value);
+    }
+
+    /// <summary>The id of the current text style.</summary>
+    /// <since>8.36</since>
+    public Guid CurrentTextStyleId
+    {
+      get => GetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentTextStyleId);
+      set => SetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentTextStyleId, value);
+    }
+
+    /// <summary>
+    /// The id of the dimension style new annotation uses. When this is nil Rhino falls back
+    /// to the obsolete V5 index, which selects the first style in the table - so a template
+    /// that leaves it nil can open with the wrong annotation style current.
+    /// </summary>
+    /// <since>8.36</since>
+    public Guid CurrentDimensionStyleId
+    {
+      get => GetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentDimensionStyleId);
+      set => SetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentDimensionStyleId, value);
+    }
+
+    /// <summary>The id of the current hatch pattern.</summary>
+    /// <since>8.36</since>
+    public Guid CurrentHatchPatternId
+    {
+      get => GetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentHatchPatternId);
+      set => SetUuid(UnsafeNativeMethods.Settings3dmUuid.CurrentHatchPatternId, value);
+    }
+
+    /// <summary>The colour new objects are created with.</summary>
+    /// <since>8.36</since>
+    public System.Drawing.Color CurrentColor
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int argb = UnsafeNativeMethods.ON_3dmSettings_GetColor(ptr_const_this,
+          UnsafeNativeMethods.Settings3dmColor.CurrentColor);
+        GC.KeepAlive(this);
+        return System.Drawing.Color.FromArgb(argb);
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetColor(ptr_this,
+          UnsafeNativeMethods.Settings3dmColor.CurrentColor, value.ToArgb());
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>The plot colour new objects are created with.</summary>
+    /// <since>8.36</since>
+    public System.Drawing.Color CurrentPlotColor
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int argb = UnsafeNativeMethods.ON_3dmSettings_GetColor(ptr_const_this,
+          UnsafeNativeMethods.Settings3dmColor.CurrentPlotColor);
+        GC.KeepAlive(this);
+        return System.Drawing.Color.FromArgb(argb);
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetColor(ptr_this,
+          UnsafeNativeMethods.Settings3dmColor.CurrentPlotColor, value.ToArgb());
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>
+    /// The surface isocurve density new objects are created with. -1 draws no isocurves,
+    /// 0 draws the surface edges only, and n &gt; 0 draws n isocurves per span.
+    /// </summary>
+    /// <since>8.36</since>
+    public int CurrentWireDensity
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetInt(ptr_const_this,
+          UnsafeNativeMethods.Settings3dmInt.CurrentWireDensity);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetInt(ptr_this,
+          UnsafeNativeMethods.Settings3dmInt.CurrentWireDensity, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>How instance definition links are updated when the model is opened.</summary>
+    /// <since>8.36</since>
+    public int InstanceDefinitionLinkUpdate
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        int rc = UnsafeNativeMethods.ON_3dmSettings_GetInt(ptr_const_this,
+          UnsafeNativeMethods.Settings3dmInt.IdefLinkUpdate);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetInt(ptr_this,
+          UnsafeNativeMethods.Settings3dmInt.IdefLinkUpdate, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>Whether texture bitmaps are embedded in the model when it is saved.</summary>
+    /// <since>8.36</since>
+    public bool SaveTextureBitmapsInFile
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        bool rc = UnsafeNativeMethods.ON_3dmSettings_GetBool(ptr_const_this,
+          UnsafeNativeMethods.Settings3dmBool.SaveTextureBitmapsInFile);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetBool(ptr_this,
+          UnsafeNativeMethods.Settings3dmBool.SaveTextureBitmapsInFile, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    /// <summary>The document-wide linetype pattern display scale.</summary>
+    /// <since>8.36</since>
+    public double LinetypeDisplayScale
+    {
+      get
+      {
+        IntPtr ptr_const_this = ConstPointer();
+        double rc = UnsafeNativeMethods.ON_3dmSettings_GetLinetypeDisplayScale(ptr_const_this);
+        GC.KeepAlive(this);
+        return rc;
+      }
+      set
+      {
+        IntPtr ptr_this = NonConstPointer();
+        UnsafeNativeMethods.ON_3dmSettings_SetLinetypeDisplayScale(ptr_this, value);
+        GC.KeepAlive(this);
+      }
+    }
+
+    Geometry.MeshingParameters GetMeshParameters(UnsafeNativeMethods.Settings3dmMeshParameters which)
+    {
+      IntPtr ptr_const_this = ConstPointer();
+      IntPtr ptr_mp = UnsafeNativeMethods.ON_3dmSettings_GetMeshParameters(ptr_const_this, which);
+      GC.KeepAlive(this);
+      return IntPtr.Zero == ptr_mp ? null : new Geometry.MeshingParameters(ptr_mp);
+    }
+
+    void SetMeshParameters(UnsafeNativeMethods.Settings3dmMeshParameters which, Geometry.MeshingParameters value)
+    {
+      if (value == null)
+        throw new ArgumentNullException(nameof(value));
+      IntPtr ptr_this = NonConstPointer();
+      UnsafeNativeMethods.ON_3dmSettings_SetMeshParameters(ptr_this, which, value.ConstPointer());
+      GC.KeepAlive(this);
+      GC.KeepAlive(value);
+    }
+
+    /// <summary>
+    /// The meshing parameters Rhino uses to build render meshes for this model. Rhino derives
+    /// the "Jagged &amp; faster" / "Smooth &amp; slower" choice from these when the model is
+    /// opened, so a model that leaves them at the openNURBS default gets jagged render meshes.
+    /// </summary>
+    /// <since>8.36</since>
+    public Geometry.MeshingParameters MeshingParameters
+    {
+      get => GetMeshParameters(UnsafeNativeMethods.Settings3dmMeshParameters.RenderMeshSettings);
+      set => SetMeshParameters(UnsafeNativeMethods.Settings3dmMeshParameters.RenderMeshSettings, value);
+    }
+
+    /// <summary>The meshing parameters used for analysis meshes (curvature, draft angle, ...).</summary>
+    /// <since>8.36</since>
+    public Geometry.MeshingParameters AnalysisMeshingParameters
+    {
+      get => GetMeshParameters(UnsafeNativeMethods.Settings3dmMeshParameters.AnalysisMeshSettings);
+      set => SetMeshParameters(UnsafeNativeMethods.Settings3dmMeshParameters.AnalysisMeshSettings, value);
+    }
+
+    /// <summary>The meshing parameters stored as the model's custom render mesh settings.</summary>
+    /// <since>8.36</since>
+    public Geometry.MeshingParameters CustomRenderMeshingParameters
+    {
+      get => GetMeshParameters(UnsafeNativeMethods.Settings3dmMeshParameters.CustomRenderMeshSettings);
+      set => SetMeshParameters(UnsafeNativeMethods.Settings3dmMeshParameters.CustomRenderMeshSettings, value);
+    }
+
+    /// <summary>
+    /// The construction plane grid defaults new views inherit: grid and snap spacing, line
+    /// counts, and whether the grid, its axes and the world axes icon are drawn.
+    /// </summary>
+    /// <since>8.36</since>
+    public DocObjects.ConstructionPlaneGridDefaults GridDefaults
+    {
+      get
+      {
+        IntPtr ptr_this = NonConstPointer();
+        IntPtr ptr_defaults = UnsafeNativeMethods.ON_3dmSettings_GridDefaultsPointer(ptr_this);
+        GC.KeepAlive(this);
+        return IntPtr.Zero == ptr_defaults ? null : DocObjects.ConstructionPlaneGridDefaults.FromConstPointer(ptr_defaults);
+      }
+      set
+      {
+        if (value == null)
+          throw new ArgumentNullException(nameof(value));
+        IntPtr ptr_this = NonConstPointer();
+        IntPtr ptr_defaults = UnsafeNativeMethods.ON_3dmSettings_GridDefaultsPointer(ptr_this);
+        if (IntPtr.Zero != ptr_defaults)
+          value.SetupNativePointer(ptr_defaults);
+        GC.KeepAlive(this);
+      }
+    }
+  }
+}

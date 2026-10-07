@@ -6,6 +6,11 @@ a foundation layer with a router, specialist skills, calculators and an
 orchestrated workflow. It also fixes what his plugins lack: routers checked by
 tests, standard frontmatter, and real solvers instead of arithmetic only.
 
+## Knowledge bank
+
+`knowledge-bank/` collects open-source skills, MCP servers, solvers and guides (license-checked,
+with credit). Start at `knowledge-bank/README.md`; the license-by-license list is `knowledge-bank/SOURCES.md`.
+
 ## What's inside
 
 | Skill | Does |

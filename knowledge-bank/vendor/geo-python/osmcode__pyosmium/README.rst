@@ -1,0 +1,60 @@
+========
+pyosmium
+========
+
+This library provides Python bindings for the `Libosmium`_ C++
+library, a library for working with OpenStreetMap data in a fast and flexible
+manner.
+
+.. _Libosmium: https://github.com/osmcode/libosmium
+
+Installation
+============
+
+pyosmium can be installed with pip:
+
+    pip install osmium
+
+The Pypi source package already comes bundled with a matching version of
+libosmium, protozero and pybind11. Pyosmium additionally depends on
+expat, libz and libbz2. You need to install
+development packages for these libraries. On Debian/Ubuntu do::
+
+    sudo apt-get install build-essential cmake libexpat1-dev zlib1g-dev libbz2-dev
+
+
+Python >= 3.8 is supported. Pypy is known not to work.
+
+Documentation
+=============
+
+The documentation for the latest release is available at
+`osmcode.org`_.
+
+If you find bugs or have feature requests, please report those in the
+`Github issue tracker`_. For general questions about using pyosmium you
+can contanct the `OSM forum`_.
+
+.. _osmcode.org: http://docs.osmcode.org/pyosmium/latest
+.. _Github issue tracker: https://github.com/osmcode/pyosmium/issues/
+.. _OSM forum: https://community.openstreetmap.org/
+
+Examples
+========
+
+The package contains an `example` directory with small examples on how to use
+the library. They are mostly ports of the examples in Libosmium and
+osmium-contrib.
+
+Also check out the `Cookbook section`_ in the documentation.
+
+.. _Cookbook section: https://docs.osmcode.org/pyosmium/latest/cookbooks/
+
+Fineprint
+=========
+
+Pyosmium is available under the BSD 2-Clause License. See LICENSE.TXT.
+
+The source code can be found on `GitHub`_.
+
+.. _GitHub: https://github.com/osmcode/pyosmium

@@ -1,0 +1,136 @@
+# Grasshopper MCP 命令生成指南
+
+當你需要在 Grasshopper 中創建和連接元件時，請按照以下結構化格式生成命令。這將確保命令能夠被正確解析和執行。
+
+## 添加元件
+
+```json
+{
+  "command": "add_component",
+  "type": "[元件類型]",
+  "x": [x坐標],
+  "y": [y坐標]
+}
+```
+
+### 重要提示：
+- 對於需要平面輸入的元件（如 Box、Circle、Rectangle 等），始終使用 "xy plane" 作為平面來源，而不是 Point 元件
+- 使用標準化的元件名稱，如 "xy plane", "box", "circle", "number slider" 等
+- 坐標值應該是數字，建議使用網格佈局（x和y的間隔約為200-300單位）
+
+## 連接元件
+
+```json
+{
+  "command": "connect_components",
+  "sourceId": "[源元件ID]",
+  "sourceParam": "[源參數名稱]",
+  "targetId": "[目標元件ID]",
+  "targetParam": "[目標參數名稱]"
+}
+```
+
+### 重要提示：
+- 使用標準化的參數名稱，如 "Plane", "Base", "Radius", "X Size", "Y Size", "Z Size", "Number" 等
+- 確保先創建所有元件，然後再進行連接
+- 對於平面到幾何元件的連接，源參數應為 "Plane"，目標參數應為 "Base" 或 "Plane"
+
+## 創建立方體的完整示例
+
+以下是創建立方體的完整命令序列：
+
+```json
+// 1. 添加 XY Plane 元件
+{
+  "command": "add_component",
+  "type": "xy plane",
+  "x": 100,
+  "y": 100
+}
+
+// 2. 添加 X 尺寸滑塊
+{
+  "command": "add_component",
+  "type": "number slider",
+  "x": 100,
+  "y": 200
+}
+
+// 3. 添加 Y 尺寸滑塊
+{
+  "command": "add_component",
+  "type": "number slider",
+  "x": 100,
+  "y": 300
+}
+
+// 4. 添加 Z 尺寸滑塊
+{
+  "command": "add_component",
+  "type": "number slider",
+  "x": 100,
+  "y": 400
+}
+
+// 5. 添加 Box 元件
+{
+  "command": "add_component",
+  "type": "box",
+  "x": 400,
+  "y": 250
+}
+
+// 6. 連接 XY Plane 到 Box
+{
+  "command": "connect_components",
+  "sourceId": "[plane_id]",
+  "sourceParam": "Plane",
+  "targetId": "[box_id]",
+  "targetParam": "Base"
+}
+
+// 7. 連接 X 尺寸滑塊到 Box
+{
+  "command": "connect_components",
+  "sourceId": "[slider1_id]",
+  "sourceParam": "Number",
+  "targetId": "[box_id]",
+  "targetParam": "X Size"
+}
+
+// 8. 連接 Y 尺寸滑塊到 Box
+{
+  "command": "connect_components",
+  "sourceId": "[slider2_id]",
+  "sourceParam": "Number",
+  "targetId": "[box_id]",
+  "targetParam": "Y Size"
+}
+
+// 9. 連接 Z 尺寸滑塊到 Box
+{
+  "command": "connect_components",
+  "sourceId": "[slider3_id]",
+  "sourceParam": "Number",
+  "targetId": "[box_id]",
+  "targetParam": "Z Size"
+}
+```
+
+## 常見錯誤和解決方案
+
+1. **使用 Point 元件代替 XY Plane**：
+   - 錯誤：使用 Point 元件作為平面輸入源
+   - 解決方案：始終使用 XY Plane 元件作為平面輸入源
+
+2. **參數名稱不正確**：
+   - 錯誤：使用不標準的參數名稱，如 "radius" 而不是 "Radius"
+   - 解決方案：使用標準化的參數名稱，首字母大寫
+
+3. **連接順序錯誤**：
+   - 錯誤：在創建所有元件之前嘗試連接
+   - 解決方案：先創建所有元件，然後再進行連接
+
+4. **元件類型不正確**：
+   - 錯誤：使用參數容器而不是實際元件，如使用 Circle 參數容器而不是 Circle 元件
+   - 解決方案：確保使用正確的元件類型

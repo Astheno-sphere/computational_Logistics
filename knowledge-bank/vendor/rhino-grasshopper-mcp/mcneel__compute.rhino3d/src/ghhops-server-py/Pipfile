@@ -1,0 +1,31 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+rhino3dm = "*"
+pylint = "*"
+flit = "*"
+rhinoinside = {version="*", sys_platform = "== 'win32'"}
+
+[dev-packages]
+black = "*"
+flake8 = "*"
+
+[requires]
+python_version = "3.10"
+
+[pipenv]
+allow_prereleases = true
+
+[scripts]
+hops_flask = "python examples/app.py"
+hops_http = "python examples/app_http.py"
+hops_rhinside = "python examples/app_rhinside.py"
+
+build = "python -m flit build"
+publish = "python -m flit publish"
+
+test_query = "python tests/app_query.py"

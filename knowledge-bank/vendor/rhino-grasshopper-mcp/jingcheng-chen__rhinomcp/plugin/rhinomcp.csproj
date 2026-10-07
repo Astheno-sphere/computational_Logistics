@@ -1,0 +1,70 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	
+  <PropertyGroup>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <TargetExt>.rhp</TargetExt>
+    <NoWarn>NU1701</NoWarn>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <!-- Specifies information for Assembly and Yak -->
+    <Version>0.4.1.1</Version>
+    <Title>rhinomcp</Title>
+    <Company>Jingcheng Chen</Company>
+    <Description>Rhino integration through the Model Context Protocol</Description>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.8.0" />
+    <PackageReference Include="Grasshopper" Version="8.17.25066.7001" />
+    <PackageReference Include="Microsoft.WindowsDesktop.App.Ref" Version="8.0.6" GeneratePathProperty="true" ExcludeAssets="all" PrivateAssets="all" />
+    <!-- Keep Newtonsoft.Json at the version Rhino 8 bundles (13.0.3). Rhino loads its
+         own copy before any plugin, so the plugin binds to that copy at runtime. Compiling
+         against a newer package lets the compiler pick overloads Rhino's copy lacks:
+         0.4.0 shipped exactly that regression in update_object_attributes. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="RhinoCommon" Version="8.17.25066.7001" ExcludeAssets="runtime" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PkgMicrosoft_WindowsDesktop_App_Ref)' != ''">
+    <Reference Include="System.Windows.Forms">
+      <HintPath>$(PkgMicrosoft_WindowsDesktop_App_Ref)/ref/net8.0/System.Windows.Forms.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--
+    Post-build install into the Mac user-level Rhino Plug-ins directory.
+    Disabled by default so a plain `dotnet build` succeeds without touching
+    the user's Rhino config and so CI/release builds don't accidentally try
+    to install. Opt in locally with `dotnet build -p:CopyToRhinoPluginDir=true`.
+
+    Prefer `./install.sh` for day-to-day dev — it also checks Rhino isn't
+    running, uses rsync with the delete flag to clear stale dlls, and prints
+    first-time drag-drop registration instructions. This target exists for
+    IDE-driven build-on-save workflows where invoking a shell script is awkward.
+
+    The .rhp depends on its sibling dlls (Newtonsoft.Json, the Roslyn
+    scripting assemblies, etc.) so the entire $(TargetDir) tree has to ship,
+    not just the .rhp — otherwise the plugin loads but throws
+    FileNotFoundException the first time it deserializes JSON.
+  -->
+  <PropertyGroup>
+    <CopyToRhinoPluginDir Condition="'$(CopyToRhinoPluginDir)' == ''">false</CopyToRhinoPluginDir>
+    <RhinoVersion Condition="'$(RhinoVersion)' == ''">8.0</RhinoVersion>
+    <RhinoPluginDir Condition="'$(RhinoPluginDir)' == ''">$(HOME)/Library/Application Support/McNeel/Rhinoceros/$(RhinoVersion)/Plug-ins/rhinomcp/</RhinoPluginDir>
+  </PropertyGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent"
+          Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$(CopyToRhinoPluginDir)' == 'true'">
+    <ItemGroup>
+      <PluginOutputFiles Include="$(TargetDir)**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PluginOutputFiles)"
+          DestinationFiles="@(PluginOutputFiles->'$(RhinoPluginDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+  
+</Project>
