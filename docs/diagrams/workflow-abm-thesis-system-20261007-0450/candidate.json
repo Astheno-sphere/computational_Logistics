@@ -1,0 +1,418 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Asthenosphere: ABM system and thesis flow",
+    "output": "docs/diagrams/workflow-abm-thesis-system-20261007-0450/abm-thesis-system.html",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    {
+      "id": "ev",
+      "label": "Evidence"
+    },
+    {
+      "id": "beh",
+      "label": "Behaviour"
+    },
+    {
+      "id": "sim",
+      "label": "Simulation"
+    },
+    {
+      "id": "dec",
+      "label": "Decision under deep uncertainty"
+    },
+    {
+      "id": "st",
+      "label": "Story and interfaces"
+    }
+  ],
+  "phases": [
+    {
+      "id": "a1",
+      "label": "A1 Behaviour",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "a2",
+      "label": "A2 DCM + ABM",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "a3",
+      "label": "A3 Exploration",
+      "fromCol": 3,
+      "toCol": 4
+    },
+    {
+      "id": "a4",
+      "label": "A4 Backcasting",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "groups": [
+    {
+      "id": "comm",
+      "label": "Communicate",
+      "lane": "st",
+      "fromCol": 5,
+      "toCol": 5
+    },
+    {
+      "id": "findings",
+      "label": "Findings",
+      "lane": "dec",
+      "fromCol": 5,
+      "toCol": 5
+    }
+  ],
+  "mainPath": [
+    "surveys",
+    "dcm",
+    "abm",
+    "ema",
+    "discovery"
+  ],
+  "nodes": [
+    {
+      "id": "surveys",
+      "lane": "ev",
+      "col": 0,
+      "type": "database",
+      "label": "Travel surveys",
+      "sublabel": "RVU, stated choice",
+      "tag": "proposed data",
+      "width": 150
+    },
+    {
+      "id": "registers",
+      "lane": "ev",
+      "col": 3,
+      "type": "database",
+      "label": "Population, fleet",
+      "sublabel": "SSB registers",
+      "tag": "proposed data",
+      "width": 150
+    },
+    {
+      "id": "networks",
+      "lane": "ev",
+      "col": 4,
+      "type": "database",
+      "label": "Networks, terrain",
+      "sublabel": "OSM, NVDB, GTFS, DEM",
+      "tag": "OSM in repo",
+      "width": 150
+    },
+    {
+      "id": "dcm",
+      "lane": "beh",
+      "col": 1,
+      "type": "backend",
+      "label": "Discrete choice",
+      "sublabel": "Biogeme, xlogit",
+      "tag": "in repo",
+      "width": 150
+    },
+    {
+      "id": "llm",
+      "lane": "beh",
+      "col": 2,
+      "type": "cloud",
+      "label": "Decision + LLM agents",
+      "sublabel": "Jev, AgentSociety, GATSim",
+      "tag": "proposed",
+      "width": 150
+    },
+    {
+      "id": "pop",
+      "lane": "beh",
+      "col": 3,
+      "type": "backend",
+      "label": "Synthetic population",
+      "sublabel": "PopulationSim, synthpop",
+      "tag": "in bank",
+      "width": 150
+    },
+    {
+      "id": "skims",
+      "lane": "beh",
+      "col": 4,
+      "type": "backend",
+      "label": "Networks and skims",
+      "sublabel": "OSMnx, AequilibraE",
+      "tag": "in repo",
+      "width": 150
+    },
+    {
+      "id": "abm",
+      "lane": "sim",
+      "col": 2,
+      "type": "backend",
+      "label": "Compact ABM",
+      "sublabel": "EV diffusion, congestion",
+      "tag": "in repo",
+      "width": 150
+    },
+    {
+      "id": "matsim",
+      "lane": "sim",
+      "col": 3,
+      "type": "backend",
+      "label": "Network and micro ABM",
+      "sublabel": "MATSim, eqasim, BEAM, SUMO, GAMA",
+      "tag": "in bank",
+      "width": 150
+    },
+    {
+      "id": "surrogate",
+      "lane": "sim",
+      "col": 5,
+      "type": "backend",
+      "label": "Surrogate emulator",
+      "sublabel": "SMT, ML emulation",
+      "tag": "proposed",
+      "width": 150
+    },
+    {
+      "id": "ema",
+      "lane": "dec",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Ensembles of futures",
+      "sublabel": "EMA Workbench, XLRM",
+      "tag": "in repo",
+      "width": 150
+    },
+    {
+      "id": "discovery",
+      "lane": "dec",
+      "col": 5,
+      "type": "backend",
+      "label": "Scenario discovery",
+      "sublabel": "PRIM, SALib, MORDM",
+      "tag": "in repo",
+      "width": 150,
+      "yOffset": -64
+    },
+    {
+      "id": "backcast",
+      "lane": "dec",
+      "col": 5,
+      "type": "backend",
+      "label": "Backcasting",
+      "sublabel": "milestones, pathways",
+      "tag": "in repo",
+      "width": 150,
+      "yOffset": 64
+    },
+    {
+      "id": "dash",
+      "lane": "st",
+      "col": 4,
+      "type": "frontend",
+      "label": "Dashboards",
+      "sublabel": "SimWrapper, kepler.gl",
+      "tag": "in bank",
+      "width": 150
+    },
+    {
+      "id": "agents",
+      "lane": "st",
+      "col": 1,
+      "type": "frontend",
+      "label": "AI agent access",
+      "sublabel": "Claude Code, MCP, Hermes",
+      "tag": "in repo",
+      "width": 150
+    },
+    {
+      "id": "gh",
+      "lane": "st",
+      "col": 5,
+      "type": "frontend",
+      "label": "Rhino, Grasshopper",
+      "sublabel": "Hops, data trees",
+      "tag": "in repo",
+      "yOffset": -64,
+      "width": 150
+    },
+    {
+      "id": "people",
+      "lane": "st",
+      "col": 5,
+      "type": "external",
+      "label": "Agencies, workshops",
+      "sublabel": "TRANSPLAN partners",
+      "tag": "planned",
+      "yOffset": 64,
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "surveys-dcm",
+      "from": "surveys",
+      "to": "dcm",
+      "label": "choice data"
+    },
+    {
+      "id": "dcm-abm",
+      "from": "dcm",
+      "to": "abm",
+      "label": "utilities + covariance",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dcm-llm",
+      "from": "dcm",
+      "to": "llm",
+      "label": "benchmark",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "llm-abm",
+      "from": "llm",
+      "to": "abm",
+      "label": "novel-policy choices",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "registers-pop",
+      "from": "registers",
+      "to": "pop",
+      "label": "marginals",
+      "role": "branch"
+    },
+    {
+      "id": "networks-skims",
+      "from": "networks",
+      "to": "skims",
+      "label": "graph",
+      "role": "branch"
+    },
+    {
+      "id": "pop-matsim",
+      "from": "pop",
+      "to": "matsim",
+      "label": "daily plans",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight"
+    },
+    {
+      "id": "skims-matsim",
+      "from": "skims",
+      "to": "matsim",
+      "label": "network",
+      "role": "branch"
+    },
+    {
+      "id": "matsim-surrogate",
+      "from": "matsim",
+      "to": "surrogate",
+      "label": "training runs",
+      "role": "branch"
+    },
+    {
+      "id": "abm-ema",
+      "from": "abm",
+      "to": "ema",
+      "label": "ensemble runs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "surrogate-ema",
+      "from": "surrogate",
+      "to": "ema",
+      "label": "fast evaluations",
+      "role": "branch",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "ema-discovery",
+      "from": "ema",
+      "to": "discovery",
+      "label": "outcomes"
+    },
+    {
+      "id": "discovery-backcast",
+      "from": "discovery",
+      "to": "backcast",
+      "label": "vulnerabilities"
+    },
+    {
+      "id": "ema-dash",
+      "from": "ema",
+      "to": "dash",
+      "label": "ensembles",
+      "role": "branch"
+    },
+    {
+      "id": "backcast-gh",
+      "from": "backcast",
+      "to": "gh",
+      "label": "pathway trees",
+      "role": "branch"
+    },
+    {
+      "id": "backcast-people",
+      "from": "backcast",
+      "to": "people",
+      "label": "milestones",
+      "role": "branch"
+    },
+    {
+      "id": "agents-abm",
+      "from": "agents",
+      "to": "abm",
+      "label": "MCP tools",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Status tags",
+      "items": [
+        "in repo: built and tested here",
+        "in bank: open-source code cloned with its license",
+        "proposed: designed, not yet built"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Frontier positions",
+      "items": [
+        "Futures as XLRM: uncertainties (technology, prices, telework, behaviour) x levers",
+        "Estimation uncertainty carried into the ensemble",
+        "Hybrid agents: estimated logit for most; Jev decision models and LLM agents stress-test novel policies",
+        "Surrogates make network-ABM ensembles affordable",
+        "Backcasting as adaptive pathways, delivered as Grasshopper data trees"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Thesis articles",
+      "items": [
+        "A1 behaviour and transferability",
+        "A2 coupled DCM and ABM, calibration",
+        "A3 exploration: ensembles, surrogates, PRIM",
+        "A4 backcasting and pathways with agencies"
+      ]
+    }
+  ]
+}

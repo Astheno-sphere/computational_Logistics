@@ -16,6 +16,7 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/abm-platforms/UDST__synthpop`: https://github.com/UDST/synthpop.git, BSD-3-Clause, commit 6fb1399
 - `vendor/abm-platforms/eqasim-org__ile-de-france`: https://github.com/eqasim-org/ile-de-france.git, GPL, commit f388481
 - `vendor/abm-visualisation/simwrapper__simwrapper`: https://github.com/simwrapper/simwrapper.git, GPL, commit 9b19d97
+- `vendor/abm-visualisation/tt-a1i__archify`: https://github.com/tt-a1i/archify.git, MIT, commit 73aaa06
 - `vendor/agent-harnesses/NousResearch__hermes-agent`: https://github.com/NousResearch/hermes-agent.git, MIT, commit 0e37a43
 - `vendor/choice-modelling/arteagac__xlogit`: https://github.com/arteagac/xlogit.git, GPL, commit c3d6d44
 - `vendor/choice-modelling/michelbierlaire__biogeme`: https://github.com/michelbierlaire/biogeme.git, MIT, commit 3dd3d36
@@ -163,6 +164,9 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/harvested-real-estate/pedra-ai__pedra-mcp`: https://github.com/pedra-ai/pedra-mcp.git, MIT, commit 79bbe8b
 - `vendor/harvested-real-estate/zornade__zornade-mcp`: https://github.com/zornade/zornade-mcp.git, MIT, commit ac1e6b1
 - `vendor/llm-agents/AgentTorch__AgentTorch`: https://github.com/AgentTorch/AgentTorch.git, AGPL, commit 86bb57e
+- `vendor/llm-agents/dungzvu__llm-agents-gama`: https://github.com/dungzvu/llm-agents-gama.git, Apache-2.0, commit 1005169
+- `vendor/llm-agents/joonspk-research__generative_agents`: https://github.com/joonspk-research/generative_agents.git, Apache-2.0, commit fe05a71
+- `vendor/llm-agents/qiliuchn__gatsim`: https://github.com/qiliuchn/gatsim.git, Apache-2.0, commit fca3064
 - `vendor/llm-agents/tsinghua-fib-lab__agentsociety`: https://github.com/tsinghua-fib-lab/agentsociety.git, Apache-2.0, commit 8cc5bb9
 - `vendor/logistics-benchmarks-solvers/ERGO-Code__HiGHS`: https://github.com/ERGO-Code/HiGHS.git, MIT, commit 73cac48
 - `vendor/logistics-benchmarks-solvers/Kuifje02__vrpy`: https://github.com/Kuifje02/vrpy.git, MIT, commit ff325cb
@@ -227,7 +231,7 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/urban-mobility/conveyal__r5`: https://github.com/conveyal/r5.git, MIT, commit 6f35542
 - `vendor/urban-mobility/eclipse-sumo__sumo`: https://github.com/eclipse-sumo/sumo.git, GPL, commit 6623f76
 - `vendor/urban-mobility/eqasim-org__eqasim-java`: https://github.com/eqasim-org/eqasim-java.git, GPL, commit 88eab79
-- `vendor/urban-mobility/gama-platform__gama`: https://github.com/gama-platform/gama.git, GPL, commit da47394
+- `vendor/urban-mobility/gama-platform__gama`: https://github.com/gama-platform/gama.git, GPL, commit e456fd0
 - `vendor/urban-mobility/movingpandas__movingpandas`: https://github.com/movingpandas/movingpandas.git, BSD-3-Clause, commit b321da5
 - `vendor/urban-mobility/mrcagney__gtfs_kit`: https://github.com/mrcagney/gtfs_kit.git, MIT, commit 107450b
 - `vendor/urban-mobility/overturemaps__overturemaps-py`: https://github.com/overturemaps/overturemaps-py.git, MIT, commit 53c163c

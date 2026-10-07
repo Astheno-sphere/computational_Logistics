@@ -386,19 +386,23 @@ Agent-based transport and urban simulation platforms.
 - **UDST__synthpop** [BSD-3-Clause, vendored]: synthpop: synthetic population synthesis. `vendor/abm-platforms/UDST__synthpop`
 - **eqasim-org__ile-de-france** [GPL, vendored, copyleft]: eqasim Ile-de-France: reproducible synthetic population + MATSim scenario pipeline. `vendor/abm-platforms/eqasim-org__ile-de-france`
 
-## llm-agents (2 vendored, 3 link-only)
+## llm-agents (5 vendored, 3 link-only)
 LLM-driven generative agents for mobility and urban simulation (frontier).
 
 - **AgentTorch__AgentTorch** [AGPL, vendored, copyleft]: AgentTorch: large population models with LLM-guided agents. `vendor/llm-agents/AgentTorch__AgentTorch`
-- **Ytlse__llm-agents-gama** [?, unreachable]: Generative LLM agents in a multimodal transport system (GAMA), Toulouse. https://github.com/Ytlse/llm-agents-gama.git
-- **joonspk-research__generative_agents** [Apache-2.0, LINK-ONLY]: Generative Agents (Park et al.): memory, reflection, planning architecture. https://github.com/joonspk-research/generative_agents.git
+- **Wangjw6__LLMob** [NONE, LINK-ONLY]: LLMob: LLM agents for personal activity/mobility generation from real data. https://github.com/Wangjw6/LLMob.git
+- **dungzvu__llm-agents-gama** [Apache-2.0, vendored]: Generative LLM agents in a multimodal transport system on GAMA (Toulouse); arXiv 2510.19497. `vendor/llm-agents/dungzvu__llm-agents-gama`
+- **joonspk-research__generative_agents** [Apache-2.0, vendored]: Generative Agents (Park et al.): memory, reflection, planning architecture. `vendor/llm-agents/joonspk-research__generative_agents`
+- **qiliuchn__gatsim** [Apache-2.0, vendored]: GATSim: generative-agent transport simulation with hierarchical memory. `vendor/llm-agents/qiliuchn__gatsim`
 - **tsinghua-fib-lab__agentsociety** [Apache-2.0, vendored]: AgentSociety: LLM-native large-scale social/urban agent simulation. `vendor/llm-agents/tsinghua-fib-lab__agentsociety`
+- **ucla-mobility__MobiVerse** [UNKNOWN, LINK-ONLY]: MobiVerse: hybrid lightweight generator + LLM agents, coupled to SUMO (arXiv 2506.21784). https://github.com/ucla-mobility/MobiVerse.git
 - **usail-hkust__Awesome-Urban-LLM-Agents** [NONE, LINK-ONLY]: Curated list of urban LLM agent papers and code. https://github.com/usail-hkust/Awesome-Urban-LLM-Agents.git
 
-## abm-visualisation (1 vendored, 0 link-only)
+## abm-visualisation (2 vendored, 0 link-only)
 Visualising agent-based simulation output: dashboards, trips, flows.
 
 - **simwrapper__simwrapper** [GPL, vendored, copyleft]: SimWrapper: open-source dashboards for MATSim and transport model outputs. `vendor/abm-visualisation/simwrapper__simwrapper`
+- **tt-a1i__archify** [MIT, vendored]: Archify: typed-JSON architecture/workflow diagrams with validation gates. `vendor/abm-visualisation/tt-a1i__archify`
 
 ## surrogates-calibration (2 vendored, 0 link-only)
 Surrogate models, emulators and calibration for expensive simulations.
@@ -406,7 +410,8 @@ Surrogate models, emulators and calibration for expensive simulations.
 - **ICB-DCM__pyABC** [BSD-3-Clause, vendored]: pyABC: approximate Bayesian computation for simulator calibration. `vendor/surrogates-calibration/ICB-DCM__pyABC`
 - **SMTorg__smt** [BSD-3-Clause, vendored]: SMT: surrogate modelling toolbox (Kriging, RBF, etc.). `vendor/surrogates-calibration/SMTorg__smt`
 
-## gh-agents (0 vendored, 1 link-only)
+## gh-agents (0 vendored, 2 link-only)
 Agent-based and behavioural design tools for Grasshopper.
 
 - **daneisinger__SlowRobotics** [NONE, LINK-ONLY]: SlowRobotics / Nursery: agent and behaviour framework for Grasshopper. https://github.com/daneisinger/SlowRobotics.git
+- **lxfschr__Quelea** [NONE, LINK-ONLY]: Quelea: agent-based design library for Grasshopper. https://github.com/lxfschr/Quelea.git

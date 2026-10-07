@@ -30,7 +30,8 @@ when behaviour, technology, prices and demography are deeply uncertain. That nee
 | Discrete choice (MNL, nested, mixed logit) | utility maximisation, estimated from survey data | statistically grounded, interpretable, welfare measures | static, needs good data | Biogeme (in bank, used in repo), xlogit, pylogit (in bank), Apollo (R, link) |
 | Activity-based models | full daily activity schedules per person | realistic tours and time use | heavy data and calibration | ActivitySim, PopulationSim (in bank) |
 | Machine-learning choice models | flexible predictors of choice | capture non-linearities | weak behavioural interpretation and transferability | scikit-learn class; hybrid "theory-constrained" ML is an active research area |
-| LLM-driven generative agents (frontier) | agents reason in language with memory, planning, reflection | rich, adaptive behaviour; can respond to novel policies | validity, cost, bias, reproducibility unresolved | AgentSociety, AgentTorch (in bank); Generative Agents, LLM agents in GAMA (link) |
+| LLM-driven generative agents (frontier) | agents reason in language with memory, planning, reflection | rich, adaptive behaviour; can respond to novel policies | validity, cost, bias, reproducibility unresolved | AgentSociety, AgentTorch, Generative Agents, GATSim, LLM agents in GAMA (in bank); MobiVerse, LLMob (link) |
+| Decision models (frontier, 2026) | a model trained to answer a typed decision question with a probability distribution over the options, not free text | fast (about 100 ms) and cheap enough for every agent at every step; output is already a choice distribution, like a logit | new, proprietary and hosted; behavioural validity for travel choice untested | Jev (TypeSafe AI); LLM2Jev paper on turning LLMs into such models |
 
 ### 2.2 Ways to simulate the system
 
@@ -89,17 +90,22 @@ STORY      dashboards (SimWrapper, kepler.gl) · design models (Rhino/Grasshoppe
    ↺       workshops with agencies refine targets, levers and uncertainties → back to EVIDENCE
 ```
 
-See `figures/architecture.svg` and `figures/toolchain.svg`.
+The full system, with every component tagged in repo / in bank / proposed and mapped to the four
+articles, is the Archify diagram in [`diagrams/`](diagrams/README.md):
+
+![ABM system and thesis flow](diagrams/abm-thesis-system.png)
 
 ### The frontier position (what would be new)
 
 1. **Estimation uncertainty carried end to end.** Choice-model covariance and transferability ranges
    become explicit uncertainties in the ensemble, so behavioural uncertainty is explored alongside
    technology and prices instead of being fixed at point estimates.
-2. **Hybrid agents.** Most agents follow estimated choice models (credible, cheap); a small panel of
-   LLM-driven agents is used as a *stress test* for novel policies the survey never covered, with their
-   choices compared against the estimated model. This uses the frontier carefully: as a probe of
-   structural uncertainty, not as the backbone.
+2. **Hybrid agents in three tiers.** (a) Most agents follow estimated choice models: credible, cheap,
+   with known uncertainty. (b) A decision-model tier (Jev-style) answers choice questions the survey
+   never asked, such as a new mobility service, and returns a probability distribution that can be
+   compared term by term with the logit probabilities. (c) A small panel of full LLM agents (AgentSociety,
+   GATSim, LLM agents in GAMA) with memory and reflection probes adaptation over years. Tiers (b) and (c)
+   are *stress tests* of structural uncertainty, benchmarked against tier (a), not the backbone.
 3. **Backcasting with pathways.** Not only "which package is robust" but which milestones and trigger
    points along the way (2030, 2035, 2040) keep the target reachable: adaptive pathways.
 4. **Design-native communication.** Results flow into Rhino/Grasshopper as data trees (one branch per
@@ -129,7 +135,8 @@ a pathway explorer (slider over futures, coloured by success), and an agent-flow
 | Tool access for any agent | MCP server (in repo) | the same skills from Claude Desktop or other hosts |
 | Open-model harness | Hermes Agent (in bank) | run the MCP tools with open-weight models, e.g. for reproducibility or offline work |
 | Live model control | Rhino MCP servers (in bank) | agents drive Grasshopper/Rhino for visual outputs |
-| Agents inside the model | LLM agent frameworks (in bank) | the hybrid-agent experiment above, kept separate from research assistance |
+| Agents inside the model | AgentSociety, GATSim, LLM agents in GAMA, AgentTorch (in bank); Jev (hosted) | the hybrid-agent tiers above, kept separate from research assistance |
+| Diagrams that stay current | Archify (in bank) | the system diagram is typed JSON checked by layout and browser gates; edit and re-run, see `diagrams/README.md` |
 
 Keep the two uses of "agent" apart in writing: AI agents that help do the research, and simulated
 agents that are part of the model.
@@ -165,11 +172,33 @@ agents that are part of the model.
 - Platform for the detailed model: MATSim/eqasim versus extending the compact ABM.
 - How far to take LLM agents, given validity and reproducibility concerns.
 
+## 9. What more agents to pull, and what is still missing
+
+**Agents worth pulling next** (license checked before cloning):
+
+| Candidate | Why | Status |
+|---|---|---|
+| POLARIS (Argonne), SimMobility (MIT/SMART) | large-scale activity-based ABMs named in the simulator overview | to check licenses |
+| MATSim core (`matsim-libs`) in full | the platform eqasim and BEAM build on | link now; GPL, can be cloned |
+| Mesa-LLM, Concordia (Google DeepMind) | LLM agents in Python ABM frameworks | to check |
+| Open-weight decision models | a reproducible alternative to hosted Jev for tier (b) | watch LLM2Jev follow-ups |
+| CityBehavEx and similar urban-behaviour benchmarks | validation sets for LLM travel behaviour | to find |
+
+**Missing pieces in the framework itself:**
+
+1. A real-data bridge: RVU, SSB, NVDB and Entur loaders (Evidence lane).
+2. A synthetic-population step (PopulationSim or eqasim pipeline) feeding both ABMs.
+3. A MATSim/eqasim run for the case region, so the surrogate has training runs.
+4. The Jev / LLM benchmarking harness: the same choice situations asked to logit, Jev and LLM agents.
+5. A SimWrapper dashboard spec for ensemble outputs, and a Grasshopper pathway explorer.
+6. Adaptive pathways (DAPP) on top of backcasting.
+
 ## Sources for the landscape
 
 - [An Overview of Agent-based Traffic Simulators (arXiv 2102.07505)](https://arxiv.org/pdf/2102.07505)
 - [BEAM framework (arXiv 2308.02073)](https://arxiv.org/pdf/2308.02073)
-- [AgentSociety](https://github.com/tsinghua-fib-lab/agentsociety/) · [LLM agents in GAMA, Toulouse](https://github.com/Ytlse/llm-agents-gama) · [Awesome Urban LLM Agents](https://github.com/usail-hkust/Awesome-Urban-LLM-Agents) · [GTA: Generative Traffic Agents (arXiv 2601.16778)](https://arxiv.org/pdf/2601.16778)
+- [AgentSociety](https://github.com/tsinghua-fib-lab/agentsociety/) · [LLM agents in GAMA, Toulouse](https://github.com/dungzvu/llm-agents-gama) · [Awesome Urban LLM Agents](https://github.com/usail-hkust/Awesome-Urban-LLM-Agents) · [GTA: Generative Traffic Agents (arXiv 2601.16778)](https://arxiv.org/pdf/2601.16778)
 - [SimWrapper (TU Berlin)](https://svn.vsp.tu-berlin.de/repos/public-svn/publications/vspwp/2022/22-21/CharltonSana2022SimWrapper.pdf)
 - [Quelea for Grasshopper](https://www2.food4rhino.com/en/node/1900) · [SlowRobotics / Nursery](https://github.com/daneisinger/SlowRobotics)
 - [Surrogate modelling and XAI for simulation exploration (arXiv 2510.16742)](https://arxiv.org/pdf/2510.16742) · [ML to emulate ABMs (arXiv 2005.02077)](https://arxiv.org/pdf/2005.02077)
+- Full list with license status: [`REFERENCES.md`](REFERENCES.md)

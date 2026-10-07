@@ -24,15 +24,25 @@ Asthenosphere assembles the pieces a transport and logistics planner needs into 
 - **Design and storytelling**: connections to Rhino, Grasshopper and GIS, following the parametric and
   environmental toolkit used in computational design practice, so results become drawings, maps and
   narratives.
-- **Knowledge bank**: about 280 license-checked open-source references (code, books, MCP servers)
+- **Knowledge bank**: about 290 license-checked open-source references (code, books, MCP servers)
   catalogued so new skills are built on real, current APIs.
 
 It works for any city or region: networks are built from OpenStreetMap by place name or file, in the
 local projected coordinate system. Molde and Kristiansund are the test case.
 
-## Architecture
+## The system and the thesis
 
-<p align="center"><img src="docs/figures/architecture.svg" alt="Modelling framework in five layers: evidence, behaviour, simulation, decision under deep uncertainty, interfaces" width="900"></p>
+<p align="center"><img src="docs/diagrams/abm-thesis-system.png" alt="ABM system and thesis flow: five lanes (evidence, behaviour, simulation, decision under deep uncertainty, story and interfaces) across four thesis articles, each component tagged in repo, in bank or proposed" width="900"></p>
+
+Five lanes across the four thesis articles (A1 behaviour, A2 coupled DCM and ABM, A3 exploration,
+A4 backcasting). Estimated choice models drive the agents. Decision models (Jev) and LLM agents
+(AgentSociety, GATSim, LLM agents in GAMA) stress-test them on policies the surveys never covered.
+Network ABMs (MATSim, eqasim, BEAM, SUMO, GAMA) train surrogates, so thousands of futures stay
+affordable. Results reach agencies as dashboards and as Grasshopper data trees. The diagram is typed
+JSON checked by [Archify](https://github.com/tt-a1i/archify); anyone can edit it and re-run the
+checks ([how](docs/diagrams/README.md)). Download the
+[interactive version](docs/diagrams/workflow-abm-thesis-system-20261007-0450/abm-thesis-system.html)
+to pan, zoom and trace paths.
 
 ## Toolchain and protocols
 
@@ -121,6 +131,8 @@ transport ABM platforms, LLM-driven agents, deep-uncertainty methods, surrogates
 Research questions and a dissertation outline: [`docs/research-proposal-outline.md`](docs/research-proposal-outline.md).
 What we absorb next and from where: [`docs/CHECKLIST.md`](docs/CHECKLIST.md).
 How claims are sourced: [`docs/CLAIMS.md`](docs/CLAIMS.md).
+Papers and repositories behind the agent, simulator, surrogate and visualisation choices, with
+license status: [`docs/REFERENCES.md`](docs/REFERENCES.md).
 
 ## Limitations
 
@@ -138,11 +150,16 @@ agents/            Claude Code agents
 servers/           MCP server and Grasshopper Hops app over a shared core
 examples/          end-to-end studies
 data/synthetic/    synthetic test network and generator
-docs/              architecture and toolchain figures, sample results, proposal outline, checklist, claims policy
+docs/              system diagram (Archify), toolchain figure, sample results, proposal outline, checklist, claims policy
 tests/             pytest suite (run in CI)
 tools/             knowledge-bank tooling: sync, harvest, assemble
 knowledge-bank/    third-party open-source references and books, with licenses
 ```
+
+## License
+
+MIT, © 2026 Arshad Akhtar Abbasia, for the original work in this repository. Third-party material
+under `knowledge-bank/` keeps its own license.
 
 ## Credits
 
