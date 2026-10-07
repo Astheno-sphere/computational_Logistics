@@ -1,0 +1,5 @@
+List of transits:
+{%- for leg in plan.legs %}{%- if not leg.is_transfer %}
+- {{ leg.transit_route | get_transit_route_type }} {{ leg.transit_route | format_route_id }} from '{{ leg.start_location.stop }}' to '{{ leg.end_location.stop }}';
+{%- endif %}
+{%- endfor %}

@@ -1,0 +1,73 @@
+data:
+  population_max_size: 2
+  number_of_llm_based_agents: 2
+
+gtfs:
+  cache_enabled: false
+  mode: OTP
+  max_trip_candidates: 5
+  fixed_day: "20250305"
+
+agent:
+  # concurrency
+  remote_llm_max_concurrent_requests: 100
+
+  reschedule_activity_departure_time: true
+  # reschedule_transition_ratio: 0.9
+  reschedule_activity_v2__k: 0.025
+  max_reschedule_amount: 1800
+  pre_schedule_duration: 1800
+  long_term_memory_enabled: true
+  quantify_time_window: false
+  long_term_reflect_interval: 86400
+  long_term_max_entries_query: 20
+  llm_model: "openai/gpt-oss-120b"
+
+  long_term_retrieval__sim_weight: 0.35
+  long_term_retrieval__keyword_weight: 0.32
+  long_term_retrieval__time_weight: 0.4
+  long_term_retrieval__time_decay: 0.8
+  long_term_retrieval__default_reflection_importance_score: 0.25
+
+  long_term_self_reflect_enabled: true
+  long_term_self_reflect_interval_days: 2
+  long_term_self_reflect_window_days: 4
+
+  # reflection_custom_guidelines: |
+  #   - You are most sensitive to the arrival times at activity destinations, and next you must consider the travel time and potential delays. You must span the consideration over past days, consider the prioritized factors, and choose the best option.
+  #   - Remember, the public transport schedule is changed in weekends, so you must consider the day of week when reflecting and planning travel. The experiences in the weekends can't be applied to weekdays, and vice versa. In the reflection, you must be specific about whether the experience is from weekday or weekend.
+  # travel_plan_custom_guidelines: |
+  #   - You are most sensitive to the arrival times at activity destinations, and next you must consider the travel time and potential delays. You must span the consideration over past days, consider the prioritized factors, and choose the best option. Any route includes more than 30 minutes of walking should be avoided, even if it is the most reliable option.
+  #   - Remember, the public transport schedule is changed in weekends, so you must consider the day of week when reflecting and planning travel. The experiences in the weekends can't be applied to weekdays, and vice versa. In the reflection, you must be specific about whether the experience is from weekday or weekend.
+
+  reflection_custom_guidelines: |
+    When planning travel, follow these priorities in order:
+    1. Arrival time at destination - make sure you arrive on time for work and education; freely for leisure and other activities.
+    2. Walking time - any route with more than 20 minutes or 1.5 km of walking for time sensitive purposes must be avoided.
+    3. Risk of delays - prefer more reliable options.
+    4. Total travel time - shorter is better.
+
+    Additional rules:
+    1. Weekday vs. weekend: Public transport schedules change on weekends.
+      - Trust experiences from weekdays to plan weekday trips, the weekend experiences can be used if there no weekday experiences related.
+      - Trust experiences from weekends to plan weekend trips, the weekday experiences can be used if there no weekend experiences related.
+    2. When reflecting on past experiences, always state if it was a weekday or a weekend.
+
+    The **FIRST PRIORITY** is to find the best route that you can trust to travel every day. If you have a route that you can trust, you can use it even if it is not the best in terms of total travel time or walking time. If you don't have a trusted route, you must find the best route based on the above priorities.
+    
+  travel_plan_custom_guidelines: |
+    When planning travel, follow these priorities in order:
+    1. Arrival time at destination - make sure you arrive on time for work and education; freely for leisure and other activities.
+    2. Walking time - any route with more than 20 minutes or 1.5 km of walking for time sensitive purposes must be avoided.
+    3. Risk of delays - prefer more reliable options.
+    4. Total travel time - shorter is better, but longer is okay if you arrive on time.
+
+    Additional rules:
+    1. Weekday vs. weekend: Public transport schedules change on weekends.
+      - Trust experiences from weekdays to plan weekday trips, the weekend experiences can be used if there no weekday experiences related.
+      - Trust experiences from weekends to plan weekend trips, the weekday experiences can be used if there no weekend experiences related.
+    2. When reflecting on past experiences, always state if it was a weekday or a weekend.
+
+    The **FIRST PRIORITY** is to find the best route that you can trust to travel every day. If you have a route that you can trust, you can use it even if it is not the best in terms of total travel time or walking time. If you don't have a trusted route, you must find the best route based on the above priorities.
+
+workdir: "../experiments/gpt-oss-120b_14"
