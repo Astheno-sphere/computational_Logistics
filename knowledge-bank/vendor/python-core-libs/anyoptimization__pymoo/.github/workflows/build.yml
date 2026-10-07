@@ -1,0 +1,192 @@
+name: Build
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, labeled]
+    push:
+        branches: [deploy]
+        # Only semver-shaped tags (e.g. 0.6.3, 0.6.3.dev1) can trigger a publish —
+        # a stray tag like `latest` or a typo no longer reaches PyPI. (P-2)
+        tags: ["*.*.*"]
+    workflow_dispatch:
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+    check_approval:
+        runs-on: ubuntu-latest
+        outputs:
+            should_build: ${{ steps.check.outputs.should_build }}
+        steps:
+            - name: Check if build should run
+              id: check
+              run: |
+                  if [[ "${{ github.event_name }}" == "push" ]]; then
+                      # Always build on push to deploy branch or tags
+                      echo "should_build=true" >> $GITHUB_OUTPUT
+                  elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+                      # Always build on manual trigger
+                      echo "should_build=true" >> $GITHUB_OUTPUT
+                  elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                      # Check for approval label on PRs
+                      if [[ "${{ contains(github.event.pull_request.labels.*.name, 'build-approved') }}" == "true" ]]; then
+                          echo "should_build=true" >> $GITHUB_OUTPUT
+                      else
+                          echo "should_build=false" >> $GITHUB_OUTPUT
+                      fi
+                  else
+                      echo "should_build=false" >> $GITHUB_OUTPUT
+                  fi
+
+    build_wheels:
+        name: Build wheel for ${{ matrix.os }}-${{ matrix.build }}${{ matrix.python }}-${{ matrix.arch }}
+        runs-on: ${{ matrix.os }}
+        needs: check_approval
+        if: needs.check_approval.outputs.should_build == 'true'
+        strategy:
+            # Ensure that a wheel builder finishes even if another fails
+            fail-fast: false
+            matrix:
+                os: [windows-latest, ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+                python: [310, 311, 312, 313, 314]
+                arch: [auto64, universal2]
+                build: ["cp"]
+                exclude:
+                    - os: ubuntu-latest
+                      arch: universal2
+                    - os: ubuntu-24.04-arm
+                      arch: universal2
+                    - os: windows-latest
+                      arch: universal2
+        steps:
+            - uses: actions/checkout@v5
+            - uses: astral-sh/setup-uv@v7
+            - uses: pypa/cibuildwheel@v3.2
+              env:
+                CIBW_BUILD_FRONTEND: "build[uv]"
+                CIBW_BUILD: "${{ matrix.build }}${{ matrix.python }}*"
+                CIBW_SKIP: "*t-*"
+                CIBW_ARCHS: ${{ matrix.arch }}
+                CIBW_TEST_COMMAND: >
+                  uv run python -c "import sys; import pymoo; print(pymoo); from pymoo.functions import is_compiled; sys.exit(0 if is_compiled() else 42)"
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: "artifact-${{ matrix.os }}-${{ matrix.build }}-${{ matrix.python }}-${{ matrix.arch }}"
+                  path: ./wheelhouse/*.whl
+
+    build_sdist:
+        name: Build source distribution
+        runs-on: ubuntu-latest
+        needs: check_approval
+        if: needs.check_approval.outputs.should_build == 'true'
+        steps:
+            - uses: actions/checkout@v5
+            - uses: astral-sh/setup-uv@v7
+            - run: uv build --sdist
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: artifact-source
+                  path: dist/*.tar.gz
+
+    merge:
+      name: Merge sdist and wheel artifacts
+      needs: [build_wheels, build_sdist]
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/upload-artifact/merge@v4
+          with:
+            name: pymoo
+            delete-merged: true
+
+    publish_testpypi:
+        name: Publish to TestPyPI (dry-run)
+        # Manual "Run workflow" button only — a safe dry-run target.
+        needs: merge
+        runs-on: ubuntu-latest
+        if: github.event_name == 'workflow_dispatch'
+        environment:
+            name: testpypi
+            url: https://test.pypi.org/p/pymoo
+        permissions:
+            id-token: write   # required for PyPI Trusted Publishing (OIDC)
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  name: pymoo
+                  path: dist
+            - uses: pypa/gh-action-pypi-publish@release/v1
+              with:
+                  repository-url: https://test.pypi.org/legacy/
+                  skip-existing: true
+
+    verify_version:
+        name: Tag matches version.py
+        # Guard against tag/version drift before anything is published. (P-2)
+        if: startsWith(github.ref, 'refs/tags/')
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: '3.12'
+            - name: Assert git tag == pymoo.version.__version__
+              run: |
+                  TAG="${GITHUB_REF_NAME}"
+                  # read version.py in isolation (no full-package import / compiled ext)
+                  VER=$(python -c "import runpy; print(runpy.run_path('pymoo/version.py')['__version__'])")
+                  echo "tag=$TAG  version.py=$VER"
+                  if [ "$TAG" != "$VER" ]; then
+                    echo "::error::Tag '$TAG' != version.py '$VER' — bump version.py or fix the tag before publishing."
+                    exit 1
+                  fi
+
+    release_gate:
+        name: Release smoke (fast tests + golden)
+        # A quick correctness gate on the tagged commit before publishing. The full
+        # OS×Python matrix runs in nightly.yml; this is the cheap pre-publish check.
+        if: startsWith(github.ref, 'refs/tags/')
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: '3.12'
+                  cache: pip
+            - name: Install pymoo (compiled) + deps
+              run: |
+                  pip install --upgrade pip "setuptools>=77" "Cython>=0.29" "numpy>=2.0.0"
+                  pip install -e .
+                  python setup.py build_ext --inplace
+                  pip install -r tests/requirements.txt
+                  pip install pyclawd pytest-xdist
+            - name: Compiled extensions present
+              run: python -c "from pymoo.functions import is_compiled; import sys; print('compiled:', is_compiled()); sys.exit(0 if is_compiled() else 1)"
+            - name: Fast unit tier + golden
+              run: |
+                  pytest -n auto -m "not long and not slow and not examples and not docs and not golden"
+                  pytest -m golden
+
+    publish_pypi:
+        name: Publish to PyPI
+        # Real release only — runs when a version tag (e.g. 0.6.2) is pushed,
+        # AND the tag matches version.py AND the release smoke gate passed.
+        needs: [merge, verify_version, release_gate]
+        runs-on: ubuntu-latest
+        if: startsWith(github.ref, 'refs/tags/')
+        environment:
+            name: pypi
+            url: https://pypi.org/p/pymoo
+        permissions:
+            id-token: write   # required for PyPI Trusted Publishing (OIDC)
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  name: pymoo
+                  path: dist
+            - uses: pypa/gh-action-pypi-publish@release/v1
+

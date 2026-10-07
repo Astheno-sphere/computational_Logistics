@@ -327,3 +327,19 @@ GIS in Rhino/Grasshopper and national/open map data clients (Heron, QGIS, Kartve
 Open agent frameworks and harnesses beyond Claude Code (e.g. Hermes Agent).
 
 - **NousResearch__hermes-agent** [MIT, vendored]: Hermes Agent: open agent framework from Nous Research. `vendor/agent-harnesses/NousResearch__hermes-agent`
+
+## python-core-libs (3 vendored, 0 link-only)
+Core Python libraries named in Abhinav's "72 Ways": data, geometry, optimisation.
+
+- **anyoptimization__pymoo** [Apache-2.0, vendored]: Multi-objective optimisation (NSGA-II/III, Pareto fronts). `vendor/python-core-libs/anyoptimization__pymoo`
+- **pandas-dev__pandas** [BSD-3-Clause, vendored]: Data frames. `vendor/python-core-libs/pandas-dev__pandas`
+- **shapely__shapely** [BSD-3-Clause, vendored]: Planar geometry (GEOS bindings). `vendor/python-core-libs/shapely__shapely`
+
+## gh-connectivity (5 vendored, 0 link-only)
+Grasshopper/Rhino connectivity: JSON, web, Revit, environmental simulation back ends.
+
+- **andrewheumann__jSwan** [MIT, vendored]: Grasshopper JSON serialise/parse components. `vendor/gh-connectivity/andrewheumann__jSwan`
+- **ladybug-tools__honeybee-energy** [AGPL, vendored, copyleft]: Honeybee energy modelling (EnergyPlus/OpenStudio). `vendor/gh-connectivity/ladybug-tools__honeybee-energy`
+- **ladybug-tools__honeybee-radiance** [AGPL, vendored, copyleft]: Honeybee daylight modelling (Radiance). `vendor/gh-connectivity/ladybug-tools__honeybee-radiance`
+- **mcneel__rhino.inside-revit** [MIT, vendored]: Rhino and Grasshopper running inside Revit. `vendor/gh-connectivity/mcneel__rhino.inside-revit`
+- **pyrevitlabs__pyRevit** [GPL, vendored, copyleft]: pyRevit: Python automation for Revit. `vendor/gh-connectivity/pyrevitlabs__pyRevit`

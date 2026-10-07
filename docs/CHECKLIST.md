@@ -98,11 +98,28 @@ Molde and Kristiansund are the test case, not the limit.
 | Ladybug Tools | ✅ (AGPL, isolated) | climate, sun | ○ P3 |
 | Layering and massing | Issa *Essential Mathematics* (open) for vectors, transforms, NURBS | `massing` (extrude parcels, heights from data) | ○ P2 |
 
+## 6b. Libraries named in *72 Ways* ("real libraries with current APIs")
+
+| Library | In bank | Used by our code |
+|---|---|---|
+| OSMnx | ✅ MIT | `osm-network` |
+| GeoPandas | ✅ BSD-3 | via OSMnx |
+| pandas | ✅ BSD-3 (user guide) | via OSMnx/GeoPandas |
+| shapely | ✅ BSD-3 | via OSMnx/GeoPandas |
+| pymoo | ✅ Apache-2.0 | `pareto-plan` ○ |
+| Ladybug, Honeybee (core, energy, radiance) | ✅ AGPL, isolated | ○ P3 |
+| IfcOpenShell | ✅ GPL/LGPL, isolated (Python part) | ✕ out of scope for now |
+| pyRevit | ✅ GPL, isolated | ✕ out of scope for now |
+| rhino3dm | ✅ MIT | Hops outputs (`servers/hops_app.py`) |
+
 ## 7. Agents, harnesses, models
 
 | Item | State | Note |
 |---|---|---|
 | Claude Code plugin (skills, agents, router) | ✅ this repo | `claude --plugin-dir .` |
+| Our own MCP server (skills as tools) | ✅ `servers/mcp_server.py`, `.mcp.json` | any MCP host, incl. Hermes Agent |
+| Grasshopper Hops components | ✅ `servers/hops_app.py` | routes and VRP into Grasshopper |
+| jSwan (JSON in Grasshopper), Rhino.Inside.Revit | ✅ in bank (MIT) | ○ P2 |
 | Claude Agent SDK, MCP SDKs | ✅ in bank | for scripted pipelines |
 | Hermes Agent (Nous Research) | ✅ core in bank (MIT) | compare harness design; run open models |
 | Open LLM serving (vLLM, llama.cpp, Ollama) | ✅ docs in bank | local models for offline agents |

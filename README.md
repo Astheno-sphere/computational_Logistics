@@ -61,6 +61,8 @@ local projected coordinate system. The plan for growing each layer is in
 | [`skills/vrp-solve`](skills/vrp-solve/SKILL.md) | Delivery routing with capacity, time windows, service times on road-network costs; PyVRP and OR-Tools cross-check; solver-independent validation | Built, tested |
 | [`skills/gh-datatree`](skills/gh-datatree/SKILL.md) | Tested model of Grasshopper data-tree semantics, live probe for Rhino 8, diagnoser that names the bug and the smallest fix | Model and diagnoser tested; Rhino probe not yet run in Rhino |
 | [`skills/opt-model`](skills/opt-model/SKILL.md) | AMPL-style LP/MIP in Pyomo: transportation, facility location, min-cost flow, exact CVRP; Gurobi, CPLEX or HiGHS; export to .lp/.mps/.nl/.gms | Built, tested; all solvers must agree |
+| [`servers/mcp_server.py`](servers/mcp_server.py) | The skills as MCP tools (network, route, VRP, optimisation, tree diagnosis) for Claude Code, Claude Desktop, Hermes Agent or any MCP client; loaded automatically by the plugin's `.mcp.json` | Built, tested over stdio |
+| [`servers/hops_app.py`](servers/hops_app.py) | The skills as Grasshopper Hops components: routes as Rhino points, VRP plans as a data tree with one branch per vehicle | Built, tested with Grasshopper's Hops payloads |
 | [`agents/gh-datatree-debugger`](agents/gh-datatree-debugger.md) | Claude Code agent: probe, diagnose, fix, re-probe | Built |
 | [`skills/cl-foundations`](skills/cl-foundations/SKILL.md) | Router and shared conventions (units, CRS, assumptions to report) | Built |
 | [`knowledge-bank/`](knowledge-bank/README.md) | Curated, license-checked collection of third-party open-source skills, solvers, routing engines and MCP servers, assembled into a searchable catalog | Built (third-party work, credited) |
@@ -102,6 +104,28 @@ inputs and hides graft/flatten/simplify flags behind small icons, which makes st
 common failure in parametric definitions. `gh-datatree` models these rules in plain Python (testable
 without Rhino), reads live trees from a running definition, and reports the cause and the smallest fix.
 
+## Connectivity
+
+```mermaid
+flowchart LR
+  subgraph Clients
+    CC[Claude Code / Desktop]
+    HA[Hermes Agent / other MCP hosts]
+    GH[Grasshopper + Hops]
+  end
+  CC -- MCP stdio --> MCP[servers/mcp_server.py]
+  HA -- MCP --> MCP
+  GH -- HTTP Hops --> HOPS[servers/hops_app.py]
+  MCP --> CORE[servers/core.py]
+  HOPS --> CORE
+  CORE --> SK[skills: osm-network, vrp-solve, opt-model, gh-datatree]
+```
+
+Both servers call the same core, so a tool call in Claude and a component in Grasshopper return the same
+answer. The MCP server targets the MCP Python SDK v2 (`MCPServer`); the Hops app targets McNeel's
+`ghhops-server` 1.5. Run `python servers/hops_app.py`, then point a Hops component at
+`http://localhost:5000/cl/vrp`.
+
 ## First results (synthetic, reproducible)
 
 Synthetic 7 x 7 street grid at Molde harbour (49 nodes, 150 directed edges, one one-way street, one
@@ -122,7 +146,7 @@ Reproduce: `python examples/showcase.py`.
 
 ## Validation
 
-`python -m pytest tests` runs 48 tests, including:
+`python -m pytest tests` runs 55 tests, including:
 - energy per edge against a hand calculation; uphill cost exceeds downhill recovery;
 - least-energy routes against an independent Bellman-Ford over reachable targets on a 120 m hill;
 - VRP: both solvers feasible and agreeing; a 5-stop case equal to brute-force enumeration of all routes;
@@ -133,6 +157,8 @@ Reproduce: `python examples/showcase.py`.
 - data trees: flatten, graft, simplify, trim, shift, flip, path-mapper masks, the matching rules of
   Issa (2024) section 3_3, pairing by branch order,
   graft-against-flat-list cross products; the diagnoser on a recorded faulty definition;
+- MCP server through the SDK's in-memory client and as a stdio subprocess; Hops components with the JSON
+  payloads Grasshopper sends, including a VRP plan returned as one tree branch per vehicle;
 - skill and agent files well-formed, router targets existing.
 
 ## Reproduce
@@ -178,7 +204,8 @@ agents/            Claude Code agents
 tests/             pytest suite
 examples/          showcase script reproducing the results above
 grid_molde.osm     synthetic test network
-docs/              checklist of what we absorb next, and from where
+servers/           MCP server and Grasshopper Hops app over a shared core
+docs/              checklist of what we absorb next, and the claims and sources policy
 knowledge-bank/    third-party open-source collection, catalog and tooling (see its README)
 tools/             knowledge-bank tooling: sync, harvest, assemble
 ```
@@ -196,4 +223,7 @@ tools/             knowledge-bank tooling: sync, harvest, assemble
   skill collections by [Abhinav Bhardwaj](https://github.com/Abhinavbwj) (MIT).
 - Everything under `knowledge-bank/vendor/` is third-party work kept under its own license; see
   [`knowledge-bank/ATTRIBUTION.md`](knowledge-bank/ATTRIBUTION.md).
+- Connectivity: [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk),
+  [ghhops-server](https://github.com/mcneel/compute.rhino3d) and [rhino3dm](https://github.com/mcneel/rhino3dm) (McNeel).
+- Sources policy: [`docs/CLAIMS.md`](docs/CLAIMS.md).
 - Built with [Claude Code](https://claude.com/claude-code) as a coding assistant.

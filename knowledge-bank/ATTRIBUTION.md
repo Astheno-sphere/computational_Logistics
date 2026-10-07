@@ -53,6 +53,11 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/geo-python/networkx__networkx`: https://github.com/networkx/networkx.git, BSD-3-Clause, commit 6da4704
 - `vendor/geo-python/osmcode__pyosmium`: https://github.com/osmcode/pyosmium.git, BSD-2-Clause, commit c4f1ae4
 - `vendor/geo-python/pysal__pysal`: https://github.com/pysal/pysal.git, BSD-3-Clause, commit 00ac4c9
+- `vendor/gh-connectivity/andrewheumann__jSwan`: https://github.com/andrewheumann/jSwan.git, MIT, commit 360d016
+- `vendor/gh-connectivity/ladybug-tools__honeybee-energy`: https://github.com/ladybug-tools/honeybee-energy.git, AGPL, commit 8885f35
+- `vendor/gh-connectivity/ladybug-tools__honeybee-radiance`: https://github.com/ladybug-tools/honeybee-radiance.git, AGPL, commit 59e9729
+- `vendor/gh-connectivity/mcneel__rhino.inside-revit`: https://github.com/mcneel/rhino.inside-revit.git, MIT, commit 0c8355b
+- `vendor/gh-connectivity/pyrevitlabs__pyRevit`: https://github.com/pyrevitlabs/pyRevit.git, GPL, commit 20b194a
 - `vendor/gis-data-connectors/blueherongis__Heron`: https://github.com/blueherongis/Heron.git, MIT, commit 2abb8c8
 - `vendor/gis-data-connectors/kartverket__norgeskart`: https://github.com/kartverket/norgeskart.git, MIT, commit 536a961
 - `vendor/gis-data-connectors/qgis__QGIS`: https://github.com/qgis/QGIS.git, GPL, commit 6c00806
@@ -161,6 +166,9 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/mcp-core/modelcontextprotocol__servers`: https://github.com/modelcontextprotocol/servers.git, CC-BY-4.0, commit 5abed86
 - `vendor/osm-mcp/GRABOSM__osm-mcp`: https://github.com/GRABOSM/osm-mcp.git, MIT, commit 963db61
 - `vendor/osm-mcp/jagan-shanmugam__open-streetmap-mcp`: https://github.com/jagan-shanmugam/open-streetmap-mcp.git, MIT, commit 4319f9f
+- `vendor/python-core-libs/anyoptimization__pymoo`: https://github.com/anyoptimization/pymoo.git, Apache-2.0, commit 23110c1
+- `vendor/python-core-libs/pandas-dev__pandas`: https://github.com/pandas-dev/pandas.git, BSD-3-Clause, commit 63651d6
+- `vendor/python-core-libs/shapely__shapely`: https://github.com/shapely/shapely.git, BSD-3-Clause, commit 0e92040
 - `vendor/rhino-grasshopper-mcp/alfredatnycu__grasshopper-mcp`: https://github.com/alfredatnycu/grasshopper-mcp.git, MIT, commit 1e5360e
 - `vendor/rhino-grasshopper-mcp/jingcheng-chen__rhinomcp`: https://github.com/jingcheng-chen/rhinomcp.git, MIT, commit 70b63a2
 - `vendor/rhino-grasshopper-mcp/mcneel__compute.rhino3d`: https://github.com/mcneel/compute.rhino3d.git, MIT, commit 80e9057
@@ -205,6 +213,9 @@ Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes yo
 - `vendor/computational-design/ladybug-tools__honeybee-core`: AGPL
 - `vendor/computational-design/ladybug-tools__ladybug`: AGPL
 - `vendor/computational-design/ladybug-tools__lbt-grasshopper`: AGPL
+- `vendor/gh-connectivity/ladybug-tools__honeybee-energy`: AGPL
+- `vendor/gh-connectivity/ladybug-tools__honeybee-radiance`: AGPL
+- `vendor/gh-connectivity/pyrevitlabs__pyRevit`: GPL
 - `vendor/gis-data-connectors/qgis__QGIS`: GPL
 - `vendor/grasshopper-datatree/ladybug-tools__ladybug-rhino`: AGPL
 - `vendor/harvested-location-services/GeiserX__pumperly-mcp`: GPL
