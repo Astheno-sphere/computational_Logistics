@@ -8,6 +8,14 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/abhinav/Abhinavbwj__Skills-Architects`: https://github.com/Abhinavbwj/Skills-Architects.git, MIT, commit 30a0845
 - `vendor/abhinav/Abhinavbwj__Urban-Design-Skills-Claude`: https://github.com/Abhinavbwj/Urban-Design-Skills-Claude.git, MIT, commit 666327b
 - `vendor/abhinav/Abhinavbwj__aec-knowledge-graph`: https://github.com/Abhinavbwj/aec-knowledge-graph.git, MIT, commit 00e796f
+- `vendor/abm-platforms/ActivitySim__populationsim`: https://github.com/ActivitySim/populationsim.git, BSD-3-Clause, commit 21881f0
+- `vendor/abm-platforms/AequilibraE__aequilibrae`: https://github.com/AequilibraE/aequilibrae.git, MIT, commit 55c78aa
+- `vendor/abm-platforms/LBNL-UCB-STI__beam`: https://github.com/LBNL-UCB-STI/beam.git, GPL, commit 57dff5c
+- `vendor/abm-platforms/NetLogo__NetLogo`: https://github.com/NetLogo/NetLogo.git, GPL, commit 8fb810b
+- `vendor/abm-platforms/Repast__repast4py`: https://github.com/Repast/repast4py.git, BSD-3-Clause, commit b91cb32
+- `vendor/abm-platforms/UDST__synthpop`: https://github.com/UDST/synthpop.git, BSD-3-Clause, commit 6fb1399
+- `vendor/abm-platforms/eqasim-org__ile-de-france`: https://github.com/eqasim-org/ile-de-france.git, GPL, commit f388481
+- `vendor/abm-visualisation/simwrapper__simwrapper`: https://github.com/simwrapper/simwrapper.git, GPL, commit 9b19d97
 - `vendor/agent-harnesses/NousResearch__hermes-agent`: https://github.com/NousResearch/hermes-agent.git, MIT, commit 0e37a43
 - `vendor/choice-modelling/arteagac__xlogit`: https://github.com/arteagac/xlogit.git, GPL, commit c3d6d44
 - `vendor/choice-modelling/michelbierlaire__biogeme`: https://github.com/michelbierlaire/biogeme.git, MIT, commit 3dd3d36
@@ -154,6 +162,8 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/harvested-real-estate/jbechtel-97__dealflowpro-mcp-server`: https://github.com/jbechtel-97/dealflowpro-mcp-server.git, MIT, commit 4f3b7e2
 - `vendor/harvested-real-estate/pedra-ai__pedra-mcp`: https://github.com/pedra-ai/pedra-mcp.git, MIT, commit 79bbe8b
 - `vendor/harvested-real-estate/zornade__zornade-mcp`: https://github.com/zornade/zornade-mcp.git, MIT, commit ac1e6b1
+- `vendor/llm-agents/AgentTorch__AgentTorch`: https://github.com/AgentTorch/AgentTorch.git, AGPL, commit 86bb57e
+- `vendor/llm-agents/tsinghua-fib-lab__agentsociety`: https://github.com/tsinghua-fib-lab/agentsociety.git, Apache-2.0, commit 8cc5bb9
 - `vendor/logistics-benchmarks-solvers/ERGO-Code__HiGHS`: https://github.com/ERGO-Code/HiGHS.git, MIT, commit 73cac48
 - `vendor/logistics-benchmarks-solvers/Kuifje02__vrpy`: https://github.com/Kuifje02/vrpy.git, MIT, commit ff325cb
 - `vendor/logistics-benchmarks-solvers/N-Wouda__ALNS`: https://github.com/N-Wouda/ALNS.git, MIT, commit 5ef1fd1
@@ -201,6 +211,8 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/supply-chain/hubbs5__or-gym`: https://github.com/hubbs5/or-gym.git, MIT, commit 0b18d16
 - `vendor/supply-chain/projectmesa__mesa`: https://github.com/projectmesa/mesa.git, Apache-2.0, commit 0a17aa6
 - `vendor/supply-chain/projectmesa__mesa-geo`: https://github.com/projectmesa/mesa-geo.git, Apache-2.0, commit 79f010a
+- `vendor/surrogates-calibration/ICB-DCM__pyABC`: https://github.com/ICB-DCM/pyABC.git, BSD-3-Clause, commit 914ce7c
+- `vendor/surrogates-calibration/SMTorg__smt`: https://github.com/SMTorg/smt.git, BSD-3-Clause, commit b915f9e
 - `vendor/urban-design-mcp/JotaDeRodriguez__Bonsai_mcp`: https://github.com/JotaDeRodriguez/Bonsai_mcp.git, MIT, commit 1d8478f
 - `vendor/urban-design-mcp/ahujasid__blender-mcp`: https://github.com/ahujasid/blender-mcp.git, MIT, commit 7a0373e
 - `vendor/urban-design-mcp/crystaldba__postgres-mcp`: https://github.com/crystaldba/postgres-mcp.git, MIT, commit 15c8e33
@@ -226,6 +238,10 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes you make to that material under the same license. Do not merge it into differently licensed code.
 
 ## Copyleft sources (verbatim, isolated; see `_KB_COPYLEFT.txt` in each)
+- `vendor/abm-platforms/LBNL-UCB-STI__beam`: GPL
+- `vendor/abm-platforms/NetLogo__NetLogo`: GPL
+- `vendor/abm-platforms/eqasim-org__ile-de-france`: GPL
+- `vendor/abm-visualisation/simwrapper__simwrapper`: GPL
 - `vendor/choice-modelling/arteagac__xlogit`: GPL
 - `vendor/claude-code-guides/FlorianBruniaux__claude-code-ultimate-guide`: CC-BY-SA-4.0
 - `vendor/computational-design/IfcOpenShell__IfcOpenShell`: MIXED:GPL+LGPL
@@ -242,6 +258,7 @@ Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes yo
 - `vendor/harvested-location-services/GeiserX__pumperly-mcp`: GPL
 - `vendor/harvested-location-services/Knight60__ArcGIS-Pro-MCP`: AGPL
 - `vendor/harvested-location-services/mapsmith-ai__MapSmith`: AGPL
+- `vendor/llm-agents/AgentTorch__AgentTorch`: AGPL
 - `vendor/raster-gis-tools/osmcode__osmium-tool`: GPL
 - `vendor/routing-engines/GIScience__openrouteservice`: MIXED:GPL+LGPL
 - `vendor/routing-engines/opentripplanner__OpenTripPlanner`: LGPL

@@ -24,7 +24,7 @@ Asthenosphere assembles the pieces a transport and logistics planner needs into 
 - **Design and storytelling**: connections to Rhino, Grasshopper and GIS, following the parametric and
   environmental toolkit used in computational design practice, so results become drawings, maps and
   narratives.
-- **Knowledge bank**: about 250 license-checked open-source references (code, books, MCP servers)
+- **Knowledge bank**: about 280 license-checked open-source references (code, books, MCP servers)
   catalogued so new skills are built on real, current APIs.
 
 It works for any city or region: networks are built from OpenStreetMap by place name or file, in the
@@ -115,6 +115,9 @@ python examples/routing_study.py            # terrain-aware routing and vehicle 
 
 The framework is built for scenario-based transport planning under deep uncertainty: estimated
 behaviour driving agent-based models, explored across futures, with backcasting from 2050 targets.
+**Framework proposal**: approaches, toolset, research flow and PhD alignment, with the landscape of
+transport ABM platforms, LLM-driven agents, deep-uncertainty methods, surrogates and visualisation:
+[`docs/FRAMEWORK.md`](docs/FRAMEWORK.md).
 Research questions and a dissertation outline: [`docs/research-proposal-outline.md`](docs/research-proposal-outline.md).
 What we absorb next and from where: [`docs/CHECKLIST.md`](docs/CHECKLIST.md).
 How claims are sourced: [`docs/CLAIMS.md`](docs/CLAIMS.md).

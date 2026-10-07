@@ -374,3 +374,39 @@ Raster, vector and point-cloud tools; map data export and conversion.
 - **jblindsay__whitebox-tools** [MIT, vendored]: WhiteboxTools: terrain and hydrology analysis. `vendor/raster-gis-tools/jblindsay__whitebox-tools`
 - **osmcode__osmium-tool** [GPL, vendored, copyleft]: osmium-tool: OSM extract, filter, convert. `vendor/raster-gis-tools/osmcode__osmium-tool`
 - **rasterio__rasterio** [BSD-3-Clause, vendored]: rasterio: raster I/O on GDAL. `vendor/raster-gis-tools/rasterio__rasterio`
+
+## abm-platforms (7 vendored, 0 link-only)
+Agent-based transport and urban simulation platforms.
+
+- **ActivitySim__populationsim** [BSD-3-Clause, vendored]: PopulationSim: synthetic population for activity-based models. `vendor/abm-platforms/ActivitySim__populationsim`
+- **AequilibraE__aequilibrae** [MIT, vendored]: AequilibraE: open transport modelling (assignment, skims, GTFS). `vendor/abm-platforms/AequilibraE__aequilibrae`
+- **LBNL-UCB-STI__beam** [GPL, vendored, copyleft]: BEAM: Behavior, Energy, Autonomy, Mobility (LBNL), MATSim-based. `vendor/abm-platforms/LBNL-UCB-STI__beam`
+- **NetLogo__NetLogo** [GPL, vendored, copyleft]: NetLogo: classic ABM environment. `vendor/abm-platforms/NetLogo__NetLogo`
+- **Repast__repast4py** [BSD-3-Clause, vendored]: Repast4Py: distributed ABM in Python. `vendor/abm-platforms/Repast__repast4py`
+- **UDST__synthpop** [BSD-3-Clause, vendored]: synthpop: synthetic population synthesis. `vendor/abm-platforms/UDST__synthpop`
+- **eqasim-org__ile-de-france** [GPL, vendored, copyleft]: eqasim Ile-de-France: reproducible synthetic population + MATSim scenario pipeline. `vendor/abm-platforms/eqasim-org__ile-de-france`
+
+## llm-agents (2 vendored, 3 link-only)
+LLM-driven generative agents for mobility and urban simulation (frontier).
+
+- **AgentTorch__AgentTorch** [AGPL, vendored, copyleft]: AgentTorch: large population models with LLM-guided agents. `vendor/llm-agents/AgentTorch__AgentTorch`
+- **Ytlse__llm-agents-gama** [?, unreachable]: Generative LLM agents in a multimodal transport system (GAMA), Toulouse. https://github.com/Ytlse/llm-agents-gama.git
+- **joonspk-research__generative_agents** [Apache-2.0, LINK-ONLY]: Generative Agents (Park et al.): memory, reflection, planning architecture. https://github.com/joonspk-research/generative_agents.git
+- **tsinghua-fib-lab__agentsociety** [Apache-2.0, vendored]: AgentSociety: LLM-native large-scale social/urban agent simulation. `vendor/llm-agents/tsinghua-fib-lab__agentsociety`
+- **usail-hkust__Awesome-Urban-LLM-Agents** [NONE, LINK-ONLY]: Curated list of urban LLM agent papers and code. https://github.com/usail-hkust/Awesome-Urban-LLM-Agents.git
+
+## abm-visualisation (1 vendored, 0 link-only)
+Visualising agent-based simulation output: dashboards, trips, flows.
+
+- **simwrapper__simwrapper** [GPL, vendored, copyleft]: SimWrapper: open-source dashboards for MATSim and transport model outputs. `vendor/abm-visualisation/simwrapper__simwrapper`
+
+## surrogates-calibration (2 vendored, 0 link-only)
+Surrogate models, emulators and calibration for expensive simulations.
+
+- **ICB-DCM__pyABC** [BSD-3-Clause, vendored]: pyABC: approximate Bayesian computation for simulator calibration. `vendor/surrogates-calibration/ICB-DCM__pyABC`
+- **SMTorg__smt** [BSD-3-Clause, vendored]: SMT: surrogate modelling toolbox (Kriging, RBF, etc.). `vendor/surrogates-calibration/SMTorg__smt`
+
+## gh-agents (0 vendored, 1 link-only)
+Agent-based and behavioural design tools for Grasshopper.
+
+- **daneisinger__SlowRobotics** [NONE, LINK-ONLY]: SlowRobotics / Nursery: agent and behaviour framework for Grasshopper. https://github.com/daneisinger/SlowRobotics.git
