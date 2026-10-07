@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Write examples/grid_molde.osm: a synthetic 7x7 street grid at Molde harbour.
+"""Write grid_molde.osm: a synthetic 7x7 street grid at Molde harbour.
 
 For tests and lessons only (not real streets). One eastbound one-way street,
-one footway that buses must not use, and a hill function for terrain.
+and one footway that vehicles must not use. Terrain is added by the caller
+(see examples/showcase.py).
 """
 from __future__ import print_function
 
@@ -17,16 +18,6 @@ D_LON = 0.0039                      # ~200 m at this latitude
 
 def node_id(i, j):
     return 1 + i * N + j
-
-
-def hill(x, y, cx=None, cy=None):
-    """Terrain for tests: 60 m hill north-west of the harbour (model metres)."""
-    import sys
-    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
-    import cl_frame as F
-    if cx is None:
-        cx, cy = F.to_local(LON0 + 1.5 * D_LON, LAT0 + 3.5 * D_LAT)
-    return 60.0 * math.exp(-(((x - cx) / 350.0) ** 2 + ((y - cy) / 350.0) ** 2))
 
 
 def write(path):

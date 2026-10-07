@@ -52,6 +52,7 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/geo-python/networkx__networkx`: https://github.com/networkx/networkx.git, BSD-3-Clause, commit 6da4704
 - `vendor/geo-python/osmcode__pyosmium`: https://github.com/osmcode/pyosmium.git, BSD-2-Clause, commit c4f1ae4
 - `vendor/geo-python/pysal__pysal`: https://github.com/pysal/pysal.git, BSD-3-Clause, commit 00ac4c9
+- `vendor/grasshopper-datatree/ladybug-tools__ladybug-rhino`: https://github.com/ladybug-tools/ladybug-rhino.git, AGPL, commit 3d34f1f
 - `vendor/harvested-architecture-and-design/Kentucky-ai__opentakeoff`: https://github.com/Kentucky-ai/opentakeoff.git, Apache-2.0, commit 0d502f4
 - `vendor/harvested-delivery/A1-x-Tech__mcp-yandex-dostavka`: https://github.com/A1-x-Tech/mcp-yandex-dostavka.git, MIT, commit 9ae2e92
 - `vendor/harvested-delivery/A1-x-Tech__mcp-yango-delivery`: https://github.com/A1-x-Tech/mcp-yango-delivery.git, MIT, commit 5007f18
@@ -200,6 +201,7 @@ Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes yo
 - `vendor/computational-design/ladybug-tools__honeybee-core`: AGPL
 - `vendor/computational-design/ladybug-tools__ladybug`: AGPL
 - `vendor/computational-design/ladybug-tools__lbt-grasshopper`: AGPL
+- `vendor/grasshopper-datatree/ladybug-tools__ladybug-rhino`: AGPL
 - `vendor/harvested-location-services/GeiserX__pumperly-mcp`: GPL
 - `vendor/harvested-location-services/Knight60__ArcGIS-Pro-MCP`: AGPL
 - `vendor/harvested-location-services/mapsmith-ai__MapSmith`: AGPL

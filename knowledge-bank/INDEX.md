@@ -308,3 +308,10 @@ Harvested from awesome-mcp-servers section `real-estate`; not yet reviewed by a 
 Hand-picked from awesome-mcp-servers; that section is otherwise software/UI design.
 
 - **Kentucky-ai__opentakeoff** [Apache-2.0, vendored]: Construction quantity takeoff MCP. `vendor/harvested-architecture-and-design/Kentucky-ai__opentakeoff`
+
+## grasshopper-datatree (1 vendored, 2 link-only)
+Grasshopper data-tree code and references: tree conversion helpers, GhPython, McNeel docs.
+
+- **ladybug-tools__ladybug-rhino** [AGPL, vendored, copyleft]: Rhino/Grasshopper helpers incl. list_to_data_tree / data_tree_to_list (ladybug_rhino/grasshopper.py). `vendor/grasshopper-datatree/ladybug-tools__ladybug-rhino`
+- **mcneel__developer-rhino3d-com** [NONE, LINK-ONLY]: McNeel developer docs incl. 'The Why and How of Data Trees' and 'Grasshopper data trees and Python'. https://github.com/mcneel/developer-rhino3d-com.git
+- **mcneel__ghpython** [NONE, LINK-ONLY]: GhPython component; home of ghpythonlib treehelpers (Piacentino). https://github.com/mcneel/ghpython.git
