@@ -1,0 +1,82 @@
+---
+title: useBoolean 用法与示例
+sidebar_label: useBoolean
+description: "useBoolean 是一个 React hook，用于管理布尔状态，并提供便捷的 setTrue、setFalse 和 toggle 辅助方法，无需再编写内联箭头函数。"
+---
+# useBoolean
+
+管理布尔值的 React hook。
+
+`useBoolean` 封装了一个布尔状态，返回一个包含当前 `value` 和便捷方法的对象：`setValue`、`setTrue`、`setFalse` 和 `toggle`。这避免了在组件中到处编写 `() => setState(true)` 这样的内联箭头函数。该 hook 接受一个可选的初始值，默认为 `false`。
+
+### 使用场景
+
+- 使用明确的 `setTrue`/`setFalse` 语义控制模态框、抽屉、工具提示或其他展示 UI 的可见性
+- 管理功能标志或开关状态，命名的辅助方法比原始 `useState` 更具可读性
+- 任何你想要比普通 `[boolean, setter]` 元组更丰富 API 的场景
+
+### 注意事项
+
+- **SSR 安全**：内部仅使用 React 状态，因此在服务端和客户端的行为完全相同。
+- **对象返回**：与返回元组的 `useToggle` 不同，`useBoolean` 返回命名对象，更容易只解构你需要的方法。
+- 参见 `useToggle` 了解最小化的基于元组的布尔 hook，以及 `useDisclosure` 了解面向模态框的带回调支持的打开/关闭模式。
+
+## Usage
+
+```tsx live
+function Demo() {
+  const { value, setValue, setTrue, setFalse, toggle } = useBoolean(false);
+
+  return (
+    <div>
+      <p>当前值: <strong>{value ? '真' : '假'}</strong></p>
+      <div style={{ marginBottom: 16 }}>
+        <button
+          type="button"
+          onClick={() => setValue(true)}
+          style={{ marginRight: 8 }}
+          disabled={value}
+        >
+          设置为真
+        </button>
+        <button
+          type="button"
+          onClick={() => setValue(false)}
+          style={{ marginRight: 8 }}
+          disabled={!value}
+        >
+          设置为假
+        </button>
+        <button
+          type="button"
+          onClick={setTrue}
+          style={{ marginRight: 8 }}
+          disabled={value}
+        >
+          setTrue()
+        </button>
+        <button
+          type="button"
+          onClick={setFalse}
+          style={{ marginRight: 8 }}
+          disabled={!value}
+        >
+          setFalse()
+        </button>
+        <button
+          type="button"
+          onClick={toggle}
+          style={{ marginRight: 8 }}
+        >
+          切换
+        </button>
+      </div>
+      <div>
+        <p>状态: {value ? '✅ 启用' : '❌ 禁用'}</p>
+      </div>
+    </div>
+  );
+};
+```
+
+%%API%%

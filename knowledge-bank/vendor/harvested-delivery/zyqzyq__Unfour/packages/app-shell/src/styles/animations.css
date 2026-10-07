@@ -1,0 +1,34 @@
+@theme {
+  --animate-indeterminate: indeterminate 1.1s ease-in-out infinite;
+  --animate-fade-in: fade-in 150ms ease-out;
+}
+
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialog-overlay-show { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-overlay-hide { from { opacity: 1; } to { opacity: 0; } }
+@keyframes dialog-content-show { from { opacity: 0; scale: 0.96; } to { opacity: 1; scale: 1; } }
+@keyframes dialog-content-hide { from { opacity: 1; scale: 1; } to { opacity: 0; scale: 0.96; } }
+
+.u-dialog-overlay[data-state="open"] { animation: dialog-overlay-show 150ms ease-out; }
+.u-dialog-overlay[data-state="closed"] { animation: dialog-overlay-hide 150ms ease-in; }
+.u-dialog-content[data-state="open"] { transform-origin: center; animation: dialog-content-show 200ms ease-out; }
+.u-dialog-content[data-state="closed"] { transform-origin: center; animation: dialog-content-hide 150ms ease-in; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,242 @@
+---
+title: useColorMode 用法與示例
+sidebar_label: useColorMode
+description: "useColorMode 是一個用於響應式切換顏色模式（主題）的 React hook，支援自動 localStorage 持久化、CSS class 控制，並提供循環切換的輔助函式。"
+---
+
+# useColorMode
+
+響應式顏色模式（主題）管理，具有自動數據持久化和靈活配置功能。
+
+`useColorMode` 透過將 CSS 類別名稱或 HTML 屬性套用到目標元素（預設為 `<html>`）並將選擇持久化到 `localStorage` 來管理多主題顏色模式。它回傳一個包含當前模式字串、設定函式和在可用模式之間循環的 `cycle` 函式的元組。你可以設定可用模式、自訂類別名稱對應、儲存鍵、儲存後端和使用的 DOM 屬性。
+
+### 使用場景
+
+- 建構超越單純明暗切換的多主題應用程式（例如藍色、綠色、復古色）
+- 建立具有循環切換功能的主題選擇器
+- 透過自動 localStorage 同步，跨工作階段持久化使用者的顏色模式選擇
+
+### 注意事項
+
+- **SSR 安全**：在伺服器端渲染時回傳 `defaultValue`（或 `null`）。伺服器上不會存取 DOM 或 localStorage。請參閱下方的 Tips 章節以防止未樣式化內容的閃爍。
+- **持久化**：預設持久化到 `localStorage`，鍵名為 `"reactuses-color-mode"`。你可以自訂儲存鍵和後端（例如 `sessionStorage`）。
+- **相關 hooks**：如需簡單的明暗切換，請參閱 `useDarkMode`。如需偵測系統偏好設定，請參閱 `usePreferredColorScheme`。
+
+## 💡 v6.1.0 新功能
+
+**useColorMode 是 useDarkMode 更靈活的升級版。** 主要区别：
+
+- **useColorMode**: 支持多种主题（浅色、深色、蓝色、绿色等）
+- **useDarkMode**: 仅限于明暗模式，但保持布尔 API 以确保兼容性
+
+两个 hook 现在内部都使用字符串存储。对于需要多种主题的新项目，建议选择 `useColorMode`。
+
+## Tips
+
+<details>
+<summary>点击展开</summary>
+对于服务端渲染的应用程序而言，由于无法在服务端獲取到用户的颜色偏好。所以第一次渲染的时候可能会出现闪烁。想要避免此问题，你可以参考一下步骤。
+
+1. 在你的內容渲染前增加一个脚本。
+
+```tsx
+<script
+  dangerouslySetInnerHTML={{
+    // 增加一个自执行的函數
+    __html: `
+          (function () {
+            function setMode(mode) {
+              if (mode) {
+                document.documentElement.classList.add(mode);
+              }
+            }
+            let store = localStorage.getItem('reactuses-color-mode');
+            let mode;
+            if(store === null){
+              // 你可以根据需要自定义这个逻辑
+              const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+              mode = darkQuery.matches ? 'dark' : 'light';
+            }else {
+              // 直接使用存储的字符串值
+              mode = store || 'light';
+            }
+            setMode(mode)
+          })();
+      `,
+  }}
+></script>
+```
+
+2. 为了方便统一管理颜色模式，我们推荐使用 `context` 来存储它们。
+
+```tsx
+import { useColorMode } from "@reactuses/core";
+import React, { createContext, useContext } from "react";
+
+type ThemeContext = { 
+  theme: string | null; 
+  setTheme: (theme: string) => void;
+  cycleTheme: () => void;
+};
+
+const ThemeContext = createContext<ThemeContext | undefined>(undefined);
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme, cycleTheme] = useColorMode({
+    modes: ['light', 'dark', 'auto'],
+    defaultValue: 'auto',
+    storageKey: 'my-app-theme',
+  });
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, cycleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
+}
+```
+
+</details>
+
+## Usage
+
+### 基本用法
+
+```tsx live
+function Demo() {
+  const [colorMode, setColorMode, cycle] = useColorMode({
+    modes: ['light', 'dark'],
+    defaultValue: 'light',
+  });
+
+  return (
+    <div>
+      <div>当前模式: {colorMode}</div>
+      <br />
+      <div>
+        <button onClick={() => setColorMode('light')}>浅色</button>
+        <button onClick={() => setColorMode('dark')}>深色</button>
+        <button onClick={cycle}>循环切换</button>
+      </div>
+    </div>
+  );
+};
+```
+
+### 多彩主题模式
+
+```tsx live
+function Demo() {
+  const [colorMode, setColorMode, cycle] = useColorMode({
+    modes: ['light', 'dark', 'blue', 'green', 'purple', 'sepia'],
+    defaultValue: 'light',
+    modeClassNames: {
+      light: 'theme-light',
+      dark: 'theme-dark', 
+      blue: 'theme-blue',
+      green: 'theme-green',
+      purple: 'theme-purple',
+      sepia: 'theme-sepia'
+    }
+  });
+
+  const themeColors = {
+    light: '#f8f9fa',
+    dark: '#343a40',
+    blue: '#0d6efd',
+    green: '#198754',
+    purple: '#6f42c1',
+    sepia: '#8b4513'
+  };
+
+  const themeLabels = {
+    light: '浅色',
+    dark: '深色',
+    blue: '蓝色',
+    green: '绿色',
+    purple: '紫色',
+    sepia: '护眼'
+  };
+
+  return (
+    <div style={{ 
+      padding: '20px', 
+      backgroundColor: themeColors[colorMode] || '#f8f9fa',
+      color: ['dark', 'blue', 'green', 'purple', 'sepia'].includes(colorMode) ? 'white' : 'black',
+      borderRadius: '8px',
+      transition: 'all 0.3s ease'
+    }}>
+      <div>当前主题: <strong>{themeLabels[colorMode]}</strong></div>
+      <br />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        {Object.entries(themeLabels).map(([key, label]) => (
+          <button 
+            key={key}
+            onClick={() => setColorMode(key)}
+            style={{ 
+              padding: '8px 16px',
+              border: colorMode === key ? '2px solid #007bff' : '1px solid #ccc',
+              borderRadius: '4px',
+              backgroundColor: colorMode === key ? '#007bff' : 'white',
+              color: colorMode === key ? 'white' : 'black',
+              cursor: 'pointer'
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <br />
+      <button 
+        onClick={cycle}
+        style={{
+          padding: '10px 20px',
+          backgroundColor: '#28a745',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer'
+        }}
+      >
+        🔄 循环切换主题
+      </button>
+    </div>
+  );
+};
+```
+
+### 使用数据屬性
+
+```tsx live
+function Demo() {
+  const [colorMode, setColorMode, cycle] = useColorMode({
+    modes: ['light', 'dark'],
+    defaultValue: 'light',
+    attribute: 'data-theme',
+    selector: 'body'
+  });
+
+  return (
+    <div>
+      <div>当前模式: {colorMode}</div>
+      <div>查看 body 元素的 data-theme 屬性！</div>
+      <br />
+      <div>
+        <button onClick={() => setColorMode('light')}>浅色</button>
+        <button onClick={() => setColorMode('dark')}>深色</button>
+        <button onClick={cycle}>循环切换</button>
+      </div>
+    </div>
+  );
+};
+```
+
+%%API%%

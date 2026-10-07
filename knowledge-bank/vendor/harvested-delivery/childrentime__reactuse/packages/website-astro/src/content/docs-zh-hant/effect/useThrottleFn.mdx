@@ -1,0 +1,47 @@
+---
+title: useThrottleFn 用法與示例
+sidebar_label: useThrottleFn
+description: "useThrottleFn 是一個 React hook，為函式包裝節流行為，在每個間隔內最多執行一次，並附帶 run、cancel 與 flush 控制項。"
+---
+# useThrottleFn
+
+React hooks that [throttle](https://lodash.com/docs/4.17.15#throttle) function
+
+
+`useThrottleFn` 建立一個節流版本的函式，確保在指定的時間間隔內最多只執行一次。與防抖不同，節流會在間隔開始時執行函式，並在時間視窗內忽略後續呼叫。
+
+### 使用場景
+
+- 在捲動或調整大小事件處理中限制回呼的執行頻率
+- 限制 API 請求的發送頻率（例如搜尋建議）
+- 以固定的最大頻率更新 UI 元素
+
+### 注意事項
+
+- **前緣和後緣**：可設定是否在間隔的前緣（立即執行）和/或後緣（延遲執行）觸發。
+- **取消**：回傳的物件包含 `cancel` 方法以取消待處理的呼叫。
+- **相關 hooks**：另請參閱 `useThrottle` 用於值的節流，以及 `useDebounceFn` 用於防抖函式。
+
+## Usage
+
+```tsx live
+
+function Demo() {
+  const [value, setValue] = useState(0);
+  const { run } = useThrottleFn(() => {
+    setValue(value + 1);
+  }, 500);
+
+  return (
+    <div>
+      <p style={{ marginTop: 16 }}> 點擊次數：{value} </p>
+      <button type="button" onClick={run}>
+        快速點擊！
+      </button>
+    </div>
+  );
+};
+
+```
+
+%%API%%

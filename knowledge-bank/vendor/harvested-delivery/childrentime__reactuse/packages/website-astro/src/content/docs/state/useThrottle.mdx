@@ -1,0 +1,48 @@
+---
+title: useThrottle – State Hook Usage & Examples
+sidebar_label: useThrottle
+description: "useThrottle is a React hook that returns a throttled copy of a value — updates at most once per interval for a steady stream of changes."
+---
+# useThrottle
+
+React hooks that [throttle](https://lodash.com/docs/4.17.15#throttle) value
+
+`useThrottle` accepts a value and a wait time in milliseconds, and returns a throttled version of that value. Unlike debouncing (which waits for idle), throttling ensures the value updates at most once per interval, providing a steady stream of updates. Under the hood it uses `lodash.throttle`, so you can pass the same options (`leading`, `trailing`) for fine-grained control.
+
+### When to Use
+
+- Rate-limiting UI updates driven by high-frequency events (e.g., scroll position, resize dimensions)
+- Ensuring a value is emitted at regular intervals rather than waiting for a pause in changes
+- Providing steady visual feedback (e.g., progress indicators) from rapidly changing source values
+
+### Notes
+
+- **Value-level throttle**: This hook throttles the *value* itself, not a callback. If you need to throttle a function invocation, use `useDebounceFn` with a `maxWait` option or a dedicated throttle utility.
+- **Options passthrough**: The third argument is forwarded directly to `lodash.throttle`, supporting `leading` and `trailing` edge configuration.
+- See also `useDebounce` for delaying updates until the value stops changing, which is better suited for search inputs and validation.
+
+## Usage
+
+```tsx live noInline
+function Demo() {
+  const [value, setValue] = useState<string>();
+  const throttledValue = useThrottle(value, 500);
+
+  return (
+    <div>
+      <input
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        placeholder="Typed value"
+        style={{ width: 280 }}
+      />
+      <p style={{ marginTop: 16 }}>throttledValue: {throttledValue}</p>
+    </div>
+  );
+};
+
+render(<Demo/>);
+
+```
+
+%%API%%

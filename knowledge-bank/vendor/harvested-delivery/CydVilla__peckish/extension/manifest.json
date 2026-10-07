@@ -1,0 +1,195 @@
+{
+  "manifest_version": "0.3",
+  "name": "peckish",
+  "display_name": "Peckish — DoorDash ordering",
+  "version": "0.5.0",
+  "description": "Order food on DoorDash from Claude — you approve every order.",
+  "long_description": "Peckish gives Claude real DoorDash ordering: it searches stores, compares true fee-included totals from live quotes, builds carts, scans promos, and handles groceries, pickup, scheduled delivery, reorders and spend questions.\n\nPlacing an order always requires an approval dialog you answer yourself — Claude must first show the itemized quote, confirm the Dasher tip, and name the card being charged. Submission never auto-retries, and every tool call and confirmation is logged to ~/.peckish/logs/.\n\nRequires DoorDash's dd-cli (waitlist-gated) on a Mac with Apple Silicon or Linux x86_64, signed in via `dd-cli login`. No Anthropic API key needed — your Claude subscription powers the model.",
+  "author": {
+    "name": "Cyd Villavicencio",
+    "url": "https://github.com/CydVilla"
+  },
+  "homepage": "https://github.com/CydVilla/peckish",
+  "documentation": "https://github.com/CydVilla/peckish#readme",
+  "support": "https://github.com/CydVilla/peckish/issues",
+  "icon": "icon.png",
+  "license": "MIT",
+  "keywords": [
+    "doordash",
+    "food",
+    "delivery",
+    "ordering",
+    "groceries",
+    "agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CydVilla/peckish"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "DD_CLI_PATH": "${user_config.dd_cli_path}"
+      }
+    }
+  },
+  "user_config": {
+    "dd_cli_path": {
+      "type": "file",
+      "title": "dd-cli location (optional)",
+      "description": "Leave blank if dd-cli is at ~/.local/bin/dd-cli. Set it if you installed the DoorDash CLI somewhere else — desktop apps don't inherit your shell PATH.",
+      "required": false
+    }
+  },
+  "tools_generated": false,
+  "tools": [
+    {
+      "name": "get_session_context",
+      "description": "Load the user's ordering context: default delivery address, saved dietary/budget preferences, and current local time."
+    },
+    {
+      "name": "list_addresses",
+      "description": "List the user's saved DoorDash delivery addresses (label, printable address, default flag)."
+    },
+    {
+      "name": "set_default_address",
+      "description": "Change the ACCOUNT-WIDE default delivery address (persists across app/web)."
+    },
+    {
+      "name": "find_address",
+      "description": "Look up a street address the user typed and get back candidate addresses with place_ids."
+    },
+    {
+      "name": "add_address",
+      "description": "Save a candidate from find_address to the user's DoorDash account AND make it the ACCOUNT-WIDE default deli…"
+    },
+    {
+      "name": "search_restaurants",
+      "description": "Search nearby restaurants by free-text query."
+    },
+    {
+      "name": "get_menu",
+      "description": "Fetch a restaurant's menu: returns menu_id (needed for cart adds and item details), store_is_open, the stor…"
+    },
+    {
+      "name": "get_restaurant_item_details",
+      "description": "Full details for one restaurant menu item: price, description, any promotion it qualifies for, and extras[]…"
+    },
+    {
+      "name": "get_store_details",
+      "description": "Store business metadata incl."
+    },
+    {
+      "name": "list_carts",
+      "description": "List the user's open (unsubmitted) carts: cart_uuid, store, items, timestamps (epoch ms)."
+    },
+    {
+      "name": "add_items_to_cart",
+      "description": "Add items to a cart (creates one if no cart_uuid passed and none open at the store)."
+    },
+    {
+      "name": "list_cart_guests",
+      "description": "Names of the guests Peckish is tracking on a group cart — people with no DoorDash account whose items the h…"
+    },
+    {
+      "name": "show_cart",
+      "description": "Show cart contents (no pricing — use preview_order for that)."
+    },
+    {
+      "name": "remove_cart_item",
+      "description": "Remove one line item from a cart."
+    },
+    {
+      "name": "delete_cart",
+      "description": "Empty a cart and abandon it (cart_uuid becomes invalid)."
+    },
+    {
+      "name": "preview_order",
+      "description": "Authoritative pricing + logistics for a cart (read-only, no charge): display_summary (show VERBATIM to the…"
+    },
+    {
+      "name": "submit_order",
+      "description": "Place the order — charges the user's real payment method."
+    },
+    {
+      "name": "get_checkout_url",
+      "description": "Browser checkout URL for a cart — FALLBACK ONLY, for edits the CLI can't make: swap payment method, opt out…"
+    },
+    {
+      "name": "get_order_history",
+      "description": "Past orders (default 50 orders / 90 days, max 100 / 365): store, items, total, order_uuid, is_reorderable,…"
+    },
+    {
+      "name": "reorder",
+      "description": "Create a NEW cart from a past order."
+    },
+    {
+      "name": "get_order_status",
+      "description": "Track a submitted order through its whole lifecycle: successful | pending (check again) | action_required (…"
+    },
+    {
+      "name": "get_receipt",
+      "description": "Itemized receipt for one past order (subtotal, fees, tax, tip, total, card last4)."
+    },
+    {
+      "name": "list_payment_methods",
+      "description": "Saved cards + which is default."
+    },
+    {
+      "name": "list_promos",
+      "description": "Campaign promos eligible at a store for this user (may be empty — that's normal)."
+    },
+    {
+      "name": "apply_promo",
+      "description": "Apply a promo to a cart."
+    },
+    {
+      "name": "remove_promo",
+      "description": "Remove an applied promo (pass the same ids used at apply)."
+    },
+    {
+      "name": "find_stores",
+      "description": "Discover NON-restaurant stores near the default address (16-mile radius): grocery (default), alcohol, conve…"
+    },
+    {
+      "name": "find_items",
+      "description": "Search items inside ONE retail/grocery store by name — returns item_ids for cart adds, keyed per query."
+    },
+    {
+      "name": "get_grocery_item_details",
+      "description": "Details for a retail/grocery item (pricing, options) + menu_id fallback source for grocery cart adds."
+    },
+    {
+      "name": "build_grocery_list",
+      "description": "Resolve a grocery/pantry list to real products at one store (raw ingredients only — NOT restaurant food)."
+    },
+    {
+      "name": "start_signin",
+      "description": "Fix a broken DoorDash sign-in WITHOUT sending the user to a terminal."
+    },
+    {
+      "name": "save_preference",
+      "description": "Persist a durable user preference across sessions (dietary rule, allergy, budget habit, tip default)."
+    },
+    {
+      "name": "remove_preference",
+      "description": "Delete one saved user preference when the user retracts or reverses it ('actually, mushrooms are fine now',…"
+    }
+  ],
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": [
+      "darwin",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "mcp-yandex-dostavka",
+  "version": "1.1.0",
+  "description": "MCP server for the Yandex Delivery B2B API (dostavka.yandex.ru) — express-courier price checks, claims and tracking plus NDD/pickup-point offers and orders for AI agents.",
+  "mcpName": "io.github.A1-x-Tech/mcp-yandex-dostavka",
+  "type": "module",
+  "bin": {
+    "mcp-yandex-dostavka": "dist/index.js"
+  },
+  "files": [
+    "assets/a1-logo-warm.svg",
+    "dist",
+    "test"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc -p tsconfig.check.json",
+    "smoke": "node --import tsx src/smoke.ts",
+    "test": "npm run test:src && npm run test:dist",
+    "test:src": "node --import tsx --test $(find src -name '*.test.ts')",
+    "test:dist": "npm run build && node --test test/dist-smoke.test.js",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run typecheck && npm test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "yandex",
+    "yandex-dostavka",
+    "yandex-delivery",
+    "delivery",
+    "logistics",
+    "courier",
+    "express-delivery",
+    "pickup-points"
+  ],
+  "license": "MIT",
+  "author": "Aleksandr Kovalko",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/A1-x-Tech/mcp-yandex-dostavka.git"
+  },
+  "homepage": "https://github.com/A1-x-Tech/mcp-yandex-dostavka#readme",
+  "bugs": {
+    "url": "https://github.com/A1-x-Tech/mcp-yandex-dostavka/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "tsx": "^4.22.4",
+    "typescript": "^5.7.0"
+  }
+}

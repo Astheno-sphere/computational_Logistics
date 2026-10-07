@@ -1,0 +1,21 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: glama.json and server.json parse
+        run: python3 -c "import json; json.load(open('glama.json')); json.load(open('server.json'))"
+      - name: glama.json lists a maintainer
+        run: python3 -c "import json,sys; m=json.load(open('glama.json')).get('maintainers'); sys.exit(0 if isinstance(m,list) and m else 'glama.json must list at least one maintainer')"
+      - name: server.json version matches the CLI pinned in the Dockerfile
+        run: python3 -c "import json,re,sys; v=json.load(open('server.json'))['version']; m=re.search(r'ARG PROXYKIT_VERSION=(\S+)', open('Dockerfile').read()); sys.exit('no ARG PROXYKIT_VERSION in Dockerfile') if not m else sys.exit(0 if m.group(1)==v else f'server.json {v} != Dockerfile {m.group(1)}')"
+      - name: image builds and the server answers initialize
+        run: |
+          docker build -t proxykit-mcp:ci .
+          echo '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' | docker run -i --rm -e PROXYKIT_CONTROL_AUTH_TOKEN=dummy proxykit-mcp:ci | grep -q serverInfo

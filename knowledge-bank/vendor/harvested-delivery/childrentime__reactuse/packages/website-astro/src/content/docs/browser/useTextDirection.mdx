@@ -1,0 +1,61 @@
+---
+title: useTextDirection – Browser Hook Usage & Examples
+sidebar_label: useTextDirection
+description: "useTextDirection is a React hook that reads and updates the dir attribute on an element — control ltr and rtl text direction for right-to-left layouts."
+---
+# useTextDirection
+
+change [dir](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir) of the element's text
+
+`useTextDirection` reads and updates the [`dir`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir) attribute on a target element (default: `<html>`), controlling the text direction. It returns a tuple of the current direction value (`"ltr"`, `"rtl"`, or `"auto"`) and a setter function. This is essential for building internationalized applications that support right-to-left languages like Arabic, Hebrew, and Persian.
+
+### When to Use
+
+- Supporting bidirectional (BiDi) content in multilingual applications
+- Building language switchers that toggle between LTR and RTL layouts
+- Dynamically adjusting text direction based on user input or content language
+
+### Notes
+
+- **The element wins**: `initialValue` is a fallback, not an override. If the target element already carries a `dir` attribute, the hook reports that value — on the very first render, not after an effect — so an RTL document never flashes `ltr`. `initialValue` is used only when the element has no `dir`.
+- **SSR-safe**: No `document` access occurs on the server; server rendering returns `initialValue` (default: `"ltr"`) and a no-op setter. Because the client reads the element on its first render, pass an `initialValue` matching the direction of your server-rendered markup, or the two will disagree and React will report a hydration mismatch.
+- **Target selector**: By default, the hook sets `dir` on the `<html>` element. Use the `selector` option to target a specific element for scoped direction changes.
+- **Related hooks**: See also `usePreferredLanguages` for detecting the user's language preferences, which can inform the text direction choice.
+
+## Usage
+
+```tsx live noInline
+function Demo() {
+  const [dir, setDir] = useTextDirection({
+    selector: "#_useTextDirectionDemo",
+  });
+
+  const text = useMemo(
+    () =>
+      dir === "ltr"
+        ? "This paragraph is in English and correctly goes left to right."
+        : "This paragraph is in English but incorrectly goes right to left.",
+    [dir],
+  );
+
+  const handleOnClick = () => {
+    const value = dir === "rtl" ? "ltr" : "rtl";
+    setDir(value);
+  };
+
+  return (
+    <div id="_useTextDirectionDemo">
+      <p>{text}</p>
+      <button onClick={handleOnClick}>
+        <span>{dir.toUpperCase()}</span>
+      </button>
+      <span>Click to change the direction</span>
+    </div>
+  );
+};
+
+render(<Demo/>);
+
+```
+
+%%API%%

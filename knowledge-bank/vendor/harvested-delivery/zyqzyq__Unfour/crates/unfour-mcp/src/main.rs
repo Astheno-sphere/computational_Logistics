@@ -1,0 +1,195 @@
+use std::io::{self, BufReader};
+use std::sync::{mpsc, Arc};
+use std::time::Duration;
+
+use unfour_mcp::{LocalCommandBusAdapter, Shutdown, StorageMode};
+
+const DEFAULT_IDLE_TIMEOUT_SECS: u64 = 0;
+const MAX_IDLE_TIMEOUT_SECS: u64 = 86_400;
+const IDLE_TIMEOUT_ENV: &str = "UNFOUR_MCP_IDLE_TIMEOUT_SECS";
+
+fn main() {
+    let storage_mode = StorageMode::from_env();
+    let _logging_guard = initialize_logging(storage_mode);
+
+    // Unified shutdown signal shared between the stdio loop and the signal
+    // handlers. The first trigger wins; every observer sees the same value.
+    let shutdown = Shutdown::new();
+
+    let stdin = io::stdin();
+    let stdout = io::stdout();
+
+    let adapter = match LocalCommandBusAdapter::from_storage_mode(storage_mode) {
+        Ok(adapter) => adapter,
+        Err(error) => {
+            eprintln!(
+                "unfour-mcp failed to initialize command bus: {}: {}",
+                error.code, error.message
+            );
+            std::process::exit(1);
+        }
+    };
+
+    // Install Ctrl+C / SIGTERM handlers. The stdio read is a blocking syscall
+    // that cannot be interrupted from another thread, so on a signal we release
+    // background tasks (bounded) and then hard-exit the whole process.
+    install_signal_handlers(shutdown.clone(), adapter.clone());
+
+    let result = unfour_mcp::run_stdio_with_adapter_and_idle_timeout(
+        adapter.clone(),
+        BufReader::new(stdin),
+        stdout.lock(),
+        idle_timeout_from_env(),
+    );
+
+    // Normal exit path: EOF on stdin or a clean client disconnect. `run_stdio_with_adapter`
+    // already shut the runtime down; mark the signal for completeness.
+    shutdown.trigger();
+
+    match result {
+        Ok(()) => {}
+        Err(error) => {
+            // A broken stdout pipe (client already gone) is an expected shutdown,
+            // not a failure. The loop already returns `Ok` for it; guard here too.
+            if error.kind() == io::ErrorKind::BrokenPipe {
+                return;
+            }
+            eprintln!("unfour-mcp stdio server failed: {error}");
+            std::process::exit(1);
+        }
+    }
+}
+
+/// Return the maximum period with no MCP protocol messages before the sidecar
+/// exits. `0` disables the idle backstop; invalid values use the packaged
+/// default. The cap avoids accidentally turning a typo into a practically
+/// unbounded process lifetime.
+fn idle_timeout_from_env() -> Option<Duration> {
+    parse_idle_timeout(std::env::var(IDLE_TIMEOUT_ENV).ok().as_deref())
+}
+
+fn parse_idle_timeout(value: Option<&str>) -> Option<Duration> {
+    let seconds = value
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .unwrap_or(DEFAULT_IDLE_TIMEOUT_SECS);
+
+    if seconds == 0 {
+        None
+    } else {
+        Some(Duration::from_secs(seconds.min(MAX_IDLE_TIMEOUT_SECS)))
+    }
+}
+
+/// Spawn a tiny dedicated tokio runtime on a thread that only waits for the
+/// termination signals, so the blocking stdio loop on the main thread is never
+/// disturbed. The async block only waits for a signal; runtime shutdown happens
+/// after `block_on` returns so dropping the command-bus runtime never occurs
+/// inside a Tokio async context.
+fn install_signal_handlers(shutdown: Shutdown, adapter: Arc<LocalCommandBusAdapter>) {
+    let (ready_sender, ready_receiver) = mpsc::channel();
+
+    #[cfg(unix)]
+    {
+        std::thread::spawn(move || {
+            let runtime = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("unfour-mcp signal runtime");
+            runtime.block_on(async {
+                let mut sigint =
+                    tokio::signal::unix::signal(tokio::signal::unix::SignalKind::interrupt())
+                        .expect("install SIGINT handler");
+                let mut sigterm =
+                    tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                        .expect("install SIGTERM handler");
+                // `signal` registers the OS handlers synchronously. Do not let
+                // the main thread enter the blocking stdio loop until both
+                // handlers are active, otherwise a fast test/client can send
+                // a signal while the process still has the default action.
+                ready_sender
+                    .send(())
+                    .expect("MCP main thread dropped signal readiness receiver");
+                tokio::select! {
+                    _ = sigint.recv() => {}
+                    _ = sigterm.recv() => {}
+                }
+            });
+            shutdown.trigger();
+            adapter.shutdown();
+            std::process::exit(0);
+        });
+    }
+    #[cfg(windows)]
+    {
+        std::thread::spawn(move || {
+            let runtime = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("unfour-mcp signal runtime");
+            runtime.block_on(async {
+                let mut ctrl_c = tokio::signal::windows::ctrl_c().expect("install Ctrl+C handler");
+                // The Windows-specific constructor installs the console
+                // handler before returning, so this is the equivalent ready
+                // point for the Windows implementation.
+                ready_sender
+                    .send(())
+                    .expect("MCP main thread dropped signal readiness receiver");
+                ctrl_c.recv().await;
+            });
+            shutdown.trigger();
+            adapter.shutdown();
+            std::process::exit(0);
+        });
+    }
+
+    ready_receiver
+        .recv()
+        .expect("unfour-mcp signal handler thread exited before initialization");
+}
+
+fn initialize_logging(storage_mode: StorageMode) -> Option<unfour_diag::LoggingGuard> {
+    if storage_mode == StorageMode::Ephemeral {
+        return None;
+    }
+
+    let paths = unfour_paths::initialize_unfour_storage().ok()?;
+    let mut config = unfour_diag::LoggingConfig::unified_dev(paths.logs_dir);
+    config.app_name = "unfour-mcp".to_string();
+    config.version = env!("CARGO_PKG_VERSION").to_string();
+    unfour_diag::init_logging(config).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn storage_mode_requires_the_exact_ephemeral_value() {
+        assert_eq!(
+            StorageMode::from_env_value(Some("ephemeral")),
+            StorageMode::Ephemeral
+        );
+        for value in [None, Some(""), Some("unknown"), Some(" Ephemeral ")] {
+            assert_eq!(StorageMode::from_env_value(value), StorageMode::Default);
+        }
+    }
+
+    #[test]
+    fn idle_timeout_is_disabled_by_default_and_for_invalid_values() {
+        assert_eq!(parse_idle_timeout(None), None);
+        assert_eq!(parse_idle_timeout(Some("invalid")), None);
+    }
+
+    #[test]
+    fn idle_timeout_zero_disables_backstop() {
+        assert_eq!(parse_idle_timeout(Some("0")), None);
+    }
+
+    #[test]
+    fn idle_timeout_is_capped() {
+        assert_eq!(
+            parse_idle_timeout(Some("999999")),
+            Some(Duration::from_secs(MAX_IDLE_TIMEOUT_SECS))
+        );
+    }
+}

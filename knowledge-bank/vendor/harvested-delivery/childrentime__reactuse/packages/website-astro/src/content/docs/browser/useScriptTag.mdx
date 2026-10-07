@@ -1,0 +1,48 @@
+---
+title: useScriptTag – Browser Hook Usage & Examples
+sidebar_label: useScriptTag
+description: "useScriptTag is a React hook that dynamically injects a script tag and manages its lifecycle — returns load status plus load and unload controls."
+---
+# useScriptTag
+
+Script tag injecting
+
+`useScriptTag` dynamically injects a `<script>` tag into the document and manages its lifecycle. It returns a tuple of the script element, a loading status (`"idle"`, `"loading"`, `"ready"`, or `"error"`), a `load` function, and an `unload` function. The hook supports options for `async`, `defer`, `type`, `crossOrigin`, `referrerPolicy`, custom attributes, and manual load/unload control.
+
+### When to Use
+
+- Loading third-party libraries (analytics, widgets, maps) on demand rather than at build time
+- Deferring heavy scripts until a component mounts or a user interaction occurs
+- Dynamically loading different script versions or configurations based on runtime conditions
+
+### Notes
+
+- **SSR-safe**: The hook is a no-op during server-side rendering. No `<script>` elements are created on the server. The status will be `"idle"` until the component mounts in the browser.
+- **Lifecycle management**: The script is automatically removed from the DOM when the component unmounts (unless `manual` is set to `true`). Use `load` and `unload` for fine-grained control.
+- **Deduplication**: If a script with the same `src` already exists in the document, the hook will reuse it rather than creating a duplicate.
+
+## Usage
+
+```tsx live
+// it's an example, use your types instead
+
+// Add this if you are using TypeScript
+// declare const jQuery: any;
+function Demo() {
+  const [, status] = useScriptTag(
+    "https://code.jquery.com/jquery-3.5.1.min.js",
+  );
+
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    if (typeof jQuery !== "undefined") {
+      setVersion(jQuery.fn.jquery);
+    }
+  }, [status]);
+
+  return <div>jQuery version: {version}</div>;
+};
+
+```
+
+%%API%%

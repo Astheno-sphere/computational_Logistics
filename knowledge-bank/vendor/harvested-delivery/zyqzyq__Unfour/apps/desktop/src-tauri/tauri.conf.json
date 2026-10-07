@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Unfour",
+  "version": "0.10.0",
+  "identifier": "dev.unfour",
+  "build": {
+    "beforeDevCommand": "node ../../scripts/prepare-tauri-sidecars.mjs --debug && pnpm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm run build && node ../../scripts/prepare-tauri-sidecars.mjs",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Unfour",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 1040,
+        "minHeight": 680,
+        "decorations": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "nsis", "dmg", "deb", "appimage", "rpm"],
+    "externalBin": [
+      "binaries/unfour-mcp"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerHooks": "./windows/hooks.nsh"
+      }
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["unfour"]
+      }
+    },
+    "updater": {
+      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlCNDEwN0VFRTA2MTcwRjYKUldUMmNHSGc3Z2RCbTJyd01oVmZZZ3ZVSWl1Ym41elZNKzc2cFloUHYvVmY2aXE3NGVoNGJDVlQK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

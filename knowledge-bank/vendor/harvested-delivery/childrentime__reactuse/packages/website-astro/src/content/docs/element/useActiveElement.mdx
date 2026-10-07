@@ -1,0 +1,63 @@
+---
+title: useActiveElement – Element Hook Usage & Examples
+sidebar_label: useActiveElement
+description: "useActiveElement is a React hook that reactively tracks document.activeElement — returns the focused DOM element, or null, updating on focus and blur."
+---
+# useActiveElement
+
+React Sensor Hooks that tracks document.activeElement
+
+`useActiveElement` reactively tracks which DOM element currently has focus via [`document.activeElement`](https://developer.mozilla.org/en-US/docs/Web/API/Document/activeElement). It returns the focused element (typed with a generic parameter) or `null` when no element is focused. The hook automatically listens for `focus` and `blur` events on the document to keep the value up to date.
+
+### When to Use
+
+- Highlighting or styling the currently focused input in a form
+- Building accessibility tools or focus-trap components that need to know which element has focus
+- Debugging focus flow in complex UIs with many interactive elements
+
+### Notes
+
+- **SSR-safe**: Returns `null` during server-side rendering since `document` is not available.
+- **Generic type**: You can narrow the return type with a type parameter, e.g. `useActiveElement<HTMLInputElement>()`, to get typed access to element properties like `dataset`.
+- See also `useFocus` for controlling and tracking focus state on a specific element.
+
+## Usage
+
+```tsx live noInline
+function Demo() {
+  const arr = [1, 2, 3, 4, 5, 6];
+
+  const activeElement = useActiveElement<HTMLElement>();
+
+  const key = useMemo(() => {
+    return activeElement?.dataset?.id;
+  }, [activeElement?.dataset?.id]);
+
+  return (
+    <div>
+      <p>Select the inputs below to see the changes </p>
+      <div style={{ display: "flex", gap: 15, flexWrap: "wrap" }}>
+        {arr.map((i) => {
+          return <input key={i} placeholder={`${i}`} data-id={i} />;
+        })}
+      </div>
+      <br />
+      <div>
+        Current Active Element:
+        <span> {activeElement?.tagName}</span>
+      </div>
+       <div>
+        Current Active Element data-key:
+        <span>{key}</span>
+      </div>
+    </div>
+  );
+};
+
+render(<Demo/>);
+
+```
+
+
+
+%%API%%

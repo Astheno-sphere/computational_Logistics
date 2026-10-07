@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Set up Peckish</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    margin: 0; padding: 28px 32px;
+    background: light-dark(#faf8f5, #1c1a18);
+    color: light-dark(#2b2724, #ece7e1);
+    user-select: none;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: light-dark(#8a8178, #9a9188); margin: 0 0 24px; }
+  .step {
+    border: 1px solid light-dark(#e6e0d8, #3a3632);
+    border-radius: 12px; padding: 16px 18px; margin-bottom: 14px;
+    background: light-dark(#fff, #262320);
+  }
+  .step h2 { font-size: 15px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: 13px; width: 22px; height: 22px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: light-dark(#eee8e0, #3a3632); flex: none; }
+  .badge.done { background: #2e9e5b; color: #fff; }
+  .badge.err { background: #c94f3d; color: #fff; }
+  .detail { margin: 8px 0 0 30px; color: light-dark(#6f675e, #b0a89f); }
+  .detail .err-text { color: #c94f3d; word-break: break-word; }
+  button {
+    font: inherit; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+    border: 1px solid light-dark(#d8d0c6, #4a453f);
+    background: light-dark(#fff, #33302c); color: inherit;
+  }
+  button.primary { background: #d5442c; border-color: #d5442c; color: #fff; font-weight: 600; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  input[type="password"] {
+    font: inherit; padding: 6px 10px; border-radius: 8px; width: 300px;
+    border: 1px solid light-dark(#d8d0c6, #4a453f);
+    background: light-dark(#fff, #1c1a18); color: inherit;
+  }
+  a { color: #d5442c; cursor: pointer; text-decoration: underline; }
+  .footer { margin-top: 22px; text-align: center; }
+  .footer button { padding: 10px 28px; font-size: 15px; }
+  .spin { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <h1>🍜 Welcome to Peckish</h1>
+  <p class="sub">Three quick steps and you're ordering. Everything stays on your Mac.</p>
+
+  <div class="step" id="step-ddcli">
+    <h2><span class="badge" id="badge-ddcli">1</span> DoorDash CLI</h2>
+    <div class="detail" id="detail-ddcli">
+      Peckish drives DoorDash through its official command-line tool.
+      <div style="margin-top:8px">
+        <button id="btn-install">Install dd-cli</button>
+        &nbsp; <a id="link-waitlist">No access yet? Join the waitlist ↗</a>
+      </div>
+      <div id="ddcli-progress" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <div class="step" id="step-login">
+    <h2><span class="badge" id="badge-login">2</span> Sign in to DoorDash</h2>
+    <div class="detail" id="detail-login">
+      Opens your browser; your sign-in is stored in the macOS keychain.
+      <div style="margin-top:8px">
+        <button id="btn-login" disabled>Sign in with DoorDash</button>
+        <span id="login-progress"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="step-key">
+    <h2><span class="badge" id="badge-key">3</span> Anthropic API key</h2>
+    <div class="detail" id="detail-key">
+      Powers the AI. Get one at <a id="link-console">console.anthropic.com ↗</a>.
+      Stored encrypted via your keychain — never in plain text.
+      <div style="margin-top:8px">
+        <input type="password" id="key-input" placeholder="sk-ant-…" />
+        <button id="btn-key">Save</button>
+      </div>
+      <div id="key-progress" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="primary" id="btn-launch" disabled>Open Peckish</button>
+    <div id="launch-progress" style="margin-top:8px"></div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const state = { ddInstalled: false, ddSignedIn: false, hasApiKey: false };
+  let pollTimer = null;
+
+  function render() {
+    setBadge("ddcli", state.ddInstalled);
+    setBadge("login", state.ddSignedIn);
+    setBadge("key", state.hasApiKey);
+    $("btn-install").disabled = state.ddInstalled;
+    if (state.ddInstalled) $("btn-install").textContent = "Installed ✓";
+    $("btn-login").disabled = !state.ddInstalled || state.ddSignedIn;
+    if (state.ddSignedIn) { $("btn-login").textContent = "Signed in ✓"; $("login-progress").textContent = ""; }
+    if (state.hasApiKey) { $("btn-key").textContent = "Saved ✓ (replace?)"; }
+    $("btn-launch").disabled = !(state.ddInstalled && state.ddSignedIn && state.hasApiKey);
+  }
+  function setBadge(step, done) {
+    const b = $("badge-" + step);
+    if (done) { b.classList.add("done"); b.classList.remove("err"); b.textContent = "✓"; }
+  }
+
+  async function refresh() {
+    const s = await window.peckish.getStatus();
+    state.ddInstalled = s.ddInstalled;
+    state.ddSignedIn = s.ddSignedIn;
+    state.hasApiKey = s.hasApiKey;
+    if (s.ddError) $("ddcli-progress").innerHTML = '<span class="err-text"></span>',
+      ($("ddcli-progress").firstChild.textContent = "dd-cli error: " + s.ddError);
+    render();
+  }
+
+  $("btn-install").onclick = async () => {
+    $("btn-install").disabled = true;
+    const r = await window.peckish.installDdCli();
+    if (!r.ok) {
+      $("badge-ddcli").classList.add("err"); $("badge-ddcli").textContent = "!";
+      const el = $("ddcli-progress"); el.innerHTML = '<span class="err-text"></span>';
+      el.firstChild.textContent = r.error;
+      $("btn-install").disabled = false;
+    }
+    await refresh();
+  };
+
+  $("btn-login").onclick = async () => {
+    const r = await window.peckish.startLogin();
+    if (!r.ok) { $("login-progress").textContent = r.error; return; }
+    $("login-progress").innerHTML = '<span class="spin">◌</span> waiting for browser sign-in…';
+    clearInterval(pollTimer);
+    const deadline = Date.now() + 5 * 60 * 1000;
+    pollTimer = setInterval(async () => {
+      const { signedIn } = await window.peckish.checkSignin();
+      if (signedIn) { clearInterval(pollTimer); state.ddSignedIn = true; render(); }
+      else if (Date.now() > deadline) {
+        clearInterval(pollTimer);
+        $("login-progress").textContent = "Timed out — click to try again.";
+      }
+    }, 3000);
+  };
+
+  $("btn-key").onclick = async () => {
+    const r = await window.peckish.saveApiKey($("key-input").value);
+    const el = $("key-progress");
+    if (r.ok) { el.textContent = ""; $("key-input").value = ""; state.hasApiKey = true; render(); }
+    else { el.innerHTML = '<span class="err-text"></span>'; el.firstChild.textContent = r.error; }
+  };
+
+  $("btn-launch").onclick = async () => {
+    $("btn-launch").disabled = true;
+    $("launch-progress").innerHTML = '<span class="spin">◌</span> starting Peckish…';
+    const r = await window.peckish.launch();
+    if (!r.ok) {
+      const el = $("launch-progress"); el.innerHTML = '<span class="err-text"></span>';
+      el.firstChild.textContent = r.error;
+      $("btn-launch").disabled = false;
+    }
+  };
+
+  $("link-waitlist").onclick = () => window.peckish.openExternal("https://github.com/doordash-oss/doordash-cli");
+  $("link-console").onclick = () => window.peckish.openExternal("https://console.anthropic.com");
+
+  window.peckish.onProgress(({ step, state: st, detail }) => {
+    if (step === "ddcli" && st === "working") $("ddcli-progress").innerHTML =
+      '<span class="spin">◌</span> ' + Object.assign(document.createElement("span"), { textContent: detail }).outerHTML;
+  });
+
+  refresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+---
+title: useCookie 用法与示例
+sidebar_label: useCookie
+description: "useCookie 是一个 React hook，可按 key 存储、更新和删除浏览器 cookie，返回值以及 update 和 refresh 函数，并支持 js-cookie 选项。"
+---
+# useCookie
+
+有助于在 CookieStore 中存储、更新和删除值的 hook
+
+:::note
+使用相同键的多个 `useCookie` 实例会在同一标签页内保持同步：在一个组件中调用 `updateCookie` 会自动让其他组件重新渲染。（旧版本不会——需要手动广播；现在不再需要了。）
+:::
+
+
+`useCookie` 按键管理单个浏览器 cookie。它返回一个 `[cookieValue, updateCookie, refreshCookie]` 元组。使用字符串调用 `updateCookie` 设置 cookie，使用 `undefined` 调用则删除它。`refreshCookie` 函数从存储中重新读取 cookie，这在 cookie 可能被外部修改时很有用。选项直接传递给 `js-cookie`，用于控制路径、域名、过期时间和其他 cookie 属性。
+
+### 使用场景
+
+- 将用户偏好（语言环境、主题、同意标志）持久化在 cookie 中，以便服务端访问
+- 读写存储在 cookie 中的认证或会话令牌
+- 当外部代码（分析、第三方脚本）也可能修改 cookie 时，在组件中同步 cookie 状态
+
+### 注意事项
+
+- **SSR 注意事项**：使用 SSR 时传入 `defaultValue`，这样在客户端 `document.cookie` 可用之前 hook 就有值。
+- **同标签页同步**：在一个组件中更新 cookie 会自动让同一标签页内使用相同键的其他 `useCookie` 实例重新渲染。cookie 没有原生的跨标签页事件，因此**不会**跨标签页传播（这点与 `useLocalStorage`/`useSessionStorage` 不同）。
+- **`refreshCookie`**：仅用于获取在 hook *之外*发生的改动——服务端 `Set-Cookie`、直接写 `document.cookie`，或 CookieStore API。兄弟 hook 实例之间不再需要它。
+- 参见 `useLocalStorage` 和 `useSessionStorage` 了解通过 `storage` 事件提供跨标签页同步的 Web Storage 替代方案。
+
+## Usage
+
+```tsx live
+function Demo() {
+    const defaultOption = {
+    path: "/",
+  };
+  const cookieName = "cookie-key";
+  const [cookieValue, updateCookie, refreshCookie] = useCookie(
+    cookieName,
+    defaultOption,
+    "default-value",
+  );
+
+  const updateButtonClick = () => {
+    updateCookie("new-cookie-value");
+  };
+
+  const deleteButtonClick = () => {
+    updateCookie(undefined);
+  };
+
+  const change = () => {
+    if ("cookieStore" in window) {
+      const store = window.cookieStore as any;
+      store.set({ name: cookieName, value: "changed" });
+    }
+    else {
+      document.cookie = `${cookieName}=changed; path=/`;
+    }
+  };
+
+  return (
+    <div>
+      <p>点击按钮来更新或清除cookie</p>
+      <p color="blue">cookie: {cookieValue || "无值"}</p>
+      <button onClick={updateButtonClick}>更新cookie</button>
+      <button onClick={deleteButtonClick}>清除cookie</button>
+      <button onClick={change}>
+        通过其他方法更改cookie
+      </button>
+      <button onClick={refreshCookie}>刷新cookie</button>
+    </div>
+  );
+}
+
+```
+
+## 同标签页同步
+
+使用相同 cookie 键的两个组件会在同一标签页内保持同步——在任意一个面板点击按钮，另一个面板会立即更新，无需手动广播，也无需刷新：
+
+```tsx live noInline
+function CookiePanel({ label }) {
+  const [value, updateCookie] = useCookie("shared-demo-cookie", { path: "/" }, "A");
+  return (
+    <div
+      style={{
+        border: "1px solid var(--sl-color-gray-5, #ccc)",
+        borderRadius: 6,
+        padding: 12,
+        marginBottom: 8,
+      }}
+    >
+      <strong>{label}</strong> 当前值：<code>{value ?? "(空)"}</code>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button onClick={() => updateCookie("A")}>Set A</button>
+        <button onClick={() => updateCookie("B")}>Set B</button>
+        <button onClick={() => updateCookie("C")}>Set C</button>
+        <button onClick={() => updateCookie(undefined)}>Clear</button>
+      </div>
+    </div>
+  );
+}
+
+function Demo() {
+  return (
+    <div>
+      <p>在任意一个面板点击按钮——另一个面板会在同一标签页内同步更新：</p>
+      <CookiePanel label="组件 A" />
+      <CookiePanel label="组件 B" />
+    </div>
+  );
+}
+
+render(<Demo />);
+```
+
+%%API%%

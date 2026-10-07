@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Peckish</title>
+<style>
+  :root {
+    --bg: #16120f;
+    --panel: #201a16;
+    --panel-2: #2a221d;
+    --border: #3a2f27;
+    --text: #f2ebe4;
+    --muted: #a6988c;
+    --accent: #ff5b3e;
+    --accent-soft: #ff5b3e22;
+    --good: #6fce8f;
+    --bad: #ff7a6e;
+    --radius: 14px;
+    font-size: 15px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column; height: 100vh;
+  }
+  header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px; border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  header .logo { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; }
+  header .chip {
+    font-size: 0.72rem; color: var(--muted); background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 99px; padding: 3px 10px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px;
+  }
+  header .spacer { flex: 1; }
+  #chip-address { cursor: pointer; }
+  #chip-address:hover { border-color: var(--accent); color: var(--text); }
+  #addr-pop {
+    display: none; position: absolute; z-index: 40; top: 52px; left: 130px;
+    max-width: 460px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+    font-size: 0.88rem;
+  }
+  .addr-row {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    border-radius: 8px; cursor: pointer;
+  }
+  .addr-row:hover { background: var(--panel-2); }
+  .addr-row.default { cursor: default; }
+  .addr-row .tag {
+    margin-left: auto; font-size: 0.75rem; color: var(--good);
+    border: 1px solid var(--good); border-radius: 999px; padding: 1px 8px; flex: none;
+  }
+  .addr-row.busy { opacity: 0.5; pointer-events: none; }
+  .addr-foot {
+    border-top: 1px solid var(--border); margin-top: 6px; padding: 9px 12px;
+    color: var(--muted);
+  }
+  .addr-foot a { color: var(--accent); }
+  .addr-err { padding: 9px 12px; color: var(--bad); }
+  header button {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 0.78rem;
+  }
+  header button:hover { color: var(--text); border-color: var(--muted); }
+
+  #chat { flex: 1; overflow-y: auto; padding: 22px 0 12px; }
+  .inner { max-width: 780px; margin: 0 auto; padding: 0 18px; }
+
+  .msg-user {
+    background: var(--accent-soft); border: 1px solid #ff5b3e44;
+    border-radius: var(--radius); padding: 10px 14px; margin: 14px 0 6px auto;
+    max-width: 78%; width: fit-content; white-space: pre-wrap;
+  }
+  .msg-assistant {
+    padding: 4px 2px; margin: 6px 0; line-height: 1.55; overflow-wrap: break-word;
+  }
+  .msg-assistant strong { color: #ffd9a8; }
+  .msg-assistant code {
+    background: var(--panel-2); border-radius: 5px; padding: 1px 5px;
+    font-family: ui-monospace, Menlo, monospace; font-size: 0.86em;
+  }
+  .msg-assistant ul { margin: 6px 0; padding-left: 22px; }
+  .msg-error { color: var(--bad); padding: 8px 2px; }
+  .msg-notice { color: #f5c451; padding: 6px 2px; font-size: 0.88rem; }
+  .msg-stopped { color: var(--muted); font-style: italic; padding: 6px 2px; }
+  #send.stop { background: var(--panel-2); color: var(--bad); border: 1px solid var(--bad); }
+
+  .toolchip {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.74rem; color: var(--muted);
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 99px; padding: 3px 11px; margin: 3px 6px 3px 0;
+    font-family: ui-monospace, Menlo, monospace;
+  }
+  .toolchip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .toolchip.running .dot { background: #f5c451; animation: pulse 1s infinite; }
+  .toolchip.ok .dot { background: var(--good); }
+  .toolchip.fail .dot { background: var(--bad); }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  .thinking { color: var(--muted); font-size: 0.8rem; padding: 6px 2px; }
+  .thinking::after { content: "…"; animation: pulse 1.2s infinite; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 10px; margin: 8px 0; }
+  .store-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+  }
+  .store-card .name { font-weight: 650; margin-bottom: 5px; }
+  .store-card .meta { color: var(--muted); font-size: 0.78rem; line-height: 1.5; }
+  .store-card .rating { color: #f5c451; }
+  .store-card .linkout { color: var(--bad); font-size: 0.72rem; }
+
+  .quote-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px; margin: 8px 0;
+  }
+  .quote-card pre {
+    margin: 0; white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.8rem; color: var(--text); line-height: 1.5;
+  }
+  .quote-card .total {
+    margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);
+    font-weight: 700; font-size: 1.02rem;
+  }
+  .quote-card .cardline { color: var(--muted); font-size: 0.8rem; margin-top: 3px; }
+
+  #composer {
+    border-top: 1px solid var(--border); background: var(--panel); padding: 14px 18px 16px;
+  }
+  #composer .inner { display: flex; gap: 10px; align-items: flex-end; }
+  textarea {
+    flex: 1; resize: none; background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 11px 14px; font: inherit; min-height: 46px; max-height: 140px; outline: none;
+  }
+  textarea:focus { border-color: var(--accent); }
+  #send {
+    background: var(--accent); color: #fff; border: none; border-radius: var(--radius);
+    padding: 12px 20px; font-weight: 700; cursor: pointer; font-size: 0.95rem;
+  }
+  #send:disabled { opacity: 0.45; cursor: default; }
+  .suggestion {
+    display: flex; align-items: center; gap: 12px;
+    margin: 54px auto 8px; max-width: 580px; min-height: 58px; text-align: left;
+    color: var(--muted); background: var(--panel); border: 1px dashed var(--border);
+    border-radius: var(--radius); padding: 14px 18px; cursor: pointer; font-size: 0.88rem;
+    line-height: 1.5; transition: border-color .15s, color .15s;
+  }
+  .suggestion:hover { border-color: var(--accent); color: var(--text); }
+  .suggestion .spark { flex: none; font-size: 1.1rem; filter: grayscale(0.2); }
+  .suggestion .text { flex: 1; transition: opacity .26s ease; }
+  .suggestion .go {
+    flex: none; font-size: 0.72rem; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 9px; opacity: 0; transition: opacity .15s;
+  }
+  .suggestion:hover .go { opacity: 1; color: var(--accent); border-color: var(--accent); }
+  .signin-card {
+    margin: 26px auto 0; max-width: 580px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; text-align: left;
+  }
+  .signin-card .t { font-weight: 700; margin-bottom: 4px; }
+  .signin-card .d { color: var(--muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 12px; }
+  .signin-card button {
+    background: var(--accent); color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-weight: 700; font-size: 0.92rem; cursor: pointer;
+  }
+  .signin-card button:disabled { opacity: 0.55; cursor: default; }
+  .signin-card .s { color: var(--muted); font-size: 0.82rem; margin-top: 10px; min-height: 1em; }
+  .hello { text-align: center; margin-top: 9vh; }
+  .hello .big { font-size: 2.1rem; font-weight: 800; letter-spacing: -0.03em; }
+  .hello .sub { color: var(--muted); margin-top: 6px; }
+
+  #modal-backdrop {
+    position: fixed; inset: 0; background: #000a; display: none;
+    align-items: center; justify-content: center; z-index: 50;
+  }
+  #modal {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 18px;
+    max-width: 560px; width: calc(100vw - 40px); padding: 22px 24px;
+    max-height: 80vh; overflow-y: auto;
+  }
+  #modal h2 { margin: 0 0 4px; font-size: 1.05rem; }
+  #modal .warn { color: var(--bad); font-size: 0.82rem; margin-bottom: 12px; }
+  #modal pre {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.8rem; line-height: 1.5; max-height: 44vh; overflow-y: auto;
+  }
+  #modal .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+  #modal button { border-radius: 10px; padding: 10px 18px; font-weight: 700; cursor: pointer; border: none; font-size: 0.92rem; }
+  #modal .cancel { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  #modal .approve { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+  <header>
+    <span class="logo">🍜 Peckish</span>
+    <span class="chip" id="chip-address" title="Delivery address — click to change">…</span>
+    <span class="chip" id="chip-model">…</span>
+    <span class="chip" id="chip-cost" title="Approximate Claude API spend this session">…</span>
+    <span class="spacer"></span>
+    <button id="reset">New chat</button>
+  </header>
+  <div id="addr-pop"></div>
+
+  <div id="chat"><div class="inner" id="feed">
+    <div class="signin-card" id="signin-card" style="display:none">
+      <div class="t">DoorDash sign-in needed</div>
+      <div class="d" id="signin-desc">Your DoorDash session is missing or expired. Peckish can open the
+        DoorDash sign-in in your browser — finish it there and this page picks it up
+        automatically.</div>
+      <button id="signin-btn">Sign in with DoorDash</button>
+      <div class="s" id="signin-status"></div>
+    </div>
+    <div class="hello" id="hello">
+      <div class="big">Feeling peckish?</div>
+      <div class="sub">Just ask. I'll search, compare fees, build the cart — you approve the order.</div>
+      <div class="suggestion" id="suggestion" title="Click to try this — or just type your own">
+        <span class="spark">🍜</span>
+        <span class="text" id="suggestion-text">Find me a high-protein dinner under $25 that can arrive within 45 minutes. Avoid mushrooms and excessive fees.</span>
+        <span class="go">try&nbsp;↵</span>
+      </div>
+    </div>
+  </div></div>
+
+  <div id="composer"><div class="inner">
+    <textarea id="input" rows="1" placeholder="What are you hungry for?"></textarea>
+    <button id="send">Send</button>
+  </div></div>
+
+  <div id="modal-backdrop">
+    <div id="modal">
+      <h2 id="modal-title">Confirm</h2>
+      <div class="warn" id="modal-warn"></div>
+      <pre id="modal-summary"></pre>
+      <div class="row">
+        <button class="cancel" id="modal-cancel">Cancel</button>
+        <button class="approve" id="modal-approve">Approve</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+"use strict";
+const feed = document.getElementById("feed");
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const send = document.getElementById("send");
+const hello = document.getElementById("hello");
+
+let busy = false;
+let currentText = null;   // active assistant text block
+let currentRaw = "";
+let thinkingEl = null;
+const toolEls = new Map(); // name+seq → chip element
+let toolSeq = 0;
+const runningTools = [];
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function mdLite(s) {
+  let h = esc(s);
+  h = h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  h = h.replace(/`([^`]+)`/g, "<code>$1</code>");
+  const lines = h.split("\n");
+  let out = "", inList = false;
+  for (const line of lines) {
+    const m = line.match(/^\s*[-•]\s+(.*)$/);
+    if (m) {
+      if (!inList) { out += "<ul>"; inList = true; }
+      out += "<li>" + m[1] + "</li>";
+    } else {
+      if (inList) { out += "</ul>"; inList = false; }
+      out += line + "<br>";
+    }
+  }
+  if (inList) out += "</ul>";
+  return out.replace(/(<br>\s*)+$/, "");
+}
+function scrollDown() { chat.scrollTop = chat.scrollHeight; }
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
+function clearThinking() {
+  if (thinkingEl) { thinkingEl.remove(); thinkingEl = null; }
+}
+
+function addUserMsg(text) {
+  if (hello) hello.style.display = "none";
+  feed.appendChild(el("div", "msg-user", esc(text)));
+  scrollDown();
+}
+
+function setBusy(b) {
+  busy = b;
+  send.textContent = b ? "Stop" : "Send";
+  send.classList.toggle("stop", b);
+  input.placeholder = b ? "Peckish is working… (Stop to cancel)" : "What are you hungry for?";
+}
+
+// ── result cards ──────────────────────────────────────────────────────────
+function renderCards(name, preview) {
+  if (!preview) return;
+  if (name === "search_restaurants" && Array.isArray(preview.stores) && preview.stores.length) {
+    const grid = el("div", "cards");
+    for (const s of preview.stores.slice(0, 8)) {
+      const card = el("div", "store-card");
+      card.appendChild(el("div", "name", esc(String(s.name ?? ""))));
+      const bits = [];
+      if (s.rating) bits.push('<span class="rating">★ ' + esc(String(s.rating)) + "</span> (" + esc(String(s.review_count ?? "?")) + ")");
+      if (s.delivery_time) bits.push(esc(String(s.delivery_time)));
+      if (s.distance) bits.push(esc(String(s.distance)));
+      card.appendChild(el("div", "meta", bits.join(" · ")));
+      if (s.is_link_out) card.appendChild(el("div", "linkout", "not orderable here"));
+      grid.appendChild(card);
+    }
+    feed.appendChild(grid);
+  }
+  if (name === "preview_order" && preview.display_summary) {
+    const card = el("div", "quote-card");
+    const pre = el("pre"); pre.textContent = preview.display_summary;
+    card.appendChild(pre);
+    const total = preview.quote && preview.quote.net_total_before_tip;
+    if (total) card.appendChild(el("div", "total", "Total (before tip): " + esc(String(total))));
+    if (preview.default_card)
+      card.appendChild(el("div", "cardline", "Payment: " + esc(String(preview.default_card.brand ?? "card")) + " ···· " + esc(String(preview.default_card.last4 ?? ""))));
+    feed.appendChild(card);
+  }
+  scrollDown();
+}
+
+// ── SSE stream ────────────────────────────────────────────────────────────
+function connect() {
+  const es = new EventSource("/api/stream");
+  es.onmessage = (ev) => {
+    const e = JSON.parse(ev.data);
+    switch (e.type) {
+      case "turn_start":
+        setBusy(true);
+        break;
+      case "thinking":
+        clearThinking();
+        currentText = null;
+        thinkingEl = el("div", "thinking", "thinking");
+        feed.appendChild(thinkingEl); scrollDown();
+        break;
+      case "text":
+        clearThinking();
+        if (!currentText) {
+          currentText = el("div", "msg-assistant");
+          currentRaw = "";
+          feed.appendChild(currentText);
+        }
+        currentRaw += e.delta;
+        currentText.innerHTML = mdLite(currentRaw);
+        scrollDown();
+        break;
+      case "tool_start": {
+        clearThinking();
+        currentText = null;
+        const chip = el("div", "toolchip running");
+        chip.appendChild(el("span", "dot"));
+        chip.appendChild(el("span", null, esc(e.name)));
+        feed.appendChild(chip); scrollDown();
+        runningTools.push(chip);
+        break;
+      }
+      case "tool_end": {
+        const chip = runningTools.shift();
+        if (chip) {
+          chip.classList.remove("running");
+          chip.classList.add(e.ok ? "ok" : "fail");
+          chip.appendChild(el("span", null, (e.ms / 1000).toFixed(1) + "s"));
+        }
+        renderCards(e.name, e.preview);
+        break;
+      }
+      case "confirm_request":
+        showModal(e);
+        break;
+      case "confirm_resolved":
+        hideModal(e.id);
+        break;
+      case "error":
+        clearThinking();
+        feed.appendChild(el("div", "msg-error", esc(e.message)));
+        scrollDown();
+        break;
+      case "notice":
+        clearThinking();
+        feed.appendChild(el("div", "msg-notice", "⚠ " + esc(e.message)));
+        scrollDown();
+        break;
+      case "aborted":
+        clearThinking();
+        runningTools.length = 0;
+        feed.appendChild(el("div", "msg-stopped", "⏹ stopped — that request was rolled back"));
+        scrollDown();
+        break;
+      case "usage":
+        document.getElementById("chip-cost").textContent = e.session_cost + " session";
+        break;
+      case "turn_done":
+        clearThinking();
+        currentText = null;
+        setBusy(false);
+        break;
+    }
+  };
+  es.onerror = () => {
+    es.close();
+    setTimeout(connect, 1500);
+  };
+}
+connect();
+
+// ── confirm modal ─────────────────────────────────────────────────────────
+const backdrop = document.getElementById("modal-backdrop");
+let modalId = null;
+function showModal(e) {
+  modalId = e.id;
+  document.getElementById("modal-title").textContent =
+    e.kind === "order" ? "Place this order?" : "Confirm change";
+  document.getElementById("modal-warn").textContent =
+    e.kind === "order" ? "This places a real DoorDash order and charges your payment method." : "";
+  document.getElementById("modal-summary").textContent = e.summary;
+  document.getElementById("modal-approve").textContent =
+    e.kind === "order" ? "Place order" : "Approve";
+  backdrop.style.display = "flex";
+}
+function hideModal(id) {
+  if (modalId === id || id === undefined) { backdrop.style.display = "none"; modalId = null; }
+}
+async function answerModal(approved) {
+  if (!modalId) return;
+  await fetch("/api/confirm", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: modalId, approved }),
+  });
+}
+document.getElementById("modal-approve").onclick = () => answerModal(true);
+document.getElementById("modal-cancel").onclick = () => answerModal(false);
+
+// ── composer ──────────────────────────────────────────────────────────────
+async function submit() {
+  const text = input.value.trim();
+  if (!text || busy) return;
+  input.value = "";
+  addUserMsg(text);
+  const res = await fetch("/api/message", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    feed.appendChild(el("div", "msg-error", esc(body.error || "request failed")));
+  }
+}
+send.onclick = () => {
+  if (busy) { fetch("/api/abort", { method: "POST" }); return; }
+  submit();
+};
+input.addEventListener("keydown", (ev) => {
+  if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); submit(); }
+});
+// ── rotating suggestions ──────────────────────────────────────────────────
+const SUGGESTIONS = [
+  "Find me a high-protein dinner under $25 that can arrive within 45 minutes. Avoid mushrooms and excessive fees.",
+  "I'm hungover. Something greasy, cheap, and here in 30 minutes.",
+  "Compare the real totals at the two top-rated taco spots near me — fees included.",
+  "Reorder my usual, but tell me if anything got silently dropped.",
+  "Cheapest way to feed 4 people tonight. Pickup if it dodges the delivery fee.",
+  "What did I spend on delivery last month? Break out the fees and tips honestly.",
+  "Late-night sushi that won't wreck me on service fees.",
+  "Grab milk, eggs, and a pound of ground beef from the closest grocery store.",
+  "Vegan comfort food under $20 — and never any mushrooms.",
+  "Is that ramen place actually any good? If so, build me a cart.",
+];
+const suggestionBox = document.getElementById("suggestion");
+const suggestionText = document.getElementById("suggestion-text");
+let suggestionIdx = 0;
+let suggestionTimer = null;
+let suggestionPaused = false;
+
+function rotateSuggestion() {
+  if (suggestionPaused || !hello || hello.style.display === "none") return;
+  suggestionText.style.opacity = "0";
+  setTimeout(() => {
+    suggestionIdx = (suggestionIdx + 1) % SUGGESTIONS.length;
+    suggestionText.textContent = SUGGESTIONS[suggestionIdx];
+    suggestionText.style.opacity = "1";
+  }, 260);
+}
+suggestionTimer = setInterval(rotateSuggestion, 4200);
+suggestionBox.addEventListener("mouseenter", () => (suggestionPaused = true));
+suggestionBox.addEventListener("mouseleave", () => (suggestionPaused = false));
+suggestionBox.onclick = function () {
+  input.value = SUGGESTIONS[suggestionIdx];
+  submit();
+};
+document.getElementById("reset").onclick = async () => {
+  if (busy) return;
+  await fetch("/api/reset", { method: "POST" });
+  location.reload();
+};
+
+// ── address popover ───────────────────────────────────────────────────────
+const addrChip = document.getElementById("chip-address");
+const addrPop = document.getElementById("addr-pop");
+
+async function openAddrPop() {
+  addrPop.style.display = "block";
+  addrPop.textContent = "";
+  addrPop.appendChild(el("div", "addr-foot", "loading addresses…"));
+  try {
+    const r = await fetch("/api/addresses");
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || "request failed");
+    addrPop.textContent = "";
+    for (const a of data.addresses) {
+      const row = el("div", "addr-row" + (a.is_default ? " default" : ""));
+      row.appendChild(el("span", null, esc((a.label ? a.label + " — " : "") + a.printable_address)));
+      if (a.is_default) {
+        row.appendChild(el("span", "tag", "default"));
+        // keep the chip honest if the address was edited on DoorDash
+        addrChip.textContent = (a.label ? '"' + a.label + '" — ' : "") + a.printable_address;
+      } else {
+        row.onclick = async () => {
+          row.classList.add("busy");
+          const res = await fetch("/api/address", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address_id: a.address_id }),
+          });
+          const b = await res.json().catch(() => ({}));
+          if (res.ok) {
+            addrChip.textContent = b.address || "no default address";
+            addrPop.style.display = "none";
+          } else {
+            row.classList.remove("busy");
+            addrPop.appendChild(el("div", "addr-err", esc(b.error || "couldn't switch address")));
+          }
+        };
+      }
+      addrPop.appendChild(row);
+    }
+    const foot = el("div", "addr-foot");
+    foot.innerHTML =
+      'Address wrong or missing? <a href="https://www.doordash.com/addresses" target="_blank" rel="noreferrer">Edit it on DoorDash ↗</a> — Peckish picks up changes automatically.';
+    addrPop.appendChild(foot);
+  } catch (e) {
+    addrPop.textContent = "";
+    addrPop.appendChild(el("div", "addr-err", esc("Couldn't load addresses: " + e.message)));
+  }
+}
+addrChip.onclick = () => {
+  if (addrPop.style.display === "block") addrPop.style.display = "none";
+  else openAddrPop();
+};
+document.addEventListener("click", (ev) => {
+  if (addrPop.style.display === "block" && !addrPop.contains(ev.target) && ev.target !== addrChip) {
+    addrPop.style.display = "none";
+  }
+});
+
+// ── DoorDash sign-in assist ───────────────────────────────────────────────
+const signinCard = document.getElementById("signin-card");
+const signinBtn = document.getElementById("signin-btn");
+const signinStatus = document.getElementById("signin-status");
+let signinTimer = null;
+
+async function pollSignin() {
+  try {
+    const s = await (await fetch("/api/signin-status")).json();
+    if (s.signed_in) {
+      clearInterval(signinTimer);
+      signinTimer = null;
+      signinStatus.textContent = "✓ signed in";
+      const st = await (await fetch("/api/state")).json();
+      addrChip.textContent = st.address || "no default address";
+      setTimeout(() => { signinCard.style.display = "none"; }, 1500);
+    } else if (s.error) {
+      signinStatus.textContent = s.error;
+      signinBtn.disabled = false;
+    }
+  } catch { /* server briefly unreachable — keep polling */ }
+}
+
+signinBtn.onclick = async () => {
+  signinBtn.disabled = true;
+  signinStatus.textContent = "waiting for the browser sign-in to finish…";
+  const r = await (await fetch("/api/signin", { method: "POST" })).json();
+  if (!r.started) {
+    // Browserless host — a login child would never complete; show the fix.
+    signinStatus.textContent = r.reason || "browser sign-in is unavailable here";
+    signinBtn.disabled = false;
+    return;
+  }
+  if (!signinTimer) signinTimer = setInterval(pollSignin, 3000);
+};
+
+// ── header state ──────────────────────────────────────────────────────────
+fetch("/api/state").then((r) => r.json()).then((s) => {
+  document.getElementById("chip-address").textContent = s.address || "no default address";
+  document.getElementById("chip-model").textContent = s.model + " @ " + (s.effort || "medium");
+  document.getElementById("chip-cost").textContent = (s.session_cost || "<$0.01") + " session";
+  if (s.busy) setBusy(true);
+  if (s.needs_signin) {
+    // No browser here (headless Linux): the button can't help, the hint can.
+    if (s.browser_signin === false) {
+      document.getElementById("signin-desc").textContent = s.signin_hint;
+      signinBtn.style.display = "none";
+    }
+    signinCard.style.display = "block";
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { WarpClient } from "./client.js";
+import { registerTools } from "./tools.js";
+import { PACKAGE_VERSION } from "./version.js";
+import {
+  QUOTE_CARD_RESOURCE_URI,
+  QUOTE_CARD_MCP_RESOURCE_URI,
+  MCP_APP_MIME_TYPE,
+  quoteCardTemplate,
+  quoteCardMcpTemplate,
+} from "./widgets/quote-card.js";
+import {
+  BOOKINGS_CARD_RESOURCE_URI,
+  BOOKINGS_CARD_MCP_RESOURCE_URI,
+  bookingsCardTemplate,
+  bookingsCardMcpTemplate,
+} from "./widgets/bookings-card.js";
+import {
+  BATCH_QUOTE_CARD_RESOURCE_URI,
+  BATCH_QUOTE_CARD_MCP_RESOURCE_URI,
+  batchQuoteCardTemplate,
+  batchQuoteCardMcpTemplate,
+} from "./widgets/batch-quote-card.js";
+import {
+  BATCH_BOOK_CARD_RESOURCE_URI,
+  BATCH_BOOK_CARD_MCP_RESOURCE_URI,
+  batchBookCardTemplate,
+  batchBookCardMcpTemplate,
+} from "./widgets/batch-book-card.js";
+
+// Node 20+ is required for native fetch and the MCP SDK. npx -y ignores the
+// "engines" field, so a user on an older Node crashes with a cryptic
+// "fetch is not defined". This guard converts that into an actionable message.
+const nodeMajor = Number(process.versions.node.split(".")[0]);
+if (!Number.isFinite(nodeMajor) || nodeMajor < 20) {
+  console.error(
+    `warp-agent-mcp requires Node.js 20 or later. Detected: ${process.versions.node}. ` +
+      `Install Node 20+ from https://nodejs.org, or run: nvm install 20 && nvm use 20`,
+  );
+  process.exit(1);
+}
+
+// Use WARP_API_URL env var if set (useful for staging), otherwise default to
+// the warp-site proxy. The proxy at /api/v1/warp/* accepts wak_live_* and
+// wak_test_* tokens via `Authorization: Bearer …`; the direct gateway at
+// gw.wearewarp.com only accepts raw customer.wearewarp.com keys, which is why
+// 0.5.62 and earlier returned "Invalid authorization" for users who signed
+// up via `warp-agent signup`.
+const WARP_API_URL = process.env.WARP_API_URL ?? "https://www.wearewarp.com/api/v1/warp";
+
+// Read API key: env var first, then ~/.warp/config.json (set by warp-agent login)
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
+
+function sanitizeKey(key: string, raw = false): string {
+  if (raw) return key.trim();
+  // Claude Desktop URL-decodes env vars — + becomes space. Re-encode spaces back to +
+  return key.trim().replace(/ /g, "+");
+}
+
+function loadApiKey(): string | undefined {
+  // ~/.warp/config.json takes priority — written by `warp-agent login` / `warp-agent signup`.
+  // This ensures a CLI login always wins over a stale WARP_API_KEY env var set in
+  // Claude Desktop config (otherwise env var would override the logged-in user's key).
+  const homeDir = homedir();
+  const candidates: string[] = [homeDir];
+
+  // NOTE: we intentionally do NOT scan /Users/* — that would leak
+  // other users' keys on shared machines (e.g. macOS with multiple accounts).
+
+  // Deduplicate
+  const seen = new Set<string>();
+  const unique = candidates.filter(d => d && !seen.has(d) && seen.add(d));
+
+  for (const dir of unique) {
+    try {
+      const configPath = join(dir, ".warp", "config.json");
+      const config = JSON.parse(readFileSync(configPath, "utf8"));
+      if (config.api_key && config.api_key.length > 10) {
+        return sanitizeKey(config.api_key);
+      }
+    } catch {
+      // try next
+    }
+  }
+
+  // Fallback: WARP_API_KEY env var (only used if no CLI login found on disk)
+  if (process.env.WARP_API_KEY) {
+    const raw = process.env.WARP_RAW_KEY === "1";
+    const k = sanitizeKey(process.env.WARP_API_KEY, raw);
+    if (k.length > 10) return k;
+  }
+
+  return undefined;
+}
+
+const WARP_API_KEY = loadApiKey();
+
+// Read customer email from config for analytics
+function loadCustomerEmail(): string | undefined {
+  const homeDir = homedir();
+  const candidates = [homeDir, ...(process.env.USER ? [`/Users/${process.env.USER}`] : [])];
+  for (const dir of candidates) {
+    try {
+      const config = JSON.parse(readFileSync(join(dir, ".warp", "config.json"), "utf8"));
+      if (config.email) return config.email;
+    } catch {}
+  }
+  return undefined;
+}
+
+// Export for use in analytics module
+export const LOADED_CUSTOMER_EMAIL = loadCustomerEmail();
+
+// Debug: log key status to stderr (visible in Claude Desktop logs)
+if (WARP_API_KEY) {
+  console.error(`[warp-mcp] API key loaded (${WARP_API_KEY.length} chars, starts: ${WARP_API_KEY.slice(0, 4)})`);
+} else {
+  console.error(`[warp-mcp] NO API KEY FOUND. HOME=${process.env.HOME} USER=${process.env.USER}`);
+  // List what we tried
+  const tried = [
+    process.env.WARP_API_KEY ? `WARP_API_KEY env (${process.env.WARP_API_KEY.length} chars)` : "WARP_API_KEY env (not set)",
+    `HOME=${process.env.HOME}`,
+    `USER=${process.env.USER}`,
+  ];
+  console.error(`[warp-mcp] Tried: ${tried.join(", ")}`);
+}
+
+const server = new McpServer(
+  {
+    name: "warp-agent-mcp",
+    version: PACKAGE_VERSION,
+  },
+  {
+    instructions: [
+      "Warp freight quoting and booking over MCP.",
+      "",
+      "COMPARE MODES — USE `compare_modes`. The same palletized load can usually move several ways (LTL / full truckload / cargo van / 26' box truck) at very different prices. When the user asks for a quote, the cheapest option, or how to ship, call `compare_modes` — ONE keyless call that prices all four modes and returns the recommended one with a bookable quote id and the cost-vs-transit trade-off already calculated. Modes Warp can't serve come back explicitly unavailable WITH the reason, so there is never a shortened list to guess from. Quoting a single mode and skipping the others hides cheaper options — the most common and costly mistake, and `compare_modes` exists so it can't happen. Reach for the single-mode tools (`ltl_quote`, `ftl_quote`, `van_quote`, `box_truck_quote`) only when the user has already fixed the mode.",
+      "",
+      "DON'T GATE A QUOTE BEHIND DIMENSIONS, BUT ALWAYS PASS ON THE DISCLOSURE. If the user hasn't given pallet length/width/height, quote anyway — a standard 48x40x48 pallet is assumed so a price comes back immediately. When that happens the result is marked quote_tier \"indicative\" and carries a dims_disclosure: relay it. LTL prices off pallet size, especially HEIGHT, so a taller pallet can cost several times more — never present an assumed-dims price as firm, and ask for real dimensions to firm it up.",
+      "",
+      "PRESENT, DON'T EDITORIALIZE. Show Warp's quote first, then market options as context; surface the cheapest valid mode plainly and let the user choose. Don't crown a single carrier the winner.",
+      "",
+      "BOOKING IS NEVER AUTOMATIC. Only book, batch_book, and multistop_book book a shipment, and only after the user explicitly confirms a specific quote.",
+    ].join("\n"),
+  },
+);
+
+// Pass loadApiKey as a getter so every tool call re-reads from disk.
+// This means CLI login/signup takes effect immediately without MCP restart.
+const client = new WarpClient(WARP_API_URL, loadApiKey);
+
+registerTools(server, client, loadApiKey);
+
+// Inline quote-card UI resources, one per host UI protocol. ChatGPT's Apps SDK
+// fetches the text/html resource and binds structuredContent via window.openai.
+// Claude (MCP Apps / SEP-1865) fetches the text/html;profile=mcp-app resource and
+// delivers the result over the postMessage bridge. Clients without UI ignore both.
+server.registerResource(
+  "warp-quote-card",
+  QUOTE_CARD_RESOURCE_URI,
+  {
+    description:
+      "Inline quote card shown after van_quote / box_truck_quote / ftl_quote / ltl_quote. Renders rate, lane, transit, expiration countdown, and a Book CTA.",
+    mimeType: "text/html",
+  },
+  async () => ({
+    contents: [{ uri: QUOTE_CARD_RESOURCE_URI, mimeType: "text/html", text: quoteCardTemplate() }],
+  }),
+);
+
+// Claude / MCP Apps variant. Same card, but the inlined client speaks the MCP
+// Apps postMessage bridge and the mimeType carries the mcp-app profile so Claude
+// renders it as an interactive widget.
+server.registerResource(
+  "warp-quote-card-mcp",
+  QUOTE_CARD_MCP_RESOURCE_URI,
+  {
+    description:
+      "Inline quote card (MCP Apps) shown after van_quote / box_truck_quote / ftl_quote / ltl_quote. Renders rate, lane, transit, expiration, and a Book CTA.",
+    mimeType: MCP_APP_MIME_TYPE,
+  },
+  async () => ({
+    contents: [{ uri: QUOTE_CARD_MCP_RESOURCE_URI, mimeType: MCP_APP_MIME_TYPE, text: quoteCardMcpTemplate() }],
+  }),
+);
+
+// Inline bookings/shipments card — a mini-TMS shown after list_bookings.
+// ChatGPT (text/html) reads structuredContent; Claude (mcp-app) gets the result
+// over the postMessage bridge. Clients without UI fall back to the text JSON.
+server.registerResource(
+  "warp-bookings-card",
+  BOOKINGS_CARD_RESOURCE_URI,
+  {
+    description:
+      "Inline shipments card shown after list_bookings. Lists shipments as clickable rows; each expands to pickup/delivery detail, freight, and a Track shipment deep-link.",
+    mimeType: "text/html",
+  },
+  async () => ({
+    contents: [{ uri: BOOKINGS_CARD_RESOURCE_URI, mimeType: "text/html", text: bookingsCardTemplate() }],
+  }),
+);
+
+server.registerResource(
+  "warp-bookings-card-mcp",
+  BOOKINGS_CARD_MCP_RESOURCE_URI,
+  {
+    description:
+      "Inline shipments card (MCP Apps) shown after list_bookings. Clickable shipment rows expand to full detail with a Track shipment deep-link.",
+    mimeType: MCP_APP_MIME_TYPE,
+  },
+  async () => ({
+    contents: [{ uri: BOOKINGS_CARD_MCP_RESOURCE_URI, mimeType: MCP_APP_MIME_TYPE, text: bookingsCardMcpTemplate() }],
+  }),
+);
+
+// Inline batch-quote card — single card showing every priced lane after a
+// batch_quote call (one tool call instead of N noisy per-lane calls).
+server.registerResource(
+  "warp-batch-quote-card",
+  BATCH_QUOTE_CARD_RESOURCE_URI,
+  {
+    description:
+      "Inline batch-quote card shown after batch_quote. Renders N priced lanes in a single scrollable card; click a row to expand its quote_id + transit + delivery for booking.",
+    mimeType: "text/html",
+  },
+  async () => ({
+    contents: [{ uri: BATCH_QUOTE_CARD_RESOURCE_URI, mimeType: "text/html", text: batchQuoteCardTemplate() }],
+  }),
+);
+
+server.registerResource(
+  "warp-batch-quote-card-mcp",
+  BATCH_QUOTE_CARD_MCP_RESOURCE_URI,
+  {
+    description:
+      "Inline batch-quote card (MCP Apps) shown after batch_quote. Single card, N rows, one price per lane.",
+    mimeType: MCP_APP_MIME_TYPE,
+  },
+  async () => ({
+    contents: [{ uri: BATCH_QUOTE_CARD_MCP_RESOURCE_URI, mimeType: MCP_APP_MIME_TYPE, text: batchQuoteCardMcpTemplate() }],
+  }),
+);
+
+// Inline batch-book progress card — single card showing per-row booking
+// status after a batch_book call. Replaces N noisy per-row book
+// calls with one progress card (Booked/Failed pills, tracking links).
+server.registerResource(
+  "warp-batch-book-card",
+  BATCH_BOOK_CARD_RESOURCE_URI,
+  {
+    description:
+      "Inline batch-book progress card shown after batch_book. Renders N bookings in a single card with per-row Booked/Failed pills, tracking numbers, and click-to-expand detail (tracking_url, order_id, amount charged).",
+    mimeType: "text/html",
+  },
+  async () => ({
+    contents: [{ uri: BATCH_BOOK_CARD_RESOURCE_URI, mimeType: "text/html", text: batchBookCardTemplate() }],
+  }),
+);
+
+server.registerResource(
+  "warp-batch-book-card-mcp",
+  BATCH_BOOK_CARD_MCP_RESOURCE_URI,
+  {
+    description:
+      "Inline batch-book progress card (MCP Apps) shown after batch_book. Single card, N rows, one booking status per row.",
+    mimeType: MCP_APP_MIME_TYPE,
+  },
+  async () => ({
+    contents: [{ uri: BATCH_BOOK_CARD_MCP_RESOURCE_URI, mimeType: MCP_APP_MIME_TYPE, text: batchBookCardMcpTemplate() }],
+  }),
+);
+
+const transport = new StdioServerTransport();
+await server.connect(transport);

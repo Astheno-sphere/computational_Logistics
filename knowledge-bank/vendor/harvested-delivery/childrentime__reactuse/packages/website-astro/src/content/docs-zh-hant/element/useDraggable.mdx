@@ -1,0 +1,130 @@
+---
+title: useDraggable 用法與示例
+sidebar_label: useDraggable
+description: "useDraggable 是一個 React hook，讓任何 HTML 或 SVG 元素可拖曳，追蹤 pointer、滑鼠與觸控輸入，並回傳 x 和 y 座標位置。"
+---
+# useDraggable
+
+元素拖动
+
+`useDraggable` 使 DOM 元素可透過滑鼠或觸控拖曳。它回傳當前位置（`x`、`y`）、拖曳狀態（`isDragging`）和需要套用到目標元素的樣式物件。支援約束拖曳範圍、初始位置設定和拖曳事件回呼。
+
+### 使用場景
+
+- 建構可拖曳的 UI 元素（如浮動按鈕、可移動面板）
+- 實作拖放排序或位置調整功能
+- 建立可由使用者自由定位的彈出視窗或工具列
+
+### 注意事項
+
+- **SSR 安全**：在伺服器端渲染時回傳初始位置和 `isDragging: false`。伺服器上不會附加事件監聽器。
+- **觸控支援**：同時處理滑鼠和觸控事件以實現跨裝置相容性。
+- **相關 hooks**：另請參閱 `useDropZone` 用於放置區域偵測，以及 `useMouse` 用於一般游標追蹤。
+
+## Usage
+
+### Fixed Demo
+
+```tsx live
+
+function Demo() {
+  const el = useRef<HTMLDivElement>(null);
+
+  const [initialValue, setInitialValue] = useState({ x: 200 / 2.2, y: 120 });
+
+  useEffect(() => {
+    setInitialValue({ x: window.innerWidth / 2.2, y: 120 });
+  }, []);
+
+  const [x, y, isDragging] = useDraggable(el, {
+    initialValue,
+    preventDefault: true,
+  });
+
+  return (
+    <div>
+      <p style={{ textAlign: "center" }}>查看浮動方框</p>
+      <div
+        ref={el}
+        style={{
+          position: "fixed",
+          cursor: "move",
+          zIndex: 10,
+          touchAction: "none",
+          padding: 10,
+          border: "solid 1px",
+          left: x,
+          top: y,
+        }}
+      >
+        {isDragging ? "正在拖拽！" : "👋 拖拽我！"}
+        <div>
+          我在 {Math.round(x)}, {Math.round(y)}
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+### Relative Demo
+
+```tsx live
+function Demo() {
+  const el = useRef<HTMLDivElement>(null);
+  const scope = useRef<HTMLDivElement>(null);
+
+  const initialValue = { x: 200 / 2.2, y: 120 };
+
+  const [x, y, isDragging, setPosition] = useDraggable(el, {
+    initialValue,
+    preventDefault: true,
+    containerElement: scope,
+  });
+
+  return (
+    <div
+      ref={scope}
+      style={{
+        width: 500,
+        height: 500,
+        border: "1px solid blue",
+        position: "relative",
+      }}
+    >
+      <button
+        style={{ textAlign: "center" }}
+        onClick={() => {
+          setPosition({
+            x: 250,
+            y: 250,
+          });
+        }}
+      >
+        設定位置
+      </button>
+      <div
+        ref={el}
+        style={{
+          position: "absolute",
+          cursor: "move",
+          zIndex: 10,
+          touchAction: "none",
+          padding: 10,
+          border: "solid 1px",
+          left: x,
+          top: y,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {isDragging ? "正在拖拽！" : "👋 拖拽我！"}
+        <div style={{ whiteSpace: "nowrap" }}>
+          我在 {Math.round(x)}, {Math.round(y)}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+%%API%%

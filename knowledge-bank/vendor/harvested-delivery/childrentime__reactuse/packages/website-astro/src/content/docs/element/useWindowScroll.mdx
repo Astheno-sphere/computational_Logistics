@@ -1,0 +1,52 @@
+---
+title: useWindowScroll – Element Hook Usage & Examples
+sidebar_label: useWindowScroll
+description: "useWindowScroll is a React hook that returns the browser window's current x and y scroll position as reactive state, updating on every scroll."
+---
+# useWindowScroll
+
+useWindowScroll is a React Hook that is used to get the scroll position of the browser window
+
+`useWindowScroll` returns the current horizontal (`x`) and vertical (`y`) scroll position of the browser window as a reactive state object. It listens to the `scroll` event on the window and updates the values whenever the user scrolls. This provides a simple way to access `window.scrollX` and `window.scrollY` as React state.
+
+### When to Use
+
+- Building scroll-progress indicators or reading-position trackers
+- Implementing parallax scrolling effects or scroll-linked animations
+- Showing or hiding UI elements (e.g., "back to top" buttons) based on the current scroll position
+
+### Notes
+
+- **SSR-safe**: Returns `{ x: 0, y: 0 }` during server-side rendering since `window` is not available.
+- **Performance**: The hook listens to the window `scroll` event. For high-frequency scroll tracking, consider combining with `requestAnimationFrame` or throttling in your consuming component.
+- See also `useSticky` for detecting when an element should become sticky, and `useWindowSize` for tracking viewport dimensions.
+
+## Usage
+
+```tsx live
+function Demo() {
+  return (
+    <div>
+      <div>
+        <iframe
+          src="https://codesandbox.io/embed/dreamy-lehmann-mzg96r?fontsize=14&hidenavigation=1&theme=dark"
+          style={{
+            width: "100%",
+            height: 500,
+            border: 0,
+            borderRadius: 4,
+            overflow: "hidden",
+          }}
+          title="dreamy-lehmann-mzg96r"
+          allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+          sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+        >
+        </iframe>
+      </div>
+    </div>
+  );
+};
+
+```
+
+%%API%%

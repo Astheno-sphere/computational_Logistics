@@ -1,0 +1,89 @@
+---
+title: useIntersectionObserver 用法与示例
+sidebar_label: useIntersectionObserver
+description: "useIntersectionObserver 是一个面向 Intersection Observer API 的 React hook，用于观察元素，并在其与视口的交叉状态变化时获取 entry 更新。"
+---
+# useIntersectionObserver
+
+使用 [Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) 跟踪元素
+
+`useIntersectionObserver` 将原生 [Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) 封装在 React 友好的接口中。它观察目标元素，并在元素与根容器的交叉状态改变时触发带有完整 `IntersectionObserverEntry` 数组的回调。该 hook 返回一个 `stop` 函数用于提前断开观察器。
+
+### 使用场景
+
+- 通过检测哨兵元素进入视口来实现无限滚动
+- 仅在图片或重量级组件变得可见时才进行懒加载
+- 在特定交叉阈值触发基于滚动的动画或分析事件
+
+### 注意事项
+
+- **可配置**：支持所有标准 `IntersectionObserverInit` 选项（`root`、`rootMargin`、`threshold`），精确控制回调触发时机。
+- **清理**：观察器在卸载时自动断开。如需手动断开，调用返回的 `stop` 函数。
+- 参见 `useElementVisibility` 了解此 hook 的简化布尔值封装。
+
+## Usage
+
+```tsx live
+function Demo() {
+  const Spacer = () => (
+    <div
+      style={{
+        width: "200px",
+        height: "300px",
+      }}
+    />
+  );
+
+  const options = {
+    root: null,
+    rootMargin: "0px",
+    threshold: 1,
+  };
+
+  const intersectionRef = useRef(null);
+  const [entry, setEntry] = useState<IntersectionObserverEntry[]>([]);
+  const stop = useIntersectionObserver(
+    intersectionRef,
+    (entry) => {
+      setEntry(entry);
+    },
+    options
+  );
+
+  return (
+    <div
+      style={{
+        width: "400px",
+        height: "400px",
+        overflow: "scroll",
+      }}
+    >
+      滚动我
+      <Spacer />
+      <button
+        onClick={() => {
+          stop();
+        }}
+      >
+        停止观察
+      </button>
+      <div
+        ref={intersectionRef}
+        style={{
+          width: "100px",
+          height: "100px",
+          padding: "20px",
+          background: "var(--c-hj-b)",
+        }}
+      >
+        {entry[0] && entry[0].intersectionRatio < 1
+          ? "被遮挡"
+          : "完全可见"}
+      </div>
+      <Spacer />
+    </div>
+  );
+}
+```
+
+%%API%%

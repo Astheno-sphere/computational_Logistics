@@ -1,0 +1,77 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+  }
+
+  button {
+    cursor: pointer;
+    letter-spacing: 0;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--focus) 55%, transparent);
+    outline-offset: 2px;
+  }
+}
+
+.app-shell { background: var(--app-bg); }
+
+.u-statusbar {
+  background: var(--u-color-primary-soft);
+  color: var(--u-color-text-muted);
+  border-top: 1px solid var(--u-color-border);
+}
+
+[data-theme="dark"] .u-statusbar {
+  background: var(--u-color-surface-active);
+  color: var(--u-color-text);
+}
+
+.u-statusbar .u-statusbar-hover:hover { background: rgba(0, 0, 0, 0.06); }
+[data-theme="dark"] .u-statusbar .u-statusbar-hover:hover { background: var(--u-color-surface-hover); }
+.surface-panel { background: var(--panel-bg); border: 1px solid var(--border); overflow: hidden; }
+.surface-header { background: var(--app-surface); border-bottom: 1px solid var(--border); color: var(--text); }
+.empty-state { color: var(--text-muted); background: var(--u-color-surface-subtle); }
+.sidebar-shell { background: var(--sidebar-bg); color: var(--text); }
+.sidebar-divider { border-color: var(--sidebar-border); }
+.workspace-card { background: var(--u-color-surface); border: 1px solid var(--u-color-border); }
+.subpanel { background: var(--u-color-surface); border: 1px solid var(--border); }
+.form-band { background: var(--panel-subtle); }
+.data-table thead { background: var(--u-color-surface-subtle); color: var(--text-muted); }
+.data-table tbody tr { border-color: var(--u-color-border); }
+.data-table tbody tr:hover { background: var(--u-color-surface-hover); }
+
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-thumb {
+  background: var(--u-color-scrollbar);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--u-color-scrollbar-hover); }
+.monaco-editor, .xterm { letter-spacing: 0; }

@@ -1,0 +1,118 @@
+---
+title: useCookie – State Hook Usage & Examples
+sidebar_label: useCookie
+description: "useCookie is a React hook to store, update, and delete a browser cookie by key — returns the value plus update and refresh functions, with js-cookie options."
+---
+# useCookie
+
+React hook that facilitates the storage, updating and deletion of values within the CookieStore
+
+`useCookie` manages a single browser cookie by key. It returns a tuple of `[cookieValue, updateCookie, refreshCookie]`. Call `updateCookie` with a string to set the cookie or with `undefined` to delete it. The `refreshCookie` function re-reads the cookie from the store, which is useful when the cookie may have been modified externally. Options are passed through to `js-cookie` for controlling path, domain, expiration, and other cookie attributes.
+
+### When to Use
+
+- Persisting user preferences (locale, theme, consent flags) in cookies for server-side access
+- Reading and writing authentication or session tokens stored in cookies
+- Synchronizing cookie state in a component when external code (analytics, third-party scripts) may also modify the cookie
+
+### Notes
+
+- **SSR considerations**: Pass a `defaultValue` when using SSR so the hook has a value before `document.cookie` is available on the client.
+- **Same-tab sync**: Updating a cookie in one component automatically re-renders sibling `useCookie` instances using the same key in the same tab. Cookies fire no native cross-tab event, so this does **not** propagate across tabs (unlike `useLocalStorage`/`useSessionStorage`).
+- **`refreshCookie`**: Only needed to pick up changes made *outside* the hook — a server `Set-Cookie`, a direct `document.cookie` write, or the CookieStore API. Sibling hook instances no longer need it.
+
+:::note
+`useCookie` instances that share the same key stay in sync within the same tab:
+calling `updateCookie` in one component re-renders the others automatically. (Earlier
+versions did not — a manual broadcast was required; that is no longer necessary.)
+:::
+
+## Usage
+
+```tsx live
+function Demo() {
+  const defaultOption = {
+    path: "/",
+  };
+
+  const cookieName = "cookie-key";
+  const [cookieValue, updateCookie, refreshCookie] = useCookie(
+    cookieName,
+    defaultOption,
+    "default-value"
+  );
+
+  const updateButtonClick = () => {
+    updateCookie("new-cookie-value");
+  };
+
+  const deleteButtonClick = () => {
+    updateCookie(undefined);
+  };
+
+  const change = () => {
+    if ("cookieStore" in window) {
+      const store = window.cookieStore as any;
+      store.set({ name: cookieName, value: "changed" });
+    } else {
+      document.cookie = `${cookieName}=changed; path=/`;
+    }
+  };
+
+  return (
+    <div>
+      <p>Click on the button to update or clear the cookie</p>
+      <p color="blue">cookie: {cookieValue || "no value"}</p>
+      <button onClick={updateButtonClick}>Update the cookie</button>
+      <button onClick={deleteButtonClick}>Clear the cookie</button>
+      <button onClick={change}>
+        Changing the cookie through other methods
+      </button>
+      <button onClick={refreshCookie}>Refresh the cookie</button>
+    </div>
+  );
+};
+
+```
+
+## Same-tab sync
+
+Two components using the same cookie key stay in sync within the tab — click a button in either panel and the other updates immediately, no manual broadcast and no reload:
+
+```tsx live noInline
+function CookiePanel({ label }) {
+  const [value, updateCookie] = useCookie("shared-demo-cookie", { path: "/" }, "A");
+  return (
+    <div
+      style={{
+        border: "1px solid var(--sl-color-gray-5, #ccc)",
+        borderRadius: 6,
+        padding: 12,
+        marginBottom: 8,
+      }}
+    >
+      <strong>{label}</strong> reads: <code>{value ?? "(empty)"}</code>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button onClick={() => updateCookie("A")}>Set A</button>
+        <button onClick={() => updateCookie("B")}>Set B</button>
+        <button onClick={() => updateCookie("C")}>Set C</button>
+        <button onClick={() => updateCookie(undefined)}>Clear</button>
+      </div>
+    </div>
+  );
+}
+
+function Demo() {
+  return (
+    <div>
+      <p>Click a button in either panel — the other updates in the same tab:</p>
+      <CookiePanel label="Component A" />
+      <CookiePanel label="Component B" />
+    </div>
+  );
+}
+
+render(<Demo />);
+```
+
+%%API%%

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.A1-x-Tech/mcp-yango-delivery",
+  "title": "Yango Delivery MCP",
+  "description": "MCP server for the Yango Delivery claims B2B API: price checks, delivery claims, courier tracking.",
+  "websiteUrl": "https://github.com/A1-x-Tech/mcp-yango-delivery#readme",
+  "repository": {
+    "url": "https://github.com/A1-x-Tech/mcp-yango-delivery",
+    "source": "github"
+  },
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "mcp-yango-delivery",
+      "version": "1.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "YANGO_DELIVERY_TOKEN",
+          "description": "OAuth Bearer token from the delivery cabinet (Integration tab -> \"Get token\"). Treat it as a secret.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "YANGO_DELIVERY_BASE_URL",
+          "description": "API root override.",
+          "isRequired": false,
+          "default": "https://b2b.taxi.yandex.net"
+        },
+        {
+          "name": "YANGO_DELIVERY_LANG",
+          "description": "Accept-Language header value (required by most claim methods).",
+          "isRequired": false,
+          "default": "en"
+        },
+        {
+          "name": "YANGO_DELIVERY_TIMEOUT_MS",
+          "description": "Per-request timeout in milliseconds.",
+          "isRequired": false,
+          "default": "60000"
+        },
+        {
+          "name": "YANGO_DELIVERY_MAX_RETRIES",
+          "description": "Retries on transient errors (429 always; 5xx/network for idempotent calls only).",
+          "isRequired": false,
+          "default": "3"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+---
+title: useKeyModifier – Browser Hook Usage & Examples
+sidebar_label: useKeyModifier
+description: "useKeyModifier is a React hook that reactively tracks whether a modifier key (Shift, Control, Alt, Meta, CapsLock) is currently pressed."
+---
+# useKeyModifier
+
+React Sensor Hook that tracks state of any of the [supported modifiers](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/getModifierState#browser_compatibility) - see Browser Compatibility notes
+
+`useKeyModifier` uses [`KeyboardEvent.getModifierState()`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/getModifierState) to reactively track whether a specific modifier key (Shift, Control, Alt, CapsLock, Meta, etc.) is currently pressed. It returns a boolean that updates on `keydown`, `keyup`, `mousedown`, and `mouseup` events. You can customize which events trigger updates and set an initial value.
+
+### When to Use
+
+- Building keyboard shortcut indicators that visually highlight when modifier keys are held
+- Showing different tooltips or cursor styles based on active modifier keys
+- Implementing modifier-aware interactions (e.g., Ctrl+Click for multi-select)
+
+### Notes
+
+- **SSR-safe**: Returns the `initial` value (default: `false`) during server-side rendering. No event listeners are attached on the server.
+- **Supported modifiers**: Supports `Alt`, `AltGraph`, `CapsLock`, `Control`, `Fn`, `FnLock`, `Meta`, `NumLock`, `ScrollLock`, `Shift`, `Symbol`, and `SymbolLock`. Not all modifiers are available in all browsers -- see [MDN compatibility](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/getModifierState#browser_compatibility).
+- **Event customization**: The default events (`mousedown`, `mouseup`, `keydown`, `keyup`) can be overridden via the `events` option.
+
+## Usage
+
+```tsx live
+function Demo() {
+  const Button = (props: { mode: boolean; name: string }) => {
+    const { mode, name } = props;
+    return (
+      <button style={mode ? { background: "var(--c-input-border-focus)" } : {}}>
+        {name}
+      </button>
+    );
+  };
+
+  const capsLock = useKeyModifier("CapsLock");
+  const numLock = useKeyModifier("NumLock");
+  const scrollLock = useKeyModifier("ScrollLock");
+  const shift = useKeyModifier("Shift");
+  const control = useKeyModifier("Control");
+  const alt = useKeyModifier("Alt");
+
+  return (
+    <div>
+      <div style={{ marginBottom: 10 }}>
+        <Button mode={capsLock} name="CapsLock" />
+        <Button mode={numLock} name="NumLock" />
+        <Button mode={scrollLock} name="ScrollLock" />
+      </div>
+      <div>
+        <Button mode={shift} name="Shift" />
+        <Button mode={control} name="Control" />
+        <Button mode={alt} name="Alt" />
+      </div>
+    </div>
+  );
+};
+
+```
+
+%%API%%

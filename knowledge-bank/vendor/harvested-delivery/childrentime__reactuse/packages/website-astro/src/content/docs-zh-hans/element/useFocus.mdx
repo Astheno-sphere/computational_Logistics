@@ -1,0 +1,84 @@
+---
+title: useFocus 用法与示例
+sidebar_label: useFocus
+description: "useFocus 是一个 React hook，用于跟踪和控制元素的焦点状态。它返回一个 isFocused 布尔值，以及一个用于聚焦或失焦的 setter 函数。"
+---
+# useFocus
+
+跟踪元素焦点状态的 React Hook
+
+`useFocus` 跟踪和控制特定 DOM 元素的焦点状态。它返回一个 `[isFocused, setFocused]` 元组——表示元素当前是否获得焦点的布尔值和程序化聚焦或失焦的函数。你可以选择传入 `true` 作为第二个参数在挂载时自动聚焦元素。
+
+### 使用场景
+
+- 构建需要跟踪和程序化控制焦点的无障碍表单组件
+- 在模态对话框、向导或多步骤表单中实现焦点管理
+- 创建响应焦点状态变化的焦点指示器或视觉反馈
+
+### 注意事项
+
+- **双向绑定**：返回的设置函数在底层调用 `element.focus()` 或 `element.blur()`，因此 DOM 和 React 状态保持同步。
+- **初始焦点**：传入 `true` 作为 `initialValue` 参数可在挂载后立即聚焦元素。
+- 参见 `useActiveElement` 了解在整个文档中全局跟踪哪个元素获得焦点。
+
+## Usage
+
+```tsx live
+
+function Demo() {
+  const text = useRef<HTMLParagraphElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+
+  const [paragraphFocus, setParagraphFocus] = useFocus(text);
+  const [inputFocus, setInputFocus] = useFocus(input, true);
+  const [buttonFocus, setButtonFocus] = useFocus(button);
+  return (
+    <div>
+      <p ref={text} style={paragraphFocus ? { opacity: 0.5 } : {}} tabIndex={0}>
+        可以获得焦点的段落
+      </p>
+      <input ref={input} placeholder="可以获得焦点的输入框" />
+      <br />
+      <br />
+      <button ref={button} style={buttonFocus ? { opacity: 0.5 } : {}}>
+        可以获得焦点的按钮
+      </button>
+      <br />
+      <br />
+      <hr />
+      <p style={{ height: "2rem" }}>
+        {paragraphFocus && "段落获得了焦点"}
+        {inputFocus && "输入框获得了焦点"}
+        {buttonFocus && "按钮获得了焦点"}
+      </p>
+      <div>
+        <button
+          onClick={() => {
+            setParagraphFocus(!paragraphFocus);
+          }}
+        >
+          聚焦文本
+        </button>
+        <button
+          onClick={() => {
+            setInputFocus(!inputFocus);
+          }}
+        >
+          聚焦输入框
+        </button>
+        <button
+          onClick={() => {
+            setButtonFocus(!buttonFocus);
+          }}
+        >
+          聚焦按钮
+        </button>
+      </div>
+    </div>
+  );
+};
+
+```
+
+%%API%%

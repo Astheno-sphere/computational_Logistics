@@ -1,0 +1,73 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.A1-x-Tech/mcp-yandex-dostavka",
+  "title": "Yandex Delivery MCP",
+  "description": "MCP server for the Yandex Delivery B2B API: express claims, tracking, NDD/pickup-point orders.",
+  "websiteUrl": "https://github.com/A1-x-Tech/mcp-yandex-dostavka#readme",
+  "repository": {
+    "url": "https://github.com/A1-x-Tech/mcp-yandex-dostavka",
+    "source": "github"
+  },
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "mcp-yandex-dostavka",
+      "version": "1.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "YANDEX_DELIVERY_TOKEN",
+          "description": "Shared Bearer token for both contours (dostavka.yandex.ru cabinet, «Интеграции» → «Получить токен»). Treat it as a secret.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "YANDEX_DELIVERY_EXPRESS_TOKEN",
+          "description": "Express-contour override of the shared token.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "YANDEX_DELIVERY_PLATFORM_TOKEN",
+          "description": "Platform-contour override of the shared token.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "YANDEX_DELIVERY_EXPRESS_BASE_URL",
+          "description": "Express API root override.",
+          "isRequired": false,
+          "default": "https://b2b.taxi.yandex.net"
+        },
+        {
+          "name": "YANDEX_DELIVERY_PLATFORM_BASE_URL",
+          "description": "Platform API root; set https://b2b.taxi.tst.yandex.net for the test contour.",
+          "isRequired": false,
+          "default": "https://b2b-authproxy.taxi.yandex.net"
+        },
+        {
+          "name": "YANDEX_DELIVERY_LANG",
+          "description": "Accept-Language header (required by the express methods).",
+          "isRequired": false,
+          "default": "ru"
+        },
+        {
+          "name": "YANDEX_DELIVERY_TIMEOUT_MS",
+          "description": "Per-request timeout in milliseconds.",
+          "isRequired": false,
+          "default": "60000"
+        },
+        {
+          "name": "YANDEX_DELIVERY_MAX_RETRIES",
+          "description": "Retries on transient errors (429 always; 5xx/network for idempotent calls only).",
+          "isRequired": false,
+          "default": "3"
+        }
+      ]
+    }
+  ]
+}

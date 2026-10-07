@@ -1,0 +1,25 @@
+[project]
+name = "claw-tsaver"
+version = "0.0.1"
+description = "Token-optimization proxy MCP server for OpenClaw users."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "mcp",
+    "fastapi",
+    "uvicorn",
+    "tiktoken",
+]
+
+[project.scripts]
+claw-tsaver = "claw_tsaver.__main__:main"
+claw-tsaver-mcp = "claw_tsaver.__main__:run_mcp"
+claw-tsaver-dashboard = "claw_tsaver.__main__:run_dashboard"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/claw_tsaver"]

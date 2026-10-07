@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Metadata consistency
+        run: node scripts/check-consistency.mjs
+
+      # Catches a broken MCP server before it can ever reach a release tag.
+      - name: MCP server handshake
+        run: |
+          OUT=$(printf '%s\n%s\n%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"elicitation":{}},"clientInfo":{"name":"ci","version":"0"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+            | node dist/mcp.js 2>/dev/null)
+          echo "$OUT" | node -e '
+            let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{
+              const L=d.trim().split("\n").map(l=>{try{return JSON.parse(l)}catch{return null}}).filter(Boolean);
+              const tools=L.find(l=>l.id===2)?.result?.tools ?? [];
+              if (!tools.length) { console.error("✗ tools/list returned nothing"); process.exit(1); }
+              if (!tools.some(t=>t.name==="submit_order")) { console.error("✗ submit_order missing"); process.exit(1); }
+              console.log("✓ MCP server responded with "+tools.length+" tools");
+            });'
