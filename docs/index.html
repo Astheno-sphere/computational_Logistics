@@ -57,13 +57,22 @@ figcaption span { color: var(--muted); font-size: 14px; flex: 1 1 320px; min-wid
 .btn { font: 500 13px/1 var(--mono); padding: 9px 12px; border: 1px solid var(--fjord); border-radius: 4px; text-decoration: none; color: var(--fjord); }
 .btn.primary { background: var(--fjord); color: var(--surface); }
 .funnel { display: grid; gap: 6px; margin: 0 0 24px; }
-.level { display: grid; grid-template-columns: 4.5em 1fr; gap: 16px; align-items: baseline; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+.level { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; }
+.level summary { display: grid; grid-template-columns: 4.5em 1fr auto; gap: 16px; align-items: baseline; padding: 12px 16px; cursor: pointer; list-style: none; }
+.level summary::-webkit-details-marker { display: none; }
+.level summary::after { content: "+"; font: 500 16px/1 var(--mono); color: var(--fjord); }
+.level[open] summary::after { content: "\2212"; }
+.level summary:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; }
 .level b { font: 500 13px/1.4 var(--mono); color: var(--fjord); }
-.level div { min-width: 0; }
-.level em { font-style: normal; color: var(--muted); font-size: 14px; display: block; }
-.level:nth-child(1) { margin-inline: 0; } .level:nth-child(2) { margin-inline: 2%; } .level:nth-child(3) { margin-inline: 4%; }
+.level summary div { min-width: 0; font-weight: 600; }
+.level summary em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 14px; display: block; }
+.level ul { margin: 0; padding: 0 16px 14px calc(4.5em + 32px); display: grid; gap: 8px; font-size: 14px; }
+.level li { min-width: 0; } .level li span { color: var(--muted); display: block; }
+.level:nth-child(2) { margin-inline: 2%; } .level:nth-child(3) { margin-inline: 4%; }
 .level:nth-child(4) { margin-inline: 6%; } .level:nth-child(5) { margin-inline: 8%; }
 .level.thesis { margin-inline: 10%; background: var(--fjord-soft); border-color: var(--fjord); }
+.funnel-tools { display: flex; gap: 8px; margin: 0 0 10px; }
+.funnel-tools button { font: 500 12px/1 var(--mono); padding: 7px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: var(--ink); cursor: pointer; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; min-width: 0; display: grid; gap: 6px; align-content: start; }
 .card h3 { margin: 0; font: 700 16px/1.3 var(--display); }
@@ -79,7 +88,7 @@ tr:last-child td { border-bottom: 0; }
 .samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
 .samples figure { margin: 0; } .samples img { background: #fff; }
 footer { padding-block: 32px 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
-@media (max-width: 560px) { .level { grid-template-columns: 1fr; gap: 2px; } .level, .level.thesis { margin-inline: 0 !important; } }
+@media (max-width: 560px) { .level summary { grid-template-columns: 1fr auto; gap: 2px 12px; } .level summary b { grid-column: 1 / -1; } .level ul { padding-left: 16px; } .level, .level.thesis { margin-inline: 0 !important; } }
 </style>
 </head>
 <body>
@@ -121,14 +130,15 @@ footer { padding-block: 32px 48px; border-top: 1px solid var(--line); color: var
 
   <section id="theory">
     <h2><small>03 · Theory</small>Theory funnel</h2>
-    <p class="note">Broad paradigms narrow to the theories each article tests. Each level states what it gives the thesis.</p>
-    <div class="funnel">
-      <div class="level"><b>L1</b><div>Sustainable mobility and backcasting<em>Robinson 1982; Banister 2008; Hickman and Banister 2014</em></div></div>
-      <div class="level"><b>L2</b><div>Decision making under deep uncertainty<em>Lempert et al. 2003; Bryant and Lempert 2010; Haasnoot et al. 2013; Kwakkel 2017</em></div></div>
-      <div class="level"><b>L3</b><div>Random utility, crowding and new mobility<em>McFadden 1974; Train 2009; Tirachini et al. 2013, 2017; Tirachini 2020</em></div></div>
-      <div class="level"><b>L4</b><div>Agent-based transport simulation and emulation<em>Horni, Nagel and Axhausen 2016; Grimm et al. 2020; ML emulation of ABMs</em></div></div>
-      <div class="level"><b>L5</b><div>LLM agents and decision models<em>Park et al. 2023; AgentSociety 2025; LLM2Jev 2026</em></div></div>
-      <div class="level thesis"><b>Thesis</b><div>A1 behaviour · A2 DCM + ABM · A3 exploration · A4 backcasting</div></div>
+    <p class="note">Broad paradigms narrow to the theories each article tests. Open a level to see its sources and what each gives the thesis.</p>
+    <div class="funnel-tools"><button type="button" id="fopen">Expand all</button><button type="button" id="fclose">Collapse all</button></div>
+    <div class="funnel" id="funnel">
+      <details class="level"><summary><b>L1</b><div>Paradigm: sustainable mobility and backcasting<em>Why plan to 2050 targets instead of forecasts</em></div></summary><ul><li>Robinson (1982), Energy backcasting, Energy Policy<span>Start from a desirable future and work back to the policies that reach it</span></li><li>Banister (2008), The sustainable mobility paradigm, Transport Policy<span>Manage demand and accessibility, not only speed</span></li><li>Hickman and Banister (2014), Transport, Climate Change and the City<span>Transport backcasting studies; template for A4</span></li></ul></details>
+      <details class="level"><summary><b>L2</b><div>Deep uncertainty: robustness, discovery, pathways<em>How to decide without one predicted future</em></div></summary><ul><li>Lempert, Popper and Bankes (2003), Shaping the Next One Hundred Years, RAND<span>Robust decision making across many futures</span></li><li>Bryant and Lempert (2010), Thinking inside the box, TFSC<span>Scenario discovery: the futures in which a policy fails</span></li><li>Haasnoot et al. (2013), Dynamic adaptive policy pathways, GEC<span>Signposts and triggers; extends backcasting over time</span></li><li>Kwakkel (2017), The Exploratory Modeling Workbench, EMS<span>The software behind dmdu-explore</span></li></ul></details>
+      <details class="level"><summary><b>L3</b><div>Behaviour: random utility, crowding, new mobility<em>What travellers value and how it shifts</em></div></summary><ul><li>McFadden (1974); Ben-Akiva and Lerman (1985); Train (2009)<span>Logit and mixed logit; estimation for A1</span></li><li>Tirachini, Hensher and Rose (2013); Tirachini et al. (2017), TR Part A<span>Crowding costs and estimated crowding multipliers</span></li><li>Tirachini (2020), Ride-hailing review, Transportation<span>Substitution from public transport; a new-mobility uncertainty</span></li><li>Tirachini and Antoniou (2020); Fielbaum, Tirachini and Alonso-Mora (2024)<span>Automated and on-demand public transport as policy levers</span></li></ul></details>
+      <details class="level"><summary><b>L4</b><div>Simulation: agent-based transport models<em>How micro-choices become system outcomes</em></div></summary><ul><li>Horni, Nagel and Axhausen (2016), MATSim book<span>The reference large-scale transport ABM (A2)</span></li><li>Grimm et al. (2020), ODD protocol, JASSS<span>How the ABM is documented</span></li><li>ML emulation of ABMs (arXiv 2005.02077); surrogates and XAI (arXiv 2510.16742)<span>Emulators that make large ensembles affordable (A3)</span></li></ul></details>
+      <details class="level"><summary><b>L5</b><div>Frontier: LLM agents and decision models<em>What is new and still unproven</em></div></summary><ul><li>Park et al. (2023), Generative agents, UIST<span>Memory, reflection and planning</span></li><li>AgentSociety (arXiv 2502.08691)<span>LLM agents at city scale</span></li><li>LLM2Jev (arXiv 2610.02076)<span>Decision models that return choice probabilities (tier 2)</span></li></ul></details>
+      <details class="level thesis"><summary><b>Thesis</b><div>Four articles<em>Where the funnel lands</em></div></summary><ul><li>A1 Behaviour<span>L3 and L5: time, cost, crowding, technology; LLM choice as benchmark</span></li><li>A2 DCM + ABM<span>L3 and L4: estimated choices driving agents; validation</span></li><li>A3 Exploration<span>L2 and L4: robustness and scenario discovery with emulators</span></li><li>A4 Backcasting<span>L1 and L2: milestones and adaptive pathways with agencies</span></li></ul></details>
     </div>
     <figure>
       <div class="shot"><img src="diagrams/theory-funnel.png" alt="Theory funnel: columns L1 to L5 and thesis, one row per article, arrows showing which theories feed each article" loading="lazy"></div>
@@ -177,5 +187,10 @@ footer { padding-block: 32px 48px; border-top: 1px solid var(--line); color: var
   </section>
 </main>
 <footer><div class="wrap">MIT © 2026 Arshad Akhtar Abbasia. Third-party material keeps its own license. Diagrams made with <a href="https://github.com/tt-a1i/archify">Archify</a>.</div></footer>
+<script>
+for (const [id, open] of [["fopen", true], ["fclose", false]])
+  document.getElementById(id).addEventListener("click", () =>
+    document.querySelectorAll("#funnel details").forEach(d => { d.open = open; }));
+</script>
 </body>
 </html>
