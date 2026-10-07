@@ -1,0 +1,66 @@
+# Bagel for agents
+
+Instructions for AI agents asked to set up, use, or develop Bagel.
+
+## Set up Bagel for a user
+
+1. Requires Docker. Pick the service matching their stack (see the table in
+   README Quickstart): `ros2-kilted`, `ros2-jazzy`, `ros2-jazzy-jev`, `ros2-iron`, `ros2-humble`,
+   `ros1-noetic`, `ros1-noetic-cv`, `px4`, `ardupilot`, `betaflight`, or `iot`.
+2. Start it: `docker compose run --service-ports <service>` and wait for
+   `Uvicorn running on http://0.0.0.0:8000`.
+   - Port 8000 taken? `MCP_SERVER_PORT=8100 docker compose run --service-ports
+     <service>` and use 8100 below.
+3. Connect the MCP client to `http://localhost:8000/sse` (SSE transport).
+   Claude Code: `claude mcp add --transport sse bagel http://localhost:8000/sse`
+4. Verify with a smoke test on bundled data:
+   "Summarize the metadata of the ROS2 bag ./data/sample/ros2/mcap".
+5. To analyze the user's own files, mount them: uncomment `volumes` under the
+   chosen service in `compose.yaml` before starting.
+
+## Use Bagel well
+
+- Answers come from DuckDB SQL over real messages. Do not do the math yourself;
+  ask Bagel and show the user the generated query.
+- Call `describe_data_source` first, and `describe_topic` before writing predicates
+  (field paths and units vary by source).
+- Reduction etiquette: `preview_pipeline` first, report detected events and
+  kept seconds, get user confirmation, then `run_pipeline`.
+- Output artifacts are written under the artifacts directory; tools return the
+  paths.
+- Anomaly detection (beta): `src.pipeline.gates.anomaly` + `snippet.mcap` +
+  `write_annotations` + an `upload.*` task keeps only anomalous slices with a JSON
+  label. Calibrate with `preview_anomalies` first (rates and errors as `signals`,
+  never positions or orientations); the `compose/anomaly_pipeline` capability walks
+  the steps. Needs `TYPESAFE_API_KEY`; see `doc/runbooks/anomaly_detection.md`.
+
+## Develop on Bagel
+
+- Runtime-independent tests run on the host: `uv sync` then
+  `uv run pytest test/*.py test/pipeline test/sink` (full list in
+  `.github/workflows/test.yaml`, job `host-tests`).
+- Service-bound tests run inside the images:
+  `docker compose build <service> --build-arg DEV_MODE=true` then
+  `docker compose run --rm <service> uv run pytest ./test`.
+- Every test file must be reachable by CI: `test/test_ci_reachability.py`
+  fails the build otherwise (add new paths to `host-tests` or a Dockerfile).
+- Lint: `uv run ruff check` and `uv run ruff format` before committing.
+- Versioning: image tags and `server.json` follow `pyproject.toml`; published
+  semver image tags are immutable (bump the version instead of retagging).
+  This makes a bump MANDATORY whenever a change alters what an image *is* —
+  its contents or its platforms — not just when the Python code changes:
+  `publish.yaml` skips any semver tag that already exists, so without a bump
+  the rebuilt image never reaches the tag `server.json` pins and the MCP
+  registry keeps serving the old one. (This is exactly what nearly sank the
+  arm64 rollout: 2.4.0 was already published amd64-only, so the multi-arch
+  manifest would have been skipped until 2.4.1.)
+- `ros2-kilted` publishes as a multi-arch (amd64 + arm64) manifest via the
+  dedicated `kilted-amd64` / `publish-arm64` / `merge-manifests` jobs; the
+  other services are amd64-only from the `docker` matrix. Those three jobs are
+  the only place `ros2-kilted`'s user-facing tags are created — the per-arch
+  legs push run-scoped staging tags and nothing else. When setting a user up on
+  an arm64 host, steer them to `ros2-kilted`: the amd64-only services need
+  emulation, which Docker Desktop provides but plain Docker Engine on arm64
+  Linux (Raspberry Pi, Jetson, Graviton) does not — there they fail outright
+  with `exec format error` until `docker run --privileged --rm
+  tonistiigi/binfmt --install amd64` has been run.
