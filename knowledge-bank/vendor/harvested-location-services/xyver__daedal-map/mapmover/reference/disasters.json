@@ -1,0 +1,71 @@
+{
+  "_description": "Disaster overlay keywords for detecting user intent to view disaster data",
+  "_note": "Keywords are matched case-insensitively against user queries to determine overlay activation",
+  "_schema_version": "1.0.0",
+
+  "overlays": {
+    "earthquakes": {
+      "keywords": ["earthquake", "quake", "seismic", "tremor", "richter"],
+      "api_endpoint": "/api/earthquakes/geojson",
+      "severity_field": "magnitude",
+      "semantic_filters": {
+        "significant": {"field": "magnitude", "min": 6.0, "label": "magnitude >= 6.0"},
+        "major": {"field": "magnitude", "min": 7.0, "label": "magnitude >= 7.0"},
+        "severe": {"field": "magnitude", "min": 6.5, "label": "magnitude >= 6.5"}
+      }
+    },
+    "hurricanes": {
+      "keywords": ["hurricane", "storm", "cyclone", "typhoon", "tropical"],
+      "api_endpoint": "/api/hurricanes/geojson",
+      "severity_field": "category",
+      "semantic_filters": {
+        "major": {"field": "category", "min": 3, "label": "category >= 3"}
+      }
+    },
+    "volcanoes": {
+      "keywords": ["volcano", "eruption", "volcanic", "lava"],
+      "api_endpoint": "/api/volcanoes/geojson",
+      "severity_field": "vei",
+      "semantic_filters": {
+        "significant": {"field": "vei", "min": 3, "label": "VEI >= 3"},
+        "major": {"field": "vei", "min": 4, "label": "VEI >= 4"}
+      }
+    },
+    "tsunamis": {
+      "keywords": ["tsunami", "tidal wave"],
+      "api_endpoint": "/api/tsunamis/geojson",
+      "severity_field": "max_water_height",
+      "semantic_filters": {
+        "significant": {"field": "max_water_height", "min": 3.0, "label": "wave height >= 3 m"},
+        "major": {"field": "max_water_height", "min": 10.0, "label": "wave height >= 10 m"}
+      }
+    },
+    "tornadoes": {
+      "keywords": ["tornado", "twister", "funnel cloud"],
+      "api_endpoint": "/api/tornadoes/geojson",
+      "severity_field": "scale",
+      "semantic_filters": {
+        "significant": {"field": "scale", "min": 2, "label": "scale >= 2"},
+        "major": {"field": "scale", "min": 4, "label": "scale >= 4"}
+      }
+    },
+    "wildfires": {
+      "keywords": ["wildfire", "fire", "blaze", "burn", "bushfire"],
+      "api_endpoint": "/api/wildfires/geojson",
+      "severity_field": "area_burned",
+      "semantic_filters": {
+        "significant": {"field": "area_km2", "min": 100.0, "label": "area >= 100 km2"},
+        "major": {"field": "area_km2", "min": 500.0, "label": "area >= 500 km2"}
+      }
+    },
+    "floods": {
+      "keywords": ["flood", "flooding", "inundation"],
+      "api_endpoint": "/api/floods/geojson",
+      "severity_field": null,
+      "semantic_filters": {
+        "significant": {"field": "severity", "min": 3, "label": "severity >= 3"},
+        "major": {"field": "severity", "min": 4, "label": "severity >= 4"}
+      }
+    }
+  }
+}

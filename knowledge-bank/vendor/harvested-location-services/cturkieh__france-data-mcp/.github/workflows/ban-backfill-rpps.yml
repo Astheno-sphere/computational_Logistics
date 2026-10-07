@@ -1,0 +1,57 @@
+# Drain BAN RPPS — appelant du corps unique `ban-backfill.yml` (workflow_call).
+# Le RÉSIDU mensuel de `rpps` est géocodé dans le cache `geocoded_addresses` ;
+# les coords sont POSÉES dans `rpps` au prochain cron via `ban_join`
+# (décalage d'UNE passe, par design ; cf. docs/plans/ban-join.md).
+#
+# DEUX déclencheurs (étape 2 du cadrage docs/plans/automatisation-backfill-ban.md) :
+#  - AUTO : à la complétion RÉUSSIE du cron « Ingest RPPS Annuaire Sante ANS »
+#    (`workflow_run`) → zéro-clic, le résidu mensuel est drainé sans intervention ;
+#  - MANUEL : `workflow_dispatch` (bouton de secours + canari via input `max`).
+name: Backfill BAN RPPS (auto + manuel)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max:
+        description: "Nb max de NOUVELLES adresses géocodées ce run (canari, ex. 1000). Vide = drainage complet."
+        type: string
+        required: false
+        default: ""
+  # AUTO post-ingestion : déclenché à la complétion du cron RPPS. La garde
+  # `conclusion == 'success'` (niveau job) évite de drainer après une ingestion
+  # ÉCHOUÉE (données non fiables). Sur cet événement, `inputs.max` est vide → drain complet.
+  workflow_run:
+    workflows: ["Ingest RPPS Annuaire Sante ANS"]
+    types: [completed]
+
+# Redéclarées ICI : GitHub calcule les permissions du job appelant, le workflow
+# appelé ne peut qu'en hériter (ou en avoir moins) — les omettre rendrait
+# l'alerte et la fermeture d'issue muettes.
+permissions:
+  contents: read
+  issues: write
+
+# JAMAIS concurrent du cron RPPS : son swap atomique renommerait `rpps` en pleine
+# énumération keyset (la RPC résout `FROM rpps` PAR NOM à chaque page → pages
+# incohérentes inter-tables). Même groupe que ingest-rpps.yml → ils se sérialisent.
+concurrency:
+  group: ingest-rpps
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    # MANUEL → toujours ; AUTO (workflow_run) → seulement si l'ingestion a RÉUSSI
+    # (une ingestion échouée n'a pas produit de nouvelles données fiables à géocoder).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/ban-backfill.yml
+    secrets: inherit
+    with:
+      source: rpps
+      source-label: RPPS
+      issue-labels: backfill-failure,rpps
+      failure-modes: "Géocodage BAN indisponible ou lent sur les DEUX hôtes (data.geopf.fr puis repli api-adresse — réessayer plus tard), RPC d'énumération keyset absente (migration T-format non appliquée), secrets Supabase manquants (preflight)."
+      killed-hint: "Le drain BAN remplit le cache geocoded_addresses au fil de l'eau (idempotent) : relancer via workflow_dispatch pour finir le drain ; les coords sont posées dans la table au prochain cron (ban_join)."
+      # Vide sur `workflow_run` (contexte `inputs` absent) → drain complet.
+      max: ${{ inputs.max || '' }}

@@ -1,0 +1,18 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      APOGEOAPI_KEY:
+        type: string
+        description: "Your ApogeoAPI key from app.apogeoapi.com"
+    required:
+      - APOGEOAPI_KEY
+  commandFunction: |-
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@apogeoapi/mcp"],
+      env: {
+        APOGEOAPI_KEY: config.APOGEOAPI_KEY
+      }
+    })

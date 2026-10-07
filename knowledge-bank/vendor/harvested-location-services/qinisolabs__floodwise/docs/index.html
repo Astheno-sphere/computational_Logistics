@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>floodwise — England flood-risk by postcode for AI agents</title>
+<meta name="description" content="floodwise gives AI agents the Environment Agency's long-term flood-risk band for an England postcode — from official open data, not guesses. England only, area-level, not advice. MCP server + TypeScript library by Qiniso." />
+<link rel="icon" href="logo.svg" type="image/svg+xml" />
+<meta property="og:image" content="https://qinisolabs.github.io/floodwise/logo.svg" />
+<meta name="twitter:image" content="https://qinisolabs.github.io/floodwise/logo.svg" />
+<meta name="twitter:card" content="summary" />
+<meta property="og:type" content="website" />
+<style>
+  :root {
+    --emerald: #10b981; --emerald-dark: #047857; --ink: #0b1220; --muted: #5b6472;
+    --bg: #ffffff; --card: #f6f8f7; --line: #e3e8e5; --warn: #b45309;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+  header { padding: 72px 0 40px; text-align: center; }
+  .logo { width: 84px; height: 84px; }
+  h1 { font-size: 2.6rem; margin: 18px 0 6px; letter-spacing: -0.02em; }
+  .tag { font-size: 1.18rem; color: var(--emerald-dark); font-weight: 600; margin: 0 0 14px; }
+  .lede { font-size: 1.12rem; color: var(--muted); max-width: 640px; margin: 0 auto 26px; }
+  .cta { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn { display: inline-block; padding: 11px 20px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+  .btn-primary { background: linear-gradient(135deg, var(--emerald), var(--emerald-dark)); color: #fff; }
+  .btn-ghost { border: 1px solid var(--line); color: var(--ink); }
+  section { padding: 36px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 1.5rem; letter-spacing: -0.01em; }
+  .stat { display: flex; gap: 28px; flex-wrap: wrap; margin: 18px 0; }
+  .stat div { flex: 1 1 200px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .stat b { display: block; font-size: 2rem; color: var(--emerald-dark); line-height: 1.1; }
+  .stat span { color: var(--muted); font-size: 0.95rem; }
+  .warn { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 16px 20px; margin: 18px 0; }
+  .warn b { color: var(--warn); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { background: var(--ink); color: #e6edf3; padding: 16px 18px; border-radius: 10px; overflow-x: auto; font-size: 0.9rem; }
+  table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); font-size: 0.95rem; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 16px; }
+  .mod { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .mod h3 { margin: 0 0 4px; font-size: 1.02rem; }
+  .mod p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+  footer { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 40px 0 64px; border-top: 1px solid var(--line); }
+  a { color: var(--emerald-dark); }
+  .note { color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" src="logo.svg" alt="Qiniso" />
+    <h1>floodwise</h1>
+    <p class="tag">England flood-risk by postcode for AI agents.</p>
+    <p class="lede">Ask an LLM "what's the flood risk at this postcode?" and it answers confidently — but it cannot know: per-postcode flood risk lives in a government dataset, not a model's memory. floodwise looks it up in the Environment Agency's official data and returns the real long-term risk band, or an honest "not found". <em>"Qiniso" means "truth" in Zulu.</em></p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#add">Add to Claude</a>
+      <a class="btn btn-ghost" href="https://github.com/qinisolabs/floodwise">GitHub</a>
+    </div>
+  </header>
+
+  <section>
+    <div class="warn">
+      <p style="margin:0"><b>Read this first.</b> floodwise covers <b>England only</b> (Environment Agency data — not Wales/Scotland/NI). The risk is <b>area-level, not property-level</b>, and reflects <b>long-term</b> risk, not a live flood warning. It is <b>not insurance, underwriting, surveying or professional advice.</b></p>
+    </div>
+    <h2>Why it exists</h2>
+    <p>Long-term flood risk for a specific postcode is exact, curated, quarterly-changing reference data — exactly what a language model cannot recall. Asked anyway, it will pattern-match a plausible "low risk" or "high risk" and state it with full confidence. For a home-insurance triage, an onboarding check, or a property question, a silently invented risk level is a real problem. floodwise returns the Environment Agency's official indication by lookup, or an honest "not found".</p>
+    <div class="stat">
+      <div><b>4</b><span>risk bands (High / Medium / Low / Very Low) for the area around a postcode, from official EA data.</span></div>
+      <div><b>OGL</b><span>open data — Environment Agency "Flood risk: postcode search tool", refreshed ~quarterly.</span></div>
+      <div><b>0</b><span>guesses — out-of-coverage or unknown postcodes return an honest "not found", never a fabricated risk.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tools</h2>
+    <div class="grid">
+      <div class="mod"><h3>flood_risk_by_postcode</h3><p>The EA long-term flood-risk band for an England postcode, address counts per band, and a separate groundwater indication. Honest "not found" outside England.</p></div>
+      <div class="mod"><h3>validate_postcode</h3><p>Deterministic UK postcode format check + outcode/incode split. No lookup.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Use it</h2>
+    <p class="note">As a library:</p>
+<pre>npm i floodwise
+
+import { floodRiskByPostcode, validatePostcode } from "floodwise";
+
+floodRiskByPostcode("SW1A 1AA").headlineRisk;  // "Very Low"
+floodRiskByPostcode("EH1 1AA").found;          // false — Scotland, out of EA coverage (no guess)
+validatePostcode("ec1a1bb").outcode;           // "EC1A"</pre>
+  </section>
+
+  <section id="add">
+    <h2>Add it to Claude</h2>
+    <p><strong>Easiest — one click, no config file.</strong> Download the Desktop Extension and open it; Claude Desktop installs it in one click. All flood data is bundled, so it works straight away — no key, no setup:</p>
+    <p><a class="btn btn-primary" href="https://github.com/qinisolabs/floodwise/releases/latest/download/floodwise.mcpb">Download for Claude Desktop (.mcpb)</a></p>
+    <h2 style="margin-top:30px">Or add it manually (npx)</h2>
+    <p>Runs locally over stdio — no key, no login. Add this under <code>mcpServers</code> in your client config and restart:</p>
+    <pre>{
+  "mcpServers": {
+    "floodwise": { "command": "npx", "args": ["-y", "floodwise"] }
+  }
+}</pre>
+    <p class="note">A hosted edge endpoint is planned; the full England dataset is moved to Cloudflare D1 first (the bundle is too large for an in-Worker dataset).</p>
+  </section>
+
+  <section>
+    <h2>What it is <em>not</em></h2>
+    <p class="note">floodwise reports the Environment Agency's long-term, area-level flood-risk indication for <strong>England</strong> postcodes. It is <strong>not</strong> insurance, underwriting, surveying or professional advice; not a property-level survey; not a live flood warning; and not Wales/Scotland/NI. It excludes flooding from highway drains, sewers and overland flow. Unknown or out-of-coverage postcodes return an honest "not found" — never a fabricated risk level.</p>
+  </section>
+
+</div>
+
+<footer>
+  floodwise — verified, trustworthy data tools for AI agents.<br />
+  Contains public sector information licensed under the Open Government Licence v3.0. © Environment Agency.<br />
+  Open source · <a href="https://github.com/qinisolabs/floodwise">github.com/qinisolabs/floodwise</a> ·
+  <a href="https://www.npmjs.com/package/floodwise">npm</a> ·
+  <a href="https://github.com/qinisolabs">Qiniso</a>
+</footer>
+</body>
+</html>

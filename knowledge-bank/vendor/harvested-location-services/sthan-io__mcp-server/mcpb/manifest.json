@@ -1,0 +1,95 @@
+{
+  "manifest_version": "0.3",
+  "name": "sthan",
+  "display_name": "sthan.io US Address Tools",
+  "version": "0.0.0",
+  "description": "Verify, parse, autocomplete, and geocode US addresses, and look up IP locations, with the sthan.io API.",
+  "long_description": "Adds sthan.io's address tools to Claude. Ask in plain English, for example \"Is 1600 Pennsylvania Ave NW, Washington DC a real address?\" or \"Where is IP 8.8.8.8?\". Needs a free sthan.io API key (no credit card) from https://sthan.io. All tools only read data.",
+  "author": {
+    "name": "Nishka LLC",
+    "url": "https://sthan.io"
+  },
+  "homepage": "https://sthan.io",
+  "documentation": "https://github.com/sthan-io/mcp-server#readme",
+  "support": "https://github.com/sthan-io/mcp-server/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sthan-io/mcp-server"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "keywords": [
+    "address",
+    "address verification",
+    "geocoding",
+    "autocomplete",
+    "ip geolocation",
+    "zip code"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "STHAN_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "sthan.io API key",
+      "description": "Free at https://sthan.io (Dashboard > API Keys). No credit card needed.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "tools": [
+    {
+      "name": "sthan_verify_address",
+      "description": "Verify that a US street address is real and deliverable; returns the standardized address, ZIP+4, and deliverability status."
+    },
+    {
+      "name": "sthan_parse_address",
+      "description": "Split a freeform US address into structured fields (number, street, unit, city, state, ZIP)."
+    },
+    {
+      "name": "sthan_autocomplete_address",
+      "description": "Suggest complete US street addresses as the user types."
+    },
+    {
+      "name": "sthan_autocomplete_city",
+      "description": "Suggest US cities (with state) as the user types."
+    },
+    {
+      "name": "sthan_autocomplete_zipcode",
+      "description": "Suggest US ZIP codes as the user types."
+    },
+    {
+      "name": "sthan_geocode",
+      "description": "Convert a US address to latitude and longitude."
+    },
+    {
+      "name": "sthan_reverse_geocode",
+      "description": "Convert latitude and longitude to the nearest US street address."
+    },
+    {
+      "name": "sthan_ip_geolocation",
+      "description": "Look up the approximate location of an IPv4 or IPv6 address."
+    }
+  ],
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  }
+}

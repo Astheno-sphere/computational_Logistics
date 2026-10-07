@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Cesium MCP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.145/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.145/Build/Cesium/Cesium.js"></script>
+  <script src="../../packages/cesium-mcp-bridge/dist/cesium-mcp-bridge.browser.global.js"></script>
+  <style>
+    :root {
+      --bg: #09090b; --bg-card: #18181b; --bg-popover: #27272a;
+      --border: #27272a; --border-hover: #3f3f46;
+      --fg: #fafafa; --fg-muted: #a1a1aa; --fg-dim: #71717a;
+      --accent: #3b82f6; --accent-hover: #2563eb;
+      --success: #22c55e; --danger: #ef4444; --warning: #eab308;
+      --radius: 8px; --radius-sm: 6px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { display: flex; height: 100vh; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); overflow: hidden; }
+
+    /* Cesium overrides */
+    #cesiumContainer { width: 100%; height: 100%; }
+    .cesium-viewer-bottom, .cesium-viewer-animationContainer,
+    .cesium-viewer-timelineContainer, .cesium-viewer-fullscreenContainer { display: none !important; }
+
+    /* Panel */
+    .panel { width: 420px; display: flex; flex-direction: column; background: var(--bg); border-left: 1px solid var(--border); }
+    .panel-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-header h1 { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+    .panel-header h1 span { color: var(--fg-dim); font-weight: 400; margin-left: 6px; font-size: 12px; }
+    .panel-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .panel-scroll::-webkit-scrollbar { width: 4px; }
+    .panel-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Badge */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 100px;
+      border: 1px solid transparent;
+    }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+    .badge.ok { background: #052e16; color: #4ade80; border-color: #14532d; }
+    .badge.ok::before { background: #4ade80; }
+    .badge.err { background: #450a0a; color: #fca5a5; border-color: #7f1d1d; }
+    .badge.err::before { background: #fca5a5; }
+
+    /* Section */
+    .section { border-bottom: 1px solid var(--border); }
+    .section-title {
+      padding: 12px 20px; font-size: 12px; font-weight: 500; color: var(--fg-muted);
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+      user-select: none; transition: color 0.15s;
+      letter-spacing: 0.02em;
+    }
+    .section-title:hover { color: var(--fg); }
+    .section-title .arrow { font-size: 10px; transition: transform 0.2s ease; color: var(--fg-dim); }
+    .section.collapsed .section-body { display: none; }
+    .section.collapsed .arrow { transform: rotate(-90deg); }
+    .section-body { padding: 4px 20px 16px; }
+
+    /* Button */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 6px 14px; font-size: 12px; font-weight: 500; font-family: inherit;
+      background: var(--bg-card); color: var(--fg-muted); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--bg-popover); color: var(--fg); border-color: var(--border-hover); }
+    .btn:active { transform: scale(0.97); }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn.primary:hover { background: var(--accent-hover); }
+    .btn.destructive { color: var(--danger); border-color: #7f1d1d40; }
+    .btn.destructive:hover { background: #450a0a; border-color: #7f1d1d; }
+    .btn-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* Log */
+    #log {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+      max-height: 220px; overflow-y: auto; line-height: 1.7;
+    }
+    .log-time { color: var(--fg-dim); }
+    .log-cmd { color: var(--accent); }
+    .log-ok { color: var(--success); }
+    .log-err { color: var(--danger); }
+    .log-info { color: var(--fg-muted); }
+
+    /* Screenshot preview */
+    #screenshotPreview {
+      display: none; position: absolute; top: 16px; right: 436px;
+      width: 280px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; z-index: 100;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    }
+    #screenshotPreview img { width: 100%; display: block; }
+    #screenshotPreview .bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; font-size: 11px; color: var(--fg-dim); border-top: 1px solid var(--border);
+    }
+    #screenshotPreview .bar button {
+      background: none; border: none; color: var(--fg-dim); cursor: pointer;
+      font-size: 11px; font-family: inherit; padding: 2px 6px; border-radius: 4px;
+    }
+    #screenshotPreview .bar button:hover { color: var(--fg); background: var(--bg-popover); }
+
+    /* Coord bar */
+    .coord-bar {
+      position: absolute; bottom: 12px; left: 12px;
+      background: rgba(9,9,11,0.8); backdrop-filter: blur(8px);
+      padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+      font-size: 11px; color: var(--fg-dim); font-family: 'JetBrains Mono', monospace;
+      z-index: 10;
+    }
+
+    /* Layer list */
+    .layer-item {
+      display: flex; align-items: center; gap: 10px; padding: 6px 0;
+      font-size: 12px; border-bottom: 1px solid var(--border);
+    }
+    .layer-item:last-child { border-bottom: none; }
+    .layer-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .layer-item .layer-type { font-size: 10px; color: var(--fg-dim); background: var(--bg-card); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+
+    /* Textarea */
+    .custom-textarea {
+      width: 100%; height: 72px; background: var(--bg-card); color: var(--fg);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 12px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+      resize: vertical; outline: none; transition: border-color 0.15s;
+    }
+    .custom-textarea:focus { border-color: var(--accent); }
+
+    /* Hint text */
+    .hint { font-size: 11px; color: var(--fg-dim); margin-top: 8px; }
+
+    /* Light theme */
+    :root[data-theme="light"] {
+      --bg: #ffffff; --bg-card: #f4f4f5; --bg-popover: #e4e4e7;
+      --border: #e4e4e7; --border-hover: #d4d4d8;
+      --fg: #09090b; --fg-muted: #52525b; --fg-dim: #71717a;
+      --accent: #2563eb; --accent-hover: #1d4ed8;
+      --success: #16a34a; --danger: #dc2626; --warning: #ca8a04;
+    }
+    [data-theme="light"] .badge.ok { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    [data-theme="light"] .badge.ok::before { background: #22c55e; }
+    [data-theme="light"] .badge.err { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+    [data-theme="light"] .badge.err::before { background: #ef4444; }
+    [data-theme="light"] .coord-bar { background: rgba(255,255,255,0.85); }
+    [data-theme="light"] #screenshotPreview { box-shadow: 0 16px 48px rgba(0,0,0,0.15); }
+
+    /* Toggle group */
+    .header-actions { display: flex; align-items: center; gap: 6px; }
+    .toggle-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: var(--radius-sm); cursor: pointer;
+      background: none; border: 1px solid var(--border); color: var(--fg-dim);
+      font-size: 14px; transition: all 0.15s;
+    }
+    .toggle-btn:hover { color: var(--fg); border-color: var(--border-hover); background: var(--bg-popover); }
+    .toggle-btn.active { color: var(--accent); border-color: var(--accent); }
+
+    /* Panel toggle */
+    .panel-toggle {
+      position: absolute; top: 50%; right: 0; z-index: 20;
+      transform: translateY(-50%);
+      width: 24px; height: 48px; cursor: pointer;
+      background: var(--bg-card); border: 1px solid var(--border); border-right: none;
+      border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center;
+      color: var(--fg-dim); font-size: 12px; transition: all 0.2s;
+    }
+    .panel-toggle:hover { color: var(--fg); background: var(--bg-popover); }
+    .panel.collapsed { width: 0; min-width: 0; overflow: hidden; border-left: none; }
+    body.panel-hidden .panel { width: 0; min-width: 0; overflow: hidden; border-left: none; }
+  </style>
+</head>
+<body>
+
+<div style="position:relative; flex:1; min-width:0;">
+  <div id="cesiumContainer"></div>
+  <button class="panel-toggle" id="panelToggle" onclick="togglePanel()" title="Toggle Panel">&#9664;</button>
+  <div class="coord-bar" id="coordBar">--</div>
+  <div id="screenshotPreview">
+    <img id="ssImg">
+    <div class="bar">
+      <span id="ssTime"></span>
+      <div style="display:flex;gap:4px;">
+        <button onclick="downloadScreenshot()">Download</button>
+        <button onclick="closeScreenshot()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h1>Cesium MCP <span>Demo</span></h1>
+    <div class="header-actions">
+      <span id="wsStatus" class="badge err" data-i18n="ws.offline">离线</span>
+      <button class="toggle-btn" onclick="toggleLang()" id="langBtn" title="中/EN">文</button>
+      <button class="toggle-btn" onclick="toggleTheme()" id="themeBtn" title="Theme">&#9789;</button>
+    </div>
+  </div>
+
+  <div class="panel-scroll">
+
+    <!-- View -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.view">视图控制</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div class="btn-grid">
+          <button class="btn" onclick="cmd('flyTo',{longitude:116.39,latitude:39.91,height:8000,duration:2})" data-i18n="city.beijing">北京</button>
+          <button class="btn" onclick="cmd('flyTo',{longitude:121.47,latitude:31.23,height:8000,duration:2})" data-i18n="city.shanghai">上海</button>
+          <button class="btn" onclick="cmd('flyTo',{longitude:113.26,latitude:23.13,height:8000,duration:2})" data-i18n="city.guangzhou">广州</button>
+          <button class="btn" onclick="cmd('flyTo',{longitude:104.07,latitude:30.67,height:8000,duration:2})" data-i18n="city.chengdu">成都</button>
+          <button class="btn" onclick="cmd('flyTo',{longitude:114.06,latitude:22.54,height:5000,duration:2})" data-i18n="city.shenzhen">深圳</button>
+          <button class="btn" onclick="cmd('flyTo',{longitude:106.55,latitude:29.56,height:8000,duration:2})" data-i18n="city.chongqing">重庆</button>
+          <button class="btn" onclick="cmd('flyTo',{longitude:120.15,latitude:30.28,height:8000,duration:2})" data-i18n="city.hangzhou">杭州</button>
+          <button class="btn" onclick="cmd('flyTo',{longitude:108.94,latitude:34.26,height:8000,duration:2})" data-i18n="city.xian">西安</button>
+        </div>
+        <div class="btn-grid" style="margin-top:8px;">
+          <button class="btn primary" onclick="cmd('getView',{})" data-i18n="btn.getView">获取视角</button>
+          <button class="btn primary" onclick="cmd('screenshot',{})" data-i18n="btn.screenshot">截图</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layers -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.geojson">GeoJSON 图层</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div class="btn-grid">
+          <button class="btn primary" onclick="addCitiesLayer()" data-i18n="btn.chinaCities">中国主要城市</button>
+          <button class="btn primary" onclick="addRandomPolygon()" data-i18n="btn.randomPoly">随机多边形</button>
+          <button class="btn primary" onclick="addPolylineLayer()" data-i18n="btn.airline">航线图层</button>
+        </div>
+        <div class="btn-grid" style="margin-top:6px;">
+          <button class="btn destructive" onclick="cmd('removeLayer',{id:'cities'})" data-i18n="btn.rmCities">- 城市</button>
+          <button class="btn destructive" onclick="cmd('removeLayer',{id:'polygon1'})" data-i18n="btn.rmPoly">- 多边形</button>
+          <button class="btn destructive" onclick="cmd('removeLayer',{id:'airline1'})" data-i18n="btn.rmAirline">- 航线</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Markers -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.markers">标注与实体</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div class="btn-grid">
+          <button class="btn" onclick="addCityMarkers()" data-i18n="btn.cityLabels">城市标注</button>
+          <button class="btn" onclick="cmd('addMarker',{id:'custom1',longitude:116.39,latitude:39.91,label:'天安门',color:'#ef4444'})" data-i18n="btn.tiananmen">天安门</button>
+          <button class="btn" onclick="cmd('addMarker',{id:'custom2',longitude:121.49,latitude:31.24,label:'外滩',color:'#3b82f6'})" data-i18n="btn.bund">外滩</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basemap -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.basemap">底图切换</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div class="btn-grid">
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'osm'})">OSM</button>
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'arcgis'})">ArcGIS</button>
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'light'})">Light</button>
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'dark'})">Dark</button>
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'satellite'})">Satellite</button>
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'tianditu_vec',token:'your_token'})" data-i18n="btn.tdtVec">天地图矢量</button>
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'tianditu_img',token:'your_token'})" data-i18n="btn.tdtImg">天地图影像</button>
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'amap'})" data-i18n="btn.amap">高德地图</button>
+          <button class="btn" onclick="cmd('setBasemap',{basemap:'amap_satellite'})" data-i18n="btn.amapSat">高德卫星</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trajectory -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.trajectory">轨迹回放</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div class="btn-grid">
+          <button class="btn primary" onclick="playBeijingToShanghai()" data-i18n="btn.bjsh">北京-上海轨迹</button>
+          <button class="btn primary" onclick="playCircleTrajectory()" data-i18n="btn.circle">环形轨迹</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.heatmap">热力图</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div class="btn-grid">
+          <button class="btn primary" onclick="addHeatmap()" data-i18n="btn.popHeat">城市人口热力图</button>
+          <button class="btn primary" onclick="addRandomHeatmap()" data-i18n="btn.randHeat">随机 200 点</button>
+          <button class="btn destructive" onclick="cmd('removeLayer',{id:'heatmap1'})" data-i18n="btn.rmHeat">- 热力图</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3D -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.3d">3D Tiles / 地形 / 影像</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div class="btn-grid">
+          <button class="btn primary" onclick="load3dTilesDemo()" data-i18n="btn.3dBuildings">3D 建筑</button>
+          <button class="btn primary" onclick="loadTerrainDemo()" data-i18n="btn.terrain">世界地形</button>
+          <button class="btn primary" onclick="loadImageryDemo()">Sentinel-2</button>
+          <button class="btn destructive" onclick="cmd('removeLayer',{id:'tiles-demo'})">- 3D Tiles</button>
+        </div>
+        <div class="hint" data-i18n="hint.3d">使用 Cesium Ion 示例数据 (96188, 1, 3954)</div>
+      </div>
+    </div>
+
+    <!-- Style & Highlight -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.style">样式与高亮</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div class="btn-grid">
+          <button class="btn" onclick="cmd('updateLayerStyle',{id:'cities',strokeColor:'#ef4444',fillColor:'#ef444480'})" data-i18n="btn.redStyle">红色样式</button>
+          <button class="btn" onclick="cmd('updateLayerStyle',{id:'cities',strokeColor:'#10b981',fillColor:'#10b98180'})" data-i18n="btn.greenStyle">绿色样式</button>
+          <button class="btn" onclick="cmd('highlight',{layerId:'cities',featureId:0,color:'#fbbf24'})" data-i18n="btn.hlFirst">高亮 #0</button>
+          <button class="btn" onclick="cmd('highlight',{clear:true})" data-i18n="btn.clearHl">清除高亮</button>
+        </div>
+        <div class="hint" data-i18n="hint.style">需先添加城市图层</div>
+      </div>
+    </div>
+
+    <!-- Layer Manager -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.layers">图层管理</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div id="layerList"><span style="font-size:12px;color:var(--fg-dim)" data-i18n="layer.empty">暂无图层</span></div>
+        <div class="btn-grid" style="margin-top:8px;">
+          <button class="btn" onclick="refreshLayers()" data-i18n="btn.refresh">刷新</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Command -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.custom">自定义 JSON 命令</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <textarea id="customCmd" class="custom-textarea" spellcheck="false">{"action":"flyTo","params":{"longitude":116.39,"latitude":39.91,"height":5000}}</textarea>
+        <button class="btn primary" style="margin-top:8px;" onclick="runCustomCmd()" data-i18n="btn.execute">执行</button>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">
+        <span data-i18n="sec.log">运行日志</span> <span class="arrow">&#9660;</span>
+      </div>
+      <div class="section-body">
+        <div id="log"><span class="log-info" data-i18n="log.ready">就绪</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ========== i18n ==========
+  let currentLang = 'zh'
+  const I18N = {
+    zh: {
+      'ws.online': '已连接', 'ws.offline': '离线', 'ws.failed': '连接失败', 'ws.error': '错误',
+      'sec.view': '视图控制', 'sec.geojson': 'GeoJSON 图层', 'sec.markers': '标注与实体',
+      'sec.basemap': '底图切换', 'sec.trajectory': '轨迹回放', 'sec.heatmap': '热力图',
+      'sec.3d': '3D Tiles / 地形 / 影像', 'sec.style': '样式与高亮', 'sec.layers': '图层管理',
+      'sec.custom': '自定义 JSON 命令', 'sec.log': '运行日志',
+      'city.beijing': '北京', 'city.shanghai': '上海', 'city.guangzhou': '广州',
+      'city.chengdu': '成都', 'city.shenzhen': '深圳', 'city.chongqing': '重庆',
+      'city.hangzhou': '杭州', 'city.xian': '西安',
+      'btn.getView': '获取视角', 'btn.screenshot': '截图',
+      'btn.chinaCities': '中国主要城市', 'btn.randomPoly': '随机多边形', 'btn.airline': '航线图层',
+      'btn.rmCities': '- 城市', 'btn.rmPoly': '- 多边形', 'btn.rmAirline': '- 航线',
+      'btn.cityLabels': '城市标注', 'btn.tiananmen': '天安门', 'btn.bund': '外滩',
+      'btn.tdtVec': '天地图矢量', 'btn.tdtImg': '天地图影像',
+      'btn.bjsh': '北京-上海轨迹', 'btn.circle': '环形轨迹',
+      'btn.popHeat': '城市人口热力图', 'btn.randHeat': '随机 200 点', 'btn.rmHeat': '- 热力图',
+      'btn.3dBuildings': '3D 建筑', 'btn.terrain': '世界地形',
+      'hint.3d': '使用 Cesium Ion 示例数据 (96188, 1, 3954)',
+      'btn.redStyle': '红色样式', 'btn.greenStyle': '绿色样式',
+      'btn.hlFirst': '高亮 #0', 'btn.clearHl': '清除高亮',
+      'hint.style': '需先添加城市图层',
+      'layer.empty': '暂无图层', 'btn.refresh': '刷新',
+      'btn.execute': '执行', 'log.ready': '就绪',
+    },
+    en: {
+      'ws.online': 'Connected', 'ws.offline': 'Offline', 'ws.failed': 'Failed', 'ws.error': 'Error',
+      'sec.view': 'View Control', 'sec.geojson': 'GeoJSON Layers', 'sec.markers': 'Markers & Labels',
+      'sec.basemap': 'Basemap', 'sec.trajectory': 'Trajectory Playback', 'sec.heatmap': 'Heatmap',
+      'sec.3d': '3D Tiles / Terrain / Imagery', 'sec.style': 'Style & Highlight', 'sec.layers': 'Layer Manager',
+      'sec.custom': 'Custom JSON Command', 'sec.log': 'Activity Log',
+      'city.beijing': 'Beijing', 'city.shanghai': 'Shanghai', 'city.guangzhou': 'Guangzhou',
+      'city.chengdu': 'Chengdu', 'city.shenzhen': 'Shenzhen', 'city.chongqing': 'Chongqing',
+      'city.hangzhou': 'Hangzhou', 'city.xian': "Xi'an",
+      'btn.getView': 'Get View', 'btn.screenshot': 'Screenshot',
+      'btn.chinaCities': 'China Cities', 'btn.randomPoly': 'Random Polygon', 'btn.airline': 'Airline Route',
+      'btn.rmCities': '- cities', 'btn.rmPoly': '- polygon', 'btn.rmAirline': '- airline',
+      'btn.cityLabels': 'City Labels', 'btn.tiananmen': 'Tiananmen', 'btn.bund': 'The Bund',
+      'btn.tdtVec': 'Tianditu Vec', 'btn.tdtImg': 'Tianditu Img', 'btn.amap': 'Amap', 'btn.amapSat': 'Amap Satellite',
+      'btn.bjsh': 'BJ - SH Route', 'btn.circle': 'Circular Path',
+      'btn.popHeat': 'Population Heatmap', 'btn.randHeat': 'Random 200pts', 'btn.rmHeat': '- heatmap',
+      'btn.3dBuildings': '3D Buildings', 'btn.terrain': 'World Terrain',
+      'hint.3d': 'Uses Cesium Ion sample assets (96188, 1, 3954)',
+      'btn.redStyle': 'Red Style', 'btn.greenStyle': 'Green Style',
+      'btn.hlFirst': 'Highlight #0', 'btn.clearHl': 'Clear Highlight',
+      'hint.style': 'Add cities layer first',
+      'layer.empty': 'No layers', 'btn.refresh': 'Refresh',
+      'btn.execute': 'Execute', 'log.ready': 'Ready',
+    },
+  }
+
+  function t(key) { return I18N[currentLang][key] || key }
+
+  function applyLang() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n')
+      if (I18N[currentLang][key]) el.textContent = I18N[currentLang][key]
+    })
+    document.getElementById('langBtn').textContent = currentLang === 'zh' ? '文' : 'EN'
+  }
+
+  function toggleLang() {
+    currentLang = currentLang === 'zh' ? 'en' : 'zh'
+    applyLang()
+  }
+
+  // ========== Theme ==========
+  let currentTheme = 'dark'
+
+  function toggleTheme() {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark'
+    document.documentElement.setAttribute('data-theme', currentTheme)
+    document.getElementById('themeBtn').innerHTML = currentTheme === 'dark' ? '&#9789;' : '&#9788;'
+  }
+  function togglePanel() {
+    document.body.classList.toggle('panel-hidden')
+    document.getElementById('panelToggle').innerHTML = document.body.classList.contains('panel-hidden') ? '&#9654;' : '&#9664;'
+    setTimeout(function() { if (window.viewer) viewer.resize() }, 300)
+  }
+  // ========== 配置 ==========
+  const RUNTIME_WS_URL = 'ws://localhost:9100'
+  const SESSION_ID = 'demo'
+
+  // ========== 初始化 Cesium ==========
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkODBmYWNiMi1kOTRiLTRjZTEtOTI0ZC00MTE2OWU0NzRkNzAiLCJpZCI6NDQ0NDAsImlhdCI6MTc2MzMxMTQxNX0.5qbneXFnJvmLIf1Tbcf-SPZCEk7pNKEN_ltxD3eeRWk'
+
+  const viewer = new Cesium.Viewer('cesiumContainer', {
+    terrain: Cesium.Terrain.fromWorldTerrain(),
+    baseLayerPicker: false,
+    geocoder: false,
+    homeButton: false,
+    navigationHelpButton: false,
+    sceneModePicker: false,
+  })
+
+  // 鼠标坐标实时显示
+  const coordBar = document.getElementById('coordBar')
+  const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
+  handler.setInputAction((movement) => {
+    const ray = viewer.camera.getPickRay(movement.endPosition)
+    const pos = viewer.scene.globe.pick(ray, viewer.scene)
+    if (pos) {
+      const carto = Cesium.Cartographic.fromCartesian(pos)
+      coordBar.textContent = `${Cesium.Math.toDegrees(carto.longitude).toFixed(5)}, ${Cesium.Math.toDegrees(carto.latitude).toFixed(5)}, ${carto.height.toFixed(1)}m`
+    }
+  }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+
+  // ========== Bridge (集成 cesium-mcp-bridge 包) ==========
+  const bridge = new CesiumMcpBridge.CesiumBridge(viewer)
+  bridge.on('layerAdded', () => refreshLayers())
+  bridge.on('layerRemoved', () => refreshLayers())
+  log('Bridge initialized (cesium-mcp-bridge)', 'info')
+  window._bridge = bridge // DEBUG: E2E testing
+
+  // ========== WebSocket ==========
+  let ws = null
+
+  function connectRuntime() {
+    const el = document.getElementById('wsStatus')
+    try { ws = new WebSocket(`${RUNTIME_WS_URL}?session=${SESSION_ID}`) } catch (e) {
+      el.textContent = t('ws.failed'); el.className = 'badge err'; el.setAttribute('data-i18n','ws.failed'); return
+    }
+    ws.onopen = () => { el.textContent = t('ws.online'); el.className = 'badge ok'; el.setAttribute('data-i18n','ws.online'); log('Runtime connected', 'ok') }
+    ws.onmessage = async (event) => {
+      const msg = JSON.parse(event.data)
+      log(`remote: ${msg.method}`, 'cmd')
+      const result = await bridge.execute({ action: msg.method, params: msg.params || {} })
+      if (msg.id) ws.send(JSON.stringify({ id: msg.id, result: result || { success: true } }))
+    }
+    ws.onclose = () => { el.textContent = t('ws.offline'); el.className = 'badge err'; el.setAttribute('data-i18n','ws.offline'); log('disconnected, reconnect in 5s...', 'err'); setTimeout(connectRuntime, 5000) }
+    ws.onerror = () => { el.textContent = t('ws.error'); el.className = 'badge err'; el.setAttribute('data-i18n','ws.error') }
+  }
+  connectRuntime()
+
+  // ========== 通用命令入口 ==========
+  async function cmd(action, params) {
+    log(`exec: ${action}`, 'cmd')
+    const result = await bridge.execute({ action, params })
+    if (action === 'screenshot' && result?.data?.dataUrl) showScreenshot(result.data.dataUrl)
+    return result
+  }
+
+  // ========== 演示数据 ==========
+  const CITIES = [
+    { name: '北京', lon: 116.39, lat: 39.91, pop: 2189 },
+    { name: '上海', lon: 121.47, lat: 31.23, pop: 2487 },
+    { name: '广州', lon: 113.26, lat: 23.13, pop: 1868 },
+    { name: '深圳', lon: 114.06, lat: 22.54, pop: 1756 },
+    { name: '成都', lon: 104.07, lat: 30.67, pop: 2094 },
+    { name: '重庆', lon: 106.55, lat: 29.56, pop: 3205 },
+    { name: '杭州', lon: 120.15, lat: 30.28, pop: 1194 },
+    { name: '武汉', lon: 114.30, lat: 30.59, pop: 1121 },
+    { name: '西安', lon: 108.94, lat: 34.26, pop: 1295 },
+    { name: '南京', lon: 118.80, lat: 32.06, pop: 942 },
+  ]
+
+  function cityGeoJson() {
+    return {
+      type: 'FeatureCollection',
+      features: CITIES.map(c => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [c.lon, c.lat] },
+        properties: { name: c.name, population: c.pop },
+      })),
+    }
+  }
+
+  async function addCitiesLayer() {
+    await cmd('addGeoJsonLayer', {
+      id: 'cities',
+      data: cityGeoJson(),
+      markerColor: '#f97316',
+      markerSize: 28,
+    })
+    await cmd('zoomToExtent', { west: 100, south: 18, east: 125, north: 42, duration: 2 })
+  }
+
+  async function addCityMarkers() {
+    await cmd('addLabels', {
+      id: 'city-labels',
+      labels: CITIES.map(c => ({ longitude: c.lon, latitude: c.lat, text: `${c.name} (${c.pop}万)`, color: '#f97316' })),
+    })
+    await cmd('zoomToExtent', { west: 100, south: 18, east: 125, north: 42, duration: 2 })
+  }
+
+  function addRandomPolygon() {
+    const cx = 110 + Math.random() * 15
+    const cy = 25 + Math.random() * 15
+    const r = 1 + Math.random() * 2
+    const pts = []
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI * 2 * i) / 6
+      pts.push([cx + r * Math.cos(a) * (0.8 + Math.random() * 0.4), cy + r * Math.sin(a) * (0.8 + Math.random() * 0.4)])
+    }
+    pts.push(pts[0])
+    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6']
+    const color = colors[Math.floor(Math.random() * colors.length)]
+    cmd('addGeoJsonLayer', {
+      id: 'polygon1',
+      data: { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [pts] }, properties: { name: '随机区域' } }] },
+      fillColor: color + '40',
+      strokeColor: color,
+      strokeWidth: 3,
+    })
+  }
+
+  function addPolylineLayer() {
+    const route = [
+      [116.39, 39.91], [118.80, 32.06], [120.15, 30.28], [121.47, 31.23],
+    ]
+    cmd('addGeoJsonLayer', {
+      id: 'airline1',
+      data: { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: route }, properties: { name: '京沪航线' } }] },
+      strokeColor: '#a855f7',
+      strokeWidth: 3,
+    })
+  }
+
+  function playBeijingToShanghai() {
+    const points = []
+    const startLon = 116.39, startLat = 39.91, endLon = 121.47, endLat = 31.23
+    for (let i = 0; i <= 20; i++) {
+      const t = i / 20
+      points.push({ longitude: startLon + (endLon - startLon) * t, latitude: startLat + (endLat - startLat) * t })
+    }
+    cmd('playTrajectory', { id: 'traj-bj-sh', points, speed: 200, color: '#ef4444' })
+    cmd('zoomToExtent', { west: 115, south: 30, east: 123, north: 41, duration: 1.5 })
+  }
+
+  function playCircleTrajectory() {
+    const points = []
+    const cx = 116.39, cy = 39.91, r = 2
+    for (let i = 0; i <= 36; i++) {
+      const a = (Math.PI * 2 * i) / 36
+      points.push({ longitude: cx + r * Math.cos(a), latitude: cy + r * Math.sin(a) })
+    }
+    cmd('playTrajectory', { id: 'traj-circle', points, speed: 100, color: '#3b82f6' })
+    cmd('flyTo', { longitude: cx, latitude: cy, height: 500000, duration: 1.5 })
+  }
+
+  // ========== 热力图 ==========
+  function addHeatmap() {
+    // 用城市人口数据生成热力点
+    const heatData = {
+      type: 'FeatureCollection',
+      features: CITIES.map(c => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [c.lon, c.lat] },
+        properties: { weight: c.pop / 3205 }, // 归一化权重
+      })),
+    }
+    cmd('addHeatmap', { id: 'heatmap1', data: heatData, radius: 60, gradient: { 0.2: '#2563eb', 0.5: '#10b981', 0.8: '#f59e0b', 1.0: '#ef4444' } })
+    cmd('zoomToExtent', { west: 100, south: 18, east: 125, north: 42, duration: 2 })
+  }
+
+  function addRandomHeatmap() {
+    const features = []
+    for (let i = 0; i < 200; i++) {
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [100 + Math.random() * 25, 20 + Math.random() * 20] },
+        properties: { weight: Math.random() },
+      })
+    }
+    cmd('addHeatmap', { id: 'heatmap1', data: { type: 'FeatureCollection', features }, radius: 40, gradient: { 0.25: '#3b82f6', 0.5: '#8b5cf6', 0.75: '#ec4899', 1.0: '#ef4444' } })
+    cmd('zoomToExtent', { west: 98, south: 18, east: 127, north: 42, duration: 2 })
+  }
+
+  // ========== 3D 数据 ==========
+  async function load3dTilesDemo() {
+    await cmd('load3dTiles', { id: 'tiles-demo', assetId: 96188 })
+    // 飞到纽约（Cesium Ion 96188 是纽约建筑）
+    cmd('flyTo', { longitude: -74.01, latitude: 40.71, height: 1500, duration: 3 })
+  }
+
+  function loadTerrainDemo() {
+    cmd('loadTerrain', { url: 'CesiumWorldTerrain', ionAssetId: 1 })
+    // 飞到珠峰看地形效果
+    cmd('flyTo', { longitude: 86.925, latitude: 27.988, height: 12000, duration: 3 })
+  }
+
+  function loadImageryDemo() {
+    cmd('loadImageryService', { id: 'sentinel2', ionAssetId: 3954, alpha: 0.7 })
+  }
+
+  // ========== 图层列表 ==========
+  function refreshLayers() {
+    const el = document.getElementById('layerList')
+    const layers = bridge.listLayers()
+    if (layers.length === 0) {
+      el.innerHTML = `<span style="font-size:12px;color:var(--fg-dim)" data-i18n="layer.empty">${t('layer.empty')}</span>`
+      return
+    }
+    const typeColors = { 'GeoJSON': '#3b82f6', '标注点': '#ef4444', '标注': '#f59e0b', '轨迹': '#a855f7', '影像服务': '#10b981', '热力图': '#ec4899', '3D Tiles': '#06b6d4', '折线': '#3b82f6', '多边形': '#8b5cf6', '模型': '#f97316' }
+    el.innerHTML = layers.map(l => `
+      <div class="layer-item">
+        <span class="dot" style="background:${typeColors[l.type] || '#6b7280'}"></span>
+        <span style="flex:1">${l.name || l.id}</span>
+        <span class="layer-type">${l.type}</span>
+        <button class="btn destructive" style="padding:2px 6px;font-size:10px;" onclick="cmd('removeLayer',{id:'${l.id}'})">x</button>
+      </div>
+    `).join('')
+  }
+
+  // ========== 自定义命令 ==========
+  function runCustomCmd() {
+    try {
+      const data = JSON.parse(document.getElementById('customCmd').value)
+      cmd(data.action, data.params || {})
+    } catch (e) {
+      log('JSON parse error: ' + e.message, 'err')
+    }
+  }
+
+  // ========== 截图 ==========
+  let lastScreenshotUrl = ''
+  function showScreenshot(dataUrl) {
+    lastScreenshotUrl = dataUrl
+    document.getElementById('ssImg').src = dataUrl
+    document.getElementById('ssTime').textContent = new Date().toLocaleTimeString()
+    document.getElementById('screenshotPreview').style.display = 'block'
+  }
+  function closeScreenshot() { document.getElementById('screenshotPreview').style.display = 'none' }
+  function downloadScreenshot() {
+    const a = document.createElement('a')
+    a.href = lastScreenshotUrl
+    a.download = `cesium-screenshot-${Date.now()}.png`
+    a.click()
+  }
+
+  // ========== UI 工具 ==========
+  function toggleSection(el) { el.parentElement.classList.toggle('collapsed') }
+
+  function log(msg, type = 'info') {
+    const el = document.getElementById('log')
+    const ts = new Date().toLocaleTimeString()
+    const cls = { cmd: 'log-cmd', ok: 'log-ok', err: 'log-err', info: 'log-info' }[type] || 'log-info'
+    const line = document.createElement('div')
+    line.innerHTML = `<span class="log-time">[${ts}]</span> <span class="${cls}">${msg}</span>`
+    el.insertBefore(line, el.firstChild)
+    // 最多保留 100 条
+    while (el.children.length > 100) el.removeChild(el.lastChild)
+  }
+</script>
+
+</body>
+</html>

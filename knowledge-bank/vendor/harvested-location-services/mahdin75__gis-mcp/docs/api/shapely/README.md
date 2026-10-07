@@ -1,0 +1,27 @@
+### Shapely Tools
+
+High-level geometric operations exposed via MCP. All tools accept and return geometries as WKT strings.
+
+- [buffer](buffer.md)
+- [intersection](intersection.md)
+- [union](union.md)
+- [difference](difference.md)
+- [centroid](centroid.md) (tool: `get_centroid`)
+- [symmetric_difference](symmetric_difference.md)
+- [convex_hull](convex_hull.md)
+- [envelope](envelope.md)
+- [minimum_rotated_rectangle](minimum_rotated_rectangle.md)
+- [get_bounds](get_bounds.md)
+- [get_coordinates](get_coordinates.md)
+- [get_geometry_type](get_geometry_type.md)
+- [rotate_geometry](rotate_geometry.md)
+- [scale_geometry](scale_geometry.md)
+- [translate_geometry](translate_geometry.md)
+- [triangulate_geometry](triangulate_geometry.md)
+- [voronoi](voronoi.md)
+- [unary_union_geometries](unary_union_geometries.md)
+- [get_length](get_length.md)
+- [get_area](get_area.md)
+- [is_valid](is_valid.md)
+- [make_valid](make_valid.md)
+- [simplify](simplify.md)

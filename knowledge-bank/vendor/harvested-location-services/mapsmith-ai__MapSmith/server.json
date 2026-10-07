@@ -1,0 +1,49 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mapsmith-ai/mapsmith",
+  "description": "Deterministic GIS geoprocessing with verifiable provenance on every output",
+  "version": "0.8.0",
+  "repository": {
+    "url": "https://github.com/mapsmith-ai/MapSmith",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/mapsmith-ai/MapSmith",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "mapsmith",
+      "version": "0.8.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "MAPSMITH_WORKSPACE",
+          "description": "Confine all reads/writes to this directory (path jail + sandboxed SQL engine)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "filepath"
+        }
+      ]
+    },
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/mapsmith-ai/mapsmith:0.8.0",
+      "runtimeHint": "docker",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "MAPSMITH_WORKSPACE",
+          "description": "Confine all reads/writes to this directory (path jail + sandboxed SQL engine)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "filepath"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+name: Authorized capture review
+description: Propose sanitized endpoint findings from an authorized browser capture.
+title: "[Capture]: "
+labels: ["api-capture", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never attach raw HAR files, cookies, bearer tokens, private screenshots, browser profiles, or unredacted captures. Only sanitized endpoint fingerprints, schemas, and fixture candidates are acceptable.
+  - type: input
+    id: provider
+    attributes:
+      label: Provider or website
+    validations:
+      required: true
+  - type: input
+    id: source_url
+    attributes:
+      label: Source URL
+      placeholder: "https://..."
+    validations:
+      required: true
+  - type: dropdown
+    id: authorization
+    attributes:
+      label: Authorization status
+      options:
+        - operator-owned authorized session
+        - public no-login page
+        - terms review pending
+    validations:
+      required: true
+  - type: textarea
+    id: endpoints
+    attributes:
+      label: Sanitized endpoint fingerprints
+      description: Include method, host, path template, query key names, and response shape summary. Do not include raw tokens or replayable URLs.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Required attribution
+      description: What source.provider and source.landingUrl should responses expose?
+    validations:
+      required: true

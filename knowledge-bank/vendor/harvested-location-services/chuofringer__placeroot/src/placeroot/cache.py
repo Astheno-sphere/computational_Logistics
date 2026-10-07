@@ -1,0 +1,1100 @@
+"""Local tile cache of touched Overture row groups.
+
+Cold queries are network-bound (~5.6s) because every query re-scans the
+remote GeoParquet dataset. This is a per-tile *materialization* cache, not a
+row-group proxy: the world is divided into a coarse 1-degree lat/lon grid,
+and the first query touching a tile copies the matching rows out of
+upstream into a small local parquet file (one COPY per tile, keyed by
+release/theme/tile). Every later query touching that tile reads the local
+file instead of going to S3.
+
+Tradeoff: a query whose radius straddles N tiles pays for N tile fetches
+the first time, even if the tiles barely overlap the search circle, and a
+tile is never partially invalidated — it's whole-tile or nothing. That's
+the right trade for a point-radius search tool (queries cluster
+geographically and get reused), but it would be a poor fit for a workload
+that scans arbitrary large regions once each.
+
+Eviction is mtime-based LRU over the whole cache directory, capped by
+total size (not by file count or age), and re-checked after every write.
+
+Query-first, materialize-later (issue #31): a COPY that pulls a whole tile
+out of upstream costs seconds, and a caller shouldn't block a user-facing
+query on it. When a query touches a tile that isn't cached yet,
+local_paths_for_query() returns None (the caller falls back to scanning
+upstream directly for *that* query) and kicks off materialization of the
+missing tile(s) on a background daemon thread instead of waiting. Each
+background fetch gets its own DuckDB connection — connections aren't safe
+for concurrent use, and this one is created and used entirely off the
+caller's connection/thread. An in-flight set (guarded by a lock) makes sure
+two queries that both miss the same tile only trigger one fetch. Tests and
+the startup warm-start want deterministic, synchronous behavior instead —
+set PLACEROOT_CACHE_SYNC to materialize missing tiles inline, on the
+caller's own connection, before returning.
+
+Schema fingerprinting (issue #63): a tile materialized under one column
+layout (an older code version, or a fixture with a different schema during
+dev) must never be read back once upstream's schema has moved on — a
+column that used to exist and got selected into the tile might not exist
+in a later query's SELECT list, or vice versa. So every tile lives under
+`<cache_dir>/<release>/<theme>/<fingerprint>/tile_Y_X.parquet`, where
+`fingerprint` is the first 12 hex chars of sha256 over the *sorted* column
+names of the upstream dataset (probed via db.probe_schema, which is
+lru_cached — the probe itself is a `LIMIT 0` metadata-only read, cheap
+enough to redo per query). Two schemas with the same columns in a
+different order hash identically (sorted first) since column order isn't
+what breaks a SELECT *; two schemas differing by even one column name hash
+differently and land in separate directories, so a query against the new
+schema can never read an old-schema tile (or vice versa) — see
+resolve_fingerprint().
+
+Old-layout tiles (materialized before this change, sitting directly under
+`<theme>/`) and any other-fingerprint directories are deliberately left
+alone rather than actively migrated or deleted: they're inert (nothing
+ever constructs a path back into them once the resolved fingerprint moves
+on) and they still get walked by evict_if_needed()'s rglob, so they age
+out of the size cap exactly like any other cold tile. Actively migrating
+would mean rewriting files under a lock for no behavioral benefit — a
+stale tile that's simply never looked at again is just as effectively
+"invalidated" as one that's been deleted, and self-cleans for free.
+
+The one subtlety is what happens when upstream is unreachable (issue #5's
+cache-as-fallback promise: a query should still answer from whatever's
+cached even if S3 is down). db.probe_schema() returns None on failure, so
+resolve_fingerprint() can't compute a *current* fingerprint — but the
+whole point of cache-as-fallback is answering without contacting upstream
+at all. In that case it falls back to the most-recently-used existing
+fingerprint directory for that release/theme, on the theory that whatever
+fingerprint dir has tiles in it corresponds to *some* schema that
+materialized successfully before, and it's the most likely one still to be
+relevant. This means an offline query can, in principle, be served tiles
+keyed under a fingerprint that's no longer upstream's current schema — but
+that's strictly better than the alternative (no cache-as-fallback at all
+when offline), and it only ever happens when upstream can't be reached to
+tell us any different.
+"""
+
+import hashlib
+import itertools
+import logging
+import math
+import os
+import threading
+import time
+from pathlib import Path
+
+from placeroot import db, manifest, progress, trace
+
+logger = logging.getLogger(__name__)
+
+TILE_DEG = 1.0
+DEFAULT_CACHE_DIR = os.path.expanduser("~/.cache/placeroot")
+DEFAULT_MAX_MB = 500
+
+# Heavy themes get finer tiles and first-touch synchronous materialization.
+# Buildings and transportation rows carry full geometries, and a truly cold
+# query measured 60-181s on the direct-scan fallback (Tokyo box) — the scan
+# itself moves too many bytes to ever answer fast, so for these themes the
+# right first-touch is the places strategy inverted: COPY a *small* tile
+# (1/16th the area of the 1-degree grid), then answer locally. Measured
+# effect is the difference between racing a scan that loses and paying a
+# bounded, narrated fetch once per neighborhood.
+HEAVY_THEME_TILE_DEG: dict[str, float] = {
+    # Buildings queries are point-radius (≤ ~1km), so tiles can be small
+    # without any query spanning many of them; a 0.0625° tile (~7km) COPYs
+    # in seconds where the 1° tile (and the direct scan — buildings row
+    # groups are fat with geometry) measured a minute-plus.
+    "buildings": 0.0625,
+    # Transportation serves corridors (routes) as well as radii, so its
+    # tiles stay coarser; 0.125° (~14km) balances a seconds-scale COPY
+    # against how many tiles a metro-area route touches.
+    "transportation": 0.125,
+    # water and infrastructure answer point/short-radius questions with
+    # sparse rows: a 0.25° first-touch tile COPYs in ~2-5s (measured:
+    # water_near 45s cold direct -> 7.0s with tiles) and warms the area.
+    # The dense-geometry base types (land_use, land, land_cover) are
+    # deliberately NOT here: their Tokyo-class tiles carry tens of MB of
+    # polygons, and a sync COPY measured worse than the manifest-pruned
+    # direct scan it replaced.
+    "base_water": 0.25,
+    "base_infrastructure": 0.25,
+}
+
+# A wide query over a heavy theme (a long route corridor) would need too
+# many inline COPYs to answer interactively; past this many missing tiles
+# the query falls back to the ordinary direct-scan-plus-background path
+# rather than stalling on a fetch marathon.
+HEAVY_SYNC_MAX_TILES = 12
+
+
+def tile_deg_for(theme: str) -> float:
+    """Tile edge length in degrees for theme (see HEAVY_THEME_TILE_DEG)."""
+    return HEAVY_THEME_TILE_DEG.get(theme, TILE_DEG)
+
+# Ceiling on how many 1-degree tiles a single query may fan out into. Each
+# missing tile in a query costs one background thread + one upstream COPY
+# (or, under PLACEROOT_CACHE_SYNC, one sequential COPY), so an oversized
+# bbox — e.g. from an abusive multi-thousand-km radius — could otherwise
+# spawn tens of thousands of threads/connections and hammer upstream: a
+# resource-exhaustion vector reachable straight from a tool argument. A
+# query above this cap skips the tile cache and scans upstream directly for
+# that one call (the bbox pushdown still prunes row groups); the query
+# layer's radius clamp (geo.MAX_QUERY_RADIUS_M) keeps that direct scan
+# bounded too. Normal point-radius queries touch a handful of tiles, far
+# under this.
+MAX_TILES_PER_QUERY = 128
+
+# Early-out threshold tiles_for_bbox() checks BEFORE building the (tx, ty)
+# cross product (issue #163's A1: a degenerate bbox — e.g. from an
+# unclamped near-pole dlon — must not get to allocate tens of millions of
+# tuples just so local_paths_for_query() can throw them away one line
+# later for exceeding MAX_TILES_PER_QUERY). Deliberately looser than
+# MAX_TILES_PER_QUERY itself, not equal to it: the raw x_span*y_span grid
+# product checked here can be a slight overcount of the real (deduped)
+# tile count for a bbox that wraps the antimeridian, so this stays a cheap,
+# clearly-oversized early-out rather than a second, subtly different copy
+# of local_paths_for_query's authoritative cap.
+OVERSIZE_TILE_SPAN_GUARD = MAX_TILES_PER_QUERY * 4
+
+# Tiles currently being fetched by a background thread, as (release, theme,
+# tile) keys — guards against two concurrent cache misses on the same tile
+# both starting a fetch.
+_inflight: set[tuple[str, str, tuple[int, int]]] = set()
+_inflight_lock = threading.Lock()
+
+
+def _background_fetch_concurrency() -> int:
+    """How many background tile COPYs may run at once (default 2, min 1).
+
+    PLACEROOT_CACHE_FETCH_CONCURRENCY overrides — raise it on a fat pipe
+    where warming faster matters more than the foreground query's share of
+    bandwidth. See _materialize_in_background for why the bound exists.
+    """
+    try:
+        return max(1, int(os.environ.get("PLACEROOT_CACHE_FETCH_CONCURRENCY", 2)))
+    except ValueError:
+        return 2
+
+
+# One process-wide bound across every theme's fetches: the network pipe the
+# bound protects is shared process-wide too. Sized at import from the env
+# var; changing the variable mid-process does not resize it.
+_background_fetch_slots = threading.BoundedSemaphore(_background_fetch_concurrency())
+
+# Seconds a background tile fetch waits before touching the network — the
+# scheduling query's own scan finishes first (typically 2-8s cold), so the
+# fetch never competes with the answer it exists to speed up next time.
+BACKGROUND_FETCH_DELAY_S = 10.0
+
+# Background fetch threads are ephemeral (one per tile), but a fresh DuckDB
+# connection pays the whole per-file parquet-footer pass again for the
+# theme it COPYs from (~25-50s cold on the heavy themes) — so connections
+# are pooled and reused across fetches instead of created per tile. The
+# pool never exceeds the fetch-concurrency bound in practice because
+# acquisitions happen under _background_fetch_slots.
+_fetcher_conns: list = []
+_fetcher_conns_lock = threading.Lock()
+
+
+def _acquire_fetcher_conn(new_connection):
+    with _fetcher_conns_lock:
+        if _fetcher_conns:
+            return _fetcher_conns.pop()
+    return new_connection()
+
+
+def _release_fetcher_conn(con) -> None:
+    with _fetcher_conns_lock:
+        _fetcher_conns.append(con)
+
+
+def enabled() -> bool:
+    """False iff PLACEROOT_CACHE=off. On (the default) otherwise."""
+    return os.environ.get("PLACEROOT_CACHE", "").strip().lower() != "off"
+
+
+def sync_mode() -> bool:
+    """True iff PLACEROOT_CACHE_SYNC is set to a truthy value.
+
+    Forces local_paths_for_query() to materialize missing tiles inline
+    instead of handing them to a background thread — used by tests (so
+    cache behavior is deterministic) and the startup warm-start (which is
+    already an explicit, best-effort blocking call).
+    """
+    value = os.environ.get("PLACEROOT_CACHE_SYNC", "").strip().lower()
+    return value not in ("", "0", "false", "off")
+
+
+def cache_dir() -> Path:
+    return Path(os.environ.get("PLACEROOT_CACHE_DIR") or DEFAULT_CACHE_DIR)
+
+
+def max_bytes() -> float:
+    mb = float(os.environ.get("PLACEROOT_CACHE_MAX_MB", DEFAULT_MAX_MB))
+    return mb * 1024 * 1024
+
+
+def tiles_for_bbox(
+    xmin: float, ymin: float, xmax: float, ymax: float, tile_deg: float = TILE_DEG
+) -> list[tuple[int, int]]:
+    """(tile_x, tile_y) grid cells a bbox touches, tile_x/y = floor(lon/lat / tile_deg).
+
+    xmin/xmax may fall outside [-180, 180] (issue #42: overture._bbox_around
+    doesn't clamp/wrap longitude, so a search near the antimeridian produces
+    a box like xmin=179.9, xmax=180.4). floor() over that raw range still
+    walks a contiguous run of tile columns; wrap_x() then folds any column
+    outside the canonical [-180, 180) range back into it (mod 360), which is
+    exactly the tile on the *other* side of the seam — e.g. tile column 180
+    (out of range) wraps to -180 (the westmost column, valid). For a
+    non-crossing box every column is already in range, so wrap_x is the
+    identity and tile ids are unchanged from before this fix.
+    """
+    x0, x1 = math.floor(xmin / tile_deg), math.floor(xmax / tile_deg)
+    y0, y1 = math.floor(ymin / tile_deg), math.floor(ymax / tile_deg)
+    span = round(360.0 / tile_deg)
+    half = span // 2
+
+    # Defense in depth for issue #163's A1: geo.bbox_around now clamps its
+    # span before it ever gets here, but this function has no way to know
+    # that every caller does — so compute the projected tile count from the
+    # same x0/x1/y0/y1 this function already derived, BEFORE materialising
+    # the (tx, ty) cross product, and bail out to a small sentinel list once
+    # it's clearly beyond what local_paths_for_query()'s MAX_TILES_PER_QUERY
+    # cap would accept anyway. Without this, an oversized bbox slipping
+    # through builds tens of millions of tuples just to have the caller
+    # throw the list away one line later. The threshold is deliberately
+    # looser than MAX_TILES_PER_QUERY itself (not equal to it) so this stays
+    # a cheap early-out rather than a second, subtly-different copy of the
+    # caller's real cap — local_paths_for_query still does the authoritative
+    # `len(tiles) > MAX_TILES_PER_QUERY` check and takes its existing
+    # "too many tiles, scan upstream directly" branch either way.
+    def wrap_x(tx: int) -> int:
+        return ((tx + half) % span) - half
+
+    x_span = x1 - x0 + 1
+    y_span = y1 - y0 + 1
+    if x_span * y_span > OVERSIZE_TILE_SPAN_GUARD:
+        # Too big to materialise: enumerate only the first
+        # MAX_TILES_PER_QUERY + 1 tiles — already more than any caller's
+        # `len(tiles) > MAX_TILES_PER_QUERY` cap accepts, without building
+        # the full cross product. These are REAL tiles of the bbox (a
+        # prefix of the full enumeration), not a fabricated filler: a
+        # caller that iterates the result — a warm loop, a log line —
+        # sees genuine ids rather than repeated copies of the
+        # perfectly-valid tile (0, 0). Dedup can't shrink the prefix
+        # under the cap: ty is never wrapped and two raw columns only
+        # collide when they are a full 360° apart, far beyond this many
+        # consecutive tx values.
+        logger.warning(
+            "bbox projects to ~%d tiles; truncating enumeration at %d",
+            x_span * y_span, MAX_TILES_PER_QUERY + 1,
+        )
+        prefix = itertools.islice(
+            ((wrap_x(tx), ty) for tx in range(x0, x1 + 1) for ty in range(y0, y1 + 1)),
+            MAX_TILES_PER_QUERY + 1,
+        )
+        return list(dict.fromkeys(prefix))
+
+    tiles = [(wrap_x(tx), ty) for tx in range(x0, x1 + 1) for ty in range(y0, y1 + 1)]
+    # Preserve first-seen order while deduping: wrapping can only fold two
+    # raw columns onto the same tile if the box is wider than a full 360
+    # degrees of longitude, i.e. radius_m far beyond any realistic query —
+    # cheap insurance against a duplicate tile fetch in that pathological case.
+    return list(dict.fromkeys(tiles))
+
+
+def schema_fingerprint(upstream_glob: str) -> str | None:
+    """First 12 hex chars of sha256 over upstream_glob's sorted column names.
+
+    None if the schema probe itself failed (upstream unreachable) — see
+    resolve_fingerprint() for how callers handle that.
+    """
+    cols = db.probe_schema(upstream_glob)
+    if cols is None:
+        return None
+    return hashlib.sha256(",".join(sorted(cols)).encode()).hexdigest()[:12]
+
+
+def _fingerprint_dirs(release: str, theme: str) -> list[Path]:
+    d = cache_dir() / release / theme
+    if not d.exists():
+        return []
+    return [p for p in d.iterdir() if p.is_dir()]
+
+
+def _fingerprint_last_use(fp_dir: Path) -> float:
+    """Newest tile-file mtime under fp_dir — its true last-*use* time.
+
+    A cache hit bumps each tile file's mtime (os.utime in ensure_tile /
+    local_paths_for_query), but NOT the containing directory's mtime (a
+    dir's mtime only moves when an entry is added/removed). So ranking
+    fingerprint dirs by dir mtime picks the most-recently-*created* one, not
+    the most-recently-*used* — during an outage that can drop the whole
+    active cache for a barely-populated newer dir (#141). Rank by the newest
+    contained tile instead, falling back to the dir's own mtime if empty.
+    """
+    tiles = list(fp_dir.glob("*.parquet"))
+    if tiles:
+        return max(t.stat().st_mtime for t in tiles)
+    return fp_dir.stat().st_mtime
+
+
+def resolve_fingerprint(release: str, theme: str, upstream_glob: str) -> str | None:
+    """The schema fingerprint to read/write release/theme tiles under.
+
+    The common case: probe upstream_glob's current schema and return its
+    fingerprint. If upstream can't be reached (schema_fingerprint returns
+    None), fall back to the most-recently-used existing fingerprint
+    directory for this release/theme — see the module docstring's
+    "Schema fingerprinting" section for why that's the right offline
+    behavior. Returns None only when upstream is unreachable AND there's no
+    existing fingerprint directory to fall back to either — nothing to key
+    a tile under, nothing cached to serve; callers should treat this the
+    same as any other upstream-unavailable case.
+    """
+    fp = schema_fingerprint(upstream_glob)
+    if fp is not None:
+        return fp
+    dirs = _fingerprint_dirs(release, theme)
+    if not dirs:
+        return None
+    newest = max(dirs, key=_fingerprint_last_use)
+    return newest.name
+
+
+def tile_path(release: str, theme: str, fingerprint: str, tile: tuple[int, int]) -> Path:
+    """Path for a tile. Non-default tile sizes carry the size in the name,
+    so a theme whose grid changed (buildings moving to 0.25°) can never
+    read a tile materialized under the old grid as if ids lined up —
+    old-grid files become inert and age out via LRU like any cold tile."""
+    tx, ty = tile
+    deg = tile_deg_for(theme)
+    suffix = "" if deg == TILE_DEG else f"@{deg:g}"
+    return cache_dir() / release / theme / fingerprint / f"tile_{ty}_{tx}{suffix}.parquet"
+
+
+def ensure_tile(
+    con,
+    release: str,
+    theme: str,
+    tile: tuple[int, int],
+    upstream_glob: str,
+    fingerprint: str | None = None,
+) -> Path:
+    """Local parquet path for `tile`, materializing it from upstream if needed.
+
+    fingerprint defaults to None, meaning "resolve it from upstream_glob via
+    resolve_fingerprint()" — callers that already resolved a fingerprint for
+    this query (local_paths_for_query, the background materializer) pass it
+    explicitly so every tile touched by the same query lands under the same
+    fingerprint dir even if upstream's schema were to change mid-query.
+
+    Raises whatever exception the upstream COPY raises if the tile isn't
+    already cached and the fetch fails — callers that want cache-as-fallback
+    behavior should check tile_path(...).exists() first and only call this
+    when they're prepared to hit upstream.
+    """
+    if fingerprint is None:
+        fingerprint = resolve_fingerprint(release, theme, upstream_glob)
+        if fingerprint is None:
+            # Upstream unreachable and nothing cached yet under any
+            # fingerprint for this release/theme: there's no local tile to
+            # fall back to, so let the COPY below run and raise upstream's
+            # real error rather than inventing a fingerprint for a tile
+            # that's about to fail to materialize anyway.
+            fingerprint = "unreachable"
+
+    path = tile_path(release, theme, fingerprint, tile)
+    if path.exists():
+        os.utime(path, None)  # bump mtime: this tile is recently used
+        return path
+
+    tx, ty = tile
+    deg = tile_deg_for(theme)
+    lon_min, lon_max = tx * deg, (tx + 1) * deg
+    lat_min, lat_max = ty * deg, (ty + 1) * deg
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(".parquet.tmp")
+    # Bundled release manifest (manifest.py): a tile COPY only needs the
+    # files whose extent intersects the tile — on a fresh connection this
+    # skips the footer pass over every other file in the theme.
+    source = (
+        manifest.pruned_source_sql(upstream_glob, (lon_min, lat_min, lon_max, lat_max))
+        or f"read_parquet('{upstream_glob}', hive_partitioning=1)"
+    )
+    sql = f"""
+        COPY (
+            SELECT * FROM {source}
+            WHERE bbox.xmax >= {lon_min} AND bbox.xmin < {lon_max}
+              AND bbox.ymax >= {lat_min} AND bbox.ymin < {lat_max}
+        ) TO '{tmp_path}' (FORMAT PARQUET)
+    """
+    # Bounded: a tile COPY is a bbox query by definition, manifest-pruned
+    # to the files that intersect it.
+    with trace.scan("tile copy", bounded=True, source=source, theme=theme):
+        con.execute(sql)
+    tmp_path.replace(path)
+    evict_if_needed()
+    return path
+
+
+def claim_existing_paths(paths: list[Path]) -> list[Path]:
+    """Claim each path against eviction and return the ones that exist.
+
+    The one implementation of the #142 critical section. Whole-listing
+    readers get it via claimed_tile_paths; callers touching a subset
+    (recreation's single-tile schema probe) call it directly with just the
+    paths they will read. The claim is recorded *before* the existence check (os.utime
+    doubles as the check and as the recently-used mtime bump), so a path
+    that exists after being claimed cannot be evicted by this process
+    before the caller reads it. A path that vanished anyway — another
+    process's eviction; the claims table is per-process — is skipped and
+    its claim released, never raised on; a utime refused for any other
+    reason (a read-only cache mount) keeps the tile, which is still
+    perfectly readable. Claim only what will actually be read: a claim
+    shields a tile from eviction for _CLAIM_TTL_S and marks it hot, so
+    blanket-claiming a whole theme distorts eviction for everyone else.
+    """
+    existing = []
+    with _claims_lock:
+        now = time.monotonic()
+        _prune_expired_locked(now)
+        deadline = now + _CLAIM_TTL_S
+        for path in paths:
+            _claim_locked(str(path), deadline)
+            try:
+                os.utime(path, None)
+            except FileNotFoundError:
+                _claims.pop(str(path), None)  # vanished; don't shield a ghost
+                continue
+            except OSError:
+                if not path.exists():
+                    _claims.pop(str(path), None)
+                    continue
+            existing.append(path)
+    return existing
+
+
+def _claim_existing_tiles(
+    release: str, theme: str, fingerprint: str, tiles: list[tuple[int, int]]
+) -> tuple[list[Path], list[tuple[int, int]]]:
+    """(on-disk tile paths claimed against eviction, tiles not on disk).
+
+    Tile-id front-end over claim_existing_paths, for the callers that
+    also need to know which tiles to materialize.
+    """
+    by_path = {tile_path(release, theme, fingerprint, t): t for t in tiles}
+    cached = claim_existing_paths(list(by_path))
+    cached_set = set(cached)
+    missing = [t for p, t in by_path.items() if p not in cached_set]
+    return cached, missing
+
+
+def claimed_tile_paths(release: str, theme: str, upstream_glob: str) -> list[Path]:
+    """cached_tile_paths, with every returned path claimed against eviction.
+
+    The composition every *reader* of the theme-wide listing needs — the
+    #142 rule ("claim before you read") encoded once instead of by
+    convention at each call site. Callers that only need existence or a
+    single tile (recreation's schema probe) still use the unclaimed
+    listing and claim exactly what they touch.
+    """
+    return claim_existing_paths(cached_tile_paths(release, theme, upstream_glob))
+
+
+def cached_tile_paths(release: str, theme: str, upstream_glob: str) -> list[Path]:
+    """Every tile parquet already materialized locally for release/theme's
+    *currently resolved* schema fingerprint.
+
+    Used by a GERS-id lookup (issue #41): before touching upstream at all,
+    check whatever tiles the local cache already has on disk — cheap, since
+    they're small local files. upstream_glob is needed (issue #63) to
+    resolve which fingerprint directory is current — without it this could
+    silently return stale-schema tiles. Returns [] if caching hasn't
+    touched this release/theme/fingerprint yet, or if upstream is
+    unreachable and no fingerprint directory exists to fall back to; never
+    raises. The listing takes no eviction claims — claiming shields tiles
+    and marks them hot, which a mere listing must not do. To *read* the
+    whole listing, call claimed_tile_paths instead; to read a subset,
+    claim exactly those paths via claim_existing_paths first.
+    """
+    fingerprint = resolve_fingerprint(release, theme, upstream_glob)
+    if fingerprint is None:
+        return []
+    d = cache_dir() / release / theme / fingerprint
+    if not d.exists():
+        return []
+    return sorted(d.glob("*.parquet"))
+
+
+def cached_tile_paths_for_bbox(
+    release: str, theme: str, upstream_glob: str,
+    bbox: tuple[float, float, float, float],
+) -> list[Path]:
+    """Tiles already on disk that intersect bbox — nothing materialized.
+
+    The bounded, cache-only counterpart to cached_tile_paths, for the
+    source_sql path where the upstream must not be touched: a query should
+    read the tiles its box covers, not every tile the theme has ever
+    cached. Tiles found are claimed against eviction for the query's
+    lifetime via the shared #142 critical section (_claim_existing_tiles).
+    An oversized bbox (> MAX_TILES_PER_QUERY tiles) returns [] — with no
+    upstream to fall back to, skipping is the only bounded answer.
+    """
+    fingerprint = resolve_fingerprint(release, theme, upstream_glob)
+    if fingerprint is None:
+        return []
+    tiles = tiles_for_bbox(*bbox, tile_deg=tile_deg_for(theme))
+    if len(tiles) > MAX_TILES_PER_QUERY:
+        return []
+    found, _missing = _claim_existing_tiles(release, theme, fingerprint, tiles)
+    return sorted(found)
+
+
+
+# --- #142: protecting in-flight tiles from eviction ------------------------
+#
+# A query resolves its cache-hit tile paths (local_paths_for_query, under
+# db.conn_lock), releases the lock, and only then runs the SELECT that reads
+# them. In that gap a concurrent request that misses a different tile can
+# call ensure_tile -> evict_if_needed, which walks the cache by mtime and
+# deletes files to fit the size cap -- potentially the very tiles the first
+# query just resolved. Its read then fails on a missing file and surfaces as
+# a hard UpstreamUnavailable even though upstream is perfectly reachable.
+#
+# Rather than widening db.conn_lock across resolve-and-read (a lock-scope
+# change with real deadlock and latency risk), resolved paths are recorded
+# here with an expiry, and evict_if_needed skips any path whose claim is
+# still live. No release call is needed -- and so nothing leaks if a query
+# raises midway -- because the claim simply expires.
+#
+# Only cache HITS handed back to a caller are claimed. A tile freshly
+# created by ensure_tile isn't claimed by its creation, so the LRU cap
+# still behaves exactly as before for the warm/populate path.
+_CLAIM_TTL_S = 60.0
+
+_claims: dict[str, float] = {}
+# Guards _claims AND serializes it against the eviction delete loop, so
+# "this tile exists, claim it" and "this tile is unclaimed, delete it" can't
+# interleave -- a snapshot-then-delete check would still leave a (small)
+# window where a tile is claimed after the snapshot and deleted anyway.
+#
+# RLock, and deliberately never held across a DB call: local_paths_for_query
+# runs under db.conn_lock, so the only lock order that ever occurs is
+# conn_lock -> _claims_lock. Nothing takes conn_lock while holding this one
+# (the tile COPY in ensure_tile happens outside it), so the two can't
+# deadlock against each other -- cf. #145, where a non-reentrant lock
+# re-entered on one thread hung a worker.
+_claims_lock = threading.RLock()
+
+
+def _prune_expired_locked(now: float) -> None:
+    """Drop lapsed claims. Caller holds _claims_lock."""
+    for p in [p for p, deadline in _claims.items() if deadline <= now]:
+        del _claims[p]
+
+
+def _claim_locked(path: str, deadline: float) -> None:
+    """Record one claim. Caller holds _claims_lock.
+
+    Extends, never shortens: if a concurrent claim on the same tile runs
+    longer, that longer lease wins.
+    """
+    if _claims.get(path, 0.0) < deadline:
+        _claims[path] = deadline
+
+
+def claim_paths(paths: list[str], ttl_s: float = _CLAIM_TTL_S) -> None:
+    """Mark `paths` as in-flight, protecting them from eviction for ttl_s."""
+    if not paths:
+        return
+    now = time.monotonic()
+    deadline = now + ttl_s
+    with _claims_lock:
+        # Prune here too, not just during eviction: on a cache comfortably
+        # under cap, eviction may never run, and _claims would otherwise
+        # accumulate an entry per distinct tile ever queried.
+        _prune_expired_locked(now)
+        for p in paths:
+            _claim_locked(p, deadline)
+
+
+def _is_claimed_locked(path: str, now: float) -> bool:
+    """Whether `path` has a live claim. Caller holds _claims_lock."""
+    deadline = _claims.get(path)
+    return deadline is not None and deadline > now
+
+
+def evict_if_needed() -> None:
+    """Delete least-recently-used cached tiles until under the size cap.
+
+    Tiles currently claimed by an in-flight query (see claim_paths, #142)
+    are skipped rather than deleted: evicting one out from under a query
+    that already resolved it turns a healthy cache hit into a spurious
+    UpstreamUnavailable. Their size still counts toward the total, so if
+    claims alone keep the cache over cap this pass simply frees what it can
+    -- the cap is a target, not a hard bound, and the next pass (after the
+    claims expire) collects the rest.
+    """
+    root = cache_dir()
+    if not root.exists():
+        return
+    # Only tile files (tile_Y_X.parquet, old- or new-layout) are evictable.
+    # The cache root also holds support tables that are NOT tiles: the
+    # geocode divisions name table (geocode-divisions/table.parquet, #43)
+    # and any sibling per-release tables built once and reused for the whole
+    # session. They are large, built exactly once, and never re-touched, so
+    # under an oldest-mtime-first sweep they are always the first casualty —
+    # evicting one turns a healthy local query into a false
+    # UpstreamUnavailable mid-query, and the subsequent rebuild immediately
+    # re-triggers eviction (thrash, #230). They are excluded from the size
+    # accounting too: they're a fixed per-release overhead, and counting
+    # them against the cap would let a large table squeeze the effective
+    # tile budget to zero and evict every tile on every pass.
+    files = [f for f in root.rglob("*.parquet") if f.name.startswith("tile_")]
+    files.sort(key=lambda p: p.stat().st_mtime)
+    total = sum(f.stat().st_size for f in files)
+    cap = max_bytes()
+    skipped = 0
+    # The claim check and the unlink have to be atomic against a query
+    # claiming a tile it just found on disk, so the delete loop runs under
+    # _claims_lock. Only filesystem work happens inside -- the scan and sort
+    # above are already done, and no DB call is made here.
+    with _claims_lock:
+        now = time.monotonic()
+        _prune_expired_locked(now)
+        i = 0
+        while total > cap and i < len(files):
+            f = files[i]
+            i += 1
+            if _is_claimed_locked(str(f), now):
+                skipped += 1
+                continue
+            try:
+                total -= f.stat().st_size
+                f.unlink()
+            except OSError:
+                pass
+    if total > cap and skipped:
+        logger.info(
+            "cache still %d bytes over cap after eviction: %d in-flight tile(s) "
+            "were skipped to avoid evicting them mid-query; they become "
+            "evictable once their claims expire",
+            total - cap, skipped,
+        )
+
+
+def _materialize_in_background(
+    release: str,
+    theme: str,
+    tile: tuple[int, int],
+    upstream_glob: str,
+    fingerprint: str,
+    new_connection,
+) -> None:
+    """Fetch `tile` on a daemon thread with its own connection, deduped by _inflight.
+
+    fingerprint is resolved once by the caller (local_paths_for_query) and
+    threaded through here and into ensure_tile so the in-flight dedup key
+    (and the tile's eventual path) can't disagree with what the triggering
+    query resolved, even if upstream's schema were to change between the
+    two — see the module docstring's "Schema fingerprinting" section.
+
+    Never raises to the caller — a failed background fetch is logged and
+    just leaves the tile uncached for next time (the calling query already
+    got its answer from upstream directly).
+
+    Fetches hold _background_fetch_slots for the duration of the COPY. The
+    bound exists because the triggering query is *still running*: it fell
+    back to a direct upstream scan, and that scan shares one network pipe
+    with these fetches. Unbounded, a first query over a new area spawns one
+    COPY per touched (theme, tile) — six at once with the recreation layer
+    on — and the measured result was the answering scan starving for tens
+    of minutes behind its own cache warmers. Two concurrent fetches keep
+    warming meaningfully faster than one while leaving the foreground scan
+    most of the bandwidth; the rest of the tiles queue on the semaphore in
+    their (cheap, parked) threads.
+    """
+    key = (release, theme, fingerprint, tile)
+    with _inflight_lock:
+        if key in _inflight:
+            return
+        _inflight.add(key)
+
+    def _run():
+        try:
+            # Let the query that scheduled this fetch answer first: it is
+            # about to run (or is running) a direct scan on the same pipe,
+            # and racing it measured up to 3x slower cold. The tiles still
+            # arrive well before any plausible repeat query.
+            if BACKGROUND_FETCH_DELAY_S:
+                time.sleep(BACKGROUND_FETCH_DELAY_S)
+            with _background_fetch_slots:
+                con = _acquire_fetcher_conn(new_connection)
+                try:
+                    ensure_tile(con, release, theme, tile, upstream_glob, fingerprint)
+                finally:
+                    _release_fetcher_conn(con)
+        except Exception as e:  # noqa: BLE001 - background fetch must never surface
+            logger.warning("Background tile materialization failed for %s: %s", key, e)
+        finally:
+            with _inflight_lock:
+                _inflight.discard(key)
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
+def local_paths_for_query(
+    con,
+    release: str,
+    theme: str,
+    bbox: tuple[float, float, float, float],
+    upstream_glob: str,
+    new_connection=None,
+    schedule_missing: bool = True,
+    force_sync: bool = False,
+) -> list[str] | None:
+    """Local cached parquet paths covering bbox, or None to fall back to upstream.
+
+    Returns None if caching is disabled. Resolves the current schema
+    fingerprint for release/theme first (issue #63 — see resolve_fingerprint
+    and the module docstring's "Schema fingerprinting" section); if that
+    fails (upstream unreachable and no existing fingerprint dir to fall
+    back to for this release/theme), also returns None — there's nothing
+    local to serve and nothing to key a new tile under, so the caller falls
+    back to upstream and hits the same unreachable error there.
+
+    If every touched tile is already cached under the resolved fingerprint,
+    returns their paths without touching upstream at all — this is what
+    lets queries keep answering from cache when upstream later goes down
+    (issue #5's cache-as-fallback path).
+
+    If any touched tile is missing, this does NOT block materializing it
+    (a tile COPY costs seconds — issue #31): under PLACEROOT_CACHE_SYNC it
+    fetches the missing tiles inline on `con` and returns the complete set
+    of paths; otherwise it schedules background fetches (via
+    `new_connection`, a zero-arg factory for a fresh connection — required
+    whenever caching is enabled, since the background thread must not share
+    `con`) and returns None so the caller queries upstream directly for
+    this one query instead of waiting.
+
+    force_sync=True is the city-warmup / operator-prewarm path: materialize
+    missing tiles inline even when PLACEROOT_CACHE_SYNC is unset, so the
+    area is warm when this returns. Same tiles, same files — not a second
+    cache. Heavy themes still honor HEAVY_SYNC_MAX_TILES: tiles past the
+    cap warm in the background instead of turning warmup into a fetch
+    marathon (the cap the ordinary heavy-sync path already uses).
+    """
+    if not enabled():
+        return None
+    fingerprint = resolve_fingerprint(release, theme, upstream_glob)
+    if fingerprint is None:
+        return None
+    tiles = tiles_for_bbox(*bbox, tile_deg=tile_deg_for(theme))
+    if len(tiles) > MAX_TILES_PER_QUERY:
+        # Oversized bbox: don't fan out into a tile-per-thread materialization
+        # storm. Fall back to a single direct upstream scan for this query.
+        logger.warning(
+            "query bbox touches %d tiles (> MAX_TILES_PER_QUERY=%d); skipping the "
+            "tile cache and scanning upstream directly for this query",
+            len(tiles), MAX_TILES_PER_QUERY,
+        )
+        return None
+
+    cached, missing = _claim_existing_tiles(release, theme, fingerprint, tiles)
+
+    if not missing:
+        return [str(p) for p in cached]
+
+    # Heavy themes materialize inline even without PLACEROOT_CACHE_SYNC:
+    # their direct-scan fallback measured 60-181s truly cold (the bytes,
+    # not the plan), so racing it loses — a few small-tile COPYs, narrated
+    # per tile, is the fast path AND leaves the area warm. A query wide
+    # enough to need more than HEAVY_SYNC_MAX_TILES fetches falls back to
+    # the ordinary path rather than stalling on a fetch marathon.
+    #
+    # force_sync used to bypass that cap. A 25 km transportation warmup
+    # (~20 tiles at 6-20s each) then held the caller for minutes. Cap
+    # the inline set the same way; overflow warms in the background.
+    overflow = []
+    if (
+        force_sync
+        and not sync_mode()
+        and theme in HEAVY_THEME_TILE_DEG
+        and len(missing) > HEAVY_SYNC_MAX_TILES
+    ):
+        overflow = missing[HEAVY_SYNC_MAX_TILES:]
+        missing = missing[:HEAVY_SYNC_MAX_TILES]
+        if schedule_missing:
+            for t in overflow:
+                _materialize_in_background(
+                    release, theme, t, upstream_glob, fingerprint, new_connection
+                )
+
+    heavy_sync = (
+        theme in HEAVY_THEME_TILE_DEG and len(missing) <= HEAVY_SYNC_MAX_TILES
+    )
+
+    if sync_mode() or heavy_sync or force_sync:
+        # Claim every tile this query holds BEFORE each fetch (#158):
+        # ensure_tile runs its own evict_if_needed() right after writing, so
+        # a query spanning several missing tiles would otherwise evict the
+        # ones it fetched earlier this loop (they're the oldest *unclaimed*
+        # files) before the caller ever reads them — defeating #150 with
+        # zero concurrency. The refresh must cover the hits and the
+        # already-fetched tiles too, not just the tile about to be fetched:
+        # a loop of sequential upstream COPYs can outlast _CLAIM_TTL_S, and
+        # a claim taken only once at discovery (or at that tile's own fetch)
+        # would expire mid-loop and leave the tile evictable again. Claiming
+        # a not-yet-existing path is harmless: eviction only deletes files
+        # that exist and skips claimed paths regardless.
+        held = [str(p) for p in cached] + [
+            str(tile_path(release, theme, fingerprint, t)) for t in missing
+        ]
+        claim_paths(held)
+        remaining = progress.tile_eta(theme, len(missing))
+        progress.report(
+            f"Fetching map data for this area ({len(missing)} {theme} "
+            f"tile(s)) — the first query over a new area is slow; results "
+            "are cached, repeat queries answer in milliseconds",
+            0, len(missing),
+            eta_s=remaining,
+        )
+        # Two fetches in flight, mirroring the background semaphore's
+        # rationale in reverse: here there is no foreground scan to starve
+        # (the query waits on these tiles), so a second stream roughly
+        # halves multi-tile waits (a route corridor, a two-tile radius)
+        # while staying gentle on the pipe. Each worker gets its own cursor
+        # of the shared instance — connections aren't safe for concurrent
+        # use, cursors are, and they share the warm metadata cache.
+        done_count = [0]
+        done_lock = threading.Lock()
+
+        def _fetch(t, fetch_con):
+            path = ensure_tile(fetch_con, release, theme, t, upstream_glob, fingerprint)
+            with done_lock:
+                done_count[0] += 1
+                n = done_count[0]
+            left = progress.tile_eta(theme, max(0, len(missing) - n))
+            progress.report(
+                f"Fetching map data for this area ({theme} tile {n} of "
+                f"{len(missing)}) — results are cached, repeat queries "
+                "answer in milliseconds",
+                n, len(missing),
+                eta_s=left if n < len(missing) else None,
+            )
+            claim_paths(held)  # refresh mid-flight so no claim expires
+            return path
+
+        # Prefer new_connection() even for a single tile so a caller
+        # (warmup) can release conn_lock during COPYs: cursors are the
+        # documented concurrent path, shared_conn() is not.
+        if new_connection is None:
+            # No factory for per-worker connections means no safe way to
+            # run two COPYs at once (a DuckDB connection is single-user;
+            # a caller's factory may also just return `con`, which the
+            # sequential loop tolerates and a pool would corrupt).
+            for t in missing:
+                cached.append(_fetch(t, con))
+        elif len(missing) == 1:
+            cached.append(_fetch(missing[0], new_connection()))
+        else:
+            import contextvars
+            from concurrent.futures import ThreadPoolExecutor
+
+            def _fetch_in_ctx(t):
+                # Each task gets its own cursor (never a shared connection)
+                # and its own copy of the calling context, so the per-tile
+                # progress reports — a ContextVar-installed reporter —
+                # survive the pool's threads instead of silently dropping.
+                ctx = contextvars.copy_context()
+                return ctx.run(_fetch, t, new_connection())
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                fetched = list(pool.map(_fetch_in_ctx, missing))
+            cached.extend(fetched)
+        progress.report(
+            f"Map data for this area cached ({theme}) — running the query",
+            len(missing), len(missing),
+        )
+        paths = [str(p) for p in cached]
+        # Fresh TTL on the way out so the caller has the full window to read
+        # the files, however long the fetch loop took.
+        claim_paths(paths)
+        if overflow:
+            # Incomplete coverage: do not pretend the whole bbox is local.
+            return None
+        return paths
+
+    if not schedule_missing:
+        # The caller's own scan is about to read the same theme, and its
+        # answer is small (a point classification); racing it against a
+        # whole-tile COPY of the same data measured 3x slower cold. No
+        # tiles are scheduled — the scan serves, this time and next.
+        return None
+    progress.report(
+        f"First query over a new area: answering from a direct scan of Overture "
+        f"on S3 while {len(missing)} {theme} tile(s) cache in the background — "
+        "this query is slow, repeat queries over this area answer in milliseconds",
+        eta_s=progress.scan_eta(theme),
+    )
+    for t in missing:
+        _materialize_in_background(release, theme, t, upstream_glob, fingerprint, new_connection)
+    return None
+
+
+def source_sql(
+    theme: str,
+    upstream_glob: str,
+    bbox: tuple[float, float, float, float] | None,
+    *,
+    upstream_fallback: bool = True,
+    schedule_missing: bool = True,
+) -> str | None:
+    """FROM-clause SQL for a theme: local cache tiles when available, upstream
+    otherwise. The one implementation of the "cached tiles else upstream glob"
+    resolution that overture.py and recreation.py previously each hand-copied
+    (and let diverge); the other theme modules can migrate here too.
+
+    With a bbox, missing tiles are materialized per local_paths_for_query's
+    contract (inline under PLACEROOT_CACHE_SYNC, in the background otherwise).
+    bbox None is the unbounded-lookup case (an id or name query with no
+    location to bound it): only tiles already on disk are used and nothing
+    new is materialized — an unbounded lookup must not trigger a world-sized
+    fetch.
+
+    upstream_fallback=False means the upstream glob must not be touched *at
+    all*: no fallback scan, and no tile materialization either (with or
+    without a bbox, only tiles already on disk serve) — returning None when
+    nothing local can. For callers where the glob is known-unusable (the
+    recreation layer's unreadable-upstream case, where a COPY from it would
+    fail the query it was meant to supplement) or where an unprunable scan
+    of it would be planet-scale (the layer's unbounded lookups).
+
+    Raises duckdb.Error on cache resolution failure; callers wrap it in their
+    own unavailable-upstream error the way they wrap the query itself.
+    """
+    if enabled():
+        from placeroot import release as release_mod
+
+        active_release = release_mod.resolve_release()
+        if bbox is None:
+            paths = claimed_tile_paths(active_release, theme, upstream_glob)
+        elif not upstream_fallback:
+            paths = cached_tile_paths_for_bbox(active_release, theme, upstream_glob, bbox)
+        else:
+            with db.conn_lock:
+                paths = local_paths_for_query(
+                    db.shared_conn(), active_release, theme, bbox, upstream_glob,
+                    db.new_connection, schedule_missing=schedule_missing,
+                )
+        if paths:
+            joined = ", ".join(f"'{p}'" for p in paths)
+            return f"read_parquet([{joined}])"
+    if not upstream_fallback:
+        return None
+    # Bundled release manifest (manifest.py): a bbox-bounded direct scan can
+    # read just the files whose extent intersects the box, skipping the
+    # per-file footer pass over the whole theme. None -> plain glob.
+    pruned = manifest.pruned_source_sql(upstream_glob, bbox)
+    if pruned is not None:
+        return pruned
+    return f"read_parquet('{upstream_glob}', hive_partitioning=1)"
+
+
+def parse_warm_region(spec: str) -> tuple[float, float, float] | None:
+    """Parse "lat,lon,radius_m" -> (lat, lon, radius_m), or None if malformed."""
+    parts = [p.strip() for p in spec.split(",")]
+    if len(parts) != 3:
+        return None
+    try:
+        return float(parts[0]), float(parts[1]), float(parts[2])
+    except ValueError:
+        return None
+
+
+def prewarm_bbox(
+    con,
+    release: str,
+    theme: str,
+    bbox: tuple[float, float, float, float],
+    upstream_glob: str,
+    new_connection=None,
+) -> dict:
+    """Synchronously materialize existing-cache tiles covering bbox.
+
+    Same files, same fingerprint dirs as a later query — this is not a
+    second cache. force_sync so the area is warm when this returns (the
+    warmup tool and the PLACEROOT_WARM_REGION startup path). Heavy
+    themes stop at HEAVY_SYNC_MAX_TILES inline tiles; the rest warm in
+    the background and this returns status "partial".
+    """
+    if not enabled():
+        return {"theme": theme, "status": "cache_disabled", "tiles": 0, "cached": 0}
+    tiles = tiles_for_bbox(*bbox, tile_deg=tile_deg_for(theme))
+    if len(tiles) > MAX_TILES_PER_QUERY:
+        return {
+            "theme": theme,
+            "status": "too_large",
+            "tiles": len(tiles),
+            "cached": 0,
+            "note": "bbox touches too many tiles; narrow radius_m",
+        }
+    fingerprint = resolve_fingerprint(release, theme, upstream_glob)
+    if fingerprint is None:
+        return {
+            "theme": theme,
+            "status": "upstream_unavailable",
+            "tiles": len(tiles),
+            "cached": 0,
+        }
+    already, missing = _claim_existing_tiles(release, theme, fingerprint, tiles)
+    if not missing:
+        return {
+            "theme": theme,
+            "status": "already_warm",
+            "tiles": len(already),
+            "cached": len(already),
+            "fetched": 0,
+        }
+    local_paths_for_query(
+        con, release, theme, bbox, upstream_glob, new_connection,
+        force_sync=True,
+    )
+    # Recount: force_sync may have capped a heavy theme, so the bbox
+    # can still have missing tiles even after the inline COPYs.
+    cached_now, still_missing = _claim_existing_tiles(
+        release, theme, fingerprint, tiles
+    )
+    return {
+        "theme": theme,
+        "status": "warmed" if not still_missing else "partial",
+        "tiles": len(tiles),
+        "cached": len(cached_now),
+        "fetched": max(0, len(cached_now) - len(already)),
+    }
+
+
+def bbox_is_cached(
+    release: str,
+    theme: str,
+    bbox: tuple[float, float, float, float],
+    upstream_glob: str,
+) -> bool:
+    """True if every tile covering bbox is already on disk. Does not COPY.
+
+    Filesystem peek only — no S3, no DuckDB. Used to decide whether a
+    warmup would be the 15s+ first-touch hop. Returns False when the
+    cache is off, the fingerprint cannot be resolved, or any tile is
+    missing. Does not claim tiles against eviction (a peek must not
+    mark them hot).
+    """
+    if not enabled():
+        return False
+    tiles = tiles_for_bbox(*bbox, tile_deg=tile_deg_for(theme))
+    if not tiles or len(tiles) > MAX_TILES_PER_QUERY:
+        return False
+    fingerprint = resolve_fingerprint(release, theme, upstream_glob)
+    if fingerprint is None:
+        return False
+    return all(tile_path(release, theme, fingerprint, t).exists() for t in tiles)

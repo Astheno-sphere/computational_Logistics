@@ -1,0 +1,88 @@
+name: Upstream
+
+# The suite, once a week, on an UNMODIFIED tree and against the newest release
+# of every dependency. It answers the question the CI on commits cannot: when
+# something breaks, is it ours or theirs?
+#
+# On 2026-09-06 the CI went red on a commit that had nothing to do with it:
+# pyproj 3.8 with PROJ 9.8.1 reported -1.0 as the accuracy of a plain UTM
+# projection, and MapSmith wrote `is_ballpark: true` into the manifest of an
+# operation that crossed no datum. The defect was not in our code and did not
+# wait for our commit to exist -- anybody installing that week had it. Found by
+# the 3.14 arm by accident, on a day somebody happened to push.
+#
+# So this runs when nobody pushes, from `main` as it is, and prints what moved
+# since the last green run on `main`: a red here with a green `main` is an
+# upstream change by construction, and the diff says which one.
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Install the newest release of everything
+        run: pip install --upgrade --upgrade-strategy eager -e .[test,raster,whitebox]
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ~/.cache/huggingface
+          key: hf-potion-retrieval-32M-6fc8051
+      - name: Ask the model host once, politely
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+        run: python -c "from mapsmith import retrieval; retrieval.warm_cache()"
+        continue-on-error: true
+      - name: What moved since the last green CI on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # Informational: it never fails the job. What decides red or green is
+        # the test step; this says what to blame when it is red.
+        continue-on-error: true
+        run: |
+          pip freeze --exclude-editable | sort > upstream.txt
+          run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?branch=main&event=push&status=success&per_page=1" --jq '.workflow_runs[0].id')"
+          if [ -z "$run_id" ] || ! gh run download "$run_id" -R "$GITHUB_REPOSITORY" -n resolved-3.14 -D last-green; then
+            echo "no resolved-3.14 artifact from a green CI run on main to compare with"
+            exit 0
+          fi
+          python3 - "$run_id" <<'EOF'
+          import pathlib, sys
+          def parsed(path):
+              return {
+                  name.lower(): version
+                  for name, _, version in (l.partition("==") for l in path.read_text().splitlines())
+                  if version
+              }
+          then = parsed(next(pathlib.Path("last-green").glob("*.txt")))
+          now = parsed(pathlib.Path("upstream.txt"))
+          moved = sorted(
+              (n, then.get(n, "absent"), now.get(n, "absent"))
+              for n in set(then) | set(now) if then.get(n) != now.get(n)
+          )
+          print(f"against the last green CI run on main ({sys.argv[1]}):")
+          for name, old, new in moved:
+              print(f"  {name}: {old} -> {new}")
+          if not moved:
+              print("  nothing moved: a red below is not an upstream change")
+          EOF
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: upstream-resolved
+          path: upstream.txt
+      - name: Test
+        run: pytest -q

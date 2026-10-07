@@ -1,0 +1,308 @@
+> [!IMPORTANT]
+> ## 📣 作者正在求职 · 北京
+>
+> **AI 应用开发 · Agent 应用开发 · AI 产品全栈**
+>
+> 我是高鹏彬，有约 6 年软件开发经验。如果你们团队正在招人，欢迎联系，也感谢帮忙内推或转发！
+>
+> ### [📄 查看简历 PDF](https://laogao.xyz/platform-api/public/resume/gaopengbin-ai-20260906.pdf)　·　[✉️ 联系我](mailto:1804287165@qq.com)
+>
+> [查看我的项目与个人介绍 →](https://github.com/gaopengbin) · 邮箱：**1804287165@qq.com**
+
+> [!TIP]
+> **📣 Built with Cesium MCP? / 谁在使用 Cesium MCP？**
+>
+> Share your project, screenshots, or feedback—work in progress is welcome! / 欢迎分享项目、截图和使用反馈，开发中的作品也欢迎！
+>
+> **[Share / 分享 → Issue #44](https://github.com/gaopengbin/cesium-mcp/issues/44)** · [Discussion / 讨论区](https://github.com/gaopengbin/cesium-mcp/discussions/43)
+
+<img width="2172" height="724" alt="ChatGPT Image 2026年7月5日 22_13_19" src="https://github.com/user-attachments/assets/098dcbef-e0bc-4214-8adf-b80a29e50e65" />
+<div align="center">
+  <p><strong>A protocol-agnostic Cesium AI control runtime for MCP, WebMCP, function calling, and browser agents</strong></p>
+
+  <p><a href="packages/cesium-mcp-bridge/">cesium-mcp-bridge</a> is the protocol-agnostic Cesium command executor. Separate adapters expose it to <strong>browser-only agents</strong>, <strong>WebMCP browser agents</strong>, <strong>function calling</strong>, or <strong>MCP</strong> — your choice.</p>
+
+  <p>Four integration paths: <a href="examples/browser-agent/">Browser Agent</a> (simplest, zero backend) · WebMCP (page-local browser tools) · function calling (embed in your web app) · <a href="packages/cesium-mcp-runtime/">MCP runtime</a> (Claude Desktop / Cursor / Dify)</p>
+
+  <p>The local Runtime is only required for external MCP hosts. Browser Agent, WebMCP, and function-calling integrations execute the same commands directly in the web application.</p>
+
+  <p><a href="https://cesium-browser-agent.pages.dev/"><strong>Try it now</strong></a> — open the live browser demo, no install, no signup.</p>
+
+  <p>
+    <a href="https://gaopengbin.github.io/cesium-mcp/">Website</a> &middot;
+    <a href="README.zh-CN.md">中文</a> &middot;
+    <a href="https://gaopengbin.github.io/cesium-mcp/guide/getting-started.html">Getting Started</a> &middot;
+    <a href="https://gaopengbin.github.io/cesium-mcp/api/bridge.html">API Reference</a>
+  </p>
+
+  <p>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-155EEF?style=flat-square" alt="License: MIT"></a>
+    <a href="https://github.com/gaopengbin/cesium-mcp/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/gaopengbin/cesium-mcp/ci.yml?branch=main&label=CI&style=flat-square" alt="CI"></a>
+    <a href="https://github.com/gaopengbin/cesium-mcp/stargazers"><img src="https://img.shields.io/github/stars/gaopengbin/cesium-mcp?style=flat-square" alt="GitHub stars"></a>
+    <a href="https://www.npmjs.com/package/cesium-mcp-runtime"><img src="https://img.shields.io/npm/dm/cesium-mcp-runtime?label=runtime%20downloads&style=flat-square" alt="Runtime downloads"></a>
+  </p>
+
+  <p>
+    <a href="https://www.npmjs.com/package/cesium-mcp-bridge"><img src="https://img.shields.io/badge/bridge-npm-528bff?style=for-the-badge&logo=npm&logoColor=white" alt="bridge npm"></a>
+    <a href="https://www.npmjs.com/package/cesium-mcp-runtime"><img src="https://img.shields.io/badge/runtime-npm-155EEF?style=for-the-badge&logo=npm&logoColor=white" alt="runtime npm"></a>
+    <a href="https://www.npmjs.com/package/cesium-mcp-dev"><img src="https://img.shields.io/badge/dev-npm-364fc7?style=for-the-badge&logo=npm&logoColor=white" alt="dev npm"></a>
+  </p>
+</div>
+
+---
+
+## Cesium Map in Codex
+
+Install the hosted map plugin from this repository's **Cesium Map Community** source:
+
+```text
+codex plugin marketplace add gaopengbin/cesium-mcp --ref main
+codex plugin add cesium-map@cesium-community
+```
+
+Restart Codex and ask “Open a map of Manhattan.” Uses native host chat, with no local map server or separate model API key. Requires a compatible MCP Apps host. This is a community beta, separate from the OpenAI public directory.
+
+[Installation and compatibility](plugins/cesium-map/README.md) · [ZIP download](https://github.com/gaopengbin/cesium-mcp/releases/tag/cesium-map-plugin-v0.1.0) · [Product website](https://laogao.xyz/cesium-map/)
+
+### Continue in native Codex chat
+
+- “Open the New York 3D city blocks scene, change the selected building height to 180 metres, then read it back.”
+- “Explain the selected hexagon in the San Francisco city activity scene.”
+- “Show the Los Angeles hotspots scene, then zoom in on the route.”
+
+Select a scene in the map, click an object and choose **Ask in Codex** to continue with its map context. The host controls chat placement and map expansion.
+
+### Map previews
+
+![Cesium Map development preview showing Manhattan's 3D city blocks](docs/public/screenshots/cesium-map/new-york-workspace.jpg)
+
+Actual running screenshot: the development preview is connected to the hosted HTTPS MCP service. The native conversation UI is provided by Codex; it is not pictured here.
+
+| San Francisco · City activity | New York · 3D city blocks | Los Angeles · Hotspots |
+| --- | --- | --- |
+| ![San Francisco activity hexagons](docs/public/screenshots/cesium-map/san-francisco.jpg) | ![Manhattan illustrative buildings](docs/public/screenshots/cesium-map/new-york.jpg) | ![Los Angeles heatmap and route](docs/public/screenshots/cesium-map/los-angeles.jpg) |
+| Inspect feature values and change classification colors | Select buildings, edit extrusion heights and read back properties | Combine a heatmap, markers and connecting routes |
+
+These covers come from rendered map scenes. Buildings, activity values and heatmap points are demonstration data, not surveyed heights or official statistics. Basemap imagery: Esri and its imagery contributors.
+
+## Demo
+
+https://github.com/user-attachments/assets/8a40565a-fcdd-47bf-ae67-bc870611c908
+
+## Packages & Entry Points
+
+| Module | Role | Status | Links |
+|--------|------|--------|-------|
+| **cesium-mcp-contracts** | Transport-neutral names, descriptions, and JSON Schemas for browser tools | New shared layer | [source](packages/cesium-mcp-contracts/) |
+| **cesium-mcp-bridge** | Protocol- and transport-free Cesium command executor (60+ commands) | Mainline, actively iterated | [![npm](https://img.shields.io/npm/v/cesium-mcp-bridge)](https://www.npmjs.com/package/cesium-mcp-bridge) · [source](packages/cesium-mcp-bridge/) |
+| **cesium-mcp-webmcp** | One-package Viewer integration plus the native `document.modelContext` adapter | Browser integration | [source](packages/cesium-mcp-webmcp/) |
+| **examples/webmcp-integration** | Focused npm + Vite integration without a chat UI or MCP server | Developer example | [example](examples/webmcp-integration/) |
+| **examples/browser-agent** | Browser-only AI agent with automatic WebMCP exposure | Recommended | [example](examples/browser-agent/) · [live demo](https://cesium-browser-agent.pages.dev/) |
+| **cesium-mcp-runtime** | MCP server (stdio + HTTP) | Stable MCP SDK v2 | [![npm](https://img.shields.io/npm/v/cesium-mcp-runtime)](https://www.npmjs.com/package/cesium-mcp-runtime) · [source](packages/cesium-mcp-runtime/) |
+| **cesium-mcp-dev** | CesiumJS API knowledge base for coding assistants | Maintained | [![npm](https://img.shields.io/npm/v/cesium-mcp-dev)](https://www.npmjs.com/package/cesium-mcp-dev) · [source](packages/cesium-mcp-dev/) |
+
+> **Which one?** Personal project or quick try → browser-agent. Let a compatible browser agent discover page-local Cesium tools → WebMCP. Existing web app embedding an AI assistant → bridge + your own function calling. Calling from Claude Desktop / Cursor / Dify → MCP runtime.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph clients ["AI Drivers (pick one)"]
+    BA["Browser Agent\n(in the same page)"]
+    WM["WebMCP Agent\n(browser-provided)"]
+    FC["Your web app\nfunction calling"]
+    MCP["Claude / Cursor / Dify\nvia MCP runtime"]
+  end
+
+  CONTRACTS["cesium-mcp-contracts\ntool definitions"]
+  WEBMCP["cesium-mcp-webmcp\nnative adapter"]
+
+  subgraph core ["cesium-mcp-bridge (browser)"]
+    B["60+ tools\nprotocol-agnostic dispatcher"]
+    C["CesiumJS Viewer"]
+  end
+
+  CONTRACTS -.-> BA
+  CONTRACTS -.-> WEBMCP
+  BA -- "in-page call" --> B
+  WM -- "document.modelContext" --> WEBMCP
+  WEBMCP --> B
+  FC -- "in-page call" --> B
+  MCP -- "WebSocket / JSON-RPC" --> B
+  B --> C
+
+  style clients fill:#1e293b,stroke:#528bff,color:#e2e8f0
+  style core fill:#1e293b,stroke:#12B76A,color:#e2e8f0
+```
+
+The bridge remains the execution core, while contracts and protocol adapters stay separate. Pick whichever driver matches your scenario — they all reach the same Cesium command layer. On WebMCP-capable browsers, `cesium-mcp-webmcp` can expose 61 browser-safe commands in 12 selectable toolsets through `document.modelContext` without adding an MCP transport or backend server.
+
+### Relationship to the CesiumGS AI ecosystem
+
+CesiumGS's newer AI work is split between [`cesiumjs-ai-starter-app`](https://github.com/CesiumGS/cesiumjs-ai-starter-app), a deployable application template, and [`cesiumjs-skills`](https://github.com/CesiumGS/cesiumjs-skills), development-time guidance for coding agents. The earlier [`cesium-ai-integrations`](https://github.com/CesiumGS/cesium-ai-integrations) repository contains the first-generation experiments and community contributions that helped explore this space.
+
+`cesium-mcp` is an independent runtime and integration toolkit, not a continuation of the earlier WebSocket-only reference architecture. Its reusable Bridge and shared contracts work unchanged across browser-only function calling, native WebMCP, standard MCP over stdio/HTTP, and embedded desktop shells. A local WebSocket bridge is used only when an external MCP host needs to reach a live browser Viewer; it is not required for the hosted demo or page-local integrations.
+
+The project author was an early contributor to `CesiumGS/cesium-ai-integrations`, contributing the Imagery server, Terrain server, and unified MCP Gateway. Those experiments informed this project's multi-protocol architecture, while the implementation, release lifecycle, and roadmap remain independent.
+
+## Quick Start
+
+### Path 0 — Try in 30 seconds (browser agent, recommended)
+
+Open the [live demo](https://cesium-browser-agent.pages.dev/) and ask—the hosted model is ready without a browser API key:
+> *"Fly to the Eiffel Tower and drop a red marker"*
+
+Fork the [examples/browser-agent](examples/browser-agent/) folder to deploy your own.
+
+### Path 1 — Expose Cesium tools through WebMCP (Chrome 149+ experimental)
+
+The browser-agent example automatically registers all 61 browser-safe page tools plus 3 page-local resource tools when `document.modelContext` is available. Its built-in chat uses automatic toolset routing while keeping resource handles available for large GeoJSON/CZML inputs, and still offers explicit core, single-toolset, and all-tools modes:
+
+```bash
+npm run build -w packages/cesium-mcp-bridge
+npm run build -w packages/cesium-mcp-webmcp
+npx serve . -l 4173
+```
+
+Open `http://localhost:4173/examples/browser-agent/`, click **Start**, then inspect or execute the tools in DevTools → Application → WebMCP. Enable `#enable-webmcp-testing` and `#devtools-webmcp-support` in `chrome://flags` for local testing.
+
+Application developers install the adapter separately. End users only open the integrated website; they do not install npm packages or run an MCP server.
+
+```bash
+npm install cesium-mcp-webmcp
+```
+
+```js
+import { registerCesiumViewerWebMcp } from 'cesium-mcp-webmcp/viewer'
+
+const registration = await registerCesiumViewerWebMcp(viewer, {
+  toolsets: 'all',
+  excludeTools: ['geocode'], // add your own browser geocoder to expose this tool
+})
+
+// Later, if the page is unmounted:
+registration.unregister()
+```
+
+See the [WebMCP adapter API](packages/cesium-mcp-webmcp/README.md) for custom integrations.
+For a complete npm + Vite application, start from the [WebMCP integration example](examples/webmcp-integration/).
+
+### Path 2 — Embed in your own web app (function calling)
+
+```bash
+npm install cesium-mcp-bridge
+```
+
+```js
+import { CesiumBridge } from 'cesium-mcp-bridge';
+
+const bridge = new CesiumBridge(viewer);
+// Then: send the bridge's tool schema to any LLM that supports function/tool calling,
+// route the model's tool calls to bridge.execute(name, params).
+```
+
+See [examples/browser-agent/index.html](examples/browser-agent/index.html) for a complete loop with OpenAI-compatible APIs.
+
+### Path 3 — Use from Claude Desktop / Cursor / Dify (MCP)
+
+Ordinary MCP users need only the Runtime package. It includes the browser Bridge bundle and a built-in Viewer at `http://localhost:9100/`; install `cesium-mcp-bridge` separately only when integrating a custom page.
+
+```bash
+# Stable channel — npm latest, MCP SDK v2
+npx -y cesium-mcp-runtime
+
+# HTTP mode
+npx -y cesium-mcp-runtime --transport http --port 3000
+```
+
+The stable release serves existing MCP `2025-11-25` clients and the new
+`2026-07-28` protocol from the same stdio/HTTP entry. It uses the stable
+TypeScript SDK v2 and passes the official `server-stateless` conformance
+scenario (28/28).
+
+MCP client config:
+
+```json
+{
+  "mcpServers": {
+    "cesium": {
+      "command": "npx",
+      "args": ["-y", "cesium-mcp-runtime"]
+    }
+  }
+}
+```
+
+## 62 Available Command Tools
+
+Tools are organized into **12 toolsets**. Default mode enables 4 core toolsets (30 tools). Set `CESIUM_TOOLSETS=all` for everything, or let the AI discover and activate toolsets dynamically at runtime.
+
+> **Canonical contracts**: Tool descriptions default to English; set `CESIUM_LOCALE=zh-CN` for Chinese. Titles, behavior annotations, localized descriptions, defaults, input validation, MCP output schemas, and structured results all come from the shared JSON Schemas in `cesium-mcp-contracts`. Text `content` remains available for older clients.
+
+| Toolset | Tools |
+|---------|-------|
+| **view** (default) | `flyTo`, `setView`, `getView`, `zoomToExtent`, `saveViewpoint`, `loadViewpoint`, `listViewpoints`, `exportScene` |
+| **entity** (default) | `addMarker`, `addLabel`, `addModel`, `addPolygon`, `addPolyline`, `updateEntity`, `removeEntity`, `batchAddEntities`, `queryEntities`, `getEntityProperties` |
+| **layer** (default) | `addGeoJsonLayer`, `addGeoJsonPrimitive`, `listLayers`, `removeLayer`, `clearAll`, `setLayerVisibility`, `updateLayerStyle`, `getLayerSchema`, `setBasemap` |
+| **interaction** (default) | `screenshot`, `highlight`, `measure` |
+| camera | `lookAtTransform`, `startOrbit`, `stopOrbit`, `setCameraOptions` |
+| entity-ext | `addBillboard`, `addBox`, `addCorridor`, `addCylinder`, `addEllipse`, `addRectangle`, `addWall` |
+| animation | `createAnimation`, `controlAnimation`, `removeAnimation`, `listAnimations`, `updateAnimationPath`, `trackEntity`, `controlClock`, `setGlobeLighting` |
+| tiles | `load3dTiles`, `load3dGaussianSplat`, `loadTerrain`, `loadImageryService`, `loadCzml`, `loadKml`, `setEdgeDisplayMode` |
+| trajectory | `playTrajectory` |
+| heatmap | `addHeatmap` |
+| scene | `setSceneOptions`, `setPostProcess`, `setIonToken` (Runtime only) |
+| geolocation | `geocode` |
+
+## Examples
+
+See [examples/minimal/](examples/minimal/) for a complete working demo.
+
+## Development
+
+```bash
+git clone https://github.com/gaopengbin/cesium-mcp.git
+cd cesium-mcp
+npm install
+npm run build
+npm test
+npm run test:contracts
+npm run test:schema-compat
+npm run test:routing
+npm run test:model-tools
+npm run eval:model-tools
+npm run test:e2e:packed
+```
+
+`test:contracts` is the focused parity gate for MCP Runtime metadata, WebMCP registration, Function Calling definitions, provider Schema portability, and the 60-tool Bridge Executor Registry. Run `test:schema-compat` directly for actionable OpenAI, Azure, VS Code MCP, and WebMCP Schema diagnostics.
+`test:routing` evaluates bilingual and multi-intent Browser Agent requests across all 12 toolsets, checking required-tool recall and the 20-tool automatic-routing budget.
+`test:model-tools` verifies the provider-neutral multi-turn scoring harness. `eval:model-tools` performs a no-network routing preflight by default; add an explicit provider and `--live` to measure real tool choice, argument validity, and required-tool completion. See [Model Tool Evaluation](docs/guide/model-tool-evaluation.md).
+`test:e2e:packed` builds npm tarballs, installs them in a clean temporary project, opens the real Cesium Viewer, and verifies a Runtime-WebSocket-Bridge command round trip.
+
+## Version Policy
+
+Version format: `{CesiumMajor}.{CesiumMinor}.{MCPPatch}`
+
+| Segment | Meaning | Example |
+|---------|---------|--------|
+| `1.145` | Tracks CesiumJS version — built & tested against Cesium `~1.145.0` | `1.145.0` → Cesium 1.145 |
+| `.x` | MCP patch — independent iterations for new tools, bug fixes, docs | `1.145.0` → `1.145.1` |
+
+Official CesiumJS releases are reviewed before the compatibility baseline is bumped; the project does not automatically claim support for a newer release without Bridge verification.
+
+## Related Projects
+
+- [mapbox-mcp](https://github.com/gaopengbin/mapbox-mcp) — AI control for Mapbox GL JS
+- [openlayers-mcp](https://github.com/gaopengbin/openlayers-mcp) — AI control for OpenLayers
+
+## Community
+
+This project recognizes [LINUX DO](https://linux.do/) as a community for open-source exchange, technical discussion, and developer feedback.
+
+## Star History
+
+[![Star History Chart](https://raw.githubusercontent.com/gaopengbin/cesium-mcp/star-history-data/.github/star-history/chart.svg)](https://github.com/gaopengbin/cesium-mcp)
+
+## License
+
+[MIT](LICENSE)

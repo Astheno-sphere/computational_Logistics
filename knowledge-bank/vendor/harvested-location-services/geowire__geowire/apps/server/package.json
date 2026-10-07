@@ -1,0 +1,55 @@
+{
+  "name": "@geowirehq/server",
+  "version": "0.6.2",
+  "description": "GeoWire REST API server (Fastify) — /v1 endpoints, OpenAPI, metrics, MCP over HTTP",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "geowire-server": "./dist/server.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.8.0",
+    "@fastify/swagger-ui": "^6.1.0",
+    "@geowirehq/core": "workspace:*",
+    "@geowirehq/mcp": "workspace:*",
+    "@geowirehq/provider-baidu": "workspace:*",
+    "@geowirehq/provider-census": "workspace:*",
+    "@geowirehq/provider-foursquare": "workspace:*",
+    "@geowirehq/provider-google": "workspace:*",
+    "@geowirehq/provider-internal": "workspace:*",
+    "@geowirehq/provider-kakao": "workspace:*",
+    "@geowirehq/provider-naver": "workspace:*",
+    "@geowirehq/provider-nominatim": "workspace:*",
+    "@geowirehq/provider-osrm": "workspace:*",
+    "@geowirehq/provider-sdk": "workspace:*",
+    "@geowirehq/provider-yelp": "workspace:*",
+    "@geowirehq/schema": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "fastify": "^5.10.0",
+    "prom-client": "^15.1.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

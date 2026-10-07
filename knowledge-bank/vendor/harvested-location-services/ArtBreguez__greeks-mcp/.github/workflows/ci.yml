@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: pip install -e ".[dev]"
+
+      - name: Smoke test (tool wiring)
+        run: GREEKS_API_KEY=grk_ci python tests/test_server.py
+
+      - name: End-to-end protocol test (spawns server over stdio, calls all tools)
+        run: python tests/test_e2e.py
+
+  build:
+    name: Build & metadata check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install --upgrade build twine
+          python -m build
+
+      - name: Twine check
+        run: twine check dist/*
+
+      - name: Verify wheel installs and exposes the CLI + all 17 tools
+        run: |
+          python -m venv /tmp/verify
+          /tmp/verify/bin/pip install dist/*.whl
+          test -x /tmp/verify/bin/greeks-mcp
+          GREEKS_API_KEY=grk_ci /tmp/verify/bin/python - <<'PY'
+          import asyncio
+          from greeks_mcp import server
+          tools = asyncio.run(server.mcp.list_tools())
+          names = {t.name for t in tools}
+          expected = {
+              "get_max_pain", "get_greeks", "get_gex", "get_flow", "get_overview",
+              "get_snapshot", "get_levels", "list_plans", "health",
+              "screener", "gex_heatmap", "track_record",
+              "get_vex", "get_vol_structure", "get_zero_dte", "get_gex_intraday",
+              "get_track_record_detail",
+          }
+          missing = expected - names
+          assert not missing, f"missing tools: {missing}"
+          print(f"OK: {len(names)} tools registered")
+          PY
+
+  docker:
+    name: Docker build + introspection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t greeks-mcp:ci .
+
+      - name: Server starts and answers MCP introspection with no API key
+        run: |
+          python -m venv /tmp/mcpcli
+          /tmp/mcpcli/bin/pip install "mcp[cli]>=1.2.0,<2"
+          /tmp/mcpcli/bin/python - <<'PY'
+          import asyncio
+          from mcp import ClientSession, StdioServerParameters
+          from mcp.client.stdio import stdio_client
+
+          async def main():
+              params = StdioServerParameters(
+                  command="docker",
+                  args=["run", "--rm", "-i", "greeks-mcp:ci"],
+                  env={},
+              )
+              async with stdio_client(params) as (r, w):
+                  async with ClientSession(r, w) as s:
+                      await s.initialize()
+                      tools = await s.list_tools()
+                      names = {t.name for t in tools.tools}
+                      assert len(names) == 17, f"expected 17 tools, got {len(names)}: {names}"
+                      print(f"OK: container exposed {len(names)} tools over MCP")
+
+          asyncio.run(main())
+          PY

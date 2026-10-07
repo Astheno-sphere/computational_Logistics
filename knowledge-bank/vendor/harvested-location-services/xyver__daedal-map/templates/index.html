@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DaedalMap</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ask place-based questions in natural language and get answers on a map. Covers disasters, demographics, economics, and climate data across 40+ sources.">
+  <!-- The app is a single-template SPA: /explore, /ops, /research all serve this
+       identical shell with no server-rendered content. Search presence lives on
+       www.daedalmap.com, which has real per-page content. Keep this noindex so
+       the app does not compete with those pages or spend crawl budget on an
+       empty shell. `follow` still passes link equity through to www.
+       Deliberately no canonical here: a canonical plus noindex is contradictory
+       signalling, and the previous relative `href="/"` declared every lane a
+       duplicate of the app root. -->
+  <meta name="robots" content="noindex, follow">
+  <link rel="home" href="/">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <!-- Vendor libraries are injected by the boot script below, which means the
+       preload scanner never sees them and DNS/TLS to these hosts starts late.
+       Warm the connections during HTML parse instead. -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "DaedalMap",
+    "url": "https://daedalmap.com",
+    "logo": "https://daedalmap.com/site-static/daedalmap_logo_v1.png",
+    "email": "contact@daedalmap.com",
+    "sameAs": [
+      "https://github.com/xyver",
+      "https://x.com/daedalmap"
+    ]
+  }
+  </script>
+
+  <!-- Vendor styles (load first so our styles can override) -->
+  <link rel="stylesheet" href="/static/vendor/maplibre-gl/maplibre-gl.css">
+  <!-- Map styles (controls, overlays, popups, time slider) -->
+  <link rel="stylesheet" href="/static/styles/map.css">
+  <!-- Chat panel styles (sidebar, messages, orders, settings) -->
+  <link rel="stylesheet" href="/static/styles/chat.css">
+
+  <!-- Shared visitor identity and first-touch attribution across www, app, and
+       downloads. Also owns the ?noga=1 owner/dev kill-switch, which moved from
+       per-origin localStorage to a cookie on the shared parent domain so an
+       opted-out browser stays opted out on every host. Blocking, and before
+       the boot script, because gtag config below reads from it.
+
+       GENERATED: synced from county-map-private by
+       build/sync_shared_frontend_assets.py. Do not edit static/js/dm-visitor.js
+       directly. -->
+  <script src="/static/js/dm-visitor.js"></script>
+  <script>
+    window.DAEDALMAP_VENDOR = {
+      maplibreCss: '/static/vendor/maplibre-gl/maplibre-gl.css',
+      maplibreJs: '/static/vendor/maplibre-gl/maplibre-gl.js',
+      msgpackJs: '/static/vendor/msgpack/msgpack.min.js',
+      supabaseJs: '/static/vendor/supabase/supabase.min.js'
+    };
+
+    function loadStylesheetWithFallback(primaryHref, fallbackHref) {
+      return new Promise((resolve) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = primaryHref;
+        link.onload = () => resolve(primaryHref);
+        link.onerror = () => {
+          if (!fallbackHref) {
+            resolve(null);
+            return;
+          }
+          const fallback = document.createElement('link');
+          fallback.rel = 'stylesheet';
+          fallback.href = fallbackHref;
+          fallback.onload = () => resolve(fallbackHref);
+          fallback.onerror = () => resolve(null);
+          document.head.appendChild(fallback);
+        };
+        document.head.appendChild(link);
+      });
+    }
+
+    function loadScriptWithFallback(primarySrc, fallbackSrc) {
+      return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = primarySrc;
+        script.onload = () => resolve(primarySrc);
+        script.onerror = () => {
+          if (!fallbackSrc) {
+            resolve(null);
+            return;
+          }
+          const fallback = document.createElement('script');
+          fallback.src = fallbackSrc;
+          fallback.onload = () => resolve(fallbackSrc);
+          fallback.onerror = () => resolve(null);
+          document.head.appendChild(fallback);
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    window.DAEDALMAP_BOOT = (async () => {
+      // Analytics must never gate app boot. Define the gtag queue synchronously
+      // so early events are buffered, then let the tag script land whenever it
+      // lands. This block is deliberately not awaited.
+      //
+      // The measurement ID is the same one www and downloads use. The app
+      // previously had its own (G-NLHFVYWW9T), which meant a visitor clicking
+      // from the marketing site into the app started a brand new session and
+      // showed up as a daedalmap.com self-referral. The shared measurement ID
+      // and parent-domain GA cookie preserve sessions across these subdomains.
+      // Do not configure the cross-domain linker here: these hosts share the
+      // same registrable domain, and linker decoration leaks GA's _gl value
+      // into otherwise clean app URLs.
+      //
+      // dm_no_ga / visitor identity live in dm-visitor.js, which is loaded in
+      // <head> and is a generated copy of the private site's canonical file.
+      if (window.dmVisitor && !window.dmVisitor.suppressed()) {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function gtag(){ window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('set', window.dmVisitor.gaParams());
+        window.gtag('config', 'G-WTF95W3759');
+        loadScriptWithFallback(
+          'https://www.googletagmanager.com/gtag/js?id=G-WTF95W3759',
+          null
+        );
+      }
+
+      // maplibre-gl.css is loaded as a static link in <head> so our map.css
+      // (which follows it) always wins without needing !important overrides.
+      // JS assets still use CDN-with-vendor-fallback for offline/self-host support.
+      //
+      // These three libraries do not depend on each other, so they load
+      // concurrently. Loading them in sequence cost roughly 250ms of pure
+      // round-trip latency before any application module could start.
+      await Promise.all([
+        loadScriptWithFallback(
+          'https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js',
+          window.DAEDALMAP_VENDOR.maplibreJs
+        ),
+        loadScriptWithFallback(
+          'https://unpkg.com/@msgpack/msgpack@3.0.0-beta2/dist.es5+umd/msgpack.min.js',
+          window.DAEDALMAP_VENDOR.msgpackJs
+        ),
+        loadScriptWithFallback(
+          'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+          window.DAEDALMAP_VENDOR.supabaseJs
+        )
+      ]);
+    })();
+  </script>
+</head>
+<body>
+  <!-- Sidebar Toggle Button (visible when sidebar is collapsed) -->
+  <button id="sidebarToggle" title="Open chat">
+    <span>&#9776;</span>
+  </button>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sidebarResizeHandle" title="Drag to resize"></div>
+    <div
+      id="sidebarHeader"
+      class="tutorial-region"
+      data-tutorial-title="Account and Session"
+      data-tutorial-body="Manage account access here, switch between account-backed and guest behavior, or collapse the sidebar to focus on the map."
+    >
+      <h2 id="sidebarModeTitle">Research Mode</h2>
+      <div id="sidebarModeMount"></div>
+      <div id="sidebarHeaderButtons">
+        <button id="tutorialToggleHeaderBtn" class="header-tutorial-btn" data-action="tutorial-toggle" type="button" aria-pressed="false" title="Toggle tutorial mode">Tutorial</button>
+        <button id="shareMapBtn" type="button" title="Copy a shareable URL for the current map view">Share</button>
+        <button id="authBtn" title="Open account or local setup">Account</button>
+        <button id="closeSidebar" title="Close">&times;</button>
+      </div>
+      <button class="tutorial-region-tip" type="button">?</button>
+    </div>
+
+    <div id="authStatusBar" class="auth-status-bar">
+      <span id="authStatusText">Local mode: set your LLM key and local data path in settings.</span>
+    </div>
+
+    <div id="mobileMapNotice" class="mobile-map-notice" aria-live="polite" hidden>
+      This map works best on desktop. Mobile experiences are currently limited.
+    </div>
+
+    <div
+      id="sidebarResearchMount"
+      class="tutorial-region"
+      data-tutorial-lane="research"
+      data-tutorial-title="Research Workspace"
+      data-tutorial-body="Load a saved corpus or build one from packs, then ask analytical questions scoped to that bounded workspace. Loaded artifacts and corpus state live here while you work."
+    >
+      <button class="tutorial-region-tip" type="button">?</button>
+    </div>
+
+    <div
+      id="chatContainer"
+      class="tutorial-region"
+      data-tutorial-title="Ask Questions"
+      data-tutorial-body="Ask questions here. Results can become orders that add data to the map or refine what is already loaded."
+    >
+      <button class="tutorial-region-tip" type="button">?</button>
+      <div id="chatMessages"></div>
+
+      <!-- Resize handle between messages and input -->
+      <div class="resize-handle" id="resizeInput" title="Drag to resize"></div>
+
+      <div id="chatInputArea">
+        <form id="chatForm">
+          <textarea id="chatInput" placeholder="Ask about locations, data, or comparisons..." rows="1"></textarea>
+          <button type="submit" id="sendBtn">Send</button>
+        </form>
+      </div>
+
+      <!-- Resize handle between input and order panel -->
+      <div class="resize-handle" id="resizeOrder" title="Drag to resize"></div>
+
+      <!-- Order Panel -->
+      <div
+        id="orderPanel"
+        class="tutorial-region"
+        data-tutorial-lane="explore"
+        data-tutorial-title="Order and Loaded Layers"
+        data-tutorial-body="Review queued requests in Order, then switch to Loaded to manage the data layers already on the map."
+      >
+        <button class="tutorial-region-tip" type="button">?</button>
+        <div class="order-tabs-header">
+          <button class="order-tab active" id="orderTabBtn" data-tab="order">Order <span id="orderCount"></span></button>
+          <button class="order-tab" id="loadedTabBtn" data-tab="loaded">Loaded</button>
+        </div>
+        <!-- Order Tab Content -->
+        <div class="order-tab-content active" id="orderTabContent" data-tab="order">
+          <div class="order-summary" id="orderSummary"></div>
+          <div class="order-items" id="orderItems"></div>
+          <div class="order-actions">
+            <button class="order-btn cancel" id="orderCancelBtn">Clear</button>
+            <button class="order-btn confirm" id="orderConfirmBtn">Display on Map</button>
+          </div>
+        </div>
+        <!-- Loaded Tab Content -->
+        <div class="order-tab-content" id="loadedTabContent" data-tab="loaded">
+          <div class="loaded-items" id="loadedItems">
+            <div style="color: #999; font-size: 12px; text-align: center; padding: 10px;">No data loaded</div>
+          </div>
+          <div class="loaded-actions" id="loadedActions" style="display: none;">
+            <button class="order-btn cancel" id="loadedClearAllBtn">Clear All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Map Container -->
+  <div id="mapContainer">
+    <div id="map"></div>
+    <div
+      id="mapModeMount"
+      class="tutorial-region"
+      data-tutorial-title="Workflow Mode"
+      data-tutorial-body="Switch between Explore for quick discovery, Research for analytical work in a bounded corpus, and Ops for monitoring. Your loaded data and account stay the same; the workspace, tools, and prompts adapt."
+      aria-label="Workflow mode switch"
+    >
+      <button class="tutorial-region-tip" type="button">?</button>
+    </div>
+    <button id="fullscreenUiToggle" type="button" aria-pressed="false" title="Hide chat and map controls">Fullscreen</button>
+    <div id="breadcrumb"></div>
+    <div
+      id="globeToggle"
+      class="tutorial-region"
+      data-tutorial-title="Map View Controls"
+      data-tutorial-body="Switch between flat or globe view and satellite imagery while you explore the same area."
+    >
+      <label><input type="checkbox" id="globeCheckbox"> Globe</label>
+      <label><input type="checkbox" id="satCheckbox"> Sat</label>
+      <button class="tutorial-region-tip" type="button">?</button>
+    </div>
+    <div id="zoomLevel">Zoom: 0.0</div>
+    <div
+      id="levelButtons"
+      class="tutorial-region"
+      data-tutorial-title="Geography Controls"
+      data-tutorial-body="Change the place resolution here, from a world view down to counties and local areas, and lock the level when you want consistency."
+    >
+      <button data-level="0" title="Countries (zoom ~2)">World</button>
+      <button data-level="1" title="States/Provinces (zoom ~5)">States</button>
+      <button data-level="2" title="Counties/Districts (zoom ~8)">Counties</button>
+      <button data-level="3" title="Subdivisions (zoom ~11)">Local</button>
+      <button id="levelLockBtn" title="Lock admin level">Lock</button>
+      <button class="tutorial-region-tip" type="button">?</button>
+    </div>
+
+    <!-- Overlay Selector -->
+    <div
+      id="overlaySelectorRegion"
+      class="tutorial-region"
+      data-tutorial-title="Overlays"
+      data-tutorial-body="Turn live hazards and themed layers on or off here. Some overlays add filters or time-aware playback."
+    >
+      <button class="tutorial-region-tip" type="button">?</button>
+      <div id="overlaySelector"></div>
+      <!-- Geometry Inventory depth key. Swatches are built from the overlay's
+           own features, so the key cannot disagree with what the map painted.
+           It lives inside the tray region so it stacks under the panel instead
+           of fighting the chat panel or the attribution bar for a corner. -->
+      <div id="geometryInventoryLegend" aria-label="Geometry inventory admin depth" hidden></div>
+    </div>
+  </div>
+
+  <!-- Stats Overlay -->
+  <div id="statsOverlay">
+    <span id="totalAreas">0</span> areas
+  </div>
+
+  <div id="loadingIndicator" aria-hidden="true">
+    <div class="map-loading-orb">
+      <div class="map-loading-ring"></div>
+      <div class="map-loading-core"></div>
+    </div>
+    <div class="map-loading-text">Loading data...</div>
+    <button id="cancelLoadingButton" class="map-loading-cancel" type="button">Cancel</button>
+  </div>
+
+  <!-- Time Slider -->
+  <div
+    id="tutorialTimelineRegion"
+    class="tutorial-region"
+    data-tutorial-title="Timeline and Animation"
+    data-tutorial-variant="timeline"
+  >
+    <button class="tutorial-region-tip" type="button">?</button>
+    <div id="tutorialTimelinePanel" class="tutorial-timeline-panel">
+      <div class="tutorial-timeline-header">
+        <strong>Timeline and Animation</strong>
+        <button id="tutorialTimelineDismiss" type="button" aria-label="Close timeline tutorial">&times;</button>
+      </div>
+      <p>The date display shows the current window on the map. Use play, loop, and speed to animate through loaded time.</p>
+      <p>Drag the scrubber to jump in time. The orange trim handles narrow the active range, and Reset Trim restores the full window.</p>
+      <p>The speed readout shows how much real-world time passes per second of playback.</p>
+    </div>
+    <div id="timeSliderContainer">
+    <!-- Metric tabs (shown when multiple metrics available) -->
+    <div id="metricTabs" class="metric-tabs" style="display: none;"></div>
+    <!-- Multi-scale tabs (hidden when only one scale) -->
+    <div id="timeSliderTabs" class="time-slider-tabs" style="display: none;"></div>
+    <div class="time-slider-header">
+      <span class="time-slider-title" id="sliderTitle">Year</span>
+      <span class="time-slider-year" id="currentYearLabel">2020</span>
+      <span class="live-badge" id="liveBadge">LIVE</span>
+    </div>
+    <div class="time-slider-controls">
+      <button id="stepBackBtn" class="time-btn" title="Previous year">&lt;</button>
+      <button id="playBtn" class="time-btn play" title="Play/Pause">▶</button>
+      <button id="stepFwdBtn" class="time-btn" title="Next year">&gt;</button>
+      <div class="slider-track-container">
+        <div id="trimOverlayLeft" class="trim-overlay"></div>
+        <div id="trimOverlayRight" class="trim-overlay"></div>
+        <input type="range" id="timeSlider" min="2000" max="2023" value="2023">
+        <div id="lowerTrimHandle" class="trim-handle" title="Drag to set start bound">
+          <span class="trim-handle-label" id="lowerBoundLabel">2000</span>
+        </div>
+        <div id="upperTrimHandle" class="trim-handle" title="Drag to set end bound">
+          <span class="trim-handle-label" id="upperBoundLabel">2023</span>
+        </div>
+      </div>
+    </div>
+    <div class="time-slider-labels">
+      <label class="loop-control" title="Loop animation">
+        <span>Loop</span>
+        <input type="checkbox" id="loopCheckbox">
+      </label>
+      <span id="minYearLabel">2000</span>
+      <button id="liveBtn" class="live-btn" title="Jump to current time and lock">LIVE</button>
+      <span id="maxYearLabel">2023</span>
+    </div>
+    <!-- Speed Control (Phase 7 - Unified Speed Slider) -->
+    <div class="speed-control">
+      <span class="speed-label-left">Slow</span>
+      <button id="speedDown" class="speed-step-btn" title="Decrease speed">-</button>
+      <input type="range" id="speedSlider" min="0" max="1" step="0.01" value="0.72" title="Animation speed">
+      <button id="speedUp" class="speed-step-btn" title="Increase speed">+</button>
+      <span class="speed-label-right">Fast</span>
+      <span id="speedLabel" class="speed-value">1yr/sec</span>
+      <button id="clearBoundsBtn" class="bounds-clear-btn" title="Reset trim to full range">Reset Trim</button>
+    </div>
+    <!-- Choropleth Legend (attached as bottom section of animator) -->
+    <div id="choroplethLegend">
+      <div class="legend-title" id="legendTitle">Value</div>
+      <div class="legend-gradient" id="legendGradient"></div>
+      <div class="legend-labels">
+        <span id="legendMin">0</span>
+        <span id="legendMax">100</span>
+      </div>
+    </div>
+    </div>
+    <!-- Shared Ops retained-snapshot cursor. Hidden until active feeds offer
+         more than one real retained frame. -->
+    <section id="opsTimelineContainer" aria-label="Ops snapshot timeline" hidden></section>
+    <!-- Fairfax LST raster controls -->
+    <div id="raster-panel" style="display:none;"></div>
+  </div>
+  <script type="module">
+    try {
+      await window.DAEDALMAP_BOOT;
+      await import('/static/modules/app.js');
+      await import('/static/modules/feedback-bubble.js');
+    } catch (error) {
+      console.error('[DaedalMap Boot] Startup failed:', error);
+      const statusEl = document.getElementById('authStatusText');
+      if (statusEl) {
+        statusEl.textContent = `Startup failed: ${error?.message || error}`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+# emem-server systemd user unit — example configuration.
+#
+# Install:
+#   cp ops/systemd/emem-server.service.example \
+#     ~/.config/systemd/user/emem-server.service
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now emem-server.service
+#
+# Adapt the Environment= lines below to your operator setup.
+
+[Unit]
+Description=emem.dev — Earth memory protocol HTTP/MCP server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/emem
+
+# Bind addresses
+Environment=EMEM_BIND=127.0.0.1:5051
+Environment=EMEM_DATA=/home/ubuntu/emem/var/emem
+Environment=EMEM_DEMOS_DIR=/home/ubuntu/emem/var/demos
+
+# TLS (Let's Encrypt via TLS-ALPN-01). Binding :443 as a non-root user
+# requires CAP_NET_BIND_SERVICE on the binary or the process. Two
+# deployment patterns:
+#
+#   USER unit (this template — installed under ~/.config/systemd/user/):
+#     The kernel does NOT honour AmbientCapabilities= for user-mode
+#     systemd because there is no UID transition for the helper to
+#     prime. The working pattern is setcap on the binary, applied by
+#     scripts/redeploy.sh after every `cargo build --release` (the
+#     strip removes the file cap). Leave the line below commented.
+#
+#   SYSTEM unit (install under /etc/systemd/system/, run as a system
+#   service with User=emem): uncomment the AmbientCapabilities line.
+#   The system instance can prime the cap before the UID transition.
+#
+Environment=EMEM_TLS_DOMAINS=emem.dev,www.emem.dev
+Environment=EMEM_TLS_BIND=0.0.0.0:443
+Environment=EMEM_TLS_CONTACT=mailto:avijeet@vortx.ai
+# Environment=EMEM_TLS_STAGING=1
+# AmbientCapabilities=CAP_NET_BIND_SERVICE  # system-mode only — see note above
+
+# Logging
+Environment=RUST_LOG=info,rustls_acme=info
+
+# Topic-routing inference backend (ort + tokenizers)
+Environment=ORT_DYLIB_PATH=/opt/onnxruntime-1.22.0-cuda12/lib/libonnxruntime.so.1.22.0
+Environment=LD_LIBRARY_PATH=/opt/onnxruntime-1.22.0-cuda12/lib:/usr/lib/x86_64-linux-gnu
+
+# Google Analytics 4 measurement ID. The repo's web/index.html holds a
+# `__EMEM_GA_ID__` placeholder; the responder substitutes this value
+# at startup. Unset (or comment out) to disable GA entirely — the
+# entire GA <script> block is stripped from the served HTML when
+# this variable is unset or empty.
+Environment=EMEM_GA_MEASUREMENT_ID=
+
+# WRI Global Drivers of Forest Loss v1.2 (Sims et al. 2025) local cache.
+# One-time download from Zenodo (record 15366671, ~282 MB COG) lets the
+# materializer sample band 1 (driver class 1..7) via the shared
+# `cog::sample_pixel_multi` LZW path through a `file://` URL. Unset to
+# fall back to the honest `NotImplemented` disclosure that the per-cell
+# fetch is blocked by Zenodo's no-Range serving. Bump this when the v1.3
+# release is wired (Zenodo record 19485190).
+#
+# One-time download:
+#   mkdir -p $EMEM_DATA/wri_gdm_cache
+#   curl -L -o $EMEM_DATA/wri_gdm_cache/drivers_forest_loss_1km_2001_2024_v1_2.tif \
+#     https://zenodo.org/records/15366671/files/drivers_forest_loss_1km_2001_2024_v1_2.tif
+Environment=EMEM_WRI_GDM_CACHE=/home/ubuntu/emem/var/emem/wri_gdm_cache/drivers_forest_loss_1km_2001_2024_v1_2.tif
+
+# /v1/ask latency floor. Each cold-band materialiser (try_materialize_bands)
+# is wrapped in a dispatch-level hard timeout of EMEM_MATERIALIZER_TIMEOUT_SECS.
+# Its code default (30s) equals the /v1/ask budget (EMEM_ASK_TIMEOUT_SECS, also
+# 30s) — leaving ZERO slack, so a single slow/unavailable cold upstream (CAMS,
+# MODIS LST 8-day, Overture) ran the full 30s and the ask budget fired at the
+# same instant, returning an empty `incomplete` envelope for every consumer
+# question. Cap each materialiser at 14s (still covers the SoilGrids/ORNL/STAC
+# p95 ~12s the 30s default was sized for) and drop the hot-path retry, so the
+# ask always reserves >=16s to synthesise a real signed partial answer from the
+# warm facts + whatever materialised in time. Deferred bands ship as honest
+# materialize_notes + next_steps recall pointers. /v1/eudr_dds keeps its own
+# longer EMEM_EUDR_ROUTE_TIMEOUT_SECS, so this does not touch the EUDR path.
+Environment=EMEM_MATERIALIZER_TIMEOUT_SECS=14
+Environment=EMEM_MATERIALIZER_RETRIES=1
+# /v1/ask budget (40s) + temporal-recipe sub-budget (16s). A cold COMPOSITE
+# question runs the cold-band materialise (cap 8 × ≤14s) then the temporal
+# recipes (run concurrently across recipes, bounded to 16s) back-to-back; 40s
+# leaves headroom to return a real scored answer on the first ask instead of a
+# timeout envelope. Both phases stay individually bounded, so 40s is a ceiling.
+Environment=EMEM_ASK_TIMEOUT_SECS=40
+Environment=EMEM_ASK_TEMPORAL_BUDGET_SECS=16
+
+LimitNOFILE=65536
+ExecStart=/home/ubuntu/emem/target/release/emem-server
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

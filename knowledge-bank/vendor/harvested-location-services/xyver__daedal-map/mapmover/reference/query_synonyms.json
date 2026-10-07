@@ -1,0 +1,106 @@
+{
+  "_description": "Query interpretation synonyms for natural language processing",
+  "_schema_version": "1.0.0",
+  "_last_updated": "2025-01",
+  "_note": "Helps LLM interpret user queries with alternative phrasings",
+
+  "metric_synonyms": {
+    "_description": "Common ways users might ask for specific metrics",
+    "population": ["people", "inhabitants", "residents", "citizens", "headcount"],
+    "gdp": ["gross domestic product", "economic output", "economy size"],
+    "gdp_per_capita": ["gdp per person", "income per capita", "wealth per person"],
+    "life_expectancy": ["lifespan", "how long people live", "longevity"],
+    "co2_emissions": ["carbon emissions", "carbon dioxide", "greenhouse gas", "carbon footprint"],
+    "unemployment": ["jobless rate", "unemployment rate", "people without jobs"],
+    "inflation": ["price increase", "cost of living increase", "inflation rate"],
+    "mortality_rate": ["death rate", "deaths per capita"],
+    "birth_rate": ["births per capita", "fertility rate", "natality"],
+    "literacy_rate": ["reading rate", "education rate", "can read"]
+  },
+
+  "time_synonyms": {
+    "_description": "Temporal query interpretations",
+    "latest": ["most recent", "current", "newest", "last available"],
+    "historical": ["over time", "trend", "time series", "through the years"],
+    "decade": ["10 years", "ten years"],
+    "century": ["100 years", "hundred years"]
+  },
+
+  "comparison_synonyms": {
+    "_description": "Comparison query patterns",
+    "highest": ["most", "top", "greatest", "largest", "maximum", "best"],
+    "lowest": ["least", "bottom", "smallest", "minimum", "worst"],
+    "compare": ["versus", "vs", "against", "difference between"],
+    "ranking": ["rank", "order", "sorted", "list by"]
+  },
+
+  "event_qualifier_defaults": {
+    "_description": "Default meaning for vague event-ranking words when the user does not name a different criterion",
+    "earthquakes": {
+      "biggest": {"metric": "magnitude", "order": "desc"},
+      "largest": {"metric": "magnitude", "order": "desc"},
+      "strongest": {"metric": "magnitude", "order": "desc"},
+      "highest": {"metric": "magnitude", "order": "desc"},
+      "smallest": {"metric": "magnitude", "order": "asc"},
+      "lowest": {"metric": "magnitude", "order": "asc"}
+    },
+    "hurricanes": {
+      "biggest": {"metric": "max_category", "order": "desc"},
+      "largest": {"metric": "max_category", "order": "desc"},
+      "strongest": {"metric": "max_category", "order": "desc"},
+      "highest": {"metric": "max_category", "order": "desc"},
+      "smallest": {"metric": "max_category", "order": "asc"},
+      "lowest": {"metric": "max_category", "order": "asc"}
+    },
+    "tornadoes": {
+      "biggest": {"metric": "tornado_scale", "order": "desc"},
+      "largest": {"metric": "tornado_scale", "order": "desc"},
+      "strongest": {"metric": "tornado_scale", "order": "desc"},
+      "highest": {"metric": "tornado_scale", "order": "desc"},
+      "smallest": {"metric": "tornado_scale", "order": "asc"},
+      "lowest": {"metric": "tornado_scale", "order": "asc"}
+    },
+    "volcanoes": {
+      "biggest": {"metric": "vei", "order": "desc"},
+      "largest": {"metric": "vei", "order": "desc"},
+      "strongest": {"metric": "vei", "order": "desc"},
+      "highest": {"metric": "vei", "order": "desc"},
+      "smallest": {"metric": "vei", "order": "asc"},
+      "lowest": {"metric": "vei", "order": "asc"}
+    },
+    "tsunamis": {
+      "biggest": {"metric": "max_water_height_m", "order": "desc"},
+      "largest": {"metric": "max_water_height_m", "order": "desc"},
+      "strongest": {"metric": "max_water_height_m", "order": "desc"},
+      "highest": {"metric": "max_water_height_m", "order": "desc"},
+      "smallest": {"metric": "max_water_height_m", "order": "asc"},
+      "lowest": {"metric": "max_water_height_m", "order": "asc"}
+    },
+    "wildfires": {
+      "biggest": {"metric": "area_km2", "order": "desc"},
+      "largest": {"metric": "area_km2", "order": "desc"},
+      "highest": {"metric": "area_km2", "order": "desc"},
+      "smallest": {"metric": "area_km2", "order": "asc"},
+      "lowest": {"metric": "area_km2", "order": "asc"}
+    },
+    "floods": {
+      "biggest": {"metric": "severity", "order": "desc"},
+      "largest": {"metric": "severity", "order": "desc"},
+      "strongest": {"metric": "severity", "order": "desc"},
+      "highest": {"metric": "severity", "order": "desc"},
+      "most severe": {"metric": "severity", "order": "desc"},
+      "smallest": {"metric": "severity", "order": "asc"},
+      "lowest": {"metric": "severity", "order": "asc"},
+      "least severe": {"metric": "severity", "order": "asc"}
+    }
+  },
+
+  "geographic_synonyms": {
+    "_description": "Geographic query patterns - see also region_aliases in conversions.json",
+    "worldwide": ["global", "all countries", "entire world", "every country"],
+    "nearby": ["neighboring", "adjacent", "bordering", "surrounding"],
+    "coastal": ["seaside", "oceanfront", "with coastline", "beach"]
+  },
+
+  "_todo_expand": "TODO: Add more synonyms based on actual user query patterns from logs"
+}

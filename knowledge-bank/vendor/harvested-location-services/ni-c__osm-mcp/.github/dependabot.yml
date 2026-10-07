@@ -1,0 +1,80 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # In semver, 0.x has its breaking changes in the *minor*, and these three are
+    # still there. Dependabot classifies 0.1 → 0.2 as semver-minor, which the
+    # auto-merge allowlist accepts — so a breaking 0.2.0 would merge itself into
+    # seventeen repositories as soon as CI went green. Patches keep flowing.
+    # Remove these three once the packages reach 1.0.0.
+    ignore:
+      - dependency-name: mcp-approval
+        update-types:
+          - version-update:semver-minor
+      - dependency-name: mcp-tool-allowlist
+        update-types:
+          - version-update:semver-minor
+      - dependency-name: mcp-internal-hosts
+        update-types:
+          - version-update:semver-minor
+
+    groups:
+      # Lockstep packages: bumped separately they arrive as individually broken PRs.
+      vitest:
+        patterns:
+          - vitest
+          - '@vitest/*'
+      # The catch-all has to repeat the patterns above as exclude-patterns.
+      # Dependabot documents the first matching group as the winner and does not
+      # behave that way (dependabot-core#9765, #14143): on 2026-08-27 it put
+      # `vitest` in the vitest group and `@vitest/coverage-v8` in this one, and
+      # the resulting half-update leaves a lockfile whose `npm ci` dies with
+      # "Cannot read properties of null (reading 'edgesOut')".
+      minor-and-patch:
+        exclude-patterns:
+          - vitest
+          - '@vitest/*'
+        update-types:
+          - minor
+          - patch
+
+  # The documentation site has its own manifest so its toolchain never lands in the
+  # runtime image or the test matrix.
+  - package-ecosystem: npm
+    directory: /docs
+    schedule:
+      interval: weekly
+    groups:
+      docs:
+        patterns:
+          - '*'
+
+  # Exists so the digest-pinned base image gets refreshed at all. Node majors are
+  # excluded because Dependabot offers whatever tag is newest, while the runtime
+  # image has to sit on an ACTIVE LTS line — and roughly half of all Node majors
+  # never become LTS. Crossing an LTS boundary is a decision, not an update.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # init and analyze are separate dependencies to Dependabot. Ungrouped,
+      # one of them bumps first and the version mismatch fails the CodeQL job.
+      codeql:
+        patterns:
+          - github/codeql-action*
+      # The docker/* actions are released in lockstep and used in one job.
+      docker:
+        patterns:
+          - docker/*

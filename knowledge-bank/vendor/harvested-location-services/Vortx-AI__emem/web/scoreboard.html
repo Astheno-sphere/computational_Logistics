@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>emem scoreboard: the memory race, live</title>
+<link rel=preconnect href="https://fonts.googleapis.com">
+<link rel=preconnect href="https://fonts.gstatic.com" crossorigin>
+<link rel=stylesheet href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,200..800;1,200..800&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap">
+<link rel=stylesheet href="/tokens.css">
+<link rel=stylesheet href="/nav.css">
+<meta name="description" content="A live scoreboard of memory architectures losing fidelity turn by turn, run in two heats because arms handed the value and arms that must find it are not comparable.">
+<style>
+:root{
+  --paper:#0f1012; --paper-2:#16181c; --paper-3:#1d2025; --rule:#272b32; --rule-2:#363b44;
+  --ink:#f3f5f8; --ink-2:#c5cbd4; --mute:#8b939e;
+  --ok:#4ade80; --warn:#e8a33d; --bad:#ea5a4e; --pub:#4ea8de;
+}
+@media (prefers-color-scheme:light){
+  :root{--paper:#fbfbf9;--paper-2:#f3f2ef;--paper-3:#e9e8e3;--rule:#dedcd5;--rule-2:#c5c3ba;
+        --ink:#15161a;--ink-2:#3b4048;--mute:#616772;
+        /* The status chips are tinted panels, so what matters is contrast
+           against the COMPOSITE (#f7ebd7, #dbecf4, #def6e5), not the page.
+           The dark-tuned accents measured 1.83, 2.17 and 1.53 there. */
+        --ok:#267442;--warn:#875e23;--bad:#a33228;--pub:#326d90;}
+}
+:root[data-theme="dark"]{--paper:#0f1012;--paper-2:#16181c;--paper-3:#1d2025;--rule:#272b32;
+  --rule-2:#363b44;--ink:#f3f5f8;--ink-2:#c5cbd4;--mute:#8b939e;--ok:#4ade80;--warn:#e8a33d;--bad:#ea5a4e;--pub:#4ea8de;}
+:root[data-theme="light"]{--paper:#fbfbf9;--paper-2:#f3f2ef;--paper-3:#e9e8e3;--rule:#dedcd5;
+  --rule-2:#c5c3ba;--ink:#15161a;--ink-2:#3b4048;--mute:#616772;--ok:#267442;--warn:#875e23;--bad:#a33228;--pub:#326d90;}
+*{box-sizing:border-box}
+/* The race fills the first screen under the site bar; the page then scrolls
+   on to the site footer. It used to be a 100%-height flex column with
+   overflow hidden, which was fine with no chrome. With the generated bar,
+   strip, path and footer as flex items too, the chart was left 10px tall. */
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:15px/1.5 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif}
+
+.top{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.6rem 1rem;
+  border-bottom:1px solid var(--rule);background:var(--paper-2)}
+.brand{font-weight:700;font-size:var(--t-sm)}.brand a{color:var(--ink);text-decoration:none}
+.top h1{font-size:var(--t-sm);font-weight:600;margin:0;color:var(--ink-2)}
+.sp{flex:1}
+.kv{font-family:var(--mono);font-size:var(--t-2xs);color:var(--mute);white-space:nowrap}
+.kv b{color:var(--ink-2)}
+.live{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:var(--t-2xs)}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:p 2s infinite}
+.live.off i{background:var(--mute);animation:none}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.2}}
+.btn{font-family:var(--mono);font-size:var(--t-2xs);color:var(--ink-2);cursor:pointer;
+  border:1px solid var(--rule-2);background:transparent;padding:.28rem .55rem;border-radius:3px}
+.btn:hover{border-color:var(--ink-2)}
+.btn[aria-pressed="true"]{background:var(--paper-3);color:var(--ink);border-color:var(--ink-2)}
+
+/* the fairness callout: the single most important sentence on the page */
+.why{padding:.5rem 1rem;background:var(--paper-3);border-bottom:1px solid var(--rule);
+  font-size:var(--t-xs);color:var(--ink-2);line-height:1.5}
+.why b{color:var(--ink)}
+
+.board{display:grid;grid-template-columns:1fr 310px;height:max(28rem,calc(100vh - 17rem))}
+@media (max-width:920px){.board{grid-template-columns:1fr;grid-template-rows:22rem auto;height:auto}}
+.chart{position:relative;min-width:0;min-height:0}
+svg{width:100%;height:100%;display:block}
+.lane{fill:none;stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.lane.dim{opacity:.15}
+.gl{stroke:var(--rule);stroke-dasharray:2 4}
+.ax{fill:var(--mute);font-family:var(--mono);font-size:var(--t-3xs)}
+.heatlbl{font-family:var(--mono);font-size:var(--t-3xs);font-weight:700;letter-spacing:.04em}
+.heatsub{font-family:var(--mono);font-size:var(--t-3xs);fill:var(--mute)}
+.band{fill:var(--paper-2);opacity:.55}
+.lbl{font-family:var(--mono);font-size:var(--t-3xs);font-weight:600}
+.cursor{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;opacity:.65}
+
+.side{border-left:1px solid var(--rule);background:var(--paper-2);overflow-y:auto;padding:.55rem}
+@media (max-width:920px){.side{border-left:0;border-top:1px solid var(--rule);max-height:36vh}}
+.side h2{font-size:var(--t-3xs);text-transform:uppercase;letter-spacing:.09em;color:var(--mute);
+  margin:.45rem .3rem .4rem;font-weight:700}
+.side h2 em{font-style:normal;color:var(--ink-2);text-transform:none;letter-spacing:0;
+  font-weight:400;font-size:var(--t-2xs)}
+.row{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center;
+  padding:.45rem;border-bottom:1px solid var(--rule);cursor:pointer;border-radius:3px}
+.row:hover{background:var(--paper-3)}
+.row.mute{opacity:.35}
+.nm{display:flex;align-items:center;gap:.42rem;min-width:0}
+.dot{width:9px;height:9px;border-radius:2px;flex:none}
+.nm span{font-family:var(--mono);font-size:var(--t-2xs);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.sc{text-align:right;font-family:var(--mono);font-size:var(--t-2xs);line-height:1.3}
+.sc b{display:block;font-size:var(--t-xs)}
+.sc i{font-style:normal;color:var(--mute)}
+.good{color:var(--ok)}.mid{color:var(--warn)}.poor{color:var(--bad)}
+.thin{color:var(--warn);font-size:var(--t-3xs);font-family:var(--mono)}
+.ev{margin:.3rem .2rem .8rem;border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.ev-h{padding:.4rem .55rem;background:var(--paper-3);font-family:var(--mono);font-size:var(--t-2xs);
+  color:var(--ink-2);display:flex;gap:.4rem;align-items:center}
+.ev-r{padding:.45rem .55rem;border-top:1px solid var(--rule);font-family:var(--mono);font-size:var(--t-3xs);
+  line-height:1.55}
+.ev-r .c{color:var(--mute);font-size:var(--t-3xs)}
+.ev-r .s{color:var(--ok)}.ev-r .g{color:var(--ink)}
+.ev-r.bad .g{color:var(--bad)}
+.ev-r a{color:var(--ink-2);font-size:var(--t-3xs);text-decoration:none;border-bottom:1px dotted var(--rule-2)}
+.ev-r a:hover{color:var(--ink)}
+.pill{font-size:var(--t-3xs);padding:.08rem .3rem;border-radius:2px;font-weight:700}
+.pill.ok{background:rgba(74,222,128,.16);color:var(--ok)}
+.pill.no{background:rgba(226,87,76,.16);color:var(--bad)}
+.tests{border-bottom:1px solid var(--rule);background:var(--paper);max-height:0;overflow:hidden;
+  transition:max-height .25s ease}
+.tests.open{max-height:60vh;overflow-y:auto}
+.t-row{display:grid;grid-template-columns:150px 1fr;gap:.8rem;padding:.6rem 1rem;
+  border-bottom:1px solid var(--rule)}
+@media (max-width:760px){.t-row{grid-template-columns:1fr}}
+.t-l b{display:block;font-size:var(--t-xs)}
+.t-l .m{font-family:var(--mono);font-size:var(--t-3xs);color:var(--mute);display:block;margin-top:.15rem}
+.t-r{font-size:var(--t-2xs);line-height:1.55}
+.t-r .hd{color:var(--ink-2)}
+.t-r .cost{color:var(--bad);display:block;margin-top:.25rem}
+.t-r .nc{color:var(--mute);display:block;margin-top:.2rem;font-size:var(--t-2xs)}
+.st{font-size:var(--t-3xs);padding:.08rem .34rem;border-radius:2px;font-family:var(--mono);font-weight:700}
+.st.run{background:rgba(232,163,61,.18);color:var(--warn)}
+.st.pub{background:rgba(78,168,222,.18);color:var(--pub)}
+.st.done{background:rgba(74,222,128,.16);color:var(--ok)}
+
+/* transport */
+.foot{display:flex;align-items:center;gap:.7rem;padding:.5rem 1rem;
+  border-top:1px solid var(--rule);background:var(--paper-2);flex-wrap:wrap}
+.scrub{flex:1;min-width:180px;accent-color:var(--ink-2)}
+.play{width:34px;height:26px;display:inline-flex;align-items:center;justify-content:center}
+.note{font-size:var(--t-2xs);color:var(--mute);width:100%;line-height:1.45}
+.note code{font-family:var(--mono);color:var(--ink-2)}
+#tip{position:absolute;pointer-events:none;background:var(--paper-3);border:1px solid var(--rule-2);
+  border-radius:3px;padding:.4rem .55rem;font-family:var(--mono);font-size:var(--t-2xs);color:var(--ink);
+  opacity:0;transition:opacity .12s;white-space:nowrap;z-index:5}
+/* The brand link and the scrubber: an icon-ish link and a range input, both
+   below the target floor and neither sized by its text. */
+.top .brand a{display:inline-block;padding:4px 0}
+input.scrub{min-height:24px}
+</style>
+<body class="doc">
+<!--nav:start-->
+<header class="sitebar"><nav class="sitebar-in" aria-label="Site">
+<a href="/" class="brand"><img src="/vortxgola.gif" alt="">emem</a>
+<button type="button" class="navtoggle" aria-expanded="false" aria-controls="sitenav-panel"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/></svg>Menu</button>
+<div class="navpanel" id="sitenav-panel">
+<a class="navlink" href="/demos">Demos</a>
+<a class="navlink" href="/how-it-works">How it works</a>
+<a class="navlink" href="/reference">Reference</a>
+<a class="navlink" href="/tools">MCP tools</a>
+<a class="navlink" href="/verify">Verify</a>
+<a class="navlink" href="/docs/">Docs</a>
+<details class="navgrp on" name="sitenav">
+<summary>More</summary>
+<div class="navmenu navmenu-cols">
+<div class="navsec"><h6>learn</h6>
+<a href="/solutions"><b>Solutions</b><span>see four agents using it</span></a>
+<a href="/whitepaper"><b>Whitepaper</b><span>read the math and the proofs</span></a>
+<a href="/spec"><b>Spec</b><span>implement the wire format</span></a>
+<a href="/whitepaper/v1"><b>Whitepaper v1</b><span>read the superseded edition</span></a>
+</div>
+<div class="navsec"><h6>connect</h6>
+<a href="/a2a"><b>A2A</b><span>hand memory between agents</span></a>
+<a href="/clients"><b>Clients</b><span>connect Claude, Cursor, ChatGPT</span></a>
+<a href="/openapi.json"><b>OpenAPI</b><span>load the machine contract</span></a>
+<a href="/skills.md"><b>Skills</b><span>run a procedure as an agent</span></a>
+</div>
+<div class="navsec"><h6>verify</h6>
+<a href="/guard"><b>Guard</b><span>gate an answer on its citations</span></a>
+<a href="/agents"><b>Attesters</b><span>see every key that writes</span></a>
+<a href="/v1/log/sth"><b>Log head</b><span>pin a signed head</span></a>
+</div>
+<div class="navsec"><h6>lab</h6>
+<a href="/worlds"><b>Worlds<i class="labtag">lab</i></b><span>fly places built on signed facts</span></a>
+<a href="/channel"><b>Channel<i class="labtag">lab</i></b><span>read agents talking</span></a>
+<a href="/scoreboard" aria-current="page"><b>Scoreboard<i class="labtag">lab</i></b><span>watch a benchmark race</span></a>
+<a href="/gallery"><b>Gallery<i class="labtag">lab</i></b><span>see the record rendered</span></a>
+<a href="/the-long-version"><b>Long version<i class="labtag">lab</i></b><span>read the old homepage</span></a>
+</div>
+</div></details>
+<span class="sitebar-gap"></span>
+<a class="navcta" href="/reference#client-setup">Connect</a>
+<a class="navplain" href="https://github.com/Vortx-AI/emem" rel="noopener noreferrer" target="_blank">GitHub</a>
+</div></nav></header>
+<div class="audience aud-lab"><ol class="crumbs" aria-label="Breadcrumb"><li><a href="/">emem</a></li><li>Lab</li><li><span aria-current="page">Scoreboard</span></li></ol><span class="aud-for">lab</span><span class="aud-what">the benchmark, live: unfinished, off the developer path</span><a class="aud-note" href="/demos">start at the demos</a></div>
+<script>(function(){var b=document.querySelector(".sitebar"),t=b&&b.querySelector(".navtoggle");function shut(){document.querySelectorAll(".navgrp[open]").forEach(function(d){d.open=false;});}function isOpen(){return !!t&&t.getAttribute("aria-expanded")==="true";}function set(o,f){if(!t)return;t.setAttribute("aria-expanded",o?"true":"false");b.classList.toggle("navopen",o);if(!o){shut();if(f)t.focus();}}if(t){b.classList.add("navjs");t.addEventListener("click",function(){set(!isOpen());});b.addEventListener("focusout",function(e){if(isOpen()&&e.relatedTarget&&!b.contains(e.relatedTarget))set(false);});}document.addEventListener("keydown",function(e){if(e.key!=="Escape")return;if(isOpen())set(false,true);else shut();});document.addEventListener("click",function(e){if(!e.target.closest(".navgrp"))shut();if(isOpen()&&!b.contains(e.target))set(false);});})();</script>
+<!--nav:end-->
+<div class="top">
+  <span class="brand"><a href="/">emem</a></span>
+  <h1>the memory race</h1>
+  <span class="live" id="live"><i></i><span id="liveTxt">connecting</span></span>
+  <span class="sp"></span>
+  <span class="kv">turn <b id="mTurn">—</b>/<span id="mMax">—</span></span>
+  <span class="kv">steps <b id="mRows">—</b></span>
+  <span class="kv">worlds <b id="mWorlds">—</b></span>
+  <span class="kv">models <b id="mModels">—</b></span>
+  <button class="btn" id="showTests" aria-pressed="false">4 tests</button>
+  <button class="btn" id="metric" aria-pressed="false">byte-exact</button>
+</div>
+
+<div class="tests" id="tests"></div>
+
+<div class="why" id="why">Two heats, deliberately. Some arms are <b>handed the value</b> and only
+have to reproduce it; the others <b>must locate it first</b>. On one track the first group sits near
+100% and the second near zero, and you would conclude one architecture is several times better when
+they are doing different jobs.<div id="why2" style="margin-top:.35rem;color:var(--mute);font-size:.75rem"></div></div>
+
+<div class="board">
+  <div class="chart"><svg id="svg"></svg><div id="tip"></div></div>
+  <aside class="side">
+    <div id="heat1"></div>
+    <div id="heat2"></div>
+    <h2 style="margin-top:.9rem">check it yourself <em>click an arm above</em></h2>
+    <div id="evidence" style="padding:0 .1rem"></div>
+    <h2 style="margin-top:.9rem">reading it</h2>
+    <div style="font-size:var(--t-2xs);color:var(--mute);line-height:1.55;padding:0 .3rem 1rem">
+      <b style="color:var(--ink-2)">Byte-exact</b> is whether the answer equals the signed value
+      character for character, which is what a citation needs.
+      <b style="color:var(--ink-2)">Material</b> is whether the error is big enough to change a
+      decision. An arm can be materially perfect and never byte-exact, which is a rounded display,
+      and that is why both are drawn. A retrieved chunk can be correct and still score 0% citable,
+      because it is not a signed reference.
+    </div>
+  </aside>
+</div>
+
+<div class="foot">
+  <button class="btn play" id="play" title="Play / pause (space)">▶</button>
+  <input class="scrub" id="scrub" type="range" min="1" max="1" value="1" aria-label="Replay turn">
+  <span class="kv">replay <b id="mAt">—</b></span>
+  <button class="btn" id="speed">1×</button>
+  <button class="btn" id="lived" aria-pressed="true">follow live</button>
+  <div class="note">Live from a 1000-turn benchmark appending one record per turn per arm, authored
+    and executed by an independent agent, not by this responder. Scored by <code>/v1/scoreboard</code>.
+    Scrub or press play to replay the race from turn 1. <span id="thinWarn"></span></div>
+</div>
+
+<script>
+(function(){
+  var PAL={emem_bundle:'#4ea8de',emem_token:'#7aa2f7',emem_resolve:'#9d7cd8',
+           context:'#e8a33d',context_region:'#e2574c',rag_bm25:'#4ade80'};
+  var LAB={emem_bundle:'emem bundle',emem_token:'emem token',emem_resolve:'emem resolve',
+           context:'prose context',context_region:'context region',rag_bm25:'BM25 retrieval'};
+  var col=function(a){return PAL[a]||'#8b939e'};
+  // Citability leads deliberately. The benchmark author asked that the ACCURACY
+  // comparison not be published yet: emem_resolve, the only arm that competes
+  // fairly with retrieval, joined mid-run and has too few steps. Citability is
+  // structural, unaffected by that, and it is the comparison that holds today.
+  var METRICS=[
+    {k:'exact_pct',     lab:'citable (byte-exact)', unit:'%',  hi:true,
+     why:'Does the answer equal the signed value character for character. This is what a citation needs, and it is structural rather than a matter of degree.'},
+    {k:'material_pct',  lab:'material failures',    unit:'%',  hi:false,
+     why:'Is the error large enough to change a decision. Thin arms are not yet rankable here.'},
+    {k:'declined_pct',  lab:'declined to answer',   unit:'%',  hi:false,
+     why:'No number produced at all. An abstention is a different failure from a confident wrong number.'},
+    {k:'payload_chars', lab:'context cost',         unit:' ch',hi:false,
+     why:'Mean characters spent per answer. A bundle names N facts in one handle; N separate tokens cost N times the context for the same coverage.'}
+  ];
+  var mi=0, metric='exact_pct', muted={}, data=null, at=null, playing=false, speed=1, follow=true, sel=null;
+  var $=function(i){return document.getElementById(i)};
+
+  function maxTurn(){ return (data&&data.turn)||1 }
+  function curTurn(){ return follow?maxTurn():(at||maxTurn()) }
+
+  function setMetric(i){
+    mi=(i+METRICS.length)%METRICS.length; metric=METRICS[mi].k;
+    $('metric').textContent=METRICS[mi].lab;
+    $('metric').setAttribute('aria-pressed', mi!==0);
+    $('why2').textContent=METRICS[mi].why;
+    draw();
+  }
+  $('metric').addEventListener('click',function(){ setMetric(mi+1); });
+  $('play').addEventListener('click',togglePlay);
+  $('speed').addEventListener('click',function(){
+    speed=speed===1?2:speed===2?4:1; this.textContent=speed+'×';
+  });
+  $('lived').addEventListener('click',function(){
+    follow=!follow; this.setAttribute('aria-pressed',follow);
+    if(follow){playing=false;$('play').textContent='▶';}
+    draw();
+  });
+  $('scrub').addEventListener('input',function(){
+    follow=false; $('lived').setAttribute('aria-pressed',false);
+    at=+this.value; draw();
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.code==='Space'){e.preventDefault();togglePlay();}
+    if(e.key==='ArrowRight'){follow=false;at=Math.min(maxTurn(),curTurn()+1);draw();}
+    if(e.key==='ArrowLeft'){follow=false;at=Math.max(1,curTurn()-1);draw();}
+  });
+  function togglePlay(){
+    if(!data)return;
+    playing=!playing;
+    $('play').textContent=playing?'❚❚':'▶';
+    if(playing){follow=false;$('lived').setAttribute('aria-pressed',false);
+      if(!at||at>=maxTurn())at=1;}
+  }
+  setInterval(function(){
+    if(!playing||!data)return;
+    at=(at||1)+speed;
+    if(at>=maxTurn()){at=maxTurn();playing=false;$('play').textContent='▶';}
+    draw();
+  },90);
+
+  // value of an arm at or before turn t
+  function valAt(a,t){
+    var s=a.series||[],v=null;
+    for(var i=0;i<s.length;i++){ if(s[i].turn<=t) v=s[i]; else break; }
+    return v;
+  }
+  function fmt(n){return n==null?'—':n.toFixed(1)}
+
+  function sideRows(){
+    [1,2].forEach(function(h){
+      var arms=(data.arms||[]).filter(function(a){return a.heat===h});
+      var t=curTurn();
+      arms=arms.map(function(a){var v=valAt(a,t);return{a:a,v:v?v[metric]:null}});
+      arms.sort(function(x,y){
+        if(x.v==null)return 1; if(y.v==null)return -1;
+        return METRICS[mi].hi? y.v-x.v : x.v-y.v;
+      });
+      var hd=(data.heats&&data.heats[h])||{};
+      var html='<h2>Heat '+(h===1?'I':'II')+' <em>'+(hd.name||'')+'</em></h2>';
+      arms.forEach(function(o){
+        var a=o.a,v=o.v;
+        var cls;
+        if(metric==='exact_pct') cls=v>=99?'good':v>=50?'mid':'poor';
+        else if(metric==='payload_chars') cls=v<=400?'good':v<=2000?'mid':'poor';
+        else cls=v<=1?'good':v<=10?'mid':'poor';
+        var thin=a.n<100?'<div class="thin">n='+a.n+', too few to rank</div>':'';
+        html+='<div class="row'+(muted[a.arm]?' mute':'')+'" data-arm="'+a.arm+'">'
+           +   '<div class="nm"><span class="dot" style="background:'+col(a.arm)+'"></span>'
+           +     '<span>'+(LAB[a.arm]||a.arm)+'</span></div>'
+           +   '<div class="sc"><b class="'+cls+'">'+fmt(v)+'%</b>'
+           +     '<i>'+a.n+' steps'+(a.declined?' · '+a.declined+' declined':'')+'</i>'+thin+'</div>'
+           + '</div>';
+      });
+      $('heat'+h).innerHTML=html;
+    });
+    renderEvidence();
+    Array.prototype.forEach.call(document.querySelectorAll('.row'),function(el){
+      el.onclick=function(ev){
+        var a=el.getAttribute('data-arm');
+        if(ev.shiftKey){ muted[a]=!muted[a]; } else { sel = (sel===a? null : a); }
+        draw();
+      };
+    });
+  }
+
+  $('showTests').addEventListener('click',function(){
+    var open=$('tests').classList.toggle('open');
+    this.setAttribute('aria-pressed',open);
+  });
+  function renderTests(){
+    var t=(data&&data.tests)||[]; if(!t.length)return;
+    var h='';
+    t.forEach(function(x){
+      var cl=x.status==='running'?'run':x.status==='published'?'pub':'done';
+      h+='<div class="t-row"><div class="t-l"><b>'+esc(x.title)+'</b>'
+       + '<span class="st '+cl+'">'+esc(x.status)+'</span>'
+       + '<span class="m">'+esc(x.n)+' &middot; '+esc(x.when)+'</span></div>'
+       + '<div class="t-r"><span class="hd">'+esc(x.headline)+'</span>'
+       + '<span class="cost">Against us: '+esc(x.costs_us)+'</span>'
+       + '<span class="nc">Not claimed: '+esc(x.not_claimed)+'</span></div></div>';
+    });
+    $('tests').innerHTML=h;
+    $('showTests').textContent=t.length+' tests';
+  }
+  function esc(t){return String(t).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+  function renderEvidence(){
+    var box=$('evidence');
+    if(!sel){ box.innerHTML='<div style="font-size:var(--t-2xs);color:var(--mute);padding:.2rem .3rem">'
+      +'Click any arm to see REAL rows from the run: the cell, the signed value, and what the model'
+      +' actually answered. Wins and losses both. Shift-click to hide a lane instead.</div>'; return; }
+    var a=(data.arms||[]).filter(function(x){return x.arm===sel})[0];
+    if(!a||!(a.examples||[]).length){ box.innerHTML='<div style="font-size:var(--t-2xs);color:var(--mute);padding:.3rem">No sampled rows yet for this arm.</div>'; return; }
+    var h='<div class="ev"><div class="ev-h"><span class="dot" style="background:'+col(a.arm)+'"></span>'
+      + (LAB[a.arm]||a.arm) + ' &middot; sampled rows</div>';
+    a.examples.forEach(function(e){
+      h+='<div class="ev-r'+(e.byte_exact?'':' bad')+'">'
+       + '<span class="pill '+(e.byte_exact?'ok">citable':'no">not citable')+'</span> '
+       + '<span class="c">'+esc(e.cell)+'</span><br>'
+       + 'signed &nbsp;<span class="s">'+esc(e.signed)+'</span><br>'
+       + 'answered <span class="g">'+esc(e.answered)+'</span><br>'
+       + '<a href="/verify" target="_blank" rel="noopener">resolve this cell yourself &rarr;</a>'
+       + '</div>';
+    });
+    box.innerHTML=h+'</div>';
+  }
+
+  function draw(){
+    if(!data)return;
+    var t=curTurn(), mx=maxTurn();
+    $('mTurn').textContent=t; $('mMax').textContent=mx;
+    $('mAt').textContent=follow?'live':('turn '+t);
+    var sc=$('scrub'); sc.max=mx; if(follow) sc.value=mx; else sc.value=t;
+
+    var svg=$('svg'), b=svg.getBoundingClientRect();
+    var W=Math.max(320,b.width), H=Math.max(240,b.height);
+    var M={t:16,r:96,b:30,l:44}, gap=16;
+    var iw=W-M.l-M.r, panelH=(H-M.t-M.b-gap)/2;
+    var x=function(v){return M.l+(v/mx)*iw};
+    var out='';
+
+    [1,2].forEach(function(h,pi){
+      var y0=M.t+pi*(panelH+gap);
+      var top=100;
+      if(metric==='payload_chars'){
+        top=1; (data.arms||[]).forEach(function(a){(a.series||[]).forEach(function(p){
+          if(p.turn<=t&&p.payload_chars>top)top=p.payload_chars;});});
+        top=Math.ceil(top/500)*500||500;
+      }
+      var y=function(v){return y0+panelH-(Math.min(v,top)/top)*panelH};
+      out+='<rect class="band" x="'+M.l+'" y="'+y0+'" width="'+iw+'" height="'+panelH+'"/>';
+      for(var vi=0;vi<=4;vi++){ var v=top*vi/4;
+        out+='<line class="gl" x1="'+M.l+'" y1="'+y(v)+'" x2="'+(M.l+iw)+'" y2="'+y(v)+'"/>'
+          +  '<text class="ax" x="'+(M.l-7)+'" y="'+(y(v)+3.5)+'" text-anchor="end">'+(top>100?Math.round(v/1000*10)/10+'k':Math.round(v))+'</text>';
+      }
+      var hd=(data.heats&&data.heats[h])||{};
+      out+='<text class="heatlbl" x="'+(M.l+6)+'" y="'+(y0+14)+'" fill="'+(h===1?'#8b939e':'#c5cbd4')+'">'
+        +  'HEAT '+(h===1?'I':'II')+'</text>'
+        +  '<text class="heatsub" x="'+(M.l+6)+'" y="'+(y0+26)+'">'+(hd.name||'')+'</text>';
+
+      (data.arms||[]).filter(function(a){return a.heat===h}).forEach(function(a){
+        var pts=(a.series||[]).filter(function(p){return p.turn>0&&p.turn<=t});
+        if(!pts.length)return;
+        var d=pts.map(function(p,i){return (i?'L':'M')+x(p.turn).toFixed(1)+','+y(p[metric]).toFixed(1)}).join(' ');
+        out+='<path class="lane'+(muted[a.arm]?' dim':'')+'" d="'+d+'" stroke="'+col(a.arm)+'"/>';
+        if(!muted[a.arm]){
+          var L=pts[pts.length-1];
+          out+='<circle cx="'+x(L.turn).toFixed(1)+'" cy="'+y(L[metric]).toFixed(1)+'" r="3.4" fill="'+col(a.arm)+'"/>'
+            +  '<text class="lbl" x="'+(x(L.turn)+7).toFixed(1)+'" y="'+(y(L[metric])+4).toFixed(1)+'" fill="'+col(a.arm)+'">'
+            +  (LAB[a.arm]||a.arm)+' '+(metric==='payload_chars'?Math.round(L[metric]).toLocaleString()+' ch':fmt(L[metric])+'%')+'</text>';
+        }
+      });
+    });
+    if(!follow) out+='<line class="cursor" x1="'+x(t)+'" y1="'+M.t+'" x2="'+x(t)+'" y2="'+(H-M.b)+'"/>';
+    for(var i=0;i<=6;i++){var tv=Math.round(mx*i/6);
+      out+='<text class="ax" x="'+x(tv)+'" y="'+(H-10)+'" text-anchor="middle">'+tv+'</text>';}
+    out+='<text class="ax" x="'+(M.l+iw/2)+'" y="'+(H-0.5)+'" text-anchor="middle">turn</text>';
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.innerHTML=out;
+    sideRows();
+  }
+
+  function poll(){
+    fetch('/v1/scoreboard',{cache:'no-store'}).then(function(r){return r.json()}).then(function(d){
+      var l=$('live');
+      if(!d.running){l.classList.add('off');$('liveTxt').textContent='no run';return;}
+      l.classList.remove('off');$('liveTxt').textContent='live';
+      data=d;
+      $('mRows').textContent=(d.rows||0).toLocaleString();
+      $('mWorlds').textContent=(d.worlds||[]).length;
+      $('mModels').textContent=(d.models||[]).length;
+      renderTests();
+      if(d.heats&&d.heats.why) $('why').innerHTML='Two heats, deliberately. '+d.heats.why;
+      var thin=(d.arms||[]).filter(function(a){return a.n<100});
+      $('thinWarn').textContent=thin.length?('Arms with n<100 ('+thin.map(function(a){return LAB[a.arm]||a.arm}).join(', ')+') started late in the run and are not yet rankable.'):'';
+      draw();
+    }).catch(function(){$('live').classList.add('off');$('liveTxt').textContent='offline';});
+  }
+  setMetric(0);
+  poll(); setInterval(poll,5000);
+  var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(draw,140)});
+})();
+</script>
+
+<!--foot:start-->
+<footer class="page foot sitefoot">
+<div class="sf-top"><a class="sf-brand" href="/"><img src="/vortxgola.gif" alt="">emem</a><p class="sf-proof" data-proof>log head: checking in this tab&hellip;</p></div>
+<div class="sf-grid">
+<div class="foot-col"><h4>Try</h4><ul>
+<li><a href="/">Home</a></li>
+<li><a href="/demos">Demos</a></li>
+</ul></div>
+<div class="foot-col"><h4>Learn</h4><ul>
+<li><a href="/how-it-works">How it works</a></li>
+<li><a href="/solutions">Solutions</a></li>
+<li><a href="/whitepaper">Whitepaper</a></li>
+<li><a href="/spec">Spec</a></li>
+<li><a href="/whitepaper/v1">Whitepaper v1</a></li>
+</ul></div>
+<div class="foot-col"><h4>Connect</h4><ul>
+<li><a href="/reference">Reference</a></li>
+<li><a href="/tools">MCP tools</a></li>
+<li><a href="/a2a">A2A</a></li>
+<li><a href="/docs/">Docs</a></li>
+<li><a href="/clients">Clients</a></li>
+<li><a href="/openapi.json">OpenAPI</a></li>
+<li><a href="/skills.md">Skills</a></li>
+</ul></div>
+<div class="foot-col"><h4>Verify</h4><ul>
+<li><a href="/verify">Verify</a></li>
+<li><a href="/guard">Guard</a></li>
+<li><a href="/agents">Attesters</a></li>
+<li><a href="/v1/log/sth">Log head</a></li>
+</ul></div>
+<div class="foot-col"><h4>Lab</h4><ul>
+<li><a href="/worlds">Worlds</a> <i class="labtag">lab</i></li>
+<li><a href="/channel">Channel</a> <i class="labtag">lab</i></li>
+<li><a href="/scoreboard">Scoreboard</a> <i class="labtag">lab</i></li>
+<li><a href="/gallery">Gallery</a> <i class="labtag">lab</i></li>
+<li><a href="/the-long-version">Long version</a> <i class="labtag">lab</i></li>
+</ul></div>
+<div class="foot-col"><h4>Machine</h4><ul>
+<li><a href="/llms.txt">llms.txt</a></li>
+<li><a href="/.well-known/agent-card.json">agent card</a></li>
+<li><a href="/.well-known/emem.json">emem.json</a></li>
+<li><a href="/mcp">MCP</a></li>
+<li><a href="/v1/discover">discover</a></li>
+<li><a href="/docs/quickstart.html">quickstart</a></li>
+<li><a href="/docs/self-host.html">self-host</a></li>
+</ul></div>
+<!--ports:start-->
+      <!-- Generated by scripts/gen_footer_ports.py from gen_nav.PORTS.
+           Do not edit by hand: the bar and the footer read one list, so
+           that they cannot come to disagree about where emem is listed. -->
+      <div class="foot-col">
+        <h4>Listed on</h4>
+        <ul>
+          <li><a href="https://chatgpt.com/plugins/plugin_asdk_app_6a6a0832a59081918b19aec0ddf9ec77" target="_blank" rel="noopener noreferrer" title="emem in the ChatGPT plugin directory">ChatGPT</a></li>
+          <li><a href="https://marketplace.dify.ai/plugin/vortx-ai/emem" target="_blank" rel="noopener noreferrer" title="emem in the Dify marketplace">Dify</a></li>
+          <li><a href="https://github.com/mcp/Vortx-AI/emem" target="_blank" rel="noopener noreferrer" title="emem in the GitHub MCP registry">MCP registry</a></li>
+          <li><a href="https://github.com/Vortx-AI/emem" target="_blank" rel="noopener noreferrer" title="the source, Apache-2.0">GitHub</a></li>
+          <li><a href="https://doi.org/10.5281/zenodo.20706893" target="_blank" rel="noopener noreferrer" title="the whitepaper, with a DOI">Zenodo</a></li>
+        </ul>
+      </div>
+      <!--ports:end-->
+</div>
+<div class="sf-bottom"><span>Apache-2.0 &middot; built by <a href="https://vortx.ai" target="_blank" rel="noopener noreferrer">vortx.ai</a></span><span><a href="https://github.com/Vortx-AI/emem" target="_blank" rel="noopener noreferrer">github</a> &middot; <a href="/privacy">privacy &middot; terms</a></span></div>
+</footer>
+<script>(function(){var el=document.querySelector('[data-proof]');if(!el)return;var enc=new TextEncoder();function u32(o,n){o.push(n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255);}function be8(n){var o=new Uint8Array(8),v=BigInt(n);for(var i=7;i>=0;i--){o[i]=Number(v&255n);v>>=8n;}return o;}function pre(d,segs){var o=[],b=enc.encode(d);o.push.apply(o,enc.encode('emem.preimage.v1\0'));u32(o,b.length);o.push.apply(o,b);segs.forEach(function(s){o.push(s[0]);u32(o,s[1].length);for(var i=0;i<s[1].length;i++)o.push(s[1][i]);});return new Uint8Array(o);}function say(ok,t){el.innerHTML=(ok?'<b class="ok">&#10003;</b> ':'<b class="no">&#10007;</b> ')+t;}function run(){var I=globalThis.ememVerifyInternals;if(!I)return say(false,'verifier did not load');Promise.all([fetch('/.well-known/emem.json').then(function(r){return r.json();}),fetch('/v1/log/sth').then(function(r){return r.json();})]).then(function(x){var k=x[0].responder&&x[0].responder.pubkey_b32,h=x[1].sth,pk=I.b32decode(h.responder_pubkey_b32);var d=I.blake3(pre('emem.translog.sth.v1',[[1,be8(h.tree_size)],[2,I.b32decode(h.root_b32)],[3,enc.encode(h.signed_at)],[4,pk]]));var ok=h.responder_pubkey_b32===k&&I.ed.verify(I.b32decode(h.signature_b32),d,pk);say(ok,'log head <a href="/verify?q=https%3A%2F%2Femem.dev%2Fv1%2Flog%2Fsth">'+Number(h.tree_size).toLocaleString('en')+' entries</a>, signed '+h.signed_at.slice(11,16)+'Z, '+(ok?'signature checked in this tab':'signature did NOT verify'));}).catch(function(){say(false,'log head unreachable');});}function go(){if(globalThis.ememVerifyInternals)return run();var s=document.createElement('script');s.src='/emem-verify-core.js';s.onload=run;s.onerror=function(){say(false,'verifier did not load');};document.head.appendChild(s);}(window.requestIdleCallback||function(f){setTimeout(f,1200);})(go);})();</script>
+<!--foot:end-->

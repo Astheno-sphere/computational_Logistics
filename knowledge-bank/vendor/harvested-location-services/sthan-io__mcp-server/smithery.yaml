@@ -1,0 +1,18 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - sthanApiKey
+    properties:
+      sthanApiKey:
+        type: string
+        description: "Your sthan.io API key (get one free at https://sthan.io/dashboard)"
+  commandFunction: |-
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@sthan/mcp-server"],
+      env: {
+        STHAN_API_KEY: config.sthanApiKey
+      }
+    })

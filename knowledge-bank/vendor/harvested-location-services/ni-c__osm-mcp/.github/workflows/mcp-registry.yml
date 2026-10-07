@@ -1,0 +1,41 @@
+name: Publish to MCP Registry
+
+# Manual fallback: re-publish the version currently in package.json to the MCP
+# registry, e.g. after a failed registry job in a release run. Re-running that job
+# is NOT an option — it checks out the immutable tag, so a fix pushed to main would
+# never reach it. The npm package for this version must already be published.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mcp-registry:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Required for MCP registry OIDC authentication.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Sync version from package.json into server.json
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          jq --arg v "$version" \
+            '.version = $v
+             | (.packages[] | select(.registryType != "oci") | .version) = $v
+             | (.packages[] | select(.registryType == "oci")) |= (del(.version) | .identifier |= sub(":[^:]*$"; ":" + $v))' \
+            server.json > server.tmp && mv server.tmp server.json
+          jq -r '.packages[] | "\(.registryType) \(.identifier) \(.version // "-")"' server.json
+      - name: Install mcp-publisher
+        # Pinned + checksum-verified: this binary runs `login github-oidc` with
+        # the job's OIDC identity, so it must not float on releases/latest.
+        run: |
+          curl -fsSLo mcp-publisher.tar.gz "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz"
+          echo "a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc  mcp-publisher.tar.gz" | sha256sum -c -
+          tar xzf mcp-publisher.tar.gz mcp-publisher
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish

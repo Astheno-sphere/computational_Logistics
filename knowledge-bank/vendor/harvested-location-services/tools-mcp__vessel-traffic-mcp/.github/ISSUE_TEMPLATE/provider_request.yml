@@ -1,0 +1,53 @@
+name: Provider request
+description: Request a new vessel, AIS, port-call, or schedule provider adapter.
+title: "[Provider]: "
+labels: ["provider", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Provider work must use official APIs, open-data feeds, BYOK credentials, or sanitized authorized captures. Do not request bypasses for authentication, paywalls, CAPTCHA, bot defenses, rate limits, or access controls.
+  - type: input
+    id: provider
+    attributes:
+      label: Provider name
+      placeholder: "Example: Datalastic, Global Fishing Watch, SeaRates"
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Official URL or API docs
+      placeholder: "https://..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: Requested capabilities
+      options:
+        - label: vessel_search
+        - label: vessel_position
+        - label: vessel_area
+        - label: vessel_track
+        - label: port_calls
+        - label: carrier_schedule_search
+        - label: vessel_schedule
+        - label: schedule_delay_predict
+  - type: dropdown
+    id: access
+    attributes:
+      label: Access type
+      options:
+        - official API with free/trial key
+        - official paid BYOK API
+        - open-data API
+        - public website with explicit authorized capture
+        - unknown
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Add quota, coverage, terms, country/region, and source attribution requirements.

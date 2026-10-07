@@ -1,0 +1,943 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Cancel an in-flight run for the same ref when a new commit lands, so a
+# wedged job (see the macOS cache note below) never keeps burning a runner
+# after it has been superseded.
+concurrency:
+  # On main the group is per-COMMIT, which is what actually stops main runs
+  # being cancelled. `cancel-in-progress: false` was believed to do that and
+  # does not: it protects a RUNNING run, and GitHub's documented behaviour for
+  # the group is that "when a new job or workflow run is queued, any existing
+  # pending job or workflow run in the same group is canceled and replaced".
+  # So while one main run was in progress, the next push queued behind it and
+  # the push after that evicted it before a single job started.
+  #
+  # Observed on 2026-08-13: the ci runs for b7a353a and 2ed6962 both ended
+  # `cancelled` with total_count 0 jobs, 12 minutes after being created, on
+  # branch main, with cancel-in-progress already false. This is the failure the
+  # comment below was written to prevent, still happening, because the fix
+  # addressed the wrong half of the mechanism.
+  #
+  # Per-commit groups on main never collide, so nothing queues and nothing is
+  # evicted: every commit gets a conclusive run. Branches keep one group per
+  # ref so a rapid iteration still cancels its own superseded runs.
+  group: ci-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  # Cancel superseded runs on branches and PRs, never on main.
+  #
+  # On a branch this saves an hour of runners when you push three times
+  # while iterating, and the only signal lost is about a commit nobody
+  # will look at again. On main it destroys the signal itself: the badge
+  # reports the newest CONCLUSIVE run, and a cancelled run is not one, so
+  # a stretch of quick pushes leaves the badge pinned to whatever the last
+  # completed run said. On 2026-08-05 that meant main read "failing" for
+  # seven hours and eight commits after the failure had been fixed, because
+  # every run that would have proved it green was killed by the next push.
+  #
+  # Correctness of the badge is worth more than the runner minutes: a red
+  # badge nobody trusts is the same as no badge.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  fmt:
+    name: cargo fmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all --check
+
+  # The /docs/ site is rendered at build time by mdbook and baked into the
+  # signed binary via `include_dir!("docs/book")` in emem-api-rest. The
+  # output is gitignored, so every CI job that compiles emem-api-rest must
+  # build the book first. Pinned to a known-good version.
+  clippy:
+    name: cargo clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: install protoc (lance build scripts)
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: '0.5.2'
+      - run: mdbook build docs && rm -f docs/book/book.toml
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test:
+    name: cargo test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    # Hard cap so a wedged post-run (cache save / process reaping) can't run
+    # to GitHub's 6h ceiling. The cold macOS release build (lance/arrow,
+    # ort/ONNX, no target cache) measured 70.9 min on the last green main
+    # run and got cancelled at a 60-min cap on 2026-07-11, so the cap is
+    # sized from that measurement plus headroom, not from optimism.
+    #
+    # Re-sized 2026-07-15, same reasoning against a newer measurement. The
+    # macOS job had grown into its own cap: 86.1 min on the last green main
+    # run (5d38a95) against a 90-min limit is 4 min of headroom, and the next
+    # push (db9d663) took 90.5 min and was cancelled at the cap. Ubuntu over
+    # the same pair moved 30.2 -> 29.4 min, so this is the cold macOS build
+    # drifting plus runner variance, not a test that got slower: a 96%-full
+    # cap fails on whichever commit happens to draw a slow runner, which
+    # reads as "your change broke CI" and is not true. Per-OS now, because
+    # one number cannot be both a real backstop for ubuntu (~30 min) and
+    # honest headroom for macOS (~90).
+    timeout-minutes: ${{ matrix.os == 'macos-latest' && 120 || 60 }}
+    env:
+      ORT_CACHE_DIR: ${{ github.workspace }}/.ort-cache
+    # macOS test is BLOCKING again (was temporarily non-blocking). A GitHub
+    # macOS image/Xcode update had broken linking of the `ort` (ONNX
+    # Runtime) prebuilt static lib against the clang runtime — `ld: library
+    # 'clang_rt.osx' not found` — failing every ort-linked binary at LINK
+    # time regardless of source. The "macOS clang_rt link path" step below
+    # locates libclang_rt.osx.a under the active toolchain and adds it to
+    # the linker search path; with that in place the macOS suite links and
+    # passes (verified green on eff7754), so the gate is restored. If a
+    # future runner image moves the lib, that step logs "not found" and the
+    # link failure surfaces here loudly rather than being masked.
+    strategy:
+      # One platform failing must not cancel the other: the point of a matrix
+      # is two independent answers.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # The macOS release target/ is multi-GB (lance/arrow, ort/ONNX);
+          # its post-job cache save could stall for a very long time on the
+          # slower macOS runners, which is the wedge the job-level
+          # timeout-minutes now also backstops. Skip target caching on macOS,
+          # and only save the cache from main so PR runs never pay the upload.
+          cache-targets: ${{ matrix.os != 'macos-latest' }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      # The ort prebuilt's extract directory, pinned by ORT_CACHE_DIR and kept across runs.
+      # Keyed on the lockfile because the hash in dfbin/<target>/<hash> changes exactly when
+      # ort-sys does. A hit means the ort fetch step touches no network at all.
+      - uses: actions/cache@v4
+        with:
+          path: .ort-cache
+          key: ort-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ort-${{ runner.os }}-
+      - name: install protoc (lance build scripts, ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: install protoc (lance build scripts, macos)
+        if: matrix.os == 'macos-latest'
+        run: brew install protobuf
+      - name: macOS clang_rt link path (ort link fix)
+        if: matrix.os == 'macos-latest'
+        # A GitHub macOS image / Xcode update left the linker unable to
+        # find libclang_rt.osx.a (the `ort` ONNX-Runtime prebuilt links the
+        # clang runtime; ld: library 'clang_rt.osx' not found). Locate it
+        # under the active toolchain and add its directory to the linker
+        # search path so the ort-linked test binaries link. Best-effort: if
+        # it isn't found we leave RUSTFLAGS unchanged and the link failure
+        # surfaces in the (now blocking) test step rather than being masked.
+        run: |
+          RT=$(find "$(xcode-select -p)" /Library/Developer/CommandLineTools \
+                 -name 'libclang_rt.osx.a' 2>/dev/null | head -1)
+          if [ -n "$RT" ]; then
+            echo "RUSTFLAGS=${RUSTFLAGS} -L $(dirname "$RT")" >> "$GITHUB_ENV"
+            echo "added clang_rt search path: $(dirname "$RT")"
+          else
+            echo "libclang_rt.osx.a not found under the active toolchain"
+          fi
+      - uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: '0.5.2'
+      - run: mdbook build docs && rm -f docs/book/book.toml
+      # A GITHUB RUNNER HAS 14 GB OF DISK AND THIS WORKSPACE'S RELEASE BUILD
+      # DOES NOT COMFORTABLY FIT IN IT.
+      #
+      # The failures on this job have not been test failures. The annotation
+      # says `Process completed with exit code 143`, which is SIGTERM: the job
+      # was KILLED. Not by the timeout, which is 60 minutes and the kill came at
+      # 10.6; not by cancel-in-progress, which is off for main (the concurrency
+      # group is per-SHA there). A runner reclaiming a job that is exhausting it
+      # is what is left, and the shape fits: it passes sometimes, at wildly
+      # different durations (one pass took 2,526 s), and it has never reproduced
+      # here across 1,394 tests where the same build has 70+ GB to live in.
+      #
+      # These four directories are preinstalled and unused by this repository,
+      # and removing them frees roughly 20 GB. Cheap, reversible, and it costs
+      # about fifteen seconds.
+      - name: free the disk this build needs
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost
+          df -h / | tail -1
+      # THIRD PARTIES DO NOT GET A VOTE ON WHETHER OUR BUILD IS GREEN.
+      #
+      # crates/emem-fetch/tests/live_cog_fetch.rs reads real COGs from AWS, GCS
+      # and Copernicus over the network. It is tolerant of a transport error,
+      # which is the failure mode it was written for, and not of the one that
+      # actually happens: an endpoint under load answers with an error body or a
+      # partial range, the fetch succeeds at the transport layer, and
+      # assert_tiff_magic panics on what came back. Intermittently, on a runner
+      # far from the data, with a message about a TIFF header.
+      #
+      # That cannot tell anyone whether THIS change broke something, which is
+      # the only question a per-commit gate is asked, and a red that means "S3
+      # was slow" is how people learn to ignore red. The file already carries
+      # the switch and says it exists for exactly this.
+      #
+      # The coverage is real and is not deleted: `cargo test -p emem-fetch
+      # --test live_cog_fetch` runs the wire paths on demand, and it is the
+      # right thing to run after touching a connector or the source registry.
+      # ort-sys fetches the ONNX Runtime prebuilt from cdn.pyke.io inside its build script and
+      # fails the job when that host does not resolve, which it did not from a macOS runner on
+      # 2026-09-16 ("failed to lookup address information"), ~25 minutes into a build that had
+      # nothing to do with ort. The fetch is isolated here with a bounded retry, BEFORE the
+      # tests: the download is the only thing retried, and the test step below runs once, so a
+      # flaky test cannot hide behind a flaky CDN. With the cache below warm this is a no-op:
+      # the build script skips the download when dfbin/<target>/<hash> already exists.
+      - name: ort prebuilt (network only, retried)
+        shell: bash
+        run: |
+          for i in 1 2 3 4 5; do
+            cargo build -p ort-sys --release --locked && exit 0
+            echo "::warning::ort-sys prebuilt fetch failed (attempt $i of 5); retrying in 30 s"
+            sleep 30
+          done
+          echo "::error::ort-sys prebuilt could not be fetched after 5 attempts; cdn.pyke.io unreachable from this runner"
+          exit 1
+      - run: cargo test --workspace --release
+        env:
+          EMEM_NO_NETWORK: "1"
+          # THE TEST HARNESS FOR ONE CRATE TAKES 14 GB TO BUILD, AND A RUNNER
+          # HAS 16.
+          #
+          # The kill is during COMPILATION, before a test runs: the log ends
+          # partway through the crate list with `exit code 143`, which is
+          # SIGTERM. Measured here, per build of emem-api-rest:
+          #
+          #     lib, production profile                     5,077,996 KB
+          #     TEST HARNESS, production profile           14,325,284 KB   <-- the kill
+          #     test harness, LTO and debuginfo off         5,226,804 KB
+          #
+          # 14.3 GB is one build. A runner has 16 GB for everything including
+          # itself, so this was never going to fit and did not need help to
+          # fail. It never reproduced on the box this is developed on because
+          # that box has 216 GB.
+          #
+          # LTO holds the whole crate's IR at link time and debug info is
+          # generated alongside it, so turning both off for the TEST build takes
+          # it to 5.2 GB and, as it happens, from 9:12 to 6:45.
+          #
+          # The profile on disk is NOT changed. `lto = "thin"`,
+          # `codegen-units = 1` and `debug = "line-tables-only"` are there for
+          # the deployed binary and for readable backtraces out of the
+          # watchdog's wedge snapshots, and redeploy.sh still builds with them.
+          # These are overrides for a test run that does not need either.
+          #
+          # What I tried first, so nobody repeats it: I assumed
+          # `codegen-units = 1` was the memory hog and overrode it to 16.
+          # Measured, that made peak RSS WORSE, 7,432,916 KB against 5,077,996,
+          # because sixteen codegen units run at once. The setting that looks
+          # like it serialises work is the one that keeps peak memory down.
+          CARGO_PROFILE_RELEASE_LTO: "false"
+          CARGO_PROFILE_RELEASE_DEBUG: "0"
+          # Two 5.2 GB builds fit; four do not. cargo defaults to one job per
+          # CPU and a runner has four.
+          CARGO_BUILD_JOBS: "2"
+
+  msrv:
+    name: minimum supported rust 1.91
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.91
+      - uses: Swatinem/rust-cache@v2
+      - name: install protoc (lance build scripts)
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: '0.5.2'
+      - run: mdbook build docs && rm -f docs/book/book.toml
+      - run: cargo build --workspace
+
+  # Surfaces RustSec advisories for our transitive deps. Fails only on
+  # actual `vulnerability` advisories; informational findings
+  # (e.g. sled is implicitly unmaintained — tracked, migration to redb
+  # is on the deferred punch list) are reported but don't block the
+  # build. We re-evaluate the ignore list whenever the advisory db
+  # adds something. Plain `cargo audit` rather than the
+  # `rustsec/audit-check` action because the action posts a GitHub
+  # check-run, which requires `checks: write` we don't otherwise need.
+  audit:
+    name: cargo audit (advisories)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install cargo-audit
+        run: cargo install --locked cargo-audit --version 0.22.2
+      - name: cargo audit
+        # Plain `cargo audit` exits non-zero only on `vulnerability`
+        # findings; informational warnings (unmaintained, yanked,
+        # notice) are surfaced in the log but don't fail CI.
+        run: cargo audit
+
+  python-sdks:
+    name: python SDK tests (${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 is the package floor (declared in pyproject.toml); 3.12
+        # catches warnings from newer interpreter behaviour. These two
+        # bracket the supported range.
+        python: ['3.9', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: install test deps
+        run: |
+          python -m pip install pip==26.0.1
+          python -m pip install "httpx>=0.27" "pytest>=8.0" "respx>=0.21" "langchain-core>=0.3,<1.0" "blake3>=0.3" "cryptography>=41"
+      - name: emem-py parity tests
+        run: PYTHONPATH=sdks/emem-py/src python -m pytest sdks/emem-py/tests/ -v
+      - name: emem-langmem smoke tests
+        run: PYTHONPATH=sdks/emem-langmem/src python -m pytest sdks/emem-langmem/tests/ -v
+      # Nothing here ran the llama-index tool spec, so its suite proved
+      # nothing about CI either. Only on 3.12: the package floor is 3.10 and
+      # llama-index-core does not install on 3.9.
+      #
+      # The offline half only. tests/test_live_contract.py replays each
+      # fixture's recorded request against production and would make this job
+      # depend on the origin; it belongs with the live gates, and is run by
+      # hand or from a machine that can reach the responder.
+      - name: llama-index tool spec tests
+        if: matrix.python == '3.12'
+        run: |
+          python -m pip install "llama-index-core>=0.13.0,<0.15"
+          PYTHONPATH=sdks/llama-index-tools-emem python -m pytest \
+            sdks/llama-index-tools-emem/tests/test_emem_tool_spec.py -v
+      # The two steps above put src/ on PYTHONPATH, so they pass whether or
+      # not the built package contains any code. ememdev 1.0.0 shipped to
+      # PyPI holding nothing but metadata, and this suite stayed green
+      # through it. Build the artefact and import it out of a wheel, which
+      # is the thing users actually install.
+      - name: wheels contain their modules
+        run: |
+          python -m pip install build==1.4.4
+          for sdk in emem-py emem-langmem; do
+            python -m build --wheel --outdir "dist-$sdk" "sdks/$sdk"
+          done
+          python - <<'PY'
+          import glob, sys, zipfile
+
+          failed = False
+          for whl in sorted(glob.glob("dist-*/*.whl")):
+              modules = [n for n in zipfile.ZipFile(whl).namelist() if n.endswith(".py")]
+              print(f"{whl}: {len(modules)} module(s)")
+              if not modules:
+                  print(f"  ERROR: {whl} ships no Python modules", file=sys.stderr)
+                  failed = True
+          sys.exit(1 if failed else 0)
+          PY
+      - name: an installed wheel imports
+        run: |
+          python -m venv /tmp/wheelcheck
+          /tmp/wheelcheck/bin/pip install --quiet dist-emem-py/*.whl
+          /tmp/wheelcheck/bin/python -c "import ememdev; print('ememdev', ememdev.__version__)"
+          /tmp/wheelcheck/bin/pip install --quiet "langchain-core==0.3.86" "blake3==1.0.9" "cryptography==50.0.1"
+          /tmp/wheelcheck/bin/pip install --quiet dist-emem-langmem/*.whl
+          /tmp/wheelcheck/bin/python -c "import emem_langmem; print('emem_langmem', emem_langmem.__version__)"
+
+  whitepaper:
+    name: whitepaper HTML matches its markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # web/whitepaper-v2.html is generated from docs/whitepaper-v2.md and
+      # baked into the binary with include_str!, so a stale commit ships a
+      # page that contradicts its own source. That is exactly how v1's two
+      # hand-written copies drifted apart.
+      - name: rendered page is up to date
+        run: python3 scripts/render_whitepaper.py --check
+
+  doc-lint:
+    name: prose convention holds
+    runs-on: ubuntu-latest
+    # Every gate left in this job reads the tree, not a responder. The ones
+    # that read a live node moved: what the code serves is checked in
+    # `contract` against this commit's own server, and what only production
+    # can answer runs hourly in production-truth.yml. Fifteen minutes was
+    # sized for the example check (231 s with four workers), which went with
+    # them; it stays as a backstop rather than being re-measured here.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # The convention CONTRIBUTING.md states, enforced instead of
+      # remembered: no em/en dashes (legacy files ride a burn-down list
+      # inside the script), no AGI-family vocabulary, no buzzword tells,
+      # and every relative doc link resolving. Judgment calls stay with
+      # review; this holds the mechanical floor.
+      # The third way a green line proves nothing: the right code present and
+      # not the code running. Python binds the LAST def, so a replacement
+      # spliced above an untouched original runs the original -- and json!
+      # keeps the LAST duplicate key, so a second entry for an existing path
+      # silently replaces its description. Both read as correct in the file.
+      # The upstream hit the first twice in one day, once on a zero-guard whose
+      # own control came back green because it was exercising the shadowed copy.
+      - name: no shadowed definitions
+        run: python3 scripts/shadowed_definitions.py
+      - name: doc lint
+        run: python3 scripts/doc_lint.py
+      - name: plugin skills carry identical crypto
+        run: python3 scripts/plugin_crypto_copies.py
+      # `include_str!` makes a repo file a BUILD input, and the Dockerfile
+      # copies selectively, so adding an include in Rust can break the image
+      # build from a file nobody edited. server.json did exactly that on
+      # 2026-08-11: the release compile failed 1422 seconds in, thirteen
+      # stages deep, with an error naming the include and not the missing
+      # COPY. This is the same question answered from static text in about a
+      # second, in the fast lane, before anything is built. It also catches
+      # the nastier half, where a COPY exists and .dockerignore excludes the
+      # file anyway, which is the trap that shipped two empty SDK wheels.
+      - name: every compile-time include reaches the image
+        run: python3 scripts/docker_context.py
+      # actionlint validates the workflow files against the real Actions
+      # schema. A duplicate `fail-fast:` once slipped past `yaml.safe_load`,
+      # which keeps the last of two silently, and GitHub refused the file:
+      # runs were created with ZERO jobs, named by file path, reporting
+      # `failure`, which reads exactly like a broken test. A validator more
+      # permissive than the consumer is not a validator, so use the one
+      # written against the consumer.
+      - name: actionlint
+        run: |
+          ver=1.7.7
+          curl -sSL "https://github.com/rhysd/actionlint/releases/download/v${ver}/actionlint_${ver}_linux_amd64.tar.gz" \
+            | tar xz actionlint
+          ./actionlint -shellcheck= -pyflakes= .github/workflows/*.yml
+      # A route is either described in the OpenAPI document or excluded with a
+      # written reason. Five live routes that llms.txt told agents to call sat
+      # outside the document for weeks: nothing was false, the route was just
+      # added in one place and not the other. Hermetic, so it runs here.
+      - name: openapi coverage
+        run: python3 scripts/openapi_coverage.py
+      # A figure the homepage presents as live must not ship a number in the
+      # HTML. Five tiles did, three had gone stale against the responder they
+      # claimed to report, and the caption above them said nothing there was
+      # typed in. Hermetic: it reads the markup, not the network.
+      - name: live numbers are fetched, not typed
+        run: python3 scripts/live_numbers.py
+      # One token file, one scale, and a dark mode on every page. Every page
+      # used to carry its own copy of the tokens; /guard rendered body copy at
+      # 13.5px because of it, three pages requested no webfont at all, and
+      # /verify shipped a light body over a dark palette when the migration
+      # removed a dark :root it should not have. Hermetic.
+      # Eighteen of twenty pages described themselves in more than a search
+      # result shows, the worst at 407 characters. None was wrong; they were
+      # paragraphs in a slot that displays a sentence, so the half a reader saw
+      # was chosen by a truncation rule rather than by us. Nothing caught it
+      # because every page looked correct in a browser, and the only surface
+      # where the length mattered is one we do not render.
+      - name: every page says what it is, in a length a result shows
+        run: python3 scripts/page_metadata.py
+      - name: the design system holds
+        run: python3 scripts/design_tokens.py
+
+      # A palette that can render text unreadable is a static property of the
+      # CSS, so it does not need a browser. This exists because --mute-2 sat at
+      # 2.26-2.68:1 while carrying 10px text across the whole site, and the same
+      # values then turned up in seven pages keeping a private copy of the
+      # palette under other names, in --warn, in the scoreboard's chips, and in
+      # gen_tools_page.py which would have rewritten the fix on the next deploy.
+      # Six discoveries of one fact. This turns it into one line.
+      - name: every ink clears AA on its own surfaces
+        run: python3 scripts/contrast_tokens.py
+
+      # SECURITY.md said 1.0.x was current while the workspace was 2.4.0,
+      # CITATION.cff minted citations for 2.2.0, CONTRIBUTING.md sent people
+      # looking for 16 of 19 crates, and README opened "Honest limits" with
+      # 2.1.0. Four documents, four answers, none of them the manifest's. These
+      # are the files a stranger reads first.
+      - name: every version surface states this version
+        run: python3 scripts/version_surfaces.py
+
+      # Every provenance_class we emit must be one we declare. The upstream
+      # found an undeclared class on ELEVEN of their surfaces, with the correct
+      # diagnosis already written in their own tree and reaching one call site.
+      # Ours was `rendering_of_measurement`, a hybrid name implying a hybrid
+      # guarantee that does not exist. Fixing it once is the fix that already
+      # failed for both of us, so it is checked instead. `none` is admitted as
+      # an explicit statement that a thing sits outside the system, which is
+      # not the same as an eighth class.
+      - name: no undeclared provenance classes
+        run: python3 scripts/provenance_classes.py
+      # And the whole suite in dependency order. shadowed_definitions runs FIRST
+      # there and the rest do not run if it fails, because a gate script with a
+      # shadowed definition reports on code that is not running and its PASS
+      # would mean nothing. In this file that check was LAST -- the trust check
+      # at the end of the trusted things, which is where the upstream found
+      # theirs too. The individual steps above stay for per-step CI granularity;
+      # this one enforces the order they are written in.
+      # The ORDER, checked without running anything twice.
+      #
+      # This step used to be `python3 scripts/gates.py`, which executes every
+      # gate again. The individual steps above had already run them once, so
+      # each gate ran twice in one job and the second pass walked the suite
+      # straight through this responder's own published rate limit. What came
+      # back was `mcp=tool_error rest=rate_limited` reported as two surfaces
+      # disagreeing, and a cold agent that "could not obtain a fact to cite",
+      # neither of which was true: parity passes 15 of 15 run on its own.
+      #
+      # The property that step existed for is that the trust check comes first,
+      # since a gate script with a shadowed definition reports on code that is
+      # not running and its PASS would mean nothing. That is now enforced two
+      # ways, neither of which costs a request: shadowed_definitions is the
+      # FIRST gate step in this job, so a failure stops the rest from running,
+      # and this asserts that it stays first.
+      - name: the trust check comes first
+        run: python3 scripts/gates.py --check-order
+      # One navigation, generated from one definition. The site had SEVEN
+      # different nav bars across 22 pages and between them they reached 13 of
+      # 142 routes; /guard appeared in exactly one nav, its own. A hand edit to
+      # any page's nav is drift, and this reports it.
+      - name: one navigation, not seven
+        run: python3 scripts/gen_nav.py --check
+      # The ChatGPT submission declares MCP annotations that the server also
+      # declares, and they had drifted: the submission called five tools
+      # readOnlyHint:true while the server says false, because each can
+      # materialize and sign new facts on a cold miss. Telling a directory a
+      # writing tool is read-only is the one direction that is unsafe, and
+      # nothing was watching the pair until a reviewer asked about a different
+      # annotation entirely.
+      - name: the submission says what the server says
+        run: python3 scripts/submission_matches_server.py
+      # cargo fmt collapses a backslash-continued string literal onto one line
+      # and the source indentation goes into the string. emem.dev served
+      # "...this band needs.<18 spaces>It is an optional extension..." to any
+      # caller whose place question routed to a sidecar band. Twenty-one
+      # literals had it, including the reasoning tier's system prompt and four
+      # trust-boundary declarations. Source-only, so it needs no responder.
+      - name: no sentence carries its own indentation
+        run: python3 scripts/no_padded_prose.py
+      # A ratchet, not a standard. tokens.css has carried a golden-ratio
+      # spacing scale for a long time and the pages use it for 136 values
+      # against 1382 hand-picked ones: every gap slightly different, which is
+      # the restlessness a reader feels and cannot name. Rewriting 1382 values
+      # blind on a live site is not something to do without eyes on the result,
+      # so this holds the line at today's count and comes down as pages are
+      # redesigned. It must never go up.
+      - name: spacing comes from the scale
+        run: python3 scripts/spacing_scale.py --budget 1379
+
+  # Jobs that check a RUNNING system rather than the source. They are here
+  # because the failures they catch are invisible to every other job: the
+  # code is correct, the tests are green, and the thing an agent talks to
+  # still misbehaves.
+  guard-conformance:
+    name: guard deployment conformance
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: build the guard
+        run: cargo build --release -p emem-guard
+      # Against a real socket, because that is where the failures live. The
+      # first run of this suite found that a 9 MB body returned 413: axum's
+      # DefaultBodyLimit of 2 MB wins over the tower-http layer set to 10 MB,
+      # so a server that documented 10 MB, carried the layer, and passed every
+      # unit test still refused. Unit tests drive the router directly and
+      # never send a body that large, so only this could have caught it.
+      # Start, check and audit in ONE step. Splitting them across steps would
+      # rely on a backgrounded process surviving between shells, which is
+      # true on this runner today and is not a thing to depend on: the
+      # failure mode is a green build that never started a server.
+      - name: start a node, conform, and audit its log
+        run: |
+          set -euo pipefail
+          # A fresh checkout has no ./var (it is gitignored), and a redirect
+          # into a missing directory fails before the node ever starts.
+          mkdir -p ./var
+          ./target/release/emem-guard --data ./var/ci-guard --bind 127.0.0.1:8099 \
+            --module secret-patterns > ./var/ci-guard-node.log 2>&1 &
+          node=$!
+          # Kill it however this step ends, so a failure cannot leave a
+          # process holding the port for whatever runs next.
+          trap 'kill "$node" 2>/dev/null || true' EXIT
+          # Sixty seconds, not thirty: on 2026-09-03 a cold runner failed this
+          # step in 48 s with the node still starting, on a commit that touched
+          # nothing the guard depends on. A flake that cannot explain itself
+          # costs a push; the log below is the explanation.
+          up=""
+          for _ in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8099/health >/dev/null; then up=1; break; fi
+            sleep 1
+          done
+          if [ -z "$up" ]; then
+            echo "the node never came up within 60 s; its log:"; cat ./var/ci-guard-node.log || true
+            exit 1
+          fi
+          ./target/release/emem-guard --conformance http://127.0.0.1:8099
+          # The log it just wrote has to audit clean, or the evidence half of
+          # the product is broken in exactly the way nobody would notice.
+          ./target/release/emem-guard --audit --data ./var/ci-guard
+          # And a module that was loaded has to actually be loaded, or the
+          # conformance run proved something about a bare node instead.
+          curl -sf http://127.0.0.1:8099/modules \
+            | grep -q '"id":"secret-patterns"' \
+            || { echo "the module was not loaded"; exit 1; }
+
+  # The gates that check what the CODE serves, run against THIS commit's
+  # own server rather than against https://emem.dev.
+  #
+  # They used to read production. Deploys are manual and land about forty
+  # minutes after a push, so a commit that changed an MCP schema and its
+  # OpenAPI entry together failed its own CI: the gate compared the new tree
+  # with the old server. Twice on 2026-09-30 (one_endpoint_one_contract
+  # failed at 16:38, the fix went live at 17:17). A per-commit gate is asked
+  # whether THIS change broke something, and only the change's own build
+  # can answer that. What genuinely needs production (the live corpus, the
+  # public host, whether a build was deployed) runs on a clock in
+  # production-truth.yml, where a red run is drift and names no commit.
+  #
+  # No exit code is waived here. Elsewhere 2 meant "the responder did not
+  # answer" and became a warning, because production restarting is not a
+  # finding about a commit. This responder is the commit: if it stops
+  # answering, that is the finding, and the node log is printed below.
+  contract:
+    name: contract gates against this commit's own server
+    runs-on: ubuntu-latest
+    # A cold debug build of emem-server is the bulk of this; the gates
+    # themselves take a few minutes against a node on loopback.
+    timeout-minutes: 60
+    env:
+      ORT_CACHE_DIR: ${{ github.workspace }}/.ort-cache
+      # One origin for every gate below. Set on the job, so nothing inherited
+      # can point a contract gate back at production.
+      EMEM_ORIGIN: http://127.0.0.1:5097
+      # The same node, for the gates that read the origin from the
+      # environment instead of a flag.
+      EMEM_RESPONDER: http://127.0.0.1:5097
+      EMEM_BASE: http://127.0.0.1:5097
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: actions/cache@v4
+        with:
+          path: .ort-cache
+          key: ort-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ort-${{ runner.os }}-
+      - name: install protoc (lance build scripts)
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: '0.5.2'
+      - run: mdbook build docs && rm -f docs/book/book.toml
+      # Same reason as the test job: the preinstalled toolchains this repo
+      # never uses are the difference between a build that fits and a
+      # runner that is reclaimed mid-compile.
+      - name: free the disk this build needs
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost
+          df -h / | tail -1
+      # Debug, not release: the gates read what the server SAYS, which does
+      # not depend on the optimiser, and a debug build is minutes shorter.
+      - name: build this commit's server
+        run: cargo build --locked -p emem-cli --bin emem-server
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Installed up front so a missing validator exits 3 nowhere below:
+      # gen_chatgpt_bundle and output_schema_conformance validate against
+      # JSON Schema, spec_verifier_check runs the published BLAKE3 + Ed25519
+      # listing.
+      - name: gate dependencies
+        run: python3 -m pip install --quiet jsonschema==4.26.0 blake3==1.0.9 pynacl==1.6.2
+      # A fresh node: throwaway data dir, a key generated at boot, no corpus.
+      # EMEM_PUBLIC_URL makes it name ITSELF in the card, the OpenAPI servers
+      # entry and the discovery documents; unset, it falls back to
+      # https://emem.dev and the card gates would quietly probe production.
+      # EMEM_RETIRED_BANDS, EMEM_ENLISTMENT_ENFORCE and
+      # EMEM_MEMORY_REQUIRE_ATTESTER copy deploy/systemd/emem-server.service,
+      # because they change what the node serves (the wired band count the
+      # docs state, which writes are refused) and the docs describe that
+      # deployment. Operator identity is deliberately NOT copied: this node
+      # is nobody's, and it is the self-hosted shape, undeclared operator
+      # included.
+      #
+      # Backgrounded in its own step and left running for the steps after it.
+      # That is safe to depend on here in a way it is not for a gate that
+      # waives an unreachable responder: nothing below waives one, so a node
+      # that did not survive fails the next gate instead of passing it.
+      - name: start the node
+        run: |
+          mkdir -p "$RUNNER_TEMP/emem-data"
+          EMEM_DATA="$RUNNER_TEMP/emem-data" \
+          EMEM_BIND=127.0.0.1:5097 \
+          EMEM_PUBLIC_URL="$EMEM_ORIGIN" \
+          EMEM_OVERTURE_SKIP_WARMUP=1 \
+          EMEM_RETIRED_BANDS=geotessera,clay_v1,prithvi_eo2,galileo \
+          EMEM_ENLISTMENT_ENFORCE=1 \
+          EMEM_MEMORY_REQUIRE_ATTESTER=1 \
+            nohup ./target/debug/emem-server > "$RUNNER_TEMP/emem-node.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/emem-node.pid"
+      - name: wait for the node
+        run: python3 scripts/await_responder.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}" --wait 180
+      # What a credential scanner gets. The service sharing this box traced
+      # 29,636 refused requests over 35 days to an automated secret hunter --
+      # /.env, /.git/config, /.aws/credentials -- every one a 1 ms 404, which is
+      # why nobody had looked. They 404 everything because they are an API; we
+      # are the public page on the same host, with a build directory and a docs
+      # tree and a 404 page of our own. It checks BODIES, not status codes, and
+      # self-tests its own patterns first, because a clean report from a
+      # detector that stopped matching looks exactly like a clean surface.
+      - name: nothing a scanner asks for is served
+        run: python3 scripts/scanner_surface.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # A test case is run by a stranger in a fresh chat. Three of the five in
+      # the 2026-08-27 submission pointed at "this farm", "this place" and "an
+      # emem:fact: token" with none of the three supplied, so opened cold they
+      # named nothing, no tool was called, and each failed against its own
+      # expected_output with the tools working correctly. Nothing read the
+      # prompts. This does, and it runs before the responder is fetched so an
+      # outage cannot waive it.
+      - name: every test case carries its own referent
+        run: python3 scripts/gen_chatgpt_bundle.py --check --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # /openapi.json is what a developer reads and the MCP inputSchema is what
+      # an agent reads. They are written separately and nothing compared them,
+      # so they drifted both ways: /v1/log/inclusion took tree_size -- prove a
+      # leaf was in a head you pinned earlier, the whole audit loop -- and the
+      # tool schema omitted it, so an agent could only prove inclusion under
+      # the current head. A parameter in OpenAPI and not in MCP is a capability
+      # out of reach and fails; the reverse is documentation debt and ratchets.
+      - name: one endpoint, one contract
+        run: python3 scripts/one_endpoint_one_contract.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # Two host details reached callers on 2026-09-10 by the same route:
+      # something inward-facing copied into something outward-facing. A socket
+      # path and a Rust errno in materialize_notes[].reason, and an upstream's
+      # loopback backend_url republished from an object we pass through. The
+      # check is on the OUTPUT rather than on anyone's care, and the surfaces
+      # come from our own openapi document so a route added tomorrow is covered.
+      # Against this node it checks what the CODE emits. The node names its
+      # own loopback origin everywhere, and the script excuses exactly that
+      # netloc and nothing else; production's configuration, where most
+      # host paths come from, is swept in production-truth.yml.
+      - name: nothing public means something only here
+        run: python3 scripts/no_host_details_in_public.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # The card declared preferredTransport HTTP+JSON while /a2a/tasks requires
+      # the JSON-RPC envelope, so every client that believed the card got a 400
+      # and the A2A registry's task_conformance probe failed on METHOD. A schema
+      # check could not see it: the value was a legal transport name, just not
+      # ours. This sends the shape the card promises and checks it is accepted.
+      - name: the agent card describes the endpoint that answers
+        run: python3 scripts/agent_card_conformance.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # live_numbers proves a figure is fetched. It cannot prove the fetch
+      # finds anything: rename a field and put() is handed undefined, declines
+      # to write, and the tile keeps its placeholder, so the page reads as
+      # though the node were down while the node is fine. A 200 carrying a
+      # renamed field passes route_truth, sync_counts and doc_lint alike.
+      - name: the fields the pages read still exist
+        run: python3 scripts/live_fields.py
+      # A count stated as prose has to match the responder it describes.
+      # /whitepaper served "102 MCP tools (15 core, 87 extended)" against a
+      # responder answering 107/16/91 while sync_counts reported no drift,
+      # because the surface list and the phrase list were both hand-written.
+      # This asserts the number. Needs the live responder, so it warns rather
+      # than fails when the origin is unreachable.
+      # Failing here now names the one-word fix, because every count corrected
+      # by hand in this repo came back wrong within weeks: a typed number
+      # cannot notice the world moved, and the person who moves it is rarely
+      # the person who typed it. `--write` corrects the prose from the live
+      # responder, and leaves records alone (plans, ISO-dated notes,
+      # withdrawal tables, COUNT_HISTORY) because rewriting a record to match
+      # today turns it into a lie.
+      - name: prose counts match the responder
+        run: |
+          set +e
+          python3 scripts/sync_counts.py --check
+          code=$?
+          set -e
+          if [ "$code" = "1" ]; then
+            echo "::error::prose counts drifted. Run: python3 scripts/sync_counts.py --write"
+          fi
+          exit $code
+      # A directory reviewer connects to the URL we advertise, reads
+      # tools/list, and calls the tools: "Every tool must return a successful
+      # response when called with valid parameters. Generic errors fail
+      # review." This runs that same sweep over the core tier, with each
+      # tool's own declared `required` list satisfied. A typed refusal (the
+      # T3 gate on the shared entity space) counts as working, because
+      # counting it as a failure would push someone toward weakening the gate
+      # to get a green light.
+      - name: every tool a reviewer would call answers
+        run: python3 scripts/core_tier_callable.py --check
+      # outputSchema is the only descriptor field that binds RUNTIME behaviour:
+      # declare one and every successful call owes conforming structuredContent.
+      # A unit test can only check the schema is well-formed; it took a live
+      # call to find that emem_echo_verify declared `drift` as a string and
+      # returned null on every exact match, violating its own schema on the
+      # most common path. Same warn-on-unreachable rule as the counts gate.
+      - name: declared output schemas are honoured live
+        run: python3 scripts/output_schema_conformance.py --check
+      # scripts/mcp_host_compat.py asserts that AWS, Glama, Smithery,
+      # Anthropic and OpenAI shaped clients can each discover the endpoint
+      # and get an answer out of it: the CORS preflight, the Accept header
+      # each one sends, the tools/list page size, and the discovery files
+      # that have to point at the same URL the responder answers on. It has
+      # been at 25 pass, 0 fail for as long as anyone ran it, which was only
+      # ever by hand. Nothing referenced it here, so a regression in any of
+      # those five paths would have reached a host before it reached a test.
+      #
+      # server.json and the MCP registry entry are published and name
+      # https://emem.dev whatever node is read, so --advertised-origin holds
+      # them to that; everything the node itself serves is held to the node.
+      # Whether the advertised endpoint is the one answering is a question
+      # about production, asked in production-truth.yml.
+      - name: five host shapes can reach and call the endpoint
+        run: python3 scripts/mcp_host_compat.py --check --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}" --advertised-origin https://emem.dev
+      # Counts, routes and homepage figures each have a gate. The sentences
+      # that assert what a component is CURRENTLY doing had none, and they rot
+      # more quietly, because a count invites checking and "X is untrained
+      # today" reads as settled background.
+      - name: state a document asserts is the state we are in
+        run: python3 scripts/state_claims.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # The agent guide's first screen is what an agent routes on. It is
+      # generated from the responder's own intent registry, so a hand edit or
+      # a new intent that never reached the guide shows up here rather than in
+      # an agent picking a tool for a need we stopped serving.
+      - name: the agent guide's first screen matches the registry
+        run: python3 scripts/gen_decision_layer.py --check --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # Everything above proves a thing we built still works. This proves an
+      # agent that has never heard of emem can find out what we are, decide
+      # whether we are relevant, and make a correct first call, from the origin
+      # alone. It also executes every served row of the intent registry, so a
+      # capability claim cannot rot into prose that no longer matches the code.
+      - name: an agent starting cold can find us and act
+        run: python3 scripts/discovery_test.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # docs/protocol.md 7.4 publishes a self-contained verifier and calls it
+      # "the entire trust-rebinding path". It is the listing third parties
+      # copy. 5ci64hps rebuilt it from the segment tables and found it
+      # rejected every current receipt: the stream stopped at tag 0x09 and
+      # never emitted the v2 MERKLE segment, so it computed the SAME digest as
+      # the downgrade attack the spec describes two sections earlier. The
+      # published verifier and the attacker agreed with each other and
+      # disagreed with the signer.
+      #
+      # /v1/verifier_spec was right the whole time because it is generated
+      # from the signer's constants. Only the prose drifted, in the one
+      # document nobody runs. So run it.
+      - name: run the published listing against a live receipt
+        run: python3 scripts/spec_verifier_check.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # The /guard page shipped a nine-route table where seven answered 404 on
+      # emem.dev. Nothing was false (the table describes a self-hosted node)
+      # and it still overclaimed, because a reader stands on emem.dev and tries
+      # the first thing they see. u4aaoieq found it by doing exactly that.
+      #
+      # This is the no-hardcoded-numbers rule generalised to routes: no number
+      # on the site that is not fetched from the node, and no route on the site
+      # that is not reachable where it is shown.
+      - name: route truth
+        run: python3 scripts/route_truth.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # The source can describe a route the binary does not serve: an
+      # include that did not reach the image, a handler never registered.
+      # Against this commit's own build that is a defect in the commit.
+      # Whether production runs the build is production-truth.yml's question.
+      - name: openapi is served, not just written
+        run: python3 scripts/openapi_coverage.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # The card is signed over itself as served. A node with no operator
+      # contact stripped the empty keys after signing, so its card did not
+      # verify; emem.dev declares a contact and hid it. This node declares none.
+      - name: the agent card verifies against its own published key
+        run: python3 scripts/agent_card_signed.py --origin "${EMEM_ORIGIN:-http://127.0.0.1:5097}"
+      # Pinned rather than relying on whatever the runner image happens to
+      # ship: this step is a cryptography check, and "it worked on the old
+      # default node" is not a property to leave to the image.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The browser verifier is the code that tells a person whether a signed
+      # fact is genuine. Two ways it fails: it accepts nothing (loud), or it
+      # accepts everything / rejects sound receipts (silent, and the second
+      # tells users their real data was forged). So the suite asserts both
+      # directions against a pinned production receipt, including the stripped
+      # inclusion proof that preimage_version 2 exists to catch.
+      - name: the browser verifier accepts what is genuine and refuses forgeries
+        run: node scripts/verify_core_test.cjs
+      - name: the node's log, when a gate failed
+        if: failure()
+        run: tail -n 200 "$RUNNER_TEMP/emem-node.log" || true
+      - name: stop the node
+        if: always()
+        run: kill "$(cat "$RUNNER_TEMP/emem-node.pid")" 2>/dev/null || true
+
+  ts-sdk:
+    name: TypeScript SDK build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: install deps
+        working-directory: sdks/emem-ts
+        run: npm install --no-audit --no-fund
+      # No job ever compiled this package, so three errors under `strict` +
+      # `exactOptionalPropertyTypes` survived in a package advertised as
+      # releasable. `tsc` also emits a full dist/ while erroring, so a green
+      # artefact directory proves nothing; only the exit code does.
+      - name: typecheck
+        working-directory: sdks/emem-ts
+        run: npx tsc --noEmit
+      # package.json and src/version.ts are two hand-written copies of one
+      # string, and they had already drifted three ways (1.0.0 / 0.0.9 /
+      # 0.0.8) with nothing comparing them. The publish workflow checks this
+      # too, but at publish time the bad version is already the thing you
+      # are shipping. Catch the skew on the PR that introduces it.
+      - name: package.json and VERSION agree
+        working-directory: sdks/emem-ts
+        run: |
+          set -euo pipefail
+          PKG=$(node -p "require('./package.json').version")
+          SRC=$(node -p "require('fs').readFileSync('src/version.ts','utf8').match(/VERSION = \"([^\"]+)\"/)[1]")
+          echo "package.json=$PKG src/version.ts=$SRC"
+          if [ "$PKG" != "$SRC" ]; then
+            echo "::error::version skew: package.json says $PKG, src/version.ts says $SRC"
+            exit 1
+          fi

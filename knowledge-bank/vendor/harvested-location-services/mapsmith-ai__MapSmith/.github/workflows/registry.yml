@@ -1,0 +1,153 @@
+name: MCP Registry
+
+# Publishes a released version to the official MCP Registry, authenticating
+# with the workflow's own OIDC token instead of an interactive device flow.
+#
+# Run by hand (workflow_dispatch), never on the tag push: the registry checks at
+# publish time that the exact version in server.json already exists on PyPI and
+# carries the `mcp-name` marker, and the PyPI upload happens only after the tag's
+# CI is green (the 0.5.0 release went out in the other order and had to be
+# yanked). So the order is: tag -> CI green -> PyPI -> this workflow.
+#
+# The registry grants `io.github.<repository_owner>/*` to any workflow of that
+# owner holding `id-token: write`, with no binding to a repository, file or ref.
+# So the protection has to be on this side, and it has three parts:
+#   - no job that runs this repository's code or installs dependencies holds
+#     that permission. Two jobs do: this one, and the Pages `deploy` job, which
+#     runs one SHA-pinned action. Until 2026-09-25 the Pages *workflow* held it,
+#     so its `build` job -- `pip install` plus our own scripts -- could have
+#     minted a registry token, and this comment claimed the opposite;
+#   - what gets published is a tag, resolved as a tag (a branch with the same
+#     name does not win), whose commit is on `main` and whose own CI run passed;
+#   - dispatching needs Actions write on this repository.
+# What it does not stop: someone who can already push to `main` and tag it.
+# That is a branch-protection question, not one this file can answer.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish, e.g. v0.6.0"
+        required: true
+      dry_run:
+        description: "Validate and log in only; publish nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      TAG: ${{ inputs.tag }}
+      # Pinned, with the digest from the release's checksums file. A publisher
+      # older than registry #1229 (2026-04-30) fails the OIDC audience check, so
+      # a bump is expected whenever the registry changes its authentication.
+      PUBLISHER_VERSION: v1.8.1
+      PUBLISHER_SHA256: a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc
+      REGISTRY: https://registry.modelcontextprotocol.io
+    steps:
+      - name: The tag must name a release
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "not a release tag: $TAG"; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # `refs/tags/` explicitly: a bare name is tried as a branch first.
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+          # A downloaded binary runs later in this job; it gets no token.
+          persist-credentials: false
+      - name: The tag must be on main, and its own CI run must have passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          git merge-base --is-ancestor "$sha" origin/main \
+            || { echo "$TAG ($sha) is not on main"; exit 1; }
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -o ci.json \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${sha}&per_page=20"
+          python3 - "$TAG" <<'EOF'
+          import json, sys
+          tag = sys.argv[1]
+          runs = json.load(open("ci.json", encoding="utf-8"))["workflow_runs"]
+          on_tag = [r for r in runs if r["event"] == "push" and r["head_branch"] == tag]
+          passed = [r for r in on_tag if r["conclusion"] == "success"]
+          if not passed:
+              seen = [(r["status"], r["conclusion"]) for r in on_tag] or "no run on the tag"
+              sys.exit(f"CI has not passed on {tag}: {seen}")
+          print(f"CI passed on {tag}: run {passed[0]['id']}")
+          EOF
+      - name: server.json must declare the tag's version
+        run: |
+          expected="${TAG#v}"
+          python3 - "$expected" <<'EOF'
+          import json, sys
+          expected = sys.argv[1]
+          server = json.load(open("server.json", encoding="utf-8"))
+          found = {"version": server["version"]}
+          for i, package in enumerate(server.get("packages", [])):
+              found[f"packages[{i}].version"] = package.get("version")
+              if package.get("registryType") == "oci":
+                  found[f"packages[{i}].identifier tag"] = package["identifier"].rpartition(":")[2]
+          wrong = {k: v for k, v in found.items() if v is not None and v != expected}
+          if wrong:
+              sys.exit(f"server.json does not declare {expected}: {wrong}")
+          print(f"server.json declares {expected}")
+          EOF
+      - name: Install mcp-publisher (pinned, digest checked)
+        run: |
+          asset=mcp-publisher_linux_amd64.tar.gz
+          curl -fsSL -o "$asset" \
+            "https://github.com/modelcontextprotocol/registry/releases/download/${PUBLISHER_VERSION}/${asset}"
+          echo "${PUBLISHER_SHA256}  ${asset}" | sha256sum -c -
+          tar xzf "$asset" mcp-publisher
+          ./mcp-publisher --version
+      - run: ./mcp-publisher validate server.json
+      - run: ./mcp-publisher login github-oidc
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        # PyPI can take a moment to serve a new version, and the registry
+        # refuses with a 404 until it does: retry a few times, then fail. A
+        # failure can also come AFTER the registry accepted the version (a
+        # timeout on the response), and every retry would then be refused as a
+        # duplicate: so before retrying, ask the registry whether it has it.
+        run: |
+          version_url="${REGISTRY}/v0.1/servers/io.github.mapsmith-ai%2Fmapsmith/versions/${TAG#v}"
+          for attempt in 1 2 3 4 5; do
+            if ./mcp-publisher publish server.json; then exit 0; fi
+            if curl -fsS -o /dev/null "$version_url"; then
+              echo "publish reported a failure, but the registry already serves ${TAG#v}"
+              exit 0
+            fi
+            echo "publish failed (attempt $attempt), retrying in 30s"
+            sleep 30
+          done
+          exit 1
+      - name: The registry must serve it as the latest version
+        if: ${{ !inputs.dry_run }}
+        # An exit code of 0 is half the proof: the registry has accepted a
+        # version before and not listed it (registry #960). Read it back.
+        run: |
+          expected="${TAG#v}"
+          url="${REGISTRY}/v0.1/servers/io.github.mapsmith-ai%2Fmapsmith/versions/latest"
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsSL "$url" -o latest.json && python3 - "$expected" <<'EOF'
+          import json, sys
+          expected = sys.argv[1]
+          body = json.load(open("latest.json", encoding="utf-8"))
+          entry = body["servers"][0] if "servers" in body else body
+          meta = entry["_meta"]["io.modelcontextprotocol.registry/official"]
+          version = entry["server"]["version"]
+          print(f"registry: version={version} status={meta.get('status')} isLatest={meta.get('isLatest')}")
+          sys.exit(0 if (version, meta.get("status"), meta.get("isLatest")) == (expected, "active", True) else 1)
+          EOF
+            then exit 0; fi
+            echo "not visible yet (attempt $attempt), retrying in 20s"
+            sleep 20
+          done
+          exit 1

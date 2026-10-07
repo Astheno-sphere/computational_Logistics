@@ -1,0 +1,165 @@
+# france-data-mcp
+
+> MCP TypeScript qui **croise et réconcilie** 13 référentiels publics français (INSEE SIRENE, IRIS & Melodi, FINESS DREES, RPPS / Annuaire Santé ANS, Annuaire Santé Ameli, Centres de Santé CNAM, DVF / DGFiP, Sit@del / SDES, PLU via apicarto, IGN Géoplateforme, geo.api.gouv.fr & Recherche Entreprises DINUM). Détecte les SIRET fermés invisibles côté DREES, distingue site vs groupe, croise l'offre de soins avec la démographie au quartier, **évalue le potentiel immobilier d'un site** (prix DVF €/m², permis de construire, zones AU du PLU), expose la fraîcheur de chaque source.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/cturkieh/france-data-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/cturkieh/france-data-mcp/actions)
+[![MCP](https://img.shields.io/badge/MCP-live-success)](https://france-data-mcp.vercel.app/mcp)
+[![npm](https://img.shields.io/npm/v/france-data-mcp.svg)](https://www.npmjs.com/package/france-data-mcp)
+[![smithery badge](https://smithery.ai/badge/cturkieh/france-data)](https://smithery.ai/servers/cturkieh/france-data)
+
+🇫🇷 Documentation principale en français. [English version →](README.en.md)
+
+---
+
+## Installation
+
+### Option 1 — URL distante (claude.ai, Claude Code, Cursor)
+
+`https://france-data-mcp.vercel.app/mcp`
+
+| Client | Config |
+|---|---|
+| **claude.ai** | Settings → Connectors → Add custom connector → URL ci-dessus |
+| **Claude Code** | `~/.claude.json` → `mcpServers` → `{ "type": "http", "url": "..." }` |
+| **Cursor** | `~/.cursor/mcp.json` → même configuration |
+
+### Option 2 — Wrapper npm stdio (Claude Desktop natif, autres clients)
+
+```json
+{
+  "mcpServers": {
+    "france-data": {
+      "command": "npx",
+      "args": ["-y", "france-data-mcp"]
+    }
+  }
+}
+```
+
+Le wrapper forwarde stdio → endpoint HTTPS distant. Aucune DB locale à provisionner. Override possible : `FRANCE_DATA_MCP_URL=https://mon-miroir.example/mcp`.
+
+Détails par client + self-hosting : [docs/installation-claude.md](docs/installation-claude.md).
+
+---
+
+## Pourquoi ce projet
+
+Les APIs officielles (INSEE, FINESS DREES, RPPS ANS, Annuaire Ameli, Centres de Santé CNAM, IGN, DINUM) existent mais sont **éclatées, sous-documentées et pleines de pièges** : rate limits, formats CSV propriétaires, latence DREES de 1-2 mois, diffusion partielle INSEE, mappings inconsistants Ameli ↔ RPPS.
+
+`france-data-mcp` est **le premier MCP qui croise factuellement ces sources** pour répondre à des questions concrètes — cartographie d'offre de soins, étude de marché territoriale, journalisme local, civic-tech.
+
+---
+
+## Périmètre — 13 sources publiques croisées
+
+- 🗺️ **Territoire** (2) : geo.api.gouv.fr (DINUM, communes), IGN Géoplateforme (géocodage)
+- 🏥 **Santé** (3) : FINESS / ANS (~105 K établissements en service, DOM inclus — flux JSON quotidien qui remplace le CSV DREES arrêté en juillet 2026), Annuaire Santé Ameli (~466 K libéraux), RPPS / ANS (~2,28 M PS actifs)
+- 🩺 **Centres de Santé** (1) : Annuaire santé CNAM (~3 K structures L.6323-1 CSP, sync hebdomadaire)
+- 📊 **Démographie infracommunale** (2) : INSEE IRIS (~48,6 K quartiers — RP 2022, FILOSOFI 2021 revenu, contours IGN) + INSEE Melodi (population de référence)
+- 🏢 **Entreprises** (2) : DINUM Recherche Entreprises + INSEE SIRENE V3.11
+- 🏗️ **Immobilier** (3) : ventes foncières DVF / DGFiP (€/m², cache paresseux PostGIS), permis de construire Sit@del / SDES (table ingérée, cron mensuel), zones AU du PLU via apicarto / IGN (live)
+
+**Cross-source** : réconciliation FINESS ↔ RPPS ↔ SIRENE pour détecter SIRET fermés, rebrandings, raisons sociales périmées.
+
+---
+
+## Outils MCP (37 tools)
+
+### 🗺️ Territoire (4)
+`autocomplete_commune` · `get_commune_by_code` · `geocode_adresse` · `reverse_geocode`
+
+### 🏢 Entreprises (3)
+`entreprises_in_radius` · `entreprise_by_siren` (+ fallback INSEE SIRENE V3.11) · `etablissement_by_siret`
+
+### 🏥 Établissements santé FINESS (4)
+`etablissements_finess_in_radius` · `etablissements_finess_by_categorie` · `etablissement_by_finess` · `etablissement_finess_by_nom` (recherche par nom : « Institut Gustave Roussy » → fiches, point exact, commune prouvée)
+
+> 24 familles couvrant ~92 % du volume. Source ANS publiée quotidiennement, ingérée le 1ᵉʳ et le 15 du mois.
+
+### 👨‍⚕️ Professionnels libéraux Ameli (2)
+`professionnels_in_radius` · `professionnels_par_specialite_dept`
+
+> Libéraux **conventionnés uniquement** (~462 K). Découverte des codes spécialité/type_ps : `lister_nomenclature` (voir ci-dessous).
+
+### 🩺 Tous les PS — RPPS / Annuaire Santé ANS (5)
+`professionnels_rpps_in_radius` · `professionnels_rpps_par_dept` · `rpps_dans_etablissement` · `rpps_search_by_name` (fuzzy) · `professionnel_by_rpps` (+ fallback FHIR ANS)
+
+> ~2,2 M PS actifs (libéraux + salariés privés + hospitaliers contractuels + agents publics). Par défaut : Civils uniquement.
+
+### 🩺 Centres de Santé — Annuaire CNAM (2)
+`centres_sante_in_radius` · `centres_sante_by_finess`
+
+> Structures de soins ambulatoires non lucratives (L.6323-1 CSP, ~3 K). Différenciateur vs FINESS famille=124 : expose **carte Vitale**, **APCV** et **spécialités exercées sur place** (Annexe A CNAM, ~70 codes). Coords = centroïde commune. Sync hebdomadaire.
+
+### 📊 Démographie & densités — INSEE Melodi + IRIS (3)
+Population de référence INSEE croisée avec RPPS / FINESS — méthodologie DREES (ratios pour 100 k hab.). Maille **IRIS** (quartier, ~48,6K zones) pour la DEMANDE, à croiser avec l'offre de soins.
+
+`population` (IRIS 9 car., commune 5 car. **ou** département 2-3 car. — granularité auto-détectée par la longueur du code) · `densite_sante` (`cible: professionnels` RPPS **ou** `etablissements` FINESS — labos, pharmacies, EHPAD, hôpitaux ; + comparaison nationale matview <50 ms) · `profil_iris` (`point` **ou** `code_iris`, `rayon_km?`) — profil démo d'un îlot ou d'un bassin (âge, CSP, familles, revenu) au RP 2022 + FILOSOFI 2021
+
+### 🔎 Découverte des nomenclatures (1)
+`lister_nomenclature` (`referentiel: ameli_specialites | ameli_types_ps | rpps_savoir_faire`) — codes spécialité/type_ps Ameli **et** savoir_faire RPPS dans un seul tool (remplace les 3 anciens `lister_*`).
+
+### 🧭 Agrégateurs & études composites (4)
+- `panorama_sante_territoire` (V0.9) — 1 call : population + densités médecins/infirmiers/pharmaciens vs national + count FINESS par famille (labo, pharmacie, EHPAD, MCO, MSP/CPTS) + **bloc demande IRIS** (profil démo commune : âge, CSP, familles, revenu). Granularité explicite (`niveau: commune`, `niveauEtablissements: departement | indisponible`).
+- `inspect_site` (V0.10) — vue 360 d'un établissement en 1 call : identification FINESS + statut administratif SIRENE (resolver SIRET) + PS rattachés + historique INSEE.
+- `panorama_implantation_complet` (V0.23) — étude d'implantation labo en 1 call : 7 sections (territoire, demande IRIS du bassin, concurrents, pourvoyeurs MCO/EHPAD/SSR, prescripteurs RPPS+IDEL, centres de santé, qualité référentiels). Résumés, jamais de listes brutes ; dégradation par section.
+- `enrichir_concurrents` (V0.23) — enquête sur le top concurrents (statut actif + équipe + signal M&A + groupe parent), cap dur `max=3`.
+
+### 🏗️ Immobilier — potentiel d'un site (2)
+`dynamique_immobiliere` (V0.26) — composite en 1 call : permis de construire (Sit@del / SDES, table ingérée mensuellement) + zones AU du PLU (apicarto / IGN, live) + ventes de terrains DVF. Sortie 2 registres : `note` (volume → scoring) / `info` (quartiers AU + prix → contexte) ; `geojson` = polygones des zones AU. · `cout_foncier` (V0.26) — prix médian €/m² DVF (P25/P75, n_ventes, période), info seule.
+
+> Source DVF / DGFiP (cache paresseux PostGIS, anon lit / service écrit). Zones AU = **live** ; permis Sit@del = table ingérée (cron mensuel, le 10). Pensé pour les rapports d'implantation.
+
+### 🔀 Croisement multi-source (7)
+Réconciliation FINESS ↔ RPPS ↔ SIRENE ↔ CNAM — faits bruts sans interprétation métier.
+
+`data_freshness` · `verifier_site_actif` · `compare_raison_sociale_finess_vs_rpps` · `compare_adresse_cnam_vs_finess` · `historique_etablissement` · `reconcilier_finess_sirene` · `finess_sirene_coverage_in_radius`
+
+---
+
+## Garde-fous publics
+
+- **Rate limit** : 60 req/min par IP sur `tools/call` (les méthodes meta restent libres). Au-delà : erreur `-32000` avec `data.retryAfterSeconds`.
+- **Logs JSON structurés** par requête : `ts`, `method`, `tool`, `ip_hash` (SHA-256 salé), `duration_ms`, `outcome`. Aucune IP en clair, aucun argument tool persisté.
+- **Sentry error monitoring** sur les 500 internes (tags `mcp.method`, `mcp.tool`, `mcp.outcome`).
+- **RGPD** : rétention 30j sur Axiom, hash IP salé, droits d'accès / effacement. Politique complète dans [PRIVACY.md](./PRIVACY.md).
+
+Usage intensif : throttler côté client ou self-héberger.
+
+---
+
+## État du projet
+
+✅ **V0.31.0 — en production.** Sur le [registry MCP officiel](https://registry.modelcontextprotocol.io/v0.1/servers?search=france-data-mcp). Détail : [CHANGELOG](CHANGELOG.md).
+
+> Dernière version (V0.31.0) : `etablissement_finess_by_nom` — un établissement de santé par son nom (« Institut Gustave Roussy » → fiches, point exact, commune prouvée, jamais un premier résultat servi seul) ; permis de construire Sit@del lus en base (10,9 s au lieu de 45 s) avec l'année en cours servie à part des 5 années pleines et le « 0 logement » de Paris/Lyon/Marseille corrigé. 13 référentiels / 37 outils.
+
+---
+
+## Contribuer
+
+Ouvrir une issue pour discuter avant d'envoyer une PR.
+
+---
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE). Les **données** restent sous leurs licences respectives :
+
+| Source | Licence | Mention obligatoire |
+|---|---|---|
+| FINESS | Licence Ouverte (Etalab) | « Source : FINESS, ANS/DREES » |
+| Annuaire Santé Ameli | Art. L.1461-2 CSP | « Source : Annuaire santé Ameli, Assurance Maladie » |
+| DINUM Recherche Entreprises | Licence Ouverte | « Source : Annuaire des Entreprises, DINUM » |
+| INSEE | Licence Ouverte | « Source : Insee » |
+| IGN Géoplateforme / apicarto | Licence Ouverte | « © IGN/Géoplateforme », « GPU — apicarto IGN » |
+| geo.api.gouv.fr | Licence Ouverte | « Source : geo.api.gouv.fr (Etalab) » |
+| DVF (Demandes de Valeurs Foncières) | Licence Ouverte | « Source : DVF, DGFiP / Etalab » |
+| Sit@del (permis de construire) | Licence Ouverte | « Source : Sit@del, SDES (API DiDo) » |
+
+---
+
+## Remerciements
+
+DINUM, Etalab, Atlasanté, ANS, INSEE, IGN pour la qualité de leurs APIs. data.gouv.fr pour l'animation civic-tech. Anthropic pour le protocole MCP.

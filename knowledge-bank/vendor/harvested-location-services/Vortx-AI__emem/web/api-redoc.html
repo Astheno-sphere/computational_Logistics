@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>emem.dev · REST API reference (interactive)</title>
+<link rel=preconnect href="https://fonts.googleapis.com">
+<link rel=preconnect href="https://fonts.gstatic.com" crossorigin>
+<link rel=stylesheet href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,200..800;1,200..800&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap">
+<link rel=stylesheet href="/tokens.css">
+<meta name=description content="Interactive console for /v1/locate, /v1/recall and /v1/hunt. Run them against the live surface, watch the ed25519 receipt verify in your browser, then read the reference.">
+<link rel=canonical href="https://emem.dev/docs/api/">
+<meta name=robots content="index,follow">
+
+<meta property=og:title content="emem.dev · REST API reference">
+<meta property=og:description content="Interactive console + full reference. Verify every receipt in your browser.">
+<meta property=og:url content="https://emem.dev/docs/api/">
+<meta property=og:type content=website>
+<meta property=og:image content="https://emem.dev/og-image.png">
+<meta property=og:image:width content="1200">
+<meta property=og:image:height content="630">
+
+<link rel=icon type="image/gif" href="/vortxgola.gif">
+<link rel="apple-touch-icon" href="/vortxgola.gif">
+
+<style>
+/* The muted levels here are a local copy of web/tokens.css and carried the
+   pre-2026-08-24 values, which measured 2.3-2.7:1 behind 10px text. Corrected
+   to match tokens.css: both levels clear WCAG AA on all three grounds. */
+  :root {
+    --paper:   oklch(0.975 0.005 85);
+    --paper-2: oklch(0.955 0.005 85);
+    --paper-3: oklch(0.93 0.006 85);
+    --ink:     oklch(0.20 0.005 85);
+    --ink-2:   oklch(0.32 0.005 85);
+    --mute:    oklch(0.42 0.005 85);
+    --rule:    oklch(0.86 0.008 85);
+    --accent:  oklch(0.45 0.09 145);
+    --warn:    oklch(0.53 0.16 25);
+    --info:    oklch(0.5 0.12 230);
+  }
+  
+
+  html, body { margin: 0; background: var(--paper); color: var(--ink); }
+  body { font-family: var(--mono); }
+
+  .topbar {
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper-2);
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(6px);
+  }
+  .topbar-inner {
+    max-width: 1400px; margin: 0 auto; padding: 0 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    height: 40px; font-size:var(--t-3xs);
+  }
+  .topbar .brand {
+    font-weight: 700; font-size:var(--t-2xs); color: var(--ink);
+    padding-right: 1rem; border-right: 1px solid var(--rule);
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .topbar .brand img { width: 20px; height: 20px; object-fit: contain; display: block; }
+  .topbar a {
+    position: relative;
+    color: var(--ink-2); text-decoration: none;
+    padding: 0 .5rem; height: 100%;
+    display: flex; align-items: center;
+    border-right: 1px solid var(--rule);
+    opacity: .6; transition: opacity .18s ease, color .18s ease;
+  }
+  .topbar a:first-of-type { border-left: 1px solid var(--rule); margin-left: .5rem; }
+  .topbar a:hover { opacity: 1; color: var(--ink); background: rgba(0,0,0,.04); }
+  .topbar a.on { opacity: 1; color: var(--accent); }
+  .topbar a.on::after {
+    content: ""; position: absolute; left: .5rem; right: .5rem; bottom: 5px;
+    height: 2px; background: var(--accent); opacity: .85; border-radius: 1px;
+  }
+  @media (max-width: 760px) { .topbar a.nav-sec { display: none; } }
+  .topbar .spacer { flex: 1; }
+
+  /* ── Playground ─────────────────────────────────────────────────────── */
+  .playground {
+    max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.5rem 0.5rem;
+  }
+  .pg-head {
+    display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+  .pg-head h1 { margin: 0; font-size:var(--t-base); font-weight: 700; letter-spacing: -.01em; }
+  .pg-head .sub { font-size:var(--t-2xs); color: var(--mute); }
+  .pg-head a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--rule); }
+  .pg-head a:hover { border-bottom-color: var(--accent); }
+
+  .pg-tabs {
+    display: flex; gap: 0; flex-wrap: wrap;
+    border-bottom: 1px solid var(--rule); margin-bottom: 1rem;
+  }
+  .pg-tabs button {
+    font: inherit; font-family: var(--mono);
+    background: transparent; border: none; cursor: pointer;
+    padding: .55em 1em; font-size:var(--t-2xs); color: var(--ink-2);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .pg-tabs button:hover { color: var(--ink); }
+  .pg-tabs button.active {
+    color: var(--accent); border-bottom-color: var(--accent); font-weight: 600;
+  }
+  .pg-tabs .method-chip {
+    display: inline-block; font-size:var(--t-3xs);
+    padding: 1px 5px; border-radius: 2px;
+    background: var(--accent); color: var(--paper);
+    margin-right: .4em; font-weight: 700; vertical-align: 1px;
+  }
+
+  .pg-body {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 900px) { .pg-body { grid-template-columns: 1fr; } }
+  .pg-panel {
+    border: 1px solid var(--rule); background: var(--paper-2);
+    border-radius: 4px; padding: 0.9rem 1rem; overflow: hidden;
+  }
+  .pg-panel h2 {
+    margin: 0 0 .55em; font-size:var(--t-3xs); font-weight: 600;
+    color: var(--mute); text-transform: uppercase; letter-spacing: .05em;
+    display: flex; align-items: center; gap: .5em;
+  }
+  .pg-panel h2 .url {
+    color: var(--ink-2); font-weight: 400; text-transform: none;
+    letter-spacing: 0; font-size:var(--t-2xs);
+  }
+  .pg-panel textarea {
+    width: 100%; min-height: 180px; resize: vertical;
+    font: inherit; font-family: var(--mono); font-size:var(--t-2xs);
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 3px;
+    padding: .55em .7em; outline: none;
+    font-variant-ligatures: none; line-height: 1.55;
+  }
+  .pg-panel textarea:focus { border-color: var(--accent); }
+
+  .pg-actions { display: flex; gap: .5em; margin-top: .7em; flex-wrap: wrap; }
+  .pg-actions button {
+    font: inherit; font-family: var(--mono); font-size:var(--t-2xs);
+    background: transparent; color: var(--ink); cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    padding: .45em .9em; letter-spacing: .02em;
+  }
+  .pg-actions button:hover { border-color: var(--accent); color: var(--accent); }
+  .pg-actions button.primary {
+    border-color: var(--accent); color: var(--accent);
+    background: color-mix(in oklch, var(--accent) 8%, transparent);
+  }
+  .pg-actions button.primary:hover { background: color-mix(in oklch, var(--accent) 18%, transparent); }
+  .pg-actions button[disabled] { opacity: .4; cursor: not-allowed; }
+
+  pre.pg-out {
+    margin: 0; font-family: var(--mono); font-size:var(--t-2xs);
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 3px;
+    padding: .7em .9em; max-height: 480px; overflow: auto;
+    white-space: pre-wrap; word-break: break-word; line-height: 1.55;
+  }
+  .pg-meta {
+    display: flex; flex-wrap: wrap; gap: .9em;
+    font-size:var(--t-3xs); color: var(--mute); margin-top: .5em;
+  }
+  .pg-meta b { color: var(--ink-2); font-weight: 600; }
+  .pg-chip {
+    display: inline-flex; align-items: center; gap: .35em;
+    padding: 2px 7px; border-radius: 99px;
+    font-size:var(--t-3xs); border: 1px solid var(--rule);
+    font-weight: 600; letter-spacing: .02em;
+  }
+  .pg-chip.ok   { color: var(--accent); border-color: var(--accent); background: color-mix(in oklch, var(--accent) 8%, transparent); }
+  .pg-chip.fail { color: var(--warn);   border-color: var(--warn);   background: color-mix(in oklch, var(--warn)   8%, transparent); }
+  .pg-chip.info { color: var(--info);   border-color: var(--info);   background: color-mix(in oklch, var(--info)   8%, transparent); }
+  .pg-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  .pg-receipt {
+    margin-top: .9em; padding-top: .8em; border-top: 1px dashed var(--rule);
+  }
+  .pg-receipt-grid {
+    display: grid; grid-template-columns: max-content 1fr; gap: .35em .9em;
+    font-size:var(--t-3xs); line-height: 1.55; margin-top: .5em;
+  }
+  .pg-receipt-grid dt { color: var(--mute); }
+  .pg-receipt-grid dd {
+    margin: 0; color: var(--ink-2); word-break: break-all;
+    font-variant-ligatures: none;
+  }
+
+  .pg-svg {
+    width: 100%; height: 220px;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--paper); margin-top: .8em;
+    display: block;
+  }
+  .pg-svg path { fill: color-mix(in oklch, var(--accent) 18%, transparent); stroke: var(--accent); stroke-width: 1.2; }
+  .pg-svg .bbox { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; stroke-width: 1; }
+
+  .pg-note {
+    font-size:var(--t-3xs); color: var(--mute); margin-top: .5em; line-height: 1.55;
+  }
+
+  /* Separator between playground and reference */
+  .pg-divider {
+    max-width: 1400px; margin: 0.5rem auto 0;
+    padding: 0 1.5rem; color: var(--mute); font-size:var(--t-3xs);
+    border-top: 1px solid var(--rule);
+    padding-top: 1.1rem; margin-top: 0.6rem;
+    display: flex; align-items: center; gap: .9em;
+  }
+  .pg-divider .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  redoc { display: block; }
+.statusbar .brand,.sitenav .brand,.topbar .brand{opacity:1;text-decoration:none;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header class=topbar>
+  <div class=topbar-inner>
+    <a href="/" class=brand><img src="/vortxgola.gif" alt="">emem</a>
+    <a href="/">Home</a>
+    <a href="/how-it-works" class=nav-sec>How it works</a>
+    <a href="/solutions" class=nav-sec>Solutions</a>
+    <a href="/reference" class=nav-sec>Reference</a>
+    <a href="/docs/" class=on>Docs</a>
+    <a href="/verify" class=nav-sec>Verify</a>
+    <span class=spacer></span>
+    <a href="https://github.com/Vortx-AI/emem" rel="noopener noreferrer" target="_blank">GitHub</a>
+  </div>
+</header>
+
+<!--
+  Interactive playground. Lives above the ReDoc reference so a first-
+  time visitor can run a real call before reading the full schema.
+  All requests go against this same emem.dev origin via POST. Read-only
+  endpoints — there are no destructive paths in the live API surface
+  unless the agent supplies an attestation, which the playground
+  doesn't construct.
+
+  The receipt-verifier reuses the same noble-ed25519 + noble-blake3
+  imports as /verify, so a visitor sees in-browser verification of the
+  exact signature the server returned, no server round-trip required.
+-->
+<section class=playground>
+  <div class=pg-head>
+    <h1>interactive console</h1>
+    <span class=sub>live calls against <code>https://emem.dev</code> · receipts verified in your browser via <a href="https://www.npmjs.com/package/@noble/curves" target=_blank rel=noopener>@noble/curves</a> · also available at <a href="/verify">/verify</a></span>
+  </div>
+
+  <div class=pg-tabs id=tabs></div>
+
+  <div class=pg-body>
+    <div class=pg-panel>
+      <h2>request <span class=url id=reqUrl></span></h2>
+      <textarea id=reqBody spellcheck=false></textarea>
+      <div class=pg-actions>
+        <button class=primary id=btnExec>Execute ▶</button>
+        <button id=btnReset>Reset to example</button>
+        <button id=btnCurl title="Copy a curl command that reproduces this call">Copy as curl</button>
+      </div>
+      <div class=pg-note id=reqNote></div>
+    </div>
+
+    <div class=pg-panel>
+      <h2>
+        response
+        <span id=respStatusChip class="pg-chip info" style="margin-left:auto"><span class=dot></span>idle</span>
+      </h2>
+      <pre class=pg-out id=respBody>// Pick an endpoint, click Execute. Response lands here.</pre>
+      <div class=pg-meta id=respMeta></div>
+      <svg id=respMap class=pg-svg style="display:none" viewBox="0 0 360 220" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class=pg-receipt id=receiptBlock style="display:none">
+        <h2>receipt
+          <span id=verifyChip class="pg-chip info" style="margin-left:auto"><span class=dot></span>pending</span>
+        </h2>
+        <dl class=pg-receipt-grid id=receiptGrid></dl>
+        <div class=pg-actions>
+          <button id=btnVerify>Re-verify ed25519 in browser</button>
+          <a id=lnkVerify href="/verify" target=_blank rel=noopener style="text-decoration:none;color:inherit"><button>Open on /verify ↗</button></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class=pg-divider><span class=dot></span> Full reference for every endpoint follows. Powered by ReDoc against the live <code>/openapi.json</code>.</div>
+</section>
+
+<section style="max-width:1100px;margin:0 auto;padding:1.4rem 1.2rem 0">
+  <h2 style="font-size:var(--t-md);margin:0 0 .3rem">Read-verb capabilities, at a glance</h2>
+  <p style="font-size:var(--t-xs);opacity:.8;line-height:1.6;margin:0 0 .9rem">
+    The reference below is generated from the live <code>/openapi.json</code>, so it never lies about shapes.
+    What it does not tell you is the per-verb behaviour a builder trips over. This does. The 24&nbsp;KB cap is an
+    <em>MCP wire budget</em>, not a REST limit: REST is uncapped.
+  </p>
+  <div style="overflow-x:auto">
+  <table style="border-collapse:collapse;font-size:var(--t-xs);width:100%;min-width:640px">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--rule)">
+      <th style="padding:.4rem .6rem">verb</th><th style="padding:.4rem .6rem">band-family expansion</th>
+      <th style="padding:.4rem .6rem">pagination</th><th style="padding:.4rem .6rem">budget_ms</th>
+      <th style="padding:.4rem .6rem">MCP wire cap</th><th style="padding:.4rem .6rem">auto-materialize on miss</th>
+    </tr></thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--rule)"><td style="padding:.4rem .6rem"><code>recall</code></td><td style="padding:.4rem .6rem">yes (<code>indices.*</code> etc.)</td><td style="padding:.4rem .6rem">n/a (one cell)</td><td style="padding:.4rem .6rem">no</td><td style="padding:.4rem .6rem">truncates; use REST for bulk</td><td style="padding:.4rem .6rem">yes</td></tr>
+      <tr style="border-bottom:1px solid var(--rule)"><td style="padding:.4rem .6rem"><code>recall_many</code></td><td style="padding:.4rem .6rem"><b>no</b> (pass exact band keys)</td><td style="padding:.4rem .6rem">no</td><td style="padding:.4rem .6rem">no</td><td style="padding:.4rem .6rem">truncates (a 400 is usually the cap)</td><td style="padding:.4rem .6rem">yes</td></tr>
+      <tr style="border-bottom:1px solid var(--rule)"><td style="padding:.4rem .6rem"><code>recall_polygon</code></td><td style="padding:.4rem .6rem">yes</td><td style="padding:.4rem .6rem"><b>yes</b> (<code>compact_offset</code>)</td><td style="padding:.4rem .6rem"><b>yes</b></td><td style="padding:.4rem .6rem">use <code>projection: compact</code></td><td style="padding:.4rem .6rem">yes</td></tr>
+      <tr style="border-bottom:1px solid var(--rule)"><td style="padding:.4rem .6rem"><code>backfill</code></td><td style="padding:.4rem .6rem">yes</td><td style="padding:.4rem .6rem">no</td><td style="padding:.4rem .6rem">no</td><td style="padding:.4rem .6rem">n/a</td><td style="padding:.4rem .6rem">yes (a past tslot)</td></tr>
+      <tr><td style="padding:.4rem .6rem"><code>derive</code></td><td style="padding:.4rem .6rem">n/a</td><td style="padding:.4rem .6rem">n/a</td><td style="padding:.4rem .6rem"><b>yes</b> (202 pending, re-POST)</td><td style="padding:.4rem .6rem">n/a</td><td style="padding:.4rem .6rem">idempotent per (attester, body)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="font-size:var(--t-xs);opacity:.8;line-height:1.6;margin:.9rem 0 0">
+    Two surfaces cannot drift because they are generated from the compiled constants the server signs against:
+    <a href="/v1/verifier_spec"><code>/v1/verifier_spec</code></a> (the exact preimage and canonical-order rules
+    to re-check any receipt or authorship yourself) and the <code>a2a</code> block in
+    <a href="/.well-known/mcp.json"><code>/.well-known/mcp.json</code></a> (the agent-collaboration front door).
+    When a narrated page and one of those disagree, trust the generated one.
+  </p>
+</section>
+
+<section style="max-width:1100px;margin:0 auto;padding:1.2rem 1.2rem 0">
+  <h2 style="font-size:var(--t-md);margin:0 0 .3rem">The whole trust chain, once, with real ids</h2>
+  <p style="font-size:var(--t-xs);opacity:.8;line-height:1.6;margin:0 0 .9rem">
+    The reference below lists endpoints. What it does not show is the chain they form, which is the thing a
+    consuming agent actually has to assemble: read a fact, check who signed it, dereference the citation, and
+    confirm the value you are about to publish is the value you were given. Every id here is live: paste the
+    commands as they are.
+  </p>
+  <pre style="font-size:var(--t-2xs);line-height:1.55;overflow-x:auto;padding:.8rem;border:1px solid var(--rule);border-radius:4px"># 1. Read a signed fact. No key, no account.
+curl -s -X POST https://emem.dev/v1/recall -H 'content-type: application/json' \
+  -d '{"cell":"defi.zb572.xoso.zb1ec","bands":["indices.ndvi"]}'
+#    -> facts[].value, facts[].fact_cid, and a signed receipt
+
+# 2. Verify that receipt WITHOUT trusting this server. Offline-checkable:
+#    it recomputes blake3(preimage) and the ed25519 signature.
+curl -s -X POST https://emem.dev/v1/recall -H 'content-type: application/json' \
+  -d '{"cell":"defi.zb572.xoso.zb1ec","bands":["indices.ndvi"]}' \
+  | jq '{receipt: .receipt}' \
+  | curl -s -X POST https://emem.dev/v1/verify_receipt \
+      -H 'content-type: application/json' --data-binary @-
+#    -> {"valid": true, ...}   (the byte rules are at /v1/verifier_spec)
+
+# (These tokens are live facts and a responder need not hold one for ever.
+#  scripts/example_check.py catches it when one stops resolving; refresh with
+#  curl -s -X POST https://emem.dev/v1/recall -H 'content-type: application/json' \
+#    -d '{"cell":"defi.zb572.xoso.zb1ec","bands":["indices.ndvi"]}'
+#  and take any memory_token plus its value_verbatim.)
+# 3. Dereference a citation someone handed you. This one is a GC-1
+#    derivation: the responder RE-RAN the arithmetic, so it resolves as
+#    deterministic_index rather than a claim you have to take on faith.
+curl -s -X POST https://emem.dev/v1/memory_token/resolve -H 'content-type: application/json' \
+  -d '{"token":"emem:fact:defi.zb572.xoso.zb1ec:4qj3l4mgh7ch5kvxmkqspjdl6y42oqhm42khh3gostccpixkbz5q"}'
+#    -> the byte-identical signed fact, its provenance block, a receipt,
+#       and value_verbatim: "-0.052199413489736016"  <- quote this, do not retype it
+
+# 4. Close the last mile: confirm the value YOU are about to publish is the
+#    value you were given. Rounding is caught, not forgiven.
+curl -s -X POST https://emem.dev/v1/echo_verify -H 'content-type: application/json' \
+  -d '{"token":"emem:fact:defi.zb572.xoso.zb1ec:4qj3l4mgh7ch5kvxmkqspjdl6y42oqhm42khh3gostccpixkbz5q",
+       "claimed_value":"-0.0522"}'
+#    -> {"matches": false, "drift": "rounded", ...}
+#       pass the full value and it answers {"matches": true, "drift": null}</pre>
+  <p style="font-size:var(--t-xs);opacity:.8;line-height:1.6;margin:.9rem 0 0">
+    Steps 1 and 2 are emem proving its own side: these are the bytes, and this key signed them. Steps 3 and 4 are
+    the half that used to be unguarded: a citation resolves to the same bytes for anyone, and the number you
+    emit is checked against them. A pipeline that runs all four can state that every value it published was
+    echo-verified, and mean it.
+  </p>
+</section>
+
+<redoc spec-url="/openapi.json"
+       theme='{"colors":{"primary":{"main":"oklch(0.45 0.09 145)"}},"typography":{"fontFamily":"JetBrains Mono, ui-monospace, SF Mono, Menlo, Consolas, monospace","headings":{"fontFamily":"JetBrains Mono, ui-monospace, monospace","fontWeight":"700"},"code":{"fontFamily":"JetBrains Mono, ui-monospace, monospace"}},"sidebar":{"backgroundColor":"transparent"}}'
+       hide-loading
+       expand-responses="200,201"
+       json-sample-expand-level="2"
+       required-props-first
+       sort-props-alphabetically
+       path-in-middle-panel></redoc>
+
+<!-- ReDoc pinned to v2.5.1 so the SRI hash below is stable. /latest/
+     would silently roll forward and break the integrity check; bump
+     this version and re-compute the sha384 deliberately when upgrading
+     (curl <url> | openssl dgst -sha384 -binary | openssl base64 -A). -->
+<script src="https://cdn.redocly.com/redoc/v2.5.1/bundles/redoc.standalone.js"
+        integrity="sha384-up2uPEo+8XzxuLXKGY4DOk79DbbRclvlcx22QZ60aPWQf8LW69XJ8BWzLFewC05H"
+        crossorigin="anonymous"></script>
+
+<script type="module">
+//==============================================================================
+// emem.dev interactive playground — vanilla JS, no framework.
+//
+// Each EXAMPLE pre-fills the request body for one endpoint. Every body is
+// a real, tested call against the live API; "Reset to example" snaps the
+// editor back to that body. Execute POSTs to {origin}{path}, displays the
+// response, decodes the receipt block, and runs an in-browser ed25519
+// verification against the canonical preimage.
+//==============================================================================
+
+const ORIGIN = (location.origin === 'null' || location.origin.startsWith('file:'))
+  ? 'https://emem.dev'
+  : location.origin;
+
+const EXAMPLES = [
+  { key: 'locate',        method: 'POST', path: '/v1/locate',
+    label: 'locate',
+    note: 'Resolve a place name to a cell64 + bbox + polygon. Try a country, a region, a city, or a landmark; the cascade routes through countries → admin1/2/3 → cities → POIs → cache → Photon → Nominatim, and Overture divisions adds an authoritative polygon + multilingual names.',
+    body: { place: 'Bangladesh' } },
+  { key: 'locate-poi',    method: 'POST', path: '/v1/locate',
+    label: 'locate · POI',
+    note: 'Same endpoint, well-known landmark example. POIs (peaks, lakes, parks, airports, monuments) come from the curated GeoNames extract bundled inside the binary; no network for ~99 % of named places.',
+    body: { place: 'Mount Everest' } },
+  { key: 'locate-latlng', method: 'POST', path: '/v1/locate',
+    label: 'locate · lat/lng',
+    note: 'Pass coordinates directly to skip geocoding; useful when the agent already has a GPS fix or has just unpacked a cell64.',
+    body: { lat: 23.7104, lng: 90.4074 } },
+  { key: 'recall',        method: 'POST', path: '/v1/recall',
+    label: 'recall',
+    note: 'Read attested facts at a cell. Pass `bands` to filter; with auto-materialize enabled (default), missing bands are fetched, signed, and persisted within the same response.',
+    body: { cell: 'defi.zb509.meze.ze7b5', bands: ['indices.ndvi', 'copdem30m.elevation_mean'] } },
+  { key: 'hunt',          method: 'POST', path: '/v1/hunt',
+    label: 'hunt',
+    note: 'Event discovery over a region. Pass `polygon_bbox` directly or `region` (free text resolved through the same geocoder cascade as /v1/locate). Events: algal_bloom, deforestation, flood_extent, wildfire, urban_heat_island, methane_plume, landslide, drought, soil_salinity, crop_stress, water_turbidity, oil_slick.',
+    body: { event: 'deforestation', polygon_bbox: { min_lat: 20.74, max_lat: 26.63, min_lng: 88.01, max_lng: 92.67 } } },
+  { key: 'find_similar',  method: 'POST', path: '/v1/find_similar',
+    label: 'find_similar',
+    note: 'Nearest-neighbour search in Tessera embedding space. Pass a cell64 to find cells that look spectrally similar; useful for transfer-learning where you have one example and want more.',
+    body: { cell: 'defi.zb509.meze.ze7b5', k: 5 } },
+  { key: 'recall-deterministic', method: 'POST', path: '/v1/recall',
+    label: 'recall · deterministic',
+    note: 'The same recall with a provenance filter. `deterministic: true` keeps only facts any third party can recompute from the cited raw source (direct_sensor + deterministic_index), dropping model_output and human_curated. Every fact carries its provenance class either way.',
+    body: { cell: 'defi.zb572.xoso.zb1ec', bands: ['indices.ndvi'], deterministic: true } },
+  { key: 'token-resolve', method: 'POST', path: '/v1/memory_token/resolve',
+    label: 'memory_token · resolve',
+    note: 'Turn a citation back into the byte-identical signed fact. This token is a GC-1 derivation the responder recomputed: its resolved record carries deterministic_index and a recomputation receipt, so a stranger recomputes the value from the cited parents. Verify the receipt offline at /verify.',
+    body: { token: 'emem:fact:defi.zb572.xoso.zb1ec:4qj3l4mgh7ch5kvxmkqspjdl6y42oqhm42khh3gostccpixkbz5q' } },
+  { key: 'derive', method: 'POST', path: '/v1/derive',
+    label: 'derive · recompute',
+    note: 'Register a derivation over signed facts. Sent with no attester, so it returns 401 with `details.how_to_sign`: the exact 32-byte digest to sign, the encoding, and a worked example, no docs trip. Because a `code_cid` is pinned on a pure op (delta), a signed submission makes the responder RE-RUN it over the cited parents and record deterministic_index when it reproduces the value (exact for delta; reductions match within a stated ULP window that the receipt reports). This is the whole write + GC-1 path in one call.',
+    body: { fn_key: 'same_doy_ndvi_delta@1',
+            inputs: ['emem:fact:defi.zb572.xoso.zb1ec:nh25ek6yx3sktt2iirfpvik53vivulghaomodra3ovmi7ti7dgmq',
+                     'emem:fact:defi.zb572.xoso.zb1ec:jwkqm6ehelmzrwupfwyq2oqotiarexr5bdrt4xbl3znuynhurqxq'],
+            cell: 'defi.zb572.xoso.zb1ec', band: 'indices.ndvi', tslot_window: [20614, 20651],
+            op: 'delta', value: -0.052199413489736016, confidence: 0.95,
+            provenance_class: 'model_output', code_cid: 'blake3:same_doy_ndvi_delta@1:ast' } },
+];
+
+let activeKey = EXAMPLES[0].key;
+const $ = id => document.getElementById(id);
+
+function active() { return EXAMPLES.find(e => e.key === activeKey) || EXAMPLES[0]; }
+function fmt(body) { return JSON.stringify(body, null, 2); }
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
+
+function buildTabs() {
+  const t = $('tabs');
+  t.innerHTML = '';
+  for (const e of EXAMPLES) {
+    const b = document.createElement('button');
+    b.className = e.key === activeKey ? 'active' : '';
+    b.innerHTML = `<span class=method-chip>${e.method}</span>${e.label}`;
+    b.onclick = () => { activeKey = e.key; refreshUi(true); };
+    t.appendChild(b);
+  }
+}
+
+function refreshUi(resetBody) {
+  const e = active();
+  buildTabs();
+  $('reqUrl').textContent = `${e.method} ${e.path}`;
+  $('reqNote').textContent = e.note;
+  if (resetBody) $('reqBody').value = fmt(e.body);
+  $('respBody').textContent = '// Pick an endpoint, click Execute. Response lands here.';
+  $('respMeta').innerHTML = '';
+  $('respMap').style.display = 'none';
+  $('respMap').innerHTML = '';
+  $('receiptBlock').style.display = 'none';
+  $('respStatusChip').className = 'pg-chip info';
+  $('respStatusChip').innerHTML = '<span class=dot></span>idle';
+}
+
+// ── Crypto libs (pinned — same versions /verify uses) ───────────────────
+let nobleEd = null, nobleBlake3 = null;
+const cryptoReady = (async () => {
+  try {
+    const [ed, blake3] = await Promise.all([
+      import('https://esm.sh/@noble/curves@1.6.0/ed25519'),
+      import('https://esm.sh/@noble/hashes@1.5.0/blake3'),
+    ]);
+    nobleEd = ed.ed25519;
+    nobleBlake3 = blake3.blake3;
+  } catch (e) { console.warn('crypto libs unavailable:', e); }
+})();
+
+const B32A = 'abcdefghijklmnopqrstuvwxyz234567';
+function b32decode(s){
+  s = String(s||'').toLowerCase().replace(/=+$/, '');
+  const out = new Uint8Array(Math.floor(s.length * 5 / 8));
+  let bits = 0, value = 0, idx = 0;
+  for (const c of s) {
+    const i = B32A.indexOf(c);
+    if (i < 0) throw new Error('bad base32 char: ' + c);
+    value = (value << 5) | i;
+    bits += 5;
+    if (bits >= 8) {
+      out[idx++] = (value >>> (bits - 8)) & 0xff;
+      bits -= 8;
+    }
+  }
+  return out.slice(0, idx);
+}
+
+// Canonical preimage matches /verify and the server-side emem-storage
+// signer byte-for-byte:
+//   request_id | served_at | primitive | cell0,cell1,…| cid0,cid1,…|
+function buildPreimageBytes(r){
+  const enc = new TextEncoder();
+  const parts = [];
+  parts.push(enc.encode(r.request_id || '')); parts.push(enc.encode('|'));
+  parts.push(enc.encode(r.served_at  || '')); parts.push(enc.encode('|'));
+  parts.push(enc.encode(r.primitive  || '')); parts.push(enc.encode('|'));
+  for (const c of (r.cells     || [])) { parts.push(enc.encode(c)); parts.push(enc.encode(',')); }
+  parts.push(enc.encode('|'));
+  for (const c of (r.fact_cids || [])) { parts.push(enc.encode(c)); parts.push(enc.encode(',')); }
+  let len = 0; for (const p of parts) len += p.length;
+  const out = new Uint8Array(len); let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+// Server emits `responder` as either a 32-byte JSON array or a base32
+// string in `responder_pubkey_b32`. Accept either.
+function decodePubkey(receipt){
+  if (Array.isArray(receipt.responder) && receipt.responder.length === 32) {
+    return new Uint8Array(receipt.responder);
+  }
+  const b32 = receipt.responder_pubkey_b32 || receipt.responder_b32;
+  if (b32) return b32decode(b32);
+  throw new Error('no responder pubkey in receipt');
+}
+function decodeSignature(receipt){
+  if (Array.isArray(receipt.signature) && receipt.signature.length === 64) {
+    return new Uint8Array(receipt.signature);
+  }
+  const b32 = receipt.signature_b32;
+  if (b32) return b32decode(b32);
+  throw new Error('no signature in receipt');
+}
+
+async function verifyReceipt(receipt){
+  await cryptoReady;
+  if (!nobleEd || !nobleBlake3) {
+    return { ok: false, reason: 'crypto libs blocked by CSP / network' };
+  }
+  let preimage, digest, pubkey, sig;
+  try {
+    preimage = buildPreimageBytes(receipt);
+    digest   = nobleBlake3(preimage);
+    pubkey   = decodePubkey(receipt);
+    sig      = decodeSignature(receipt);
+  } catch (e) { return { ok: false, reason: 'malformed receipt: ' + e.message }; }
+  try {
+    const ok = nobleEd.verify(sig, digest, pubkey);
+    return { ok, reason: ok ? 'verified' : 'signature mismatch' };
+  } catch (e) { return { ok: false, reason: 'verify failed: ' + e.message }; }
+}
+
+function renderReceipt(receipt){
+  const grid = $('receiptGrid');
+  grid.innerHTML = '';
+  const rows = [
+    ['request_id',  receipt.request_id],
+    ['primitive',   receipt.primitive],
+    ['served_at',   receipt.served_at],
+    ['responder',   receipt.responder_pubkey_b32 || (Array.isArray(receipt.responder) ? `[${receipt.responder.length}-byte raw key]` : '(unknown)')],
+    ['fact_cids',   (receipt.fact_cids || []).join(', ') || '(none)'],
+    ['cells',       (receipt.cells || []).join(', ') || '(none)'],
+    ['signature',   receipt.signature_b32 || (Array.isArray(receipt.signature) ? `[${receipt.signature.length}-byte raw sig]` : '(unknown)')],
+  ];
+  for (const [k, v] of rows) {
+    const dt = document.createElement('dt'); dt.textContent = k;
+    const dd = document.createElement('dd'); dd.textContent = v || '(absent)';
+    grid.appendChild(dt); grid.appendChild(dd);
+  }
+  // Wire the /verify deep-link so the user can re-verify the SAME
+  // receipt on the dedicated /verify surface.
+  $('lnkVerify').href = '/verify#receipt=' + encodeURIComponent(JSON.stringify(receipt));
+}
+
+// SVG polygon sketch — projects a Polygon/MultiPolygon GeoJSON
+// geometry into the viewBox using an equirectangular projection
+// scoped to its own bbox. Not a map; just a "shape preview".
+function drawPolygon(geom, bbox){
+  const svg = $('respMap');
+  svg.innerHTML = '';
+  svg.style.display = 'block';
+  const W = 360, H = 220, pad = 6;
+  let mn_la = bbox ? bbox.min_lat : 90, mx_la = bbox ? bbox.max_lat : -90;
+  let mn_ln = bbox ? bbox.min_lng : 180, mx_ln = bbox ? bbox.max_lng : -180;
+  if (!bbox) {
+    const ringsToBox = rings => {
+      for (const ring of rings) for (const [x, y] of ring) {
+        if (y < mn_la) mn_la = y; if (y > mx_la) mx_la = y;
+        if (x < mn_ln) mn_ln = x; if (x > mx_ln) mx_ln = x;
+      }
+    };
+    if (geom.type === 'Polygon') ringsToBox(geom.coordinates);
+    else if (geom.type === 'MultiPolygon') for (const p of geom.coordinates) ringsToBox(p);
+  }
+  const dx = Math.max(mx_ln - mn_ln, 1e-6);
+  const dy = Math.max(mx_la - mn_la, 1e-6);
+  const sx = (W - 2*pad) / dx;
+  const sy = (H - 2*pad) / dy;
+  const s = Math.min(sx, sy);
+  const ox = (W - s*dx) / 2;
+  const oy = (H - s*dy) / 2;
+  const proj = (x, y) => [ox + (x - mn_ln) * s, oy + (mx_la - y) * s];
+
+  // bbox rect
+  const ns = 'http://www.w3.org/2000/svg';
+  const r = document.createElementNS(ns, 'rect');
+  const [px0, py0] = proj(mn_ln, mx_la);
+  const [px1, py1] = proj(mx_ln, mn_la);
+  r.setAttribute('class', 'bbox');
+  r.setAttribute('x', px0); r.setAttribute('y', py0);
+  r.setAttribute('width',  px1 - px0); r.setAttribute('height', py1 - py0);
+  svg.appendChild(r);
+
+  const ringPath = ring => {
+    let d = '';
+    for (let i = 0; i < ring.length; i++) {
+      const [x, y] = proj(ring[i][0], ring[i][1]);
+      d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+    }
+    return d + 'Z';
+  };
+  const polys = geom.type === 'Polygon' ? [geom.coordinates]
+              : geom.type === 'MultiPolygon' ? geom.coordinates
+              : [];
+  for (const p of polys) {
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', p.map(ringPath).join(' '));
+    svg.appendChild(path);
+  }
+}
+
+async function execute(){
+  const e = active();
+  const btn = $('btnExec');
+  btn.disabled = true;
+  $('respStatusChip').className = 'pg-chip info';
+  $('respStatusChip').innerHTML = '<span class=dot></span>requesting…';
+  let parsed;
+  try { parsed = JSON.parse($('reqBody').value); }
+  catch (err) {
+    $('respStatusChip').className = 'pg-chip fail';
+    $('respStatusChip').innerHTML = '<span class=dot></span>bad JSON';
+    $('respBody').textContent = String(err);
+    btn.disabled = false;
+    return;
+  }
+  const t0 = performance.now();
+  let resp, text;
+  try {
+    resp = await fetch(ORIGIN + e.path, {
+      method: e.method,
+      headers: { 'content-type': 'application/json', 'accept': 'application/json' },
+      body: JSON.stringify(parsed),
+    });
+    text = await resp.text();
+  } catch (err) {
+    $('respStatusChip').className = 'pg-chip fail';
+    $('respStatusChip').innerHTML = '<span class=dot></span>network error';
+    $('respBody').textContent = String(err);
+    btn.disabled = false;
+    return;
+  }
+  const ms = (performance.now() - t0).toFixed(0);
+  let body;
+  try { body = JSON.parse(text); } catch { body = null; }
+  $('respBody').textContent = body ? JSON.stringify(body, null, 2) : text;
+
+  // Status chip
+  const chip = $('respStatusChip');
+  if (resp.ok) {
+    chip.className = 'pg-chip ok';
+    chip.innerHTML = `<span class=dot></span>${resp.status} OK · ${ms} ms`;
+  } else {
+    chip.className = 'pg-chip fail';
+    chip.innerHTML = `<span class=dot></span>${resp.status} ${resp.statusText} · ${ms} ms`;
+  }
+
+  // Meta line
+  const meta = [];
+  if (body) {
+    if (body.cell64)          meta.push(`<b>cell64</b> <code>${escapeHtml(body.cell64)}</code>`);
+    if (body.via)             meta.push(`<b>via</b> ${escapeHtml(body.via)}`);
+    if (body.overture_division?.subtype)
+                              meta.push(`<b>overture subtype</b> ${escapeHtml(body.overture_division.subtype)}`);
+    if (body.overture_division?.country)
+                              meta.push(`<b>iso country</b> ${escapeHtml(body.overture_division.country)}`);
+    if (body.localized_names) meta.push(`<b>localized names</b> ${Object.keys(body.localized_names).length}`);
+    if (body.ranking?.cells_with_facts != null)
+                              meta.push(`<b>cells_with_facts</b> ${body.ranking.cells_with_facts}/${body.ranking.cells_sampled}`);
+    if (Array.isArray(body.hotspots))
+                              meta.push(`<b>hotspots</b> ${body.hotspots.length}`);
+  }
+  meta.push(`<b>bytes</b> ${text.length.toLocaleString()}`);
+  $('respMeta').innerHTML = meta.join(' · ');
+
+  // Polygon preview when present
+  if (body && body.polygon_geojson) {
+    try {
+      const bb = body.polygon_bbox || null;
+      drawPolygon(body.polygon_geojson, bb);
+    } catch { $('respMap').style.display = 'none'; }
+  } else {
+    $('respMap').style.display = 'none';
+  }
+
+  // Receipt block
+  const receipt = body && body.receipt;
+  if (receipt && receipt.request_id) {
+    $('receiptBlock').style.display = 'block';
+    renderReceipt(receipt);
+    $('verifyChip').className = 'pg-chip info';
+    $('verifyChip').innerHTML = '<span class=dot></span>verifying…';
+    const v = await verifyReceipt(receipt);
+    $('verifyChip').className = 'pg-chip ' + (v.ok ? 'ok' : 'fail');
+    $('verifyChip').innerHTML = `<span class=dot></span>${v.ok ? 'verified offline · in browser' : 'failed: ' + v.reason}`;
+  } else {
+    $('receiptBlock').style.display = 'none';
+  }
+  btn.disabled = false;
+}
+
+$('btnExec').onclick = execute;
+$('btnReset').onclick = () => refreshUi(true);
+$('btnVerify').onclick = async () => {
+  let parsed;
+  try { parsed = JSON.parse($('respBody').textContent); }
+  catch { return; }
+  const receipt = parsed && parsed.receipt;
+  if (!receipt) return;
+  $('verifyChip').className = 'pg-chip info';
+  $('verifyChip').innerHTML = '<span class=dot></span>verifying…';
+  const v = await verifyReceipt(receipt);
+  $('verifyChip').className = 'pg-chip ' + (v.ok ? 'ok' : 'fail');
+  $('verifyChip').innerHTML = `<span class=dot></span>${v.ok ? 'verified offline · in browser' : 'failed: ' + v.reason}`;
+};
+$('btnCurl').onclick = () => {
+  const e = active();
+  let parsed;
+  try { parsed = JSON.parse($('reqBody').value); }
+  catch { parsed = {}; }
+  const cmd = `curl -fsS -X ${e.method} ${ORIGIN}${e.path} \\\n  -H 'content-type: application/json' \\\n  -d '${JSON.stringify(parsed).replace(/'/g, "'\\''")}'`;
+  navigator.clipboard.writeText(cmd).then(() => {
+    const old = $('btnCurl').textContent;
+    $('btnCurl').textContent = 'Copied ✓';
+    setTimeout(() => { $('btnCurl').textContent = old; }, 1100);
+  });
+};
+
+refreshUi(true);
+</script>
+
+</body>
+</html>

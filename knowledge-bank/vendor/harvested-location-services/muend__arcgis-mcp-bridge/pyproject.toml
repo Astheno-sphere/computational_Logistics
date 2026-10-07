@@ -1,0 +1,159 @@
+# ---------------------------------------------------------------------------
+# arcgis-mcp-bridge — package metadata and tool configuration
+# ---------------------------------------------------------------------------
+
+[build-system]
+requires = ["setuptools>=68", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arcgis-mcp-bridge"
+dynamic = ["version"]
+description = "A secure, local-first, asynchronous MCP server exposing ArcGIS Pro's ArcPy engine over stdio JSON-RPC."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "muend" }]
+keywords = [
+    "arcgis",
+    "arcpy",
+    "mcp",
+    "gis",
+    "geoai",
+    "model-context-protocol",
+    "spatial-analysis",
+    "esri",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: GIS",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+# Runtime bounds are capped at the next major release. The lockfile pins exact
+# builds for development and CI, while these ranges keep regular installs away
+# from known breaking-version boundaries.
+dependencies = [
+    "fastmcp>=3.4,<4",
+    "mcp>=1.27.2,<2",
+    "pydantic>=2.5,<3",
+]
+
+[project.optional-dependencies]
+# Required only for the Sketch-to-GIS pipeline.
+vision = ["opencv-python-headless", "numpy"]
+
+# Development and CI tooling.
+dev = ["ruff", "mypy", "pytest", "pytest-cov"]
+
+[project.scripts]
+arcgis-mcp-bridge = "arcgis_mcp.server:main"
+arcgis-mcp-server = "arcgis_mcp.server:main"
+arcgis-mcp-setup = "arcgis_mcp.setup_env:main"
+
+[project.urls]
+Repository = "https://github.com/muend/arcgis-mcp-bridge"
+"Bug Tracker" = "https://github.com/muend/arcgis-mcp-bridge/issues"
+Changelog = "https://github.com/muend/arcgis-mcp-bridge/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["arcgis_mcp*"]
+
+# ---------------------------------------------------------------------------
+# setuptools-scm
+# ---------------------------------------------------------------------------
+
+# The package version is derived from Git tags. Do not add a static
+# `version = "..."`
+# field under [project].
+[tool.setuptools_scm]
+version_scheme = "release-branch-semver"
+local_scheme = "node-and-date"
+fallback_version = "0.0.0+unknown"
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+src = ["arcgis_mcp"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # import sorting
+    "B",    # flake8-bugbear
+    "RUF",  # Ruff-specific rules
+]
+ignore = [
+    # Formatting handles normal wrapping; long URLs and tool descriptions are
+    # allowed where readability would suffer.
+    "E501",
+]
+external = ["PLC", "BLE", "ANN", "A"]
+allowed-confusables = ["ı", "İ"]
+
+[tool.ruff.lint.per-file-ignores]
+"arcgis_mcp/contracts/__init__.py" = ["F401"]
+"arcgis_mcp/tools/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["arcgis_mcp"]
+combine-as-imports = true
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["arcgis_mcp"]
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+
+# Third-party decorators used by MCP/Pydantic integrations are not always
+# typed precisely enough for strict decorator checks.
+disallow_untyped_decorators = false
+
+# Optional or binary dependencies may be unavailable in CI and often do not
+# provide complete type information.
+[[tool.mypy.overrides]]
+module = [
+    "cv2",
+    "cv2.*",
+    "numpy",
+    "numpy.*",
+    "fastmcp",
+    "fastmcp.*",
+    "mcp",
+    "mcp.*",
+]
+ignore_missing_imports = true
+
+# ArcPy is only imported inside the worker process. Its stubs can be
+# incompatible with a Python 3.11 type-checking target, so mypy treats it as
+# opaque.
+[[tool.mypy.overrides]]
+module = ["arcpy", "arcpy.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
+follow_imports_for_stubs = true
+
+# Tool implementations receive the ArcPy module object dynamically. The tools
+# layer intentionally allows `Any` around ArcPy calls while keeping strict mode
+# enabled for the rest of the package.
+[[tool.mypy.overrides]]
+module = ["arcgis_mcp.tools.*"]
+disallow_any_explicit = false
+warn_return_any = false
+disallow_any_generics = false

@@ -1,0 +1,34 @@
+FROM python:3.12-slim
+
+# System dependencies - install core packages, Python packages come from pip
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libgdal-dev \
+    libproj-dev \
+    libgeos-dev \
+    pkg-config \
+    curl \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/* || true
+
+WORKDIR /apps
+
+# Prevent bytecode generation to avoid corruption issues
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install package from PyPI - Python 3.12 should be more stable
+RUN pip install --no-cache-dir gis-mcp[all] && \
+    pip show gis-mcp || (echo "Installation failed" && exit 1)
+
+ENV GIS_MCP_TRANSPORT=http
+ENV GIS_MCP_HOST=0.0.0.0
+ENV GIS_MCP_PORT=9010
+
+EXPOSE 9010
+
+CMD ["gis-mcp"]
+

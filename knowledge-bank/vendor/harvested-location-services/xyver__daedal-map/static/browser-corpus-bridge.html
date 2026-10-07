@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser Corpus Bridge</title>
+</head>
+<body>
+<script>
+const DB_NAME = 'countymap-research-browser-store';
+const DB_VERSION = 2;
+const CORPUS_STORE = 'corpora';
+const INSTALL_MANIFEST_STORE = 'install_manifests';
+const SOURCE_ARTIFACT_STORE = 'source_artifacts';
+
+function allowedOrigins() {
+  const origins = new Set([window.location.origin]);
+  try {
+    const requested = new URLSearchParams(window.location.search).get('parentOrigin');
+    if (requested) {
+      origins.add(String(requested).trim().replace(/\/$/, ''));
+    }
+  } catch (_) {}
+  return origins;
+}
+
+function isAllowedOrigin(origin) {
+  return allowedOrigins().has(String(origin || '').trim().replace(/\/$/, ''));
+}
+
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error || new Error('IndexedDB open failed'));
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(CORPUS_STORE)) {
+        const store = db.createObjectStore(CORPUS_STORE, { keyPath: 'storageKey' });
+        store.createIndex('namespace', 'namespace', { unique: false });
+      }
+      if (!db.objectStoreNames.contains(INSTALL_MANIFEST_STORE)) {
+        const store = db.createObjectStore(INSTALL_MANIFEST_STORE, { keyPath: 'storageKey' });
+        store.createIndex('namespace', 'namespace', { unique: false });
+      }
+      if (!db.objectStoreNames.contains(SOURCE_ARTIFACT_STORE)) {
+        const store = db.createObjectStore(SOURCE_ARTIFACT_STORE, { keyPath: 'storageKey' });
+        store.createIndex('namespace', 'namespace', { unique: false });
+        store.createIndex('sourceId', 'sourceId', { unique: false });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+function idbRequest(request) {
+  return new Promise((resolve, reject) => {
+    request.onerror = () => reject(request.error || new Error('IndexedDB request failed'));
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+function corpusStorageKey(namespace, corpusId) {
+  return `${namespace}::${corpusId}`;
+}
+
+function installManifestStorageKey(namespace, corpusId) {
+  return `${namespace}::manifest::${corpusId}`;
+}
+
+function sourceArtifactStorageKey(namespace, sourceId, artifactVersion) {
+  return `${namespace}::source::${sourceId}::${artifactVersion || 'unknown'}`;
+}
+
+async function listBrowserCorpusRecords(namespace) {
+  const db = await openDb();
+  const tx = db.transaction(CORPUS_STORE, 'readonly');
+  const index = tx.objectStore(CORPUS_STORE).index('namespace');
+  const records = await idbRequest(index.getAll(namespace));
+  db.close();
+  return Array.isArray(records) ? records : [];
+}
+
+async function listBrowserSourceArtifactRecords(namespace) {
+  const db = await openDb();
+  const tx = db.transaction(SOURCE_ARTIFACT_STORE, 'readonly');
+  const index = tx.objectStore(SOURCE_ARTIFACT_STORE).index('namespace');
+  const records = await idbRequest(index.getAll(namespace));
+  db.close();
+  return Array.isArray(records) ? records : [];
+}
+
+async function listBrowserSourceArtifactRecordsForCorpus(namespace, corpusId) {
+  const records = await listBrowserSourceArtifactRecords(namespace);
+  return records.filter((record) => Array.isArray(record?.corpusIds) && record.corpusIds.includes(corpusId));
+}
+
+async function getInstallManifestRecord(namespace, corpusId) {
+  const db = await openDb();
+  const record = await idbRequest(
+    db.transaction(INSTALL_MANIFEST_STORE, 'readonly')
+      .objectStore(INSTALL_MANIFEST_STORE)
+      .get(installManifestStorageKey(namespace, corpusId))
+  );
+  db.close();
+  return record || null;
+}
+
+async function getSourceArtifactRecord(namespace, sourceId, artifactVersion) {
+  const db = await openDb();
+  const record = await idbRequest(
+    db.transaction(SOURCE_ARTIFACT_STORE, 'readonly')
+      .objectStore(SOURCE_ARTIFACT_STORE)
+      .get(sourceArtifactStorageKey(namespace, sourceId, artifactVersion))
+  );
+  db.close();
+  return record || null;
+}
+
+function summarizeRecord(record) {
+  if (!record) return null;
+  return {
+    corpusId: record.corpusId,
+    corpusName: record.corpusName,
+    namespace: record.namespace,
+    corpusUpdatedAt: record.corpusUpdatedAt || null,
+    savedAt: record.savedAt || null,
+    status: record.status || 'complete',
+    sizeBytes: Number(record.sizeBytes || 0),
+    payloadBytes: Number(record.payloadBytes || 0),
+    sizeKind: String(record.sizeKind || 'payload'),
+    artifactCount: Number(record.artifactCount || 0),
+    sourceCount: Number(record.sourceCount || 0),
+    packCount: Number(record.packCount || 0)
+  };
+}
+
+async function handleBridgeRequest(message) {
+  const type = String(message?.type || '').trim();
+
+  if (type === 'dm-browser-corpus-list-summaries') {
+    const records = await listBrowserCorpusRecords(String(message.namespace || 'guest'));
+    return { ok: true, summaries: records.map(summarizeRecord) };
+  }
+  if (type === 'dm-browser-corpus-save') {
+    const record = message.record;
+    if (!record || !record.storageKey) return { ok: false, error: 'Missing record' };
+    const db = await openDb();
+    const tx = db.transaction(CORPUS_STORE, 'readwrite');
+    await idbRequest(tx.objectStore(CORPUS_STORE).put(record));
+    db.close();
+    return { ok: true, summary: summarizeRecord(record) };
+  }
+  if (type === 'dm-browser-install-manifest-get') {
+    const namespace = String(message.namespace || 'guest');
+    const corpusId = String(message.corpusId || '').trim();
+    if (!corpusId) return { ok: false, error: 'Missing corpusId' };
+    return { ok: true, record: await getInstallManifestRecord(namespace, corpusId) };
+  }
+  if (type === 'dm-browser-install-manifest-save') {
+    const record = message.record;
+    if (!record || !record.storageKey) return { ok: false, error: 'Missing manifest record' };
+    const db = await openDb();
+    const tx = db.transaction(INSTALL_MANIFEST_STORE, 'readwrite');
+    await idbRequest(tx.objectStore(INSTALL_MANIFEST_STORE).put(record));
+    db.close();
+    return { ok: true, record };
+  }
+  if (type === 'dm-browser-source-artifact-get') {
+    const namespace = String(message.namespace || 'guest');
+    const sourceId = String(message.sourceId || '').trim();
+    const artifactVersion = String(message.artifactVersion || '').trim();
+    if (!sourceId || !artifactVersion) return { ok: false, error: 'Missing sourceId or artifactVersion' };
+    return { ok: true, record: await getSourceArtifactRecord(namespace, sourceId, artifactVersion) };
+  }
+  if (type === 'dm-browser-source-artifact-save') {
+    const record = message.record;
+    if (!record || !record.storageKey) return { ok: false, error: 'Missing source artifact record' };
+    const db = await openDb();
+    const tx = db.transaction(SOURCE_ARTIFACT_STORE, 'readwrite');
+    await idbRequest(tx.objectStore(SOURCE_ARTIFACT_STORE).put(record));
+    db.close();
+    return { ok: true, record };
+  }
+  if (type === 'dm-browser-corpus-remove') {
+    const namespace = String(message.namespace || 'guest');
+    const corpusId = String(message.corpusId || '').trim();
+    if (!corpusId) return { ok: false, error: 'Missing corpusId' };
+    const artifactRecords = await listBrowserSourceArtifactRecordsForCorpus(namespace, corpusId);
+    const db = await openDb();
+    const tx = db.transaction([CORPUS_STORE, INSTALL_MANIFEST_STORE, SOURCE_ARTIFACT_STORE], 'readwrite');
+    await idbRequest(tx.objectStore(CORPUS_STORE).delete(corpusStorageKey(namespace, corpusId)));
+    await idbRequest(tx.objectStore(INSTALL_MANIFEST_STORE).delete(installManifestStorageKey(namespace, corpusId)));
+    const artifactStore = tx.objectStore(SOURCE_ARTIFACT_STORE);
+    for (const record of artifactRecords) {
+      const remainingCorpusIds = (record?.corpusIds || []).filter((id) => id && id !== corpusId);
+      if (remainingCorpusIds.length) {
+        await idbRequest(artifactStore.put({ ...record, corpusIds: remainingCorpusIds }));
+      } else if (record?.storageKey) {
+        await idbRequest(artifactStore.delete(record.storageKey));
+      }
+    }
+    db.close();
+    return { ok: true };
+  }
+  if (type === 'dm-browser-corpus-clear') {
+    const namespace = String(message.namespace || 'guest');
+    const records = await listBrowserCorpusRecords(namespace);
+    const artifactRecords = await listBrowserSourceArtifactRecords(namespace);
+    const db = await openDb();
+    const tx = db.transaction([CORPUS_STORE, INSTALL_MANIFEST_STORE, SOURCE_ARTIFACT_STORE], 'readwrite');
+    const corpusStore = tx.objectStore(CORPUS_STORE);
+    const manifestStore = tx.objectStore(INSTALL_MANIFEST_STORE);
+    const artifactStore = tx.objectStore(SOURCE_ARTIFACT_STORE);
+    for (const record of records) {
+      if (record?.storageKey) corpusStore.delete(record.storageKey);
+      if (record?.corpusId) manifestStore.delete(installManifestStorageKey(namespace, record.corpusId));
+    }
+    for (const artifactRecord of artifactRecords) {
+      if (artifactRecord?.storageKey) artifactStore.delete(artifactRecord.storageKey);
+    }
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error('IndexedDB clear failed'));
+      tx.onabort = () => reject(tx.error || new Error('IndexedDB clear aborted'));
+    });
+    db.close();
+    return { ok: true };
+  }
+
+  return { ok: false, error: 'Unknown browser corpus bridge request' };
+}
+
+window.addEventListener('message', async (event) => {
+  if (!isAllowedOrigin(event.origin)) return;
+  const data = event.data || {};
+  if (!data?.type) return;
+  const requestId = String(data.requestId || '').trim();
+  const result = await handleBridgeRequest(data).catch((error) => ({
+    ok: false,
+    error: error?.message || String(error || 'Browser corpus bridge request failed')
+  }));
+  event.source?.postMessage({
+    type: 'dm-bridge-response',
+    requestId,
+    ...result
+  }, event.origin);
+});
+
+window.parent?.postMessage({ type: 'dm-auth-bridge-ready' }, '*');
+</script>
+</body>
+</html>

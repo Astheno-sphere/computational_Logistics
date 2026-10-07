@@ -1,0 +1,71 @@
+{
+  "name": "osm-mcp",
+  "version": "0.3.1",
+  "mcpName": "io.github.ni-c/osm-mcp",
+  "description": "MCP server for OpenStreetMap: geocoding, walking/driving/cycling distances, route optimization, isochrones and POI search",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "openstreetmap",
+    "osm",
+    "routing",
+    "geocoding",
+    "osrm",
+    "nominatim",
+    "overpass",
+    "travel-planning"
+  ],
+  "license": "MIT",
+  "author": "Willi Thiel",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ni-c/osm-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ni-c/osm-mcp/issues"
+  },
+  "homepage": "https://osm-mcp.ni-c.de",
+  "funding": "https://github.com/sponsors/ni-c",
+  "type": "module",
+  "bin": {
+    "osm-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "!dist/**/*.map"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --project tsconfig.test.json",
+    "watch": "tsc --watch",
+    "lint": "oxlint --deny-warnings && prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "smoke": "node scripts/smoke.mjs",
+    "assets": "svg-asset-set",
+    "assets:check": "svg-asset-set --check",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "mcp-internal-hosts": "^0.2.1",
+    "mcp-tool-allowlist": "^0.2.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "5.0.3",
+    "fast-check": "^4.9.0",
+    "oxlint": "^1.80.0",
+    "prettier": "^3.9.6",
+    "svg-asset-set": "https://github.com/ni-c/svg-asset-set/releases/download/v0.3.0/svg-asset-set-0.3.0.tgz",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}

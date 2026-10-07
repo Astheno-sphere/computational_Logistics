@@ -1,0 +1,104 @@
+{
+  "_comment": "Auto-generated. Run county-map-private/data_converters/utilities/update_disaster_metadata.py to refresh.",
+  "_last_updated": "2026-06-18",
+  "earthquakes": {
+    "data_min_year": -2150,
+    "data_max_year": 2026,
+    "default_min_year": 1900,
+    "default_min_year_reason": "Seismograph era - reliable magnitude measurements",
+    "record_count": 1063620,
+    "data_file": "global/disasters/earthquakes/events.parquet",
+    "year_column": "year",
+    "severity_filters": [
+      "min_magnitude",
+      "max_magnitude"
+    ],
+    "has_event_areas": true
+  },
+  "hurricanes": {
+    "data_min_year": 1842,
+    "data_max_year": 2026,
+    "default_min_year": 1950,
+    "default_min_year_reason": "Satellite era - reliable track data",
+    "record_count": 13660,
+    "data_file": "global/disasters/hurricanes/storms.parquet",
+    "year_column": "year",
+    "severity_filters": [
+      "min_category",
+      "basin"
+    ],
+    "has_event_areas": true,
+    "detail_files": {
+      "positions": "global/disasters/hurricanes/positions.parquet"
+    },
+    "detail_endpoints": {
+      "track": "/api/storms/{storm_id}/track"
+    }
+  },
+  "volcanoes": {
+    "data_min_year": -55500,
+    "data_max_year": 2026,
+    "default_min_year": 1800,
+    "default_min_year_reason": "Modern observation era",
+    "record_count": 11084,
+    "data_file": "global/disasters/volcanoes/events.parquet",
+    "year_column": "year",
+    "severity_filters": [
+      "min_vei"
+    ],
+    "has_event_areas": true
+  },
+  "tsunamis": {
+    "data_min_year": -2000,
+    "data_max_year": 2026,
+    "default_min_year": 1900,
+    "default_min_year_reason": "Tide gauge era - reliable measurements",
+    "record_count": 2626,
+    "data_file": "global/disasters/tsunamis/events.parquet",
+    "year_column": "year",
+    "severity_filters": [],
+    "has_event_areas": true
+  },
+  "tornadoes": {
+    "data_min_year": 1950,
+    "data_max_year": 2025,
+    "default_min_year": 1990,
+    "default_min_year_reason": "Doppler radar era - reliable detection",
+    "record_count": 81711,
+    "data_file": "global/disasters/tornadoes/events.parquet",
+    "year_column": "year",
+    "severity_filters": [
+      "min_scale"
+    ],
+    "has_event_areas": true,
+    "detail_endpoints": {
+      "sequence": "/api/tornadoes/{event_id}/sequence"
+    }
+  },
+  "floods": {
+    "data_min_year": 1985,
+    "data_max_year": 2024,
+    "default_min_year": 1985,
+    "default_min_year_reason": "Dataset start (Dartmouth Flood Observatory)",
+    "record_count": 5503,
+    "data_file": "global/disasters/floods/events.parquet",
+    "year_column": "year",
+    "severity_filters": [],
+    "has_event_areas": true
+  },
+  "wildfires": {
+    "data_min_year": null,
+    "data_max_year": null,
+    "default_min_year": 2010,
+    "default_min_year_reason": "Recent fires with good coverage",
+    "severity_filters": [
+      "min_area_km2"
+    ],
+    "has_event_areas": true,
+    "geographic_sources": {},
+    "detail_endpoints": {
+      "progression": "/api/wildfires/{event_id}/progression",
+      "perimeter": "/api/wildfires/{event_id}/perimeter"
+    }
+  }
+}

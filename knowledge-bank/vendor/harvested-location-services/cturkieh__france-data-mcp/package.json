@@ -1,0 +1,120 @@
+{
+  "name": "france-data-mcp",
+  "version": "0.31.1",
+  "mcpName": "io.github.cturkieh/france-data-mcp",
+  "description": "MCP TypeScript pour combiner et réconcilier 13 référentiels publics français (INSEE SIRENE, IRIS & Melodi, FINESS DREES, RPPS Annuaire Santé ANS, Annuaire Santé Ameli, Centres de Santé CNAM, DVF / DGFiP, Sit@del / SDES, PLU apicarto, IGN Géoplateforme, geo.api.gouv.fr, Recherche Entreprises DINUM) — avec cross-source FINESS↔RPPS↔SIRENE↔CNAM, démographie infracommunale au quartier, intelligence immobilière (DVF €/m², permis de construire, zones AU du PLU), détection des SIRET fermés invisibles côté DREES, scoring d'adresse Dice, rate limit & observabilité structurée. Production-ready pour Claude, Cursor et toute app TypeScript.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "france",
+    "open-data",
+    "data-gouv",
+    "insee",
+    "finess",
+    "rpps",
+    "annuaire-sante",
+    "ameli",
+    "cnam",
+    "centres-sante",
+    "iris",
+    "demographie",
+    "population",
+    "ign",
+    "geocodage",
+    "sirene",
+    "dinum",
+    "territoire",
+    "sante",
+    "claude",
+    "civic-tech"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Cyril Turkieh",
+    "url": "https://github.com/cturkieh"
+  },
+  "homepage": "https://github.com/cturkieh/france-data-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cturkieh/france-data-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cturkieh/france-data-mcp/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "france-data-mcp": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./territoire": {
+      "types": "./dist/territoire/index.d.ts",
+      "import": "./dist/territoire/index.js"
+    },
+    "./sante": {
+      "types": "./dist/sante/index.d.ts",
+      "import": "./dist/sante/index.js"
+    },
+    "./cli": "./dist/cli.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run --no-file-parallelism",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --exclude '**/*.integration.test.ts'",
+    "test:integration": "vitest run '**/*.integration.test.ts' --passWithNoTests --no-file-parallelism",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.api.json --noEmit",
+    "dev:server": "vercel dev",
+    "deploy:server": "vercel --prod",
+    "prepublishOnly": "pnpm build",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > src/storage/supabase-types.ts",
+    "ingest:finess": "tsx scripts/ingest/finess.ts",
+    "ingest:ameli": "tsx scripts/ingest/ameli.ts",
+    "ingest:rpps": "tsx scripts/ingest/rpps.ts",
+    "ingest:cds": "tsx scripts/ingest/cds.ts",
+    "ingest:iris": "tsx scripts/ingest/iris.ts",
+    "ingest:sitadel": "tsx scripts/ingest/sitadel.ts",
+    "notify:pending-geocode": "tsx scripts/ingest/notify-pending-geocode.ts",
+    "notify:ingest-anomaly": "tsx scripts/ingest/notify-ingest-anomaly.ts",
+    "finess:refresh-categories": "tsx scripts/ingest/refresh-finess-categories.ts",
+    "cleanup:stale-previous": "tsx scripts/ingest/drop-stale-previous.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.9.0",
+    "@vercel/node": "^5.7.15",
+    "dotenv": "^16.4.5",
+    "stream-json": "^3.6.0",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5",
+    "yaml": "^2.9.0"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.53.1",
+    "@supabase/supabase-js": "^2.45.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
+    "@vercel/functions": "^3.7.4",
+    "csv-parse": "^5.5.6"
+  }
+}

@@ -1,0 +1,256 @@
+name: publish
+
+# Build and publish the emem MCP server container to GitHub Container
+# Registry on every push to main and on every release tag, plus mirror
+# the same image to Docker Hub when DOCKERHUB_TOKEN is configured.
+#
+# Image tags:
+#   ghcr.io/vortx-ai/emem:latest        — head of main
+#   ghcr.io/vortx-ai/emem:main          — head of the default branch, by name
+#   ghcr.io/vortx-ai/emem:<short-sha>   — every push to main
+#   ghcr.io/vortx-ai/emem:v<semver>     — every git tag matching v* (ref name)
+#   ghcr.io/vortx-ai/emem:<semver>      — same tag, v stripped (1.4.0)
+#   ghcr.io/vortx-ai/emem:<major>.<minor> — moves within a minor (1.4)
+#   docker.io/vortxai/emem:<same>       — only when secrets are present
+#
+# Tags at or before v1.4.0 exist only in the v-prefixed form, because the
+# bare semver lines were added after that release shipped. Re-running this
+# workflow against an old tag backfills them. For anything long-lived,
+# pin the digest: it is the only form that cannot move or be deleted.
+#
+# The image runs the same emem-server binary served at https://emem.dev,
+# bound to :5051 by default.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY_GHCR: ghcr.io
+  REGISTRY_DH:   docker.io
+  IMAGE_NAME:    vortx-ai/emem
+  DH_IMAGE_NAME: vortxai/emem
+
+jobs:
+  # Build each platform on its native runner. QEMU emulation died on
+  # the linux/arm64 leg after Lance 6.x landed — datafusion + lance's
+  # compile graph OOM's under emulation. Native arm64 runners are free
+  # for public repos as of 2025-01.
+  build:
+    name: build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner:   ubuntu-latest
+            arch:     amd64
+          - platform: linux/arm64
+            runner:   ubuntu-24.04-arm
+            arch:     arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      # GitHub ubuntu-latest runners ship with ~14 GB free disk; Lance
+      # 6.x + datafusion + arrow pull in 530+ crates and the release
+      # build exhausts that during `cargo build --bin emem-server`,
+      # which is the actual root cause of the post-Lance publish
+      # failures (cargo exit 101 at ~7 min, no specific compile error
+      # surfaced — the docker layer just dies). Frees ~30 GB by
+      # removing dotnet / android sdk / ghc / hosted toolcache that
+      # this image doesn't need.
+      - name: free up disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: false
+          swap-storage: false
+
+      - name: report free disk + memory pre-build
+        run: |
+          echo "=== df -h / ==="; df -h /
+          echo "=== free -h ===";  free -h
+
+      - name: set up buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: log in to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: log in to docker hub (optional)
+        if: ${{ vars.PUBLISH_DOCKERHUB == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_DH }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: build & push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: |
+            EMEM_GIT_COMMIT=${{ github.sha }}
+          file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
+          # Push by digest, no tag. The merge job below stamps the
+          # human-readable tags on the joined manifest. Per-arch cache
+          # scope so the two legs don't fight over the same gha cache.
+          outputs: type=image,name=${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to:   type=gha,mode=max,scope=${{ matrix.arch }}
+
+      - name: export digest
+        run: |
+          mkdir -p /tmp/digests
+          echo "${{ steps.build.outputs.digest }}" > /tmp/digests/${{ matrix.arch }}
+
+      - name: upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.arch }}
+          path: /tmp/digests/${{ matrix.arch }}
+          if-no-files-found: error
+          retention-days: 1
+
+  # Join the per-arch digests into a single multi-arch manifest under
+  # every tag (latest, short-sha, semver). Runs after both builds.
+  manifest:
+    name: combine multi-arch manifest
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digest-*
+          merge-multiple: true
+
+      - name: set up buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: log in to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: log in to docker hub (optional)
+        if: ${{ vars.PUBLISH_DOCKERHUB == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_DH }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}
+            ${{ vars.PUBLISH_DOCKERHUB == 'true' && format('{0}/{1}', env.REGISTRY_DH, env.DH_IMAGE_NAME) || '' }}
+          # type=ref,event=tag keeps the v-prefixed ref name (:v1.4.0); the
+          # two semver lines add the bare forms (:1.4.0, :1.4) a registry
+          # consumer reaches for first, and fire on tag pushes only.
+          # Deliberately no {{major}}: a :1 tag would silently roll across
+          # minor releases, which is the moving-target property we pin to
+          # avoid. Kept out of the block scalar below on purpose — a # line
+          # indented under `tags: |` is string content, not a YAML comment.
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=emem
+            org.opencontainers.image.description=Earth memory protocol — content-addressed, ed25519-signed memory of every place on Earth
+            org.opencontainers.image.url=https://emem.dev
+            org.opencontainers.image.source=https://github.com/Vortx-AI/emem
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.vendor=Vortx-AI
+
+      - name: create manifest list & push
+        working-directory: /tmp/digests
+        run: |
+          # Each per-arch job wrote one file containing its digest; the
+          # filename (amd64 / arm64) lines up with the docker reference.
+          AMD64=$(cat amd64)
+          ARM64=$(cat arm64)
+          DIGEST_REFS="${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}@${AMD64} ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}@${ARM64}"
+          # imagetools create takes a list of source digests and stamps
+          # every tag from the metadata step onto the joined manifest.
+          echo "$DIGEST_REFS"
+          for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n'); do
+            [ -z "$tag" ] && continue
+            echo "==> stamping $tag"
+            docker buildx imagetools create -t "$tag" $DIGEST_REFS
+          done
+
+      - name: inspect joined manifest
+        run: |
+          for tag in $(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n'); do
+            [ -z "$tag" ] && continue
+            docker buildx imagetools inspect "$tag" || true
+          done
+
+  hf-space:
+    name: sync huggingface space
+    runs-on: ubuntu-latest
+    if: ${{ vars.PUBLISH_HF_SPACE == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install huggingface_hub
+        run: pip install --quiet "huggingface_hub==1.33.0"
+
+      - name: push huggingface-space/ to hf hub
+        env:
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE_REPO_ID }}
+        run: |
+          # PUBLISH_HF_SPACE=true is the operator saying "publish this".
+          # A missing repo id at that point is a misconfiguration, not a
+          # skip: fail loudly instead of green-skipping forever.
+          if [ -z "$HF_SPACE" ]; then
+            echo "::error::PUBLISH_HF_SPACE is true but the HF_SPACE_REPO_ID variable is not set (Settings -> Secrets and variables -> Actions -> Variables)"; exit 1
+          fi
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::PUBLISH_HF_SPACE is true but the HUGGINGFACE_TOKEN secret is not set"; exit 1
+          fi
+          # Not `hf upload`: the CLI preflights repos/create even when the
+          # repo exists, and HF answers that with 402 for docker Spaces
+          # under an unpaid org. The Space already exists and runs free on
+          # cpu-basic; upload_folder commits to it without touching create.
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+          info = HfApi(token=os.environ["HF_TOKEN"]).upload_folder(
+              repo_id=os.environ["HF_SPACE"], repo_type="space",
+              folder_path="huggingface-space", path_in_repo=".",
+              commit_message="sync from " + os.environ["GITHUB_SHA"][:7])
+          print("committed:", info.commit_url)
+          PY

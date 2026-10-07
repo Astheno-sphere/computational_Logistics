@@ -1,0 +1,280 @@
+{
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json",
+  "schema_version": 1,
+  "app_info": {
+    "display_name": "emem",
+    "subtitle": "Shared, verifiable AI memory",
+    "description": "emem is a shared, verifiable memory of the physical world for AI. Every place resolves to one canonical address, every observation about it becomes one signed fact you can verify offline, and every fact has a short citation token that resolves anywhere to the byte-identical signed value. Ask about a place (elevation, vegetation, surface water, built-up context, flood signals), an area (a native-resolution raster field, or a field over time), change over time, or similarity between places; get back cite-able, ed25519-signed receipts. No API key or signup required.",
+    "category": "DEVELOPER_TOOLS"
+  },
+  "tools": {
+    "emem_ask": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "ask_inner reads through recall_with_auto_materialize, and for questions whose algorithm has a temporal recipe it also calls materialize_band_at. Both fetch a missing band, sign the fact and persist it to emem's publicly readable store, so the call can change what later readers see.",
+        "open_world_justification": "It reaches external services: a place name is geocoded through locate_inner, which can call Photon, Nominatim and Wikidata, and a missing band is fetched from upstream Earth-observation and weather archives (Sentinel-2 and -1, Copernicus DEM, JRC surface water, Open-Meteo and others).",
+        "destructive_justification": "It adds facts and never edits or deletes one; an earlier fact stays resolvable by its cid."
+      }
+    },
+    "emem_locate": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "locate_inner returns a cell64 and the band inventory there. The only thing it stores is this node's own cache of geocoder answers; it signs nothing and adds nothing to the shared store.",
+        "open_world_justification": "When the embedded gazetteer does not settle the name, locate_inner calls external geocoders (Photon and Nominatim, with a Wikidata decision stage). It only reads from them.",
+        "destructive_justification": "Nothing is written to the shared store, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_recall": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "The handler is recall_with_auto_materialize. When a requested band is not held for the cell, it fetches the band upstream, signs the fact and persists it to emem's publicly readable store before answering.",
+        "open_world_justification": "A missing band is fetched from upstream Earth-observation and weather archives (Sentinel-2 and -1, Copernicus DEM, JRC surface water, Open-Meteo and others), and a place name is geocoded through locate_inner, which can call Photon, Nominatim and Wikidata.",
+        "destructive_justification": "It adds facts and never edits or deletes one; an earlier fact stays resolvable by its cid."
+      }
+    },
+    "emem_verify_receipt": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "post_verify_receipt checks the ed25519 signature and preimage of the receipt the caller supplies. It writes nothing.",
+        "open_world_justification": "The check runs against the caller's data and this node's published key. No external service is contacted.",
+        "destructive_justification": "Nothing is written, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_memory_token": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "post_memory_token formats a citation handle from a cell and a fact id. It does not touch the store at all.",
+        "open_world_justification": "It formats a string from arguments already in hand and contacts nothing.",
+        "destructive_justification": "Nothing is written, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_find_similar": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "The handler is find_similar_with_auto_materialize. When the seed cell has no vector fact, it materialises that band and the signed fact is persisted to emem's publicly readable store. The similarity search itself writes nothing.",
+        "open_world_justification": "Materialising the seed vector reads upstream Earth-observation and weather archives (Sentinel-2 and -1, Copernicus DEM, JRC surface water, Open-Meteo and others), and a place name given as the key is geocoded through locate_inner.",
+        "destructive_justification": "It adds facts and never edits or deletes one; an earlier fact stays resolvable by its cid."
+      }
+    },
+    "emem_echo_verify": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "echo_verify_core reads the one stored fact a citation points at and compares the caller's value to it. It signs the response and persists nothing.",
+        "open_world_justification": "It reads only facts this node already holds. No external service is contacted.",
+        "destructive_justification": "Nothing is written, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_entity_resolve": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "post_entity_resolve ranks identities already in the entity registry, and get_entity dereferences a token. Neither mints or records anything.",
+        "open_world_justification": "When `near` is a place name, resolve_cell_field geocodes it through locate_inner, which can call Photon, Nominatim and Wikidata. Without `near` it reads only this node's registry.",
+        "destructive_justification": "Nothing is written, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_memory_contradictions": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "It scans stored facts for keys where independent signers disagree and records no verdict. The only thing it keeps is an internal result cache.",
+        "open_world_justification": "It reads only facts this node already holds. No external service is contacted.",
+        "destructive_justification": "Nothing is written, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_memory_token_resolve": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "resolve_one_token parses an emem: handle and returns the signed body it cites from local storage. It writes nothing.",
+        "open_world_justification": "A handle that does not resolve here is reported as missing rather than fetched from anywhere else.",
+        "destructive_justification": "Nothing is written, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_tools": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Returns the compiled catalogue of this server's tools. Nine of the eighteen tools in this submission are strictly read-only, including this one. The other nine can add state, and each says how in its own read_only_justification.",
+        "open_world_justification": "It describes this server from data compiled into it. No external call.",
+        "destructive_justification": "Nothing is written, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_guard_verdict": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "It resolves the emem: citations in a transcript against stored facts and answers allow or deny. It records no verdict.",
+        "open_world_justification": "guard_resolve_token calls storage.get_facts_many and nothing else: no fetch, no materialise, no HTTP. A citation this node does not hold is reported, never looked up elsewhere.",
+        "destructive_justification": "Nothing is written, so nothing can be overwritten or removed."
+      }
+    },
+    "emem_entity": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "post_entity mints a shared identity for a new anchor and writes it, with its alias rows, to the entity registry every agent resolves names against. The enlistment gate refuses callers without a valid signed attester block, so an unsigned call writes nothing.",
+        "open_world_justification": "It resolves the anchor through entity_locate_rich, which calls locate_inner and so can reach Photon, Nominatim and Wikidata, and the identity it mints is published for other agents to resolve.",
+        "destructive_justification": "When the anchor already has an identity, post_entity returns the existing record unchanged. It never edits or removes one."
+      }
+    },
+    "emem_entity_link": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "post_entity_alias appends a signed, attributed claim that a phrasing or external id denotes an existing entity, which changes what other agents see when they resolve that phrasing. The enlistment gate refuses unsigned callers.",
+        "open_world_justification": "The alias is written to this node's shared entity store, which other agents query through emem_entity_resolve. A write that changes what independently controlled agents read is an interaction with an external system, even though no outbound HTTP call leaves this node.",
+        "destructive_justification": "Claims are append-only: a disagreement is a new row with stance `disputes`, never an edit or removal of an earlier claim."
+      }
+    },
+    "emem_intent": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "It plans a typed intent and dispatches to emem_ask, emem_recall, emem_find_similar, emem_compare, emem_diff, emem_verify or emem_locate. Ask, recall and find_similar can materialise and persist signed facts, so the union is not read-only.",
+        "open_world_justification": "The primitives it dispatches to geocode place names and fetch missing bands from upstream Earth-observation and weather archives (Sentinel-2 and -1, Copernicus DEM, JRC surface water, Open-Meteo and others).",
+        "destructive_justification": "Every primitive it can reach only appends facts. It never edits or deletes one."
+      }
+    },
+    "emem_memory_bundle": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "post_memory_bundle recalls each (cell, band, tslot) through recall_with_auto_materialize, so a cold member is materialised and persisted, and then stores the bundle record so its token resolves later.",
+        "open_world_justification": "Cold members are fetched from upstream Earth-observation and weather archives (Sentinel-2 and -1, Copernicus DEM, JRC surface water, Open-Meteo and others), a place name is geocoded, and the stored bundle can be resolved by anyone holding its token.",
+        "destructive_justification": "The bundle is content-addressed: the same members give the same token. Nothing existing is edited or removed."
+      }
+    },
+    "search": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "openai_search is a projection of emem_recall and calls recall_with_auto_materialize, so on a cold cell it fetches the missing band, signs the fact and persists it to emem's publicly readable store before returning citations.",
+        "open_world_justification": "A place name is geocoded through locate_inner and a missing band is fetched from upstream Earth-observation and weather archives (Sentinel-2 and -1, Copernicus DEM, JRC surface water, Open-Meteo and others).",
+        "destructive_justification": "It adds facts and never edits or deletes one; an earlier fact stays resolvable by its cid."
+      }
+    },
+    "fetch": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Given an emem:fact: citation or a bare fact_cid, openai_fetch reads local storage and writes nothing. Given an emem:cell: handle it calls recall_with_auto_materialize, which can persist a newly materialised fact. The flag follows the second path.",
+        "open_world_justification": "A cell handle can materialise a missing band from upstream Earth-observation and weather archives (Sentinel-2 and -1, Copernicus DEM, JRC surface water, Open-Meteo and others). A fact handle contacts nothing.",
+        "destructive_justification": "It adds facts and never edits or deletes one; an earlier fact stays resolvable by its cid."
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "description": "Resolves the airport to one canonical cell64 and answers with the elevation held there, 48 m from copdem30m.elevation_mean, carrying its fact content id and the responder's ed25519 signature.",
+      "user_prompt": "What is the elevation at Helsinki-Vantaa Airport?",
+      "tools_triggered": "emem_locate, emem_recall",
+      "expected_output": "Resolves the airport to one canonical cell64 and answers with the elevation held there, 48 m from copdem30m.elevation_mean, carrying its fact content id and the responder's ed25519 signature."
+    },
+    {
+      "description": "Resolves the lake to one cell64 and lists the bands attested there with their values, each a signed fact. The cell holds more facts than fit one tool result, so the reply says so and names the remaining bands rather than presenting five as the whole set.",
+      "user_prompt": "What signed facts does emem hold for Lake Erie, Ohio?",
+      "tools_triggered": "emem_locate, emem_recall",
+      "expected_output": "Resolves the lake to one cell64 and lists the bands attested there with their values, each a signed fact. The cell holds more facts than fit one tool result, so the reply says so and names the remaining bands rather than presenting five as the whole set."
+    },
+    {
+      "description": "Resolves the valley to one cell64, reads the NDVI fact held there, and returns a citation of the form emem:fact:<cell64>:<fact_cid>, 83 characters, which resolves to the byte-identical signed reading in any later session.",
+      "user_prompt": "Give me a citation token for the NDVI at Napa Valley, California that I can re-verify later.",
+      "tools_triggered": "emem_locate, emem_recall, emem_memory_token",
+      "expected_output": "Resolves the valley to one cell64, reads the NDVI fact held there, and returns a citation of the form emem:fact:<cell64>:<fact_cid>, 83 characters, which resolves to the byte-identical signed reading in any later session."
+    },
+    {
+      "description": "Dereferences the citation to the signed reading it names, 48 m of Copernicus DEM elevation, then checks the receipt that came back with it against the responder's published ed25519 key and reports valid. Two steps, because a token is not a receipt: resolving shows the bytes, verifying shows who signed them.",
+      "user_prompt": "Is this emem citation genuine, and what does it say? emem:fact:defi.zb6ae.lEdu.rErU:nqbl6yveuvwivda34q5bvupepzvlscumia62l7c7yivqpxhogcda",
+      "tools_triggered": "emem_memory_token_resolve, emem_verify_receipt",
+      "expected_output": "Dereferences the citation to the signed reading it names, 48 m of Copernicus DEM elevation, then checks the receipt that came back with it against the responder's published ed25519 key and reports valid. Two steps, because a token is not a receipt: resolving shows the bytes, verifying shows who signed them."
+    },
+    {
+      "description": "Resolves the valley to one cell64 and compares the independently signed NDVI facts held at that one cell, not the whole corpus. It reports that none of them disagree, and says how many it compared, rather than reading silence as agreement it did not check.",
+      "user_prompt": "Do any signed sources disagree about the vegetation index at Napa Valley, California?",
+      "tools_triggered": "emem_locate, emem_memory_contradictions",
+      "expected_output": "Resolves the valley to one cell64 and compares the independently signed NDVI facts held at that one cell, not the whole corpus. It reports that none of them disagree, and says how many it compared, rather than reading silence as agreement it did not check."
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "description": "emem tools should not be called. This is not a place-based question.",
+      "user_prompt": "What is the stock price of Apple?",
+      "tools_triggered": null,
+      "expected_output": "emem tools should not be called. This is not a place-based question."
+    },
+    {
+      "description": "emem tools should not be called. This is a creative writing request.",
+      "user_prompt": "Write me a poem about the ocean.",
+      "tools_triggered": null,
+      "expected_output": "emem tools should not be called. This is a creative writing request."
+    },
+    {
+      "description": "emem tools should not be called. This is a software question.",
+      "user_prompt": "How do I install Python on Windows?",
+      "tools_triggered": null,
+      "expected_output": "emem tools should not be called. This is a software question."
+    }
+  ]
+}

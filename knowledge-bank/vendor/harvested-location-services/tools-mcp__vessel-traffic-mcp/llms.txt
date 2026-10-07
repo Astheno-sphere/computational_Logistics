@@ -1,0 +1,148 @@
+# vessel-traffic-mcp
+
+> Read-only Model Context Protocol server for vessel identity,
+> AIS-style position data, carrier schedules, vessel schedules, and
+> delay heuristics.
+
+Repository: https://github.com/tools-mcp/vessel-traffic-mcp
+Agent discovery page: https://tools-mcp.github.io/vessel-traffic-mcp/
+License: MIT
+Runtime: Node.js 22+, TypeScript, ESM
+Default transport: stdio for local MCP clients
+Remote transport: Streamable HTTP at `/mcp`, with public `/health`
+
+## Agent Setup Task
+
+When an agent is asked to install this MCP server on a new machine, do
+the following:
+
+1. Clone `https://github.com/tools-mcp/vessel-traffic-mcp.git`.
+2. Run `npm ci`.
+3. Run `npm run build`.
+4. Register the built server as a local stdio MCP server with an
+   absolute path to `dist/index.js`.
+5. Set `VESSEL_MCP_TRANSPORT=stdio`.
+6. For public opt-in providers, set
+   `VESSEL_MCP_ENABLE_PUBLIC_PROVIDERS=myshiptracking,tradlinx,aisfriends`.
+   Add `shipfinder` only when the user accepts browser-verification
+   no-data responses from that provider.
+7. Restart the MCP client.
+8. Verify by asking for `EVER GIVEN` current position with source URL,
+   and for a carrier schedule from `KRPUS` to `NLRTM` with source URL.
+
+## Search-Style Agent Flow
+
+For agents or products that expect generic connector tools, use:
+
+1. `search` with query `EVER GIVEN`.
+2. `fetch` with the returned `vessel:mmsi:*`, `vessel:imo:*`, or
+   `vessel:name:*` id.
+3. Include `source.provider`, `source.landingUrl`, `observedAt`,
+   `retrievedAt`, `freshnessSeconds`, confidence, and coverage caveats.
+4. State that AIS-style data is not for safety-critical navigation.
+
+## Codex CLI Config
+
+Add this to the local `~/.codex/config.toml`, replacing only the
+absolute path:
+
+```toml
+[mcp_servers.vessel-traffic-mcp]
+command = "node"
+args = ["/absolute/path/to/vessel-traffic-mcp/dist/index.js"]
+
+[mcp_servers.vessel-traffic-mcp.env]
+VESSEL_MCP_TRANSPORT = "stdio"
+VESSEL_MCP_ENABLE_PUBLIC_PROVIDERS = "myshiptracking,tradlinx,aisfriends"
+```
+
+## Claude Desktop / Claude Code Config
+
+Add this MCP server entry to the local Claude config, replacing only
+the absolute path:
+
+```json
+{
+  "mcpServers": {
+    "vessel-traffic-mcp": {
+      "command": "node",
+      "args": ["/absolute/path/to/vessel-traffic-mcp/dist/index.js"],
+      "env": {
+        "VESSEL_MCP_TRANSPORT": "stdio",
+        "VESSEL_MCP_ENABLE_PUBLIC_PROVIDERS": "myshiptracking,tradlinx,aisfriends"
+      }
+    }
+  }
+}
+```
+
+## Safety Rules
+
+- Keep all MCP tools read-only.
+- Do not bypass authentication, paywalls, CAPTCHA, bot defenses, rate
+  limits, or access controls.
+- Do not commit local MCP client configs, `.env` files, cookies,
+  bearer tokens, API keys, HAR files, browser sessions, or raw
+  captures.
+- Do not copy credentials from another machine.
+- Paid providers are BYOK only. Configure API keys only through local
+  environment variables or ignored local config files.
+- Every vessel or schedule response from a live/public provider must
+  expose provenance: `source.provider` and `source.landingUrl`.
+- This is not a safety-critical navigation tool.
+
+## Provider Status
+
+- Default runtime: `fixture`.
+- Public opt-in runtime providers:
+  `aisfriends`, `myshiptracking`, `shipfinder`, `tradlinx-schedule`.
+- Implemented credentialed runtime providers:
+  `marinetraffic`, `vesselfinder`, `aisstream`, `aishub`,
+  `barentswatch`, `searates-schedules`, `routescanner-connect`,
+  `vesselapi`, `datadocked`, `datalastic`, `globalfishingwatch`.
+- Planned schedule providers:
+  `linescape-schedule-api`.
+- The remaining PRD providers are cataloged for discovery, enterprise
+  review, or future BYOK adapter work. Do not claim they are fully
+  implemented until `config/provider-catalog.example.json` marks them
+  `implemented` and runtime registry can enable them.
+
+## Main Tools
+
+- `vessel_search`
+- `vessel_position`
+- `vessel_area`
+- `vessel_track`
+- `port_calls`
+- `carrier_schedule_search`
+- `vessel_schedule`
+- `schedule_delay_predict`
+- `provider_status`
+- `data_sources`
+- `credential_profiles`
+- `provider_onboarding`
+- `search`
+- `fetch`
+
+## Important Docs
+
+- `README.md`: full setup, provider notes, and agent install prompt.
+- `docs/index.html`: static page for ChatGPT, Codex, Claude, Gemini,
+  and search-engine discovery.
+- `server.json`: MCP Registry metadata for
+  `io.github.tools-mcp/vessel-traffic-mcp`.
+- `AGENTS.md`: non-negotiable repository rules.
+- `CODE_OF_CONDUCT.md`: collaboration expectations.
+- `docs/runbooks/public-sharing.md`: GitHub, MCP Registry, Smithery,
+  Glama, PulseMCP, and launch-post sharing checklist.
+- `docs/runbooks/clients.md`: Claude Desktop, Claude Code, ChatGPT
+  remote MCP, and MCP Inspector setup.
+- `docs/runbooks/codex.md`: Codex CLI setup.
+- `docs/runbooks/operator.md`: operational runbook.
+- `docs/provider-catalog.md`: provider inventory and routing policy.
+- `docs/runbooks/credential-profiles.md`: BYOK credential profile
+  handling.
+- `docs/runbooks/browser-api-capture-results.md`: sanitized public
+  vessel API capture notes.
+- `docs/runbooks/schedule-api-capture-results.md`: sanitized schedule
+  API capture notes.

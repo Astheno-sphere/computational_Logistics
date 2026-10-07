@@ -1,0 +1,81 @@
+{
+  "manifest_version": "0.3",
+  "name": "atlasfetch",
+  "display_name": "AtlasFetch",
+  "version": "0.1.6",
+  "description": "Reverse geocode a coordinate to country, region, municipality and street, plus your own geofences.",
+  "long_description": "AtlasFetch answers **which place is this coordinate in?** A point becomes the country, region and municipality that contain it, with ISO 3166-1 and 3166-2 codes, plus matches from boundary sets you upload yourself: delivery zones, service areas, sales territories. Ask for the **street** layer and it also answers with the nearest street and, where one is mapped, the house number — worldwide.\n\n**No sign-up needed to try it.** Leave the API key empty and it uses a shared public demo key, capped at 1,000 lookups a month across everyone using it. Get your own limits with a free sign-up at https://atlasfetch.xyz.\n\n**Not for** forward geocoding or place search (an address to a coordinate), routing, distances, or downloading boundary geometry. House numbers are rare outside well-mapped areas.\n\nReference boundaries derive from OpenStreetMap under the ODbL. Coordinates you look up are not stored.",
+  "author": {
+    "name": "ATLASIQ PTY LTD",
+    "email": "atlasfetch@atlas-iq.co",
+    "url": "https://atlasfetch.xyz"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atlasfetch-dev/atlasfetch-mcp"
+  },
+  "homepage": "https://atlasfetch.xyz",
+  "documentation": "https://atlasfetch.xyz/docs",
+  "support": "https://github.com/atlasfetch-dev/atlasfetch-mcp/issues",
+  "icon": "icon.png",
+  "license": "MIT",
+  "keywords": [
+    "reverse geocoding",
+    "geocoding",
+    "geofencing",
+    "point in polygon",
+    "administrative boundaries",
+    "ISO 3166",
+    "GeoJSON",
+    "GIS",
+    "street"
+  ],
+  "privacy_policies": [
+    "https://atlasfetch.xyz/privacy"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/stdio.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/stdio.js"
+      ],
+      "env": {
+        "ATLASFETCH_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "AtlasFetch API key",
+      "description": "Optional. Create one free at https://atlasfetch.xyz/dashboard. Leave empty to use the shared demo key, capped at 1,000 lookups a month across all its users.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "lookup_location",
+      "description": "Resolve a coordinate to the country, region and municipality containing it, with ISO 3166 codes, optionally the nearest street and house number, and match it against your own boundary sets."
+    },
+    {
+      "name": "list_boundary_sets",
+      "description": "List the boundary sets on your account, their boundary counts and which API keys may query them."
+    },
+    {
+      "name": "create_boundary_set",
+      "description": "Create an empty set for your own polygons. Making it queryable is finished in the AtlasFetch dashboard."
+    },
+    {
+      "name": "add_boundary",
+      "description": "Add one GeoJSON Polygon to an existing set on your account, with properties returned on every match. MultiPolygons are added part by part."
+    }
+  ],
+  "compatibility": {
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  }
+}
