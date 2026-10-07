@@ -1,0 +1,570 @@
+import os.path
+import inspect
+import tracemalloc
+import warnings
+
+import numpy as np
+import pandas as pd
+import pytest
+
+import pandana.network as pdna
+
+from numpy.testing import assert_allclose
+from pandas.testing import assert_index_equal
+
+from pandana.loaders.pandash5 import open_hdf_store
+
+
+def sample_path():
+    return os.path.join(os.path.dirname(__file__), "osm_sample.h5")
+
+
+def load_sample():
+    with open_hdf_store(
+            sample_path(), migrate_legacy=True) as store:
+        return store.nodes.copy(), store.edges.copy()
+
+
+@pytest.fixture(scope="module")
+def sample_osm():
+    nodes, edges = load_sample()
+
+    net = pdna.Network(nodes.x, nodes.y, edges["from"], edges.to, edges[["weight"]])
+
+    net.precompute(2000)
+
+    return net
+
+
+# initialize a second network
+@pytest.fixture(scope="module")
+def second_sample_osm():
+    nodes, edges = load_sample()
+    net = pdna.Network(nodes.x, nodes.y, edges["from"], edges.to, edges[["weight"]])
+
+    net.precompute(2000)
+
+    return net
+
+
+def random_node_ids(net, ssize):
+    return pd.Series(np.random.choice(net.node_ids, ssize))
+
+
+def random_data(ssize):
+    return pd.Series(np.random.random(ssize))
+
+
+def get_connected_nodes(net):
+    net.set(pd.Series(net.node_ids))
+    s = net.aggregate(10000, type="COUNT")
+    # not all the nodes in the sample network are connected
+    # get the nodes in the largest connected subgraph
+    # from printing the result out I know the largest subgraph has
+    # 477 nodes in the sample data
+    connected_nodes = s[s == 477].index.values
+    return connected_nodes
+
+
+def random_connected_nodes(net, ssize):
+    return pd.Series(np.random.choice(get_connected_nodes(net), ssize))
+
+
+def random_x_y(sample_osm, ssize):
+    bbox = sample_osm.bbox
+    x = pd.Series(np.random.uniform(bbox[0], bbox[2], ssize))
+    y = pd.Series(np.random.uniform(bbox[1], bbox[3], ssize))
+    return x, y
+
+
+def test_agg_variables_accuracy(sample_osm):
+    net = sample_osm
+
+    # test accuracy compared to Pandas functions
+    ssize = 50
+    r = random_data(ssize)
+    connected_nodes = get_connected_nodes(net)
+    nodes = random_connected_nodes(net, ssize)
+    net.set(nodes, variable=r)
+
+    s = net.aggregate(100000, type="count").loc[connected_nodes]
+    assert s.unique().size == 1
+    assert s.iloc[0] == 50
+
+    s = net.aggregate(100000, type="AVE").loc[connected_nodes]
+    assert s.describe()["std"] < 0.01  # assert almost equal
+    assert_allclose(s.mean(), r.mean(), atol=1e-3)
+
+    s = net.aggregate(100000, type="mean").loc[connected_nodes]
+    assert s.describe()["std"] < 0.01  # assert almost equal
+    assert_allclose(s.mean(), r.mean(), atol=1e-3)
+
+    s = net.aggregate(100000, type="min").loc[connected_nodes]
+    assert s.describe()["std"] < 0.01  # assert almost equal
+    assert_allclose(s.mean(), r.min(), atol=1e-3)
+
+    s = net.aggregate(100000, type="max").loc[connected_nodes]
+    assert s.describe()["std"] < 0.01  # assert almost equal
+    assert_allclose(s.mean(), r.max(), atol=1e-3)
+
+    r.sort_values(inplace=True)
+
+    s = net.aggregate(100000, type="median").loc[connected_nodes]
+    assert s.describe()["std"] < 0.01  # assert almost equal
+    assert_allclose(s.mean(), r.iloc[25], atol=1e-2)
+
+    s = net.aggregate(100000, type="25pct").loc[connected_nodes]
+    assert s.describe()["std"] < 0.01  # assert almost equal
+    assert_allclose(s.mean(), r.iloc[12], atol=1e-2)
+
+    s = net.aggregate(100000, type="75pct").loc[connected_nodes]
+    assert s.describe()["std"] < 0.01  # assert almost equal
+    assert_allclose(s.mean(), r.iloc[37], atol=1e-2)
+
+    s = net.aggregate(100000, type="SUM").loc[connected_nodes]
+    assert s.describe()["std"] < 0.05  # assert almost equal
+    assert_allclose(s.mean(), r.sum(), atol=1e-2)
+
+    s = net.aggregate(100000, type="std").loc[connected_nodes]
+    assert s.describe()["std"] < 0.01  # assert almost equal
+    assert_allclose(s.mean(), r.std(), atol=1e-2)
+
+
+def test_non_integer_nodeids():
+
+    nodes, edges = load_sample()
+
+    # convert to string!
+    nodes.index = nodes.index.astype("str")
+    edges["from"] = edges["from"].astype("str")
+    edges["to"] = edges["to"].astype("str")
+
+    net = pdna.Network(nodes.x, nodes.y, edges["from"], edges.to, edges[["weight"]])
+
+    # test accuracy compared to Pandas functions
+    ssize = 50
+    r = random_data(ssize)
+    connected_nodes = get_connected_nodes(net)
+    random_nodes = random_connected_nodes(net, ssize)
+    net.set(random_nodes, variable=r)
+
+    s = net.aggregate(100000, type="count").loc[connected_nodes]
+    assert list(nodes.index), list(s.index)
+
+
+def test_agg_variables(sample_osm):
+    net = sample_osm
+
+    ssize = 50
+    net.set(random_node_ids(sample_osm, ssize), variable=random_data(ssize))
+
+    for type in net.aggregations:
+        for decay in net.decays:
+            for distance in [5, 10, 20]:
+                t = type.decode(encoding="UTF-8")
+                d = decay.decode(encoding="UTF-8")
+                s = net.aggregate(distance, type=t, decay=d)
+                assert s.describe()["std"] > 0
+
+    # testing w/o setting variable
+    ssize = 50
+    net.set(random_node_ids(sample_osm, ssize))
+
+    for type in net.aggregations:
+        for decay in net.decays:
+            for distance in [5, 10, 20]:
+                t = type.decode(encoding="UTF-8")
+                d = decay.decode(encoding="UTF-8")
+                s = net.aggregate(distance, type=t, decay=d)
+                if t != "std":
+                    assert s.describe()["std"] > 0
+                else:
+                    # no variance in data
+                    assert s.describe()["std"] == 0
+
+
+def test_non_float_node_values(sample_osm):
+    net = sample_osm
+
+    ssize = 50
+    net.set(
+        random_node_ids(sample_osm, ssize),
+        variable=(random_data(ssize) * 100).astype("int"),
+    )
+
+    for type in net.aggregations:
+        for decay in net.decays:
+            for distance in [5, 10, 20]:
+                t = type.decode(encoding="UTF-8")
+                d = decay.decode(encoding="UTF-8")
+                s = net.aggregate(distance, type=t, decay=d)
+                assert s.describe()["std"] > 0
+
+
+def test_missing_nodeid(sample_osm):
+    node_ids = random_node_ids(sample_osm, 50)
+    # non-existing value
+    node_ids.iloc[0] = -1
+    sample_osm.set(node_ids)
+
+
+def test_assign_nodeids(sample_osm):
+    ssize = 50
+    np.random.seed(0)
+    x, y = random_x_y(sample_osm, ssize)
+    node_ids1 = sample_osm.get_node_ids(x, y)
+    assert len(node_ids1) == ssize
+    # check a couple of assignments for accuracy
+    assert node_ids1.loc[48] == 1840703798
+    assert node_ids1.loc[43] == 257739973
+    assert_index_equal(x.index, node_ids1.index)
+
+    # test with max distance - this max distance is in decimal degrees
+    node_ids2 = sample_osm.get_node_ids(x, y, 0.0005)
+    assert 0 < len(node_ids2) < ssize
+    assert len(node_ids2) < len(node_ids1), "Max distance not working"
+    assert len(node_ids2) == 14
+
+    node_ids3 = sample_osm.get_node_ids(x, y, 0)
+    assert len(node_ids3) == 0
+
+
+def test_named_variable(sample_osm):
+    net = sample_osm
+
+    ssize = 50
+    net.set(random_node_ids(sample_osm, ssize), variable=random_data(ssize), name="foo")
+
+    net.aggregate(500, type="sum", decay="linear", name="foo")
+
+
+"""
+def test_plot(sample_osm):
+    net = sample_osm
+
+    ssize = 50
+    net.set(random_node_ids(sample_osm, ssize),
+            variable=random_data(ssize))
+
+    s = net.aggregate(500, type="sum", decay="linear")
+
+    sample_osm.plot(s)
+"""
+
+
+def test_shortest_path(sample_osm):
+
+    for i in range(10):
+        ids = random_connected_nodes(sample_osm, 2)
+        path = sample_osm.shortest_path(ids[0], ids[1])
+        assert path.size >= 2
+        assert ids[0] == path[0]
+        assert ids[1] == path[-1]
+
+
+def test_shortest_paths(sample_osm):
+
+    nodes = random_connected_nodes(sample_osm, 100)
+    vec_paths = sample_osm.shortest_paths(nodes[0:50], nodes[50:100])
+
+    for i in range(50):
+        path = sample_osm.shortest_path(nodes[i], nodes[i + 50])
+        assert np.array_equal(vec_paths[i], path)
+
+    # check mismatched OD lists
+    try:
+        vec_paths = sample_osm.shortest_paths(nodes[0:51], nodes[50:100])
+        assert 0
+    except ValueError as e:
+        pass
+
+
+def test_shortest_path_length(sample_osm):
+
+    for i in range(10):
+        ids = random_connected_nodes(sample_osm, 2)
+        len = sample_osm.shortest_path_length(ids[0], ids[1])
+        assert len >= 0
+
+
+def test_shortest_path_lengths(sample_osm):
+
+    nodes = random_connected_nodes(sample_osm, 100)
+    lens = sample_osm.shortest_path_lengths(nodes[0:50], nodes[50:100])
+    for len in lens:
+        assert len >= 0
+
+    # check mismatched OD lists
+    try:
+        lens = sample_osm.shortest_path_lengths(nodes[0:51], nodes[50:100])
+        assert 0
+    except ValueError as e:
+        pass
+
+
+def _unconnected_warnings(record):
+    # Select only the unconnected-pair warning, so that unrelated warnings
+    # raised by dependencies (e.g. pandas deprecations) don't affect the
+    # assertions below.
+    warned = [w for w in record if issubclass(w.category, UserWarning)]
+    return [w for w in warned if "not connected in the network" in str(w.message)]
+
+
+def test_shortest_path_lengths_unconnected_warning_is_bounded():
+    nodes_a = np.arange(20)
+    nodes_b = np.arange(100, 120)
+    lens = [pdna._UNCONNECTED_DISTANCE] * 20
+
+    with pytest.warns(UserWarning) as record:
+        pdna._warn_unconnected_shortest_paths(nodes_a, nodes_b, lens)
+
+    warned = _unconnected_warnings(record)
+    assert len(warned) == 1
+    message = str(warned[0].message)
+    assert "for 20 node pairs" in message
+    assert "First 10 pairs" in message
+    assert "(0, 100)" in message
+    assert "(9, 109)" in message
+    assert "(10, 110)" not in message
+    assert "(19, 119)" not in message
+
+
+@pytest.mark.parametrize("input_kind", ["list", "array", "series"])
+def test_shortest_path_lengths_warns_for_disconnected_public_path(input_kind):
+    node_x = pd.Series([0.0, 1.0, 10.0, 11.0], index=[10, 11, 20, 21])
+    node_y = pd.Series([0.0, 0.0, 0.0, 0.0], index=node_x.index)
+    edge_from = pd.Series([10, 20])
+    edge_to = pd.Series([11, 21])
+    edge_weights = pd.DataFrame({"weight": [1.0, 1.0]})
+    net = pdna.Network(node_x, node_y, edge_from, edge_to, edge_weights)
+
+    nodes_a, nodes_b = [10, 10, 20], [11, 20, 21]
+    if input_kind == "array":
+        nodes_a, nodes_b = np.array(nodes_a), np.array(nodes_b)
+    elif input_kind == "series":
+        nodes_a = pd.Series(nodes_a, index=[100, 200, 300])
+        nodes_b = pd.Series(nodes_b, index=[400, 500, 600])
+
+    with pytest.warns(UserWarning) as record:
+        call_line = inspect.currentframe().f_lineno + 1
+        lens = net.shortest_path_lengths(nodes_a, nodes_b)
+
+    assert isinstance(lens, list)
+    assert np.array_equal(lens, np.array([1.0, pdna._UNCONNECTED_DISTANCE, 1.0]))
+    warned = _unconnected_warnings(record)
+    assert len(warned) == 1
+    assert warned[0].filename == __file__
+    assert warned[0].lineno == call_line
+    message = str(warned[0].message)
+    assert "for 1 node pair not connected" in message
+    assert str(pdna._UNCONNECTED_DISTANCE) in message
+    assert "Pair (external node IDs): [(10, 20)]" in message
+
+
+@pytest.mark.parametrize("disconnected", [False, True])
+def test_shortest_path_warning_extra_memory_is_bounded(disconnected):
+    size = 200000
+    nodes_a, nodes_b = [10] * size, [20] * size
+    lens = [pdna._UNCONNECTED_DISTANCE if disconnected else 1.0] * size
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        tracemalloc.start()
+        try:
+            pdna._warn_unconnected_shortest_paths(nodes_a, nodes_b, lens)
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+    # Inputs already exist: even a single full-sized temporary exceeds this.
+    assert peak < 65536
+    assert len(_unconnected_warnings(record)) == int(disconnected)
+
+
+@pytest.mark.parametrize("size, positions", [
+    (0, []), (100, []), (100, [99]), (100, [0, 50, 99]),
+    (100, list(range(80, 100))),
+])
+def test_shortest_path_warning_sample_positions(size, positions):
+    nodes_a, nodes_b = list(range(size)), list(range(1000, 1000 + size))
+    lens = [1.0] * size
+    for i in positions:
+        lens[i] = pdna._UNCONNECTED_DISTANCE
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        pdna._warn_unconnected_shortest_paths(nodes_a, nodes_b, lens)
+    warned = _unconnected_warnings(record)
+    assert len(warned) == bool(positions)
+    if positions:
+        message = str(warned[0].message)
+        expected = [(nodes_a[i], nodes_b[i]) for i in positions[:10]]
+        if len(positions) > 10:
+            count_text, label = "%d node pairs" % len(positions), "First 10 pairs"
+        elif len(positions) == 1:
+            count_text, label = "1 node pair", "Pair"
+        else:
+            count_text, label = "%d node pairs" % len(positions), "Pairs"
+        assert "for %s not connected" % count_text in message
+        assert "%s (external node IDs): %s" % (label, expected) in message
+
+
+def test_pois(sample_osm):
+    net = sample_osm
+
+    ssize = 50
+    np.random.seed(0)
+    x, y = random_x_y(sample_osm, ssize)
+
+    with pytest.raises(AssertionError):
+        net.nearest_pois(2000, "restaurants", num_pois=10)
+
+    with pytest.raises(AssertionError):
+        net.nearest_pois(2000, "restaurants", num_pois=10)
+
+    # boundary condition
+    net.set_pois("restaurants", 2000, 10, x, y)
+
+    net.nearest_pois(2000, "restaurants", num_pois=10)
+
+    with pytest.raises(AssertionError):
+        net.nearest_pois(2000, "restaurants", num_pois=11)
+
+    net = sample_osm
+    x, y = random_x_y(sample_osm, 100)
+    x.index = ["lab%d" % i for i in range(len(x))]
+    y.index = x.index
+
+    net.set_pois("restaurants", 2000, 10, x, y)
+
+    d = net.nearest_pois(2000, "restaurants", num_pois=10, include_poi_ids=True)
+
+
+def test_pois2(second_sample_osm):
+    net2 = second_sample_osm
+
+    ssize = 50
+    np.random.seed(0)
+    x, y = random_x_y(second_sample_osm, ssize)
+
+    # make sure POI searches work on second graph
+    net2.set_pois("restaurants", 2000, 10, x, y)
+
+    net2.nearest_pois(2000, "restaurants", num_pois=10)
+
+
+def test_pois_pandana3(second_sample_osm):
+    net2 = second_sample_osm
+
+    ssize = 50
+    np.random.seed(0)
+    x, y = random_x_y(second_sample_osm, ssize)
+    pdna.reserve_num_graphs(1)
+
+    net2.init_pois(num_categories=1, max_dist=2000, max_pois=10)
+
+    # make sure POI searches work on second graph
+    net2.set_pois(category="restaurants", x_col=x, y_col=y)
+
+    net2.nearest_pois(2000, "restaurants", num_pois=10)
+
+
+def test_pois_pandana3_pos_args(second_sample_osm):
+    net2 = second_sample_osm
+
+    ssize = 50
+    np.random.seed(0)
+    x, y = random_x_y(second_sample_osm, ssize)
+    pdna.reserve_num_graphs(1)
+
+    net2.init_pois(1, 2000, 10)
+
+    # make sure poi searches work on second graph
+    net2.set_pois("restaurants", x, y)
+
+    net2.nearest_pois(2000, "restaurants", num_pois=10)
+
+
+# test items are sorted
+
+
+def test_sorted_pois(sample_osm):
+    net = sample_osm
+
+    ssize = 1000
+    x, y = random_x_y(sample_osm, ssize)
+
+    # set two categories
+    net.set_pois("restaurants", 2000, 10, x, y)
+
+    test = net.nearest_pois(2000, "restaurants", num_pois=10)
+
+    for ind, row in test.iterrows():
+        # make sure it's sorted
+        assert_allclose(row, row.sort_values())
+
+
+def test_repeat_pois(sample_osm):
+    net = sample_osm
+
+    def get_nearest_nodes(x, y, x2=None, y2=None, n=2):
+        coords_dict = [{"x": x, "y": y, "var": 1} for i in range(2)]
+        if x2 and y2:
+            coords_dict.append({"x": x2, "y": y2, "var": 1})
+        df = pd.DataFrame(coords_dict)
+        sample_osm.set_pois("restaurants", 2000, 10, df["x"], df["y"])
+        res = sample_osm.nearest_pois(
+            2000, "restaurants", num_pois=5, include_poi_ids=True
+        )
+        return res
+
+    # these are the min-max values of the network
+    # -122.3383688 -122.2962223
+    # 47.5950005 47.6150548
+
+    test1 = get_nearest_nodes(-122.31, 47.60)
+    test2 = get_nearest_nodes(-122.254116, 37.869361)
+    # Same coords as the first call, should yield same result
+    test3 = get_nearest_nodes(-122.31, 47.60)
+    assert test1.equals(test3)
+
+    test4 = get_nearest_nodes(-122.31, 47.60, -122.32, 47.61, n=3)
+    assert_allclose(
+        test4.loc[53114882], [7, 13, 13, 2000, 2000, 2, 0, 1, np.nan, np.nan]
+    )
+    assert_allclose(
+        test4.loc[53114880], [6, 14, 14, 2000, 2000, 2, 0, 1, np.nan, np.nan]
+    )
+    assert_allclose(
+        test4.loc[53227769],
+        [2000, 2000, 2000, 2000, 2000, np.nan, np.nan, np.nan, np.nan, np.nan],
+    )
+
+
+def test_nodes_in_range(sample_osm):
+    net = sample_osm
+
+    np.random.seed(0)
+    ssize = 10
+    x, y = random_x_y(net, 10)
+    snaps = net.get_node_ids(x, y)
+
+    test1 = net.nodes_in_range(snaps, 1)
+    net.precompute(10)
+    test5 = net.nodes_in_range(snaps, 5)
+    test11 = net.nodes_in_range(snaps, 11)
+    assert test1.weight.max() == 1
+    assert test5.weight.max() == 5
+    assert test11.weight.max() == 11
+
+    focus_id = snaps[0]
+    all_distances = net.shortest_path_lengths(
+        [focus_id] * len(net.node_ids), net.node_ids
+    )
+    all_distances = np.asarray(all_distances)
+    assert (all_distances <= 1).sum() == len(
+        test1.query("source == {}".format(focus_id))
+    )
+    assert (all_distances <= 5).sum() == len(
+        test5.query("source == {}".format(focus_id))
+    )
+    assert (all_distances <= 11).sum() == len(
+        test11.query("source == {}".format(focus_id))
+    )
