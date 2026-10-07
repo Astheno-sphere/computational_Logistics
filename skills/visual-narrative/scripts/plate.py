@@ -58,7 +58,8 @@ def figure(p: Plate):
     if p.code:
         fig.text(0.0625, 0.098, p.code, color=DIM, size=7.5, **_font(MONO))
     if p.sources:
-        fig.text(0.0625, 0.082, p.sources, color=DIM, size=6.5, va="top", linespacing=1.6, **_font(SANS))
+        src = "\n".join(textwrap.fill(line, 150) for line in p.sources.split("\n"))
+        fig.text(0.0625, 0.082, src, color=DIM, size=6.5, va="top", linespacing=1.6, **_font(SANS))
     fig.text(0.0625, 0.028, p.series, color=DIM, size=7, **_font(SANS))
     fig.text(0.9375, 0.028, p.number, color=ACCENT, size=7, weight="bold", ha="right", **_font(SANS))
     return fig, ax

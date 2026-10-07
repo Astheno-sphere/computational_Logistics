@@ -22,7 +22,8 @@ def test_agents_have_name_description_tools():
 
 def test_router_points_only_at_existing_skills():
     text = (ROOT / "skills/cl-foundations/SKILL.md").read_text()
-    for name in ("osm-network", "vrp-solve", "gh-datatree", "opt-model", "dcm-estimate", "abm-transport", "dmdu-explore"):
+    for name in ("osm-network", "vrp-solve", "gh-datatree", "opt-model", "dcm-estimate", "abm-transport", "dmdu-explore",
+                 "visual-narrative"):
         assert "`%s`" % name in text and (ROOT / "skills" / name / "SKILL.md").exists()
 
 

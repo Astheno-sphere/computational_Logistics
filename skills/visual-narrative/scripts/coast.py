@@ -1,6 +1,6 @@
 """Sea polygons from OSM coastline ways, which keep land on the left and sea on the right."""
 import numpy as np
-from shapely.geometry import LineString, Point, box
+from shapely.geometry import MultiLineString, Point, box
 from shapely.ops import linemerge, polygonize, unary_union
 
 
@@ -9,9 +9,11 @@ def sea_polygons(coast, bounds, probe=4.0):
     turned into island polygons). bounds: (x0, y0, x1, y1) of the area to fill.
     Returns (sea geometry, bounds actually filled)."""
     frame = box(*bounds)
-    lines = [g for g in coast.geometry if g.geom_type in ("LineString", "MultiLineString")]
+    lines = [p for g in coast.geometry if g.geom_type in ("LineString", "MultiLineString")
+             for p in (g.geoms if g.geom_type == "MultiLineString" else [g])]
     islands = [g for g in coast.geometry if g.geom_type in ("Polygon", "MultiPolygon")]
-    merged = linemerge(unary_union(lines)) if lines else None
+    # join ways end to start; directed, because direction is what says which side is sea
+    merged = linemerge(MultiLineString(lines), directed=True) if lines else None
     # an extract cut on a lat/lon box ends its coastline on a curved edge: shrink the metric frame
     # until every loose coastline end lies outside it, so the coast splits the frame cleanly
     parts = [] if merged is None else (list(merged.geoms) if merged.geom_type == "MultiLineString" else [merged])

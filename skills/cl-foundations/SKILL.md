@@ -13,7 +13,7 @@ description: Entry point for the Asthenosphere computational logistics plugin. R
 | Simulate behaviour and fleets to 2050 under policies | `abm-transport` (uses `dcm-estimate` output) |
 | Futures under deep uncertainty, robust policies, scenario discovery, backcasting | `dmdu-explore` (wraps `abm-transport`) |
 | Show ensembles and agents: SimWrapper dashboard, kepler.gl agent-flow map, Grasshopper pathway explorer | `viz-story` (runs `abm-transport`) |
-| One explainer plate for a concept or result ("in our style", carousel slide) | `visual-narrative` |
+| Any figure for people: a result, scenario or concept as a plate (house style; "in our style", carousel slide, thesis figure) | `visual-narrative` |
 | Depots, allocation, network flows, any LP/MIP, proving a route plan optimal | `opt-model` |
 | Grasshopper trees: wrong counts, pairing, nulls, paths; GhPython tree I/O | `gh-datatree`, agent `gh-datatree-debugger` |
 | Showing routes in Rhino/Grasshopper | `vrp-solve --paths` -> `cl_tree.routes_to_tree` -> polylines per `{vehicle}` |
