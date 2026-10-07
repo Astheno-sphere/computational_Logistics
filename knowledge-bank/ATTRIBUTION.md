@@ -9,13 +9,60 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/abhinav/Abhinavbwj__Urban-Design-Skills-Claude`: https://github.com/Abhinavbwj/Urban-Design-Skills-Claude.git, MIT, commit 666327b
 - `vendor/abhinav/Abhinavbwj__aec-knowledge-graph`: https://github.com/Abhinavbwj/aec-knowledge-graph.git, MIT, commit 00e796f
 - `vendor/claude-code-guides/FlorianBruniaux__claude-code-ultimate-guide`: https://github.com/FlorianBruniaux/claude-code-ultimate-guide.git, CC-BY-SA-4.0, commit f1b8cbe
-- `vendor/claude-code-guides/punkpeye__awesome-mcp-servers`: https://github.com/punkpeye/awesome-mcp-servers.git, MIT, commit 3c30195
+- `vendor/claude-skill-registries/GetBindu__awesome-claude-code-and-skills`: https://github.com/GetBindu/awesome-claude-code-and-skills.git, Apache-2.0, commit 5302371
+- `vendor/claude-skill-registries/JasonColapietro__suede-creator-skills`: https://github.com/JasonColapietro/suede-creator-skills.git, MIT, commit a9bf55e
+- `vendor/claude-skill-registries/VoltAgent__awesome-claude-code-subagents`: https://github.com/VoltAgent/awesome-claude-code-subagents.git, MIT, commit 721e973
+- `vendor/claude-skill-registries/agent37-platform__agent37-skills-collection`: https://github.com/agent37-platform/agent37-skills-collection.git, MIT, commit 56902ba
+- `vendor/claude-skill-registries/anthropics__claude-plugins-official`: https://github.com/anthropics/claude-plugins-official.git, Apache-2.0, commit d4226d0
+- `vendor/claude-skill-registries/davila7__claude-code-templates`: https://github.com/davila7/claude-code-templates.git, MIT, commit 46361e8
+- `vendor/claude-skill-registries/mhattingpete__claude-skills-marketplace`: https://github.com/mhattingpete/claude-skills-marketplace.git, Apache-2.0, commit b5b34bc
+- `vendor/claude-skill-registries/obra__superpowers`: https://github.com/obra/superpowers.git, MIT, commit 8ca22db
+- `vendor/claude-skill-registries/punkpeye__awesome-mcp-servers`: https://github.com/punkpeye/awesome-mcp-servers.git, MIT, commit 3c30195
+- `vendor/claude-skill-registries/wshobson__agents`: https://github.com/wshobson/agents.git, MIT, commit 46891e7
+- `vendor/computational-design/IfcOpenShell__IfcOpenShell`: https://github.com/IfcOpenShell/IfcOpenShell.git, MIXED:GPL+LGPL, commit 5ff15fb
+- `vendor/computational-design/compas-dev__compas`: https://github.com/compas-dev/compas.git, MIT, commit d114251
+- `vendor/computational-design/keplergl__kepler.gl`: https://github.com/keplergl/kepler.gl.git, MIT, commit e591395
+- `vendor/computational-design/ladybug-tools__honeybee-core`: https://github.com/ladybug-tools/honeybee-core.git, AGPL, commit 0261c07
+- `vendor/computational-design/ladybug-tools__ladybug`: https://github.com/ladybug-tools/ladybug.git, AGPL, commit 329a3b8
+- `vendor/computational-design/ladybug-tools__lbt-grasshopper`: https://github.com/ladybug-tools/lbt-grasshopper.git, AGPL, commit fe51025
 - `vendor/computational-design/speckleworks__SpeckleCore`: https://github.com/speckleworks/SpeckleCore.git, MIT, commit d29e36a
+- `vendor/computational-design/visgl__deck.gl`: https://github.com/visgl/deck.gl.git, MIT, commit b04c8f2
+- `vendor/frontier-model-tooling/anthropics__anthropic-quickstarts`: https://github.com/anthropics/anthropic-quickstarts.git, MIT, commit c474585
+- `vendor/frontier-model-tooling/anthropics__anthropic-sdk-python`: https://github.com/anthropics/anthropic-sdk-python.git, MIT, commit 18f2554
+- `vendor/frontier-model-tooling/anthropics__claude-agent-sdk-python`: https://github.com/anthropics/claude-agent-sdk-python.git, MIT, commit 23bb015
+- `vendor/frontier-model-tooling/anthropics__claude-code-action`: https://github.com/anthropics/claude-code-action.git, MIT, commit 5898584
+- `vendor/frontier-model-tooling/anthropics__claude-cookbooks`: https://github.com/anthropics/claude-cookbooks.git, MIT, commit d7265d6
+- `vendor/frontier-model-tooling/deepseek-ai__DeepSeek-V3`: https://github.com/deepseek-ai/DeepSeek-V3.git, MIT, commit 9b4e978
+- `vendor/frontier-model-tooling/ggml-org__llama.cpp`: https://github.com/ggml-org/llama.cpp.git, MIT, commit c479922
+- `vendor/frontier-model-tooling/google-gemini__cookbook`: https://github.com/google-gemini/cookbook.git, Apache-2.0, commit 79e2983
+- `vendor/frontier-model-tooling/huggingface__smolagents`: https://github.com/huggingface/smolagents.git, Apache-2.0, commit 96f33fa
+- `vendor/frontier-model-tooling/huggingface__transformers`: https://github.com/huggingface/transformers.git, Apache-2.0, commit e598fba
+- `vendor/frontier-model-tooling/langchain-ai__langgraph`: https://github.com/langchain-ai/langgraph.git, MIT, commit 39c523e
+- `vendor/frontier-model-tooling/microsoft__autogen`: https://github.com/microsoft/autogen.git, MIXED:CC-BY-4.0+MIT, commit 027ecf0
+- `vendor/frontier-model-tooling/modelcontextprotocol__inspector`: https://github.com/modelcontextprotocol/inspector.git, CC-BY-4.0, commit ae865a1
+- `vendor/frontier-model-tooling/modelcontextprotocol__typescript-sdk`: https://github.com/modelcontextprotocol/typescript-sdk.git, CC-BY-4.0, commit b022522
+- `vendor/frontier-model-tooling/ollama__ollama`: https://github.com/ollama/ollama.git, MIT, commit f864601
+- `vendor/frontier-model-tooling/openai__openai-agents-python`: https://github.com/openai/openai-agents-python.git, MIT, commit 911f106
+- `vendor/frontier-model-tooling/openai__openai-cookbook`: https://github.com/openai/openai-cookbook.git, MIT, commit 0eac144
+- `vendor/frontier-model-tooling/openai__openai-python`: https://github.com/openai/openai-python.git, Apache-2.0, commit 4e152cd
+- `vendor/frontier-model-tooling/vllm-project__vllm`: https://github.com/vllm-project/vllm.git, Apache-2.0, commit 8a26869
 - `vendor/geo-python/gboeing__osmnx`: https://github.com/gboeing/osmnx.git, MIT, commit 74e68ce
 - `vendor/geo-python/geopandas__geopandas`: https://github.com/geopandas/geopandas.git, BSD-3-Clause, commit cf7059f
 - `vendor/geo-python/networkx__networkx`: https://github.com/networkx/networkx.git, BSD-3-Clause, commit 6da4704
 - `vendor/geo-python/osmcode__pyosmium`: https://github.com/osmcode/pyosmium.git, BSD-2-Clause, commit c4f1ae4
 - `vendor/geo-python/pysal__pysal`: https://github.com/pysal/pysal.git, BSD-3-Clause, commit 00ac4c9
+- `vendor/logistics-benchmarks-solvers/ERGO-Code__HiGHS`: https://github.com/ERGO-Code/HiGHS.git, MIT, commit 73cac48
+- `vendor/logistics-benchmarks-solvers/Kuifje02__vrpy`: https://github.com/Kuifje02/vrpy.git, MIT, commit ff325cb
+- `vendor/logistics-benchmarks-solvers/N-Wouda__ALNS`: https://github.com/N-Wouda/ALNS.git, MIT, commit 5ef1fd1
+- `vendor/logistics-benchmarks-solvers/Pyomo__pyomo`: https://github.com/Pyomo/pyomo.git, BSD-3-Clause, commit b473cba
+- `vendor/logistics-benchmarks-solvers/TimefoldAI__timefold-quickstarts`: https://github.com/TimefoldAI/timefold-quickstarts.git, Apache-2.0, commit 76993a3
+- `vendor/logistics-benchmarks-solvers/TimefoldAI__timefold-solver`: https://github.com/TimefoldAI/timefold-solver.git, Apache-2.0, commit 9de70fc
+- `vendor/logistics-benchmarks-solvers/ai4co__rl4co`: https://github.com/ai4co/rl4co.git, MIT, commit dbd18e7
+- `vendor/logistics-benchmarks-solvers/ai4co__routefinder`: https://github.com/ai4co/routefinder.git, MIT, commit cc3ab07
+- `vendor/logistics-benchmarks-solvers/coin-or__pulp`: https://github.com/coin-or/pulp.git, MIT, commit 1e6e325
+- `vendor/logistics-benchmarks-solvers/scipopt__scip`: https://github.com/scipopt/scip.git, Apache-2.0, commit e2cc3b2
+- `vendor/logistics-benchmarks-solvers/vidalt__HGS-CVRP`: https://github.com/vidalt/HGS-CVRP.git, MIT, commit 1a92795
+- `vendor/logistics-benchmarks-solvers/wouterkool__attention-learn-to-route`: https://github.com/wouterkool/attention-learn-to-route.git, MIT, commit c9abf41
 - `vendor/logistics-solvers/VROOM-Project__vroom`: https://github.com/VROOM-Project/vroom.git, BSD-2-Clause, commit 07be776
 - `vendor/logistics-solvers/google__or-tools`: https://github.com/google/or-tools.git, Apache-2.0, commit 100f66e
 - `vendor/logistics-solvers/graphhopper__jsprit`: https://github.com/graphhopper/jsprit.git, Apache-2.0, commit 2a4ccbc
@@ -30,11 +77,46 @@ Each folder contains the upstream LICENSE/NOTICE files. Keep them with any copy 
 - `vendor/rhino-grasshopper-mcp/mcneel__rhino-developer-samples`: https://github.com/mcneel/rhino-developer-samples.git, MIT, commit 4863b4c
 - `vendor/rhino-grasshopper-mcp/mcneel__rhino3dm`: https://github.com/mcneel/rhino3dm.git, MIT, commit 7eee4d8
 - `vendor/rhino-grasshopper-mcp/veoery__GH_mcp_server`: https://github.com/veoery/GH_mcp_server.git, MIT, commit bd50b1a
+- `vendor/routing-engines/GIScience__openrouteservice`: https://github.com/GIScience/openrouteservice.git, MIXED:GPL+LGPL, commit d3d40a3
 - `vendor/routing-engines/Project-OSRM__osrm-backend`: https://github.com/Project-OSRM/osrm-backend.git, BSD-2-Clause, commit 8dc89cb
+- `vendor/routing-engines/gis-ops__routingpy`: https://github.com/gis-ops/routingpy.git, Apache-2.0, commit 756f985
 - `vendor/routing-engines/graphhopper__graphhopper`: https://github.com/graphhopper/graphhopper.git, Apache-2.0, commit bb42f6f
+- `vendor/routing-engines/opentripplanner__OpenTripPlanner`: https://github.com/opentripplanner/OpenTripPlanner.git, LGPL, commit 4d3613f
+- `vendor/routing-engines/pgRouting__pgrouting`: https://github.com/pgRouting/pgrouting.git, GPL, commit 3a37bea
 - `vendor/routing-engines/valhalla__valhalla`: https://github.com/valhalla/valhalla.git, MIT, commit f288329
+- `vendor/supply-chain/LarrySnyder__stockpyl`: https://github.com/LarrySnyder/stockpyl.git, MIT, commit 0bae176
+- `vendor/supply-chain/hubbs5__or-gym`: https://github.com/hubbs5/or-gym.git, MIT, commit 0b18d16
+- `vendor/supply-chain/projectmesa__mesa`: https://github.com/projectmesa/mesa.git, Apache-2.0, commit 0a17aa6
+- `vendor/supply-chain/projectmesa__mesa-geo`: https://github.com/projectmesa/mesa-geo.git, Apache-2.0, commit 79f010a
+- `vendor/urban-design-mcp/JotaDeRodriguez__Bonsai_mcp`: https://github.com/JotaDeRodriguez/Bonsai_mcp.git, MIT, commit 1d8478f
+- `vendor/urban-design-mcp/ahujasid__blender-mcp`: https://github.com/ahujasid/blender-mcp.git, MIT, commit 7a0373e
+- `vendor/urban-design-mcp/crystaldba__postgres-mcp`: https://github.com/crystaldba/postgres-mcp.git, MIT, commit 15c8e33
+- `vendor/urban-design-mcp/mapbox__mcp-server`: https://github.com/mapbox/mcp-server.git, MIT, commit 91a7f92
+- `vendor/urban-design-mcp/mcp-servers-for-revit__mcp-servers-for-revit`: https://github.com/mcp-servers-for-revit/mcp-servers-for-revit.git, MIT, commit 86cf705
+- `vendor/urban-design-mcp/neka-nat__freecad-mcp`: https://github.com/neka-nat/freecad-mcp.git, MIT, commit 8e14693
+- `vendor/urban-design-mcp/specklesystems__specklepy`: https://github.com/specklesystems/specklepy.git, Apache-2.0, commit 3854062
 - `vendor/urban-mobility/ActivitySim__activitysim`: https://github.com/ActivitySim/activitysim.git, BSD-3-Clause, commit e44be4d
+- `vendor/urban-mobility/UDST__pandana`: https://github.com/UDST/pandana.git, AGPL, commit e070217
 - `vendor/urban-mobility/UDST__urbansim`: https://github.com/UDST/urbansim.git, BSD-3-Clause, commit 1a9a68e
 - `vendor/urban-mobility/conveyal__r5`: https://github.com/conveyal/r5.git, MIT, commit 6f35542
+- `vendor/urban-mobility/eclipse-sumo__sumo`: https://github.com/eclipse-sumo/sumo.git, GPL, commit 6623f76
+- `vendor/urban-mobility/movingpandas__movingpandas`: https://github.com/movingpandas/movingpandas.git, BSD-3-Clause, commit b321da5
+- `vendor/urban-mobility/mrcagney__gtfs_kit`: https://github.com/mrcagney/gtfs_kit.git, MIT, commit 107450b
+- `vendor/urban-mobility/overturemaps__overturemaps-py`: https://github.com/overturemaps/overturemaps-py.git, MIT, commit 53c163c
+- `vendor/urban-mobility/pysal__momepy`: https://github.com/pysal/momepy.git, BSD-3-Clause, commit 1bc85a8
+- `vendor/urban-mobility/scikit-mobility__scikit-mobility`: https://github.com/scikit-mobility/scikit-mobility.git, BSD-3-Clause, commit 9433d05
+- `vendor/urban-mobility/uber__h3-py`: https://github.com/uber/h3-py.git, Apache-2.0, commit c38c1e4
 
 Share-alike (CC-BY-SA-4.0) folders: credit the author and release any changes you make to that material under the same license. Do not merge it into differently licensed code.
+
+## Copyleft sources (verbatim, isolated; see `_KB_COPYLEFT.txt` in each)
+- `vendor/claude-code-guides/FlorianBruniaux__claude-code-ultimate-guide`: CC-BY-SA-4.0
+- `vendor/computational-design/IfcOpenShell__IfcOpenShell`: MIXED:GPL+LGPL
+- `vendor/computational-design/ladybug-tools__honeybee-core`: AGPL
+- `vendor/computational-design/ladybug-tools__ladybug`: AGPL
+- `vendor/computational-design/ladybug-tools__lbt-grasshopper`: AGPL
+- `vendor/routing-engines/GIScience__openrouteservice`: MIXED:GPL+LGPL
+- `vendor/routing-engines/opentripplanner__OpenTripPlanner`: LGPL
+- `vendor/routing-engines/pgRouting__pgrouting`: GPL
+- `vendor/urban-mobility/UDST__pandana`: AGPL
+- `vendor/urban-mobility/eclipse-sumo__sumo`: GPL
