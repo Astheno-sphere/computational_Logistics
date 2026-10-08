@@ -80,3 +80,26 @@ def test_energy_route_is_optimal_against_bellman_ford_on_all_pairs():
     dist = nx.single_source_bellman_ford_path_length(H, src, weight=on._min_weight("energy_kwh"))
     for t in list(H.nodes)[1:12]:
         assert on.route(H, src, t, "energy_kwh")["energy_kwh"] == pytest.approx(dist[t], abs=1e-6)
+
+
+def test_gdal_export_converts_to_a_routable_graph(tmp_path):
+    # an ogr2ogr-style OSM export: two roads sharing a junction vertex, tags partly in other_tags,
+    # 100+ points marking the export box, and a long ferry line far outside it that must be dropped
+    import json
+    import gdal_osm_to_xml as g
+    feats = [{"type": "Feature", "properties": {"highway": "residential", "other_tags": '"oneway"=>"no","maxspeed"=>"30"'},
+              "geometry": {"type": "LineString", "coordinates": [[7.000, 63.000], [7.002, 63.000]]}},
+             {"type": "Feature", "properties": {"highway": "residential", "other_tags": None},
+              "geometry": {"type": "LineString", "coordinates": [[7.002, 63.000], [7.002, 63.002]]}},
+             {"type": "Feature", "properties": {"highway": None, "other_tags": '"route"=>"ferry"'},
+              "geometry": {"type": "LineString", "coordinates": [[10.0, 63.4], [10.1, 63.5]]}}]
+    feats += [{"type": "Feature", "properties": {"amenity": "bench"},
+               "geometry": {"type": "Point", "coordinates": [7.0 + 0.002 * i / 120, 63.0 + 0.002 * i / 120]}}
+              for i in range(121)]
+    src = tmp_path / "export.geojsonl"
+    src.write_text("\n".join(json.dumps(f) for f in feats))
+    out = g.convert(str(src), str(tmp_path / "export.osm"))
+    assert out["ways"] == 2                       # the far ferry is dropped
+    G = on.load(osm=str(tmp_path / "export.osm"))
+    assert G.number_of_nodes() == 3               # the shared vertex became one junction
+    assert any(d.get("maxspeed") == "30" for *_, d in G.edges(data=True))   # other_tags parsed
