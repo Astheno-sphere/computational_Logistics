@@ -1,23 +1,101 @@
-# Asthenosphere
+# Robust and acceptable pathways to low-emission regional mobility
 
-**An open framework and toolkit for computational transport and logistics planning: skills, agents,
-models and protocols assembled into one tested system, from travel behaviour to scenario analysis to
-design and visual storytelling.**
+[![tests](https://github.com/Astheno-sphere/computational_Logistics/actions/workflows/tests.yml/badge.svg)](https://github.com/Astheno-sphere/computational_Logistics/actions/workflows/tests.yml)
 
-**Author:** Arshad Akhtar Abbasia · Research portfolio · Test region: Molde and Kristiansund, Norway
+**Arshad Akhtar Abbasia** · Reproducible research prototype for a proposed PhD in Logistics at Molde
+University College, within TRANSPLAN (Norwegian Centre for Sustainable Transport Planning) ·
+Case studies: Molde and Kristiansund, Norway
 
-> The asthenosphere is the slowly flowing layer beneath the Earth's rigid crust. Cities have one too:
-> the flows of people, vehicles and goods beneath their visible form. This framework models that layer
-> and makes it visible.
+> **Research question.** How much confidence does a 2050 transport pathway deserve when the behaviour
+> behind it is estimated with error and the future itself is deeply uncertain, and which policies stay
+> effective, acceptable and affordable anyway?
 
-**Browse:** [Plates](#molde-in-four-plates) · [Research atlas](https://astheno-sphere.github.io/computational_Logistics/) (interactive diagrams) ·
-[System](#the-system-and-the-thesis) · [Agent tiers](#hybrid-agent-tiers) · [Theory funnel](#theory-funnel) ·
-[God's-eye view](#gods-eye-view) · [Toolkit](#toolkit) · [Framework](docs/FRAMEWORK.md) · [References](docs/REFERENCES.md) ·
-[Knowledge bank](knowledge-bank/README.md)
+Norway won the showroom: in 2025 almost every new car sold was electric. Most cars on the road still
+burn fuel, the fleet renews slowly, and the tax base that came from fuel is draining away. The next
+decisions are about road pricing, fleet turnover and plans that must reach 2050 targets nobody can
+forecast. This repository is the engine I am building for that question, and it already runs end to end.
+
+**Read:** [Proposal portfolio](https://astheno-sphere.github.io/computational_Logistics/proposal/standalone.html) ·
+[How it works](#the-engine) · [What runs, what is planned](#status) · [Reproduce](#reproduce) ·
+[Tools and gaps](#tools-and-gaps) · [Limitations](#limitations) · [Supporting toolkit](#supporting-toolkit)
+
+## The engine
+
+![Preferences go in, a timed plan comes out: the chain from one trip to a 2050 verdict](docs/figures/loop.png)
+
+Estimated travel preferences (a discrete choice model) drive commuters in an agent-based model. The
+model runs across many futures and many policy packages, and each package is judged by the share of
+futures in which it reaches the 2050 target. Packages must also be acceptable and affordable. The
+successful futures are read backwards into milestones and a 2030 signpost. This extends the coupling of
+choice models and agent models used for policy acceptability in urban freight (Le Pira, Marcucci,
+Gatta et al., 2017) to long-horizon passenger policy under deep uncertainty, as an exploratory layer
+alongside the national models NTM6 and RTM.
+
+| What the prototype shows | Figure |
+|---|---|
+| In 19 of 60 futures no package works; the most robust package works in every other one | [data tree](docs/figures/data-tree.png) |
+| Robustness has a price: the best self-financing package gives up 4 of 60 futures | [price of robustness](docs/figures/price-of-robustness.png) |
+| Long-lived cars and little telework sink every package, and a 2030 reading flags 17 of 19 failures | [failure box and signpost](docs/figures/failure-and-signpost.png) |
+
+These numbers come from synthetic behaviour and illustrative parameters. They show that the chain
+works, not what will happen in Norway.
+
+## Status
+
+| Article | Question | Module | Today | What the PhD adds |
+|---|---|---|---|---|
+| A1 | How do people trade off time, cost and vehicle technology, and which packages would they accept? | [`dcm-estimate`](skills/dcm-estimate/SKILL.md) | runs, tested on synthetic choices (recovery test: all parameters within one standard error) | stated-choice survey in both towns, mixed and latent-class logit, an estimated acceptance model |
+| A2 | Can estimated behaviour drive an agent model that stays consistent and can be validated? | [`abm-transport`](skills/abm-transport/SKILL.md) | runs, tested; fleet turnover, EV diffusion, welfare per agent, public money | calibration to RVU and SSB, car vintages per household, Kristiansund transfer test, a 2010 to 2025 historical check |
+| A3 | Which packages stay robust, acceptable and affordable, and what makes them fail? | [`dmdu-explore`](skills/dmdu-explore/SKILL.md) | runs, tested; 60 futures × 25 packages, robustness, PRIM, backcast milestones | about 10⁴ futures, regret and Sobol, consistent futures, 2026 policy instruments, freight transfer |
+| A4 (optional) | What must hold by 2030, and which signposts warn early? | `dmdu-explore.backcast` | milestones and one signpost computed | adaptive pathways and a workshop with planners |
+| Case | Where do networks concentrate travel? | [`osm-network`](skills/osm-network/SKILL.md), [`vrp-solve`](skills/vrp-solve/SKILL.md), [`visual-narrative`](skills/visual-narrative/SKILL.md) | real OpenStreetMap networks for both towns, four plates | agents routed on the network |
+
+## Reproduce
+
+```bash
+pip install -r requirements.txt        # exact versions used: requirements-lock.txt
+python -m pytest -q tests              # the suite CI runs on every push
+python examples/transplan_study.py     # choice model, ensemble, robustness, backcast
+python docs/proposal/make_data.py      # re-runs the 1,500 runs behind the proposal figures
+python docs/proposal/make_towns.py     # route shares on both OSM networks (extracts: data/osm/README.md)
+python docs/proposal/build.py && python docs/proposal/build_standalone.py
+```
+
+## Tools and gaps
+
+| Have | Missing, and when it comes |
+|---|---|
+| Discrete choice estimation with two independent estimators | Mixed and latent-class logit, survey design (A1) |
+| Agent model with EV diffusion, fleet turnover, welfare and public money | Car vintages per household, distribution by zone and income (A2) |
+| Ensembles, robustness, PRIM, backcast milestones | Regret, Sobol, consistent futures, surrogate model (A3) |
+| Real road networks, route shares, vehicle routing, facility location | Agents routed on the network (A2) |
+| Figures rebuilt from code, 87 tests in CI | A versioned data release with a DOI |
+
+## Limitations
+
+- All behaviour is synthetic until the A1 survey; parameters are illustrative.
+- The policy levers in the prototype include instruments Norway is now phasing out (EV purchase support,
+  EV toll exemption). The PhD tests the 2026 instruments: distance-based road charging, toll rings that
+  EVs pay, public transport frequency, cycling infrastructure and fleet renewal.
+- Agents carry trip lengths, not routes; congestion is zonal.
+- Sixty futures demonstrate the method; they are not an analysis.
 
 ---
 
-## Molde in four plates
+## Supporting toolkit
+
+The research engine sits inside a wider toolkit I built for computational transport and logistics work.
+It shows how I work; it is not part of the research argument.
+
+**Asthenosphere.** The asthenosphere is the slowly flowing layer beneath the Earth's rigid crust. Cities
+have one too: the flows of people, vehicles and goods beneath their visible form.
+
+**Browse:** [Research atlas](https://astheno-sphere.github.io/computational_Logistics/) ·
+[System](#the-system-and-the-thesis) · [Agent tiers](#hybrid-agent-tiers) · [Theory funnel](#theory-funnel) ·
+[Toolkit](#toolkit) · [Framework](docs/FRAMEWORK.md) · [References](docs/REFERENCES.md) ·
+[Knowledge bank](knowledge-bank/README.md) (index only; the sources are rebuilt locally)
+
+### Molde in four plates
 
 Every result in this repository is told the same way: one idea per plate, the method written as
 something you could do, one highlighted instance of it, and every number computed by the script that
@@ -46,7 +124,7 @@ routing skills ([gallery and how to rebuild](docs/plates/README.md)).
 
 ---
 
-## What this is
+### What this is
 
 Asthenosphere assembles the pieces a transport and logistics planner needs into one coherent toolkit:
 
@@ -64,7 +142,7 @@ Asthenosphere assembles the pieces a transport and logistics planner needs into 
 It works for any city or region: networks are built from OpenStreetMap by place name or file, in the
 local projected coordinate system. Molde and Kristiansund are the test case.
 
-## The system and the thesis
+### The system and the thesis
 
 <p align="center"><img src="docs/diagrams/abm-thesis-system.png" alt="ABM system and thesis flow: five lanes (evidence, behaviour, simulation, decision under deep uncertainty, story and interfaces) across four thesis articles, each component tagged in repo, in bank or proposed" width="900"></p>
 
@@ -77,7 +155,7 @@ JSON checked by [Archify](https://github.com/tt-a1i/archify); anyone can edit it
 checks ([how](docs/diagrams/README.md)). The interactive version (pan, zoom, trace paths) is on the
 [research atlas](https://astheno-sphere.github.io/computational_Logistics/).
 
-## Hybrid agent tiers
+### Hybrid agent tiers
 
 <p align="center"><img src="docs/diagrams/agent-tiers.png" alt="Three agent tiers (estimated logit, decision models, LLM agents) feeding a benchmark harness and the agent-based model" width="900"></p>
 
@@ -87,7 +165,7 @@ the logit. Tier 3 LLM agents (AgentSociety, Concordia, OASIS, GATSim, LLM agents
 probe how behaviour adapts over years. All of these repositories are cloned into the knowledge bank.
 [Interactive version](docs/diagrams/workflow-agent-tiers-20261007/agent-tiers.html).
 
-## Theory funnel
+### Theory funnel
 
 <p align="center"><img src="docs/diagrams/theory-funnel.png" alt="Theory funnel: paradigm, deep uncertainty, behaviour, simulation and frontier theories feeding articles A1 to A4" width="900"></p>
 
@@ -96,7 +174,7 @@ random utility and new-mobility research (Tirachini and co-authors on crowding, 
 automated transit), agent-based simulation, and the LLM frontier, to the four articles. Entries with
 what each gives the thesis: [`docs/THEORY.md`](docs/THEORY.md); BibTeX: [`docs/references.bib`](docs/references.bib).
 
-## God's-eye view
+### God's-eye view
 
 <p align="center"><img src="docs/story/kepler/preview.png" alt="kepler.gl map: one arc per simulated commuter around Molde and Kristiansund, coloured by car, bus or bike" width="900"></p>
 
@@ -108,7 +186,7 @@ One ensemble, three views, generated by [`viz-story`](skills/viz-story/SKILL.md)
 | SimWrapper dashboard: CO2 pathway bands per package, robustness, mode shares, futures | modellers | [simwrapper.app](https://simwrapper.app/github/Astheno-sphere/computational_Logistics/docs/story/simwrapper) · [files](docs/story/simwrapper) |
 | Grasshopper pathway explorer: pathways as a `{future}` data tree through Hops, a slider per future | planners, designers | [script](skills/viz-story/grasshopper/pathway_explorer.py), Hops `/cl/pathways` |
 
-## Toolchain and protocols
+### Toolchain and protocols
 
 <p align="center"><img src="docs/figures/toolchain.svg" alt="Toolchain: agents and harnesses, shared core, design, GIS and storytelling, with the protocols between them" width="900"></p>
 
@@ -121,7 +199,7 @@ One ensemble, three views, generated by [`viz-story`](skills/viz-story/SKILL.md)
 | Files: GraphML, GeoJSON, GeoTIFF, CSV, LP/MPS/NL | core ↔ GIS, solvers, other tools | GraphML and solver formats built; GIS export planned |
 | CI (GitHub Actions) | every push ↔ test suite | built |
 
-## Toolkit
+### Toolkit
 
 | Layer | Skill / component | What it gives you | Status |
 |---|---|---|---|
@@ -137,7 +215,7 @@ One ensemble, three views, generated by [`viz-story`](skills/viz-story/SKILL.md)
 | Interfaces | [`servers/`](servers/) | MCP server and Hops app over a shared core | tested |
 | Knowledge | [`knowledge-bank/`](knowledge-bank/README.md) | Vendored open-source code and books with licenses, searchable catalog, sync and harvest tools | curated |
 
-## Design and storytelling toolkit
+### Design and storytelling toolkit
 
 Computational design practice tells its stories through Rhino, Grasshopper and their plugins. The open
 AEC skill collections by [Abhinav Bhardwaj](https://github.com/Abhinavbwj) rely on the tools below
@@ -161,7 +239,7 @@ results to the same tools so that a robust policy pathway becomes a map, a model
 | Mapbox, kepler.gl, deck.gl | interactive maps for presentation | 7, 4 | yes |
 | depthmapX | space syntax | 4 | link only (no license file) |
 
-## Sample outputs
+### Sample outputs
 
 From the demonstration study (`python examples/transplan_study.py`; synthetic data, illustrative
 parameters). These show what the toolkit produces, not findings about Molde.
@@ -176,7 +254,7 @@ In the sample, no policy meets an 80% cut in commute CO₂ by 2050 in 7% of 60 f
 package (pricing, public transport, cycling, EV support) meets it in 68%, and backcasting implies
 milestones of about 58% of 2025 emissions by 2030, 36% by 2035 and 26% by 2040.
 
-## Quick start
+### Quick start
 
 ```bash
 pip install -r requirements.txt
@@ -188,7 +266,7 @@ python examples/routing_study.py            # terrain-aware routing and vehicle 
 python skills/viz-story/scripts/story.py    # SimWrapper dashboard, kepler.gl map, Grasshopper tree
 ```
 
-## Research direction
+### Research direction
 
 The framework is built for scenario-based transport planning under deep uncertainty: estimated
 behaviour driving agent-based models, explored across futures, with backcasting from 2050 targets.
@@ -205,7 +283,7 @@ Suggested reading order for reviewers:
 Supporting: [`docs/CHECKLIST.md`](docs/CHECKLIST.md) (what to absorb next) and
 [`docs/CLAIMS.md`](docs/CLAIMS.md) (how claims are sourced).
 
-## Limitations
+### Toolkit limitations
 
 - Demonstration data are synthetic; real data (national travel survey, SSB, NVDB, Entur, Kartverket)
   are the next step.

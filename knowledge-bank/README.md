@@ -1,11 +1,11 @@
 # Knowledge bank
 
-Central research store for Abhinav-level computational design and computational
+Central research store for computational design and computational
 logistics: skills, plugins, MCP servers, solvers, routing engines and guides,
 pulled from open-source repositories and arranged so nothing collides.
 
 - `sources.yaml`: the only input. One entry per upstream repo.
-- `vendor/<category>/<owner>__<repo>/`: verbatim snapshot, no git history.
+- `vendor/<category>/<owner>__<repo>/`: verbatim snapshot, no git history. **Not committed** (about 3 GB of other people's code): rebuild it with `python3 tools/kb_sync.py`, which reads `sources.yaml` and applies the license gate. `MANIFEST.json` records the commit and license of every source.
 - `catalog/`: the assembled view: every skill, agent, command, plugin and MCP server, by domain, with interlinks.
 - `ROADMAP.md`: what we have, what we missed, what comes next.
 - `MANIFEST.json`: per source: license, commit, status, files, bytes, what was skipped.

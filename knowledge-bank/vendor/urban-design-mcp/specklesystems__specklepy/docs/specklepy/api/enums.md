@@ -1,1 +1,0 @@
-::: specklepy.api.enums.ProjectVisibility

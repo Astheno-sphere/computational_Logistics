@@ -1,1 +1,0 @@
-// skip for now. Much of this functionality can be wrapping into a single ObjRef class (CRhinoObjRef wrapper)

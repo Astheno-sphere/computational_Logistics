@@ -1,7 +1,0 @@
-package org.eqasim.core.simulation.vdf.travel_time.function;
-
-import org.matsim.api.core.v01.network.Link;
-
-public interface VolumeDelayFunction {
-	double calculateTravelTime(double time, double flow, double capacity, Link link);
-}
