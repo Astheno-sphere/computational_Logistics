@@ -1,0 +1,324 @@
+<title>The Path to 2050</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* layout: one reading column of prose, plates break wider; single dark theme in the line-art plate grammar */
+:root{
+  --bg:#2f1519; --plate:#341a1e; --cream:#EFE3CC; --body:#D9CCB6; --dim:#A8958A; --faint:rgba(239,227,204,.16);
+  --accent:#D9734E; --mauve:rgba(239,227,204,.07);
+  --sans:Roboto,system-ui,sans-serif; --mono:"Roboto Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--body);font-family:var(--sans);font-weight:300;-webkit-font-smoothing:antialiased}
+.doc{max-width:1060px;margin:0 auto;padding-inline:20px;padding-block:56px 110px}
+.col{max-width:700px}
+.kick{font-style:italic;font-weight:300;color:var(--dim);font-size:16px}
+header{padding-bottom:34px;border-bottom:1px solid var(--faint)}
+h1{font-weight:900;color:var(--cream);font-size:clamp(30px,4.6vw,48px);line-height:1.08;letter-spacing:-.01em;margin:14px 0 18px;max-width:900px;text-wrap:balance}
+.by{color:var(--dim);font-size:14.5px;line-height:1.7}
+.by b{color:var(--cream);font-weight:500}
+.by a{color:var(--cream)}
+h2{font-weight:900;color:var(--cream);font-size:24px;letter-spacing:.01em;text-transform:uppercase;margin:70px 0 4px}
+h2 small{display:block;font-weight:300;font-style:italic;text-transform:none;letter-spacing:0;color:var(--dim);font-size:16px;margin-bottom:6px}
+h3{color:var(--cream);font-weight:700;font-size:17px;margin:28px 0 6px}
+p,li{font-size:17px;line-height:1.72}
+p strong,li strong{color:var(--cream);font-weight:500}
+sup{font-size:11px;color:var(--accent)}
+.lead{font-size:20px;line-height:1.6;color:var(--cream);font-weight:300}
+.plate{background:var(--plate);margin:44px 0 18px;padding:34px clamp(18px,4vw,48px) 30px;max-width:980px}
+.plate .pk{font-style:italic;color:var(--dim);font-size:17px;margin-bottom:8px}
+.plate svg{width:100%;height:auto;display:block}
+.plate hr{border:0;border-top:1px solid var(--faint);margin:22px 0 16px}
+.plate .pt{font-weight:900;color:var(--cream);font-size:clamp(24px,3.4vw,34px);letter-spacing:.005em;margin:0 0 8px;text-transform:uppercase}
+.plate .ps{color:var(--body);font-size:17px;line-height:1.6;max-width:760px;margin:0}
+.plate .src{font-size:12.5px;color:var(--dim);margin-top:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--faint);border:1px solid var(--faint);margin:22px 0}
+.cards div{background:var(--bg);padding:18px 20px;min-width:0}
+.cards .n{font-family:var(--mono);color:var(--accent);font-size:12px;letter-spacing:.1em}
+.cards h4{color:var(--cream);font-size:16.5px;font-weight:700;margin:6px 0 6px;line-height:1.35}
+.cards p{font-size:15px;line-height:1.6;margin:0}
+.cards .near{font-size:13px;color:var(--dim);margin-top:8px}
+.art{border-top:1px solid var(--faint);padding:20px 0 4px}
+.art .tag{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.06em}
+.art h3{margin:4px 0 6px;font-size:19px}
+.art .q{color:var(--cream);font-size:17.5px;font-style:italic;margin:4px 0 10px}
+.art p b{color:var(--cream);font-weight:500}
+.tbl{overflow-x:auto;margin:18px 0}
+table{border-collapse:collapse;width:100%;min-width:620px}
+th{text-align:left;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:500;border-bottom:1px solid var(--faint);padding:8px 12px 8px 0}
+td{font-size:15px;line-height:1.55;color:var(--body);border-bottom:1px solid var(--faint);padding:10px 12px 10px 0;vertical-align:top}
+td:first-child{color:var(--cream);font-weight:500}
+.close{font-size:22px;line-height:1.5;color:var(--cream);font-weight:300;border-left:2px solid var(--accent);padding-left:22px;margin:40px 0;max-width:760px}
+.refs{margin-top:70px;border-top:1px solid var(--faint);padding-top:18px}
+.refs ol{padding-left:22px}
+.refs li{font-size:13px;line-height:1.55;color:var(--dim);margin:2px 0}
+.refs i{color:var(--body)}
+a{color:var(--cream)}
+svg text{font-family:Roboto,sans-serif}
+@media(max-width:600px){p,li{font-size:16px}.lead{font-size:18px}}
+</style>
+
+<div class="doc">
+<header>
+  <div class="kick">phd proposal · transport modelling for sustainability transitions · molde university college · transplan</div>
+  <h1>The path, not the end state: household fleet simulation, estimated behaviour and exploratory backcasting for robust and acceptable low-emission transport</h1>
+  <div class="by"><b>Arshad Akhtar Abbasia</b> · PhD in Logistics, Molde University College · TRANSPLAN research areas 1 to 3<br>Case studies: Molde and Kristiansund, Møre og Romsdal · working prototype: <a href="https://github.com/Astheno-sphere/computational_Logistics">github.com/Astheno-sphere/computational_Logistics</a></div>
+</header>
+
+<h2><small>why now</small>1 · The road, not the destination</h2>
+<p class="lead col">Norway won the showroom. The fleet, the tax base and the politics have not caught up.</p>
+<div class="col">
+<p>In 2025, 95.9% of new passenger cars sold in Norway were fully electric<sup>1</sup>, yet most cars on the road still burn fuel, and a car stays in the fleet for close to two decades. The fuel tax that financed roads is eroding. The 2027 budget proposes cutting the VAT exemption for electric cars to NOK 150,000, and the distance-based road charge meant to replace fuel taxes has stalled between the state and the municipalities<sup>2</sup>.</p>
+<p>The state has asked for better methods. The National Transport Plan 2025 to 2036 commits to improving analytical methods so that the next plan can steer toward the 2050 low-emission society<sup>3</sup>, and the Ministry’s methods assignment admits that today’s models suit continued policy but are much less suited to showing what deep cuts require<sup>4</sup>. TRANSPLAN was created to answer this, starting from the 2050 goals and working backwards<sup>5</sup>.</p>
+<p>TØI’s own review of models for backcasting names the limitation in one line: RTM and NTM6 compute partial equilibria but “say nothing about the path to a new equilibrium”<sup>6</sup>. <strong>Backcasting is a path.</strong> That path runs through households: the car each one owns, the year it is replaced, the trips it makes and the charges it will accept. My PhD builds the engine that gives TRANSPLAN that path, built from people’s estimated preferences, and tests whether the plans built on it survive the futures nobody can forecast.</p>
+</div>
+
+<figure class="plate">
+  <div class="pk">the stock problem</div>
+  <svg id="p1" viewBox="0 0 1000 470" role="img" aria-label="Two grids of 100 cars: 96 electric among new cars sold, about 30 among cars on the road"></svg>
+  <hr>
+  <div class="pt">The fleet lags the showroom</div>
+  <p class="ps">each car is one in a hundred. almost every new car sold in 2025 was electric; on the road, about seven in ten still burn fuel. the gap closes only as old cars leave the fleet, so what matters for 2035 is how fast households replace the cars they already own.</p>
+  <div class="src">OFV registrations 2025; Norwegian EV Association fleet estimate.</div>
+</figure>
+
+<h2><small>what is new</small>2 · Five contributions</h2>
+<p class="col">Each claim is placed against the closest work found in the literature reviewed for this proposal.</p>
+<div class="cards">
+  <div><div class="n">C1 · THE PATH</div><h4>A household engine that shows how Norway gets from today to 2050, year by year</h4><p>Agents carry each household’s car, its age, its replacement moment, its mode choices and its response to price. Norway’s fleet model BIG follows vintages with an estimated choice model, but in aggregate and for fixed scenarios<sup>7</sup>.</p><div class="near">nearest: Fridstrøm et al. 2016; Deuten et al. 2020</div></div>
+  <div><div class="n">C2 · ACCEPTANCE THAT MOVES</div><h4>Acceptance estimated from choice data, carried by agents, changing as a charge is lived, and used as a condition on which plans count</h4><p>TØI’s national experiment found 70 to 80% support for moderate distance charges with earmarked revenue, with opposition among drivers with few alternatives and, partly, rural residents<sup>8</sup>. Support also rises after a charge is introduced<sup>9</sup>. Le Pira, Marcucci and Gatta built agents that carry acceptance for urban freight<sup>10</sup>; I carry it into passenger policy and into the robust search itself.</p><div class="near">nearest: Lempert et al. 2020; Kasprzyk et al. 2013</div></div>
+  <div><div class="n">C3 · HOW MUCH WE DO NOT KNOW</div><h4>2050 uncertainty split into three parts, and a test of whether the winning policy survives each</h4><p>Error in the estimated preferences, chance inside the simulation, and the deep uncertainty of the future are separated over 25 years. Petrik and colleagues propagated estimated parameters through a one-day activity model; parameter uncertainty exceeded sampling noise, with no long horizon and no policy choice<sup>11</sup>.</p><div class="near">nearest: Petrik et al. 2016, 2020</div></div>
+  <div><div class="n">C4 · WARNINGS WITH A HIT RATE</div><h4>Backcast pathways stress-tested across thousands of futures, with signposts whose lead time and false-alarm rate are measured</h4><p>Signpost detection has been evaluated only in water management<sup>12,13</sup>; transport backcasting remains national and deterministic<sup>14</sup>. Each signpost gets years of warning, false alarms and missed failures, and each pathway a measure of how often it must change.</p><div class="near">nearest: Raso et al. 2019; Haasnoot et al. 2018</div></div>
+  <div><div class="n">C5 · TESTED ON HISTORY</div><h4>The engine is checked against Norway’s 2010 to 2025 electric transition before it is trusted with 2050</h4><p>EV forecasts often fail against what happened<sup>15</sup>. Norway’s registration record allows the engine to be run from 2010 information and scored against the observed fleet.</p><div class="near">nearest: Deuten et al. 2020 (system dynamics, 2010 to 2017)</div></div>
+</div>
+
+<h2><small>where</small>3 · Two towns, one street, one bridge</h2>
+<div class="col">
+<p>Molde and Kristiansund are <strong>case studies, not a national sample</strong>. They are car-dependent towns where national surveys find road charges hardest to accept, in a county whose 2025 climate accounts are not on track<sup>16</sup>, and where the decisive instruments (tolls, bus service, parking, cycling networks) are set locally. Their networks concentrate travel in ways that make policy effects visible. Molde is the main case, where preferences are estimated and the engine calibrated. Kristiansund is the transfer case: the Molde model is applied without re-estimation, which turns the transferability of preferences from an assumption into a measurement. Inputs come from national sources and outputs are reported against national targets, so the method carries to other regions.</p>
+</div>
+
+<figure class="plate">
+  <div class="pk">where the network concentrates people</div>
+  <svg id="p3" viewBox="0 0 1000 640" role="img" aria-label="Molde street network and buildings with Øvre veg highlighted, Kristiansund inset with Gomabrua"></svg>
+  <hr>
+  <div class="pt">One street, one bridge</div>
+  <p class="ps">route every pair of junctions by its fastest path. in molde, 17.5% of all those routes use øvre veg; in kristiansund, a quarter cross gomabrua. a charge, a bus lane or a closure on these links changes travel for most of the town at once.</p>
+  <div class="src">OpenStreetMap; edge betweenness on drive time; 2,772 and 3,066 junctions. © OpenStreetMap contributors (ODbL).</div>
+</figure>
+
+<h2><small>how</small>4 · One engine, three articles</h2>
+<div class="col"><p>The engine has four layers, and each article builds one of them on top of the layer below (plate 3). Each article is publishable on its own and hands a defined product to the next.</p></div>
+
+<figure class="plate">
+  <div class="pk">inside the engine</div>
+  <svg id="p2" viewBox="0 0 1000 1080" role="img" aria-label="Exploded axonometric of the engine: preferences, network, households and futures as stacked layers"></svg>
+  <hr>
+  <div class="pt">Exploded engine</div>
+  <p class="ps">four layers. at the bottom, preferences estimated from people, with their error. above them, the real road network. then households that carry their cars, trips and opinions through time. at the top, the thousands of futures every plan is tested against.</p>
+</figure>
+
+<div class="col">
+<div class="art"><div class="tag">A1 · TRANSPLAN RA3 · YEAR 1</div><h3>Preferences and acceptance</h3>
+<p class="q">How do people in Molde and Kristiansund trade off time, cost and service, when do they replace their car, and which road-charging packages would they accept? Does acceptance measured nationally hold in car-dependent towns, and do preferences carry over from one town to the other?</p>
+<p><b>Design.</b> A stated-choice survey in both towns with three blocks: mode choice, timing and type of the next car, and votes on charging packages that vary charge level, exemptions, alternatives offered and how revenue is used. Attribute ranges follow the national experiment<sup>8</sup> so the two can be compared. An efficient design is tested in a pilot of about 50 respondents; the full survey targets about 800 respondents with eight tasks each, a size checked in advance by recovering all six parameters of the prototype model within one standard error. <b>Models.</b> Mixed and latent-class logit, willingness to pay by segment, and an acceptance model with heterogeneity in trust and alternatives. <b>Product.</b> Estimated preferences with their covariance, and an acceptance function the agents can carry.</p></div>
+
+<div class="art"><div class="tag">A2 · TRANSPLAN RA2 · YEAR 2</div><h3>The household fleet engine</h3>
+<p class="q">When estimated preferences, with their uncertainty, drive households with real cars, how do fleet renewal, mode shift, acceptance and who pays evolve year by year? Does the engine reproduce 2010 to 2025, and how much of its 2050 spread comes from preferences, from chance and from the future?</p>
+<p><b>Engine.</b> Households hold cars of known age and fuel, replace them by a choice model from A1, choose modes for their trips on the OpenStreetMap network, influence their neighbours, and form opinions on charges that shift with experience. Preference parameters are drawn from their estimated distribution in every run. <b>Validation.</b> Calibration matches several observed patterns at once (mode shares from the national travel survey, fleet age and fuel from the vehicle register, traffic counts)<sup>17</sup>, with Kristiansund as a hold-out and the 2010 to 2025 transition as a historical test; the model is documented with the ODD protocol<sup>18</sup>. Emissions are counted well to wheel with Norwegian grid factors, including rebound in travel. <b>Product.</b> A calibrated engine and an ensemble interface.</p></div>
+
+<div class="art"><div class="tag">A3 · TRANSPLAN RA1 · YEAR 3</div><h3>Robust pathways and warnings</h3>
+<p class="q">Across thousands of futures, which packages stay effective, acceptable and affordable; when do they fail; and which reading in 2030 warns early, with what lead time and false-alarm rate?</p>
+<p><b>Method.</b> About 10<sup>4</sup> futures and 10<sup>2</sup> packages built from the instruments under discussion in 2026: distance-based road charging, toll rings in which electric cars pay, public transport frequency and fares, cycling infrastructure and fleet renewal. Futures are anchored on the strategies of the national methods work<sup>14</sup> and screened for internal consistency. A many-objective robust search<sup>19</sup> keeps packages that reach the target in most futures under two conditions: majority acceptance from the A2 agents, and a public budget. Scenario discovery finds the conditions under which packages fail<sup>20</sup>, Sobol indices rank the uncertainties, and a statistical surrogate replaces the engine if run time requires it. Signposts are scored for lead time, false alarms and missed failures<sup>12</sup>, and each pathway for how often it must change and what stability costs<sup>21</sup>. <b>Product.</b> Robust and acceptable pathways with measured signposts for Molde and Kristiansund.</p></div>
+
+<div class="art"><div class="tag">A4 · OPTIONAL</div><h3>Pathways that planners can agree on</h3>
+<p>A workshop with county and municipal planners and TRANSPLAN partners tests whether pathway stories help stakeholders agree on the next decision, building on storytelling for participatory planning<sup>22</sup>.</p></div>
+</div>
+
+<h2><small>proof</small>5 · It already runs</h2>
+<div class="col"><p>A working prototype implements the full chain on synthetic behaviour and the real road networks of both towns: two independent choice-model estimators with a recovery test, an agent model with fleet turnover, EV adoption, welfare and public money per household, and an ensemble of 60 futures by 25 packages. The behaviour is synthetic and its policy levers include instruments Norway is now phasing out, so the numbers show what each article will produce, not what will happen in Norway. Two results already point at the stock problem.</p></div>
+
+<figure class="plate">
+  <div class="pk">the operation for selective survival</div>
+  <svg id="p4" viewBox="0 0 1000 560" role="img" aria-label="Twenty-five packages run in sixty futures pass through a robust filter; four survive, shown as rows of sixty dots"></svg>
+  <hr>
+  <div class="pt">Robust filter</div>
+  <p class="ps">every package runs in every future. the filter keeps a package only if it reaches the target in most futures, a majority would accept it, and the budget allows it. each dot on the right is one future: lit where the package reached the target. in 19 futures nothing works, and they are the futures where cars stay on the road the longest.</p>
+  <div class="src">Prototype ensemble, 1,500 runs; target: commuting CO₂ in 2050 at most 20% of 2025.</div>
+</figure>
+
+<figure class="plate">
+  <div class="pk">reading the future early</div>
+  <svg id="p5" viewBox="0 0 1000 560" role="img" aria-label="Sixty CO2 trajectories for the most robust package with a 2030 gate at 63 percent of 2025"></svg>
+  <hr>
+  <div class="pt">A warning with a hit rate</div>
+  <p class="ps">sixty futures under the most robust package. at the 2030 gate, emissions above 63% of 2025 flag 17 of the 19 futures that later miss the 2050 target, with 4 false alarms among 41 that succeed. twenty years of warning, with its error rate stated.</p>
+  <div class="src">Prototype ensemble; threshold chosen for the best separation of later success and failure.</div>
+</figure>
+
+<div class="col">
+<p>The code is public, the 87 automated tests run on every change, and every number in this proposal is rebuilt by committed scripts. The repository separates what runs, what is tested and what is planned, and lists its limitations.</p>
+</div>
+
+<h2><small>when</small>6 · Plan, risks and ethics</h2>
+<div class="tbl"><table>
+<tr><th></th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr>
+<tr><td>Research</td><td>Travel-survey data application in month 1; survey design, pilot and fieldwork; A1</td><td>Engine, calibration, Kristiansund transfer, 2010 to 2025 test; A2</td><td>Ensemble, robust search, signposts; A3; thesis</td></tr>
+<tr><td>Training</td><td>PhD courses: stated choice, econometrics, simulation</td><td>Research stay with a decision-making-under-deep-uncertainty group</td><td>Optional A4 with planners through TRANSPLAN</td></tr>
+<tr><td>Output</td><td>A1 submitted</td><td>A2 submitted</td><td>A3 submitted, thesis</td></tr>
+</table></div>
+<div class="col">
+<p><strong>Risks.</strong> A low survey response is met by combining a web panel with municipal channels, with the national travel survey as fallback. Delayed data access is covered by Statistics Norway commuting tables. Run time is handled by surrogates and national computing resources. Calibration that cannot be identified is constrained by several observed patterns at once and a hold-out town. Results that hinge on the target or the robustness metric are reported for targets of 10, 20 and 30% and compared across metrics. <strong>Ethics and data.</strong> The survey is assessed by Sikt before fieldwork, with informed consent and pseudonymised storage. Code is open under the MIT licence, and data are released with a DOI where consent allows.</p>
+</div>
+
+<h2><small>what changes</small>7 · For TRANSPLAN, the region and the field</h2>
+<div class="col">
+<p><strong>For TRANSPLAN,</strong> a behavioural experiment for research area 3, a household engine for research area 2 that supplies the transition path national models lack, and measured pathways for the backcasting of research area 1, built to work alongside NTM6 and RTM and in the spirit of moving from “predict and provide” to “decide and provide”<sup>23</sup>. <strong>For Møre og Romsdal,</strong> tested pathways with signposts planners can monitor from traffic counts and the vehicle register. <strong>For the field,</strong> acceptance treated as a dynamic condition on robustness, uncertainty separated into its sources, and signposts with measured hit rates in transport. <strong>For logistics,</strong> the same engine and network tools carry to urban freight.</p>
+</div>
+<p class="close">The fleet that will drive in 2035 is being bought now. This project builds the instrument to steer it, and to know early when a plan needs to change.</p>
+
+<div class="refs col"><div class="kick">references</div><ol>
+<li>Opplysningsrådet for veitrafikken (OFV) (2026) New passenger car registrations, 2025.</li>
+<li>Wangsness, Proost &amp; Steinsland (2026) The curious case of road pricing reform in Norway: welfare impacts and political economy of a stalled transition. <i>Transportation Research Interdisciplinary Perspectives</i> 38, 102064.</li>
+<li>Ministry of Transport (2024) Meld. St. 14 (2023–2024) <i>National Transport Plan 2025–2036</i>.</li>
+<li>Ministry of Transport and Ministry of Trade, Industry and Fisheries (2024) NTP-oppdrag nr. 1-2024: improving the basis for assessing future transport demand and goal achievement.</li>
+<li>TØI. TRANSPLAN, Norwegian Centre for Sustainable Transport Planning (2025–2033), toi.no/transplan.</li>
+<li>Kristensen, Flügel, Hovi, Madslien, Wangsness, Hansen, Halse, Steinsland &amp; Johansen (2024) <i>Transport demand in foresight and backcasting</i>. TØI report 2051/2024.</li>
+<li>Fridstrøm, Østli &amp; Johansen (2016) A stock-flow cohort model of the national car fleet. <i>European Transport Research Review</i> 8.</li>
+<li>Ciccone, Halse, Andreassen, Garnache &amp; Wangsness (2026) <i>Acceptance of distance-based road pricing: national choice experiment and field trial in the Oslo region</i>. TØI report 2179/2026.</li>
+<li>Hess &amp; Börjesson (2019) Understanding attitudes towards congestion pricing. <i>Transportation Letters</i> 11(2); Börjesson, Eliasson, Hugosson &amp; Brundell-Freij (2012) <i>Transport Policy</i> 20.</li>
+<li>Le Pira, Marcucci, Gatta, Inturri, Ignaccolo &amp; Pluchino (2017) Integrating discrete choice models and agent-based models for ex-ante evaluation of stakeholder policy acceptability in urban freight transport. <i>Research in Transportation Economics</i> 64; Gatta et al. (2020) <i>Transportation Research Procedia</i> 46.</li>
+<li>Petrik, Moura &amp; de Abreu e Silva (2016) <i>Transportation Planning and Technology</i> 39(2); Petrik, Adnan, Basak &amp; Ben-Akiva (2020) <i>Future Generation Computer Systems</i> 110.</li>
+<li>Raso, Kwakkel &amp; Timmermans (2019) Assessing the capacity of adaptive policy pathways to adapt on time. <i>Sustainability</i> 11(6).</li>
+<li>Haasnoot, van ’t Klooster &amp; van Alphen (2018) Designing a monitoring system to detect signals to adapt. <i>Global Environmental Change</i> 52.</li>
+<li>Wangsness et al. (2025) <i>Methods, processes and example calculations for strategies towards a carbon-neutral transport sector in 2050</i>. TØI report 2119/2025.</li>
+<li>Domarchi &amp; Cherchi (2023) Electric vehicle forecasts: a review of models and methods. <i>Transport Reviews</i> 43(6).</li>
+<li>Møre og Romsdal fylkeskommune (2025) Climate accounts.</li>
+<li>Grimm et al. (2005) Pattern-oriented modeling of agent-based complex systems. <i>Science</i> 310.</li>
+<li>Grimm et al. (2020) The ODD protocol: a second update. <i>Journal of Artificial Societies and Social Simulation</i> 23(2).</li>
+<li>Kasprzyk, Nataraj, Reed &amp; Lempert (2013) Many objective robust decision making. <i>Environmental Modelling &amp; Software</i> 42; Kwakkel (2017) <i>Environmental Modelling &amp; Software</i> 96.</li>
+<li>Bryant &amp; Lempert (2010) Thinking inside the box. <i>Technological Forecasting &amp; Social Change</i> 77(1).</li>
+<li>Shaabani, Hvattum, Laporte &amp; Hoff (2024) Stability metrics for a maritime inventory routing problem under sailing time uncertainty. <i>EURO Journal on Transportation and Logistics</i> 13.</li>
+<li>Lozzi, Marcucci &amp; Gatta (2025) Urban logistics facilities and storytelling. <i>Transportation Planning and Technology</i>.</li>
+<li>TØI (2025) <i>The National Transport Plan as a more strategic steering tool</i>. Report 2081/2025.</li>
+</ol></div>
+</div>
+
+<script>
+const TOWNS=/*TOWNS*/null;
+const DATA=/*STUDY*/null;
+const NS="http://www.w3.org/2000/svg",K={cream:"#EFE3CC",dim:"#A8958A",faint:"rgba(239,227,204,.18)",ghost:"rgba(239,227,204,.10)",accent:"#D9734E",plate:"#341a1e",mauve:"rgba(239,227,204,.07)"};
+function el(p,tag,a,txt){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;p.appendChild(e);return e}
+function t(p,x,y,s,o={}){return el(p,"text",Object.assign({x,y,fill:K.cream,"font-size":18,stroke:K.plate,"stroke-width":4,"paint-order":"stroke","stroke-linejoin":"round"},o),s)}
+function proj(town,x,y,w,h){const [x0,y0,x1,y1]=town.bbox,k=Math.min(w/(x1-x0),h/(y1-y0)),ox=x+(w-(x1-x0)*k)/2,oy=y+(h-(y1-y0)*k)/2;
+  const f=([a,b])=>[ox+(a-x0)*k,oy+(y1-b)*k];return{f,k,P:c=>c.map(q=>f(q).map(v=>v.toFixed(1)).join(",")).join(" ")}}
+
+// P1 the fleet lags the showroom: line-art cars
+(function(){const s=document.getElementById("p1");
+  function car(x,y,lit){const g=el(s,"g",{transform:`translate(${x},${y})`});
+    el(g,"path",{d:"M1 13 L1 9 Q2 7 5 6.5 L10 2.5 Q11.5 1.5 14 1.5 L23 1.5 Q25 1.5 27 3 L31 6.5 L36 7.5 Q38 8 38 10.5 L38 13 Z",fill:lit?K.cream:"none",stroke:lit?K.cream:K.dim,"stroke-width":1,"stroke-opacity":lit?1:.55,"stroke-linejoin":"round"});
+    [9.5,29].forEach(cx=>el(g,"circle",{cx,cy:13.5,r:3.2,fill:K.plate,stroke:lit?K.cream:K.dim,"stroke-width":1,"stroke-opacity":lit?1:.55}));}
+  function grid(x0,n){for(let i=0;i<100;i++){const c=i%10,r=Math.floor(i/10);car(x0+c*42,40+r*30,i<n);}}
+  grid(20,96); grid(560,30);
+  t(s,20,372,"NEW CARS SOLD, 2025",{"font-weight":700,"font-size":17,"letter-spacing":".06em"});
+  t(s,20,398,"96 in 100 electric",{fill:K.dim,"font-size":16});
+  t(s,560,372,"CARS ON THE ROAD",{"font-weight":700,"font-size":17,"letter-spacing":".06em"});
+  t(s,560,398,"about 30 in 100 electric",{fill:K.dim,"font-size":16});
+  el(s,"path",{d:"M455 190 C490 160 505 160 540 190",fill:"none",stroke:K.accent,"stroke-width":1.6});
+  el(s,"path",{d:"M532 180 L541 191 L528 193",fill:"none",stroke:K.accent,"stroke-width":1.6});
+  t(s,498,140,"renewal",{"text-anchor":"middle",fill:K.accent,"font-size":15,"font-style":"italic"});
+  t(s,498,446,"close to twenty years for the road to look like the showroom",{"text-anchor":"middle",fill:K.dim,"font-size":15,"font-style":"italic"});
+})();
+
+// P3 one street, one bridge: figure-ground with the instance
+(function(){const s=document.getElementById("p3");if(!TOWNS)return;
+  function town(T,x,y,w,h,label,dx,dy,big){const p=proj(T,x,y,w,h),g=el(s,"g",{});
+    T.sea.forEach(r=>el(g,"polygon",{points:p.P(r),fill:"rgba(239,227,204,.05)"}));
+    T.points.forEach(q=>{const [px,py]=p.f(q);el(g,"rect",{x:(px-1.2).toFixed(1),y:(py-1.2).toFixed(1),width:big?2.6:2,height:big?2.6:2,fill:"rgba(239,227,204,.55)"});});
+    const R=T.roads.slice().sort((a,b)=>a[2]-b[2]),mx=R[R.length-1][2];
+    R.forEach(([maj,c,sh])=>{const k=sh/mx,hot=k>0.45;el(g,"polyline",{points:p.P(c),fill:"none","stroke-linecap":"round",stroke:hot?K.cream:(maj?"rgba(239,227,204,.5)":"rgba(239,227,204,.2)"),"stroke-width":hot?(big?3.4:2.6):(maj?1:.5)});});
+    const top=R[R.length-1],[cx,cy]=p.f(top[1][Math.floor(top[1].length/2)]);
+    el(g,"circle",{cx,cy,r:big?9:7,fill:K.accent,stroke:K.plate,"stroke-width":2});
+    el(g,"line",{x1:cx,y1:cy,x2:cx+dx,y2:cy+dy,stroke:K.accent,"stroke-width":1});
+    const anc=dx<0?"end":"start";
+    t(g,cx+dx+(dx<0?-6:6),cy+dy-4,T.pinch[0].toLowerCase(),{"text-anchor":anc,"font-size":big?19:16,"font-weight":500});
+    t(g,cx+dx+(dx<0?-6:6),cy+dy+18,`${(T.pinch[1]*100).toFixed(1)}% of all fastest routes`,{"text-anchor":anc,fill:K.accent,"font-size":big?16:14});
+    t(g,x,y+h+24,label,{fill:K.dim,"font-size":15,"font-style":"italic"});}
+  town(TOWNS.molde,0,10,1000,300,"molde · main case",60,90,true);
+  town(TOWNS.kristiansund,280,360,720,240,"kristiansund · transfer case",-150,-40,false);
+})();
+
+// P2 exploded engine: isometric layers
+(function(){const s=document.getElementById("p2");
+  const W=380,D=250,S=1,cx=640,cy0=60,gap=225;
+  const iso=(u,v,z)=>[cx+(u-v)*0.866*S, z+(u+v)*0.5*S];
+  const P=pts=>pts.map(([u,v,z])=>iso(u,v,z).map(n=>n.toFixed(1)).join(",")).join(" ");
+  const layers=[["LAYER 3","futures","10⁴ worlds every plan","is tested against","A3"],["LAYER 2","households","cars, trips and opinions","carried through time","A2"],["LAYER 1","network","the real streets","of molde, from osm","case"],["LAYER 0","preferences","estimated from people,","with their error","A1"]];
+  // dashed guides
+  [[0,0],[W,0],[W,D],[0,D]].forEach(([u,v])=>{const a=iso(u,v,cy0),b=iso(u,v,cy0+gap*3);el(s,"line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:K.faint,"stroke-dasharray":"4 5"});});
+  layers.map((d,i)=>[d,i]).reverse().forEach(([[L,name,l1,l2,tag],i])=>{const z=cy0+i*gap,th=7;
+    el(s,"polygon",{points:P([[W,0,z],[W,D,z],[W,D,z+th],[W,0,z+th]]),fill:K.plate,stroke:K.cream,"stroke-width":1});
+    el(s,"polygon",{points:P([[0,D,z],[W,D,z],[W,D,z+th],[0,D,z+th]]),fill:K.plate,stroke:K.cream,"stroke-width":1});
+    el(s,"polygon",{points:P([[0,0,z],[W,0,z],[W,D,z],[0,D,z]]),fill:K.plate,stroke:K.cream,"stroke-width":1.3});
+    const g=el(s,"g",{});
+    if(i===0&&DATA){const P12=DATA.packages_list[0];for(let k=0;k<60;k++){const u=24+(k%12)*29,v=30+Math.floor(k/12)*45,[x,y]=iso(u,v,z);el(g,"ellipse",{cx:x,cy:y,rx:5,ry:3,fill:P12.meets[k]?K.cream:"none",stroke:P12.meets[k]?"none":K.dim,"stroke-width":1});}}
+    if(i===1){const R=(()=>{let s0=11;return()=>((s0=(s0*16807)%2147483647)/2147483647)})();const pts=[];for(let k=0;k<26;k++){pts.push([25+R()*330,25+R()*200]);}
+      pts.forEach(([u,v],k)=>{pts.slice(k+1,k+3).forEach(([u2,v2])=>{const a=iso(u,v,z),b=iso(u2,v2,z);el(g,"line",{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:K.faint,"stroke-width":.8});});});
+      pts.forEach(([u,v],k)=>{const [x,y]=iso(u,v,z),h=10;el(g,"polygon",{points:`${x-7},${y} ${x},${y-4} ${x+7},${y} ${x+7},${y-h} ${x},${y-h-5} ${x-7},${y-h}`,fill:k===7?K.accent:"rgba(239,227,204,.75)",stroke:"none"});});}
+    if(i===2&&TOWNS){const T=TOWNS.molde,[x0,y0,x1,y1]=T.bbox,ku=W/(x1-x0),kv=D/(y1-y0),k=Math.min(ku,kv*2.6);
+      T.roads.filter(r=>r[0]||r[2]>0.02).forEach(([maj,c,sh])=>{const pts=c.map(([a,b])=>iso((a-x0)*W/(x1-x0),(y1-b)/(y1-y0)*D*0.9+D*0.05,z));el(g,"polyline",{points:pts.map(q=>q.map(n=>n.toFixed(1)).join(",")).join(" "),fill:"none",stroke:sh>0.08?K.cream:"rgba(239,227,204,.6)","stroke-width":sh>0.08?2.2:.9});});}
+    if(i===3){for(let k=0;k<6;k++){const u0=30+(k%3)*115,v0=60+Math.floor(k/3)*110;const pts=[];for(let j=0;j<=24;j++){const xx=j/24*90,dd=Math.exp(-Math.pow((j-12)/5,2));pts.push(iso(u0+xx,v0,z-dd*(26+k*3)));}
+      el(g,"polyline",{points:pts.map(q=>q.map(n=>n.toFixed(1)).join(",")).join(" "),fill:"none",stroke:K.cream,"stroke-width":1.2});const [lx,ly]=iso(u0+45,v0+22,z);t(g,lx,ly,["β time","β cost","β wait","acceptance","replace","peer"][k],{"text-anchor":"middle",fill:K.dim,"font-size":11.5});}}
+    const [ax,ay]=iso(0,0,z);
+    t(s,40,ay-6,L,{"font-weight":900,"font-size":19,"letter-spacing":".04em"});
+    t(s,40,ay+16,name,{fill:K.cream,"font-size":17});
+    t(s,40,ay+38,l1,{fill:K.dim,"font-size":15});t(s,40,ay+57,l2,{fill:K.dim,"font-size":15});
+    t(s,40,ay+82,tag,{fill:K.accent,"font-family":"Roboto Mono","font-size":14});
+  });
+})();
+
+// P4 robust filter: explode-tree grammar with real counts
+(function(){const s=document.getElementById("p4");if(!DATA)return;
+  const P=DATA.packages_list.filter(p=>p.id!=="no_policy");const keep=P.slice(0,4);
+  const rx=60,ry=280,bx=430,by=210,bw=150,bh=140;
+  P.forEach((p,i)=>{const yy=40+i*(480/(P.length-1)),mid=(rx+bx)/2,ty=by+30+(i%4)*27;
+    el(s,"path",{d:`M${rx} ${ry} C${rx+120} ${ry} ${mid-80} ${yy} ${mid} ${yy} S${bx-90} ${ty} ${bx} ${ty}`,fill:"none",stroke:K.cream,"stroke-width":i<4?1.4:.7,"stroke-opacity":i<4?1:.45});});
+  el(s,"circle",{cx:rx,cy:ry,r:4,fill:K.cream});
+  el(s,"rect",{x:bx,y:by,width:bw,height:bh,rx:8,fill:"#e8dcc4",stroke:"none"});
+  el(s,"rect",{x:bx+bw/2-18,y:by+12,width:36,height:bh-24,rx:5,fill:"#3a2023"});
+  t(s,bx+bw/2+6,by+bh/2,"robust filter",{"text-anchor":"middle",transform:`rotate(-90 ${bx+bw/2+6} ${by+bh/2})`,"font-size":15,"font-weight":500});
+  ["R","A","C"].forEach((l,i)=>{t(s,bx+18,by+38+i*36,l,{fill:"#3a2023","font-size":15,"font-weight":700});});
+  ["≥","≥ ½","≤ B"].forEach((l,i)=>{t(s,bx+bw-14,by+38+i*36,l,{fill:"#3a2023","font-size":13,"text-anchor":"end"});});
+  const ox=bx+bw,lx=700,lw=280;
+  keep.forEach((p,i)=>{const ly=60+i*125,net=p.subsidy_nok-p.toll_nok_rev;
+    el(s,"path",{d:`M${ox} ${by+40+i*20} C${ox+60} ${by+40+i*20} ${lx-70} ${ly+18} ${lx} ${ly+18}`,fill:"none",stroke:K.cream,"stroke-width":1.4});
+    el(s,"circle",{cx:lx,cy:ly+18,r:3.5,fill:K.cream});
+    el(s,"rect",{x:lx+8,y:ly,width:lw,height:36,rx:6,fill:"none",stroke:K.cream,"stroke-width":1.2});
+    el(s,"line",{x1:lx+58,x2:lx+58,y1:ly,y2:ly+36,stroke:K.cream,"stroke-width":1});
+    t(s,lx+33,ly+24,p.id,{"text-anchor":"middle","font-size":14,fill:i==0?K.accent:K.cream,"font-weight":500});
+    for(let f=0;f<60;f++){const c=f%30,r=Math.floor(f/30);el(s,"circle",{cx:lx+68+c*7,cy:ly+12+r*12,r:2.4,fill:p.meets[f]?K.cream:"none",stroke:p.meets[f]?"none":K.dim,"stroke-width":.7});}
+    t(s,lx+8,ly+56,`${Math.round(p.robustness*60)} of 60 · ${Math.round(p.accept*100)}% accept · ${net>0?"costs":"raises"} NOK ${Math.round(Math.abs(net)).toLocaleString("en")}`,{fill:K.dim,"font-size":13.5});});
+  t(s,rx-20,520,"24 PACKAGES × 60 FUTURES",{"font-size":16,"font-weight":500,"letter-spacing":".04em"});
+  t(s,lx+8,540,"WHAT SURVIVES",{"font-size":16,"font-weight":500,"letter-spacing":".04em"});
+})();
+
+// P5 warning with a hit rate: fan and gate
+(function(){const s=document.getElementById("p5");if(!DATA)return;
+  const L=DATA.traj[DATA.best],yr=DATA.traj.years,sp=DATA.signposts.find(q=>q.key==="co2_30"),T=DATA.target;
+  const x0=70,x1=960,y0=40,y1=460,X=v=>x0+(v-2025)/25*(x1-x0),Y=v=>y1-v/1.02*(y1-y0);
+  const i30=yr.indexOf(2030);
+  L.forEach(r=>{const fail=r[r.length-1]>T+1e-9;el(s,"polyline",{points:r.map((v,j)=>`${X(yr[j]).toFixed(1)},${Y(v).toFixed(1)}`).join(" "),fill:"none",stroke:fail?K.accent:K.cream,"stroke-width":fail?1.2:.9,"stroke-opacity":fail?.85:.42});});
+  const gx=X(2030);el(s,"line",{x1:gx,x2:gx,y1:y0,y2:y1,stroke:K.cream,"stroke-width":1.2,"stroke-dasharray":"5 5"});
+  el(s,"line",{x1:gx-26,x2:gx+26,y1:Y(sp.threshold),y2:Y(sp.threshold),stroke:K.cream,"stroke-width":2.4});
+  t(s,gx+34,Y(sp.threshold)+6,`63% of 2025`,{"font-size":16,"font-weight":500});
+  t(s,gx,y0-12,"2030 GATE",{"text-anchor":"middle","font-size":14,"letter-spacing":".1em",fill:K.dim});
+  el(s,"line",{x1:X(2046),x2:X(2050),y1:Y(T),y2:Y(T),stroke:K.cream,"stroke-width":2});
+  t(s,X(2045.6),Y(T)+5,"target 2050",{"text-anchor":"end","font-size":14,fill:K.cream});
+  [2025,2030,2040,2050].forEach(v=>t(s,X(v),y1+28,v,{"text-anchor":"middle","font-size":14,fill:K.dim}));
+  t(s,X(2034),Y(.86),`${sp.flags_failures} of ${sp.failures} failures flagged`,{fill:K.accent,"font-size":18,"font-weight":500});
+  t(s,X(2034),Y(.79),`${sp.false_alarms} false alarms among ${60-sp.failures} successes`,{fill:K.dim,"font-size":16});
+  el(s,"line",{x1:X(2025),x2:X(2026.6),y1:y1+48,y2:y1+48,stroke:K.accent,"stroke-width":2});t(s,X(2027),y1+53,"misses 2050 target",{"font-size":14,fill:K.dim});
+  el(s,"line",{x1:X(2033),x2:X(2034.6),y1:y1+48,y2:y1+48,stroke:K.cream,"stroke-width":2,"stroke-opacity":.6});t(s,X(2035),y1+53,"reaches it",{"font-size":14,fill:K.dim});
+})();
+</script>
