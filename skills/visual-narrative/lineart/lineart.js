@@ -7,6 +7,13 @@
  *   const L = LineArt(svgElement, {cream:"#EFE3CC", accent:"#D9734E", ground:"#2f1519"});
  *   L.house(g, 100, 400, 120, 90); L.tree(g, 260, 400, 90, 7); L.person(g, 320, 400, 34, 2);
  */
+/* Three plate families, one grammar. oxblood: tool and method plates; charcoal: urban-theory plates
+ * (near-black ground, cream line, vermilion accent); sage: step-by-step "how to" plates (mono code, sage accent). */
+const LINEART_THEMES = {
+  oxblood:  { ground: "#2f1519", cream: "#EFE3CC", dim: "#A8958A", accent: "#D9734E", title: "Roboto", weight: 900 },
+  charcoal: { ground: "#151413", cream: "#E9E1D0", dim: "#8E877D", accent: "#D2412B", title: "Inter", weight: 800 },
+  sage:     { ground: "#161512", cream: "#EDE6D6", dim: "#8E877D", accent: "#8FA07E", title: "Inter", weight: 800 },
+};
 function LineArt(svg, opt) {
   const C = Object.assign({ cream: "#EFE3CC", dim: "#A8958A", accent: "#D9734E", ground: "#2f1519", sw: 1 }, opt || {});
   const NS = "http://www.w3.org/2000/svg";
@@ -95,4 +102,4 @@ function LineArt(svg, opt) {
     },
   };
 }
-if (typeof module !== "undefined") module.exports = { LineArt };
+if (typeof module !== "undefined") module.exports = { LineArt, LINEART_THEMES };

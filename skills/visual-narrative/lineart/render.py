@@ -3,6 +3,7 @@
 
     python skills/visual-narrative/lineart/render.py stock-turns docs/plates/05-the-stock-turns.png
     python skills/visual-narrative/lineart/render.py banner docs/brand/banner.png
+    python skills/visual-narrative/lineart/render.py stock-turns out.png charcoal   # theme: oxblood | charcoal | sage
 """
 import json
 import sys
@@ -33,13 +34,13 @@ def banner_data():
     return {"meets": st["packages_list"][0]["meets"], "roads": roads}
 
 
-def main(name, out):
+def main(name, out, theme="oxblood"):
     global data
     if name == "banner":
         data = banner_data
     html = (HERE / f"{name}.html").read_text(encoding="utf-8")
     html = html.replace("/*LINEART*/", (HERE / "lineart.js").read_text(encoding="utf-8"))
-    html = html.replace("/*DATA*/null", json.dumps(data()))
+    html = html.replace("/*DATA*/null", json.dumps(data()) + f";window.THEME={json.dumps(theme)}")
     tmp = HERE / f".{name}.built.html"
     tmp.write_text(html, encoding="utf-8")
     with sync_playwright() as p:
@@ -58,4 +59,4 @@ def main(name, out):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    main(*sys.argv[1:4])

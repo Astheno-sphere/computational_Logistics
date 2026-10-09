@@ -84,6 +84,21 @@ Map plates (v1) prove a place. Line-art plates explain a mechanism. Same page, d
    component, scalebar, catchment, iso). `lineart/render.py <name> <out.png>` renders a plate HTML
    to a 1440 × 1800 PNG with the prototype numbers injected.
 
+### Three families and their typography (`LINEART_THEMES`; `render.py <plate> <out> <theme>`)
+| Family | Use it for | Ground / line / accent | Title type | Page furniture |
+|---|---|---|---|---|
+| oxblood | tools and methods (engine, filter, toolbench) | #2f1519 / #EFE3CC / #D9734E | Roboto 900, caps, wide | italic kicker, rule, lowercase sentence |
+| charcoal | ideas about places and people (urban theory, the stock, the street) | #151413 / #E9E1D0 / #D2412B | Inter 800, caps, tight tracking (-0.015em), one accent word | large grey subtitle sentence, "Source: author, year, chapter" bottom left, author name bottom right, scale bar with a caps label |
+| sage | step-by-step "how to" plates (one command, one result) | #161512 / #EDE6D6 / #8FA07E | Inter 800, two lines, second line in the accent | "[ SECTION ]" bracket label top left, large plate number top right, mono terminal window, arrow to the result |
+
+Rules shared by all three: one accent; text never sits on a line without a ground-coloured halo; the
+subtitle is a plain sentence in lowercase; the source line names the data or the author and chapter.
+
+**Still to learn (next study):** isometric street scenes with facades, stoops, awnings and people at
+true scale; elevations with a time band (morning, noon, evening, night); left/right comparison pairs;
+stacked density sections. Build `facade`, `stoop`, `awning`, `bench`, `bicycle`, `lamp` primitives
+for them and draw a Molde street in that manner (charcoal family).
+
 ## Rules
 - Our palette and voice, not the reference's: `INK #10161B`, `PAPER #E8E1CF`, `ACCENT #FF5B3A`.
   Study other work for method; never trace its plates or reuse its artwork.

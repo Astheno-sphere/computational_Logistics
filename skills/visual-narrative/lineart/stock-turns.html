@@ -1,16 +1,16 @@
 <!doctype html><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,700;0,900;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,700;0,900;1,300&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
-body{margin:0;background:#2f1519}
-.plate{width:1440px;height:1800px;box-sizing:border-box;padding:80px 90px;background:#2f1519;color:#EFE3CC;font-family:Roboto,sans-serif;position:relative}
-.k{font-style:italic;font-weight:300;font-size:30px;color:#A8958A}
+body{margin:0;background:var(--g)}
+.plate{width:1440px;height:1800px;box-sizing:border-box;padding:80px 90px;background:var(--g);color:var(--c);font-family:var(--tf),sans-serif;position:relative}
+.k{font-style:italic;font-weight:300;font-size:30px;color:var(--d)}
 svg{display:block;margin-top:30px}
 hr{border:0;border-top:2px solid rgba(239,227,204,.5);margin:30px 0 26px}
-h1{font-weight:900;font-size:76px;margin:0;letter-spacing:.005em}
-h1 em{font-style:normal;color:#D9734E}
-p{font-size:34px;font-weight:300;line-height:1.35;margin:14px 0 0;color:#D9CCB6;max-width:1180px}
-.src{position:absolute;left:90px;bottom:96px;font-size:22px;color:#A8958A}
-.by{position:absolute;left:90px;bottom:58px;font-size:22px;color:#EFE3CC}
+h1{font-weight:var(--tw);font-size:80px;margin:0;letter-spacing:-.015em}
+h1 em{font-style:normal;color:var(--a)}
+p{font-size:34px;font-weight:300;line-height:1.35;margin:14px 0 0;color:var(--d);max-width:1180px}
+.src{position:absolute;left:90px;bottom:96px;font-size:22px;color:var(--d)}
+.by{position:absolute;left:90px;bottom:58px;font-size:22px;color:var(--c)}
 </style>
 <div class="plate">
 <div class="k">the stock problem, in one street</div>
@@ -24,7 +24,9 @@ p{font-size:34px;font-weight:300;line-height:1.35;margin:14px 0 0;color:#D9CCB6;
 <script>/*LINEART*/</script>
 <script>
 const D=/*DATA*/null;
-const s=document.getElementById("s"),L=LineArt(s,{sw:1.4});
+const T=LINEART_THEMES[window.THEME||"oxblood"];
+for(const [k,v] of Object.entries({"--g":T.ground,"--c":T.cream,"--d":T.dim,"--a":T.accent,"--tf":T.title,"--tw":T.weight}))document.documentElement.style.setProperty(k,v);
+const s=document.getElementById("s"),L=LineArt(s,Object.assign({sw:1.4},T));
 const rows=[[2025,D.ev25,150],[2050,D.ev50,590]];
 rows.forEach(([yr,share,top],ri)=>{
   const ground=top+300, g=L.el(s,"g",{}), n=10, lit=Math.round(share*n), dx=122;
