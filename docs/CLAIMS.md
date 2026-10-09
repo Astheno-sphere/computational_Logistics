@@ -1,7 +1,6 @@
 # Claims and sources policy
 
-Adopted from the rule Abhinav Bhardwaj states for *72 Ways Architects Use Claude*: every number carries
-its source, and anything that cannot be verified is left out. Applied here as follows.
+Every number carries its source, and anything that cannot be verified is left out. Applied here as follows.
 
 | Kind of claim | Must trace to | How we check |
 |---|---|---|

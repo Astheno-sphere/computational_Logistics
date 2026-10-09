@@ -10,6 +10,7 @@ All four run on real OpenStreetMap data for Molde through the same road graph as
 | 02 | [Where the detour goes](02-where-the-detour-goes.png) | Close that street and route every trip again | 32% of trips slower, by 10 s on average, 2 min at worst; Strandgata gains 13 points; 0.9% of trips impossible | `detour.py` |
 | 03 | [The five-minute depot](03-the-five-minute-depot.png) | Time the drive from every junction to every other; keep the shortest average | 79% of buildings within 5 min of the best junction; 56% from the median junction | `reach.py` |
 | 04 | [The shortest loop](04-the-shortest-loop.png) | Give one van 24 addresses and let a solver order them | 48 min of driving instead of 137 (65% less); OR-Tools agrees with PyVRP within 0.1% | `loop.py` |
+| 05 | [The stock turns](05-the-stock-turns.png) | Draw one street twice, lighting each car by the simulated electric share | 3 in 10 electric in 2025, 9 in 10 in 2050 under the most robust package (synthetic behaviour) | `lineart/render.py stock-turns` |
 
 The plates read as a sequence: where the network is fragile (01), what breaking it costs (02), where
 to stand to serve the town (03), and how to drive it once you stand there (04).

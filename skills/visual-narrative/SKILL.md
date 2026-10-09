@@ -23,6 +23,7 @@ Molde extract first: `data/osm/README.md`. Gallery and measured results: `docs/p
 | 02 | Where the detour goes | close a street, re-route every pair, betweenness gain | `detour.py` |
 | 03 | The five-minute depot | closeness on drive time, five-minute frontier, buildings reached | `reach.py` |
 | 04 | The shortest loop | one-van routing with `vrp-solve` (PyVRP, OR-Tools cross-check) vs order received | `loop.py` |
+| 05 | The stock turns | stacked street elevations, cars lit by the simulated electric share (2025, 2050) | `lineart/render.py stock-turns` |
 
 | Helper | Does |
 |---|---|
@@ -58,6 +59,30 @@ Molde extract first: `data/osm/README.md`. Gallery and measured results: `docs/p
 8. **Proof:** scale bar, north arrow, cited sources, the real function call; the comparison that makes
    a number mean something (56% from the median junction; 137 min as received; OR-Tools within 0.1%).
 9. **Scale for the body or vehicle** when geometry is abstract: not used yet (a street-scale inset).
+
+## Grammar v2: line-art plates (from a 20-plate study, applied in `docs/proposal/src/proposal5.html` and plate 05)
+Map plates (v1) prove a place. Line-art plates explain a mechanism. Same page, different drawing.
+1. **Thin cream line on a dark ground**, one accent colour for the single thing the plate is about
+   (one orange dot, one awning, one word). Vegetation is stippled dots; people and vehicles are line
+   drawings at true scale, so the reader can measure the scene by the body.
+2. **Pick the drawing type from the idea**, not from habit:
+   | Idea | Drawing | Example |
+   |---|---|---|
+   | layers that build on each other | exploded axonometric, labels down the left, dashed guides, file or article tags | the engine (A1 to A3) |
+   | many inputs, one operation, selected outputs | node-wire tree: bezier branches into a component box, lists out | robust filter |
+   | change over time in one place | stacked elevations with a time label per row and a hatched sky band | the stock turns |
+   | where something reaches | catchment blobs around an accent dot on the street grid | depot reach |
+   | two worlds compared | LEFT and RIGHT panels, same scale, same projection | street versus project |
+   | the code behind the result | terminal window, arrow, map or chart produced | toolbench plates |
+3. **Page:** italic lowercase kicker · drawing · rule · caps title with at most one accent word · one
+   plain lowercase sentence that says what happens · source line · author line.
+4. **Every count drawn is a computed count** (cars lit = electric share from the run, dots = futures
+   met). If a number is illustrative, the source line says so.
+5. **Depth by occlusion:** objects behind are drawn first; buildings carry a ground-coloured fill so
+   trees and wires pass behind them. Labels get a ground-coloured halo instead of a box.
+6. **Primitives** live in `lineart/lineart.js` (person, tree, treePlan, car, house, hatch, wire,
+   component, scalebar, catchment, iso). `lineart/render.py <name> <out.png>` renders a plate HTML
+   to a 1440 × 1800 PNG with the prototype numbers injected.
 
 ## Rules
 - Our palette and voice, not the reference's: `INK #10161B`, `PAPER #E8E1CF`, `ACCENT #FF5B3A`.

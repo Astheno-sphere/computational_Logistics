@@ -1,0 +1,44 @@
+<!doctype html><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,700;0,900;1,300&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#2f1519}
+.plate{width:1440px;height:1800px;box-sizing:border-box;padding:80px 90px;background:#2f1519;color:#EFE3CC;font-family:Roboto,sans-serif;position:relative}
+.k{font-style:italic;font-weight:300;font-size:30px;color:#A8958A}
+svg{display:block;margin-top:30px}
+hr{border:0;border-top:2px solid rgba(239,227,204,.5);margin:30px 0 26px}
+h1{font-weight:900;font-size:76px;margin:0;letter-spacing:.005em}
+h1 em{font-style:normal;color:#D9734E}
+p{font-size:34px;font-weight:300;line-height:1.35;margin:14px 0 0;color:#D9CCB6;max-width:1180px}
+.src{position:absolute;left:90px;bottom:96px;font-size:22px;color:#A8958A}
+.by{position:absolute;left:90px;bottom:58px;font-size:22px;color:#EFE3CC}
+</style>
+<div class="plate">
+<div class="k">the stock problem, in one street</div>
+<svg id="s" width="1260" height="1100" viewBox="0 0 1260 1100"></svg>
+<hr>
+<h1>THE STOCK <em>TURNS</em></h1>
+<p>a household replaces its car once every decade or two. policy decides which car comes next, not the one already in the driveway.</p>
+<div class="src">Prototype agents, Molde zone, median future under the most robust package. Synthetic behaviour.</div>
+<div class="by">Arshad Akhtar Abbasia · computational logistics</div>
+</div>
+<script>/*LINEART*/</script>
+<script>
+const D=/*DATA*/null;
+const s=document.getElementById("s"),L=LineArt(s,{sw:1.4});
+const rows=[[2025,D.ev25,150],[2050,D.ev50,590]];
+rows.forEach(([yr,share,top],ri)=>{
+  const ground=top+300, g=L.el(s,"g",{}), n=10, lit=Math.round(share*n), dx=122;
+  L.hatch(g,0,top,1260,170,5);
+  for(let i=0;i<n;i+=2) L.tree(g,30+i*dx+108,ground,150,ri*20+i+3,{});
+  for(let i=0;i<n;i++){const x=12+i*dx; L.house(g,x,ground,70,64,{roof:36}); L.car(g,x+72,ground,46,i<lit,{});}
+  L.line(g,`M0 ${ground} L1260 ${ground}`,{"stroke-width":2});
+  L.line(g,`M0 ${ground+34} L1260 ${ground+34}`,{"stroke-opacity":.5});
+  [[160,0],[530,2],[560,1],[900,3],[1180,0]].forEach(([x,pose],k)=>L.person(g,x+ri*40,ground+30,46,pose+ri));
+  L.text(g,0,ground+80,`${yr}`,{"font-size":32,"font-weight":700});
+  L.text(g,100,ground+80,`${Math.round(share*10)} in 10 cars electric`,{"font-size":30,fill:L.C.dim});
+});
+// arrow of time between the rows
+L.line(s,"M1210 470 L1210 560 M1198 548 L1210 562 L1222 548",{stroke:L.C.accent,"stroke-width":2});
+L.text(s,1195,522,"renewal",{"text-anchor":"end","font-size":24,fill:L.C.accent,"font-style":"italic"});
+L.scalebar(s,960,1050,280,[[0,"0"],[0.5,"25"],[1,"50 m"]]);
+</script>
