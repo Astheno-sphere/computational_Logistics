@@ -2,7 +2,7 @@
 
 // P6 six of six recovered: true value as a tick, estimate with one standard error (sage family)
 (function(){const s=document.getElementById("p6");if(!s||!DCM)return;
-  const L=LineArt(s,Object.assign({sw:1},LINEART_THEMES.sage)),C=L.C;
+  const L=LineArt(s,Object.assign({sw:1},LINEART_THEMES.oxblood)),C=L.C;
   const names={ASC_ev:"electric car constant",ASC_bus:"bus constant",ASC_bike:"bike constant",B_TIME:"time, per minute",B_COST:"cost, per NOK",B_WAIT:"wait, per minute"};
   const keys=Object.keys(names),x0=430,x1=930,X=z=>x0+(z+2.5)/5*(x1-x0);
   [-2,-1,0,1,2].forEach(z=>{L.line(s,`M${X(z)} 30 L${X(z)} 330`,{"stroke-opacity":z===0?.6:.15,"stroke-dasharray":z===0?"":"3 4"});
@@ -29,7 +29,7 @@
   [0,15,30,45,60].forEach(n=>L.text(s,X(n),y1+26,n,{"text-anchor":"middle","font-size":14,fill:C.dim}));
   L.text(s,(x0+x1)/2,y1+56,"futures in which the package meets the 2050 target, of 60",{"text-anchor":"middle","font-size":15});
   const step=Math.pow(10,Math.floor(Math.log10(hi-lo)))*0.5;
-  for(let v=Math.ceil((lo-pad)/step)*step;v<=hi+pad;v+=step)L.text(s,x0-12,Y(v)+5,(v>0?"+":"")+Math.round(v).toLocaleString("en"),{"text-anchor":"end","font-size":13,fill:C.dim});
+  for(let v=Math.ceil((lo-pad)/step)*step;v<=hi+pad;v+=step)L.text(s,x0-12,Y(v)+5,Math.round(Math.abs(v)).toLocaleString("en"),{"text-anchor":"end","font-size":13,fill:C.dim});
   P.forEach(p=>{const surv=p.robustness>=0.55-1e-9&&p.accept>=0.5;
     L.el(s,"circle",{cx:X(p.n),cy:Y(p.net),r:surv?8:6,fill:surv?C.accent:"none",stroke:surv?C.accent:C.cream,"stroke-width":1.2,"stroke-opacity":surv?1:.7});
     if(surv)L.text(s,X(p.n)+12,Y(p.net)+5,p.id,{"font-size":15,fill:C.cream});});
@@ -56,12 +56,12 @@
 // P9 thirty-six months: one row per strand, an accent diamond at each submission
 (function(){const s=document.getElementById("p9");if(!s)return;
   const L=LineArt(s,Object.assign({sw:1},LINEART_THEMES.oxblood)),C=L.C,x0=230,x1=980,X=m=>x0+m/36*(x1-x0);
-  const rows=[["survey: design, pilot, field",[[1,9]]],["engine on synthetic, then real",[[1,12],[13,22]]],["calibration and 2010 to 2025 test",[[14,22]]],
-    ["research stay",[[19,24]]],["ensemble, search, signposts",[[25,32]]],["freight test",[[29,32]]],["thesis",[[32,36]]]];
+  const rows=[["PhD courses",[[1,6],[13,16]]],["survey: design, pilot, field",[[1,9]]],["engine on synthetic, then real",[[1,12],[13,22]]],["calibration and 2010 to 2025 test",[[14,22]]],
+    ["research stay",[[19,24]]],["ensemble, search, signposts",[[25,32]]],["freight test",[[29,32]]],["thesis",[[30,36]]]];
   [0,12,24,36].forEach(m=>{L.line(s,`M${X(m)} 20 L${X(m)} 250`,{"stroke-opacity":m%12?0.15:0.35});});
   ["YEAR 1","YEAR 2","YEAR 3"].forEach((t,i)=>L.text(s,X(i*12+6),20,t,{"text-anchor":"middle","font-size":14,"letter-spacing":".1em",fill:C.dim}));
-  rows.forEach(([name,segs],i)=>{const y=50+i*28;L.text(s,0,y+5,name,{"font-size":15});
+  rows.forEach(([name,segs],i)=>{const y=46+i*26;L.text(s,0,y+5,name,{"font-size":15});
     segs.forEach(([a,b])=>L.el(s,"rect",{x:X(a-1),y:y-7,width:X(b)-X(a-1),height:14,rx:3,fill:"none",stroke:C.cream,"stroke-width":1.1}));});
-  [[12,"A1"],[24,"A2"],[33,"A3"]].forEach(([m,t])=>{const x=X(m),y=262;L.el(s,"path",{d:`M${x} ${y-9} L${x+9} ${y} L${x} ${y+9} L${x-9} ${y} Z`,fill:C.accent});
+  [[12,"A1"],[24,"A2"],[31,"A3"]].forEach(([m,t])=>{const x=X(m),y=262;L.el(s,"path",{d:`M${x} ${y-9} L${x+9} ${y} L${x} ${y+9} L${x-9} ${y} Z`,fill:C.accent});
     L.text(s,x,y+30,t+" submitted",{"text-anchor":"middle","font-size":14,fill:C.accent});});
 })();

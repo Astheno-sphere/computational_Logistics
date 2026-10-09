@@ -85,3 +85,4 @@ verdict, and at most five next fixes ranked by score gain per word.
 | 1 | 2026-10-09 | 7.6 | 7.6 | 6.6 | 7.4 | length fail (about 8 pages) | long page, before the cut; scored by the author |
 | 2 | 2026-10-09 | 7.2 | 7.2 | 6.6 | 7.4 | fail: package count 24 vs 25, plate titles, refs 22 to 24 | five-page cut; first round by independent reader agents |
 | 3 | 2026-10-09 | 8.0 | 8.0 | 7.2 | 8.2 | pass | counts, τ against the Climate Change Act, held-out signposts, survey blocks, freight sentence, refs renumbered |
+| P1 | 2026-10-09 | 8.2 | 8.0 | 7.2 | 8.4 | fail: print layout, P(EV) term, sign convention, units | proposal plus portfolio, first read; all findings then fixed, estimator Monte Carlo added (docs/proposal/mc.json) |
