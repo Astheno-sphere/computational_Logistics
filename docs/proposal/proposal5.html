@@ -65,6 +65,10 @@ td:first-child{color:var(--cream);font-weight:500}
 a{color:var(--cream)}
 svg text{font-family:Roboto,sans-serif}
 @media(max-width:600px){p,li{font-size:16px}.lead{font-size:18px}}
+.cards.five{grid-template-columns:repeat(6,minmax(0,1fr))}
+.cards.five>div{grid-column:span 2}
+.cards.five>div:nth-child(n+4){grid-column:span 3}
+@media(max-width:760px){.cards.five{grid-template-columns:1fr}.cards.five>div,.cards.five>div:nth-child(n+4){grid-column:auto}}
 </style>
 
 <div class="doc">
@@ -93,13 +97,20 @@ svg text{font-family:Roboto,sans-serif}
 
 <h2><small>what is new</small>2 · Five contributions</h2>
 <p class="col">Each claim is placed against the closest work found in the literature reviewed for this proposal.</p>
-<div class="cards">
+<figure class="plate charcoal">
+  <div class="pk">the five contributions, on one road</div>
+  <svg id="p0" viewBox="0 0 1000 530" role="img" aria-label="Isometric road from 2010 to 2050 bending at a 2030 gate; houses, a charging gantry with voting residents, a warning pole and sixty futures fanning to the 2050 target, tagged C1 to C5"></svg>
+  <hr>
+  <div class="pt">Five questions, one <em>road</em></div>
+  <p class="ps">time runs along the road. the engine is first scored on the record (C5). households turn the fleet one car at a time (C1) and vote on the charge they drive under (C2). at the 2030 gate one reading warns early (C4). after the gate the road opens into sixty futures, and a plan counts only if it holds in most of them (C3).</p>
+  <div class="src">Fan: prototype ensemble, package P12, 60 futures, CO₂ relative to 2025; red futures miss the 2050 target. Synthetic behaviour.</div>
+</figure>
+<div class="cards five">
   <div><div class="n">C1 · THE PATH</div><h4>A household engine that shows how Norway gets from today to 2050, year by year</h4><p>Agents carry each household’s car, its age, its replacement moment, its mode choices and its response to price. Norway’s fleet model BIG follows vintages with an estimated choice model, but in aggregate and for fixed scenarios<sup>7</sup>.</p><div class="near">nearest: Fridstrøm et al. 2016; Deuten et al. 2020</div></div>
   <div><div class="n">C2 · ACCEPTANCE THAT MOVES</div><h4>Acceptance estimated from choice data, carried by agents, changing as a charge is lived, and used as a condition on which plans count</h4><p>TØI’s national experiment found 70 to 80% support for moderate distance charges with earmarked revenue, with opposition among drivers with few alternatives and, partly, rural residents<sup>8</sup>. Support also rises after a charge is introduced<sup>9</sup>. Le Pira, Marcucci and Gatta built agents that carry acceptance for urban freight<sup>10</sup>; I carry it into passenger policy and into the robust search itself.</p><div class="near">nearest: Lempert et al. 2020; Kasprzyk et al. 2013</div></div>
   <div><div class="n">C3 · HOW MUCH WE DO NOT KNOW</div><h4>2050 uncertainty split into three parts, and a test of whether the winning policy survives each</h4><p>Error in the estimated preferences, chance inside the simulation, and the deep uncertainty of the future are separated over 25 years. Petrik and colleagues propagated estimated parameters through a one-day activity model; parameter uncertainty exceeded sampling noise, with no long horizon and no policy choice<sup>11</sup>.</p><div class="near">nearest: Petrik et al. 2016, 2020; for appraisal ranges, Tveter, Welde &amp; Odeck 2025</div></div>
   <div><div class="n">C4 · WARNINGS WITH A HIT RATE</div><h4>Backcast pathways stress-tested across thousands of futures, with signposts whose lead time and false-alarm rate are measured</h4><p>Measured signpost detection appears mainly in water management<sup>12,13</sup>; transport backcasting remains national and deterministic<sup>14</sup>. Each signpost gets years of warning, false alarms and missed failures, and each pathway a measure of how often it must change.</p><div class="near">nearest: Raso et al. 2019; Haasnoot et al. 2018</div></div>
   <div><div class="n">C5 · TESTED ON HISTORY</div><h4>The engine is checked against Norway’s 2010 to 2025 electric transition before it is trusted with 2050</h4><p>EV forecasts often fail against what happened<sup>15</sup>, and Norwegian traffic forecasts for fixed links missed long-run traffic by up to a factor of two<sup>24</sup>. Norway’s registration record allows the engine to be run from 2010 information and scored against the observed fleet.</p><div class="near">nearest: Deuten et al. 2020 (system dynamics, 2010 to 2017)</div></div>
-  <div class="isocell"><div class="n">HOW THE FIVE FIT</div><svg id="p0" viewBox="0 0 420 330" role="img" aria-label="Isometric street block showing households, acceptance, futures, a 2030 signpost and a history strip, tagged C1 to C5"></svg><p>one block, five questions: who owns which car (C1), who accepts the charge (C2), how wide the futures spread (C3), when the signpost warns (C4), and whether the engine reproduced the past (C5).</p></div>
 </div>
 
 <h2><small>where</small>3 · Two towns, one street, one bridge</h2>
@@ -374,33 +385,80 @@ function t(p,x,y,s,o={}){return el(p,"text",Object.assign({x,y,fill:K.cream,"fon
 function proj(town,x,y,w,h){const [x0,y0,x1,y1]=town.bbox,k=Math.min(w/(x1-x0),h/(y1-y0)),ox=x+(w-(x1-x0)*k)/2,oy=y+(h-(y1-y0)*k)/2;
   const f=([a,b])=>[ox+(a-x0)*k,oy+(y1-b)*k];return{f,k,P:c=>c.map(q=>f(q).map(v=>v.toFixed(1)).join(",")).join(" ")}}
 
-// P0 how the five fit: isometric block
-(function(){const s=document.getElementById("p0");
-  const k=1.25,ox=200,oy=110,iso=(u,v,z)=>[ox+(u-v)*0.866*k, oy+(u+v)*0.5*k-z], P=a=>a.map(q=>iso(...q).map(n=>n.toFixed(1)).join(",")).join(" ");
-  const BG="#2f1519";
-  el(s,"polygon",{points:P([[0,0,0],[200,0,0],[200,140,0],[0,140,0]]),fill:"none",stroke:K.cream,"stroke-width":1});
-  el(s,"polygon",{points:P([[0,62,0],[200,62,0],[200,80,0],[0,80,0]]),fill:"rgba(239,227,204,.06)",stroke:"none"});
-  function house(u,v,w,d,h,acc){const r=12;
-    el(s,"polygon",{points:P([[u+w,v,0],[u+w,v+d,0],[u+w,v+d,h],[u+w,v,h]]),fill:BG,stroke:K.cream,"stroke-width":.9});
-    el(s,"polygon",{points:P([[u,v+d,0],[u+w,v+d,0],[u+w,v+d,h],[u,v+d,h]]),fill:BG,stroke:K.cream,"stroke-width":.9});
-    el(s,"polygon",{points:P([[u,v+d,h],[u+w,v+d,h],[u+w,v+d/2,h+r],[u,v+d/2,h+r]]),fill:acc?K.accent:BG,stroke:acc?K.accent:K.cream,"stroke-width":.9});
-    el(s,"polygon",{points:P([[u+w,v,h],[u+w,v+d,h],[u+w,v+d/2,h+r]]),fill:BG,stroke:K.cream,"stroke-width":.9});}
-  function car(u,v,lit){el(s,"polygon",{points:P([[u,v,0],[u+12,v,0],[u+12,v+6,0],[u,v+6,0]]),fill:"none",stroke:K.cream,"stroke-width":.6});
-    el(s,"polygon",{points:P([[u,v+6,0],[u+12,v+6,0],[u+12,v+6,6],[u,v+6,6]]),fill:lit?K.cream:BG,stroke:K.cream,"stroke-width":.8});}
-  [[10,10],[60,10],[110,10],[160,8]].forEach(([u,v],i)=>{house(u,v,28,30,22,i===1);car(u+4,v+40,i!==3);});
-  [[20,92],[80,92],[140,92]].forEach(([u,v],i)=>{house(u,v,30,30,20,false);car(u+6,v-12,i===0);});
-  // C2: two figures with a yes and a no
-  [[186,100,"✓"],[188,118,"✗"]].forEach(([u,v,m])=>{const [x,y]=iso(u,v,0);el(s,"line",{x1:x,y1:y,x2:x,y2:y-12,stroke:K.cream,"stroke-width":1});el(s,"circle",{cx:x,cy:y-15,r:2.4,fill:BG,stroke:K.cream,"stroke-width":1});t(s,x+5,y-18,m,{"font-size":12,fill:m=="✓"?K.cream:K.accent});});
-  // C4: signpost at the corner
-  {const [x,y]=iso(198,58,0);el(s,"line",{x1:x,y1:y,x2:x,y2:y-58,stroke:K.cream,"stroke-width":1.2});el(s,"rect",{x:x-2,y:y-62,width:34,height:15,fill:K.accent});t(s,x+15,y-51,"2030",{"text-anchor":"middle","font-size":10,fill:BG,style:"stroke:none"});}
-  // C3: futures fan rising from the block
-  {const [x,y]=iso(196,71,30);for(let i=0;i<13;i++){const a=-Math.PI/2+(i-6)*0.1;el(s,"line",{x1:x,y1:y,x2:x+Math.cos(a)*62,y2:y+Math.sin(a)*62,stroke:K.cream,"stroke-width":.7,"stroke-opacity":i===4?1:.45});}
-   el(s,"circle",{cx:x,cy:y,r:3,fill:K.cream});}
-  // C5: history strip along the front edge
-  {for(let i=0;i<=15;i++){const [x,y]=iso(0,140*i/15,0);el(s,"line",{x1:x-6,y1:y+3,x2:x-11,y2:y+6,stroke:K.cream,"stroke-width":.8,"stroke-opacity":i%5?.5:1});}
-   const [a,b]=iso(0,0,0),[c,d]=iso(0,140,0);t(s,a-26,b+6,"2010",{"font-size":10,fill:K.dim,"text-anchor":"end"});t(s,c-24,d+14,"2025",{"font-size":10,fill:K.dim,"text-anchor":"end"});}
-  // tags
-  [["C1",[60,25,34],[-40,-40]],["C2",[187,108,14],[34,-6]],["C3",[196,71,92],[40,-4]],["C4",[198,58,50],[30,14]],["C5",[0,70,0],[-34,34]]].forEach(([l,q,[dx,dy]])=>{const [x,y]=iso(...q);el(s,"line",{x1:x,y1:y,x2:x+dx,y2:y+dy,stroke:K.accent,"stroke-width":.8});t(s,x+dx+(dx<0?-3:3),y+dy+4,l,{"font-size":12,fill:K.accent,"font-family":"Roboto Mono","text-anchor":dx<0?"end":"start"});});
+// P0 five questions, one road: the contributions placed on the 2010 to 2050 timeline (charcoal, isometric)
+(function(){const s=document.getElementById("p0");if(!s)return;
+  const L=LineArt(s,Object.assign({sw:1},LINEART_THEMES.charcoal)),C=L.C,el=L.el,G=C.ground;
+  const ox=84,oy=150,iso=(u,v,z=0)=>[ox+(u-v)*0.866,oy+(u+v)*0.5-z];
+  const P=a=>a.map(q=>iso(...q).map(n=>n.toFixed(1)).join(",")).join(" ");
+  const poly=(pts,o)=>el(s,"polygon",Object.assign({points:P(pts),fill:G,stroke:C.cream,"stroke-width":1},o||{}));
+  const pl=(pts,o)=>el(s,"polyline",Object.assign({points:P(pts),fill:"none",stroke:C.cream,"stroke-width":1},o||{}));
+  const W=44,UC=498,uOf=y=>(y-2010)/20*UC,vOf=y=>W/2-(y-2030)/20*430;
+  const lbl=(x,y,tag,head,sub,anc="start")=>{L.text(s,x,y,tag,{"font-family":"Roboto Mono","font-size":14,fill:C.accent,"letter-spacing":".08em","text-anchor":anc});
+    L.text(s,x,y+23,head,{"font-family":"Inter","font-weight":800,"font-size":19,"text-anchor":anc});
+    if(sub)L.text(s,x,y+44,sub,{"font-family":"Inter","font-size":15,fill:C.dim,"text-anchor":anc});};
+  const lead=(a,b)=>L.line(s,`M${a[0]} ${a[1]} L${b[0]} ${b[1]}`,{"stroke-width":.8,"stroke-opacity":.7});
+
+  // ground: the road in two legs, history solid, the future dashed
+  poly([[0,0],[UC+W/2,0],[UC+W/2,W],[0,W]],{fill:"rgba(233,225,208,.035)",stroke:"none"});
+  poly([[UC-W/2,W],[UC+W/2,W],[UC+W/2,-410],[UC-W/2,-410]],{fill:"rgba(233,225,208,.035)",stroke:"none"});
+  pl([[0,0],[UC-W/2,0],[UC-W/2,-410]],{});
+  pl([[0,W],[UC+W/2,W],[UC+W/2,-410]],{"stroke-width":1.3});
+  pl([[uOf(2025),0],[uOf(2025),W]],{"stroke-opacity":.5});
+  // centre line: solid in the record, dashed where the record ends
+  pl([[0,W/2],[uOf(2025),W/2]],{"stroke-opacity":.55});
+  pl([[uOf(2025),W/2],[UC,W/2],[UC,-410]],{"stroke-dasharray":"6 6","stroke-opacity":.55});
+  // year ticks on the front edge
+  [2010,2015,2020,2025,2030].forEach(y=>{const [x,yy]=iso(uOf(y),W);L.line(s,`M${x} ${yy} l-7 4`,{});
+    L.text(s,x-10,yy+18,y,{"font-family":"Roboto Mono","font-size":12,fill:y===2030?C.cream:C.dim,"text-anchor":"end"});});
+  [2040,2050].forEach(y=>{const [x,yy]=iso(UC+W/2,vOf(y));L.line(s,`M${x} ${yy} l7 4`,{});L.text(s,x+10,yy+18,y,{"font-family":"Roboto Mono","font-size":12,fill:C.dim});});
+
+  // C5: the record. small cars on the history leg, lit by the observed electric share
+  const car=(u,v,lit)=>{const a=15,b=8,h=6;
+    poly([[u,v,h],[u+a,v,h],[u+a,v+b,h],[u,v+b,h]],{fill:lit?C.cream:G,"stroke-width":.8});
+    poly([[u,v+b,0],[u+a,v+b,0],[u+a,v+b,h],[u,v+b,h]],{fill:lit?"rgba(233,225,208,.55)":G,"stroke-width":.8});
+    poly([[u+a,v,0],[u+a,v+b,0],[u+a,v+b,h],[u+a,v,h]],{fill:lit?"rgba(233,225,208,.35)":G,"stroke-width":.8});};
+  [[30,8,0],[70,26,0],[115,8,0],[160,26,0],[205,8,0],[245,26,1],[290,8,0],[330,26,1],[355,8,1]].forEach(([u,v,l])=>car(u,v,l));
+
+  // C1: households behind the road, each with a car in the drive; lit share rises toward 2030
+  const house=(u,v,acc)=>{const w=36,d=30,h=28,r=14;
+    poly([[u+w,v,0],[u+w,v+d,0],[u+w,v+d,h],[u+w,v,h]]);poly([[u,v+d,0],[u+w,v+d,0],[u+w,v+d,h],[u,v+d,h]]);
+    poly([[u,v+d,h],[u+w,v+d,h],[u+w,v+d/2,h+r],[u,v+d/2,h+r]],acc?{fill:C.accent,stroke:C.accent}:{});
+    poly([[u+w,v,h],[u+w,v+d,h],[u+w,v+d/2,h+r]]);
+    const [x,y]=iso(u+w*0.45,v+d,0);el(s,"rect",{x:x-2,y:y-14,width:5,height:9,fill:"none",stroke:C.cream,"stroke-width":.7});};
+  [[130,-96,0],[192,-96,0],[254,-96,1],[316,-96,0]].forEach(([u,v,a],i)=>{house(u,v,a);car(u+10,v+40,i>=2);});
+
+  // C2: the charge. a gantry across the road and residents who vote on it
+  {const u=uOf(2023);[0,W].forEach(v=>pl([[u,v-6,0],[u,v-6,46]],{"stroke-width":1.4}));
+    poly([[u-3,-6,46],[u+3,-6,46],[u+3,W-6,46],[u-3,W-6,46]],{fill:C.accent,stroke:C.accent});
+    [[u-4,W+52,"✓"],[u+20,W+62,"✓"],[u+44,W+54,"✗"]].forEach(([a,b,m],k)=>{const [x,y]=iso(a,b);L.person(s,x,y,30,k);
+      L.text(s,x+8,y-34,m,{"font-size":15,fill:m==="✓"?C.cream:C.accent,"font-weight":700});});}
+
+  // C3: sixty futures after the gate, emissions standing above the road, failures in the accent
+  if(typeof DATA!=="undefined"&&DATA){const yrs=DATA.traj.years,T=DATA.traj[DATA.best],H=140,i0=yrs.indexOf(2030);
+    const order=T.map((r,f)=>[r[r.length-1],f]).sort((a,b)=>a[0]-b[0]);
+    order.forEach(([end,f],k)=>{const r=T[f],fail=end>DATA.target+1e-9,off=(k-29.5)/29.5;
+      pl(r.slice(i0).map((val,j)=>{const t=j/(r.length-1-i0);return [UC+off*(4+t*72),vOf(yrs[i0+j]),val*H]}),{stroke:fail?C.accent:C.cream,"stroke-width":fail?1.1:.75,"stroke-opacity":fail?.95:.5});});
+    // target plane at 2050
+    const zt=DATA.target*H;pl([[UC-84,vOf(2050),zt],[UC+84,vOf(2050),zt]],{"stroke-width":2.2});
+    const [tx,ty]=iso(UC+84,vOf(2050),zt);L.text(s,tx+8,ty+5,"target",{"font-family":"Inter","font-size":13.5});}
+
+  // C4: the warning pole at the 2030 gate, standing in the fan at the 63% reading
+  {const zt=0.63*140,[bx,by]=iso(UC,W/2,0),[tx,ty]=iso(UC,W/2,zt+18);
+    L.line(s,`M${bx} ${by} L${tx} ${ty}`,{"stroke-width":1.4,"stroke-dasharray":"3 3"});
+    const [gx,gy]=iso(UC,W/2,zt);L.line(s,`M${gx-16} ${gy} L${gx+16} ${gy}`,{"stroke-width":2.4});
+    el(s,"rect",{x:tx-84,y:ty-8,width:82,height:22,fill:C.accent});
+    L.text(s,tx-43,ty+8,"2030 · 63%",{"text-anchor":"middle","font-family":"Roboto Mono","font-size":12.5,fill:"#151413",stroke:"none","font-weight":500});}
+
+  // callouts in the empty corners, read in time order
+  lbl(24,370,"C5 · TESTED ON HISTORY","the past, scored first","engine run from 2010 against the register");
+  lead([150,356],iso(150,W));
+  lbl(24,30,"C1 · THE PATH","each household turns its own car","replacement year by year, not an end state");
+  lead([200,76],iso(192,-96,40));
+  lbl(250,466,"C2 · ACCEPTANCE THAT MOVES","residents vote on the charge","a condition on which plans count");
+  lead([300,450],iso(uOf(2023)+20,W+62,36));
+  lbl(640,420,"C4 · WARNINGS WITH A HIT RATE","the gate reads early","17 of 19 failures flagged, 4 false alarms");
+  lead([636,416],iso(UC,W/2,40));
+  lbl(560,30,"C3 · HOW MUCH WE DO NOT KNOW","sixty futures after the gate","preferences, chance and the future, split apart");
 })();
 
 // P1 the stock turns: one street across four years (charcoal family, lineart.js)
