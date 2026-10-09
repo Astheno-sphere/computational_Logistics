@@ -17,7 +17,7 @@ burn fuel, the fleet renews slowly, and the tax base that came from fuel is drai
 decisions are about road pricing, fleet turnover and plans that must reach 2050 targets nobody can
 forecast. This repository is the engine I am building for that question, and it already runs end to end.
 
-**Read:** [Proposal](https://astheno-sphere.github.io/computational_Logistics/proposal/proposal5.html) · [Portfolio](https://astheno-sphere.github.io/computational_Logistics/proposal/standalone.html) ·
+**Read:** [Proposal, five pages](https://astheno-sphere.github.io/computational_Logistics/proposal/proposal-5p.html) · [Long read](https://astheno-sphere.github.io/computational_Logistics/proposal/proposal5.html) · [Portfolio](https://astheno-sphere.github.io/computational_Logistics/proposal/standalone.html) ·
 [How it works](#the-engine) · [What runs, what is planned](#status) · [Reproduce](#reproduce) ·
 [Tools and gaps](#tools-and-gaps) · [Limitations](#limitations) · [Supporting toolkit](#supporting-toolkit)
 

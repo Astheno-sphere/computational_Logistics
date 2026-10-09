@@ -14,3 +14,8 @@ p5 = (here / "src" / "proposal5.html").read_text(encoding="utf-8")
 lineart = (here.parents[1] / "skills" / "visual-narrative" / "lineart" / "lineart.js").read_text(encoding="utf-8")
 (here / "proposal5.html").write_text(p5.replace("/*LINEART*/", lineart).replace("/*TOWNS*/null", towns).replace("/*STUDY*/null", study), encoding="utf-8")
 print("wrote", here / "proposal5.html")
+
+# the five-page ranked proposal, same grammar (src/five-page.html -> proposal-5p.html)
+p5s = (here / "src" / "five-page.html").read_text(encoding="utf-8")
+(here / "proposal-5p.html").write_text(p5s.replace("/*LINEART*/", lineart).replace("/*TOWNS*/null", towns).replace("/*STUDY*/null", study), encoding="utf-8")
+print("wrote", here / "proposal-5p.html")
