@@ -102,4 +102,49 @@ function LineArt(svg, opt) {
     },
   };
 }
-if (typeof module !== "undefined") module.exports = { LineArt, LINEART_THEMES };
+
+/* Street furniture and facades for elevation plates (charcoal family). Built on a LineArt instance. */
+function LineArtStreet(L) {
+  const C = L.C, el = L.el, line = L.line;
+  return {
+    /** apartment or shop building in elevation: base-left (x,y), width w, floors n of height fh */
+    facade(p, x, y, w, n, fh = 46, o = {}) {
+      const g = el(p, "g", {}), h = n * fh + 12;
+      el(g, "rect", { x, y: y - h, width: w, height: h, fill: C.ground, stroke: C.cream, "stroke-width": C.sw });
+      line(g, `M${x - 4} ${y - h} L${x + w + 4} ${y - h} M${x - 4} ${y - h + 6} L${x + w + 4} ${y - h + 6}`);
+      const cols = Math.max(2, Math.round(w / 34));
+      for (let f = 1; f < n; f++) for (let c = 0; c < cols; c++) {
+        const wx = x + (c + 0.5) * w / cols - 7, wy = y - (f + 1) * fh + 8;
+        el(g, "rect", { x: wx, y: wy, width: 14, height: fh * 0.5, fill: "none", stroke: C.cream, "stroke-width": C.sw * 0.9 });
+        line(g, `M${wx} ${wy + fh * 0.25} L${wx + 14} ${wy + fh * 0.25}`, { "stroke-width": 0.6 });
+      }
+      // ground floor: shopfront or door
+      if (o.shop) { el(g, "rect", { x: x + 8, y: y - fh + 6, width: w - 16, height: fh - 6, fill: "none", stroke: C.cream, "stroke-width": C.sw }); line(g, `M${x + w / 2} ${y - fh + 6} L${x + w / 2} ${y}`); }
+      else el(g, "rect", { x: x + w / 2 - 8, y: y - fh + 10, width: 16, height: fh - 10, fill: "none", stroke: C.cream, "stroke-width": C.sw });
+      return g;
+    },
+    /** awning over a shopfront; accent=true fills it with the accent colour */
+    awning(p, x, y, w, accent = false) {
+      const g = el(p, "g", {});
+      el(g, "path", { d: `M${x} ${y} L${x + w} ${y} L${x + w + 8} ${y + 16} L${x - 8} ${y + 16} Z`, fill: accent ? C.accent : C.cream, stroke: "none" });
+      for (let k = 0; k <= 6; k++) line(g, `M${x - 8 + k * (w + 16) / 6} ${y + 16} l0 4`, { stroke: accent ? C.accent : C.cream });
+      return g;
+    },
+    bench(p, x, y, w = 34) { const g = el(p, "g", {}); line(g, `M${x} ${y - 9} L${x + w} ${y - 9} M${x} ${y - 14} L${x + w} ${y - 14} M${x + 4} ${y - 9} L${x + 4} ${y} M${x + w - 4} ${y - 9} L${x + w - 4} ${y}`); return g; },
+    bicycle(p, x, y, s = 1) {
+      const g = el(p, "g", {}), r = 7 * s;
+      [x, x + 22 * s].forEach(cx => el(g, "circle", { cx, cy: y - r, r, fill: "none", stroke: C.cream, "stroke-width": C.sw }));
+      line(g, `M${x} ${y - r} L${x + 8 * s} ${y - r - 10 * s} L${x + 18 * s} ${y - r - 10 * s} L${x + 22 * s} ${y - r} M${x + 8 * s} ${y - r - 10 * s} L${x + 11 * s} ${y - r} L${x + 18 * s} ${y - r - 10 * s} M${x + 7 * s} ${y - r - 13 * s} L${x + 10 * s} ${y - r - 13 * s} M${x + 18 * s} ${y - r - 10 * s} L${x + 19 * s} ${y - r - 15 * s}`);
+      return g;
+    },
+    lamp(p, x, y, h = 70, accent = false) { const g = el(p, "g", {}); line(g, `M${x} ${y} L${x} ${y - h} M${x - 6} ${y - h} L${x + 6} ${y - h}`); el(g, "rect", { x: x - 5, y: y - h - 12, width: 10, height: 12, fill: accent ? C.accent : "none", stroke: accent ? C.accent : C.cream, "stroke-width": C.sw }); return g; },
+    /** pill-shaped time band with labels evenly spaced, like a timeline caption */
+    band(p, x, y, w, labels) {
+      const g = el(p, "g", {});
+      el(g, "path", { d: `M${x + 10} ${y} L${x + w - 10} ${y} L${x + w} ${y + 14} L${x + w - 10} ${y + 28} L${x + 10} ${y + 28} L${x} ${y + 14} Z`, fill: "none", stroke: C.cream, "stroke-width": C.sw });
+      labels.forEach((l, i) => L.text(g, x + (i + 0.5) * w / labels.length, y + 20, l, { "text-anchor": "middle", "font-size": 16, "letter-spacing": ".08em" }));
+      return g;
+    },
+  };
+}
+if (typeof module !== "undefined") module.exports = { LineArt, LineArtStreet, LINEART_THEMES };

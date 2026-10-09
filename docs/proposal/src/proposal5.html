@@ -1,7 +1,7 @@
 <title>The Path to 2050</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400&family=Roboto+Mono:wght@400;500&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
 /* layout: one reading column of prose, plates break wider; single dark theme in the line-art plate grammar */
 :root{
@@ -32,6 +32,11 @@ sup{font-size:11px;color:var(--accent)}
 .plate svg{width:100%;height:auto;display:block}
 .plate hr{border:0;border-top:1px solid var(--faint);margin:22px 0 16px}
 .plate .pt{font-weight:900;color:var(--cream);font-size:clamp(24px,3.4vw,34px);letter-spacing:.005em;margin:0 0 8px;text-transform:uppercase}
+.plate .pt em{font-style:normal;color:var(--accent)}
+.plate.charcoal{background:#151413;--accent:#D2412B;--halo:#151413}
+.plate.charcoal .pt{font-family:Inter,sans-serif;font-weight:800;letter-spacing:-.015em}
+.plate.charcoal .ps{font-family:Inter,sans-serif;color:#9a948a;font-size:19px}
+.plate.charcoal .pk{font-family:Inter,sans-serif}
 .plate .ps{color:var(--body);font-size:17px;line-height:1.6;max-width:760px;margin:0}
 .plate .src{font-size:12.5px;color:var(--dim);margin-top:10px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--faint);border:1px solid var(--faint);margin:22px 0}
@@ -75,13 +80,13 @@ svg text{font-family:Roboto,sans-serif}
 <p>TØI’s own review of models for backcasting names the limitation in one line: RTM and NTM6 compute partial equilibria but “say nothing about the path to a new equilibrium”<sup>6</sup>. <strong>Backcasting is a path.</strong> That path runs through households: the car each one owns, the year it is replaced, the trips it makes and the charges it will accept. My PhD builds the engine that gives TRANSPLAN that path, built from people’s estimated preferences, and tests whether the plans built on it survive the futures nobody can forecast.</p>
 </div>
 
-<figure class="plate">
-  <div class="pk">the stock problem</div>
-  <svg id="p1" viewBox="0 0 1000 470" role="img" aria-label="Two grids of 100 cars: 96 electric among new cars sold, about 30 among cars on the road"></svg>
+<figure class="plate charcoal">
+  <div class="pk">the stock problem, in one street</div>
+  <svg id="p1" viewBox="0 0 1000 545" role="img" aria-label="One Molde street drawn across 2025 to 2050, cars lit by the simulated electric share"></svg>
   <hr>
-  <div class="pt">The fleet lags the showroom</div>
-  <p class="ps">each car is one in a hundred. almost every new car sold in 2025 was electric; on the road, about seven in ten still burn fuel. the gap closes only as old cars leave the fleet, so what matters for 2035 is how fast households replace the cars they already own.</p>
-  <div class="src">OFV registrations 2025; Norwegian EV Association fleet estimate.</div>
+  <div class="pt">The stock <em>turns</em></div>
+  <p class="ps">one street, four moments. each lit car is electric, in the share the household engine simulates for that year under the most robust package. the street changes only as fast as households replace the cars they already own.</p>
+  <div class="src">Prototype household engine, median future, package P12; without policy the 2050 share is 74%. Synthetic behaviour.</div>
 </figure>
 
 <h2><small>what is new</small>2 · Five contributions</h2>
@@ -99,11 +104,11 @@ svg text{font-family:Roboto,sans-serif}
 <p>Molde and Kristiansund are <strong>case studies, not a national sample</strong>. They are car-dependent towns where national surveys find road charges hardest to accept, in a county whose 2025 climate accounts are not on track<sup>16</sup>, and where the decisive instruments (tolls, bus service, parking, cycling networks) are set locally. Their networks concentrate travel in ways that make policy effects visible. Molde is the main case, where preferences are estimated and the engine calibrated. Kristiansund is the transfer case: the Molde model is applied without re-estimation, which turns the transferability of preferences from an assumption into a measurement. Inputs come from national sources and outputs are reported against national targets, so the method carries to other regions.</p>
 </div>
 
-<figure class="plate">
+<figure class="plate charcoal">
   <div class="pk">where the network concentrates people</div>
   <svg id="p3" viewBox="0 0 1000 640" role="img" aria-label="Molde street network and buildings with Øvre veg highlighted, Kristiansund inset with Gomabrua"></svg>
   <hr>
-  <div class="pt">One street, one bridge</div>
+  <div class="pt">One <em>street</em>, one <em>bridge</em></div>
   <p class="ps">route every pair of junctions by its fastest path. in molde, 17.5% of all those routes use øvre veg; in kristiansund, a quarter cross gomabrua. a charge, a bus lane or a closure on these links changes travel for most of the town at once.</p>
   <div class="src">OpenStreetMap; edge betweenness on drive time; 2,772 and 3,066 junctions. © OpenStreetMap contributors (ODbL).</div>
 </figure>
@@ -115,7 +120,7 @@ svg text{font-family:Roboto,sans-serif}
   <div class="pk">inside the engine</div>
   <svg id="p2" viewBox="0 0 1000 1080" role="img" aria-label="Exploded axonometric of the engine: preferences, network, households and futures as stacked layers"></svg>
   <hr>
-  <div class="pt">Exploded engine</div>
+  <div class="pt">Exploded <em>engine</em></div>
   <p class="ps">four layers. at the bottom, preferences estimated from people, with their error. above them, the real road network. then households that carry their cars, trips and opinions through time. at the top, the thousands of futures every plan is tested against.</p>
 </figure>
 
@@ -143,7 +148,7 @@ svg text{font-family:Roboto,sans-serif}
   <div class="pk">the operation for selective survival</div>
   <svg id="p4" viewBox="0 0 1000 560" role="img" aria-label="Twenty-five packages run in sixty futures pass through a robust filter; four survive, shown as rows of sixty dots"></svg>
   <hr>
-  <div class="pt">Robust filter</div>
+  <div class="pt">Robust <em>filter</em></div>
   <p class="ps">every package runs in every future. the filter keeps a package only if it reaches the target in most futures, a majority would accept it, and the budget allows it. each dot on the right is one future: lit where the package reached the target. in 19 futures nothing works, and they are the futures where cars stay on the road the longest.</p>
   <div class="src">Prototype ensemble, 1,500 runs; target: commuting CO₂ in 2050 at most 20% of 2025.</div>
 </figure>
@@ -152,7 +157,7 @@ svg text{font-family:Roboto,sans-serif}
   <div class="pk">reading the future early</div>
   <svg id="p5" viewBox="0 0 1000 560" role="img" aria-label="Sixty CO2 trajectories for the most robust package with a 2030 gate at 63 percent of 2025"></svg>
   <hr>
-  <div class="pt">A warning with a hit rate</div>
+  <div class="pt">A warning with a <em>hit rate</em></div>
   <p class="ps">sixty futures under the most robust package. at the 2030 gate, emissions above 63% of 2025 flag 17 of the 19 futures that later miss the 2050 target, with 4 false alarms among 41 that succeed. twenty years of warning, with its error rate stated.</p>
   <div class="src">Prototype ensemble; threshold chosen for the best separation of later success and failure.</div>
 </figure>
@@ -205,45 +210,51 @@ svg text{font-family:Roboto,sans-serif}
 </ol></div>
 </div>
 
+<script>/*LINEART*/</script>
 <script>
 const TOWNS=/*TOWNS*/null;
 const DATA=/*STUDY*/null;
 const NS="http://www.w3.org/2000/svg",K={cream:"#EFE3CC",dim:"#A8958A",faint:"rgba(239,227,204,.18)",ghost:"rgba(239,227,204,.10)",accent:"#D9734E",plate:"#341a1e",mauve:"rgba(239,227,204,.07)"};
 function el(p,tag,a,txt){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;p.appendChild(e);return e}
-function t(p,x,y,s,o={}){return el(p,"text",Object.assign({x,y,fill:K.cream,"font-size":18,stroke:K.plate,"stroke-width":4,"paint-order":"stroke","stroke-linejoin":"round"},o),s)}
+function t(p,x,y,s,o={}){return el(p,"text",Object.assign({x,y,fill:K.cream,"font-size":18,style:"stroke:var(--halo,#341a1e)","stroke-width":4,"paint-order":"stroke","stroke-linejoin":"round"},o),s)}
 function proj(town,x,y,w,h){const [x0,y0,x1,y1]=town.bbox,k=Math.min(w/(x1-x0),h/(y1-y0)),ox=x+(w-(x1-x0)*k)/2,oy=y+(h-(y1-y0)*k)/2;
   const f=([a,b])=>[ox+(a-x0)*k,oy+(y1-b)*k];return{f,k,P:c=>c.map(q=>f(q).map(v=>v.toFixed(1)).join(",")).join(" ")}}
 
-// P1 the fleet lags the showroom: line-art cars
-(function(){const s=document.getElementById("p1");
-  function car(x,y,lit){const g=el(s,"g",{transform:`translate(${x},${y})`});
-    el(g,"path",{d:"M1 13 L1 9 Q2 7 5 6.5 L10 2.5 Q11.5 1.5 14 1.5 L23 1.5 Q25 1.5 27 3 L31 6.5 L36 7.5 Q38 8 38 10.5 L38 13 Z",fill:lit?K.cream:"none",stroke:lit?K.cream:K.dim,"stroke-width":1,"stroke-opacity":lit?1:.55,"stroke-linejoin":"round"});
-    [9.5,29].forEach(cx=>el(g,"circle",{cx,cy:13.5,r:3.2,fill:K.plate,stroke:lit?K.cream:K.dim,"stroke-width":1,"stroke-opacity":lit?1:.55}));}
-  function grid(x0,n){for(let i=0;i<100;i++){const c=i%10,r=Math.floor(i/10);car(x0+c*42,40+r*30,i<n);}}
-  grid(20,96); grid(560,30);
-  t(s,20,372,"NEW CARS SOLD, 2025",{"font-weight":700,"font-size":17,"letter-spacing":".06em"});
-  t(s,20,398,"96 in 100 electric",{fill:K.dim,"font-size":16});
-  t(s,560,372,"CARS ON THE ROAD",{"font-weight":700,"font-size":17,"letter-spacing":".06em"});
-  t(s,560,398,"about 30 in 100 electric",{fill:K.dim,"font-size":16});
-  el(s,"path",{d:"M455 190 C490 160 505 160 540 190",fill:"none",stroke:K.accent,"stroke-width":1.6});
-  el(s,"path",{d:"M532 180 L541 191 L528 193",fill:"none",stroke:K.accent,"stroke-width":1.6});
-  t(s,498,140,"renewal",{"text-anchor":"middle",fill:K.accent,"font-size":15,"font-style":"italic"});
-  t(s,498,446,"close to twenty years for the road to look like the showroom",{"text-anchor":"middle",fill:K.dim,"font-size":15,"font-style":"italic"});
+// P1 the stock turns: one street across four years (charcoal family, lineart.js)
+(function(){const s=document.getElementById("p1");if(!DATA)return;
+  const L=LineArt(s,Object.assign({sw:1.1},LINEART_THEMES.charcoal)),St=LineArtStreet(L),E=DATA.ev_series,yrs=[2025,2030,2040,2050];
+  const share=y=>E[DATA.best][E.years.indexOf(y)], gy=330, seg=250;
+  L.hatch(s,0,40,1000,150,5);
+  yrs.forEach((y,k)=>{const x0=k*seg;
+    L.tree(s,x0+60,gy,120,k*7+2,{}); L.tree(s,x0+205,gy,110,k*7+5,{});
+    L.house(s,x0+8,gy,56,52,{roof:28}); St.facade(s,x0+70,gy,74,3,44,{shop:k%2==0});
+    if(k%2==0) St.awning(s,x0+78,gy-40,58,k==2);
+    L.house(s,x0+150,gy,52,50,{roof:26}); St.facade(s,x0+204,gy,40,2,44,{});
+    const n=10,lit=Math.round(share(y)*n);
+    for(let c=0;c<n;c++) L.car(s,x0+8+(c%5)*48,gy+40+Math.floor(c/5)*30,40,c<lit,{});
+    St.lamp(s,x0+136,gy,74,false); if(k==1) St.bench(s,x0+100,gy); if(k!=1) St.bicycle(s,x0+108,gy,0.9);
+    [[x0+30,0],[x0+178,2]].forEach(([px,pose])=>L.person(s,px,gy,30,pose+k));
+    L.text(s,x0+seg/2,gy+104,`${Math.round(share(y)*100)}% electric`,{"text-anchor":"middle","font-size":17,fill:k==3?L.C.accent:L.C.cream,"font-family":"Inter"});
+  });
+  L.line(s,`M0 ${gy} L1000 ${gy}`,{"stroke-width":1.6}); L.line(s,`M0 ${gy+76} L1000 ${gy+76}`,{"stroke-opacity":.6});
+  St.band(s,40,gy+120,920,yrs.map(String));
+  L.text(s,1000,gy+178,"MOLDE STREET / ELEVATION",{"text-anchor":"end","font-size":14,"letter-spacing":".08em","font-family":"Inter"});
+  L.scalebar(s,760,gy+186,240,[[0,"0"],[0.5,"25"],[1,"50 m"]]);
 })();
 
 // P3 one street, one bridge: figure-ground with the instance
 (function(){const s=document.getElementById("p3");if(!TOWNS)return;
-  function town(T,x,y,w,h,label,dx,dy,big){const p=proj(T,x,y,w,h),g=el(s,"g",{});
-    T.sea.forEach(r=>el(g,"polygon",{points:p.P(r),fill:"rgba(239,227,204,.05)"}));
+  function town(T,x,y,w,h,label,dx,dy,big){const p=proj(T,x,y,w,h),g=el(s,"g",{}),ACC="#D2412B";
+    T.sea.forEach(r=>el(g,"polygon",{points:p.P(r),fill:"rgba(233,225,208,.06)"}));
     T.points.forEach(q=>{const [px,py]=p.f(q);el(g,"rect",{x:(px-1.2).toFixed(1),y:(py-1.2).toFixed(1),width:big?2.6:2,height:big?2.6:2,fill:"rgba(239,227,204,.55)"});});
     const R=T.roads.slice().sort((a,b)=>a[2]-b[2]),mx=R[R.length-1][2];
     R.forEach(([maj,c,sh])=>{const k=sh/mx,hot=k>0.45;el(g,"polyline",{points:p.P(c),fill:"none","stroke-linecap":"round",stroke:hot?K.cream:(maj?"rgba(239,227,204,.5)":"rgba(239,227,204,.2)"),"stroke-width":hot?(big?3.4:2.6):(maj?1:.5)});});
     const top=R[R.length-1],[cx,cy]=p.f(top[1][Math.floor(top[1].length/2)]);
-    el(g,"circle",{cx,cy,r:big?9:7,fill:K.accent,stroke:K.plate,"stroke-width":2});
-    el(g,"line",{x1:cx,y1:cy,x2:cx+dx,y2:cy+dy,stroke:K.accent,"stroke-width":1});
+    el(g,"circle",{cx,cy,r:big?9:7,fill:ACC,stroke:"#151413","stroke-width":2});
+    el(g,"line",{x1:cx,y1:cy,x2:cx+dx,y2:cy+dy,stroke:ACC,"stroke-width":1});
     const anc=dx<0?"end":"start";
     t(g,cx+dx+(dx<0?-6:6),cy+dy-4,T.pinch[0].toLowerCase(),{"text-anchor":anc,"font-size":big?19:16,"font-weight":500});
-    t(g,cx+dx+(dx<0?-6:6),cy+dy+18,`${(T.pinch[1]*100).toFixed(1)}% of all fastest routes`,{"text-anchor":anc,fill:K.accent,"font-size":big?16:14});
+    t(g,cx+dx+(dx<0?-6:6),cy+dy+18,`${(T.pinch[1]*100).toFixed(1)}% of all fastest routes`,{"text-anchor":anc,fill:ACC,stroke:"#151413","font-size":big?16:14});
     t(g,x,y+h+24,label,{fill:K.dim,"font-size":15,"font-style":"italic"});}
   town(TOWNS.molde,0,10,1000,300,"molde · main case",60,90,true);
   town(TOWNS.kristiansund,280,360,720,240,"kristiansund · transfer case",-150,-40,false);
