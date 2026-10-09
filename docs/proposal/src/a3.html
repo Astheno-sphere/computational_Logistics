@@ -1,0 +1,284 @@
+<title>Will the Toll Survive</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* layout: five fixed A3 sheets (1123 x 1587 px = 297 x 420 mm); on screen the deck scales to the viewport, in print each sheet is one A3 page.
+   Colour carries meaning on every plate: electric green, fossil grey, vans blue, opinion vermilion, money gold, futures lavender. */
+:root{
+  --ground:#151413; --panel:#1d1b19; --cream:#E9E1D0; --body:#CFC7B8; --dim:#8E877D; --faint:rgba(233,225,208,.14);
+  --red:#D2412B; --ev:#7FB89A; --fossil:#8E877D; --van:#6E9CC8; --gold:#D4A530; --fut:#B7A4D8;
+  --sans:Inter,system-ui,sans-serif; --mono:"Roboto Mono",ui-monospace,monospace; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#0d0c0b;color:var(--body);font-family:var(--sans);font-weight:300;-webkit-font-smoothing:antialiased}
+.deck{transform-origin:top left;width:1123px;margin:0 auto}
+.sheet{width:1123px;height:1587px;background:var(--ground);position:relative;overflow:hidden;padding:54px 62px 48px;margin:0 auto 28px}
+.sheet .folio{position:absolute;left:62px;right:62px;bottom:22px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+h1{font-weight:900;color:var(--cream);font-size:96px;line-height:.92;letter-spacing:-.035em;margin:20px 0 18px;text-transform:uppercase}
+h1 em,h2 em,.pt em{font-style:normal;color:var(--red)}
+.sub{font-size:21px;line-height:1.45;color:var(--cream);font-weight:300;max-width:860px;margin:0}
+.by{font-size:13px;color:var(--dim);margin-top:14px}
+.by b{color:var(--cream);font-weight:600}
+.by a{color:var(--cream)}
+h2{font-weight:800;color:var(--cream);font-size:30px;line-height:1.08;letter-spacing:-.015em;margin:0 0 10px;text-transform:uppercase}
+h2 small{display:block;font-family:var(--mono);font-size:11px;font-weight:400;letter-spacing:.14em;color:var(--dim);margin-bottom:8px}
+h3{font-weight:700;color:var(--cream);font-size:16px;margin:0 0 4px}
+p{font-size:14.5px;line-height:1.56;margin:0 0 9px}
+p b,li b{color:var(--cream);font-weight:600}
+sup{font-size:9.5px;color:var(--red);line-height:0}
+.x{color:inherit}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:34px}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.rule{border-top:1px solid var(--faint);margin:20px 0 18px}
+.plate{background:var(--panel);padding:18px 22px 14px;margin:0}
+.plate svg{width:100%;height:auto;display:block}
+.plate .pk{font-size:13px;font-style:italic;color:var(--dim);margin-bottom:4px}
+.plate .pt{font-weight:800;color:var(--cream);font-size:24px;letter-spacing:-.015em;text-transform:uppercase;margin:8px 0 4px}
+.plate .ps{font-size:13px;line-height:1.5;color:var(--body);margin:0}
+.plate .src{font-size:10.5px;color:var(--dim);margin-top:5px}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.fact .n{font-family:var(--mono);color:var(--red);font-size:12px;letter-spacing:.1em}
+.fact .big{font-weight:800;color:var(--cream);font-size:34px;letter-spacing:-.02em;line-height:1;margin:6px 0 6px}
+.fact p{font-size:13.5px;line-height:1.5}
+.question{border-left:3px solid var(--red);padding:6px 0 6px 20px;margin:0}
+.question .q{font-weight:800;color:var(--cream);font-size:27px;line-height:1.2;letter-spacing:-.01em;text-transform:none}
+.give{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.give div{border-top:2px solid var(--c,var(--cream));padding-top:10px}
+.give .t{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--c,var(--cream));text-transform:uppercase}
+.give p{font-size:13.5px;margin-top:6px}
+table{border-collapse:collapse;width:100%}
+th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:400;border-bottom:1px solid var(--faint);padding:6px 8px 6px 0}
+td{font-size:12.5px;line-height:1.45;border-bottom:1px solid var(--faint);padding:6px 8px 6px 0;vertical-align:top;color:var(--body)}
+td:first-child{color:var(--cream);font-weight:500}
+td.m{text-align:center}
+.d{display:inline-block;width:11px;height:11px;border-radius:50%;border:1.5px solid var(--cream);vertical-align:middle}
+.d.f{background:var(--cream)}
+.d.h{background:linear-gradient(90deg,var(--cream) 50%,transparent 50%)}
+tr.us td{color:var(--cream);font-weight:600;background:rgba(210,65,43,.10)}
+.art{border-top:2px solid var(--c);padding-top:10px}
+.art .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--c)}
+.art h3{font-size:19px;margin:4px 0 6px}
+.art .rq{font-size:14px;font-style:italic;color:var(--cream);line-height:1.45;margin-bottom:8px}
+.art p{font-size:13.2px;line-height:1.5}
+.gantt td{font-size:12px}
+.refs{columns:2;column-gap:28px;font-size:10.2px;line-height:1.38;color:var(--dim);padding-left:16px;margin:0}
+.refs li{break-inside:avoid;margin:0 0 2px}
+.refs i{color:var(--body)}
+.close{font-weight:300;color:var(--cream);font-size:22px;line-height:1.4;border-left:3px solid var(--red);padding-left:20px;margin:0}
+@page{size:A3;margin:0}
+@media print{
+  html,body{background:var(--ground);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .deck{transform:none!important;width:auto;height:auto!important}
+  .sheet{margin:0;break-after:page;width:297mm;height:420mm}
+}
+</style>
+
+<div class="deck" id="deck">
+
+<!-- ============================ SHEET 1: the problem ============================ -->
+<section class="sheet">
+  <div class="kick">phd proposal · transport modelling for sustainability transitions · molde university college · transplan</div>
+  <h1>Will the toll<br>survive the<br><em>electric</em> fleet?</h1>
+  <p class="sub">Road-pricing instruments, the people who must accept them, and the order in which a realistic plan should introduce them. A national question, tested on one bridge.</p>
+  <div class="by"><b>Arshad Akhtar Abbasia</b> · applicant, PhD in Logistics, Molde University College · working code: <a href="https://github.com/Astheno-sphere/computational_Logistics">github.com/Astheno-sphere/computational_Logistics</a></div>
+
+  <div class="rule"></div>
+  <figure class="plate">
+    <div class="pk">rv. 70, Kristiansund, 2026</div>
+    <svg id="h1" viewBox="0 0 1000 430" role="img" aria-label="Isometric toll bridge with electric cars, fossil cars and a van passing a gantry, beside a chart of revenue per passing falling as the electric share rises"></svg>
+    <div class="pt">Every electric passing pays <em>30%</em> less</div>
+    <p class="ps">the gantry charges a fossil car with a tag NOK 27.20 and an electric car NOK 19.04. revenue per passing falls in a straight line as the fleet turns: at today's national four in ten electric passings it is already NOK 23.94, at a fully electric fleet NOK 19.04, while the debt the toll repays does not shrink.</p>
+    <div class="src">Tariffs: Vegamot, tariff group 1 with tag<sup>vegamot</sup>; electric share of passings: Statens vegvesen<sup>svvev</sup>. Revenue per passing = 27.20 − 8.16 × electric share.</div>
+  </figure>
+
+  <div class="rule"></div>
+  <h2><small>the squeeze, in four facts</small>Norway pays for its transition with a charge the transition is removing</h2>
+  <div class="facts" style="margin-top:14px">
+    <div class="fact"><div class="n">01 · THE MONEY</div><div class="big">NOK 16.8 bn</div><p>raised by tolls in 2025, a record even after inflation, three kroner in five from city packages. Toll companies owe about NOK 78 bn<sup>svv25,dok15</sup>.</p></div>
+    <div class="fact"><div class="n">02 · THE FLEET</div><div class="big">4 in 10</div><p>toll passings are now electric, and electric cars pay reduced rates<sup>svvev</sup>. The emissions reason for the toll fades as its revenue base does.</p></div>
+    <div class="fact"><div class="n">03 · THE STALL</div><div class="big">No successor</div><p>The national distance-based charge meant to replace fuel taxes is stuck between the state and the municipalities<sup>wps</sup>.</p></div>
+    <div class="fact"><div class="n">04 · THE CONSENT</div><div class="big">16.7%</div><p>for an anti-toll list in Bergen in 2019<sup>snl19</sup>. Every instrument on the path to 2050 has to survive the people who pay it.</p></div>
+  </div>
+
+  <div class="rule"></div>
+  <div class="question">
+    <div class="kick" style="margin-bottom:6px">the question this phd answers</div>
+    <div class="q">Which road-pricing instruments survive Norway's electric fleet and the people who must accept them, and in what order should a realistic plan introduce them?</div>
+  </div>
+  <div class="folio"><span>Arshad Akhtar Abbasia · Will the toll survive the electric fleet?</span><span>1 / 5</span></div>
+</section>
+
+<!-- ============================ SHEET 2: the gap ============================ -->
+<section class="sheet">
+  <h2><small>why this is open</small>The evidence on acceptance <em>disagrees</em>, and that is the opening</h2>
+  <div class="cols2" style="margin-top:10px">
+    <div>
+      <p>Whether a charge survives depends on whether people come to accept it, and the best evidence points in two directions. In Gothenburg, support rose after the congestion charge was introduced; the authors trace it mainly to status quo bias, not to benefits exceeding expectations<sup>borjesson16</sup>. In a randomised field trial in the Oslo region, experiencing road pricing changed attitudes only a little, while concrete information about one's own costs moved support most<sup>toi2179</sup>. After Oslo's permanent toll restructuring in 2019, the share positive to tolls rose<sup>toi2141</sup>.</p>
+      <p>One reading reconciles them. A status quo can only form around a charge that is real and permanent. A trial is neither. Kristiansund's package, collecting for up to fifteen years<sup>innst337</sup>, is exactly that condition, a few months old, in a town that can be surveyed.</p>
+    </div>
+    <div>
+      <p><b>H1.</b> Support rises within the same people as a permanent charge becomes the status quo.</p>
+      <p><b>H2.</b> Information about personal cost and where the revenue goes moves support independently of experience.</p>
+      <p>Neither has been tested in a Norwegian town living with a new permanent charge, and neither has been carried into the models that plan the path to 2050. The national models were built to compute equilibria, and TØI's own review asks how far they can describe a path toward 2050<sup>toi2051</sup>; they do not carry acceptance; the national fleet model follows vintages in aggregate<sup>big</sup>; backcasting starts from the target and assumes that people follow.</p>
+    </div>
+  </div>
+  <figure class="plate" style="margin-top:12px">
+    <div class="pk">three cases, one variable</div>
+    <svg id="h2" viewBox="0 0 1000 340" role="img" aria-label="Three cases of support before and after a charge: Gothenburg rose, Oslo field trial little change, Oslo 2019 rose; the permanent cases rise, the temporary trial does not; Kristiansund is the test"></svg>
+    <div class="pt">Support rises only where the charge <em>stays</em></div>
+    <p class="ps">direction of change in support after people met the charge, in the three studies closest to this project. the two permanent charges saw support rise; the temporary trial did not. kristiansund holds the variable fixed at permanent and lets the design measure the change within persons.</p>
+    <div class="src">Schematic: directions as reported by the cited studies, bar heights are not data.</div>
+  </figure>
+
+  <div class="rule"></div>
+  <h2><small>what is new</small>No one has put moving acceptance inside the search for a plan</h2>
+  <div class="cols2" style="margin-top:8px;grid-template-columns:1.25fr 1fr">
+    <table>
+      <tr><th>Nearest work</th><th>Estimated acceptance</th><th>Acceptance that moves</th><th>Agents with fleets</th><th>Instrument order under deep uncertainty</th><th>Live Norwegian toll</th></tr>
+      <tr><td>BIG fleet model<sup>big</sup></td><td class="m"><span class="d"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d h"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d"></span></td></tr>
+      <tr><td>Le Pira, Marcucci &amp; Gatta<sup>lepira</sup></td><td class="m"><span class="d f"></span></td><td class="m"><span class="d h"></span></td><td class="m"><span class="d f"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d"></span></td></tr>
+      <tr><td>Edmondson et al.<sup>edmondson</sup></td><td class="m"><span class="d h"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d h"></span></td><td class="m"><span class="d"></span></td></tr>
+      <tr><td>Adaptive pathways<sup>dapp</sup></td><td class="m"><span class="d"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d f"></span></td><td class="m"><span class="d"></span></td></tr>
+      <tr><td>TØI national experiment<sup>toi2179</sup></td><td class="m"><span class="d f"></span></td><td class="m"><span class="d h"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d"></span></td><td class="m"><span class="d h"></span></td></tr>
+      <tr class="us"><td>This PhD</td><td class="m"><span class="d f"></span></td><td class="m"><span class="d f"></span></td><td class="m"><span class="d f"></span></td><td class="m"><span class="d f"></span></td><td class="m"><span class="d f"></span></td></tr>
+    </table>
+    <div>
+      <p><b>New.</b> (1) Acceptance as a formal constraint in a robust search over the order of instruments. (2) Experience and information effects on acceptance separated within persons, in a live toll case, against contested Norwegian evidence.</p>
+      <p><b>Application, done well.</b> Agent-based fleet turnover, who-pays accounting, robust-decision machinery, testing a forecast against what happened, hindcasting. Each is cited, none is claimed.</p>
+      <p style="font-size:11.5px;color:var(--dim)"><span class="d f"></span> central to the work &nbsp; <span class="d h"></span> partly or qualitatively &nbsp; <span class="d"></span> absent</p>
+    </div>
+  </div>
+  <div class="folio"><span>Arshad Akhtar Abbasia · Will the toll survive the electric fleet?</span><span>2 / 5</span></div>
+</section>
+
+<!-- ============================ SHEET 3: the case ============================ -->
+<section class="sheet">
+  <h2><small>where it is tested</small>One bridge, <em>no way</em> around</h2>
+  <figure class="plate" style="margin-top:10px">
+    <div class="pk">kristiansund's road network without nordsundbrua</div>
+    <svg id="h3" viewBox="0 0 1000 400" role="img" aria-label="Kristiansund road network split in two when the tolled Nordsundbrua is removed; buildings coloured by side"></svg>
+    <div class="pt">Take away the tolled bridge and the town <em>splits</em></div>
+    <p class="ps">remove nordsundbrua, where one of the two toll stations stands, from the road graph. the network falls into two parts: 48% of all junction pairs lose every road connection, and three in ten buildings lie on the far side. for most crossings there is no route around the charge, so the toll is felt, not avoided: the condition under which a status quo can form.</p>
+    <div class="src">OpenStreetMap road graph, 10,978 junctions; random sample of 2,500 building centroids; docs/proposal/make_bridge.py<sup>osm</sup>. The second station, at Omsundbrua, lies outside the extract.</div>
+  </figure>
+
+  <div class="cols3" style="margin-top:18px">
+    <div>
+      <h3>Test bed: Kristiansund</h3>
+      <p>A city package with two toll stations on rv. 70 charging both ways, about 70% toll-financed<sup>innst337</sup>. Approved by the city council 26 to 19 and the county council 33 to 14 in 2024<sup>bypakke</sup>, on an official traffic and revenue forecast, with collection from 2026. A live decision, a forecast to test, and a population that crosses the charge.</p>
+    </div>
+    <div>
+      <h3>Control: Molde</h3>
+      <p>The neighbouring regional centre without this package. The plain contrast between the towns is reported as description only, because Kristiansund chose its package; the causal claims rest on randomised information and on change within persons.</p>
+    </div>
+    <div>
+      <h3>Reach: Norway</h3>
+      <p>The question is national and so is the evidence the design argues with. The model is transferred to Molde with a stated transfer error. National implications are drawn through TØI's national evidence and the national instruments, not by pretending two towns stand for all.</p>
+    </div>
+  </div>
+
+  <figure class="plate" style="margin-top:16px">
+    <div class="pk">the design in time</div>
+    <svg id="h4" viewBox="0 0 1000 250" role="img" aria-label="Timeline from the 2024 votes to the 2026 start of collection, survey wave 1 in both towns in 2027, wave 2 in Kristiansund in 2028, and the three articles"></svg>
+  </figure>
+
+  <table style="margin-top:14px">
+    <tr><th style="width:26%">Data</th><th>What it does in the project</th></tr>
+    <tr><td>Two survey waves</td><td>About 800 respondents in both towns in wave 1, with randomised information messages; the Kristiansund respondents again after twelve months.</td></tr>
+    <tr><td>Toll passages and counts</td><td>Aggregated by station, hour and vehicle class (no personal data); trafikkdata.no counts before and after opening; they validate the survey's reported crossings and the forecast.</td></tr>
+    <tr><td>Vehicle register, travel survey</td><td>Fleet by age, fuel and class for cars, vans and lorries; travel patterns for calibration.</td></tr>
+    <tr><td>RTM zones, NVDB, Statistics Norway</td><td>Zones and trip lengths shared with the national models; road network; population and commuting.</td></tr>
+    <tr><td>The package's own forecast</td><td>The traffic and revenue forecast the package was approved on, scored against what happened.</td></tr>
+  </table>
+  <div class="folio"><span>Arshad Akhtar Abbasia · Will the toll survive the electric fleet?</span><span>3 / 5</span></div>
+</section>
+
+<!-- ============================ SHEET 4: the method ============================ -->
+<section class="sheet">
+  <h2><small>how</small>Three articles, one engine</h2>
+  <div class="cols3" style="margin-top:10px">
+    <div class="art" style="--c:var(--red)"><div class="tag">A1 · YEAR 1 · TRANSPLAN RESEARCH AREA 3</div><h3>What moves acceptance</h3>
+      <div class="rq">Does support for a permanent charge rise with experience, with information, or both?</div>
+      <p>Stated choice in both towns with randomised messages on personal cost, where the revenue goes and fairness; the messages carry the causal claim. Exposure inside Kristiansund is self-reported crossing frequency, validated in aggregate by station counts; with consent, respondents may donate their own passage statement. A hybrid choice model links trust and fairness to acceptance. Submitted on wave 1; wave 2 measures the change within persons.</p></div>
+    <div class="art" style="--c:var(--gold)"><div class="tag">A2 · YEAR 2 · RESEARCH AREA 2</div><h3>An engine of people and vehicles</h3>
+      <div class="rq">How do revenue, emissions, who pays and support move together as the fleet turns electric?</div>
+      <p>Households carry car, trips and opinion; opinions update each year by the rule A1 estimates. Vans and lorries renew their fleets with the same turnover machinery, calibrated on the register and toll passages by class. Each year: revenue against debt service, emissions well to wheel with vehicle production, and who pays (residents, commuters from outside, firms). Validated by scoring the engine and the official forecast against observed counts, and by a 2010 to 2025 fleet hindcast<sup>welde19,tveter25</sup>.</p></div>
+    <div class="art" style="--c:var(--fut)"><div class="tag">A3 · YEAR 3 · RESEARCH AREA 1</div><h3>The order that survives</h3>
+      <div class="rq">Which order of instruments stays effective, solvent and accepted across the futures nobody can forecast?</div>
+      <p>A pathway orders one to four instruments (package revision, electric rate, distance charge, earmarking), each switch set by a signpost: 904 pathways, enumerated in full<sup>dapp</sup>. It fails politically when support drops below a threshold sampled from Norwegian toll decisions, financially when revenue stays below debt service three years running. Search maximises the futures that reach the 2050 target without failure<sup>mordm</sup>.</p></div>
+  </div>
+
+  <figure class="plate" style="margin-top:18px">
+    <div class="pk">inside the engine</div>
+    <svg id="h5" viewBox="0 0 1000 470" role="img" aria-label="Exploded isometric layers: road network and toll stations, households and vans, opinions, money against debt, and the futures"></svg>
+    <div class="pt">Five layers, one <em>year</em> at a time</div>
+    <p class="ps">each simulated year passes up the stack: vehicles cross the stations on the network, households and firms renew their fleets, opinions shift with what people pay and learn, revenue is set against debt, and the whole stack is replayed across a thousand futures.</p>
+  </figure>
+
+  <figure class="plate" style="margin-top:16px">
+    <div class="pk">the plan as a metro map</div>
+    <svg id="h6" viewBox="0 0 1000 320" role="img" aria-label="Adaptive pathways map: four instrument lines over time with switches at signposts and tipping points where support or revenue fails"></svg>
+    <div class="pt">A plan that switches <em>before</em> it breaks</div>
+    <p class="ps">each line is an instrument; a line ends where it would fail, when support falls below the threshold or revenue below debt service. signposts are read early enough to switch lines in time. the thesis enumerates every route through this map and keeps those that reach 2050 in most futures.</p>
+    <div class="src">Schematic of the method; 904 routes, 10<sup class="x">3</sup> futures, five repeats: about 4.5 × 10<sup class="x">6</sup> runs, some 125 CPU hours on the zonal engine.</div>
+  </figure>
+  <div class="folio"><span>Arshad Akhtar Abbasia · Will the toll survive the electric fleet?</span><span>4 / 5</span></div>
+</section>
+
+<!-- ============================ SHEET 5: what changes ============================ -->
+<section class="sheet">
+  <h2><small>what it gives</small>Answers the people deciding <em>need</em></h2>
+  <div class="give" style="margin-top:12px">
+    <div style="--c:var(--gold)"><div class="t">Vegvesen and the county</div><p>Whether a package will keep repaying its debt as the fleet turns, who pays it (residents, outside commuters, firms), and how the approved forecast compares with what happened. Tools to revise a package before it fails.</p></div>
+    <div style="--c:var(--red)"><div class="t">TRANSPLAN and the ministry</div><p>For research area 3, what moves acceptance; for area 2, a path model that carries acceptance, which the national models do not; for area 1, a robust order for the instruments of the national reform<sup>transplan,ntp</sup>.</p></div>
+    <div style="--c:var(--fut)"><div class="t">The field</div><p>A test of why acceptance moves, in the one setting that can separate experience from information, and the first robust search in which acceptance can end a plan.</p></div>
+  </div>
+
+  <div class="rule"></div>
+  <div class="cols2">
+    <div>
+      <h2><small>it already runs</small>The engine exists; the question is new</h2>
+      <p>A working prototype of the chain is public: a choice model whose estimator recovers known parameters, household agents with fleet turnover, welfare and public money per commuter, and an ensemble across futures, with automated tests on every change. It was built for an earlier question, commuter emissions, and is being retargeted to vehicle classes, toll revenue against debt and support. The bridge analysis on page 3 already runs on the same road tools.</p>
+      <p>On the prototype's speed, 0.1 s per run, the full A3 design costs about 125 CPU hours. Routing on the road network costs 100 to 1,000 times more per run, so it only checks the zonal engine on a sample, which also tests whether traffic diverts around the stations.</p>
+    </div>
+    <div>
+      <h2><small>three years</small>One article a year</h2>
+      <table class="gantt">
+        <tr><th></th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr>
+        <tr><td>Research</td><td>Data applications in month 1; survey design and pilot; wave 1; A1. Engine retargeted.</td><td>Wave 2; calibration; forecast test and hindcast; transfer to Molde; A2.</td><td>Pathways and search; signposts on held-out futures; A3; thesis.</td></tr>
+        <tr><td>Training</td><td>Courses in stated choice, econometrics, simulation.</td><td>Research stay with a deep-uncertainty group.</td><td>Results returned to county and Vegvesen planners.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+  <h2><small>risks and ethics</small>What could go wrong, and what then</h2>
+  <table style="margin-top:6px">
+    <tr><th style="width:24%">Risk</th><th>Response</th></tr>
+    <tr><td>Language</td><td>I work in English; the survey is written in English, translated and piloted with Norwegian-speaking co-authors, and Norwegian documents are read with translation.</td></tr>
+    <tr><td>Low response or panel attrition</td><td>Web panel plus a postal sample from the population register; wave 1 carries the causal claims on its own; attrition weights in wave 2.</td></tr>
+    <tr><td>Data access is slow</td><td>Applications in month 1; public counts and Statistics Norway tables as fallbacks; only aggregated toll data are requested.</td></tr>
+    <tr><td>A short window after opening</td><td>Stated as a limit of the forecast test; long-run drift is taken from the Norwegian forecast-accuracy record<sup>welde19</sup>.</td></tr>
+    <tr><td>Ethics</td><td>Assessment by Sikt before fieldwork; informed consent; pseudonymised storage; data donation only with explicit consent; code open under MIT.</td></tr>
+  </table>
+
+  <div class="rule"></div>
+  <p class="close">Four in ten passings are already electric. The toll that pays for the transition is losing its reason to exist, and the next instrument will need consent the last one is spending. This PhD tells planners which instrument to reach for next, and when.</p>
+
+  <div class="kick" style="margin:18px 0 6px">references</div>
+  <ol data-refs class="refs"></ol>
+  <div class="folio"><span>Arshad Akhtar Abbasia · Will the toll survive the electric fleet?</span><span>5 / 5</span></div>
+</section>
+</div>
+
+<script>/*LINEART*/</script>
+<script>
+const TOWNS=/*TOWNS*/null;
+const BRIDGE=/*BRIDGE*/null;
+/*A3PLATES*/
+(function(){const d=document.getElementById("deck");function fit(){if(matchMedia("print").matches){d.style.transform="";return}
+  const s=Math.min(1,(document.documentElement.clientWidth-16)/1123);d.style.transform=s<1?`scale(${s})`:"";d.style.height=s<1?(d.scrollHeight*s)+"px":"";d.style.marginLeft=s<1?"8px":"auto"}
+  addEventListener("resize",fit);fit();})();
+</script>

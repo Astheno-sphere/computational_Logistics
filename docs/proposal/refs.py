@@ -24,6 +24,18 @@ REFS = {
     "toi2119": "Wangsness et al. (2025) <i>Methods, processes and example calculations for strategies towards a carbon-neutral transport sector in 2050</i>. TØI report 2119/2025.",
     "domarchi": "Domarchi &amp; Cherchi (2023) Electric vehicle forecasts: a review of models and methods. <i>Transport Reviews</i> 43(6).",
     "svv": "Statens vegvesen (2025) Klimagassutslipp fra transport. vegvesen.no.",
+    "svv25": "Statens vegvesen (2026) Bompengerapport 2025: flere passeringer og økte inntekter. vegvesen.no.",
+    "dok15": "Samferdselsdepartementet (2026) Answer to written question Dok. 15:1376 (2025–2026) on toll revenue by project type. stortinget.no.",
+    "svvev": "Statens vegvesen (2026) Fire av ti bompasseringer skjer nå med elbil. vegvesen.no, September 2026.",
+    "vegamot": "Vegamot (2026) Takster, Bypakke Kristiansund. vegamot.no.",
+    "snl19": "Store norske leksikon. Kommunestyre- og fylkestingsvalget 2019. snl.no.",
+    "borjesson16": "Börjesson, Eliasson &amp; Hamilton (2016) Why experience changes attitudes to congestion pricing: the case of Gothenburg. <i>Transportation Research Part A</i> 85, 1–16.",
+    "toi2141": "TØI (2026) Report 2141/2026 on the effects of the 2019 toll restructuring in Oslo and Akershus.",
+    "edmondson": "Edmondson, Flachsland, aus dem Moore, Koch et al. (2025) Anticipatory climate policy mix pathways. <i>Climate Policy</i> 25(3), 438–467.",
+    "dapp": "Haasnoot, Kwakkel, Walker &amp; ter Maat (2013) Dynamic adaptive policy pathways. <i>Global Environmental Change</i> 23(2), 485–498.",
+    "bypakke": "Statens vegvesen (2024–2025) Bypakke Kristiansund: faglig grunnlag vedtatt i bystyret; bypakken vedtatt; vedtok Bypakke Kristiansund. vegvesen.no.",
+    "innst337": "Stortinget (2025) Innst. 337 S (2024–2025) on Bypakke Kristiansund.",
+    "osm": "OpenStreetMap contributors (2026) Road network of Kristiansund and Molde, ODbL.",
     "welde19": "Welde, Tveter &amp; Odeck (2019) The traffic effects of fixed links: short and long-run forecast accuracy. <i>Transportation Research Procedia</i> 42.",
     "deuten": "Deuten, Gómez Vilchez &amp; Thiel (2020) Analysis and testing of electric car incentive scenarios in the Netherlands and Norway. <i>Technological Forecasting and Social Change</i> 151.",
     "pom": "Grimm et al. (2005) Pattern-oriented modeling of agent-based complex systems. <i>Science</i> 310.",
@@ -38,7 +50,10 @@ REFS = {
 
 
 def renumber(html):
-    head, sep, tail = html.partition("<ol data-refs>")
+    m = re.search(r"<ol data-refs[^>]*>", html)
+    if not m:
+        raise ValueError("no <ol data-refs> block")
+    head, sep, tail = html[:m.start()], m.group(0), html[m.end():]
     order = []
     for m in re.finditer(r"<sup>([a-z0-9,]+)</sup>", head):
         for k in m.group(1).split(","):

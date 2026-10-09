@@ -51,3 +51,11 @@ port = (head + "\n<style>\n" + (here / "src" / "portfolio.css").read_text(encodi
 port = renumber(port).replace("/*LINEART*/", lineart).replace("/*TOWNS*/null", towns).replace("/*STUDY*/null", study)
 (here / "portfolio.html").write_text(port, encoding="utf-8")
 print("wrote", here / "portfolio.html")
+
+# the five-page A3 proposal (src/a3.html + src/a3-plates.js -> proposal-a3.html)
+a3 = renumber((here / "src" / "a3.html").read_text(encoding="utf-8"))
+a3 = (a3.replace("/*A3PLATES*/", (here / "src" / "a3-plates.js").read_text(encoding="utf-8"))
+        .replace("/*LINEART*/", lineart).replace("/*TOWNS*/null", towns)
+        .replace("/*BRIDGE*/null", (here / "bridge.json").read_text(encoding="utf-8")))
+(here / "proposal-a3.html").write_text(a3, encoding="utf-8")
+print("wrote", here / "proposal-a3.html")

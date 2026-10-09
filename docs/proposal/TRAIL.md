@@ -46,6 +46,9 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 
 ## Verified facts (with source)
 
+- Our own analysis (make_bridge.py, OSM): removing Nordsundbrua splits the Kristiansund road graph into 6,580 and 4,398 junctions; 48% of junction pairs lose every road connection; 30.2% of a random sample of 2,500 buildings lie on the far side. Omsundbrua lies outside the extract.
+- Statens vegvesen, September 2026: four in ten toll passings are electric (cited via the Tveter reader; re-check the article before final).
+
 - Kristiansund toll package approved by Storting 3 or 4 June 2025; county council 33 to 14 on 10 June 2024; city council 26 to 19 on 18 April 2024 (Vegvesen news pages).
 - Two toll stations on rv70 charging both ways (not 'two bridges'); start of collection in 2026 still to confirm; about 70% toll-financed; up to 15 years; about NOK 2.2 bn (Vegvesen, Stortinget Innst. 337 S).
 - Tariff group 1 (up to 3,500 kg): full NOK 34; NOK 27.20 with agreement (20% off); zero-emission with agreement NOK 19.04, i.e. 30% below the agreement price (Vegamot tariff page).
@@ -72,6 +75,8 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 - [ ] (Arshad, 16 Oct) CV evidence of survey, fieldwork or modelling experience.
 
 ## Pending work
+
+0. A3 five-page proposal drafted (docs/proposal/src/a3.html, proposal-a3.html), HTML only; one written-proposal scoring round pending.
 
 1. Outline v3 checked by the four readers and the outside examiner.
 2. Concept note draft for Arshad to rewrite and send to Gatta and Tveter.
