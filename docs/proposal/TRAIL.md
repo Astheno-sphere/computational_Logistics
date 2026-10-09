@@ -19,6 +19,13 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-10-09 | Design is after-only (collection began 2026, before any wave); the exact start date stays an open check but no longer changes the design | Either reported date (4 May or 1 June) precedes the PhD |
+| 2026-10-09 | Dose = self-reported crossing frequency; aggregate station counts validate the sample's distribution, never individuals; optional consented data donation of each respondent's own toll statement | Individual passages are personal data; donation turns recall into record |
+| 2026-10-09 | RQ1 stated as a reconciliation: Gothenburg's rise is status quo bias (Börjesson et al. 2016), the Oslo trial's charge was temporary (TØI 2179); H1 status quo forms only around a real, permanent charge; H2 information moves support independently | The two studies disagree for a reason the design can test |
+| 2026-10-09 | A3 enumerates all 904 pathways (orders of 1 to 4 instruments, 3 thresholds per switch); about 4.5 × 10^6 runs, about 125 CPU hours on the zonal engine; network model only on a stratified subset | The 3-of-4 cap was a computability guess the costing removed; the network cost cliff must be stated |
+| 2026-10-09 | Simulated panel scores are internal consistency checks of our own process, never a prediction of rank; the only score that counts arrives after 1 November | Same model grading its own draft in borrowed voices |
+| 2026-10-09 | Rule: every open check has a resolver and a date, or it blocks submission | Keeps the trail honest under deadline |
+| 2026-10-09 | Arshad works in English: survey instrument written in English, translated and piloted with Norwegian-speaking co-authors (TØI, supervisors); Norwegian documents read with translation | Answered 2026-10-09; must appear as a managed risk |
 | 2026-10-09 | v3.1: information treatments carry the causal claim; dose-response by station crossings inside Kristiansund; wave 2 (same Kristiansund respondents, 12 months) is core; town contrast descriptive; DiD only if wave 1 precedes collection | All four readers and the examiner: experience was confounded with town |
 | 2026-10-09 | "Scaling across Norway by centrality class" dropped; transfer to Molde with stated error; national implications argued, not modelled | Two towns cannot carry it (Tveter, Gatta, Hjelle, examiner) |
 | 2026-10-09 | Vans and lorries renew fleets with the same turnover machinery (register fleet, passages by class); no route-choice model | Hjelle wants freight behaviour; examiner wants scope held; turnover reuses existing code |
@@ -45,22 +52,24 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 - Toll revenue 2025 NOK 16.8 bn, a record even inflation-adjusted; 2026 forecast NOK 17.3 bn, about 62% from city packages; toll company debt NOK 77.9 bn (Vegvesen bompengerapport 2025; Stortinget Dok. 15 answer).
 - TØI 2179/2026 (Ciccone, Halse, Andreassen, Garnache, Wangsness): concrete personal information raises support most; experience in a randomised field trial gives only limited attitude change.
 - TØI 2141/2026: after Oslo and Akershus' 2019 toll restructuring the share viewing tolls positively increased.
+- Börjesson, Eliasson and Hamilton (2016) Why experience changes attitudes to congestion pricing: the case of Gothenburg. Transportation Research Part A 85, 1 to 16, doi 10.1016/j.tra.2015.12.002. Two-wave survey; main driver status quo bias; change not explained by benefits exceeding expectations.
 - 2019 municipal election: People's Action No to More Road Tolls won 16.7% in Bergen.
 - Ad text (aggregator, confirm against Jobbnorge): deep uncertainty, discrete choice plus agent-based modelling, travel behaviour, backcasting to 2050; PhD in Logistics.
 
-## Open: verify before writing
+## Open: verify before writing (resolver, due date; unresolved items block submission)
 
-- [ ] Toll start date and whether collection has begun: Vegamot says 1 June 2026; another source said 4 May 2026; Tveter-reader found no confirmation. Decides whether a pre-opening wave (DiD) is possible.
-- [ ] Molde: no comparable tolling; Molde to Kristiansund commuting does not cross the new stations.
-- [ ] Source for 'three kroner in five from city packages' (Stortinget Dok. 15 table: 61 to 62%).
-- [ ] Monthly cap (60 passings?) and "two bridges, no alternative route".
-- [ ] Centrality class of Kristiansund (index 749) and Molde (740): class 4 or 5; size of the class nationally.
-- [ ] Whether electric vans in group 1 get the zero-emission discount; heavy-vehicle rules.
-- [ ] TØI 2051/2024 quote "say nothing about the path to a new equilibrium" against the report text.
-- [ ] Börjesson, Eliasson and Hamilton 2016 (status quo bias after Gothenburg).
-- [ ] Access to TØI 2179 microdata for reanalysis (TRANSPLAN partner, but not guaranteed).
-- [ ] Official traffic and revenue forecast behind the Kristiansund package (faglig grunnlag PDF).
-- [ ] Ad text from the official Jobbnorge listing.
+- [ ] (Arshad, 12 Oct) Toll start date, from the package site and Vegamot in a browser: Vegamot says 1 June 2026; another source said 4 May 2026; Tveter-reader found no confirmation. Decides whether a pre-opening wave (DiD) is possible.
+- [ ] (Claude, 13 Oct) Molde: no comparable tolling; Molde to Kristiansund commuting does not cross the new stations.
+- [ ] (Claude, 12 Oct) Source for 'three kroner in five from city packages' (Stortinget Dok. 15 table: 61 to 62%).
+- [ ] (Arshad, 12 Oct) Monthly cap (60 passings?) and "two bridges, no alternative route".
+- [ ] (Claude, 13 Oct) Centrality class of Kristiansund (index 749) and Molde (740): class 4 or 5; size of the class nationally.
+- [ ] (Arshad, 12 Oct) Whether electric vans in group 1 get the zero-emission discount; heavy-vehicle rules.
+- [ ] (Claude, 14 Oct; quote it or drop it) TØI 2051/2024 quote "say nothing about the path to a new equilibrium" against the report text.
+- [ ] (Gatta or Tveter via concept note, 20 Oct) Access to TØI 2179 microdata and attribute ranges for reanalysis (TRANSPLAN partner, but not guaranteed).
+- [ ] (Claude, 14 Oct) Official traffic and revenue forecast behind the Kristiansund package (faglig grunnlag PDF).
+- [ ] (Arshad, 12 Oct) Ad text from the official Jobbnorge listing.
+- [ ] (Arshad, 12 Oct) trafikkdata.no counts at the two stations, May to October 2026: the API is blocked from the cloud container, so pull from a normal machine.
+- [ ] (Arshad, 16 Oct) CV evidence of survey, fieldwork or modelling experience.
 
 ## Pending work
 
