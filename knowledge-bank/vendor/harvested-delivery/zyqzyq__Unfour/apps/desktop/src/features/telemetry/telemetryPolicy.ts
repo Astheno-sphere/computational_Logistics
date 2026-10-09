@@ -1,1 +1,0 @@
-export const FIRST_NOTICE_GRACE_PERIOD_MS = 15_000;

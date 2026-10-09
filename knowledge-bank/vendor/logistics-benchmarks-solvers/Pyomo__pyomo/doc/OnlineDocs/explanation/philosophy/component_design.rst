@@ -1,4 +1,0 @@
-Pyomo Component Design
-======================
-
-TODO

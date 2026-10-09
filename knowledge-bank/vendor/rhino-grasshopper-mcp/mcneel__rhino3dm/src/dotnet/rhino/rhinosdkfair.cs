@@ -1,1 +1,0 @@
-// this looks like it may become a static function on ON_Curve

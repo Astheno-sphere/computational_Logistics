@@ -1,1 +1,0 @@
-docker run --rm -it --name repast4py repast4py:latest

@@ -11,7 +11,8 @@ illustrative and uncalibrated). Each year:
      (time, cost, wait; ASCs). Choices use sample enumeration (the agent's choice probabilities).
   3. Congestion: car times follow a BPR curve on each zone's road capacity; car demand and times are
      found by the method of successive averages (MSA).
-Outcomes: yearly mode shares, EV fleet share, car km, CO2, and consumer surplus (logsum / -b_cost). Mode constants are calibrated so
+Outcomes: yearly mode shares, EV fleet share, car km, CO2, consumer surplus (logsum / -b_cost), and the public
+money that moves per commuter (EV subsidies paid, tolls collected; thousand NOK). Mode constants are calibrated so
 the 2025 shares match TARGET_SHARES_2025; levers phase in from 2026 to full strength in 2030.
 
     from abm import run
@@ -80,7 +81,7 @@ def ramp(year):
 
 
 def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6, calibrate_to=TARGET_SHARES_2025,
-        trace_years=()):
+        trace_years=(), agent_cs_years=()):
     L = {**defaults(LEVERS), **(levers or {})}
     U = {**defaults(UNCERTAINTIES), **(uncertainties or {})}
     b = dict(beta or BETA_DEFAULT)
@@ -97,9 +98,10 @@ def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6,
     owns, ev, age = P["owns_car"].copy(), P["is_ev"].copy(), P["age"].copy()
     shift = {"car": 0.0, "bus": 0.0, "bike": 0.0}
     calib_iters = 30 if calibrate_to else 0
-    series = {k: [] for k in ("car_share", "bus_share", "bike_share", "ev_fleet_share", "car_km", "co2_t", "cs_nok")}
+    series = {k: [] for k in ("car_share", "bus_share", "bike_share", "ev_fleet_share", "car_km", "co2_t", "cs_nok",
+                                 "subsidy_knok_pc", "toll_knok_pc")}
     # per-agent trace for maps: a separate random stream, so tracing never changes the results
-    trng, trace = np.random.default_rng(seed + 7919), {}
+    trng, trace, agent_cs = np.random.default_rng(seed + 7919), {}, {}
     for t, year in enumerate(YEARS):
         # ---- 1. fleet turnover and EV adoption -------------------------------------------------------
         replace = owns & (rng.uniform(size=n) < 1.0 / U["vehicle_lifetime"])
@@ -113,6 +115,7 @@ def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6,
                 - 0.4 * (dist > 40))                                                   # range concern
         p_ev = 1.0 / (1.0 + np.exp(-u_ev))
         ev = np.where(replace, rng.uniform(size=n) < p_ev, ev)
+        subsidy_pc = float((replace & ev).sum()) * L["ev_subsidy_knok"] / n        # thousand NOK per commuter
         # ---- 2-3. mode choice with congestion (MSA); constants calibrated in the base year ----------
         r = ramp(year)
         fuel_nok_km = 1.6 * (1 + U["fuel_price_growth"]) ** t
@@ -134,14 +137,19 @@ def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6,
             u = trng.uniform(size=n)[:, None]
             trace[int(year)] = {"mode": (u > Pm.cumsum(axis=1)).sum(axis=1).clip(0, 2).tolist(),
                                 "ev": (ev & owns).tolist()}
+        toll_pc = float((Pm[:, 0] * commute * 2 * 220 * toll * np.where(ev, L["ev_toll_share"], 1.0)).sum()) / n / 1000
         car_km = float((Pm[:, 0] * dist * 2 * commute).sum() * 220 * (6000.0 / n))   # 2 trips, 220 days, scaled
         ice_km = float((Pm[:, 0] * dist * 2 * commute * ~ev).sum() * 220 * (6000.0 / n))
         bus_pkm = float((Pm[:, 1] * dist * 2 * commute).sum() * 220 * (6000.0 / n))
         ef_ice = EF_ICE_2025 * (1 - U["ice_ef_decline"]) ** t
         co2 = (ice_km * ef_ice + (car_km - ice_km) * EF_EV + bus_pkm * EF_BUS_PKM) / 1000.0
         ls = (Vm[:, 0] + np.log(E.sum(axis=1)))
-        cs = float((ls / (-b["B_COST"] * cost_scale)).mean())
-        for k, v in zip(series, (shares[0], shares[1], shares[2], ev[owns].mean(), car_km, co2, cs)):
+        cs_i = ls / (-b["B_COST"] * cost_scale)                   # NOK per agent (logsum / cost coefficient)
+        cs = float(cs_i.mean())
+        if year in agent_cs_years:
+            agent_cs[int(year)] = cs_i.tolist()
+        for k, v in zip(series, (shares[0], shares[1], shares[2], ev[owns].mean(), car_km, co2, cs,
+                                  subsidy_pc, toll_pc)):
             series[k].append(float(v))
     s = {k: np.array(v) for k, v in series.items()}
     return {
@@ -153,6 +161,7 @@ def run(levers=None, uncertainties=None, beta=None, n=3000, seed=0, msa_iters=6,
         "cs_2050_nok": float(s["cs_nok"][-1]),
         "calibration_shift": shift,
         "levers": L, "uncertainties": U,
+        **({"agent_cs": agent_cs} if agent_cs_years else {}),
         **({"trace": {"modes": ["car", "bus", "bike"], "zone": [P["zone_names"][z] for z in zone],
                       "dist_km": dist.round(2).tolist(), "years": trace}} if trace_years else {}),
     }

@@ -50,3 +50,17 @@ def test_bike_infrastructure_raises_bike_share(base):
 def test_ema_interface_returns_scalar_outcomes():
     out = abm.ema_function(toll_nok=20, ev_parity_year=2030, n_agents=500)
     assert set(out) == {"co2_2050_rel", "co2_cum_kt", "car_share_2050", "ev_fleet_2050", "cs_2050_nok"}
+
+
+def test_agent_surplus_averages_to_the_reported_surplus():
+    r = abm.run(n=500, agent_cs_years=(2030,))
+    i = r["years"].index(2030)
+    assert np.isclose(np.mean(r["agent_cs"][2030]), r["series"]["cs_nok"][i])
+    assert r["co2_2050_rel"] == abm.run(n=500)["co2_2050_rel"]      # asking for it changes nothing
+
+
+def test_public_money_follows_the_levers():
+    none = abm.run(n=500)["series"]
+    assert sum(none["subsidy_knok_pc"]) == 0 and sum(none["toll_knok_pc"]) == 0
+    pol = abm.run({"toll_nok": 30, "ev_subsidy_knok": 50}, n=500)["series"]
+    assert sum(pol["subsidy_knok_pc"]) > 0 and pol["toll_knok_pc"][0] == 0 and pol["toll_knok_pc"][-1] > 0

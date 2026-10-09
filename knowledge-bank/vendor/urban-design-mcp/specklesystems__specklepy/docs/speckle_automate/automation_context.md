@@ -1,1 +1,0 @@
-::: speckle_automate.AutomationContext

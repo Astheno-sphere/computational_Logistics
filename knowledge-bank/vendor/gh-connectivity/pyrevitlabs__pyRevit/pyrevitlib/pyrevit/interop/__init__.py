@@ -1,1 +1,0 @@
-"""Interoperability with other applications."""

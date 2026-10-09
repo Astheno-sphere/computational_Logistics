@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robust Mobility Pathways</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,700;0,800;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2b1719;--card:#331d20;--paper:#E8DFD0;--body:#D6CCBD;--dim:#A99A8B;--faint:rgba(232,223,208,.2);--gold:#D4A530;--sage:#9DB886;--terra:#D4835C}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--paper);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.doc{max-width:1120px;margin:0 auto;padding:64px 24px 120px}
+.col{max-width:720px}
+.kicker{font-style:italic;font-weight:300;color:var(--dim);font-size:15px}
+.mono{font-family:"JetBrains Mono",monospace}
+header{border-bottom:1px solid var(--faint);padding-bottom:40px;margin-bottom:12px}
+h1{font-weight:800;font-size:clamp(28px,4.2vw,44px);line-height:1.12;margin:14px 0 18px;max-width:900px}
+h1 em{font-style:normal;color:var(--gold)}
+.byline{color:var(--dim);font-size:14px;line-height:1.7}
+.byline b{color:var(--paper);font-weight:500}
+.status{margin-top:22px;font-size:12px;color:var(--dim);border:1px solid var(--faint);border-radius:8px;padding:8px 12px;display:inline-block}
+h2{font-weight:800;font-size:22px;letter-spacing:.01em;margin:64px 0 6px;text-transform:uppercase}
+h2 span{color:var(--gold);margin-right:14px}
+h3{font-weight:700;font-size:16px;margin:30px 0 8px;color:var(--paper)}
+p,li{font-size:16.5px;line-height:1.72;color:var(--body);font-weight:300}
+p strong,li strong{color:var(--paper);font-weight:500}
+sup{color:var(--gold);font-size:11px}
+figure{margin:40px 0 8px}
+figure svg{width:100%;height:auto;display:block;background:var(--card);border-radius:4px}
+figcaption{font-size:13.5px;line-height:1.6;color:var(--dim);margin-top:12px;max-width:900px}
+figcaption b{color:var(--paper);font-weight:500}
+.hook{border-left:2px solid var(--gold);padding:4px 0 4px 20px;margin:28px 0;color:var(--paper);font-size:17.5px;line-height:1.65;font-weight:400}
+.formula{background:var(--card);border-radius:4px;padding:22px 26px;margin:22px 0;font-family:"JetBrains Mono",monospace;font-size:14.5px;line-height:2;color:var(--paper);overflow-x:auto}
+.formula .g{color:var(--gold)} .formula .d{color:var(--dim)}
+ol.rq{padding-left:0;list-style:none}
+ol.rq li{border-top:1px solid var(--faint);padding:14px 0 14px 70px;position:relative}
+ol.rq li b{position:absolute;left:0;top:15px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.08em}
+ul.obj li{margin:4px 0}
+.new{background:var(--card);border-left:2px solid var(--gold);padding:18px 24px;margin:28px 0}
+.new .kicker{margin-bottom:6px}.new ol{margin:0;padding-left:20px}.new li{font-size:15.5px;margin:6px 0}
+.tools{border-top:1px solid var(--faint);border-bottom:1px solid var(--faint);padding:18px 0;margin:36px 0}
+.tools a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(212,165,48,.4)}
+.tools .mods{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--dim);line-height:1.9}
+.tools .mods b{color:var(--paper);font-weight:500}
+.lede{font-size:18px;line-height:1.6;color:var(--paper);font-weight:300;font-style:italic;margin:4px 0 18px}
+h4{font-size:17px;margin:4px 0 6px;color:var(--paper)}
+.art{border-top:1px solid var(--faint);padding:18px 0 6px}
+.art .tag{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--gold);letter-spacing:.06em}
+.art p b{color:var(--gold);font-weight:500;font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-right:4px}
+table.data{width:100%;border-collapse:collapse;margin:18px 0}
+table.data th{text-align:left;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:500;border-bottom:1px solid var(--faint);padding:8px 10px 8px 0}
+table.data td{font-size:14.5px;line-height:1.5;color:var(--body);font-weight:300;border-bottom:1px solid var(--faint);padding:9px 10px 9px 0;vertical-align:top}
+table.data td:first-child{color:var(--paper);font-weight:500}
+td.ok{color:var(--sage)!important} td.y{color:var(--gold)!important}
+.plates .sheet{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.plates a{display:block;text-decoration:none;color:var(--dim);font-size:12.5px;line-height:1.45}
+.plates img{width:100%;display:block;border-radius:3px;margin-bottom:8px;border:1px solid var(--faint)}
+.plates a b{color:var(--gold);font-family:"JetBrains Mono",monospace;margin-right:6px}
+.limits{border-left-color:var(--terra)}
+@media(max-width:760px){.plates .sheet{grid-template-columns:repeat(2,1fr)}}
+.opener{display:grid;grid-template-columns:210px minmax(0,1fr);gap:28px;align-items:center;margin:10px 0 18px}
+.opener .lede{margin:0}
+.vig{--hairline-plate:#2b1719;--hairline-hi:#E8DFD0;--hairline-edge:#D4A530;--hairline-mid:#8a6f5f;--hairline-lo:#4a2e31;--hairline-stroke:1}
+.vig .hl{width:100%;aspect-ratio:5/4;border-top:1px solid var(--faint);border-bottom:1px solid var(--faint)}
+.vig-cap{font-size:11px;color:var(--dim);margin-top:6px;letter-spacing:.04em;min-height:1.4em}
+.vig-cap .read{color:var(--gold)}
+@media(max-width:560px){.opener{grid-template-columns:1fr}.vig{max-width:240px}}
+.refs{margin-top:72px;border-top:1px solid var(--faint);padding-top:20px}
+.refs ol{padding-left:22px} .refs li{font-size:13px;line-height:1.6;color:var(--dim)}
+footer{margin-top:40px;font-size:12.5px;color:var(--dim)}
+svg text{font-family:Inter,sans-serif}
+@media(max-width:760px){.doc{padding:36px 16px 80px}ol.rq li{padding-left:0}ol.rq li b{position:static;display:block}}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header>
+  <div class="kicker">research portfolio · the full story behind the <a style="color:var(--gold)" href="proposal.pdf">five-page proposal</a></div>
+  <h1>Robust and acceptable pathways to <em>low-emission</em> regional mobility: coupling estimated travel behaviour, agent-based simulation and backcasting under deep uncertainty</h1>
+  <div class="byline"><b>Arshad Akhtar Abbasia</b> · PhD programme in Logistics, Molde University College · proposed within TRANSPLAN, Research Area 1 “Scenarios and strategies”<br>Case: Molde (main) and Kristiansund (transfer), Møre og Romsdal</div>
+  <div class="status mono">DRAFT · 8 SECTIONS · 12 FIGURES · NUMBERS FROM THE PROTOTYPE, BEHAVIOUR SYNTHETIC · TO BE REWRITTEN IN THE APPLICANT’S OWN WORDS</div>
+</header>
+
+<div class="col">
+<h2><span>1</span>Background</h2>
+<h3>1.1 Policy context</h3>
+<p>In March 2024 the government replaced its National Transport Plan, calling the previous one unrealistic, and committed to better analytical methods for planning toward the low-emission society of 2050<sup>1</sup>. The obstacle is less ambition than inertia. In 2025, 95.9% of new passenger cars sold in Norway were fully electric<sup>11</sup>, yet only about one car in three on the road is; with cars typically kept for close to two decades, much of the fleet that will still be driving in 2035 has already been bought<sup>12</sup> (Figure 1). Road-transport emissions in 2020 were still above their 1990 level<sup>13</sup>. Whether the targets are met depends largely on household decisions — how people travel and which vehicles they buy — which respond to policy, prices and technology in ways that are only partly known. The Norwegian Centre for Sustainable Transport Planning (TRANSPLAN, 2025–2033) takes the 2050 low-emission society as a premise and asks which transport system, models and policy instruments are consistent with it<sup>2</sup>. This project contributes to that agenda for a low-density fjord region, using Molde as the main case and Kristiansund as a transfer case.</p>
+<figure>
+  <svg id="f0" viewBox="0 0 1600 420" role="img" aria-label="Figure 1: new-car sales versus the car fleet"></svg>
+  <figcaption><b>Figure 1. The fleet lags the showroom.</b> Each square is one car in a hundred. Almost every new car sold in 2025 was electric; about one in three cars on the road was. The gap closes only as old cars are scrapped, which is why the timing of policy matters as much as its strength. Sources: OFV<sup>11</sup>, Statistics Norway<sup>12</sup>.</figcaption>
+</figure>
+<h3>1.2 Why a single forecast is not enough</h3>
+<p>Strategic transport planning relies on demand models that produce one forecast for one set of assumptions. The record is sobering: across 210 projects in 14 nations, rail passenger forecasts were overestimated in nine cases out of ten, by 106% on average; half of road forecasts missed by more than ±20%; and accuracy did not improve over thirty years<sup>3</sup>. When the main drivers of 2050 emissions — electric-vehicle prices, fuel prices, telework, population growth, social influence on vehicle choice, and how well behavioural parameters transfer to new conditions — cannot be given reliable probabilities, the planning problem is one of <strong>deep uncertainty</strong><sup>4</sup>. This project does not replace the national and regional models (NTM6, RTM), which remain the best single estimate; it builds the exploratory layer around them and asks which decisions still hold when that estimate turns out wrong. The question then changes from “what will happen?” to <strong>“which policies perform acceptably across the futures that could happen, and when must they be adopted?”</strong><sup>4,5</sup> Figure 2 shows this decision problem as one chain, from a single commuting trip to a 2050 verdict, exactly as it runs in the project’s working prototype.</p>
+</div>
+
+<figure>
+  <svg id="f1" viewBox="0 0 1600 830" role="img" aria-label="Figure 2: from one trip to a 2050 plan, in five steps"></svg>
+  <figcaption><b>Figure 2. From one trip to a 2050 plan, as implemented in the Year-0 prototype.</b> (a) Each traveller chooses a mode by comparing utilities whose coefficients are estimated from choice data. (b) 1,000 agents in Molde, Kristiansund and the corridor between them respond to policy, prices and each other (EV adoption with peer effects; congestion feedback). (c) A policy package sets five levers. (d) Nine deep uncertainties are sampled into 60 futures. (e) Each of 25 packages is judged by the share of futures in which commuting CO₂ in 2050 is at most 20% of 2025. Behavioural data are synthetic (coefficients recovered from simulated choices) and parameters illustrative; road networks and coastlines are OpenStreetMap.</figcaption>
+</figure>
+
+<div class="col">
+<p class="hook">In the prototype, no policy reaches the target in only 4 of 60 futures. The most robust of 25 packages reaches it in 41 — but only with a NOK 54 toll per car trip, near-exemption of electric cars from that toll, nearly halved bus headways and a NOK 99,000 electric-vehicle purchase subsidy. A package can win on emissions and still fail with the public or the budget. That tension is the subject of this project.</p>
+
+<h2><span>2</span>Problem statement and research gap</h2>
+<p>Two modelling traditions each address part of the problem. <strong>Discrete choice models</strong> estimate how travellers trade off time, cost and service attributes, with well-understood statistical properties<sup>6</sup>, but they describe behaviour at one point in time. <strong>Agent-based models</strong> represent dynamics — the spread of electric vehicles through social networks, congestion feedback, fleet turnover — but their behavioural rules are often assumed rather than estimated. Coupling the two has been demonstrated for the ex-ante evaluation of urban freight policies, where choice models estimated from stakeholder data drive an agent-based simulation of policy acceptability<sup>7,8</sup>. Separately, exploratory modelling and scenario discovery search for policies that are robust across many futures<sup>4,5,9</sup>, and adaptive pathways sequence decisions over time<sup>10</sup>.</p>
+<p>Three recent strands come close. Backcasting has been formulated as optimal control of a single trajectory — for example, scheduling electric-vehicle incentives for France from 2022 to 2050<sup>14</sup>. Large agent-based models have simulated 2050 under a handful of scenario bundles<sup>15</sup>. And two decades of survey research show that acceptance of road pricing falls with the charge level, rises when revenues are earmarked or instruments are bundled, and can rise once a scheme has been experienced<sup>16,17</sup>. Yet the optimal trajectory is optimal for one assumed future, the scenario bundles are few and fixed in advance, and acceptability is measured after policies are designed rather than used to design them. The literature reviewed for this proposal does not provide an integrated framework that couples estimated choice models, an agent-based model and deep-uncertainty exploration, and treats acceptability as a formal condition for robustness.</p>
+<p>What is missing is a framework that brings these together for long-range passenger policy: <strong>estimated behaviour, with its uncertainty, driving an agent model; the coupled model explored across thousands of futures; acceptability and cost treated as conditions for robustness rather than separate assessments; and the result sequenced backwards from a 2050 target into timed decisions.</strong> Figure 3 locates this gap.</p>
+<div class="new"><div class="kicker">what is new</div><ol>
+  <li><strong>Acceptability as a condition for robustness.</strong> A package counts as robust only if most affected households would accept it — using acceptance estimated from the region’s own survey data, not assumed.</li>
+  <li><strong>Estimation uncertainty carried into the futures.</strong> Preference parameters are drawn from their estimated distribution in every future, so whether behaviour transfers to 2050 is explored rather than fixed.</li>
+  <li><strong>Backcasting under deep uncertainty.</strong> Milestones, signposts and trigger points are read from thousands of futures instead of one optimal trajectory.</li>
+</ol></div>
+</div>
+
+<figure>
+  <svg id="f2" viewBox="0 0 1600 640" role="img" aria-label="Figure 3: capabilities of model families, showing the gap"></svg>
+  <figcaption><b>Figure 3. The gap.</b> Capabilities of model families as typically applied in transport planning (● present · ◐ partial or in some applications · ○ absent). No single family combines all five; the proposed framework is designed to. Classification by the applicant from the cited literature.</figcaption>
+</figure>
+
+<div class="col">
+<h2><span>3</span>Aim, objectives and research questions</h2>
+<p><strong>Aim.</strong> To develop and demonstrate a reproducible framework that identifies policy packages which reach a 2050 emission target across most plausible futures while remaining acceptable to the people affected and affordable, and to sequence them into a timed pathway for a Norwegian region.</p>
+<p><strong>Definition of robustness used throughout.</strong> For a package <i>p</i> evaluated over a set of futures <i>F</i>:</p>
+</div>
+<div class="formula col">
+  R(p) <span class="d">=</span> share of futures f ∈ F with  E<sub>2050</sub>(p, f) ≤ τ · E<sub>2025</sub>        <span class="d">τ = 0.2 in the prototype</span><br>
+  <span class="g">p* = argmax R(p)</span>   subject to   <span class="g">A(p) ≥ ½</span>   and   <span class="g">C(p) ≤ B</span><br>
+  <span class="d">A(p): share of the population accepting p (estimated in A1) · C(p): public cost of p · B: budget</span>
+</div>
+<div class="col">
+<p><strong>Objectives.</strong></p>
+<ul class="obj">
+  <li>O1 — Estimate mode, vehicle-technology and policy-acceptance preferences for the region from a stated-choice survey and travel-survey data.</li>
+  <li>O2 — Couple the estimated models into an agent-based model, calibrated and validated against observed shares and fleet data.</li>
+  <li>O3 — Explore the coupled model over thousands of futures and search for admissible robust packages and their failure conditions.</li>
+  <li>O4 — Backcast from the 2050 target to milestones, signposts and trigger points, and test how they are best communicated to planners.</li>
+</ul>
+<p><strong>Research questions.</strong></p>
+<ol class="rq">
+  <li><b>RQ1</b>How do households in a low-density fjord region trade off travel time, cost and vehicle technology; how heterogeneous and transferable are these preferences; and which policy packages would they accept?</li>
+  <li><b>RQ2</b>How can estimated choice and acceptance models drive an agent-based model so that diffusion and network feedback remain behaviourally consistent, and how should the coupled model be calibrated and validated?</li>
+  <li><b>RQ3</b>Across thousands of futures, which admissible packages maximise robustness (or minimise regret), which combinations of uncertainties make them fail, and does the same procedure carry over to freight?</li>
+  <li><b>RQ4</b>Starting from the 2050 target, what must hold by 2030 and 2035, which signposts indicate that a pathway is failing, and do visual representations of pathways help stakeholders reach agreement?</li>
+</ol>
+<p>Each question is answered by one article, and each article hands a defined product to the next (Figure 4).</p>
+</div>
+
+<figure>
+  <svg id="f3" viewBox="0 0 1600 640" role="img" aria-label="Figure 4: research design, four articles in sequence"></svg>
+  <figcaption><b>Figure 4. Research design.</b> Four articles, one loop. Utilities and acceptance shares estimated in A1 drive the agent model of A2; the ensemble leaves A2 as a data tree indexed by future, package and year; A3 searches it for admissible robust packages and the conditions under which they fail; A4 turns the result into a timed pathway with signposts.</figcaption>
+</figure>
+
+<div class="col">
+<h2><span>4</span>The case: two fjord towns</h2>
+<div class="opener"><div class="vig"><div class="hl" data-fig="terrain" role="img" aria-label="Eighty-one pillars that rise around the pointer: demand gathering where a network concentrates it"></div><div class="vig-cap mono">move across the town · <span class="read"></span></div></div><p class="lede">Molde and Kristiansund are case studies, not a national sample: the testbed where the method is built, with national data in, national targets out and a transfer test between the towns.</p></div>
+<h3>4.1 Why Molde, and why Kristiansund</h3>
+<p>Molde and Kristiansund are the two regional centres of northern Møre og Romsdal. They are of similar size, car-dependent, and have no rail. Their geography is a natural experiment in network fragility. Molde lies on a narrow shelf between fjord and mountain: routing a vehicle between every pair of its 2,772 road junctions, <strong>17.5% of all fastest routes use one street, Øvre veg</strong>. Kristiansund is built on islands joined by bridges: <strong>a quarter of all fastest routes (24.9%) cross Gomabrua</strong> (Figure 5). In places like these, a toll cordon, a bus priority lane or a closed bridge changes travel for most of the town at once. A model that ignores the network will misjudge both the effect of a policy and who is affected by it.</p>
+<p><strong>Molde is the main case</strong>: choice models are estimated there and the agent model is calibrated there. <strong>Kristiansund is the transfer case</strong>: the Molde model is applied without re-estimation and checked against observed shares. This gives an empirical value for the transferability uncertainty that the ensemble otherwise has to assume (the cost- and time-sensitivity scales in Figure 2d). The corridor between the towns is left to future work, because no consistent network extract for it exists yet.</p>
+</div>
+
+<figure class="wide">
+  <svg id="f5" viewBox="0 0 1600 990" role="img" aria-label="Figure 5: maps of Molde and Kristiansund with route shares and agents, next to the model tree"></svg>
+  <figcaption><b>Figure 5. Map of runs, tree of tools.</b> Left: the real road networks of Molde and Kristiansund (OpenStreetMap). Streets are drawn in gold in proportion to the share of all fastest junction-to-junction routes that use them. Dots are the prototype’s commuting agents in 2050 under the most robust package, P12, coloured by chosen mode. Agents carry a zone and a trip length only, and are placed on randomly drawn OSM buildings for display; routing them on the network is part of A2. Right: the same prototype as a tree, from data through tools to the funnel that narrows 1,500 simulation runs to one pathway and one signpost. The counts are the prototype’s own.</figcaption>
+</figure>
+
+<div class="col">
+<h3>4.2 Data</h3>
+<p>Year 0 runs on open data and synthetic behaviour. Each later year replaces one synthetic layer with an observed one.</p>
+<table class="data">
+<tr><th>Source</th><th>Content</th><th>Status</th><th>Used in</th></tr>
+<tr><td>OpenStreetMap</td><td>road graphs, buildings, coastline for both towns</td><td class="ok">in use</td><td>case, A2</td></tr>
+<tr><td>Stated-choice survey (new)</td><td>mode, vehicle and package-acceptance choices; ≈800 respondents × 8 tasks</td><td class="y">Year 1 · Sikt</td><td>A1</td></tr>
+<tr><td>National travel survey (RVU)</td><td>observed trips, modes and trip lengths for the region</td><td class="y">Year 1 · on application</td><td>A1, A2</td></tr>
+<tr><td>Statistics Norway (SSB)</td><td>population, commuting flows between municipalities, vehicle register by fuel</td><td class="ok">open</td><td>A2 calibration</td></tr>
+<tr><td>Norwegian Public Roads Administration</td><td>traffic counts (trafikkdata.no)</td><td class="ok">open</td><td>A2 validation</td></tr>
+<tr><td>Planners and stakeholders</td><td>county and municipal planners, TRANSPLAN partners</td><td class="y">Year 3 · workshop</td><td>A4</td></tr>
+</table>
+<p>The survey size comes from a recovery test rather than a rule of thumb. With 800 simulated respondents answering eight tasks each, all six parameters of the prototype’s choice model were recovered within one standard error of their true values, and the value of time within 2% (NOK 142 against 144 per hour). The real survey adds a mixed-logit layer, so the target is set at this size or larger.</p>
+<p><strong>Evidence already produced on the case.</strong> Four explainer plates run on the same Molde network (Figure 6). They establish that the method works on real geography before any survey money is spent. They also open the logistics side of the project: urban freight shares the same pinch points.</p>
+</div>
+
+<figure class="wide plates">
+  <div class="sheet">
+    <a href="../plates/01-freight-pinch-points.png"><img src="../plates/01-freight-pinch-points.png" alt="Plate 01: freight pinch points in Molde" loading="lazy"><span><b>01</b> Øvre veg carries 18% of all fastest routes</span></a>
+    <a href="../plates/02-where-the-detour-goes.png"><img src="../plates/02-where-the-detour-goes.png" alt="Plate 02: where the detour goes" loading="lazy"><span><b>02</b> close it: 32% of trips slower, 0.9% impossible</span></a>
+    <a href="../plates/03-the-five-minute-depot.png"><img src="../plates/03-the-five-minute-depot.png" alt="Plate 03: the five-minute depot" loading="lazy"><span><b>03</b> best depot: 79% of buildings in 5 min (median 56%)</span></a>
+    <a href="../plates/04-the-shortest-loop.png"><img src="../plates/04-the-shortest-loop.png" alt="Plate 04: the shortest loop" loading="lazy"><span><b>04</b> one van, 24 stops: 48 min instead of 137</span></a>
+  </div>
+  <figcaption><b>Figure 6. Four plates, one network.</b> Each plate teaches one idea on real Molde data and prints the function call that computed it: edge betweenness; closure and re-routing of all 7.7 million junction pairs; closeness on drive time; and vehicle routing with PyVRP, cross-checked by OR-Tools to within 0.1%. Free-flow times; random delivery addresses in plate 04. Click to enlarge.</figcaption>
+</figure>
+
+<div class="col">
+<h2><span>5</span>Methods: four articles, one model chain</h2>
+<div class="opener"><div class="vig"><div class="hl" data-fig="exploded" role="img" aria-label="An application window opened into layers, like the four layers of the model chain"></div><div class="vig-cap mono">move across to open the layers · <span class="read"></span></div></div><p class="lede">Each article answers one research question, can be published on its own, and hands a defined product to the next.</p></div>
+
+<div class="art"><div class="tag">A1 · RQ1 · Year 1</div><h4>Preferences and acceptance</h4>
+<p><b>Data</b> Stated-choice survey in Molde and Kristiansund with three blocks of tasks: mode choice, vehicle technology, and votes on policy packages (charge level, exemptions, how revenue is used). RVU trips for revealed-preference anchoring. <b>Method</b> Multinomial, mixed and latent-class logit<sup>6</sup>, with willingness to pay and value of time by segment. Package acceptance is modelled as a binary or ordered choice whose attributes are the levers of Figure 2c, following the evidence that acceptance falls with charge level and rises with earmarking and bundling<sup>16,17</sup>. <b>Transfer test</b> Estimate on Molde, predict Kristiansund, compare. <b>Product</b> Estimated utilities with their covariance matrix, and an acceptance function A(p). <b>Venue</b> <i>Transportation Research Part A</i> or <i>Transport Policy</i>.</p></div>
+
+<div class="art"><div class="tag">A2 · RQ2 · Year 2</div><h4>The coupled agent model</h4>
+<p><b>Method</b> Agents choose mode and vehicle with the A1 utilities. Parameters are drawn from their estimated distribution, not fixed at point estimates. EV adoption spreads through neighbourhood peer effects, and car travel times respond to congestion on the OSM network. Agents vote with A(p), so acceptance becomes an outcome of the simulation. <b>Calibration and validation</b> Pattern-oriented modelling<sup>18</sup>: mode shares (RVU), fleet composition (SSB) and traffic counts must be matched at the same time, with Kristiansund as a hold-out. Documented with the ODD protocol<sup>19</sup>. <b>Product</b> A calibrated model and an ensemble interface. <b>Venue</b> <i>Transportation Research Part C</i> or <i>Environmental Modelling &amp; Software</i>.</p></div>
+
+<div class="art"><div class="tag">A3 · RQ3 · Year 3</div><h4>Robust and admissible packages</h4>
+<p><b>Method</b> Around 10<sup>4</sup> futures × 10<sup>2</sup> packages, with the futures sampled by Latin hypercube<sup>5</sup>. Each package is scored by satisficing robustness R(p) subject to A(p) ≥ ½ and C(p) ≤ B, with regret and alternative robustness metrics reported for comparison<sup>20</sup>. PRIM scenario discovery finds the failure conditions<sup>9</sup>, and Sobol indices rank the uncertainties<sup>21</sup>. If the model is too slow for the ensemble, a statistical surrogate is trained on a subset of runs. <b>Freight</b> The same procedure is applied to urban delivery on the Molde network using the routing module (Figure 6, plates 01–04). <b>Product</b> Admissible robust packages, their failure boxes, and a data tree indexed {future; package; year}. <b>Venue</b> <i>Transportation Research Part D</i> or <i>Technological Forecasting &amp; Social Change</i>.</p></div>
+
+<div class="art"><div class="tag">A4 · RQ4 · Year 3</div><h4>From 2050 back to now</h4>
+<p><b>Method</b> Backcasting from the 2050 target to milestones, read from the successful trajectories of the ensemble. Signposts and triggers<sup>22</sup> are chosen by how well an indicator observable in 2030 separates futures that go on to succeed from those that fail. These are assembled into adaptive pathways<sup>10</sup>, including switches to instruments outside the original lever set. <b>Workshop</b> Planners from the county, the two municipalities and TRANSPLAN partners compare a pathway map with a conventional table of results, as a within-subject test of whether the visual form helps them agree on the next decision. <b>Venue</b> <i>Futures</i> or <i>Environmental Modelling &amp; Software</i>.</p></div>
+</div>
+
+<figure class="wide">
+  <svg id="f7" viewBox="0 0 1600 1010" role="img" aria-label="Figure 7: the data tree of 1,500 runs, packages by futures"></svg>
+  <figcaption><b>Figure 7. The data tree.</b> Every run of the prototype ensemble is one cell, addressed as {future; package} and carrying a list of 26 yearly values. Rows are the 25 packages, sorted by robustness. Columns are the 60 futures, sorted by how many packages succeed in them. Gold means commuting CO₂ in 2050 is at most 20% of 2025. The dark block on the right is the finding that drives A3 and A4: in 19 futures no package succeeds, and in every other future the most robust package, P12, does.</figcaption>
+</figure>
+
+<div class="tools col"><div class="kicker">working prototype and tools</div>
+<p>Every number and figure in this proposal is produced by code in a public repository, <a href="https://github.com/Astheno-sphere/computational_Logistics">github.com/Astheno-sphere/computational_Logistics</a> (MIT licence). Its 87 automated tests run on every change, and figures 5–12 are rebuilt by two scripts (<span class="mono">docs/proposal/make_data.py</span>, <span class="mono">make_towns.py</span>). The modules map onto the articles:</p>
+<div class="mods"><b>dcm-estimate</b> multinomial and mixed logit → A1 · <b>abm-transport</b> agents, EV diffusion, congestion, public money → A2 · <b>dmdu-explore</b> Latin hypercube, PRIM, robustness, backcasting → A3–A4 · <b style="white-space:nowrap">gh-datatree</b> {future; package; year} trees → A2–A4 · <b>osm-network</b> OpenStreetMap road graphs → case · <b style="white-space:nowrap">vrp-solve</b> PyVRP / OR-Tools → freight · <b>visual-narrative</b> the figures → A4</div>
+</div>
+
+<div class="col">
+<h3>Tools I have, and tools still missing</h3>
+<table class="data">
+<tr><th>Have</th><th>Missing, and where it comes</th></tr>
+<tr><td>Choice estimation, two independent estimators, recovery test</td><td>Mixed and latent-class logit, survey design (A1)</td></tr>
+<tr><td>Agent model: EV diffusion, fleet turnover, welfare and public money per agent</td><td>Car vintages per household, distribution by zone and income (A2)</td></tr>
+<tr><td>Ensembles, robustness, PRIM, backcast milestones</td><td>Regret, Sobol, consistent futures, surrogate model (A3)</td></tr>
+<tr><td>Real road networks, route shares, routing, facility location</td><td>Agents routed on the network (A2)</td></tr>
+<tr><td>Figures rebuilt from code, tests in CI, exact versions pinned</td><td>A versioned data release with a DOI</td></tr>
+</table>
+<h2><span>6</span>What the prototype already shows</h2>
+<div class="opener"><div class="vig"><div class="hl" data-fig="branches" role="img" aria-label="A history that forks into branches and merges back, like futures leaving one path"></div><div class="vig-cap mono">touch a commit · <span class="read"></span></div></div><p class="lede">The behaviour is synthetic and the numbers below are not findings about Norway. They show what each article will produce, and that the chain from Figure 2 runs end to end.</p></div>
+<h3>6.1 Policy changes the odds, not the future</h3>
+<p>Without policy, commuting emissions reach the 2050 target in 4 of 60 futures. With package P12, they reach it in 41. Even with P12, emissions in 2050 still range from 9% to 30% of the 2025 level across the futures; without policy they range from 14% to 50% (Figure 8). No package removes the uncertainty. The best one makes success likely and makes failure recognisable early.</p>
+</div>
+
+<figure class="wide">
+  <svg id="f8" viewBox="0 0 1600 640" role="img" aria-label="Figure 8: CO2 trajectories in 60 futures without policy and with package P12"></svg>
+  <figcaption><b>Figure 8. Sixty futures, twice.</b> Commuting CO₂ relative to 2025 in each of the 60 sampled futures. Left: no policy. Right: the most robust package, P12. Gold trajectories end at or below the target (20% of 2025). The milestones on the right panel are medians of the successful trajectories, which is how A4 reads what must hold by 2030, 2035 and 2040.</figcaption>
+</figure>
+
+<div class="col">
+<h3>6.2 The price of robustness</h3>
+<p>Robustness has a cost, and the ensemble can price it. P12 combines a NOK 54 toll per car trip, near-exemption of electric cars from that toll, nearly halved bus headways, bike infrastructure and a NOK 99,000 EV purchase subsidy. Measured as public money moved per commuter per year, it pays out about NOK 5,390 in subsidies and collects NOK 3,810 in tolls, a net cost of about NOK 1,580. <strong>The best package that pays for itself, P21, reaches the target in 37 futures instead of 41 and raises a net NOK 2,900 per commuter per year</strong> (Figure 9). The trade-off between four futures and NOK 4,480 per commuter per year is a political choice. Making it explicit is the purpose of the budget constraint C(p) ≤ B.</p>
+<p>Acceptance in the prototype is only a proxy: the share of commuters whose commuting is not made worse in 2030. By that measure, 21 of 24 packages, P12 included, are acceptable to a majority. This is a lower bound from self-interest alone and is very likely optimistic. In 2019, a party founded to oppose road tolls won 16.7% of the vote in Bergen’s municipal election<sup>23</sup>. This is why A1 estimates acceptance directly instead of inferring it from travel times.</p>
+</div>
+
+<figure class="wide">
+  <svg id="f9" viewBox="0 0 1600 720" role="img" aria-label="Figure 9: robustness against public money for 25 packages"></svg>
+  <figcaption><b>Figure 9. Robustness against money.</b> Each circle is a package. Height is the share of the 60 futures in which it reaches the target. Horizontal position is the net public money it moves (EV subsidies paid minus tolls collected, NOK per commuter per year, median over futures). Left of zero, the package pays for itself. Filled circles are acceptable to a majority under the self-interest proxy. Transit and bike infrastructure costs are not yet included and will come from county cost data in A3.</figcaption>
+</figure>
+
+<div class="col">
+<h3>6.3 Where every package fails, and how early we would know</h3>
+<p>The 19 futures in which no package succeeds share a signature. An exhaustive search for the densest two-threshold box finds that <strong>cars kept for 12.9 years or more, combined with 2050 telework at or below 12.7% of commute days</strong>, describes 16 futures, of which 14 fail every package (Figure 10a). This is the inertia of Figure 1 reappearing inside the model: where cars are replaced slowly and commuting does not shrink, levers that act on new purchases and on trip costs cannot reach the target in time. With 60 futures the box is a hypothesis, to be re-tested on 10<sup>4</sup> futures in A3.</p>
+<p>The failure is also visible early. If commuting CO₂ in 2030 is still above 63% of its 2025 level, the pathway is off track. In the prototype this single reading identifies 17 of the 19 failing futures, with 4 false alarms among the 41 successes (Figure 10b), twenty years before the target year. A signpost with a measured hit rate is what turns a backcast into a plan.</p>
+</div>
+
+<figure class="wide">
+  <svg id="f10" viewBox="0 0 1600 690" role="img" aria-label="Figure 10: the failure box and the 2030 signpost"></svg>
+  <figcaption><b>Figure 10. Why it fails, and when we would know.</b> (a) The 60 futures by vehicle lifetime and 2050 telework. Filled: futures in which no package reaches the target. Shaded: the two-threshold box found by exhaustive search (density 88%, coverage 74%, against a base rate of 32%). (b) For P12, commuting CO₂ in 2030 in each future, split by whether the 2050 target is met. The threshold that best separates the two groups is 63% of 2025 (90% accuracy).</figcaption>
+</figure>
+
+<div class="col">
+<h3>6.4 The pathway</h3>
+<p>Put together, the prototype already yields the skeleton of A4’s product. A package starts in 2026 and is at full strength by 2030. Milestones of 58%, 36% and 26% of 2025 emissions are set for 2030, 2035 and 2040. One signpost is read in 2030. If the signpost fails, the evidence of Figure 10a points beyond the five levers, to instruments that speed up fleet renewal or reduce commuting (Figure 11). Designing and testing those switches is the work of A4.</p>
+<div class="new limits"><div class="kicker">what the prototype does not show</div><ol>
+  <li>Real preferences: all behaviour is synthetic until the A1 survey.</li>
+  <li>Current instruments: the prototype’s levers include EV purchase support and an EV toll exemption, which Norway is phasing out. The PhD tests the 2026 instruments: distance-based road charging, toll rings that EVs pay, public transport, cycling and fleet renewal.</li>
+  <li>Network routing: agents have trip lengths, not routes. The congestion model is zonal.</li>
+  <li>Freight: plates 01–04 run on the real network but are not yet coupled to the ensemble.</li>
+  <li>Statistical confidence in the boxes and signposts: 60 futures are a demonstration, not an analysis.</li>
+</ol></div>
+</div>
+
+<figure class="wide">
+  <svg id="f11" viewBox="0 0 1600 560" role="img" aria-label="Figure 11: adaptive pathway from 2025 to 2050 with milestones and a 2030 signpost"></svg>
+  <figcaption><b>Figure 11. A pathway with a measured signpost.</b> The main line is package P12, with the prototype’s median milestones. The 2030 signpost tests commuting CO₂ against 63% of 2025. On failure, the pathway switches to instruments outside the original lever set (dashed); A4 designs and tests these switches. The schematic shows the form of A4’s product. Only the milestones and the signpost are computed.</figcaption>
+</figure>
+
+<div class="col">
+<h2><span>7</span>Work plan, risks and ethics</h2>
+<div class="opener"><div class="vig"><div class="hl" data-fig="slow" role="img" aria-label="Crates on a conveyor; hovering slows the clock without stopping it"></div><div class="vig-cap mono">hover to slow time · <span class="read"></span></div></div><p class="lede">The prototype is Year 0. Each later year replaces one synthetic layer with an observed one, and ends with an article.</p></div>
+</div>
+
+<figure class="wide">
+  <svg id="f12" viewBox="0 0 1600 640" role="img" aria-label="Figure 12: work plan 2026 to 2029"></svg>
+  <figcaption><b>Figure 12. Work plan.</b> Three years after the Year-0 prototype, with each year ending in an article. Diamonds mark submissions and the stakeholder workshop. The top row shows which data layer becomes real in each year.</figcaption>
+</figure>
+
+<div class="col">
+<table class="data risk">
+<tr><th>Risk</th><th>Mitigation</th></tr>
+<tr><td>Low survey response</td><td>Panel recruitment plus municipal channels. The size target is set by a recovery test, and RVU anchors the revealed-preference side.</td></tr>
+<tr><td>RVU access delayed</td><td>SSB commuting flows and the survey’s own revealed-preference questions cover calibration until access is granted.</td></tr>
+<tr><td>Agent model too slow for 10<sup>6</sup> runs</td><td>About a hundred core-hours at present speed. If that grows, use a statistical surrogate, national HPC (Sigma2) or fewer packages after screening.</td></tr>
+<tr><td>Calibration not identifiable</td><td>Pattern-oriented calibration against several observed patterns at once, with Kristiansund as a hold-out.</td></tr>
+<tr><td>Results hinge on the target or the robustness metric</td><td>Report results for targets of 10%, 20% and 30% of 2025, and compare satisficing, regret and other metrics<sup>20</sup>.</td></tr>
+<tr><td>Stakeholder workshop</td><td>Recruited through TRANSPLAN and the county from Year 2. A remote format as fallback.</td></tr>
+</table>
+<p><strong>Ethics and data management.</strong> The survey collects personal data. It will be assessed by Sikt before fieldwork, with informed consent, pseudonymised storage at Molde University College, and deletion of identifiers after linkage. Code is open under the MIT licence. Model inputs, ensemble outputs and anonymised survey data will be deposited with a DOI when consent allows, following the FAIR principles. An anti-drift register in the repository will record every change to targets, levers and assumptions, so that the published results can be traced to the version that produced them.</p>
+
+<h2><span>8</span>Expected contributions</h2>
+<ul class="obj">
+  <li><strong>To transport science</strong>: a framework in which acceptability is a condition for robustness rather than a separate check; estimation uncertainty carried from the survey into deep-uncertainty exploration of an agent model; and backcasting with signposts whose hit rates are measured on the ensemble.</li>
+  <li><strong>To TRANSPLAN</strong>: an exploratory layer for Research Area 1 that works alongside the national and regional models (NTM6, RTM). It asks which strategies remain sound when their forecasts are wrong, in a region type the national models resolve coarsely.</li>
+  <li><strong>To the region</strong>: a tested pathway for Molde and Kristiansund with indicators planners can monitor using data they already collect (traffic counts, the vehicle register).</li>
+  <li><strong>To logistics</strong>: the same robustness procedure applied to urban freight on the same network, supported by the routing and network tools already built.</li>
+  <li><strong>To practice</strong>: an open, tested toolchain and a visual language for showing uncertainty to the people who must decide under it.</li>
+</ul>
+<p class="hook">The fleet that will drive in 2035 is being bought now. The decisions that steer it must be made before the evidence is in. This project builds the instruments to make those decisions well, and to know early when they need to change.</p>
+</div>
+
+
+<div class="refs col">
+  <div class="kicker">references</div>
+  <ol>
+    <li>Ministry of Transport (2024) Meld. St. 14 (2023–2024) <i>National Transport Plan 2025–2036</i>.</li>
+    <li>TØI. TRANSPLAN research centre (2025–2033); Halse, Wangsness, Babri, Tveter, Bråthen &amp; Olsen (2026) <i>Strategic choices for a realistic and goal-oriented transport plan</i>, TØI report 2172/2026.</li>
+    <li>Flyvbjerg, Skamris Holm &amp; Buhl (2006) Inaccuracy in traffic forecasts. <i>Transport Reviews</i> 26(1).</li>
+    <li>Lempert, Popper &amp; Bankes (2003) <i>Shaping the Next One Hundred Years</i>. RAND.</li>
+    <li>Kwakkel (2017) The Exploratory Modeling Workbench. <i>Environmental Modelling &amp; Software</i> 96.</li>
+    <li>Train (2009) <i>Discrete Choice Methods with Simulation</i>, 2nd ed. Cambridge University Press.</li>
+    <li>Le Pira, Marcucci, Gatta, Inturri, Ignaccolo &amp; Pluchino (2017) Integrating discrete choice models and agent-based models for ex-ante evaluation of stakeholder policy acceptability in urban freight transport. <i>Research in Transportation Economics</i> 64.</li>
+    <li>Marcucci, Le Pira, Gatta, Inturri, Ignaccolo &amp; Pluchino (2017) Simulating participatory urban freight transport policy-making. <i>Transportation Research Part E</i> 103.</li>
+    <li>Bryant &amp; Lempert (2010) Thinking inside the box: a participatory, computer-assisted approach to scenario discovery. <i>Technological Forecasting &amp; Social Change</i> 77(1).</li>
+    <li>Haasnoot, Kwakkel, Walker &amp; ter Maat (2013) Dynamic adaptive policy pathways. <i>Global Environmental Change</i> 23(2).</li>
+    <li>Opplysningsrådet for veitrafikken (OFV), new passenger-car registrations 2023–2025.</li>
+    <li>Statistics Norway (SSB), registered vehicles (bilparken) by fuel type, 2025.</li>
+    <li>Ministry of Climate and Environment (2022) <i>Norway’s Eighth National Communication</i> under the UNFCCC.</li>
+    <li>Preprint (2025) on backcasting electric-vehicle incentives for France as an optimal-control problem, arXiv:2502.02204.</li>
+    <li>Preprint (2026) on POLARIS agent-based scenarios for Chicago to 2050, arXiv:2609.00327.</li>
+    <li>Schade &amp; Schlag (2003) Acceptability of urban transport pricing strategies. <i>Transportation Research Part F</i> 6(1).</li>
+    <li>Börjesson, Eliasson, Hugosson &amp; Brundell-Freij (2012) The Stockholm congestion charges — 5 years on. <i>Transport Policy</i> 20.</li>
+    <li>Grimm, Revilla, Berger et al. (2005) Pattern-oriented modeling of agent-based complex systems: lessons from ecology. <i>Science</i> 310(5750).</li>
+    <li>Grimm, Railsback, Vincenot et al. (2020) The ODD protocol for describing agent-based and other simulation models: a second update. <i>Journal of Artificial Societies and Social Simulation</i> 23(2).</li>
+    <li>McPhail, Maier, Kwakkel, Giuliani, Castelletti &amp; Westra (2018) Robustness metrics: how are they calculated, when should they be used and why do they give different results? <i>Earth’s Future</i> 6(2).</li>
+    <li>Saltelli, Ratto, Andres et al. (2008) <i>Global Sensitivity Analysis: The Primer</i>. Wiley.</li>
+    <li>Walker, Rahman &amp; Cave (2001) Adaptive policies, policy analysis, and policy-making. <i>European Journal of Operational Research</i> 128(2).</li>
+    <li>Statistics Norway / valgresultat.no. Municipal council election 2019, Bergen: Folkeaksjonen nei til mer bompenger.</li>
+  </ol>
+</div>
+<footer>All figures are drawn in code from the prototype’s outputs (docs/results/transplan_study.json, docs/proposal/study.json) and OpenStreetMap; nothing is hand-placed. Arshad Akhtar Abbasia · <a style="color:var(--gold)" href="https://github.com/Astheno-sphere/computational_Logistics">github.com/Astheno-sphere/computational_Logistics</a> · Line figures: <a style="color:var(--gold)" href="https://github.com/lucasmarkes/hairline">hairline</a> by Lucas Marques (MIT).</footer>
+</div>
+
+<script>
+const TOWNS=/*TOWNS*/null;
+const DATA=/*STUDY*/null;
+const STUDY={vot:142,beta:{t:-0.061,c:-0.026,w:-0.089},shares:{car:68,bus:10,bike:22},zones:[["Molde",55],["Kristiansund",35],["between",10]],
+  np:4, best:41, nf:60, npk:25, levers:{toll:54,evshare:.08,freq:.91,bike:.68,sub:99}, ms:[[2025,1],[2030,.58],[2035,.36],[2040,.26],[2050,.2]]};
+const NS="http://www.w3.org/2000/svg",C={paper:"#E8DFD0",dim:"#A99A8B",faint:"rgba(232,223,208,.22)",ghost:"rgba(232,223,208,.14)",gold:"#D4A530",sage:"#9DB886",terra:"#D4835C",card:"#331d20"};
+function el(p,tag,a,txt){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;p.appendChild(e);return e}
+function t(p,x,y,s,o={}){return el(p,"text",Object.assign({x,y,fill:C.paper,"font-size":15},o),s)}
+function rng(seed){let s=seed>>>0;return()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0),((s^s>>>7)>>>0)/4294967296)}
+function kick(p,x,y,s){return t(p,x,y,s,{fill:C.dim,"font-style":"italic","font-weight":300,"font-size":17})}
+function cap(p,x,y,s,o={}){return t(p,x,y,s,Object.assign({"font-weight":700,"font-size":19,"letter-spacing":".04em"},o))}
+function arrow(p,x1,y,x2){el(p,"line",{x1,y1:y,x2:x2-8,y2:y,stroke:C.dim,"stroke-width":1.4});el(p,"path",{d:`M${x2-10} ${y-6} L${x2} ${y} L${x2-10} ${y+6}`,fill:"none",stroke:C.dim,"stroke-width":1.4})}
+function slider(p,x,y,w,label,lo,hi,v,fmt){
+  t(p,x,y-12,label,{fill:C.dim,"font-size":13});
+  el(p,"line",{x1:x,y1:y,x2:x+w,y2:y,stroke:C.faint,"stroke-width":4,"stroke-linecap":"round"});
+  const k=x+w*(v-lo)/(hi-lo); el(p,"line",{x1:x,y1:y,x2:k,y2:y,stroke:C.gold,"stroke-width":4,"stroke-linecap":"round"});
+  el(p,"rect",{x:k-7,y:y-11,width:14,height:22,rx:4,fill:C.paper});
+  t(p,x+w,y-12,fmt(v),{fill:C.gold,"font-size":13,"text-anchor":"end","font-family":"JetBrains Mono"});
+}
+function townMap(p,town,x,y,w,h,label,share){
+  const [x0,y0,x1,y1]=town.bbox, s=Math.min(w/(x1-x0),h/(y1-y0)), ox=x+(w-(x1-x0)*s)/2, oy=y+(h-(y1-y0)*s)/2;
+  const P=c=>c.map(([a,b])=>`${(ox+(a-x0)*s).toFixed(1)},${(oy+(y1-b)*s).toFixed(1)}`).join(" ");
+  const g=el(p,"g",{});
+  el(g,"rect",{x,y,width:w,height:h,fill:"none",stroke:C.faint});
+  town.sea.forEach(r=>el(g,"polygon",{points:P(r),fill:"rgba(90,122,140,.28)",stroke:"none"}));
+  town.roads.forEach(([maj,c])=>el(g,"polyline",{points:P(c),fill:"none",stroke:maj?C.paper:C.ghost,"stroke-width":maj?1.3:.6}));
+  t(p,x+10,y+h-12,label.toUpperCase(),{"font-size":12,"letter-spacing":".1em"});
+  t(p,x+w-10,y+h-12,share+"% of agents",{fill:C.gold,"font-size":12,"text-anchor":"end"});
+}
+
+// ---------------- Figure 1: fleet vs showroom ----------------
+(function(){
+  const s=document.getElementById("f0");
+  t(s,40,48,"FIGURE 1",{fill:C.gold,"font-size":13,"font-weight":700,"letter-spacing":".14em"});
+  t(s,128,48,"why 2035 is being decided now",{fill:C.dim,"font-style":"italic","font-weight":300,"font-size":17});
+  el(s,"line",{x1:40,y1:70,x2:1560,y2:70,stroke:C.faint});
+  const grid=(x0,n,label,big)=>{const q=22,g=6;
+    for(let i=0;i<100;i++){const c=i%10,r=Math.floor(i/10);
+      el(s,"rect",{x:x0+c*(q+g),y:110+r*(q+g),width:q,height:q,rx:3,fill:i<n?C.gold:"none",stroke:i<n?"none":C.faint,"stroke-width":1.4});}
+    cap(s,x0,400,label,{"font-size":15}); t(s,x0+278,400,big,{fill:C.gold,"font-size":15,"text-anchor":"end","font-family":"JetBrains Mono"});};
+  grid(60,96,"NEW CARS SOLD, 2025","95.9%");
+  grid(1000,33,"CARS ON THE ROAD","≈ 1 in 3");
+  // turnover arrow
+  const ax=470,bx=950,ay=220; arrow(s,ax,ay,bx);
+  t(s,(ax+bx)/2,ay-40,"FLEET TURNOVER",{"text-anchor":"middle","font-weight":700,"font-size":15,"letter-spacing":".06em"});
+  t(s,(ax+bx)/2,ay-16,"cars stay on the road for close to two decades",{"text-anchor":"middle",fill:C.dim,"font-size":14});
+  // sales trend
+  [[2023,82],[2024,89],[2025,95.9]].forEach(([y,v],i)=>{const x=560+i*130,h=v*.9;
+    el(s,"rect",{x,y:370-h,width:56,height:h,fill:i==2?C.gold:"rgba(212,165,48,.45)"});
+    t(s,x+28,385,y,{"text-anchor":"middle",fill:C.dim,"font-size":12,"font-family":"JetBrains Mono"});
+    t(s,x+28,365-h,v+"%",{"text-anchor":"middle",fill:C.paper,"font-size":12,"font-family":"JetBrains Mono"});});
+  t(s,710,410,"ELECTRIC SHARE OF NEW CARS",{"text-anchor":"middle",fill:C.dim,"font-size":12,"letter-spacing":".08em"});
+  ["Policy that moves","the right-hand grid","acts through use,","scrapping and timing —","not sales alone."].forEach((l,i)=>t(s,1340,150+i*28,l,{fill:i<4?C.paper:C.gold,"font-size":19,"font-weight":300}));
+})();
+
+// ---------------- Figure 2 ----------------
+(function(){
+  const s=document.getElementById("f1");
+  t(s,40,48,"FIGURE 2",{fill:C.gold,"font-size":13,"font-weight":700,"letter-spacing":".14em"});
+  t(s,128,48,"from one trip to a 2050 plan",{fill:C.dim,"font-style":"italic","font-weight":300,"font-size":17});
+  t(s,1560,48,"AGENTS 1,000 · ZONES 3 · LEVERS 5 · UNCERTAINTIES 9 · FUTURES 60 · PACKAGES 25 · RUNS 1,500 · DATA SYNTHETIC",{fill:C.dim,"font-size":11.5,"text-anchor":"end","font-family":"JetBrains Mono"});
+  el(s,"line",{x1:40,y1:70,x2:1560,y2:70,stroke:C.faint});
+  const X=[40,352,664,976,1288], W=272, top=112;
+  const heads=[["a / a trip","ESTIMATED CHOICE"],["b / a population","AGENTS IN TWO TOWNS"],["c / a package","FIVE POLICY LEVERS"],["d / the futures","NINE DEEP UNCERTAINTIES"],["e / the verdict","ROBUSTNESS + MILESTONES"]];
+  heads.forEach(([k,h],i)=>{kick(s,X[i],top,k);cap(s,X[i],top+30,h,{"font-size":16}); if(i<4) arrow(s,X[i]+W+6,top+22,X[i+1]-6);});
+  // (a) choice
+  let y=top+80; const modes=[["CAR",STUDY.shares.car],["ELECTRIC CAR","—"],["BUS",STUDY.shares.bus],["BIKE",STUDY.shares.bike]];
+  modes.forEach(([m,sh],i)=>{const yy=y+i*58; el(s,"rect",{x:X[0],y:yy,width:W,height:46,rx:10,fill:"none",stroke:C.paper,"stroke-width":1.6});
+    t(s,X[0]+16,yy+29,m,{"font-size":14,"font-weight":700,"letter-spacing":".06em"});
+    if(sh!=="—"){el(s,"rect",{x:X[0]+140,y:yy+19,width:sh*1.0,height:8,fill:C.gold});t(s,X[0]+W-14,yy+29,sh+"%",{fill:C.gold,"font-size":13,"text-anchor":"end","font-family":"JetBrains Mono"})}
+    else t(s,X[0]+W-14,yy+29,"share of car",{fill:C.dim,"font-size":12,"text-anchor":"end"});});
+  y+=4*58+30;
+  t(s,X[0],y,"U = ASC + βt·time + βc·cost + βw·wait",{"font-size":13.5,"font-family":"JetBrains Mono"});
+  [["βt",STUDY.beta.t+" per min"],["βc",STUDY.beta.c+" per NOK"],["βw",STUDY.beta.w+" per min waiting"]].forEach(([a,b],i)=>{t(s,X[0],y+30+i*24,a,{fill:C.dim,"font-size":13,"font-family":"JetBrains Mono"});t(s,X[0]+40,y+30+i*24,b,{"font-size":13,"font-family":"JetBrains Mono"})});
+  t(s,X[0],y+120,"value of time ≈ "+STUDY.vot+" NOK/h",{fill:C.gold,"font-size":15,"font-weight":500});
+  t(s,X[0],y+146,"2025 shares: placeholders until RVU",{fill:C.dim,"font-size":12,"font-style":"italic"});
+  // (b) towns
+  if(TOWNS){ townMap(s,TOWNS.molde,X[1],top+80,W,250,"Molde",55); townMap(s,TOWNS.kristiansund,X[1],top+370,W,250,"Kristiansund",35); }
+  el(s,"line",{x1:X[1]+W/2,y1:top+330,x2:X[1]+W/2,y2:top+370,stroke:C.gold,"stroke-width":1.6,"stroke-dasharray":"4 4"});
+  t(s,X[1]+W/2+10,top+356,"corridor · 10% · ~30 km",{fill:C.gold,"font-size":12});
+  t(s,X[1],top+660,"EV adoption spreads through neighbours;",{fill:C.dim,"font-size":12.5});
+  t(s,X[1],top+680,"car traffic slows roads (congestion feedback)",{fill:C.dim,"font-size":12.5});
+  // (c) sliders — the most robust package
+  const L=STUDY.levers; let sy=top+110;
+  [["toll per car trip (NOK)",0,60,L.toll,v=>v.toFixed(0)],["share of toll paid by EVs",0,1,L.evshare,v=>v.toFixed(2)],["bus frequency gain (0–1)",0,1,L.freq,v=>v.toFixed(2)],["safe bike network (0–1)",0,1,L.bike,v=>v.toFixed(2)],["EV purchase subsidy (kNOK)",0,100,L.sub,v=>v.toFixed(0)]]
+    .forEach(([lab,lo,hi,v,f],i)=>slider(s,X[2],sy+i*74,W,lab,lo,hi,v,f));
+  t(s,X[2],sy+5*74+6,"shown: package P12, the most robust of 25",{fill:C.gold,"font-size":13});
+  t(s,X[2],sy+5*74+28,"levers phase in 2026–2030",{fill:C.dim,"font-size":12.5,"font-style":"italic"});
+  // (d) uncertainties with 60 sampled ticks
+  const U=[["EV price parity year","2026","2040"],["fuel price growth / yr","−2%","+4%"],["telework by 2050","0%","30%"],["population growth / yr","0%","1.5%"],["peer effect on EV choice","0","3"],["vehicle lifetime (yr)","10","18"],["cost sensitivity","×0.7","×1.3"],["time sensitivity","×0.7","×1.3"],["ICE efficiency gain / yr","0%","3%"]];
+  const r=rng(7); let uy=top+100;
+  U.forEach(([n,lo,hi],i)=>{const yy=uy+i*58; t(s,X[3],yy-12,n,{fill:C.dim,"font-size":12.5});
+    el(s,"line",{x1:X[3],y1:yy,x2:X[3]+W,y2:yy,stroke:C.faint,"stroke-width":1});
+    const perm=[...Array(60).keys()].sort(()=>r()-.5);   // Latin-hypercube-style: one tick per stratum
+    perm.forEach((k,j)=>{const xx=X[3]+W*(k+r())/60; el(s,"line",{x1:xx,y1:yy-6,x2:xx,y2:yy+6,stroke:j===0?C.gold:C.ghost,"stroke-width":j===0?2:1})});
+    t(s,X[3],yy+20,lo,{fill:C.dim,"font-size":11,"font-family":"JetBrains Mono"});t(s,X[3]+W,yy+20,hi,{fill:C.dim,"font-size":11,"text-anchor":"end","font-family":"JetBrains Mono"});});
+  t(s,X[3],uy+9*58+4,"60 futures; gold tick = one future",{fill:C.gold,"font-size":13});
+  // (e) verdict
+  let vy=top+110;
+  t(s,X[4],vy-14,"futures in which 2050 CO₂ ≤ 20% of 2025",{fill:C.dim,"font-size":12.5});
+  [["no policy",STUDY.np,C.dim],["P12",STUDY.best,C.gold]].forEach(([n,k,col],i)=>{const yy=vy+i*64;
+    for(let j=0;j<60;j++){const cx=X[4]+(j%30)*9, cy=yy+Math.floor(j/30)*10; el(s,"rect",{x:cx,y:cy,width:7,height:7,fill:j<k?col:"none",stroke:j<k?col:C.faint,"stroke-width":.8})}
+    t(s,X[4],yy+40,n,{"font-size":13,"font-weight":700}); t(s,X[4]+W,yy+40,`${k} of 60`,{fill:col,"font-size":13,"text-anchor":"end","font-family":"JetBrains Mono"});});
+  // milestone ladder
+  const gx=X[4], gy=vy+190, gw=W, gh=220, xa=yr=>gx+(yr-2025)/25*gw, ya=v=>gy+gh-v*gh;
+  t(s,gx,gy-38,"backcast milestones, P12 (CO₂ vs 2025)",{fill:C.dim,"font-size":12.5});
+  el(s,"line",{x1:gx,y1:gy+gh,x2:gx+gw,y2:gy+gh,stroke:C.faint});
+  el(s,"rect",{x:xa(2049),y:ya(.2),width:xa(2050)-xa(2049)+8,height:gh*.2,fill:C.sage,opacity:.25});
+  el(s,"polyline",{points:STUDY.ms.map(([a,b])=>xa(a)+","+ya(b)).join(" "),fill:"none",stroke:C.gold,"stroke-width":2.4});
+  STUDY.ms.forEach(([a,b])=>{el(s,"circle",{cx:xa(a),cy:ya(b),r:5,fill:C.gold});t(s,xa(a),ya(b)-12,Math.round(b*100)+"%",{fill:C.paper,"font-size":12,"text-anchor":a===2050?"end":"middle","font-family":"JetBrains Mono"});t(s,xa(a),gy+gh+20,a,{fill:C.dim,"font-size":11,"text-anchor":"middle"})});
+  t(s,gx,gy+gh+50,"what must be true by 2030 for 2050 to hold",{fill:C.gold,"font-size":13});
+})();
+
+// ---------------- Figure 3: gap matrix ----------------
+(function(){
+  const s=document.getElementById("f2");
+  t(s,40,48,"FIGURE 3",{fill:C.gold,"font-size":13,"font-weight":700,"letter-spacing":".14em"});
+  t(s,128,48,"the gap",{fill:C.dim,"font-style":"italic","font-weight":300,"font-size":17});
+  el(s,"line",{x1:40,y1:70,x2:1560,y2:70,stroke:C.faint});
+  const cols=["estimated behaviour","agent dynamics","thousands of futures","acceptability","backcasting & timing"];
+  const rows=[["Strategic demand models","national / regional logit models",[2,0,0,0,0]],
+              ["Discrete choice studies","revealed and stated preference",[2,0,0,1,0]],
+              ["Agent-based transport models","simulation of individual travellers",[1,2,1,0,0]],
+              ["Exploratory modelling (DMDU)","robust decisions, scenario discovery",[0,1,2,0,1]],
+              ["DCM–ABM coupling, urban freight","Le Pira, Marcucci, Gatta et al. 2017",[2,2,0,2,0]],
+              ["This project","coupled · explored · constrained · backcast",[2,2,2,2,2]]];
+  const x0=520, cw=208, y0=150, rh=72;
+  cols.forEach((c,j)=>{const w=c.split(" & ");t(s,x0+j*cw+cw/2,y0-30,c.toUpperCase(),{fill:C.dim,"font-size":12,"text-anchor":"middle","letter-spacing":".08em"})});
+  rows.forEach(([a,b,v],i)=>{const yy=y0+i*rh, me=i===rows.length-1;
+    el(s,"line",{x1:40,y1:yy,x2:1560,y2:yy,stroke:C.faint});
+    if(me) el(s,"rect",{x:40,y:yy,width:1520,height:rh,fill:"rgba(212,165,48,.08)"});
+    t(s,60,yy+32,a,{"font-size":17,"font-weight":me?800:600,fill:me?C.gold:C.paper});
+    t(s,60,yy+54,b,{fill:C.dim,"font-size":13,"font-style":"italic"});
+    v.forEach((k,j)=>{const cx=x0+j*cw+cw/2, cy=yy+rh/2, R=11, col=me?C.gold:C.paper;
+      el(s,"circle",{cx,cy,r:R,fill:"none",stroke:k?col:C.faint,"stroke-width":1.6});
+      if(k===2) el(s,"circle",{cx,cy,r:R,fill:col});
+      if(k===1) el(s,"path",{d:`M${cx} ${cy-R} A${R} ${R} 0 0 1 ${cx} ${cy+R} Z`,fill:col});});
+  });
+  el(s,"line",{x1:40,y1:y0+rows.length*rh,x2:1560,y2:y0+rows.length*rh,stroke:C.faint});
+  const ly=y0+rows.length*rh+34, items=[[2,"present"],[1,"partial / in some applications"],[0,"absent"]]; let lx=1100;
+  items.forEach(([k,lab])=>{const R=7, cx=lx, cy=ly-4;
+    el(s,"circle",{cx,cy,r:R,fill:"none",stroke:k?C.paper:C.faint,"stroke-width":1.4});
+    if(k===2) el(s,"circle",{cx,cy,r:R,fill:C.paper});
+    if(k===1) el(s,"path",{d:`M${cx} ${cy-R} A${R} ${R} 0 0 1 ${cx} ${cy+R} Z`,fill:C.paper});
+    t(s,cx+14,ly,lab,{fill:C.dim,"font-size":12.5}); lx+=k===1?250:100;});
+})();
+
+// ---------------- Figure 4: research design ----------------
+(function(){
+  const s=document.getElementById("f3");
+  t(s,40,48,"FIGURE 4",{fill:C.gold,"font-size":13,"font-weight":700,"letter-spacing":".14em"});
+  t(s,128,48,"research design — four articles, one loop",{fill:C.dim,"font-style":"italic","font-weight":300,"font-size":17});
+  el(s,"line",{x1:40,y1:70,x2:1560,y2:70,stroke:C.faint});
+  const A=[["A1","BEHAVIOUR","RQ1","stated-choice survey + RVU","mixed logit, WTP; acceptance model","utilities · A(p)","J. Choice Modelling / TR-B"],
+           ["A2","COUPLING","RQ2","A1 + SSB fleet + OSM network","agent model driven by A1; calibration, validation","{future; package; year}","TR-C / JASSS"],
+           ["A3","EXPLORATION","RQ3","A2 ensemble + budget B","robust search under A(p) ≥ ½, C(p) ≤ B; PRIM; Sobol; freight test","admissible robust set · failure boxes","Env. Modelling & Software"],
+           ["A4","BACKCASTING","RQ4","A3 + 2050 target + agency workshop","milestones, signposts, triggers; visual pathways","timed pathway","Transport Policy / Futures"]];
+  const W=330, gap=60, x0=60, y0=130, H=430;
+  A.forEach(([id,name,rq,inp,meth,out,venue],i)=>{const x=x0+i*(W+gap), me=i===2;
+    el(s,"rect",{x,y:y0,width:W,height:H,rx:16,fill:"none",stroke:me?C.gold:C.paper,"stroke-width":2});
+    t(s,x+24,y0+40,id,{fill:me?C.gold:C.dim,"font-size":14,"font-weight":700,"letter-spacing":".1em"});
+    t(s,x+W-24,y0+40,rq,{fill:C.dim,"font-size":13,"text-anchor":"end","font-family":"JetBrains Mono"});
+    t(s,x+24,y0+76,name,{"font-size":24,"font-weight":800});
+    const block=(lab,txt,yy)=>{t(s,x+24,yy,lab,{fill:C.dim,"font-size":11.5,"letter-spacing":".1em"});
+      const words=txt.split(" "); let line="",ly=yy+24; words.forEach(w=>{if((line+" "+w).length>34){t(s,x+24,ly,line.trim(),{"font-size":14.5});line="";ly+=21}line+=" "+w}); t(s,x+24,ly,line.trim(),{"font-size":14.5});};
+    block("INPUT",inp,y0+130); block("METHOD",meth,y0+215);
+    el(s,"line",{x1:x+24,y1:y0+H-96,x2:x+W-24,y2:y0+H-96,stroke:C.faint});
+    t(s,x+24,y0+H-66,"HANDS OVER",{fill:C.dim,"font-size":11.5,"letter-spacing":".1em"});
+    t(s,x+24,y0+H-40,out,{fill:me?C.gold:C.paper,"font-size":14,"font-family":"JetBrains Mono"});
+    t(s,x+W/2,y0+H+34,venue,{fill:C.dim,"font-size":12.5,"text-anchor":"middle","font-style":"italic"});
+    if(i<3) el(s,"circle",{cx:x+W,cy:y0+H-46,r:7,fill:C.card,stroke:C.paper,"stroke-width":2});
+    if(i) el(s,"circle",{cx:x,cy:y0+H-46,r:7,fill:C.card,stroke:C.paper,"stroke-width":2});
+    if(i<3) el(s,"path",{d:`M${x+W+7} ${y0+H-46} L${x+W+gap-7} ${y0+H-46}`,stroke:i===1?C.gold:C.dim,"stroke-width":i===1?2.4:1.6,fill:"none"});
+  });
+  // the loop back: A4 signposts feed the next planning round
+  const xr=x0+3*(W+gap)+W/2, xl=x0+W/2;
+  el(s,"path",{d:`M${xr} ${y0} L${xr} ${y0-34} L${xl} ${y0-34} L${xl} ${y0}`,fill:"none",stroke:C.dim,"stroke-width":1.2,"stroke-dasharray":"4 5"});
+  t(s,(xr+xl)/2,y0-42,"signposts observed → next planning round",{fill:C.dim,"font-size":12.5,"text-anchor":"middle","font-style":"italic"});
+})();
+
+// ================= figures 5-12: drawn from DATA (docs/proposal/study.json) and TOWNS =================
+const fmt=n=>Math.round(n).toLocaleString("en");
+function fhead(s,n,k,r){
+  t(s,40,48,"FIGURE "+n,{fill:C.gold,"font-size":13,"font-weight":700,"letter-spacing":".14em"});
+  t(s,n>9?140:128,48,k,{fill:C.dim,"font-style":"italic","font-weight":300,"font-size":17});
+  if(r) t(s,1560,48,r,{fill:C.dim,"font-size":11.5,"text-anchor":"end","font-family":"JetBrains Mono"});
+  el(s,"line",{x1:40,y1:70,x2:1560,y2:70,stroke:C.faint});
+}
+function proj(town,x,y,w,h){
+  const [x0,y0,x1,y1]=town.bbox,k=Math.min(w/(x1-x0),h/(y1-y0)),ox=x+(w-(x1-x0)*k)/2,oy=y+(h-(y1-y0)*k)/2;
+  const f=([a,b])=>[ox+(a-x0)*k,oy+(y1-b)*k];
+  return {f,k,P:c=>c.map(q=>f(q).map(v=>v.toFixed(1)).join(",")).join(" ")};
+}
+function mono(p,x,y,s,o={}){return t(p,x,y,s,Object.assign({"font-family":"JetBrains Mono","font-size":12,fill:C.dim},o))}
+function wire(p,x1,y1,x2,y2,o={}){const m=(y1+y2)/2;return el(p,"path",Object.assign({d:`M${x1} ${y1} C${x1} ${m} ${x2} ${m} ${x2} ${y2}`,fill:"none",stroke:C.gold,"stroke-width":1.4},o))}
+function hwire(p,x1,y1,x2,y2,o={}){const m=(x1+x2)/2;return el(p,"path",Object.assign({d:`M${x1} ${y1} C${m} ${y1} ${m} ${y2} ${x2} ${y2}`,fill:"none",stroke:C.gold,"stroke-width":1},o))}
+function node(p,x,y,w,h,title,l1,l2,o={}){
+  el(p,"rect",{x,y,width:w,height:h,rx:8,fill:o.fill||C.card,stroke:o.stroke||C.paper,"stroke-width":o.sw||1.3,"stroke-dasharray":o.dash||"none"});
+  t(p,x+12,y+22,title,{"font-family":"JetBrains Mono","font-size":13.5,"font-weight":500,fill:o.tc||C.paper});
+  if(l1) t(p,x+12,y+40,l1,{fill:C.dim,"font-size":12.5});
+  if(l2) t(p,x+12,y+56,l2,{fill:C.dim,"font-size":12.5});
+}
+const MODECOL=(m,e)=>m==0?(e?C.sage:"#8f8174"):m==1?C.terra:C.paper;
+const PK=DATA?Object.fromEntries(DATA.packages_list.map(p=>[p.id,p])):{};
+const NET=p=>p.subsidy_nok-p.toll_nok_rev;
+
+// ---------------- Figure 5: map of runs, tree of tools ----------------
+(function(){
+  const s=document.getElementById("f5"); if(!s||!TOWNS||!DATA) return;
+  const M=TOWNS.molde,K=TOWNS.kristiansund;
+  fhead(s,5,"a map of runs, a tree of tools",`OSM · ${fmt(M.junctions+K.junctions)} JUNCTIONS · ${fmt(M.buildings+K.buildings)} BUILDINGS · AGENTS ${fmt(DATA.agents)} · RUNS ${fmt(DATA.runs)}`);
+  function bigMap(town,zone,x,y,w,h,label,seed,off){
+    const p=proj(town,x,y,w,h), g=el(s,"g",{});
+    el(g,"rect",{x,y,width:w,height:h,fill:"#271416",stroke:C.faint});
+    town.sea.forEach(r=>el(g,"polygon",{points:p.P(r),fill:"rgba(90,122,140,.30)"}));
+    const roads=town.roads.slice().sort((a,b)=>a[2]-b[2]), mx=roads[roads.length-1][2];
+    roads.forEach(([maj,c,sh])=>{const k=sh/mx, hot=k>0.05;
+      el(g,"polyline",{points:p.P(c),fill:"none","stroke-linecap":"round",stroke:hot?C.gold:(maj?"rgba(232,223,208,.42)":"rgba(232,223,208,.16)"),
+        "stroke-width":hot?(0.9+6*k):(maj?1.1:.55),"stroke-opacity":hot?(0.3+0.7*k):1});});
+    const R=rng(seed), pts=town.points, tr=DATA.trace, n25=[0,0,0], n50=[0,0,0]; let ev=0,cars=0;
+    tr.zone.forEach((z,i)=>{ if(z!==zone) return;
+      const [px,py]=p.f(pts[Math.floor(R()*pts.length)]), m=tr.mode50[i], e=tr.ev50[i];
+      n25[tr.mode25[i]]++; n50[m]++; if(m==0){cars++; if(e) ev++;}
+      el(g,"circle",{cx:px.toFixed(1),cy:py.toFixed(1),r:2.7,fill:MODECOL(m,e),stroke:"#271416","stroke-width":.7});});
+    const top=roads[roads.length-1], [mx_,my_]=p.f(top[1][Math.floor(top[1].length/2)]);
+    const lx=mx_+off[0], ly=my_+off[1];
+    el(g,"circle",{cx:mx_,cy:my_,r:7,fill:"none",stroke:C.gold,"stroke-width":1.6});
+    el(g,"line",{x1:mx_,y1:my_,x2:lx,y2:ly,stroke:C.gold,"stroke-width":1});
+    const anchor=off[0]<0?"end":"start";
+    t(g,lx+(off[0]<0?-6:6),ly-4,town.pinch[0].toUpperCase(),{"font-weight":700,"font-size":14,"letter-spacing":".06em","text-anchor":anchor});
+    t(g,lx+(off[0]<0?-6:6),ly+14,`${(town.pinch[1]*100).toFixed(1)}% of all fastest routes`,{fill:C.gold,"font-size":13,"text-anchor":anchor});
+    kick(s,x,y-14,label);
+    const tot=n=>n[0]+n[1]+n[2], pc=(n,i)=>Math.round(100*n[i]/tot(n));
+    mono(s,x+w,y-14,`2025 → 2050 (P12)   car ${pc(n25,0)}→${pc(n50,0)}%  bus ${pc(n25,1)}→${pc(n50,1)}%  bike ${pc(n25,2)}→${pc(n50,2)}%  · EV ${Math.round(100*ev/cars)}% of cars`,{"text-anchor":"end"});
+  }
+  bigMap(M,"Molde",40,128,940,250,"a / molde — main case: estimate and calibrate",11,[70,62]);
+  bigMap(K,"Kristiansund",40,452,940,404,"b / kristiansund — transfer case: predict without re-estimating",12,[-160,-30]);
+  // legend
+  let ly=900; t(s,40,ly,"SHARE OF ALL FASTEST ROUTES",{fill:C.dim,"font-size":11.5,"letter-spacing":".1em"});
+  [0.25,0.5,1].forEach((k,i)=>el(s,"line",{x1:40+i*70,y1:ly+18,x2:94+i*70,y2:ly+18,stroke:C.gold,"stroke-width":0.9+6*k,"stroke-opacity":0.3+0.7*k,"stroke-linecap":"round"}));
+  t(s,330,ly,"AGENTS IN 2050, BY MODE",{fill:C.dim,"font-size":11.5,"letter-spacing":".1em"});
+  [["petrol/diesel car",0,0],["electric car",0,1],["bus",1,0],["bike",2,0]].forEach(([l,m,e],i)=>{
+    el(s,"circle",{cx:336+i*150,cy:ly+18,r:5,fill:MODECOL(m,e)}); t(s,348+i*150,ly+23,l,{"font-size":13,fill:C.paper});});
+  t(s,40,ly+60,"Agents carry a zone and a trip length; they are drawn on random OSM buildings for display. Network routing of agents is part of A2.",{fill:C.dim,"font-size":12.5,"font-style":"italic"});
+  t(s,40,ly+80,"Sea: OSM coastline polygonised. © OpenStreetMap contributors (ODbL).",{fill:C.dim,"font-size":12.5,"font-style":"italic"});
+
+  // ---- the tree ----
+  const X0=1040,TW=520;
+  kick(s,X0,114,"c / the same prototype as a tree");
+  const nw=160,gap=20, xs=[X0,X0+nw+gap,X0+2*(nw+gap)];
+  node(s,xs[0],134,nw,64,"OpenStreetMap",`${fmt(M.junctions+K.junctions)} junctions`,`${fmt(M.buildings+K.buildings)} buildings`);
+  node(s,xs[1],134,nw,64,"choice survey","6,400 choices","synthetic → Year 1",{dash:"5 4"});
+  node(s,xs[2],134,nw,64,"RVU · SSB · counts","observed shares,","fleet, traffic → Y1–2",{dash:"5 4"});
+  node(s,xs[0],262,nw,64,"osm-network","graph, travel times,","betweenness");
+  node(s,xs[1],262,nw,64,"dcm-estimate","6 parameters,","VoT NOK 142/h");
+  node(s,xs[2],262,nw,64,"abm-transport",`${fmt(DATA.agents)} agents × 26 yr,`,"EV, congestion, money");
+  wire(s,xs[0]+nw/2,198,xs[0]+nw/2,262); wire(s,xs[1]+nw/2,198,xs[1]+nw/2,262);
+  wire(s,xs[2]+nw/2,198,xs[2]+nw/2,262,{"stroke-dasharray":"5 4",stroke:C.dim});
+  hwire(s,xs[1]+nw,294,xs[2],294,{"stroke-width":1.4});
+  el(s,"path",{d:`M${xs[0]+nw/2} 326 C${xs[0]+nw/2} 352 ${xs[2]+30} 340 ${xs[2]+30} 326`,fill:"none",stroke:C.dim,"stroke-dasharray":"5 4","stroke-width":1.2});
+  mono(s,xs[1]+nw/2,352,"routing → A2",{"text-anchor":"middle","font-size":11});
+  node(s,X0,392,TW,64,"dmdu-explore",`${DATA.futures} futures × ${DATA.packages} packages = ${fmt(DATA.runs)} runs`,"Latin hypercube over 9 uncertainties and 5 levers",{stroke:C.gold});
+  wire(s,xs[2]+nw/2,326,X0+TW-80,392);
+  // funnel
+  const P=DATA.packages_list.filter(p=>p.id!=="no_policy"), acc=P.filter(p=>p.accept>=0.5), both=acc.filter(p=>NET(p)<=0);
+  const bestB=both.reduce((a,b)=>b.robustness>a.robustness?b:a), best=PK[DATA.best];
+  const sp=DATA.signposts.find(q=>q.key==="co2_30");
+  const L=[[fmt(DATA.runs),"runs","every package in every future"],
+           [P.length,"packages scored","R(p): share of futures on target"],
+           [acc.length,"acceptable","A(p) ≥ ½ (self-interest proxy, 2030)"],
+           [both.length,"also pay for themselves","C(p) ≤ 0: tolls ≥ subsidies"],
+           [`${best.id} · ${bestB.id}`,"most robust · within budget",`${Math.round(best.robustness*60)}/60 · ${Math.round(bestB.robustness*60)}/60 futures`],
+           ["1 + 1","pathway + signpost",`CO₂ 2030 ≤ ${Math.round(sp.threshold*100)}% of 2025`]];
+  const fw=[300,250,210,170,130,90], cx=X0+150, y0=486, bh=50, bg=20;
+  L.forEach(([n,a,b],i)=>{const y=y0+i*(bh+bg), w=fw[i];
+    if(i<L.length-1){const w2=fw[i+1]; el(s,"polygon",{points:`${cx-w/2},${y+bh} ${cx+w/2},${y+bh} ${cx+w2/2},${y+bh+bg} ${cx-w2/2},${y+bh+bg}`,fill:"rgba(212,165,48,.12)"});}
+    el(s,"rect",{x:cx-w/2,y,width:w,height:bh,rx:6,fill:`rgba(212,165,48,${0.18+0.13*i})`,stroke:C.gold,"stroke-width":1});
+    t(s,cx,y+31,String(n),{"text-anchor":"middle","font-family":"JetBrains Mono","font-size":i==4?14:17,"font-weight":500});
+    t(s,X0+318,y+20,a.toUpperCase(),{"font-weight":700,"font-size":12.5,"letter-spacing":".06em"});
+    t(s,X0+318,y+38,b,{fill:C.dim,"font-size":12.5});});
+})();
+
+// ---------------- Figure 7: the data tree ----------------
+(function(){
+  const s=document.getElementById("f7"); if(!s||!DATA) return;
+  const P=DATA.packages_list, nf=DATA.futures;
+  fhead(s,7,"the data tree: {future; package} → 26 yearly values",`${P.length} PACKAGES × ${nf} FUTURES = ${fmt(P.length*nf)} RUNS · TARGET: CO₂ 2050 ≤ ${Math.round(DATA.target*100)}% OF 2025`);
+  const cnt=[...Array(nf).keys()].map(f=>P.reduce((a,p)=>a+p.meets[f],0));
+  const order=[...Array(nf).keys()].sort((a,b)=>cnt[b]-cnt[a]||a-b);
+  const rh=26, y0=150, gx=360, cw=12, cg=2, rootY=y0+P.length*rh/2;
+  // root and branches
+  el(s,"rect",{x:40,y:rootY-34,width:190,height:68,rx:8,fill:C.card,stroke:C.gold,"stroke-width":1.4});
+  t(s,56,rootY-8,"{future; package}",{"font-family":"JetBrains Mono","font-size":14,"font-weight":500});
+  t(s,56,rootY+14,"→ list of 26 years",{fill:C.dim,"font-size":12.5});
+  P.forEach((p,r)=>{const y=y0+r*rh+rh/2; hwire(s,230,rootY,292,y,{stroke:p.id===DATA.best?C.gold:"rgba(212,165,48,.35)","stroke-width":p.id===DATA.best?1.8:.8});
+    t(s,300,y+4.5,p.id==="no_policy"?"none":p.id,{"font-family":"JetBrains Mono","font-size":12,fill:p.id===DATA.best?C.gold:C.paper,"font-weight":p.id===DATA.best?500:400});
+    order.forEach((f,c)=>{const x=gx+c*(cw+cg); el(s,"rect",{x,y:y-rh/2+4,width:cw,height:rh-8,rx:1.5,fill:p.meets[f]?C.gold:"rgba(232,223,208,.07)"});});
+    const bx=1236; el(s,"rect",{x:bx,y:y-6,width:140,height:12,fill:"rgba(232,223,208,.07)"}); el(s,"rect",{x:bx,y:y-6,width:140*p.robustness,height:12,fill:C.gold,opacity:.85});
+    mono(s,bx+150,y+4,`${Math.round(p.robustness*60)}/60`,{fill:C.paper});
+    mono(s,1460,y+4,p.id==="no_policy"?"—":`${Math.round(p.accept*100)}%`,{"text-anchor":"end",fill:p.accept<0.5?C.terra:C.paper});
+    const n=NET(p); mono(s,1556,y+4,p.id==="no_policy"?"—":(n>0?"−":"+")+(Math.abs(n)/1000).toFixed(1)+"k",{"text-anchor":"end",fill:n>0?C.terra:C.sage});
+  });
+  const gEnd=gx+nf*(cw+cg)-cg, yb=y0+P.length*rh;
+  t(s,gx,y0-30,"60 FUTURES — SORTED BY HOW MANY PACKAGES SUCCEED IN THEM →",{fill:C.dim,"font-size":11.5,"letter-spacing":".1em"});
+  t(s,1236,y0-30,"ROBUSTNESS",{fill:C.dim,"font-size":11.5,"letter-spacing":".1em"});
+  t(s,1460,y0-30,"ACCEPT",{fill:C.dim,"font-size":11.5,"letter-spacing":".1em","text-anchor":"end"});
+  t(s,1556,y0-30,"NOK/yr",{fill:C.dim,"font-size":11.5,"letter-spacing":".1em","text-anchor":"end"});
+  t(s,1556,y0-14,"public balance per commuter",{fill:C.dim,"font-size":10.5,"text-anchor":"end"});
+  // hostile bracket
+  const nh=DATA.hostile.n, hx=gx+(nf-nh)*(cw+cg)-1;
+  el(s,"rect",{x:hx,y:y0-2,width:gEnd-hx+2,height:P.length*rh+4,fill:"none",stroke:C.terra,"stroke-width":1.4,"stroke-dasharray":"5 4"});
+  t(s,(hx+gEnd)/2,yb+26,`${nh} HOSTILE FUTURES`,{"text-anchor":"middle",fill:C.terra,"font-weight":700,"font-size":13,"letter-spacing":".08em"});
+  t(s,(hx+gEnd)/2,yb+44,"no package succeeds",{"text-anchor":"middle",fill:C.terra,"font-size":12.5});
+  const nAll=cnt.filter(c=>c===P.length).length;
+  // highlighted cell: the best package in its median future
+  const f=DATA.trace.future, c=order.indexOf(f), cx=gx+c*(cw+cg)+cw/2, cy=y0+rh/2;
+  el(s,"rect",{x:cx-cw/2-3,y:cy-rh/2+1,width:cw+6,height:rh-2,fill:"none",stroke:C.paper,"stroke-width":1.6});
+  const tr=DATA.traj[DATA.best][f], yr=DATA.traj.years, bx0=420, by0=yb+66, bw=520, bh=90;
+  el(s,"path",{d:`M${cx} ${cy+rh/2-1} L${cx} ${by0-10} L${bx0+bw/2} ${by0-10}`,fill:"none",stroke:C.paper,"stroke-width":1});
+  el(s,"rect",{x:bx0-20,y:by0-6,width:bw+330,height:bh+28,rx:8,fill:"#2a1618",stroke:C.faint});
+  t(s,bx0,by0+18,`{${f}; ${DATA.best}}`,{"font-family":"JetBrains Mono","font-size":15,"font-weight":500,fill:C.gold});
+  mono(s,bx0,by0+40,"26 yearly values of commuting CO₂ (2025 = 1)",{});
+  const sx=v=>bx0+250+(v-2025)/25*360, sy=v=>by0+bh-v*bh*0.85;
+  el(s,"polyline",{points:tr.map((v,i)=>`${sx(yr[i]).toFixed(1)},${sy(v).toFixed(1)}`).join(" "),fill:"none",stroke:C.gold,"stroke-width":2});
+  tr.forEach((v,i)=>el(s,"circle",{cx:sx(yr[i]),cy:sy(v),r:1.8,fill:C.paper}));
+  el(s,"line",{x1:sx(2045),x2:sx(2050),y1:sy(DATA.target),y2:sy(DATA.target),stroke:C.paper,"stroke-dasharray":"3 3"});
+  mono(s,sx(2050)+12,sy(tr[tr.length-1])+4,`2050: ${tr[tr.length-1].toFixed(3)} ≤ ${DATA.target} ✓`,{fill:C.paper});
+  mono(s,bx0,by0+62,`[${tr.slice(0,4).map(v=>v.toFixed(2)).join(", ")}, …, ${tr[tr.length-1].toFixed(2)}]`,{"font-size":11.5});
+  t(s,40,yb+26,`In ${nAll} futures every package succeeds;`,{fill:C.dim,"font-size":13});
+  t(s,40,yb+44,`in ${nf-nh} at least one does —`,{fill:C.dim,"font-size":13});
+  t(s,40,yb+62,`and ${DATA.best} succeeds in all ${nf-nh}.`,{fill:C.gold,"font-size":13});
+})();
+
+// ---------------- Figure 8: sixty futures, twice ----------------
+(function(){
+  const s=document.getElementById("f8"); if(!s||!DATA) return;
+  const yr=DATA.traj.years, T=DATA.target;
+  fhead(s,8,"policy changes the odds, not the future",`${DATA.futures} FUTURES · COMMUTING CO₂, 2025 = 1 · TARGET ${T} IN 2050`);
+  function panel(x,key,title){
+    const w=640,y=130,h=410, X=v=>x+(v-2025)/25*w, Y=v=>y+h-v/1.05*h, L=DATA.traj[key];
+    [0,0.2,0.5,1].forEach(v=>{el(s,"line",{x1:x,x2:x+w,y1:Y(v),y2:Y(v),stroke:C.faint,"stroke-width":v==0?1.2:.6});mono(s,x-10,Y(v)+4,v.toFixed(1),{"text-anchor":"end"});});
+    [2025,2030,2040,2050].forEach(v=>mono(s,X(v),y+h+22,v,{"text-anchor":"middle"}));
+    const ok=L.map(r=>r[r.length-1]<=T+1e-9), n=ok.filter(Boolean).length;
+    L.forEach((r,i)=>{ if(ok[i]) return; el(s,"polyline",{points:r.map((v,j)=>`${X(yr[j]).toFixed(1)},${Y(v).toFixed(1)}`).join(" "),fill:"none",stroke:C.terra,"stroke-opacity":.45,"stroke-width":1.1});});
+    L.forEach((r,i)=>{ if(!ok[i]) return; el(s,"polyline",{points:r.map((v,j)=>`${X(yr[j]).toFixed(1)},${Y(v).toFixed(1)}`).join(" "),fill:"none",stroke:C.gold,"stroke-opacity":.75,"stroke-width":1.3});});
+    el(s,"rect",{x:X(2049.4),y:Y(T)-4,width:X(2050.6)-X(2049.4),height:Y(0)-Y(T)+4,fill:"none",stroke:C.paper,"stroke-width":1.2});
+    t(s,X(2049.4)-8,Y(T)-10,"target zone",{"text-anchor":"end",fill:C.paper,"font-size":12.5});
+    cap(s,x,y-26,title,{"font-size":16});
+    t(s,x+w,y-22,`${n} / ${L.length}`,{"text-anchor":"end","font-family":"JetBrains Mono","font-size":30,fill:n>L.length/2?C.gold:C.terra});
+    t(s,x+w-110,y-22,"reach the target",{"text-anchor":"end",fill:C.dim,"font-size":13});
+    return {X,Y};
+  }
+  panel(90,"no_policy","NO POLICY");
+  const {X,Y}=panel(870,DATA.best,`${DATA.best} — THE MOST ROBUST PACKAGE`);
+  const ms=Object.entries(DATA.milestones).map(([k,v])=>[+k,v]).concat([[2050,DATA.target]]);
+  el(s,"polyline",{points:[[2025,1]].concat(ms).map(([a,b])=>`${X(a)},${Y(b)}`).join(" "),fill:"none",stroke:C.paper,"stroke-width":1.6,"stroke-dasharray":"6 4"});
+  ms.forEach(([a,b])=>{el(s,"circle",{cx:X(a),cy:Y(b),r:6,fill:"#2b1719",stroke:C.paper,"stroke-width":2});
+    if(a<2050) mono(s,X(a)+9,Y(b)-10,`${a}: ${Math.round(b*100)}%`,{fill:C.paper,"font-size":12.5});});
+  t(s,870,600,"– – median of the successful trajectories = the milestones A4 backcasts",{fill:C.dim,"font-size":12.5,"font-style":"italic"});
+  t(s,90,600,"gold: ends at or below the target · terracotta: misses it",{fill:C.dim,"font-size":12.5,"font-style":"italic"});
+})();
+
+// ---------------- Figure 9: robustness against money ----------------
+(function(){
+  const s=document.getElementById("f9"); if(!s||!DATA) return;
+  const P=DATA.packages_list;
+  fhead(s,9,"the price of robustness",`${P.length} PACKAGES · ${DATA.futures} FUTURES · MEDIAN PUBLIC MONEY PER COMMUTER PER YEAR`);
+  const xs=P.map(NET), lo=Math.floor(Math.min(...xs)/1000)*1000-500, hi=Math.ceil(Math.max(...xs)/1000)*1000+500;
+  const x0=130,x1=1100,y0=110,y1=620, X=v=>x0+(v-lo)/(hi-lo)*(x1-x0), Y=v=>y1-v/0.9*(y1-y0);
+  el(s,"rect",{x:X(lo),y:y0,width:X(0)-X(lo),height:y1-y0,fill:"rgba(157,184,134,.07)"});
+  t(s,X(lo)+12,y0+22,"PAYS FOR ITSELF  ←",{fill:C.sage,"font-size":12.5,"font-weight":700,"letter-spacing":".08em"});
+  t(s,X(0)+12,y0+22,"→  COSTS PUBLIC MONEY",{fill:C.terra,"font-size":12.5,"font-weight":700,"letter-spacing":".08em"});
+  [0,0.2,0.4,0.6,0.8].forEach(v=>{el(s,"line",{x1:x0,x2:x1,y1:Y(v),y2:Y(v),stroke:C.faint,"stroke-width":.6});mono(s,x0-10,Y(v)+4,`${Math.round(v*60)}/60`,{"text-anchor":"end"});});
+  for(let v=Math.ceil(lo/2000)*2000; v<=hi; v+=2000) mono(s,X(v),y1+22,(v>0?"+":v<0?"−":"")+fmt(Math.abs(v)),{"text-anchor":"middle"});
+  el(s,"line",{x1:X(0),x2:X(0),y1:y0,y2:y1,stroke:C.dim,"stroke-width":1});
+  t(s,(x0+x1)/2,y1+48,"net public money: EV subsidies paid − tolls collected (NOK per commuter per year)",{"text-anchor":"middle",fill:C.dim,"font-size":13});
+  t(s,x0-60,y0-16,"futures in which the target is met",{fill:C.dim,"font-size":13});
+  const b=PK[DATA.best], acc=P.filter(p=>p.id!=="no_policy"&&p.accept>=0.5);
+  const bb=acc.filter(p=>NET(p)<=0).reduce((a,c)=>c.robustness>a.robustness?c:a);
+  // arrow best -> best within budget
+  const ax1=X(NET(b)),ay1=Y(b.robustness),ax2=X(NET(bb)),ay2=Y(bb.robustness);
+  el(s,"path",{d:`M${ax1-14} ${ay1-4} Q${(ax1+ax2)/2} ${ay1-70} ${ax2+16} ${ay2-8}`,fill:"none",stroke:C.paper,"stroke-width":1.3,"stroke-dasharray":"5 4"});
+  t(s,(ax1+ax2)/2,ay1-70,`−${Math.round((b.robustness-bb.robustness)*60)} futures, NOK ${fmt(NET(b)-NET(bb))} per commuter per year for the public budget`,{"text-anchor":"middle",fill:C.paper,"font-size":13});
+  P.forEach(p=>{const x=X(NET(p)),y=Y(p.robustness),a=p.id==="no_policy"||p.accept>=0.5;
+    el(s,"circle",{cx:x,cy:y,r:p.id===DATA.best||p.id===bb.id?11:8,fill:a?(p.id===DATA.best?C.gold:"rgba(212,165,48,.6)"):"#2b1719",stroke:a?C.gold:C.terra,"stroke-width":a?1:2});});
+  const lab=(p,dx,dy,txt,col)=>{const x=X(NET(p)),y=Y(p.robustness);t(s,x+dx,y+dy,txt,{fill:col||C.paper,"font-size":13,"text-anchor":dx<0?"end":"start","font-family":"JetBrains Mono"});};
+  lab(b,16,22,`${b.id}  ${Math.round(b.robustness*60)}/60`,C.gold); lab(bb,16,26,`${bb.id}  ${Math.round(bb.robustness*60)}/60`);
+  const p04=PK["P04"]; if(p04&&p04!==bb) lab(p04,-14,-10,`P04  ${Math.round(p04.robustness*60)}/60`);
+  lab(PK["no_policy"],14,5,"no policy  4/60",C.dim);
+  P.filter(p=>p.id!=="no_policy"&&p.accept<0.5).forEach(p=>lab(p,NET(p)>0?-13:13,5,`${p.id} ${Math.round(p.accept*100)}%`,C.terra));
+  // legend
+  el(s,"circle",{cx:x0+10,cy:y1+82,r:7,fill:"rgba(212,165,48,.6)",stroke:C.gold}); t(s,x0+24,y1+87,"acceptable to a majority (proxy)",{"font-size":13});
+  el(s,"circle",{cx:x0+290,cy:y1+82,r:7,fill:"#2b1719",stroke:C.terra,"stroke-width":2}); t(s,x0+304,y1+87,"not acceptable (share not worse off shown)",{"font-size":13});
+  // lever cards
+  const LV=[["toll","toll_nok",60,"NOK/trip"],["EV exemption","ev_toll_share",1,""],["bus frequency","transit_freq_gain",1,""],["bike network","bike_infra",1,""],["EV subsidy","ev_subsidy_knok",100,"kNOK"]];
+  [b,bb,p04].filter((p,i,a)=>p&&a.indexOf(p)===i).forEach((p,k)=>{const cx=1170, cy=120+k*170;
+    el(s,"rect",{x:cx,y:cy,width:390,height:150,rx:8,fill:C.card,stroke:k==0?C.gold:C.faint});
+    t(s,cx+16,cy+26,p.id,{"font-family":"JetBrains Mono","font-weight":500,fill:k==0?C.gold:C.paper,"font-size":15});
+    mono(s,cx+374,cy+26,`${Math.round(p.robustness*60)}/60 · ${Math.round(p.accept*100)}% · ${NET(p)>0?"costs":"raises"} ${fmt(Math.abs(NET(p)))}`,{"text-anchor":"end","font-size":11.5});
+    LV.forEach(([nm,key,mx,u],i)=>{const v=p.levers[key], frac=key==="ev_toll_share"?1-v:v/mx, y=cy+50+i*19;
+      t(s,cx+16,y+4,nm,{fill:C.dim,"font-size":12}); el(s,"rect",{x:cx+130,y:y-5,width:150,height:9,fill:"rgba(232,223,208,.08)"});
+      el(s,"rect",{x:cx+130,y:y-5,width:150*frac,height:9,fill:C.gold,opacity:.85});
+      mono(s,cx+374,y+4,key==="ev_toll_share"?`${Math.round((1-v)*100)}%`:key.includes("nok")?`${Math.round(v)} ${u}`:`${Math.round(v*100)}%`,{"text-anchor":"end","font-size":11.5,fill:C.paper});});});
+})();
+
+// ---------------- Figure 10: failure box and signpost ----------------
+(function(){
+  const s=document.getElementById("f10"); if(!s||!DATA) return;
+  const H=DATA.hostile, bx=H.box.box, sp=DATA.signposts.find(q=>q.key==="co2_30");
+  fhead(s,10,"why it fails, and when we would know",`${H.n} HOSTILE FUTURES · BOX: ${H.box.hits}/${H.box.inside} INSIDE FAIL · SIGNPOST ACCURACY ${Math.round(sp.accuracy*100)}%`);
+  // (a)
+  const x0=110,x1=720,y0=130,y1=560, X=v=>x0+(v-10)/8*(x1-x0), Y=v=>y1-v/0.3*(y1-y0);
+  kick(s,x0-60,92,"a / what the hostile futures share");
+  [10,12,14,16,18].forEach(v=>{mono(s,X(v),y1+22,v,{"text-anchor":"middle"});});
+  [0,0.1,0.2,0.3].forEach(v=>{el(s,"line",{x1:x0,x2:x1,y1:Y(v),y2:Y(v),stroke:C.faint,"stroke-width":.6});mono(s,x0-10,Y(v)+4,`${Math.round(v*100)}%`,{"text-anchor":"end"});});
+  t(s,(x0+x1)/2,y1+48,"vehicle lifetime (years a car is kept)",{"text-anchor":"middle",fill:C.dim,"font-size":13});
+  t(s,x0-60,y0-16,"↑ telework, 2050",{fill:C.dim,"font-size":13});
+  const tl=bx.vehicle_lifetime[1], tw=bx.telework_2050[1];
+  el(s,"rect",{x:X(tl),y:Y(tw),width:X(18)-X(tl),height:Y(0)-Y(tw),fill:"rgba(212,131,92,.13)",stroke:C.terra,"stroke-width":1.4,"stroke-dasharray":"6 4"});
+  t(s,X(18)-10,Y(tw)-12,`lifetime ≥ ${tl.toFixed(1)} yr  and  telework ≤ ${(tw*100).toFixed(1)}%`,{"text-anchor":"end",fill:C.terra,"font-size":13,"font-weight":500});
+  H.points.forEach(([tele,life,h])=>el(s,"circle",{cx:X(life),cy:Y(tele),r:6.5,fill:h?C.terra:"none",stroke:h?"#2b1719":C.paper,"stroke-width":h?1:1.3,"stroke-opacity":h?1:.6}));
+  t(s,x0,y1+80,`${H.box.hits} of the ${H.box.inside} futures inside the box fail every package; the box holds ${H.box.hits} of all ${H.n} hostile futures.`,{fill:C.paper,"font-size":13});
+  el(s,"circle",{cx:x0+6,cy:y1+104,r:6,fill:C.terra}); t(s,x0+18,y1+109,"no package succeeds",{"font-size":13});
+  el(s,"circle",{cx:x0+190,cy:y1+104,r:6,fill:"none",stroke:C.paper}); t(s,x0+202,y1+109,"at least one does",{"font-size":13});
+  // (b)
+  const v=sp.values, ok=sp.meets, lo=Math.floor(Math.min(...v)*20)/20, hi=Math.ceil(Math.max(...v)*20)/20;
+  const u0=880,u1=1530, U=q=>u0+(q-lo)/(hi-lo)*(u1-u0), R=rng(5);
+  kick(s,u0,92,`b / the 2030 signpost for ${DATA.best}`);
+  const rows=[[1,250,"MET THE 2050 TARGET",C.gold],[0,420,"MISSED IT",C.terra]];
+  rows.forEach(([m,y,l,c])=>{t(s,u0,y-56,l,{fill:c,"font-size":12.5,"font-weight":700,"letter-spacing":".08em"});
+    mono(s,u1,y-56,`${ok.filter(o=>o===m).length} futures`,{"text-anchor":"end"});
+    el(s,"line",{x1:u0,x2:u1,y1:y,y2:y,stroke:C.faint});});
+  v.forEach((q,i)=>{const y=(ok[i]?250:420)+(R()-0.5)*56; el(s,"circle",{cx:U(q),cy:y,r:6.5,fill:ok[i]?C.gold:C.terra,"fill-opacity":.85,stroke:"#2b1719"});});
+  const tx=U(sp.threshold);
+  el(s,"rect",{x:tx,y:160,width:u1-tx,height:300,fill:"rgba(212,131,92,.08)"});
+  el(s,"line",{x1:tx,x2:tx,y1:150,y2:470,stroke:C.paper,"stroke-width":1.6,"stroke-dasharray":"6 4"});
+  t(s,tx+10,148,`OFF TRACK: CO₂ 2030 > ${Math.round(sp.threshold*100)}% of 2025`,{fill:C.paper,"font-size":13,"font-weight":700});
+  for(let q=lo;q<=hi+1e-9;q+=0.05) mono(s,U(q),500,`${Math.round(q*100)}%`,{"text-anchor":"middle"});
+  t(s,(u0+u1)/2,528,"commuting CO₂ in 2030, share of 2025",{"text-anchor":"middle",fill:C.dim,"font-size":13});
+  t(s,u0,580,`flags ${sp.flags_failures} of ${sp.failures} failing futures in 2030 · ${sp.false_alarms} false alarms among ${60-sp.failures} successes`,{fill:C.paper,"font-size":14});
+  t(s,u0,602,"twenty years before the target year",{fill:C.gold,"font-size":14,"font-style":"italic"});
+})();
+
+// ---------------- Figure 11: the pathway ----------------
+(function(){
+  const s=document.getElementById("f11"); if(!s||!DATA) return;
+  const sp=DATA.signposts.find(q=>q.key==="co2_30"), ms=DATA.milestones;
+  fhead(s,11,"from 2050 back to now — and forward again","SCHEMATIC OF A4 · MILESTONES AND SIGNPOST COMPUTED");
+  const X=v=>120+(v-2025)/25*1340, yM=250, yB=420, yN=140;
+  [2025,2030,2035,2040,2045,2050].forEach(v=>{el(s,"line",{x1:X(v),x2:X(v),y1:100,y2:480,stroke:C.faint,"stroke-width":.6});mono(s,X(v),505,v,{"text-anchor":"middle"});});
+  // no-policy line
+  el(s,"line",{x1:X(2025),x2:X(2050),y1:yN,y2:yN,stroke:C.dim,"stroke-width":2,"stroke-dasharray":"2 5"});
+  mono(s,X(2050)+12,yN+4,`no policy · ${Math.round(PK.no_policy.robustness*60)}/60`,{});
+  // phase-in
+  el(s,"rect",{x:X(2026),y:yM-22,width:X(2030)-X(2026),height:44,fill:"rgba(212,165,48,.10)"});
+  mono(s,(X(2026)+X(2030))/2,yM-32,"phase-in 2026–2030",{"text-anchor":"middle"});
+  el(s,"line",{x1:X(2025),x2:X(2026),y1:yM,y2:yM,stroke:C.dim,"stroke-width":3});
+  el(s,"line",{x1:X(2026),x2:X(2050),y1:yM,y2:yM,stroke:C.gold,"stroke-width":7,"stroke-linecap":"round"});
+  t(s,X(2035.6),yM+42,`${DATA.best}: toll, EV exemption, bus, bike, subsidy`,{fill:C.gold,"font-size":13.5,"font-weight":500});
+  mono(s,X(2050)+18,yM+5,`${Math.round(PK[DATA.best].robustness*60)}/60`,{fill:C.gold,"font-size":13});
+  Object.entries(ms).map(([k,v])=>[+k,v]).concat([[2050,DATA.target]]).forEach(([y,v])=>{
+    if(y===2030) return;
+    el(s,"circle",{cx:X(y),cy:yM,r:11,fill:"#2b1719",stroke:C.paper,"stroke-width":3});
+    t(s,X(y),yM-24,`${Math.round(v*100)}%`,{"text-anchor":"middle","font-family":"JetBrains Mono","font-size":15,"font-weight":500});});
+  // signpost diamond at 2030
+  const dx=X(2030); el(s,"path",{d:`M${dx} ${yM-17} L${dx+17} ${yM} L${dx} ${yM+17} L${dx-17} ${yM} Z`,fill:C.paper,stroke:"#2b1719","stroke-width":2});
+  t(s,dx,yM-30,`${Math.round(ms["2030"]*100)}%`,{"text-anchor":"middle","font-family":"JetBrains Mono","font-size":15,"font-weight":500});
+  t(s,dx+26,yM+78,"SIGNPOST 2030",{"font-weight":700,"font-size":13,"letter-spacing":".08em"});
+  t(s,dx+26,yM+96,`commuting CO₂ ≤ ${Math.round(sp.threshold*100)}% of 2025?`,{fill:C.paper,"font-size":13});
+  t(s,dx+26,yM+114,`catches ${sp.flags_failures}/${sp.failures} failing futures · ${sp.false_alarms} false alarms`,{fill:C.dim,"font-size":12.5});
+  // branch
+  el(s,"path",{d:`M${dx} ${yM+17} C${dx} ${yB} ${dx+60} ${yB} ${X(2033)} ${yB} L${X(2050)} ${yB}`,fill:"none",stroke:C.terra,"stroke-width":4,"stroke-dasharray":"10 7"});
+  el(s,"circle",{cx:X(2050),cy:yB,r:10,fill:"#2b1719",stroke:C.terra,"stroke-width":3});
+  t(s,X(2034),yB-14,"IF OFF TRACK → BEYOND THE FIVE LEVERS",{fill:C.terra,"font-size":13,"font-weight":700,"letter-spacing":".06em"});
+  t(s,X(2034),yB+28,"faster fleet renewal (scrappage), ICE phase-out, telework and land use — designed and tested in A4",{fill:C.paper,"font-size":13});
+  mono(s,X(2050)+16,yB+4,"A4",{fill:C.terra,"font-size":13});
+})();
+
+// ---------------- Figure 12: work plan ----------------
+(function(){
+  const s=document.getElementById("f12"); if(!s) return;
+  fhead(s,12,"three years, four articles, one thesis","YEAR 0 = THE PROTOTYPE IN THIS PROPOSAL");
+  const x0=290, yw=317.5, X=v=>x0+(v-2026)*yw;   // v in years, fractional
+  [["YEAR 0 · 2026",2026],["YEAR 1 · 2027",2027],["YEAR 2 · 2028",2028],["YEAR 3 · 2029",2029]].forEach(([l,v],i)=>{
+    el(s,"rect",{x:X(v),y:96,width:yw-4,height:28,fill:i==0?"rgba(157,184,134,.15)":"rgba(232,223,208,.06)"});
+    t(s,X(v)+10,115,l,{"font-size":12.5,"font-weight":700,"letter-spacing":".08em",fill:i==0?C.sage:C.paper});});
+  const data=["synthetic + OSM ✓","survey + RVU","SSB + fleet + counts","10⁴ futures + workshop"];
+  data.forEach((d,i)=>mono(s,X(2026+i)+10,146,d,{fill:i==0?C.sage:C.gold}));
+  t(s,40,146,"DATA LAYER MADE REAL",{fill:C.dim,"font-size":11.5,"letter-spacing":".1em"});
+  const rows=[["Prototype","Year-0 chain, plates, proposal",[[2026,2026.95,"done",1]]],
+    ["Courses","30 ECTS: econometrics, simulation, DMDU",[[2027,2028.5,""]]],
+    ["A1 · preferences","design · pilot · fieldwork · estimation",[[2027,2027.25,"design"],[2027.25,2027.6,"fieldwork"],[2027.6,2027.95,"estimate"]],2027.95],
+    ["A2 · agent model","coupling, calibration, Kristiansund hold-out",[[2027.75,2028.9,""]],2028.9],
+    ["Research stay","DMDU group abroad, 3 months",[[2028.5,2028.75,""]]],
+    ["A3 · robustness","10⁴ futures, PRIM, Sobol, freight",[[2028.7,2029.6,""]],2029.6],
+    ["A4 · pathways","signposts, workshop with planners",[[2029.1,2029.85,""]],2029.85],
+    ["Thesis","synthesis and defence",[[2029.5,2029.98,""]]]];
+  rows.forEach(([name,desc,bars,sub],i)=>{const y=186+i*52;
+    el(s,"line",{x1:40,x2:1560,y1:y+38,y2:y+38,stroke:C.faint,"stroke-width":.6});
+    t(s,40,y+16,name,{"font-weight":700,"font-size":14}); t(s,40,y+33,desc,{fill:C.dim,"font-size":11.5});
+    bars.forEach(([a,b,l,done])=>{el(s,"rect",{x:X(a),y:y+4,width:Math.max(6,X(b)-X(a)-3),height:24,rx:5,fill:done?"rgba(157,184,134,.55)":"rgba(212,165,48,.55)",stroke:done?C.sage:C.gold});
+      if(l) t(s,X(a)+8,y+21,l,{"font-size":11.5,fill:C.paper});});
+    if(sub){const xd=X(sub); el(s,"path",{d:`M${xd} ${y+4} L${xd+10} ${y+16} L${xd} ${y+28} L${xd-10} ${y+16} Z`,fill:C.paper});
+      mono(s,xd+14,y+20,"submit",{fill:C.paper,"font-size":11});}
+  });
+  const wy=186+6*52, wx=X(2029.4); el(s,"path",{d:`M${wx} ${wy+4} L${wx+10} ${wy+16} L${wx} ${wy+28} L${wx-10} ${wy+16} Z`,fill:C.terra});
+  mono(s,wx,wy-2,"workshop",{fill:C.terra,"font-size":11,"text-anchor":"middle"});
+})();
+</script>
+<script>/*HAIRLINE*/</script>
+<script>
+(function(){
+  if(!window.Hairline) return;
+  document.querySelectorAll(".hl[data-fig]").forEach(function(el){
+    var read=el.parentNode.querySelector(".read"), make=window.Hairline[el.dataset.fig];
+    if(!make) return;
+    el.innerHTML=""; el.removeAttribute("data-hairline");
+    make(el,{theme:"dark",intensity:0.6,label:el.getAttribute("aria-label"),onRead:function(t){ if(read) read.textContent=t; }});
+  });
+})();
+</script>
+</body>
+</html>

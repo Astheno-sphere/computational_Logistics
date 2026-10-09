@@ -1,1 +1,0 @@
-"""honeybee-radiance light sources."""

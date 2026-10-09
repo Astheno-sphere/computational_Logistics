@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Robust Mobility Pathways · Proposal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+@page{size:A4;margin:16mm 17mm 15mm}
+:root{--ink:#1d1416;--dim:#6b5f57;--ox:#7a2430;--gold:#b5861b;--line:#d9cfc2;--paper:#fffdf9}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Source Serif 4",Georgia,serif;font-size:10.4pt;line-height:1.42}
+.page{max-width:176mm;margin:0 auto}
+h1{font-family:Inter,sans-serif;font-weight:700;font-size:15pt;line-height:1.2;margin:0 0 4pt;color:var(--ox)}
+.by{font-family:Inter,sans-serif;font-size:8.6pt;color:var(--dim);margin-bottom:8pt;border-bottom:1.2pt solid var(--ox);padding-bottom:6pt}
+h2{font-family:Inter,sans-serif;font-size:10.5pt;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--ox);margin:11pt 0 3pt}
+h3{font-family:Inter,sans-serif;font-size:9.6pt;font-weight:700;margin:7pt 0 2pt}
+p{margin:0 0 5pt;text-align:left}
+.lead{font-size:11pt}
+.box{border-left:2.4pt solid var(--gold);padding:3pt 0 3pt 8pt;margin:6pt 0}
+ul,ol{margin:2pt 0 5pt 14pt;padding:0} li{margin:1pt 0}
+table{border-collapse:collapse;width:100%;font-family:Inter,sans-serif;font-size:8.2pt;margin:4pt 0 6pt}
+th{text-align:left;color:var(--dim);font-weight:500;border-bottom:.8pt solid var(--ink);padding:2pt 4pt 2pt 0}
+td{border-bottom:.5pt solid var(--line);padding:2.5pt 4pt 2.5pt 0;vertical-align:top}
+figure{margin:6pt 0 7pt;break-inside:avoid}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:Inter,sans-serif;font-size:8.2pt;color:var(--dim);margin-top:3pt;line-height:1.35}
+figcaption b{color:var(--ink)}
+.formula{font-family:Inter,sans-serif;font-size:9.4pt;text-align:center;margin:4pt 0}
+.refs{font-family:Inter,sans-serif;font-size:7.4pt;line-height:1.3;color:#3b302c}
+.refs ol{margin-left:13pt}
+sup{font-size:6.8pt;color:var(--ox)}
+a{color:var(--ox);text-decoration:none}
+svg text{font-family:Inter,sans-serif}
+</style>
+</head>
+<body><div class="page">
+
+<h1>Robust and acceptable pathways to low-emission regional mobility: coupling estimated travel behaviour, agent-based simulation and backcasting under deep uncertainty</h1>
+<div class="by"><b>Arshad Akhtar Abbasia</b> · PhD in Logistics, Molde University College · TRANSPLAN, Research Area 1 “Scenarios and strategies” · Case studies: Molde and Kristiansund · Code and portfolio: github.com/Astheno-sphere/computational_Logistics (tag <i>proposal-v1</i>)</div>
+
+<h2>1 · Why this matters now</h2>
+<p class="lead">In March 2024 the government replaced its National Transport Plan, calling the previous one unrealistic, and committed to better analytical methods for planning toward the low-emission society of 2050<sup>1</sup>. TRANSPLAN exists to build such methods: it starts from the 2050 goals and asks which strategies, models and instruments are consistent with them<sup>2,3</sup>. This proposal develops one of those methods and shows that a first version already runs.</p>
+<p>The problem has changed shape. Norway won the showroom: in 2025, 95.9% of new passenger cars were fully electric<sup>4</sup>, yet about seven in ten cars on the road still burn fuel<sup>5</sup>. The fleet renews slowly, the fuel tax base is shrinking, and the national distance-based road charge designed to replace it has stalled between central and local revenue needs<sup>6</sup>. The next decisions concern road pricing, public transport and fleet renewal, and they must hold for decades in which prices, technology, telework and behaviour cannot be forecast with confidence. Forecasts have a poor record here: across 210 projects in 14 countries, half of road traffic forecasts missed by more than ±20%<sup>7</sup>. When the drivers of the outcome cannot be given reliable probabilities, the question shifts from “what will happen?” to <b>“which policies perform acceptably across the futures that could happen, and when must they be adopted?”</b><sup>8,9</sup></p>
+
+<h2>2 · Research gap and contribution</h2>
+<p>Three bodies of work each solve part of this problem. Discrete choice models estimate how people trade off time, cost and service, with known statistical properties<sup>10</sup>. Agent-based models capture dynamics such as fleet turnover and social diffusion of technology. Le Pira, Marcucci, Gatta and colleagues coupled the two to test the acceptability of urban freight policies before adoption<sup>11,12</sup>, building on survey instruments for policy acceptance<sup>13</sup>. Exploratory modelling and scenario discovery search for policies that are robust across many futures<sup>8,14</sup>, and adaptive pathways sequence decisions over time<sup>15</sup>. TØI has developed a backcasting process that soft-links national transport models with a macroeconomic model for 2050 strategies, and notes that parts of it need refinement<sup>16</sup>.</p>
+<p>What the literature reviewed for this proposal does not provide is a framework that <b>carries estimated behavioural uncertainty into agent-based simulation, evaluates policies for robustness under deep uncertainty with acceptability as a formal condition, and uses the resulting ensemble to set timed decisions</b>. The project is organised around three layers of uncertainty that meet in one decision problem:</p>
+<div class="box"><b>Behaviour</b> (what people prefer, estimated with error) → <b>model</b> (how those preferences play out through fleet turnover, diffusion and network feedback) → <b>future</b> (prices, telework, population, vehicle lifetimes) → <b>decision</b>: which packages stay effective, acceptable and affordable across all three?</div>
+<p>Acceptability is treated with care, because a policy that changes behaviour is not the same as one people prefer, accept, or vote for. The project distinguishes behavioural response (simulated in A2), stated acceptance (estimated in A1), and political feasibility, including who pays by zone and income (assessed in A3). The framework is designed as an exploratory layer alongside the national and regional models (NTM6, RTM), not a replacement for them: those models give the best single estimate, and this one asks which decisions still hold when that estimate is wrong.</p>
+
+<h2>3 · Aim and research questions</h2>
+<p><b>Aim:</b> to develop and test a reproducible framework that identifies transport policy packages which reach a 2050 emission target across most plausible futures while remaining acceptable and affordable, and to sequence them into a timed pathway for a Norwegian region. For a package <i>p</i> evaluated over futures <i>F</i>:</p>
+<p class="formula">R(<i>p</i>) = share of <i>F</i> with E<sub>2050</sub> ≤ τ·E<sub>base</sub> &nbsp;·&nbsp; choose <i>p</i>* = argmax R(<i>p</i>) subject to A(<i>p</i>) ≥ ½ and C(<i>p</i>) ≤ B</p>
+<ul>
+<li><b>RQ1</b> How do households in a car-dependent fjord region trade off travel time, cost, service and vehicle technology; how heterogeneous and transferable are these preferences; and which policy packages would they accept?</li>
+<li><b>RQ2</b> How can estimated choice and acceptance models drive an agent-based model so that fleet turnover, diffusion and network feedback stay behaviourally consistent, and how can the coupled model be calibrated and validated?</li>
+<li><b>RQ3</b> Across thousands of futures, which acceptable and affordable packages are most robust, which combinations of uncertainties make them fail, and how early can failure be detected?</li>
+</ul>
+<p>Each question is answered by one article, and each article hands a defined product to the next (Figure 1). An optional fourth article turns the results into adaptive pathways tested with planners.</p>
+
+<figure><svg id="fa" viewBox="0 0 1000 300"></svg>
+<figcaption><b>Figure 1. Preferences go in, a timed plan comes out, and every step can be checked.</b> Read left to right. (1) A stated-choice survey gives estimated preferences with their uncertainty. (2) These drive agents who buy cars, choose modes and respond to policy. (3) The model runs over thousands of futures and candidate packages. (4) Packages are kept only if they are robust, acceptable and affordable. (5) The successful futures are read backwards into milestones and signposts. Grey labels show what already runs; the rest is the PhD.</figcaption></figure>
+
+<h2>4 · Case studies and data</h2>
+<p>Molde and Kristiansund serve as <b>case studies, not a national sample</b>. They are where the framework is built and tested, in a car-dependent region type that national models represent only coarsely and where the decisive instruments (tolls, bus service, parking, cycling networks) are set locally. Their road networks are fragile in ways that make policy effects visible: routing between every pair of junctions on OpenStreetMap, 17.5% of all fastest routes in Molde use one street, and 24.9% in Kristiansund cross one bridge. Molde is the main case, where preferences are estimated and the model calibrated. Kristiansund is the transfer case: the Molde model is applied without re-estimation and compared with observed shares, which turns the transferability of preferences from an assumption into a measured quantity. The method draws on national data and reports against national targets, so it can be applied to other regions.</p>
+<table>
+<tr><th>Data</th><th>Use</th><th>Status</th></tr>
+<tr><td>Stated-choice survey, about 800 respondents × 8 tasks</td><td>Preferences and acceptance (A1)</td><td>Year 1, after assessment by Sikt</td></tr>
+<tr><td>National travel survey (RVU)</td><td>Observed trips and modes, revealed-preference anchor</td><td>Year 1, on application</td></tr>
+<tr><td>Statistics Norway, vehicle register, OFV</td><td>Population, commuting flows, fleet by age and fuel</td><td>Open</td></tr>
+<tr><td>OpenStreetMap, traffic counts (trafikkdata.no)</td><td>Networks; validation</td><td>In use; open</td></tr>
+</table>
+
+<h2>5 · Methods</h2>
+<h3>A1 · Preferences and acceptance (RQ1, Year 1)</h3>
+<p>A stated-choice survey in both towns with three blocks: mode choice, vehicle choice, and votes on policy packages. Attributes include travel time, cost, a distance-based road charge or toll, bus headway, cycling conditions and how revenue is used, since acceptance is known to fall with charge level and rise with earmarking and bundling<sup>13,17,18</sup>. An efficient design is tested in a pilot of about 50 respondents. Recruitment combines a web panel with municipal channels. The sample size is checked in advance: in a simulation with 800 respondents answering eight tasks, all six parameters of the prototype model were recovered within one standard error. Models: multinomial, mixed and latent-class logit, with willingness to pay by segment and a binary or ordered model of package acceptance. Main risks are hypothetical bias and attribute non-attendance, addressed through design checks and the RVU anchor. <i>Product:</i> estimated utilities with their covariance, and an acceptance function A(p).</p>
+<h3>A2 · The coupled agent model (RQ2, Year 2)</h3>
+<p>Agents choose modes and vehicles with the A1 utilities. Parameters are drawn from their estimated distribution rather than fixed at point estimates. The agent model earns its place through what only agents carry: the age of each household’s car and the timing of its replacement, peer effects on vehicle choice, household constraints, and who pays under each package. Calibration matches several observed patterns at once (mode shares, fleet composition, traffic counts)<sup>19</sup>, with Kristiansund as a hold-out, and the model is documented with the ODD protocol<sup>20</sup>. Because a 2050 model cannot be checked against 2050, the engine is also tested against Norway’s electric-vehicle transition from 2010 to 2025, using only information available at the start; earlier system-dynamics work reproduced part of that period<sup>21</sup> and sets the bar.</p>
+<h3>A3 · Robust, acceptable and affordable packages (RQ3, Year 3)</h3>
+<p>About 10<sup>4</sup> futures and 10<sup>2</sup> packages, sampled by Latin hypercube with screening for internally inconsistent futures, run with the EMA Workbench<sup>14</sup>. Levers are the instruments under discussion in 2026: distance-based road charging, toll rings in which electric cars pay, public transport frequency and fares, cycling infrastructure and fleet renewal. Packages are scored by satisficing robustness under the acceptance and budget conditions, with regret and alternative metrics reported<sup>22</sup>. PRIM scenario discovery finds the conditions under which packages fail<sup>23</sup>, Sobol indices rank the uncertainties, and a statistical surrogate replaces the model if run time requires it. Signposts are chosen by how well a reading observable in 2030 separates futures that go on to succeed from those that fail. The same procedure is applied to urban freight on the Molde network as a transfer test. The trade-off between robustness and public cost has the same structure as the trade-off between cost and plan stability studied for maritime routing at Molde<sup>24</sup>.</p>
+
+<h2>6 · What already runs</h2>
+<p>A working prototype implements the full chain on synthetic behaviour and real road networks: choice estimation with two independent estimators, an agent model with fleet turnover, EV diffusion, welfare and public money per agent, and an ensemble of 60 futures × 25 packages. Its numbers show what each article will produce; they are not findings about Norway, and its policy levers include instruments Norway is now phasing out, which A3 replaces. Two results illustrate the kind of evidence the PhD will produce with real data (Figures 2 and 3).</p>
+
+<figure><svg id="fb" viewBox="0 0 1000 400"></svg>
+<figcaption><b>Figure 2. Robustness has a price, and the ensemble can name it.</b> Each dot is one policy package. Height: share of the 60 futures in which commuting CO₂ in 2050 falls to 20% of 2025. Left to right: public money per commuter per year (subsidies paid minus tolls collected); left of zero, the package pays for itself. The most robust package works in 41 futures and costs money; the best package that pays for itself works in 37. Synthetic behaviour; transit and cycling costs not yet included.</figcaption></figure>
+
+<figure><svg id="fc" viewBox="0 0 1000 380"></svg>
+<figcaption><b>Figure 3. Long-lived cars sink every package, and the failure is visible by 2030.</b> (a) In 19 of 60 futures no package reaches the target. Most of them (14) share two conditions: cars kept 12.9 years or more and little telework. Policies that act on new-car purchases cannot fix a slow fleet, which is why A3 tests fleet renewal and road pricing. (b) For the most robust package, commuting CO₂ in 2030 above 63% of the 2025 level flags 17 of the 19 failing futures, with 4 false alarms among 41 successes. Sixty futures demonstrate the method; A3 tests it on 10<sup>4</sup>.</figcaption></figure>
+
+<p>Every figure and number in this proposal is rebuilt by committed scripts, and the test suite runs on every change. The repository separates what runs, what is tested and what is planned, and lists its limitations.</p>
+
+<h2>7 · Work plan, risks and ethics</h2>
+<table>
+<tr><th></th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr>
+<tr><td>Research</td><td>RVU application (month 1); survey design, pilot, fieldwork; A1</td><td>Coupling, calibration, Kristiansund transfer, 2010 to 2025 test; A2</td><td>Ensemble, robustness, signposts, freight transfer; A3; thesis</td></tr>
+<tr><td>Training</td><td>PhD courses (econometrics, stated choice, simulation)</td><td>Research stay at a decision-making-under-deep-uncertainty group</td><td>Optional A4 with a planner workshop via TRANSPLAN</td></tr>
+<tr><td>Output</td><td>A1 submitted</td><td>A2 submitted</td><td>A3 submitted, thesis</td></tr>
+</table>
+<p><b>Risks.</b> Low survey response: panel plus municipal recruitment, with RVU as fallback. Delayed RVU access: Statistics Norway flows cover calibration in the meantime. Run time: surrogate modelling and national computing resources. Non-identifiable calibration: several patterns at once and a hold-out town. Results that hinge on the target or metric: report targets of 10%, 20% and 30% and compare robustness metrics. <b>Ethics and data.</b> The survey is assessed by Sikt before fieldwork, with informed consent and pseudonymised storage; code is open under the MIT licence, and data are released with a DOI where consent allows.</p>
+
+<h2>8 · Expected contributions</h2>
+<p><b>To science:</b> a framework in which acceptability is a condition for robustness, estimation uncertainty is carried into deep-uncertainty exploration, and signposts come with measured hit rates. <b>To TRANSPLAN:</b> an exploratory engine for its backcasting process that works alongside the national models in a region type they resolve coarsely. <b>To the region:</b> tested pathways for Molde and Kristiansund with indicators planners can monitor from data they already collect. <b>To logistics:</b> the same procedure applied to urban freight on the same network. The fleet that will drive in 2035 is being bought now; this project builds the instruments to steer it, and to know early when a plan needs to change.</p>
+
+<div class="refs"><h2>References</h2><ol>
+<li>Ministry of Transport (2024) Meld. St. 14 (2023–2024) <i>National Transport Plan 2025–2036</i>.</li>
+<li>TØI. TRANSPLAN research centre (2025–2033), toi.no/transplan.</li>
+<li>Halse, Wangsness, Babri, Tveter, Bråthen &amp; Olsen (2026) <i>Strategic choices for a realistic and goal-oriented transport plan</i>. TØI report 2172/2026.</li>
+<li>Opplysningsrådet for veitrafikken (OFV) (2026) Registrations of new passenger cars, 2025.</li>
+<li>Norwegian EV Association (2025), as reported in InsideEVs, “Norway’s shift to EVs is nearly complete”.</li>
+<li>Wangsness, Proost &amp; Steinsland (2026) The curious case of road pricing reform in Norway. <i>Transport Policy</i>, 102064.</li>
+<li>Flyvbjerg, Skamris Holm &amp; Buhl (2006) Inaccuracy in traffic forecasts. <i>Transport Reviews</i> 26(1).</li>
+<li>Lempert, Popper &amp; Bankes (2003) <i>Shaping the Next One Hundred Years</i>. RAND.</li>
+<li>Haasnoot, Kwakkel, Walker &amp; ter Maat (2013) Dynamic adaptive policy pathways. <i>Global Environmental Change</i> 23(2).</li>
+<li>Train (2009) <i>Discrete Choice Methods with Simulation</i>, 2nd ed. Cambridge University Press.</li>
+<li>Le Pira, Marcucci, Gatta, Inturri, Ignaccolo &amp; Pluchino (2017) Integrating discrete choice models and agent-based models for ex-ante evaluation of stakeholder policy acceptability in urban freight transport. <i>Research in Transportation Economics</i> 64.</li>
+<li>Marcucci, Le Pira, Gatta, Inturri, Ignaccolo &amp; Pluchino (2017) Simulating participatory urban freight transport policy-making. <i>Transportation Research Part E</i> 103.</li>
+<li>Marcucci, Stathopoulos, Gatta &amp; Valeri (2012) A stated ranking experiment to study policy acceptance: the case of freight operators in Rome’s LTZ. <i>Scienze Regionali</i> 11(3).</li>
+<li>Kwakkel (2017) The Exploratory Modeling Workbench. <i>Environmental Modelling &amp; Software</i> 96.</li>
+<li>Walker, Rahman &amp; Cave (2001) Adaptive policies, policy analysis, and policy-making. <i>European Journal of Operational Research</i> 128(2).</li>
+<li>TØI (2025) <i>Developing methods and processes for analysing strategies towards a carbon-neutral transport sector in 2050</i>. Report 2119/2025; see also report 2051/2024.</li>
+<li>Schade &amp; Schlag (2003) Acceptability of urban transport pricing strategies. <i>Transportation Research Part F</i> 6(1).</li>
+<li>Börjesson, Eliasson, Hugosson &amp; Brundell-Freij (2012) The Stockholm congestion charges: 5 years on. <i>Transport Policy</i> 20.</li>
+<li>Grimm et al. (2005) Pattern-oriented modeling of agent-based complex systems. <i>Science</i> 310.</li>
+<li>Grimm et al. (2020) The ODD protocol: a second update. <i>Journal of Artificial Societies and Social Simulation</i> 23(2).</li>
+<li>Deuten et al. (2020) <i>Technological Forecasting and Social Change</i> 151, system-dynamics model of the Norwegian car market, 2010 to 2017.</li>
+<li>McPhail, Maier, Kwakkel, Giuliani, Castelletti &amp; Westra (2018) Robustness metrics. <i>Earth’s Future</i> 6(2).</li>
+<li>Bryant &amp; Lempert (2010) Thinking inside the box: scenario discovery. <i>Technological Forecasting &amp; Social Change</i> 77(1).</li>
+<li>Shaabani, Hvattum, Laporte &amp; Hoff (2024) Stability metrics for a maritime inventory routing problem under sailing time uncertainty. <i>EURO Journal on Transportation and Logistics</i> 13, 100146.</li>
+</ol></div>
+</div>
+
+<script>
+const DATA=/*STUDY*/null;
+const NS="http://www.w3.org/2000/svg",K={ink:"#1d1416",dim:"#6b5f57",ox:"#7a2430",gold:"#b5861b",line:"#d9cfc2",soft:"#efe6d8"};
+function el(p,tag,a,txt){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;p.appendChild(e);return e}
+function t(p,x,y,s,o={}){return el(p,"text",Object.assign({x,y,fill:K.ink,"font-size":19,stroke:"#fffdf9","stroke-width":5,"paint-order":"stroke","stroke-linejoin":"round"},o),s)}
+// Figure 1: the engine
+(function(){const s=document.getElementById("fa");
+  const steps=[["1","SURVEY","preferences","with their error","A1","recovery-tested"],["2","AGENTS","cars, modes,","policy response","A2","runs on synthetic data"],["3","FUTURES","10⁴ futures ×","10² packages","A3","60 × 25 runs today"],["4","FILTER","robust, accepted,","affordable","A3","robustness runs"],["5","PLAN","milestones and","a 2030 signpost","A3–A4","one signpost computed"]];
+  const w=170,g=27;steps.forEach(([n,h,l1,l2,a,now],i)=>{const x=10+i*(w+g);
+    el(s,"rect",{x,y:40,width:w,height:170,rx:10,fill:i==3?K.soft:"#fff",stroke:i==3?K.ox:K.ink,"stroke-width":i==3?2.4:1.4});
+    el(s,"circle",{cx:x+28,cy:72,r:17,fill:K.ox}); t(s,x+28,79,n,{fill:"#fff","text-anchor":"middle","font-weight":700,"font-size":19,stroke:"none"});
+    t(s,x+54,80,h,{"font-weight":700,"font-size":20,"letter-spacing":".04em"});
+    t(s,x+16,128,l1,{"font-size":18}); t(s,x+16,152,l2,{"font-size":18});
+    t(s,x+16,194,a,{"font-size":17,fill:K.ox,"font-weight":700});
+    t(s,x+16,250,now,{"font-size":16,fill:K.dim});
+    if(i<4){const ax=x+w+4;el(s,"path",{d:`M${ax} 125 L${ax+g-8} 125 M${ax+g-16} 117 L${ax+g-6} 125 L${ax+g-16} 133`,fill:"none",stroke:K.ink,"stroke-width":2});}
+  });
+  t(s,10,26,"THE ENGINE",{"font-size":15,"font-weight":700,fill:K.dim,"letter-spacing":".1em"});
+  t(s,10,288,"grey: what runs today in the prototype",{"font-size":15,fill:K.dim,"font-style":"italic"});
+})();
+// Figure 2: price of robustness
+(function(){const s=document.getElementById("fb");if(!DATA)return;
+  const P=DATA.packages_list.filter(p=>p.id!=="no_policy"),net=p=>p.subsidy_nok-p.toll_nok_rev;
+  const lo=-9000,hi=5000,x0=90,x1=980,y0=30,y1=330,X=v=>x0+(v-lo)/(hi-lo)*(x1-x0),Y=v=>y1-v/0.75*(y1-y0);
+  el(s,"rect",{x:X(lo),y:y0,width:X(0)-X(lo),height:y1-y0,fill:K.soft});
+  t(s,X(lo)+12,y1-14,"pays for itself",{fill:K.dim,"font-size":18,"font-style":"italic"});
+  t(s,X(0)+12,y1-14,"costs public money",{fill:K.dim,"font-size":18,"font-style":"italic"});
+  [0,15,30,45].forEach(v=>{const y=Y(v/60);el(s,"line",{x1:x0,x2:x1,y1:y,y2:y,stroke:K.line});t(s,x0-10,y+6,v+"/60",{"text-anchor":"end","font-size":16,fill:K.dim});});
+  [-8000,-4000,0,4000].forEach(v=>t(s,X(v),y1+26,(v>0?"+":v<0?"−":"")+Math.abs(v).toLocaleString("en"),{"text-anchor":"middle","font-size":16,fill:K.dim}));
+  t(s,(x0+x1)/2,y1+56,"public money per commuter per year (NOK)",{"text-anchor":"middle","font-size":17,fill:K.dim});
+  const best=P.reduce((a,b)=>b.robustness>a.robustness?b:a),self=P.filter(p=>net(p)<=0&&p.accept>=.5).reduce((a,b)=>b.robustness>a.robustness?b:a);
+  P.forEach(p=>{const hl=p===best||p===self;el(s,"circle",{cx:X(net(p)),cy:Y(p.robustness),r:hl?11:7,fill:hl?K.ox:"#c9b9a4",stroke:"#fff","stroke-width":1.5});});
+  t(s,X(net(best))+14,Y(best.robustness)-16,`most robust: ${Math.round(best.robustness*60)} of 60`,{"font-size":18,"font-weight":700,fill:K.ox,"text-anchor":"middle"});
+  t(s,X(net(best))+14,Y(best.robustness)+34,`costs ${Math.round(net(best)).toLocaleString("en")}`,{"font-size":17,fill:K.ox,"text-anchor":"middle"});
+  t(s,X(net(self))-16,Y(self.robustness)-14,`pays for itself: ${Math.round(self.robustness*60)} of 60`,{"font-size":18,"font-weight":700,fill:K.ox,"text-anchor":"end"});
+})();
+// Figure 3: failure box and signpost
+(function(){const s=document.getElementById("fc");if(!DATA)return;
+  const H=DATA.hostile,bx=H.box.box,tl=bx.vehicle_lifetime[1],tw=bx.telework_2050[1];
+  const x0=70,x1=470,y0=40,y1=300,X=v=>x0+(v-10)/8*(x1-x0),Y=v=>y1-v/0.3*(y1-y0);
+  t(s,x0-60,22,"(a) why every package fails",{"font-size":18,"font-weight":700});
+  el(s,"rect",{x:X(tl),y:Y(tw),width:X(18)-X(tl),height:Y(0)-Y(tw),fill:K.soft,stroke:K.ox,"stroke-dasharray":"6 4","stroke-width":1.6});
+  H.points.forEach(([te,li,h])=>el(s,"circle",{cx:X(li),cy:Y(te),r:7,fill:h?K.ox:"#fff",stroke:h?"#fff":K.dim,"stroke-width":1.4}));
+  [10,14,18].forEach(v=>t(s,X(v),y1+24,v,{"text-anchor":"middle","font-size":16,fill:K.dim}));
+  [0,0.1,0.2,0.3].forEach(v=>t(s,x0-8,Y(v)+5,Math.round(v*100)+"%",{"text-anchor":"end","font-size":16,fill:K.dim}));
+  t(s,x0+10,Y(0.3)+5,"← telework 2050",{"font-size":15,fill:K.dim});
+  t(s,(x0+x1)/2,y1+50,"years a car is kept",{"text-anchor":"middle","font-size":17,fill:K.dim});
+  t(s,X(18)-6,Y(tw)-10,"14 of 16 here fail everything",{"text-anchor":"end","font-size":17,fill:K.ox,"font-weight":700});
+  const sp=DATA.signposts.find(q=>q.key==="co2_30"),v=sp.values,ok=sp.meets,u0=560,u1=980,lo=0.5,hi=0.7,U=q=>u0+(q-lo)/(hi-lo)*(u1-u0);
+  t(s,u0,22,"(b) the warning in 2030",{"font-size":18,"font-weight":700});
+  const tx=U(sp.threshold);el(s,"rect",{x:tx,y:50,width:u1-tx,height:230,fill:K.soft});
+  [[1,110,"met the target"],[0,220,"missed it"]].forEach(([m,y,l])=>{t(s,u0,y-38,l,{"font-size":17,fill:K.dim});});
+  let seed=7;const r=()=>((seed=(seed*16807)%2147483647)/2147483647);
+  v.forEach((q,i)=>el(s,"circle",{cx:U(Math.min(q,hi)),cy:(ok[i]?110:220)+(r()-.5)*40,r:7,fill:ok[i]?"#c9b9a4":K.ox,stroke:"#fff","stroke-width":1.2}));
+  el(s,"line",{x1:tx,x2:tx,y1:44,y2:284,stroke:K.ink,"stroke-width":2,"stroke-dasharray":"6 4"});
+  t(s,tx-8,300,"63% of 2025",{"font-size":16,"font-weight":700,"text-anchor":"end"});
+  [0.5,0.6,0.7].forEach(q=>t(s,U(q),330,Math.round(q*100)+"%",{"text-anchor":"middle","font-size":16,fill:K.dim}));
+  t(s,(u0+u1)/2,360,"commuting CO₂ in 2030, share of 2025",{"text-anchor":"middle","font-size":17,fill:K.dim});
+  t(s,u1,272,"17 of 19 failures flagged",{"text-anchor":"end","font-size":17,fill:K.ox,"font-weight":700});
+})();
+</script>
+</body></html>

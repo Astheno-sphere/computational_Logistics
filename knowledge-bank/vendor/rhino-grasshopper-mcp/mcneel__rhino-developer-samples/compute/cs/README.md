@@ -1,1 +1,0 @@
-# Rhino.Compute C# Samples
