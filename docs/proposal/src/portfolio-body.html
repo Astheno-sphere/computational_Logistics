@@ -1,0 +1,327 @@
+<div class="doc">
+
+<header class="cover">
+  <div class="kick">portfolio · phd in transport modelling for sustainability transitions · molde university college · transplan</div>
+  <h1 class="big">The Path<br>to <em>2050</em></h1>
+  <p class="lead col">The proposal argues for an engine. This portfolio opens it: what it is made of, what it already found, which tools build it, what is still missing, and how anyone can rerun every number.</p>
+  <div class="by"><b>Arshad Akhtar Abbasia</b> · applicant, PhD in Logistics, Molde University College<br>
+  Code: <a href="https://github.com/Astheno-sphere/computational_Logistics">github.com/Astheno-sphere/computational_Logistics</a> · Proposal: <a href="proposal-5p.html">five pages</a></div>
+</header>
+
+<figure class="plate charcoal">
+  <div class="pk">the whole project, on one road</div>
+  <svg id="p0" viewBox="0 0 1000 530" role="img" aria-label="Isometric road from 2010 to 2050 bending at a 2030 gate, with the five contributions placed along it"></svg>
+  <hr>
+  <div class="pt">The road splits at <em>2030</em></div>
+  <p class="ps">time runs along the road. the engine is first scored on the record (C5). households turn the fleet one car at a time (C1) and vote on the charge they drive under (C2). at the 2030 gate one reading warns early (C4). after the gate the road opens into sixty futures, and a plan counts only if it holds in most of them (C3).</p>
+  <div class="src">Fan: prototype ensemble, package P12, 60 futures, CO₂ relative to 2025; red futures miss the 2050 target. Synthetic behaviour.</div>
+</figure>
+
+<section>
+<h2><small>how to read this</small>Each chapter answers a question</h2>
+<div class="col"><p>A proposal has five pages and cannot show its workings. These chapters are the workings. Each one starts from a question a careful reader would ask, and answers it with something built and run rather than promised.</p></div>
+<div class="tbl"><table class="map">
+<tr><th>Chapter</th><th>The question it answers</th><th>Who asks it first</th></tr>
+<tr><td>1 · The stock problem</td><td>Why households, and why a path rather than an end state?</td><td>TRANSPLAN, research area 1</td></tr>
+<tr><td>2 · Five contributions in depth</td><td>What exactly is new, against what, and how will each claim be tested?</td><td>Every examiner</td></tr>
+<tr><td>3 · Two towns and their networks</td><td>Why Molde and Kristiansund, and is this a logistics thesis?</td><td>The PhD committee</td></tr>
+<tr><td>4 · Inside the engine</td><td>What are the equations, and do the estimators recover what they should?</td><td>Choice modellers</td></tr>
+<tr><td>5 · What the prototype found</td><td>Does the chain produce decisions, and what does robustness cost?</td><td>Operations research</td></tr>
+<tr><td>6 · The toolbench</td><td>Which tools exist, which are tested, which are still missing?</td><td>Anyone judging feasibility</td></tr>
+<tr><td>7 · Rerun it yourself</td><td>Can I trust a number without trusting the author?</td><td>Anyone</td></tr>
+<tr><td>8 · Three years, and the limits</td><td>Can one person finish it, and what does it not do?</td><td>The committee</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><small>chapter 1</small>The stock problem</h2>
+<div class="col">
+<p class="lead">Norway won the showroom. The street has not caught up.</p>
+<p>Picture one household in Molde in 2025. They drive a 2014 diesel that still runs. The new car they will buy is almost certainly electric: 95.9% of new cars sold in Norway in 2025 were<sup>ofv</sup>. But they will buy it when the diesel dies or the family changes, not when a national plan would like them to. Multiply that household by every driveway in the country and you have the reason the fleet lags the showroom by well over a decade.</p>
+<p>That lag is the part of the transition national models do not describe. TØI’s review of models for backcasting says RTM and NTM6 compute partial equilibria but “say nothing about the path to a new equilibrium”<sup>toi2051</sup>. The National Transport Plan asks for methods that can steer toward 2050<sup>ntp</sup>, and the methods assignment admits today’s models suit continued policy, not deep cuts<sup>oppdrag</sup>. A backcast that cannot see the path cannot tell a planner whether 2030 is on track.</p>
+<p>The path also carries the politics. As the fleet turns electric, fuel tax revenue falls, and the distance-based charge meant to replace it has stalled between the state and the municipalities<sup>wps</sup>. Who accepts a charge depends on the car they own and the alternatives they have. So the same household that decides the fleet also decides whether the policy survives. That is why the engine is built from households.</p>
+</div>
+<figure class="plate charcoal">
+  <div class="pk">the stock problem, in one street</div>
+  <svg id="p1" viewBox="0 0 1000 545" role="img" aria-label="One Molde street drawn across 2025 to 2050, cars lit by the simulated electric share"></svg>
+  <hr>
+  <div class="pt">The stock <em>turns</em></div>
+  <p class="ps">one street, four moments. each lit car is electric, in the share the prototype engine simulates under the most robust package. the street changes only as fast as households replace the cars they already own.</p>
+  <div class="src">Prototype, median future, package P12; without policy the 2050 share is 74%. The prototype’s purchase model is not yet calibrated to Norwegian sales and turns the fleet more slowly than TØI’s fleet model BIG<sup>big</sup>; calibrating it to the vehicle register is the first job of article 2. The plate shows the mechanism, not the expected fleet.</div>
+</figure>
+</section>
+
+<section>
+<h2><small>chapter 2</small>Five contributions in depth</h2>
+<div class="col"><p>The proposal states each contribution in a sentence. Here each one gets the same five lines: what is new, the nearest work, what the prototype already shows, what the article adds, and how the claim will be tested. If a line is weak, it is visible.</p></div>
+
+<div class="deep">
+  <div class="dc"><div class="n">C1 · THE PATH</div><h3>A household engine that shows how Norway gets from today to 2050, year by year</h3>
+  <dl><dt>New</dt><dd>Fleet turnover, mode choice and acceptance carried by the same households, so the transition path and its politics come out of one model.</dd>
+  <dt>Nearest</dt><dd>BIG follows vintages with an estimated choice model, in aggregate and for fixed scenarios<sup>big</sup>. Deuten et al. use system dynamics for the Norwegian EV transition<sup>deuten</sup>.</dd>
+  <dt>Prototype</dt><dd>1,000 agents in three zones, a yearly replacement and EV choice, mode choice with congestion, welfare and public money per household (chapter 4).</dd>
+  <dt>Article</dt><dd>A2 replaces synthetic preferences with A1’s estimates, gives replacement a memory of car age, and runs on the real networks of both towns.</dd>
+  <dt>Test</dt><dd>Several observed patterns at once: travel survey mode shares, fleet age and fuel from the register, traffic counts<sup>pom</sup>.</dd></dl></div>
+
+  <div class="dc"><div class="n">C2 · ACCEPTANCE THAT MOVES</div><h3>Acceptance measured in choice data, shifted as a charge is lived, and used as a condition on which plans count</h3>
+  <dl><dt>New</dt><dd>Acceptance enters the robust search as a constraint, not a footnote, and it changes with experience rather than staying at its survey value.</dd>
+  <dt>Nearest</dt><dd>Le Pira, Marcucci and Gatta gave freight agents acceptance from choice models<sup>lepira</sup>. TØI’s national experiment measured support for distance charges<sup>toi2179</sup>. Support rose after Stockholm’s charge<sup>accept</sup> but moved little in the Oslo field trial<sup>toi2179</sup>.</dd>
+  <dt>Prototype</dt><dd>A self-interest proxy: the share of commuters not made worse off in 2030. It is a placeholder and is labelled as one.</dd>
+  <dt>Article</dt><dd>A1 measures acceptance at one point in time, with trust measured by attitudinal indicators in a hybrid choice model. How far acceptance shifts after introduction is set from the field evidence and every result is reported with and without the shift, because the evidence points both ways.</dd>
+  <dt>Test</dt><dd>National attribute ranges, so Molde and Kristiansund can be compared with the national result directly.</dd></dl></div>
+
+  <div class="dc"><div class="n">C3 · HOW MUCH WE DO NOT KNOW</div><h3>2050 uncertainty split into three sources, and a test of whether the winning plan survives each</h3>
+  <dl><dt>New</dt><dd>Error in estimated preferences, chance inside the simulation and deep uncertainty about the future are separated over a 25-year policy path.</dd>
+  <dt>Nearest</dt><dd>Petrik and colleagues propagated parameter error through one simulated day<sup>petrik</sup>. Tveter, Welde and Odeck quantify uncertainty in the appraisal of single road projects<sup>tveter25</sup>; I separate its sources along a policy path.</dd>
+  <dt>Prototype</dt><dd>Deep uncertainty only: 60 futures over nine uncertain inputs. Every package uses the same random draw, so chance is not yet separated.</dd>
+  <dt>Article</dt><dd>A2 draws preferences from their estimated covariance and repeats runs, so each source gets its share of the 2050 spread.</dd>
+  <dt>Test</dt><dd>Does the ranking of packages change when each source is switched off in turn.</dd></dl></div>
+
+  <div class="dc"><div class="n">C4 · WARNINGS WITH A HIT RATE</div><h3>Pathways stress-tested across thousands of futures, with signposts whose lead time and false-alarm rate are measured</h3>
+  <dl><dt>New</dt><dd>Each signpost carries its years of warning, false alarms and missed failures, as in adaptive water planning, applied to transport backcasting.</dd>
+  <dt>Nearest</dt><dd>Raso et al. and Haasnoot et al. measure signals in water management<sup>raso,haasnoot</sup>; transport backcasting remains national and deterministic<sup>toi2119</sup>.</dd>
+  <dt>Prototype</dt><dd>A 2030 reading of 63% of 2025 emissions flags 17 of 19 later failures with 4 false alarms. The threshold was fitted on the same 60 futures.</dd>
+  <dt>Article</dt><dd>A3 chooses thresholds on one set of futures and scores them on a held-out set, for several indicators planners can read.</dd>
+  <dt>Test</dt><dd>Hit rate and false alarms out of sample, and lead time in years.</dd></dl></div>
+
+  <div class="dc"><div class="n">C5 · TESTED ON HISTORY</div><h3>The engine is checked against Norway’s 2010 to 2025 electric transition before it is trusted with 2050</h3>
+  <dl><dt>New</dt><dd>A household engine scored against a real transition before it is used for a future one.</dd>
+  <dt>Nearest</dt><dd>Deuten et al. tested system dynamics on 2010 to 2017<sup>deuten</sup>. EV forecasts often fail against what happened<sup>domarchi</sup>, and Norwegian fixed-link forecasts underestimated long-run traffic, in some cases by half<sup>welde19</sup>.</dd>
+  <dt>Prototype</dt><dd>Not built. It is one validation step of A2, not an article.</dd>
+  <dt>Article</dt><dd>The 2010 run holds the 2026 preferences fixed, so it scores the fleet mechanics, not the stability of preferences, and is reported on that basis.</dd>
+  <dt>Test</dt><dd>Simulated against registered EV fleet share by year, from register extracts at zone level.</dd></dl></div>
+</div>
+</section>
+
+<section>
+<h2><small>chapter 3</small>Two towns and their networks</h2>
+<div class="col">
+<p>Molde and Kristiansund are case studies, not a national sample. They are car-dependent, the instruments that matter (tolls, bus service, parking, cycling) are decided locally, and their road networks concentrate travel on a few links, which makes policy effects visible. Molde is the main case where preferences are estimated. Kristiansund is the transfer case, where the Molde model is applied without re-estimation.</p>
+</div>
+<figure class="plate charcoal">
+  <div class="pk">where the network concentrates people</div>
+  <svg id="p3" viewBox="0 0 1000 640" role="img" aria-label="Molde street network with Øvre veg highlighted, Kristiansund inset with Gomabrua"></svg>
+  <hr>
+  <div class="pt">One <em>street</em>, one <em>bridge</em></div>
+  <p class="ps">route every pair of junctions by its fastest path. in molde, 17.5% of all those routes use øvre veg; in kristiansund, a quarter cross gomabrua. a charge, a bus lane or a closure on these links changes travel for most of the town at once.</p>
+  <div class="src">OpenStreetMap; edge betweenness on drive time; 2,772 and 3,066 junctions. © OpenStreetMap contributors (ODbL).</div>
+</figure>
+<div class="col">
+<h3>The same network already answers logistics questions</h3>
+<p>The road graph that carries commuters in the engine is the one a delivery van drives. I built four plates on it for Molde to show the tools are not tied to commuting. Read in order, they go from where the network is fragile, to what breaking it costs, to where to stand to serve the town, to how to drive it once you stand there. This is the bridge to article 3’s freight test and to the logistics programme the PhD sits in.</p>
+</div>
+<div class="gallery">
+  <figure><img src="/*IMG:01*/" alt="Freight pinch points in Molde"><figcaption><b>01 · Freight pinch points.</b> Route a van between every pair of junctions and shade each street by the share of routes on it. Øvre veg carries 18%.</figcaption></figure>
+  <figure><img src="/*IMG:02*/" alt="Where the detour goes"><figcaption><b>02 · Where the detour goes.</b> Close that street and route all 7.7 million junction pairs again: 32% of trips slower, by 10 s on average and 2 minutes at worst; 0.9% become impossible.</figcaption></figure>
+  <figure><img src="/*IMG:03*/" alt="The five-minute depot"><figcaption><b>03 · The five-minute depot.</b> Time the drive from every junction to every other and keep the best: 79% of buildings within five minutes, against 56% from the median junction.</figcaption></figure>
+  <figure><img src="/*IMG:04*/" alt="The shortest loop"><figcaption><b>04 · The shortest loop.</b> One van, 24 addresses, a solver orders them: 48 minutes of driving instead of 137. OR-Tools agrees with PyVRP within 0.1%.</figcaption></figure>
+</div>
+<div class="col"><p class="src">Free-flow drive times from OpenStreetMap speeds; no turn penalties, signals or congestion; flat terrain. Scripts in <code>skills/visual-narrative/scripts</code>.</p></div>
+</section>
+
+<section>
+<h2><small>chapter 4</small>Inside the engine</h2>
+<div class="col"><p>Four layers, each built by one article on top of the one below. This chapter writes down what each layer computes in the prototype, and what changes when the article replaces it.</p></div>
+<figure class="plate">
+  <div class="pk">inside the engine</div>
+  <svg id="p2" viewBox="0 0 1000 1080" role="img" aria-label="Exploded axonometric of the engine: preferences, network, households and futures as stacked layers"></svg>
+  <hr>
+  <div class="pt">Exploded <em>engine</em></div>
+  <p class="ps">four layers. at the bottom, preferences estimated from people, with their error. above them, the real road network. then households that carry their cars, trips and opinions through time. at the top, the futures every plan is tested against.</p>
+</figure>
+
+<div class="layer"><div class="lt">LAYER 0 · PREFERENCES · BUILT IN A1</div>
+<div class="col">
+<p>For person <i>n</i> choosing mode <i>j</i> among car, electric car, bus and bike:</p>
+<div class="eq"><i>V<sub>nj</sub></i> = ASC<sub><i>j</i></sub> + β<sub>time</sub> · time<sub><i>nj</i></sub> + β<sub>cost</sub> · cost<sub><i>nj</i></sub> + β<sub>wait</sub> · wait<sub><i>nj</i></sub>, &nbsp;&nbsp; <i>P<sub>nj</sub></i> = e<sup><i>V<sub>nj</sub></i></sup> / Σ<sub><i>k</i></sub> e<sup><i>V<sub>nk</sub></i></sup></div>
+<p>Value of time is 60 β<sub>time</sub>/β<sub>cost</sub> NOK per hour. In the prototype a synthetic survey of 800 respondents with eight tasks each is simulated from known parameters and estimated twice, with Biogeme and with an independent maximum-likelihood code. The two agree to 1.5 × 10<sup class="x">−6</sup>, and every parameter is recovered within one standard error of its true value. The recovered value of time is 142 NOK per hour against a true 144.</p>
+</div>
+<figure class="plate sage">
+  <div class="pk">does the estimator find what was put in</div>
+  <svg id="p6" viewBox="0 0 1000 380" role="img" aria-label="Six parameters: true value as a tick, estimate as a dot with one standard error bar"></svg>
+  <hr>
+  <div class="pt">Six of six <em>recovered</em></div>
+  <p class="ps">each row is one parameter. the tick is the value the synthetic survey was built from, the dot is the estimate, the bar one standard error either side. every bar covers its tick.</p>
+  <div class="src">docs/results/transplan_study.json; 800 respondents × 8 tasks; Biogeme MNL; synthetic data.</div>
+</figure>
+<div class="col"><p><b>What A1 changes.</b> Real stated-choice data in three blocks (mode, next car, votes on charging packages), mixed and latent-class logit so preferences vary across people, and a hybrid choice model for trust. Sample size follows from the S-estimates of the efficient design for every parameter, including the random-parameter spreads, with pilot priors updated before the main wave.</p></div>
+</div>
+
+<div class="layer"><div class="lt">LAYER 1 · NETWORK · BUILT IN A2</div>
+<div class="col"><p>OpenStreetMap road graphs for both towns, filtered to drivable ways, projected, with speeds and travel times on every edge. Paths are computed on the graph, never as straight lines. The prototype engine still uses three zones with a congestion curve each; A2 moves trips onto the graph with zone data and trip lengths taken from the regional model RTM, so results stay comparable with it.</p></div></div>
+
+<div class="layer"><div class="lt">LAYER 2 · HOUSEHOLDS · BUILT IN A2</div>
+<div class="col">
+<p>Each year every car owner may replace the car. In the prototype that is a constant yearly rate, 1 / lifetime; the new car is electric with probability</p>
+<div class="eq"><i>P</i>(EV) = 1 / (1 + e<sup>−<i>u</i></sup>), &nbsp;&nbsp; <i>u</i> = 0.5 − 0.03 · price gap + 0.08 · running-cost saving + φ · zone EV share</div>
+<p>where the price gap closes to parity by an uncertain year, the saving includes any toll exemption, and φ is a peer effect. Agents then choose modes with the layer-0 utilities; car times follow a congestion curve solved by successive averages. Welfare is the logsum divided by −β<sub>cost</sub>, and each agent carries the subsidies it receives and the tolls it pays.</p>
+<p><b>What A2 changes.</b> Replacement depends on car age and household events; the price gap and the purchase model are calibrated to the register so the fleet turns as fast as Norway’s does; acceptance is carried per household and shifts with experience; vehicle and battery production enter as an emission at purchase; repeated runs separate chance from preference error.</p>
+</div></div>
+
+<div class="layer"><div class="lt">LAYER 3 · FUTURES AND PLANS · BUILT IN A3</div>
+<div class="col"><p>Nine uncertain inputs span the futures and five levers span the plans. In the prototype both are Latin hypercube samples: 60 futures and 24 packages plus a no-policy reference.</p></div>
+<div class="tbl two">
+<table><tr><th>Uncertain input</th><th>Range</th></tr>
+<tr><td>EV price parity year</td><td>2026 to 2040</td></tr><tr><td>Fuel price growth, real</td><td>−2% to +4% a year</td></tr>
+<tr><td>Telework share of commute days, 2050</td><td>0 to 30%</td></tr><tr><td>Population growth</td><td>0 to 1.5% a year</td></tr>
+<tr><td>Peer effect on EV choice</td><td>0 to 3</td></tr><tr><td>Vehicle lifetime</td><td>10 to 18 years</td></tr>
+<tr><td>Transfer scale, cost and time sensitivity</td><td>0.7 to 1.3 each</td></tr><tr><td>Yearly efficiency gain, fuel cars</td><td>0 to 3%</td></tr></table>
+<table><tr><th>Lever</th><th>Range</th></tr>
+<tr><td>Toll per car trip</td><td>NOK 0 to 60</td></tr><tr><td>Share of the toll electric cars pay</td><td>0 to 100%</td></tr>
+<tr><td>Bus frequency gain</td><td>0 to headways halved</td></tr><tr><td>Cycle network</td><td>none to complete</td></tr>
+<tr><td>EV purchase subsidy</td><td>NOK 0 to 100,000</td></tr></table>
+</div>
+<div class="col">
+<p>A package <i>p</i> is robust in proportion to the futures in which commuting CO₂ in 2050 falls to the target:</p>
+<div class="eq">R(<i>p</i>) = |{ <i>f</i> ∈ F : CO₂<sub>2050</sub>(<i>p</i>, <i>f</i>) ≤ τ }| / |F|, &nbsp;&nbsp; <i>p</i>* = argmax R(<i>p</i>) &nbsp;s.t.&nbsp; median<sub><i>f</i></sub> A(<i>p</i>, <i>f</i>) ≥ ½, &nbsp; C(<i>p</i>) ≤ B</div>
+<p>The prototype applies the acceptance constraint only; the budget B will be set with the county from its transport budget. Some prototype levers, such as purchase subsidies and toll exemptions for electric cars, are instruments Norway is now phasing out; A3 replaces them with the instruments debated in 2026, distance-based charging first.</p>
+<p><b>What A3 changes.</b> About 10<sup class="x">4</sup> futures anchored on the national strategies<sup>toi2119</sup>, packages screened as a 10<sup class="x">2</sup> Latin hypercube and then refined by a many-objective search in the best region<sup>mordm</sup>, τ tied to the Climate Change Act and tested at three levels, regret and stability beside robustness<sup>hoff</sup>, and a run budget: one prototype run takes about 0.1 s with 1,000 agents, so the full design is costed before it is launched and a surrogate is fitted if one full-scale run passes ten seconds.</p>
+</div></div>
+</section>
+
+<section>
+<h2><small>chapter 5</small>What the prototype found</h2>
+<div class="col"><p>1,500 runs: 24 packages and a no-policy reference, each in the same 60 futures, on synthetic behaviour. The numbers show what each article will produce, not what will happen in Norway. Four results already shape the plan.</p></div>
+
+<figure class="plate">
+  <div class="pk">selective survival</div>
+  <svg id="p4" viewBox="0 0 1000 560" role="img" aria-label="Twenty-four packages run in sixty futures pass through a robust filter; five survive"></svg>
+  <hr>
+  <div class="pt">Five plans <em>survive</em></div>
+  <p class="ps">a package survives if it meets the target in at least 55% of futures and the median future leaves a majority not worse off. each dot is one future, lit where the package met the target. the best, P12, meets it in 41 of 60.</p>
+  <div class="src">Prototype ensemble; target: commuting CO₂ in 2050 at most 20% of 2025; acceptance is the self-interest proxy; budget not yet applied.</div>
+</figure>
+
+<figure class="plate">
+  <div class="pk">what robustness costs the public purse</div>
+  <svg id="p7" viewBox="0 0 1000 560" role="img" aria-label="Packages by robustness against net public money per commuter per year"></svg>
+  <hr>
+  <div class="pt">The price of <em>robustness</em></div>
+  <p class="ps">each circle is a package: across, the futures in which it meets the target; up, the public money it moves per commuter and year, subsidies paid minus tolls collected. the most robust packages pay for themselves through tolls; the ones that only subsidise are neither robust nor cheap.</p>
+  <div class="src">Prototype ensemble; medians over 60 futures; NOK per commuter per year, 2025 to 2050 average.</div>
+</figure>
+
+<figure class="plate">
+  <div class="pk">where every plan fails</div>
+  <svg id="p8" viewBox="0 0 1000 560" role="img" aria-label="Sixty futures by vehicle lifetime and telework share; hostile futures cluster where cars last long and telework stays low"></svg>
+  <hr>
+  <div class="pt">When cars <em>last</em></div>
+  <p class="ps">in 19 of the 60 futures no package meets the target. 14 of them sit in one box: cars that last 12.9 years or more and telework that stays under 13% of commute days. the policy question there is not which package, but how to shorten the life of the fleet.</p>
+  <div class="src">Prototype ensemble; exhaustive two-threshold search, 74% of hostile futures inside, 88% of futures inside are hostile.</div>
+</figure>
+
+<figure class="plate">
+  <div class="pk">reading the future early</div>
+  <svg id="p5" viewBox="0 0 1000 560" role="img" aria-label="Sixty CO2 trajectories for the most robust package with a 2030 gate at 63 percent of 2025"></svg>
+  <hr>
+  <div class="pt">A warning with a <em>hit rate</em></div>
+  <p class="ps">sixty futures under P12. at the 2030 gate, emissions above 63% of 2025 flag 17 of the 19 futures that later miss the target, with 4 false alarms among 41 that succeed: a warning in 2030, twenty years before the target year. the threshold was fitted on these futures; A3 scores it on held-out ones.</p>
+  <div class="src">Prototype ensemble; threshold chosen for the best separation of later success and failure.</div>
+</figure>
+</section>
+
+<section>
+<h2><small>chapter 6</small>The toolbench</h2>
+<div class="col"><p>Every result above comes from a tool in the repository, each with its own tests. The bench is laid out the way it is used: the call, then what it returned. The second half lists what is not built yet, which article builds it, and why it is not faked in the meantime.</p></div>
+
+<div class="bench">
+  <div class="tool"><div class="tn">dcm-estimate</div><div class="tq">What do people trade off?</div>
+  <pre><code>sp   = dcm.simulate(800, 8, seed=1)
+bio  = dcm.estimate_biogeme(sp)
+mle  = dcm.estimate_mle(sp)</code></pre>
+  <div class="tr"><b>6 of 6</b> parameters within one standard error; Biogeme and own MLE agree to 1.5 × 10<sup class="x">−6</sup>; value of time 142 NOK/h.</div><div class="tt">5 tests</div></div>
+
+  <div class="tool"><div class="tn">abm-transport</div><div class="tq">How does the fleet turn?</div>
+  <pre><code>out = abm.run(levers={"toll_nok": 30},
+              uncertainties={"ev_parity_year": 2030},
+              beta=bio["beta"], n=1000)</code></pre>
+  <div class="tr"><b>26 years</b> of mode shares, EV fleet share, CO₂, consumer surplus, subsidies and tolls per commuter, in about 0.1 s.</div><div class="tt">10 tests</div></div>
+
+  <div class="tool"><div class="tn">dmdu-explore</div><div class="tq">Which plans survive which futures?</div>
+  <pre><code>exp = dmdu.explore(60, 24, 1000, beta=beta)
+rob = dmdu.robustness(exp, 0.2)
+box = dmdu.discover(exp, "P17", 0.2)</code></pre>
+  <div class="tr"><b>1,500 runs</b> with EMA Workbench; robustness per package, PRIM boxes, backcast milestones.</div><div class="tt">6 tests</div></div>
+
+  <div class="tool"><div class="tn">osm-network</div><div class="tq">Where does the network concentrate travel?</div>
+  <pre><code>G = osm_network.build(place="Molde, Norway")
+p = osm_network.route(G, a, b,
+                      weight="travel_time")</code></pre>
+  <div class="tr"><b>2,772</b> junctions in Molde and <b>3,066</b> in Kristiansund, with speeds, times and energy per edge.</div><div class="tt">9 tests</div></div>
+
+  <div class="tool"><div class="tn">vrp-solve</div><div class="tq">How should a van drive the town?</div>
+  <pre><code>res = vrp_solve.solve(G, problem,
+                      solver="pyvrp")
+# cross-check: solver="ortools"</code></pre>
+  <div class="tr"><b>48 min</b> instead of 137 for 24 addresses; two independent solvers within 0.1%.</div><div class="tt">4 tests</div></div>
+
+  <div class="tool"><div class="tn">opt-model</div><div class="tq">Exact models when size allows</div>
+  <pre><code>m = models.facility_location(
+        fixed, capacity, demand, cost)
+solvers.solve(m)  # Gurobi, CPLEX or HiGHS</code></pre>
+  <div class="tr">Transportation, facility location, min-cost flow and exact CVRP; free solver limits measured (Gurobi 2,000 variables).</div><div class="tt">8 tests</div></div>
+
+  <div class="tool"><div class="tn">viz-story</div><div class="tq">Can a planner see the pathways?</div>
+  <pre><code>python story.py --out docs/story \
+    --futures 30 --agents 600</code></pre>
+  <div class="tr">SimWrapper dashboard of pathway bands, a kepler.gl map of every agent’s commute, and a data tree for Grasshopper.</div><div class="tt">5 tests</div></div>
+
+  <div class="tool"><div class="tn">visual-narrative</div><div class="tq">One idea per plate</div>
+  <pre><code>python lineart/render.py stock-turns \
+    out.png charcoal</code></pre>
+  <div class="tr">The line-art grammar behind every plate in this portfolio, drawn from the study data, never by hand.</div><div class="tt">4 tests</div></div>
+</div>
+
+<h3 class="col">Not built yet, and not faked</h3>
+<div class="bench planned">
+  <div class="tool"><div class="tn">survey design</div><div class="tq">A1 · month 2 to 6</div><div class="tr">Efficient design with S-estimates for all three blocks, priors from the pilot. Until then the prototype uses a synthetic survey and says so.</div></div>
+  <div class="tool"><div class="tn">hybrid choice model</div><div class="tq">A1 · month 8 to 12</div><div class="tr">Trust and attitudes as latent variables measured by indicators, feeding acceptance.</div></div>
+  <div class="tool"><div class="tn">register calibration</div><div class="tq">A2 · month 13 to 18</div><div class="tr">Purchase and replacement fitted to vehicle register extracts at zone level, and checked against BIG.</div></div>
+  <div class="tool"><div class="tn">appraisal module</div><div class="tq">A2 · month 18 to 22</div><div class="tr">Welfare and public money in line with the Ministry of Finance guidance, including the cost of public funds.</div></div>
+  <div class="tool"><div class="tn">production emissions</div><div class="tq">A2 · month 18 to 22</div><div class="tr">Vehicle and battery production charged at purchase, so faster renewal pays for the cars it builds.</div></div>
+  <div class="tool"><div class="tn">surrogate</div><div class="tq">A3 · if needed</div><div class="tr">A statistical emulator of the engine, fitted only if one full-scale run passes ten seconds.</div></div>
+  <div class="tool"><div class="tn">held-out signposts</div><div class="tq">A3 · month 28 to 32</div><div class="tr">Thresholds chosen on one set of futures and scored on another.</div></div>
+</div>
+</section>
+
+<section>
+<h2><small>chapter 7</small>Rerun it yourself</h2>
+<div class="col"><p>No number in the proposal or this portfolio needs to be taken on trust. Four commands rebuild them from a clean checkout, and the tests run on every change.</p></div>
+<div class="steps">
+  <div><div class="sn">1</div><pre><code>git clone https://github.com/Astheno-sphere/computational_Logistics
+cd computational_Logistics</code></pre><p>The code, the data scripts and the documents live together.</p></div>
+  <div><div class="sn">2</div><pre><code>pip install -r requirements-lock.txt</code></pre><p>Exact package versions, so a rerun next year gives the same numbers.</p></div>
+  <div><div class="sn">3</div><pre><code>python examples/transplan_study.py
+python docs/proposal/make_data.py</code></pre><p>The survey, the estimation, the 1,500 runs, the robustness table and every plate number. Asserts stop the build if the ensemble drifts.</p></div>
+  <div><div class="sn">4</div><pre><code>python -m pytest -q tests</code></pre><p>87 tests across the tools; the same suite runs in continuous integration on every push.</p></div>
+</div>
+<div class="col"><p>The repository separates what runs, what is tested and what is planned, keeps a claims policy that ties every number to a script or a source, and lists its limitations on the front page.</p></div>
+</section>
+
+<section>
+<h2><small>chapter 8</small>Three years, and the limits</h2>
+<figure class="plate">
+  <div class="pk">thirty-six months</div>
+  <svg id="p9" viewBox="0 0 1000 300" role="img" aria-label="Three-year timeline with articles, survey and research stay"></svg>
+  <hr>
+  <div class="pt">One article a <em>year</em></div>
+  <p class="ps">the engine is built in year 1 on synthetic preferences while the survey is in the field, so year 2 swaps in real preferences rather than starting from zero. each year ends with a submitted article.</p>
+</figure>
+<div class="col">
+<p><b>If the survey slips.</b> If fieldwork runs past month 9, A1 is submitted on the pilot and panel sample, and the municipal wave feeds A2. Recruitment combines a Norwegian web panel with postal invitations drawn from the population register, so coverage does not depend on one channel.</p>
+<p><b>If data access slips.</b> Statistics Norway commuting tables stand in for the travel survey; register extracts are requested from the Norwegian Public Roads Administration in month 1, at zone level, so no individual records are needed.</p>
+<p><b>If run time explodes.</b> The design is costed from measured run times before launch, and a surrogate is fitted if needed, on national computing resources.</p>
+<h3>What this work does not do</h3>
+<ul class="limits">
+<li>Every behavioural number in this portfolio is synthetic until A1. The prototype shows the chain works, not what Norwegians prefer.</li>
+<li>The prototype fleet turns more slowly than Norway’s and is not yet calibrated; its EV shares are not forecasts.</li>
+<li>The prototype applies acceptance as a self-interest proxy and does not yet apply the budget constraint.</li>
+<li>Scope is commuting and other regular car travel by residents of two towns, translated to national targets; it is not a national model and does not replace NTM6 or RTM.</li>
+<li>The freight plates use free-flow times without congestion or turn penalties; the freight test in A3 is a test of the method, not a freight demand model.</li>
+</ul>
+</div>
+<p class="close">The fleet that will drive in 2035 is being bought now. I have built the first version of the instrument to steer it. With TRANSPLAN’s data, Molde’s supervision and three years, it becomes one that planners can trust.</p>
+</section>
+
+<div class="refs col"><div class="kick">references</div><ol data-refs></ol></div>
+</div>

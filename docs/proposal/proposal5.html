@@ -156,7 +156,7 @@ svg text{font-family:Roboto,sans-serif}
 </div>
 
 <h2><small>proof</small>5 · It already runs</h2>
-<div class="col"><p>A working prototype implements the full chain on synthetic behaviour and the real road networks of both towns: two independent choice-model estimators with a recovery test, an agent model with fleet turnover, EV adoption, welfare and public money per household, and an ensemble of 60 futures by 25 packages. The behaviour is synthetic and its policy levers include instruments Norway is now phasing out, so the numbers show what each article will produce, not what will happen in Norway. Two results already point at the stock problem.</p></div>
+<div class="col"><p>A working prototype implements the full chain on synthetic behaviour and the real road networks of both towns: two independent choice-model estimators with a recovery test, an agent model with fleet turnover, EV adoption, welfare and public money per commuter, and an ensemble of 60 futures by 25 packages. The behaviour is synthetic and its policy levers include instruments Norway is now phasing out, so the numbers show what each article will produce, not what will happen in Norway. Two results already point at the stock problem.</p></div>
 
 <figure class="plate">
   <div class="pk">the operation for selective survival</div>
@@ -532,7 +532,7 @@ function proj(town,x,y,w,h){const [x0,y0,x1,y1]=town.bbox,k=Math.min(w/(x1-x0),h
 
 // P4 robust filter: explode-tree grammar with real counts
 (function(){const s=document.getElementById("p4");if(!DATA)return;
-  const P=DATA.packages_list.filter(p=>p.id!=="no_policy");const keep=P.slice(0,4);
+  const P=DATA.packages_list.filter(p=>p.id!=="no_policy"),RMIN=0.55;const keep=P.filter(p=>p.robustness>=RMIN-1e-9&&p.accept>=0.5);
   const rx=60,ry=280,bx=430,by=210,bw=150,bh=140;
   P.forEach((p,i)=>{const yy=40+i*(480/(P.length-1)),mid=(rx+bx)/2,ty=by+30+(i%4)*27;
     el(s,"path",{d:`M${rx} ${ry} C${rx+120} ${ry} ${mid-80} ${yy} ${mid} ${yy} S${bx-90} ${ty} ${bx} ${ty}`,fill:"none",stroke:K.cream,"stroke-width":i<4?1.4:.7,"stroke-opacity":i<4?1:.45});});
@@ -541,18 +541,18 @@ function proj(town,x,y,w,h){const [x0,y0,x1,y1]=town.bbox,k=Math.min(w/(x1-x0),h
   el(s,"rect",{x:bx+bw/2-18,y:by+12,width:36,height:bh-24,rx:5,fill:"#3a2023"});
   t(s,bx+bw/2+6,by+bh/2,"robust filter",{"text-anchor":"middle",transform:`rotate(-90 ${bx+bw/2+6} ${by+bh/2})`,"font-size":15,"font-weight":500});
   ["R","A","C"].forEach((l,i)=>{t(s,bx+18,by+38+i*36,l,{fill:"#3a2023","font-size":15,"font-weight":700});});
-  ["≥","≥ ½","≤ B"].forEach((l,i)=>{t(s,bx+bw-14,by+38+i*36,l,{fill:"#3a2023","font-size":13,"text-anchor":"end"});});
+  ["≥ .55","≥ ½","later"].forEach((l,i)=>{t(s,bx+bw-14,by+38+i*36,l,{fill:"#3a2023","font-size":13,"text-anchor":"end"});});
   const ox=bx+bw,lx=700,lw=280;
-  keep.forEach((p,i)=>{const ly=60+i*125,net=p.subsidy_nok-p.toll_nok_rev;
+  keep.forEach((p,i)=>{const ly=30+i*100,net=p.subsidy_nok-p.toll_nok_rev;
     el(s,"path",{d:`M${ox} ${by+40+i*20} C${ox+60} ${by+40+i*20} ${lx-70} ${ly+18} ${lx} ${ly+18}`,fill:"none",stroke:K.cream,"stroke-width":1.4});
     el(s,"circle",{cx:lx,cy:ly+18,r:3.5,fill:K.cream});
     el(s,"rect",{x:lx+8,y:ly,width:lw,height:36,rx:6,fill:"none",stroke:K.cream,"stroke-width":1.2});
     el(s,"line",{x1:lx+58,x2:lx+58,y1:ly,y2:ly+36,stroke:K.cream,"stroke-width":1});
     t(s,lx+33,ly+24,p.id,{"text-anchor":"middle","font-size":14,fill:i==0?K.accent:K.cream,"font-weight":500});
     for(let f=0;f<60;f++){const c=f%30,r=Math.floor(f/30);el(s,"circle",{cx:lx+68+c*7,cy:ly+12+r*12,r:2.4,fill:p.meets[f]?K.cream:"none",stroke:p.meets[f]?"none":K.dim,"stroke-width":.7});}
-    t(s,lx+8,ly+56,`${Math.round(p.robustness*60)} of 60 · ${Math.round(p.accept*100)}% accept · ${net>0?"costs":"raises"} NOK ${Math.round(Math.abs(net)).toLocaleString("en")}`,{fill:K.dim,"font-size":13.5});});
-  t(s,rx-20,520,"24 PACKAGES × 60 FUTURES",{"font-size":16,"font-weight":500,"letter-spacing":".04em"});
-  t(s,lx+8,540,"WHAT SURVIVES",{"font-size":16,"font-weight":500,"letter-spacing":".04em"});
+    t(s,lx+8,ly+62,`${Math.round(p.robustness*60)}/60 · ${Math.round(p.accept*100)}% · ${net>0?"−":"+"}${Math.round(Math.abs(net)).toLocaleString("en")}`,{fill:K.cream,"font-size":22});});
+  t(s,rx-20,520,"24 PACKAGES · 60 FUTURES",{"font-size":16,"font-weight":500,"letter-spacing":".04em"});
+  t(s,lx+8,532,"WHAT SURVIVES",{"font-size":16,"font-weight":500,"letter-spacing":".04em"});t(s,lx+8,554,"futures met · accept · NOK per commuter-year",{"font-size":15,fill:K.dim});
 })();
 
 // P5 warning with a hit rate: fan and gate

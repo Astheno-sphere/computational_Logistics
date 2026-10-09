@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Assemble docs/proposal/index.html from src/proposal.html, towns.json (make_towns.py) and study.json (make_data.py)."""
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).parent))
+from refs import renumber  # noqa: E402
 here = Path(__file__).parent
 html = (here / "src" / "proposal.html").read_text(encoding="utf-8")
 towns = (here / "towns.json").read_text(encoding="utf-8")
@@ -16,6 +19,6 @@ lineart = (here.parents[1] / "skills" / "visual-narrative" / "lineart" / "linear
 print("wrote", here / "proposal5.html")
 
 # the five-page ranked proposal, same grammar (src/five-page.html -> proposal-5p.html)
-p5s = (here / "src" / "five-page.html").read_text(encoding="utf-8")
+p5s = renumber((here / "src" / "five-page.html").read_text(encoding="utf-8"))
 (here / "proposal-5p.html").write_text(p5s.replace("/*LINEART*/", lineart).replace("/*TOWNS*/null", towns).replace("/*STUDY*/null", study), encoding="utf-8")
 print("wrote", here / "proposal-5p.html")

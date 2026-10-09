@@ -63,7 +63,9 @@ Fail the round if any item fails. Report each with the offending text.
    carry "synthetic behaviour" or "prototype" nearby. Current anchors: P12 robust in 41 of 60 futures;
    19 hostile futures; 2030 gate at 63% flags 17 of 19 failures with 4 false alarms among 41;
    EV fleet share 32, 51, 75, 86% in 2025, 2030, 2040, 2050; Øvre veg 17.5%; Gomabrua 24.9%; 1,500 runs;
-   87 tests.
+   87 tests. Survivors of the illustrative filter (R ≥ 0.55, median acceptance ≥ ½): P12, P21, P04, P10, P09.
+   Money is NOK per commuter per year. The prototype target (20% of 2025) is looser than the Climate Change Act
+   implies (about 5 to 10%); say so wherever it matters.
 5. **Sources.** Do not cite Lee and Brown 2021 or "Natterer 2025" (not found). Wangsness, Proost and
    Steinsland 2026 is in *Transportation Research Interdisciplinary Perspectives* 38, 102064.
    Measured signpost detection is "mainly in water management", never "only".
@@ -80,4 +82,6 @@ verdict, and at most five next fixes ranked by score gain per word.
 
 | Round | Date | Gatta | Tveter | Hjelle | Hoff | Inspector | Note |
 |---|---|---|---|---|---|---|---|
-| 1 | 2026-10-09 | 7.6 | 7.6 | 6.6 | 7.4 | length fail (about 8 pages) | long page, before the cut |
+| 1 | 2026-10-09 | 7.6 | 7.6 | 6.6 | 7.4 | length fail (about 8 pages) | long page, before the cut; scored by the author |
+| 2 | 2026-10-09 | 7.2 | 7.2 | 6.6 | 7.4 | fail: package count 24 vs 25, plate titles, refs 22 to 24 | five-page cut; first round by independent reader agents |
+| 3 | 2026-10-09 | 8.0 | 8.0 | 7.2 | 8.2 | pass | counts, τ against the Climate Change Act, held-out signposts, survey blocks, freight sentence, refs renumbered |
