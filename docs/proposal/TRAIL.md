@@ -19,6 +19,13 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-10-09 | v3.1: information treatments carry the causal claim; dose-response by station crossings inside Kristiansund; wave 2 (same Kristiansund respondents, 12 months) is core; town contrast descriptive; DiD only if wave 1 precedes collection | All four readers and the examiner: experience was confounded with town |
+| 2026-10-09 | "Scaling across Norway by centrality class" dropped; transfer to Molde with stated error; national implications argued, not modelled | Two towns cannot carry it (Tveter, Gatta, Hjelle, examiner) |
+| 2026-10-09 | Vans and lorries renew fleets with the same turnover machinery (register fleet, passages by class); no route-choice model | Hjelle wants freight behaviour; examiner wants scope held; turnover reuses existing code |
+| 2026-10-09 | A3 search space fixed: up to 3 of 4 instruments, one signpost per switch, about 200 pathways, 10^3 futures, 5 repeats, 10^6 runs, about 28 CPU hours | Hoff: computable and costed |
+| 2026-10-09 | Financial failure = revenue below debt service three years running; θ sampled in a range anchored on Norwegian toll decisions and protest votes | Hoff, examiner |
+| 2026-10-09 | Forecast validation scores both engine and official forecast against observed counts; short window acknowledged | Tveter |
+| 2026-10-09 | Research-stay host and optional workshop removed from the outline until confirmed or needed | Examiner: echo elements |
 | 2026-10-09 | Question is national: which road-pricing instruments survive Norway's electric fleet and the people who must accept them, and in what order should a realistic plan introduce them | TRANSPLAN serves the national plan; the next-car choice is nearly settled (96% electric sales), the live problem is the instruments |
 | 2026-10-09 | Kristiansund is the test bed (live toll package), Molde the control town; national reach by centrality-class scaling and the TØI national acceptance evidence | Dense data and a live decision; causal contrast; one PhD cannot model every household nationally |
 | 2026-10-09 | Three contributions, three articles; A4 workshop optional and phrased as a test | Five contributions read as method imports; examiner: choose the one thing the thesis proves |
@@ -33,7 +40,7 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 ## Verified facts (with source)
 
 - Kristiansund toll package approved by Storting 3 or 4 June 2025; county council 33 to 14 on 10 June 2024; city council 26 to 19 on 18 April 2024 (Vegvesen news pages).
-- Tolling started in 2026 on two stations on rv70 (Omsundbrua, Nordsundbrua); about 70% toll-financed; up to 15 years; about NOK 2.2 bn (Vegvesen, Stortinget Innst. 337 S).
+- Two toll stations on rv70 charging both ways (not 'two bridges'); start of collection in 2026 still to confirm; about 70% toll-financed; up to 15 years; about NOK 2.2 bn (Vegvesen, Stortinget Innst. 337 S).
 - Tariff group 1 (up to 3,500 kg): full NOK 34; NOK 27.20 with agreement (20% off); zero-emission with agreement NOK 19.04, i.e. 30% below the agreement price (Vegamot tariff page).
 - Toll revenue 2025 NOK 16.8 bn, a record even inflation-adjusted; 2026 forecast NOK 17.3 bn, about 62% from city packages; toll company debt NOK 77.9 bn (Vegvesen bompengerapport 2025; Stortinget Dok. 15 answer).
 - TØI 2179/2026 (Ciccone, Halse, Andreassen, Garnache, Wangsness): concrete personal information raises support most; experience in a randomised field trial gives only limited attitude change.
@@ -43,7 +50,9 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 
 ## Open: verify before writing
 
-- [ ] Toll start date: Vegamot says 1 June 2026; another source said 4 May 2026.
+- [ ] Toll start date and whether collection has begun: Vegamot says 1 June 2026; another source said 4 May 2026; Tveter-reader found no confirmation. Decides whether a pre-opening wave (DiD) is possible.
+- [ ] Molde: no comparable tolling; Molde to Kristiansund commuting does not cross the new stations.
+- [ ] Source for 'three kroner in five from city packages' (Stortinget Dok. 15 table: 61 to 62%).
 - [ ] Monthly cap (60 passings?) and "two bridges, no alternative route".
 - [ ] Centrality class of Kristiansund (index 749) and Molde (740): class 4 or 5; size of the class nationally.
 - [ ] Whether electric vans in group 1 get the zero-emission discount; heavy-vehicle rules.
@@ -64,3 +73,4 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 ## Scores log
 
 See skills/panel-review/SKILL.md. Outline v2: Gatta 8.2, Tveter 8.0, Hjelle 7.0, Hoff 8.0; outside examiner importance 6, originality 5, usefulness 6.
+Outline v3: Gatta 8.2, Tveter 8.2, Hjelle 7.2, Hoff 8.0; examiner 8, 7, 8 and narrowly first of 30. Main gap: experience confounded with town; fixed in v3.1 (not yet re-scored).
