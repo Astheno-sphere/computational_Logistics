@@ -144,7 +144,7 @@
   <p class="ps">each row is one parameter. the tick is the value the synthetic survey was built from, the dot is the estimate, the bar one standard error either side. every bar covers its tick.</p>
   <div class="src">docs/results/transplan_study.json; 800 respondents × 8 tasks; Biogeme MNL; synthetic data.</div>
 </figure>
-<div class="col"><p><b>What A1 changes.</b> Real stated-choice data in three blocks (mode, next car, votes on charging packages), mixed and latent-class logit so preferences vary across people, and a hybrid choice model for trust. Sample size follows from the S-estimates of the efficient design for every parameter, including the random-parameter spreads, with pilot priors updated before the main wave.</p></div>
+<div class="col"><p><b>What A1 changes.</b> Real stated-choice data in three blocks (mode, next car, votes on charging packages), mixed and latent-class logit so preferences vary across people, and a hybrid choice model for trust. Each respondent completes two of the three blocks with four tasks in each, so every block has about 530 respondents, and the sample size follows from the S-estimates of the efficient design, random-parameter spreads included. Stated replacement timing is estimated jointly with revealed replacement from the register.</p></div>
 </div>
 
 <div class="layer"><div class="lt">LAYER 1 · NETWORK · BUILT IN A2</div>
@@ -175,7 +175,7 @@
 <p>A package <i>p</i> is robust in proportion to the futures in which commuting CO₂ in 2050 falls to the target:</p>
 <div class="eq">R(<i>p</i>) = |{ <i>f</i> ∈ F : CO₂<sub>2050</sub>(<i>p</i>, <i>f</i>) ≤ τ }| / |F|, &nbsp;&nbsp; <i>p</i>* = argmax R(<i>p</i>) &nbsp;s.t.&nbsp; median<sub><i>f</i></sub> A(<i>p</i>, <i>f</i>) ≥ ½, &nbsp; C(<i>p</i>) ≤ B</div>
 <p>The prototype applies the acceptance constraint only; the budget B will be set with the county from its transport budget. Some prototype levers, such as purchase subsidies and toll exemptions for electric cars, are instruments Norway is now phasing out; A3 replaces them with the instruments debated in 2026, distance-based charging first.</p>
-<p><b>What A3 changes.</b> About 10<sup class="x">4</sup> futures anchored on the national strategies<sup>toi2119</sup>, packages screened as a 10<sup class="x">2</sup> Latin hypercube and then refined by a many-objective search in the best region<sup>mordm</sup>, τ tied to the Climate Change Act and tested at three levels, regret and stability beside robustness<sup>hoff</sup>, and a run budget: one prototype run takes about 0.1 s with 1,000 agents, so the full design is costed before it is launched and a surrogate is fitted if one full-scale run passes ten seconds.</p>
+<p><b>What A3 changes.</b> About 10<sup class="x">4</sup> futures anchored on the national strategies<sup>toi2119</sup>, packages screened as a 10<sup class="x">2</sup> Latin hypercube and then refined by a many-objective search in the best region<sup>mordm</sup>, τ set against the Climate Change Act, which implies about 5 to 10% of 2025 rather than the prototype’s looser 20%, reported at 5, 10 and 20%, regret and stability beside robustness<sup>hoff</sup>, and a run budget: one prototype run takes about 0.1 s with 1,000 agents, so the full design is costed before it is launched and a surrogate is fitted if one full-scale run passes ten seconds.</p>
 </div></div>
 </section>
 
@@ -194,16 +194,16 @@
 
 <figure class="plate">
   <div class="pk">what robustness costs the public purse</div>
-  <svg id="p7" viewBox="0 0 1000 560" role="img" aria-label="Packages by robustness against net public money per commuter per year"></svg>
+  <svg id="p7" viewBox="0 0 1000 540" role="img" aria-label="Packages by robustness against net public money per commuter per year"></svg>
   <hr>
   <div class="pt">The price of <em>robustness</em></div>
-  <p class="ps">each circle is a package: across, the futures in which it meets the target; up, the public money it moves per commuter and year, subsidies paid minus tolls collected. the most robust packages pay for themselves through tolls; the ones that only subsidise are neither robust nor cheap.</p>
+  <p class="ps">each circle is a package: across, the futures in which it meets the target; up, the public money it moves per commuter and year, subsidies paid minus tolls collected. four of the five survivors raise money through tolls; the most robust, P12, costs about NOK 1,580 per commuter-year. the packages that cost the most are not the robust ones.</p>
   <div class="src">Prototype ensemble; medians over 60 futures; NOK per commuter per year, 2025 to 2050 average.</div>
 </figure>
 
 <figure class="plate">
   <div class="pk">where every plan fails</div>
-  <svg id="p8" viewBox="0 0 1000 560" role="img" aria-label="Sixty futures by vehicle lifetime and telework share; hostile futures cluster where cars last long and telework stays low"></svg>
+  <svg id="p8" viewBox="0 0 1000 540" role="img" aria-label="Sixty futures by vehicle lifetime and telework share; hostile futures cluster where cars last long and telework stays low"></svg>
   <hr>
   <div class="pt">When cars <em>last</em></div>
   <p class="ps">in 19 of the 60 futures no package meets the target. 14 of them sit in one box: cars that last 12.9 years or more and telework that stays under 13% of commute days. the policy question there is not which package, but how to shorten the life of the fleet.</p>
@@ -308,7 +308,7 @@ python docs/proposal/make_data.py</code></pre><p>The survey, the estimation, the
   <p class="ps">the engine is built in year 1 on synthetic preferences while the survey is in the field, so year 2 swaps in real preferences rather than starting from zero. each year ends with a submitted article.</p>
 </figure>
 <div class="col">
-<p><b>If the survey slips.</b> If fieldwork runs past month 9, A1 is submitted on the pilot and panel sample, and the municipal wave feeds A2. Recruitment combines a Norwegian web panel with postal invitations drawn from the population register, so coverage does not depend on one channel.</p>
+<p><b>If the survey slips.</b> If fieldwork runs past month 9, A1 is submitted on the pilot and panel sample, and the postal wave feeds A2. Recruitment combines a Norwegian web panel with postal invitations drawn from the population register, so coverage does not depend on one channel.</p>
 <p><b>If data access slips.</b> Statistics Norway commuting tables stand in for the travel survey; register extracts are requested from the Norwegian Public Roads Administration in month 1, at zone level, so no individual records are needed.</p>
 <p><b>If run time explodes.</b> The design is costed from measured run times before launch, and a surrogate is fitted if needed, on national computing resources.</p>
 <h3>What this work does not do</h3>
@@ -316,6 +316,7 @@ python docs/proposal/make_data.py</code></pre><p>The survey, the estimation, the
 <li>Every behavioural number in this portfolio is synthetic until A1. The prototype shows the chain works, not what Norwegians prefer.</li>
 <li>The prototype fleet turns more slowly than Norway’s and is not yet calibrated; its EV shares are not forecasts.</li>
 <li>The prototype applies acceptance as a self-interest proxy and does not yet apply the budget constraint.</li>
+<li>The prototype target, commuting CO₂ in 2050 at most 20% of 2025, is looser than the 5 to 10% the Climate Change Act implies; every prototype number would be harder to reach under the law.</li>
 <li>Scope is commuting and other regular car travel by residents of two towns, translated to national targets; it is not a national model and does not replace NTM6 or RTM.</li>
 <li>The freight plates use free-flow times without congestion or turn penalties; the freight test in A3 is a test of the method, not a freight demand model.</li>
 </ul>
