@@ -7,6 +7,7 @@ references block is <ol data-refs></ol>; renumber(html) fills it and replaces ke
 import re
 
 REFS = {
+    "wooldridge": "Wooldridge (2005) Simple solutions to the initial conditions problem in dynamic, nonlinear panel data models with unobserved heterogeneity. <i>Journal of Applied Econometrics</i> 20(1), 39–54.",
     "odeck08": "Odeck &amp; Bråthen (2008) Travel demand elasticities and users attitudes: a case study of Norwegian toll projects. <i>Transportation Research Part A</i> 42(1), 77–94.",
     "tramodsim": "Flügel, Flötteröd et al. (2023) <i>TraModSim: an open-source traffic assignment tool for TraMod_By based on MATSim</i>. TØI report 1993/2023.",
     "toi2035": "Flügel, Weber &amp; Hamre (2024) TØI report 2035/2024 on modelling new mobility and flexible tolls beyond the regional transport model.",

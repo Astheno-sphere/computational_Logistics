@@ -128,8 +128,9 @@ coded into acceptance arguments with a language model, validated against a Norwe
 coder, with agreement reported. This gives the period before collection an aggregate trajectory.
 
 **Estimation.** Mixed logit first, then a hybrid choice model with acceptance as a latent variable. The
-two waves identify a state-dependence term: how much last year's acceptance and exposure shape this
-year's. That term is what lets agents remember.
+two waves identify a state-dependence term, how much last year's acceptance and exposure shape this
+year's, from within-person change and the variation in exposure, with the initial-conditions problem
+handled explicitly [wooldridge]. That term is what lets agents remember.
 
 ## 4. Articles, models and calendar
 
