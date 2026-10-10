@@ -173,7 +173,9 @@ planners in A4 [story].
 Nordsundbrua and Omsundbrua, charging in both directions; about 70% of the package is toll-financed
 over up to 15 years [bypakke, innst337]. A car pays NOK 34, NOK 27.20 with a tag, and NOK 19.04 if
 zero-emission with a tag [vegamot]. The city council approved the basis 26 to 19 and the county 33 to
-14: acceptance here is contested, and live. Exposure is not uniform. The Atlantic Ocean Tunnel has
+14: acceptance here is contested, and live. Exposure is not uniform. Computed on the town's road network, Nordsundbrua
+splits Kristiansund in two: Nordlandet holds 32% of homes and 39% of workplaces, and inside the town
+its only road to the other half is the bridge. Atlanterhavstunnelen has
 been toll-free since 2020, so some trips have a free alternative; computed on the road network, [N1]%
 of trips can avoid both stations. The study therefore has a measured dose rather than the assumption
 that everyone pays. Molde, with no toll package, is the comparison town [CHECK: older stations near
