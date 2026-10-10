@@ -60,6 +60,7 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 - TØI 2141/2026: after Oslo and Akershus' 2019 toll restructuring the share viewing tolls positively increased.
 - Börjesson, Eliasson and Hamilton (2016) Why experience changes attitudes to congestion pricing: the case of Gothenburg. Transportation Research Part A 85, 1 to 16, doi 10.1016/j.tra.2015.12.002. Two-wave survey; main driver status quo bias; change not explained by benefits exceeding expectations.
 - 2019 municipal election: People's Action No to More Road Tolls won 16.7% in Bergen.
+- Applykite aggregator (2026-10-10): 3-year appointment, Faculty of Logistics, PhD programme in Logistics; strong master's in transport, economics, engineering, OR or data science; from NOK 550,800; deadline 1 Nov 2026. TRANSPLAN partners: TØI, Molde, NMBU, NTNU, SINTEF, CICERO, Norwegian Computing Center (toi.no, nr.no). The 3-year term is unconfirmed against Jobbnorge and it shortens every calendar.
 - Ad text (aggregator, confirm against Jobbnorge): deep uncertainty, discrete choice plus agent-based modelling, travel behaviour, backcasting to 2050; PhD in Logistics.
 
 ## Open: verify before writing (resolver, due date; unresolved items block submission)
@@ -73,7 +74,7 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 - [ ] (Claude, 14 Oct; quote it or drop it) TØI 2051/2024 quote "say nothing about the path to a new equilibrium" against the report text.
 - [ ] (Gatta or Tveter via concept note, 20 Oct) Access to TØI 2179 microdata and attribute ranges for reanalysis (TRANSPLAN partner, but not guaranteed).
 - [ ] (Claude, 14 Oct) Official traffic and revenue forecast behind the Kristiansund package (faglig grunnlag PDF).
-- [ ] (Arshad, 12 Oct) Ad text from the official Jobbnorge listing.
+- [ ] (Arshad, 12 Oct) Ad text from the official Jobbnorge listing, especially the appointment length (3 or 4 years) and the evaluation criteria.
 - [ ] (Arshad, 12 Oct) trafikkdata.no counts at the two stations, May to October 2026: the API is blocked from the cloud container, so pull from a normal machine.
 - [ ] (Claude, 13 Oct) Alternative route: Atlanterhavstunnelen (fv64, Kristiansund to Averøy) has been toll-free since 1 July 2020 (state grant NOK 370 m; tu.no, lokalhistoriewiki). A free mainland route exists for some trips; which origin-destination pairs avoid the rv70 stations is still to compute. 'Captive' is withdrawn until then.
 - [ ] (Arshad, 12 Oct) Can RVU and vehicle-register access be requested before admission, or only by the supervisor team? Decides the wording of K13.
