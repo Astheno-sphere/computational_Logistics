@@ -128,6 +128,28 @@ What the analytical series does that ours did not:
     computed, spell-checked and every number survives a re-run.
 Use our own palette with the same semantics; learn the method, never trace the plates.
 
+### Living things and line diagrams (study of 5 more plates, 2026-10-10)
+- **People at true scale**: single thin line, about 1.75 m against a 3 m storey. Mostly pairs and
+  threes, not singles. Poses carry the story: walking pairs, a parent holding a child's hand, a cyclist,
+  someone with a walker or wheelchair, two seated on a bench, a vendor handing something over, a person
+  carrying a bag or basket.
+- **Subject versus context**: context people are outlines; the people the plate is about are solid
+  accent silhouettes. One rule, no legend needed.
+- **Trees**: stippled crowns lit from one side (dense and dark on the shadow side), a trunk of two or
+  three lines, a stippled square tree pit. In plan, stippled discs.
+- **Street apparatus**: isometric at 30 degrees, paving joints, kerb line, stoops with railings,
+  windows with mullions, cornices, one accent awning beside one cream awning, bikes, benches, lamps,
+  post boxes. In elevation, one facade carries a brick hatch for texture.
+- **Invisible relations as dashed lines**: sight lines from windows to children, "casual supervision".
+  For us: who pays whom, which trip crosses which station.
+- **Elevation with a time band**: a ground line, a rounded band naming the times of day, a checker
+  scale bar with uneven ticks.
+- **Line diagrams**: rounded boxes, orthogonal connectors with rounded corners, one arrowhead at the
+  entry, one inner drawing inside the box that matters (a network inside the surrogate box). A
+  spectrum bar under the loop places the method on a gradient ("a gradient, not a wall"). Cite the
+  method's source in the footer.
+- Build our own primitives from these proportions; never trace the reference figures.
+
 ## Rules
 - Our palette and voice, not the reference's: `INK #10161B`, `PAPER #E8E1CF`, `ACCENT #FF5B3A`.
   Study other work for method; never trace its plates or reuse its artwork.
