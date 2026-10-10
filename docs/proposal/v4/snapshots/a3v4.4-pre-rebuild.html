@@ -43,7 +43,6 @@ table{border-collapse:collapse;width:100%;margin:4px 0 10px}
 th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:400;border-bottom:1px solid var(--faint);padding:6px 10px 6px 0}
 td{font-size:14.2px;line-height:1.38;border-bottom:1px solid var(--faint);padding:4px 10px 4px 0;vertical-align:top}
 td:first-child{color:var(--cream);font-weight:500}
-.risk td{padding:2px 10px 2px 0}
 /* plates */
 .plate{background:var(--panel);padding:16px 18px 14px;margin:0 0 14px}
 .pal{display:flex;gap:6px;margin-bottom:10px}
@@ -74,14 +73,6 @@ td:first-child{color:var(--cream);font-weight:500}
 .card table td:first-child{color:var(--dim);font-weight:400}
 .card .opt{font-family:var(--mono);color:var(--amber);font-size:11px;letter-spacing:.08em}
 ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-size:8.7px;line-height:1.24;margin-bottom:1px;break-inside:avoid}
-.trips{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:2px 0 8px}
-.trips div{border-left:4px solid var(--c);padding-left:9px;font-size:14px;line-height:1.35}
-.trips b{font-family:var(--mono);color:var(--c)}
-.trips em{font-style:normal;color:var(--c);font-weight:700}
-.bars{display:grid;grid-template-columns:96px 1fr;gap:5px 10px;margin:6px 0 8px;align-items:center}
-.bars .bl{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
-.bars .bt{display:flex;gap:2px;height:22px}
-.bars .bt span{display:flex;align-items:center;padding-left:8px;font-family:var(--mono);font-size:12px;color:var(--ground);background:var(--cream);white-space:nowrap;overflow:hidden}
 .ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:2px 0 4px}
 .ladder div{border-top:2px solid var(--c);padding-top:7px}
 .ladder .t{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--c);text-transform:uppercase}
@@ -104,17 +95,52 @@ ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-si
     <div>
       <h2><small>01</small>The problem</h2>
       <p>Norway plans its transport system with strategic models that compute an equilibrium for a chosen year. Asked what 2050 looks like under a set of assumptions, they give a careful answer. Asked how the country gets there, and which routes fail on the way, they are silent by construction. The path is governed by things an equilibrium does not carry: a vehicle fleet that turns over slowly, public acceptance that persists or erodes, and debt that must be repaid on a schedule.</p>
-      <p>Road pricing shows the problem in its sharpest form. It is the first lever proposed for the next National Transport Plan, as a way to use existing capacity before building more<sup>toi2172</sup>, yet the national reform has stalled<sup>wps</sup>. Tolls raised NOK 16.8 billion in 2025, about 62% of it in city packages, against toll-company debt of about NOK 78 billion<sup>svv25,dok15</sup>. Revisions meet voters: in 2019 a party with a single anti-toll demand won 16.7% in Bergen<sup>snl19</sup>.</p>
+      <p>Road pricing shows the problem in its sharpest form. It is the first lever proposed for the next National Transport Plan, as a way to use existing capacity before building more<sup>toi2172</sup>, yet the national reform has stalled<sup>wps</sup>. Tolls raised NOK 16.8 billion in 2025, about 62% of it in city packages, against toll-company debt of about NOK 78 billion<sup>svv25,dok15</sup>. Every revision meets a public that has voted against tolls before: in 2019 a party with a single anti-toll demand won 16.7% in Bergen<sup>snl19</sup>.</p>
       <p class="decisive">Whether a plan for 2050 is feasible depends on the order in which instruments arrive and on whether people accept each step. That is a question about paths.</p>
     </div>
     <div>
       <div class="plate">
-        <div class="pal"><span style="--c:var(--cream)">fossil crossing</span><span style="--c:var(--sage)">electric crossing</span><span style="--c:var(--amber)">what 100 crossings earn</span><span style="--c:var(--red)">what the debt needs</span></div>
+        <div class="pal"><span style="--c:var(--cream)">fossil crossing</span><span style="--c:var(--sage)">electric crossing</span><span style="--c:var(--amber)">today</span><span style="--c:var(--red)">revenue per crossing</span></div>
         <div class="pk">how fast is the toll base already eroding?</div>
-        /*EROSION*/
+        <svg viewBox="0 0 470 300" role="img" aria-label="Revenue per crossing falls linearly from 27.20 to 19.04 kroner as the electric share rises; 23.94 at today's 40 percent">
+          <g font-family="Roboto Mono, monospace" font-size="10" fill="#948B7E">
+            <line x1="56" y1="22" x2="56" y2="236" stroke="#948B7E" stroke-width="1"/>
+            <line x1="56" y1="236" x2="456" y2="236" stroke="#948B7E" stroke-width="1"/>
+            <text x="48" y="44" text-anchor="end">27.20</text><text x="48" y="215" text-anchor="end">19.04</text>
+            <text x="48" y="123" text-anchor="end">23.94</text>
+            <text x="56" y="252" text-anchor="middle">0%</text><text x="216" y="252" text-anchor="middle">40%</text><text x="456" y="252" text-anchor="middle">100%</text>
+            <text x="256" y="268" text-anchor="middle" letter-spacing="1">ELECTRIC SHARE OF CROSSINGS</text>
+            <text x="14" y="130" transform="rotate(-90 14 130)" text-anchor="middle" letter-spacing="1">NOK PER CROSSING</text>
+          </g>
+          <!-- ghost grid -->
+          <g stroke="rgba(236,227,210,.08)"><line x1="56" y1="40" x2="456" y2="40"/><line x1="56" y1="211" x2="456" y2="211"/><line x1="56" y1="119" x2="456" y2="119" stroke-dasharray="3 4"/></g>
+          <!-- the erosion line -->
+          <polygon points="56,40 456,211 456,236 56,236" fill="rgba(210,65,43,.10)"/>
+          <line x1="56" y1="40" x2="456" y2="211" stroke="#D2412B" stroke-width="3"/>
+          <!-- today -->
+          <line x1="216" y1="119" x2="216" y2="236" stroke="#D4A530" stroke-dasharray="4 4"/>
+          <circle cx="216" cy="108.5" r="14" fill="none" stroke="#ECE3D2" stroke-width="1.2"/>
+          <circle cx="216" cy="108.5" r="6" fill="#D4A530"/>
+          <!-- callout cards -->
+          <g font-family="Roboto Mono, monospace">
+            <rect x="66" y="52" width="122" height="38" fill="#16120F" stroke="rgba(236,227,210,.3)"/>
+            <text x="74" y="67" font-size="10" fill="#ECE3D2" font-weight="500">FOSSIL FLEET</text>
+            <text x="74" y="82" font-size="10" fill="#948B7E">NOK 27.20 with tag</text>
+            <rect x="232" y="64" width="172" height="38" fill="#16120F" stroke="#D4A530"/>
+            <text x="240" y="79" font-size="10" fill="#D4A530" font-weight="500">TODAY · 4 IN 10 ELECTRIC</text>
+            <text x="240" y="94" font-size="10" fill="#ECE3D2">NOK 23.94 · 12% less</text>
+            <rect x="300" y="150" width="148" height="38" fill="#16120F" stroke="rgba(236,227,210,.3)"/>
+            <text x="308" y="165" font-size="10" fill="#9DB886" font-weight="500">ALL ELECTRIC</text>
+            <text x="308" y="180" font-size="10" fill="#ECE3D2">NOK 19.04 · 30% less</text>
+            <line x1="374" y1="188" x2="440" y2="204" stroke="rgba(236,227,210,.3)"/>
+          </g>
+          <!-- ten crossings, four lit -->
+          <g transform="translate(66,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#9DB886" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#9DB886"/><circle cx="23" cy="14" r="2.4" fill="#9DB886"/></g><g transform="translate(106,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#9DB886" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#9DB886"/><circle cx="23" cy="14" r="2.4" fill="#9DB886"/></g><g transform="translate(146,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#9DB886" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#9DB886"/><circle cx="23" cy="14" r="2.4" fill="#9DB886"/></g><g transform="translate(186,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#9DB886" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#9DB886"/><circle cx="23" cy="14" r="2.4" fill="#9DB886"/></g><g transform="translate(226,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(266,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(306,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(346,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(386,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(426,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g>
+          <text x="460" y="296" font-family="Roboto Mono, monospace" font-size="9.5" fill="#948B7E" text-anchor="end">today: four crossings in ten are electric</text>
+        </svg>
         <div class="pt">The base <em>erodes</em></div>
-        <p class="ps">The same hundred crossings, three times. Each electric one pays NOK 8.16 less; the debt they repay stays where it was.</p>
-        <div class="src">revenue per crossing = 27.20 − 8.16 × electric share; 2035 share is the prototype median · tariff group 1 with tag, Bypakke Kristiansund<sup>vegamot</sup> · share: national, Sept 2026<sup>svvev</sup></div>
+        <p class="ps">Each electric crossing pays NOK 8.16 less. The debt does not shrink with it.</p>
+        <div class="src">revenue per crossing = 27.20 − 8.16 × electric share · tariff group 1 with tag, Bypakke Kristiansund<sup>vegamot</sup> · share: national, Sept 2026<sup>svvev</sup></div>
       </div>
     </div>
   </div>
@@ -126,18 +152,16 @@ ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-si
     <p><b>RQ3 · PLANNING · A3</b>&nbsp; Which pathways are robust, what margin of acceptance does each survive, and which signposts give lead time before a pathway fails?</p>
   </div>
 
-  <div class="cols" style="grid-template-columns:.66fr 1.34fr">
+  <div class="cols" style="grid-template-columns:.9fr 1.1fr">
     <div>
       <h3>What already exists</h3>
-      <p>I have built a working prototype of the method. It produced both plates on this page from Kristiansund's tariffs and road network; it also recovers known choice parameters from simulated survey data with bias below 3% and 92 to 98% coverage at two standard errors.</p>
+      <p>I have built a working prototype of the method, and it already gives the result on the right: at today's national share of four electric crossings in ten, a Kristiansund crossing earns 12% less than in a fossil fleet, and an all-electric fleet earns 30% less while the debt stays the same. It also recovers known choice parameters from simulated survey data with bias below 3% and 92 to 98% coverage at two standard errors, and holds both towns' road networks.</p>
       <p class="decisive" style="font-size:17px">The question is no longer whether the base erodes, but which path through that erosion people will accept.</p>
     </div>
     <div class="plate" style="margin:0;padding:12px 14px 10px">
-      <div class="pal"><span style="--c:var(--sage)">60%+ futures on target</span><span style="--c:var(--amber)">40 to 60%</span><span style="--c:rgba(236,227,210,.3)">fails most</span><span style="--c:var(--red)">widest margin</span></div>
-      <div class="pk">what does a planner get: an end state, or the routes to it?</div>
-      /*TREE*/
-      <div class="pt" style="font-size:19px">A plan is a <em>tree</em>, not a point</div>
-      <div class="src">prototype demonstration, not a forecast: 904 pathways × 1,000 futures, parameters assumed · make_proto.py</div>
+      <div class="pk">what does a strategic model see that a plan cannot use?</div>
+      /*ANSWERS*/
+      <div class="src">real buildings at Nordsundbrua (OSM); years from the prototype run</div>
     </div>
   </div>
   <div class="folio"><span>From end states to pathways</span><span>1 / 5</span></div>
@@ -215,15 +239,14 @@ ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-si
 
   <div class="plate" style="padding:12px 16px 10px">
     <div class="pk">what does it mean for an agent to remember?</div>
-    /*MEMORY*/
-    <div class="pt" style="font-size:19px">What memory <em>does</em></div>
-    <p class="ps">Same instruments, three people: memory ρ decides how fast acceptance follows the bill. Two survey waves are what measure it.</p>
+    /*HOUSEHOLD*/
+    <div class="pt" style="font-size:19px">One household, three <em>years</em></div>
   </div>
   </div>
 
   <div class="cols">
     <div>
-      <p><b>Reading the plate.</b> The commuter on Nordlandet opposes the package in 2026. An electric car in 2029 cuts the bill by 30%, and with ρ = 0.8 acceptance climbs slowly, crossing λ only in 2031; when the distance charge ends the discount in 2035, the same memory holds it above λ. The van driver, with ρ = 0.3, follows the bill almost at once: up when the van goes electric, below λ again in 2035. Memory cuts both ways, so its size decides which pathways stay admissible. The model runs this for every agent in every future; the thesis replaces the stated values with estimates.</p>
+      <p><b>One household through time (illustrative).</b> A household on Nordlandet crosses Nordsundbrua twice a day and opposes the package in 2026. In 2029 it replaces its car with an electric one and its toll bill falls 30%; with ρ above zero, its acceptance carries forward. In 2035 a distance-based charge removes the discount: its bill rises, its acceptance drops, and if enough households follow, the pathway breaks λ and is inadmissible unless revenue is earmarked to what they use. The same model runs this story for every agent in every future.</p>
     </div>
     <div>
       <p><b>What would falsify it.</b> If ρ is close to zero, agents need no memory and claim 1 reduces to a static result; if η is close to zero, information does not move acceptance and H2 fails; if the fast engine cannot reproduce the network model, the ensemble is cut to what the network model can run. Each is reported, whichever way it falls.</p>
@@ -240,21 +263,13 @@ ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-si
     <div class="pal"><span style="--c:var(--cream)">rest of the town</span><span style="--c:var(--red)">Nordlandet, beyond the bridge</span><span style="--c:var(--amber)">rv. 70, the tolled road</span><span style="--c:var(--teal)">Atlanterhavstunnelen, free</span></div>
     <div class="pk">who has to pay to reach the other half of town?</div>
     <img src="/*HALVES*/" alt="Kristiansund on relief: Nordlandet's buildings in red east of Nordsundbrua, the rest in cream, rv. 70 in amber, the free tunnel in teal" style="display:block;width:100%;margin:6px 0 8px">
-    <div class="trips">
-      <div style="--c:var(--red)"><b>1</b> Nordlandet → centre: crosses Nordsundbrua at <b>A</b>, <em>pays</em></div>
-      <div style="--c:var(--teal)"><b>2</b> Kirkelandet → Averøy: through the tunnel, <em>free</em></div>
-      <div style="--c:var(--cream)"><b>3</b> Nordlandet → mainland: Omsundbrua at <b>B</b>, <em>pays</em></div>
-    </div>
-    <div class="pt">Who pays depends on where you <em>live</em></div>
-    <div class="bars">
-      <div class="bl">homes</div><div class="bt"><span style="flex:1948;background:var(--red)">Nordlandet 1,948 · 32%</span><span style="flex:4188">rest of town 4,188</span></div>
-      <div class="bl">workplaces</div><div class="bt"><span style="flex:229;background:var(--red)">229 · 39%</span><span style="flex:363">363</span></div>
-    </div>
+    <div class="pt">Two halves, one <em>bridge</em></div>
+    <p class="ps">Nordlandet holds 32% of the town's homes and 39% of its workplaces; inside the town its only road to the rest is the bridge, and the free tunnel opens on the other side.</p>
     <div class="src">OpenStreetMap road graph and buildings, Copernicus GLO-30 terrain · make_plate_halves.py<sup>osm</sup></div>
   </div>
   <div class="cols">
     <p><b>Why Kristiansund.</b> Bypakke Kristiansund began collection on 1 June 2026 at two stations on rv70, Nordsundbrua and Omsundbrua, charging in both directions; about 70% of the package is toll-financed over up to 15 years<sup>bypakke,innst337</sup>. The city council approved the basis 26 to 19 and the county 33 to 14: acceptance here is contested, and live.</p>
-    <p><b>Exposure is not uniform.</b> Atlanterhavstunnelen has been toll-free since 2020, so some trips have a free way out; on the regional network, <span class="todo">[N1]</span>% of trips avoid both stations. The study has a measured dose, not the assumption that everyone pays. Molde, with no package, is the comparison town<span class="check">CHECK older stations</span>.</p>
+    <p><b>Exposure is not uniform.</b> Atlanterhavstunnelen has been toll-free since 2020, so some trips out of town have a free alternative; computed on the regional network, <span class="todo">[N1]</span>% of trips can avoid both stations. The study therefore has a measured dose rather than the assumption that everyone pays. Molde, with no toll package, is the comparison town<span class="check">CHECK older stations</span>.</p>
   </div>
   <div class="rule"></div>
 
@@ -287,7 +302,7 @@ ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-si
         <div class="pt" style="font-size:19px">One card, three <em>arms</em></div>
         <p class="ps">A third see their own monthly cost first, a third a short story of the package, a third nothing. Illustrative levels from the national ranges<sup>toi2179</sup>.</p>
       </div>
-      <p><b>The public record.</b> Submissions, council debate and local press from 2019 to 2026 are coded by a language model and checked by a Norwegian-speaking coder: an acceptance trajectory for the years before collection.</p>
+      <p><b>The public record.</b> Consultation submissions, council debate and local press from 2019 to 2026 are coded into acceptance arguments by a language model, checked against a Norwegian-speaking human coder: a trajectory for the years before collection.</p>
       <p class="decisive">The design separates persistence from information with an experiment, not with a before-period nobody collected.</p>
 
     </div>
@@ -307,16 +322,36 @@ ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-si
       <div class="pal"><span style="--c:var(--sage)">60%+ of futures</span><span style="--c:var(--amber)">40 to 60%</span><span style="--c:rgba(236,227,210,.3)">fails most</span><span style="--c:var(--red)">widest margin</span></div>
       /*FRONT*/
       <div class="pt" style="font-size:19px">The robust <em>front</em></div>
-      <p class="ps">Five of 904 pathways drop into the strip with their signposts. Prototype, parameters assumed.</p>
+      <p class="ps">904 pathways competed in 1,000 futures; five drop into the strip with their signposts. Prototype, parameters assumed.</p>
       
     </div>
   </div>
-  <div class="plate" style="padding:10px 16px 8px;margin-bottom:6px">
-    <div class="pal"><span style="--c:var(--teal)">no new data · level 1</span><span style="--c:var(--amber)">survey wave 1 · level 2</span><span style="--c:var(--sage)">survey wave 2 · level 3</span><span style="--c:var(--red)">article, at submission</span></div>
-    <div class="pk">what feeds what, and when?</div>
-    /*THESISMAP*/
-    <div class="pt" style="font-size:19px">Data to articles to <em>claims</em></div>
-    <div class="src">instrument designed before the start · A1 also hindcasts the fleet 2010 to 2025<sup>deuten</sup> and checks the package forecast against counts<sup>welde19</sup><span class="check">CHECK term</span></div>
+  <table>
+    <tr><th style="width:23%">Article</th><th style="width:9%">Submit</th><th style="width:7%">RQ</th><th>Data</th><th style="width:9%">Fieldwork</th></tr>
+    <tr><td>A1 Agents with memory</td><td>Month 12</td><td>RQ1</td><td>National ranges, vehicle register; recovery tests; fidelity; fleet hindcast 2010 to 2025<sup>deuten</sup>; the package's traffic forecast checked against station counts<sup>welde19</sup></td><td>No</td></tr>
+    <tr><td>A2 Acceptance that persists</td><td>Month 24</td><td>RQ2</td><td>Both waves; public record</td><td>Yes</td></tr>
+    <tr><td>A3 Robust pathways</td><td>Month 32</td><td>RQ3</td><td>The ensemble; dated events</td><td>Partly</td></tr>
+    <tr><td>A4 Discount revision (optional)</td><td>Month 34</td><td>Practice</td><td>A3 with planners, as visual stories</td><td>No</td></tr>
+  </table>
+
+  <div class="plate" style="padding:8px 18px 6px;margin-bottom:10px">
+    <svg viewBox="0 14 990 108" role="img" aria-label="36-month calendar">
+      <g font-family="Roboto Mono, monospace" font-size="10" fill="#948B7E">
+        <line x1="20" y1="64" x2="980" y2="64" stroke="#948B7E"/>
+        <g stroke="#948B7E"><line x1="20" y1="60" x2="20" y2="68"/><line x1="340" y1="60" x2="340" y2="68"/><line x1="660" y1="60" x2="660" y2="68"/><line x1="980" y1="60" x2="980" y2="68"/></g>
+        <text x="20" y="84">month 0</text><text x="340" y="84" text-anchor="middle">12</text><text x="660" y="84" text-anchor="middle">24</text><text x="980" y="84" text-anchor="end">36</text>
+      </g>
+      <!-- bands -->
+      <rect x="20" y="34" width="427" height="10" fill="rgba(236,227,210,.18)"/><text x="460" y="43" font-family="Roboto Mono" font-size="10" fill="#ECE3D2">30 ECTS coursework</text>
+      <rect x="20" y="96" width="107" height="10" fill="rgba(124,186,196,.5)"/><text x="24" y="118" font-family="Roboto Mono" font-size="10" fill="#7CBAC4">Sikt · pilot</text>
+      <rect x="900" y="96" width="80" height="10" fill="rgba(236,227,210,.4)"/><text x="976" y="118" font-family="Roboto Mono" font-size="10" fill="#ECE3D2" text-anchor="end">summary chapter</text>
+      <!-- waves -->
+      <g fill="#D4A530" font-family="Roboto Mono" font-size="10.5"><circle cx="180" cy="64" r="7"/><text x="180" y="50" text-anchor="middle">WAVE 1</text><circle cx="500" cy="64" r="7"/><text x="500" y="50" text-anchor="middle">WAVE 2</text></g>
+      <!-- articles -->
+      <g fill="#D2412B" font-family="Roboto Mono" font-size="10.5" font-weight="500"><rect x="334" y="58" width="12" height="12"/><text x="340" y="104" text-anchor="middle">A1</text><rect x="654" y="58" width="12" height="12"/><text x="660" y="104" text-anchor="middle">A2</text><rect x="867" y="58" width="12" height="12"/><text x="873" y="104" text-anchor="middle">A3</text></g>
+      <g fill="none" stroke="#D2412B"><rect x="921" y="58" width="12" height="12"/></g><text x="927" y="50" text-anchor="middle" font-family="Roboto Mono" font-size="10" fill="#D2412B">A4?</text>
+    </svg>
+    <div class="src">36 months · instrument designed before the start · Sikt and pilot in months 1 to 3<span class="check">CHECK term and coursework</span></div>
   </div>
   <div class="ladder">
     <div style="--c:var(--teal)"><div class="t">Level 1 · no new data</div><p>A1 and A3 alone: a complete thesis.</p></div>
@@ -325,7 +360,7 @@ ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-si
   </div>
 
   <div class="cols" style="grid-template-columns:1.45fr .55fr;gap:24px">
-    <table class="risk">
+    <table>
       <tr><th style="width:22%">Risk</th><th style="width:30%">Trigger</th><th>Response</th></tr>
       <tr><td>Low response</td><td style="color:var(--dim)">wave 1 below power</td><td>Commercial panel top-up; Level 2 still holds</td></tr>
       <tr><td>Attrition</td><td style="color:var(--dim)">wave 2 below plan</td><td>Sized for it; H1 with its detectable effect</td></tr>
@@ -333,9 +368,9 @@ ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-si
       <tr><td>Engine diverges</td><td style="color:var(--dim)">fidelity error too high</td><td>Larger network subset, fewer pathways</td></tr>
       <tr><td>Language</td><td style="color:var(--dim)">pilot comprehension</td><td>Norwegian-speaking co-authors pilot it</td></tr>
     </table>
-    <p style="font-size:15.5px"><b>Receipts and open science.</b> Every number here traces to commit <span class="todo">[SHA]</span>, with <span class="todo">[TESTS]</span> automated tests. Code is open; anonymised survey data go to a FAIR archive as Sikt allows; traffic data are used as aggregate counts. AI use is disclosed in the supplement.</p>
+    <p style="font-size:15.5px"><b>Receipts and open science.</b> Every number this proposal computes traces to commit <span class="todo">[SHA]</span>, with <span class="todo">[TESTS]</span> automated tests. Code is released openly; anonymised survey data are deposited under FAIR principles as Sikt allows; traffic data are used as aggregate counts only. AI use is disclosed in the supplement.</p>
   </div>
-  <div class="rule" style="margin:2px 0 6px"></div>
+  <div class="rule" style="margin:6px 0 8px"></div>
   <ol data-refs class="refs"></ol>
   <div class="folio"><span>From end states to pathways</span><span>5 / 5</span></div>
 </section>

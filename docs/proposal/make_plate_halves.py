@@ -96,6 +96,7 @@ def main():
     bridge = [(u, v) for u, v, d in G.edges(data=True) if "Nordsundbrua" in names(d)]
     U = G.to_undirected()
     U = U.subgraph(max(nx.connected_components(U), key=len)).copy()
+    FULL = U.copy()                                   # with the bridge, for the example trips
     U.remove_edges_from(bridge)
     parts = sorted(nx.connected_components(U), key=len, reverse=True)[:2]
     side = {n: i for i, c in enumerate(parts) for n in c}
@@ -192,8 +193,31 @@ def main():
         ax.text(tx, ey - 25, body, color=c, fontsize=10, family="monospace", ha=ha, va="top", zorder=10,
                 bbox=dict(boxstyle="square,pad=0.45", fc=INK, ec="none"))
 
-    callout(bmid, 700, 650, "A · NORDSUNDBRUA", "toll station, rv. 70", RED)
-    callout(exit_pt, -450, 520, "B · TOWARDS OMSUNDBRUA", "second station, beyond the frame", AMBER)
+    # three example trips, shortest paths on the road network
+    allids = list(FULL.nodes)
+    atree = cKDTree(np.array([[G.nodes[i]["x"], G.nodes[i]["y"]] for i in allids]))
+    near = lambda p: allids[atree.query(p)[1]]
+    nl = cent[(bside == 1) & (cent[:, 0] < x1 - 300) & (cent[:, 1] < y1 - 300) & (cent[:, 1] > y0 + 200)]
+    nl_north = nl[np.argmin(np.hypot(nl[:, 0] - (x1 - 900), nl[:, 1] - (y1 - 750)))]   # a home in north Nordlandet
+    nl_south = nl[np.argmin(np.hypot(nl[:, 0] - (x1 - 1700), nl[:, 1] - (y0 + 350)))]
+    kirk_c = np.array(F["islands"]["Kirkelandet"])
+    trips = [(nl_north, kirk_c, RED, "1"), (kirk_c + np.array([150, -250]), portal, TEAL, "2"), (nl_south, exit_pt, CREAM, "3")]
+    res["trips"] = []
+    for a, b_, col, num in trips:
+        route = nx.shortest_path(FULL, near(a), near(b_), weight="length")
+        xy = np.array([[G.nodes[n]["x"], G.nodes[n]["y"]] for n in route])
+        crosses = any((u, v) in bridge or (v, u) in bridge for u, v in zip(route[:-1], route[1:]))
+        res["trips"].append({"trip": num, "crosses_A": bool(crosses), "km": round(float(np.sum(np.hypot(*np.diff(xy, axis=0).T))) / 1000, 1)})
+        ax.plot(xy[:, 0], xy[:, 1], color=col, lw=7, alpha=0.18, zorder=7, solid_capstyle="round")
+        ax.plot(xy[:, 0], xy[:, 1], color=col, lw=1.8, zorder=7, ls=(0, (6, 3)))
+        sx_, sy_ = xy[0]
+        ax.add_patch(plt.Circle((sx_, sy_), 70, color=col, zorder=10))
+        ax.text(sx_, sy_, num, color=INK, fontsize=9, fontweight="bold", ha="center", va="center", zorder=11)
+        ex_, ey_ = xy[-1]
+        ax.add_patch(plt.Circle((ex_, ey_), 45, fill=False, ec=col, lw=1.6, zorder=10))
+    print("trips", res["trips"])
+    callout(bmid, -500, 820, "A · NORDSUNDBRUA", "toll station, rv. 70", RED)
+    callout(exit_pt, -300, 1150, "B · TOWARDS OMSUNDBRUA", "second station, beyond the frame", AMBER)
     callout(portal, -500, -700, "C · ATLANTERHAVSTUNNELEN", "fv. 64, toll-free since 2020", TEAL)
     for name, (ix, iy) in F["islands"].items():
         if name and x0 + 200 < ix < x1 - 200 and y0 + 200 < iy < y1 - 200 and not (ix > x1 - 1900 and iy > y1 - 900):
@@ -201,7 +225,7 @@ def main():
                     va="center", zorder=8)
     if far_name:
         fc = cent[(bside == 1) & (cent[:, 0] < x1) & (cent[:, 1] > y0)].mean(axis=0)
-        ax.text(fc[0] + 700, fc[1] + 150, far_name, color=RED, fontsize=12, family="monospace", fontweight="bold",
+        ax.text(fc[0] + 300, fc[1] - 250, far_name, color=RED, fontsize=12, family="monospace", fontweight="bold",
                 ha="center", zorder=8, bbox=dict(boxstyle="square,pad=0.3", fc=INK, ec="none", alpha=0.75))
     sx, sy = x0 + 220, y0 + 200
     ax.plot([sx, sx + 500], [sy, sy], color=CREAM, lw=3.2, zorder=9, solid_capstyle="butt")

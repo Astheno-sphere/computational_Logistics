@@ -16,7 +16,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 CREAM, DIM, RED, AMBER, SAGE, TEAL, INK = "#ECE3D2", "#948B7E", "#D2412B", "#D4A530", "#9DB886", "#7CBAC4", "#16120F"
-W, H = 640, 712
+W, H = 860, 712
 CX, A, B = 445, 180, 80          # slab centre x, half-width and half-depth of the isometric slab
 TOP, GAP = 26, 128               # y of the top slab's back corner, vertical gap between layers
 
@@ -41,7 +41,7 @@ def main():
 
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" '
            f'aria-label="Exploded axonometric of the engine: data, estimated choice, agents with memory, futures, pathways">',
-           f'<defs><filter id="g"><feGaussianBlur stdDeviation="2.2"/></filter></defs>']
+           f'<defs><filter id="g"><feGaussianBlur stdDeviation="2.2"/></filter><marker id="ar" viewBox="0 0 10 10" refX="5" refY="9" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L5,10 L10,0" fill="none" stroke="{CREAM}" stroke-width="1.6"/></marker></defs>']
     # dashed verticals at the slab corners, behind everything
     c_top, _ = slab(0); c_bot, _ = slab(4)
     for (a, b), (c, d) in zip(c_top, c_bot):
@@ -108,11 +108,11 @@ def main():
     layers.append((0, "".join(g)))
 
     labels = {
-        0: ("05", "PATHWAYS", "904 orders, 4 instruments", "claim 1 · claim 3 · A3", RED),
-        1: ("04", "10³ FUTURES", "EMA Workbench", "claim 2", SAGE),
-        2: ("03", "AGENTS", "acceptance remembered, ρ", "claim 1 · A1", RED),
-        3: ("02", "ESTIMATED CHOICE", "two waves · Biogeme", "A2", AMBER),
-        4: ("01", "DATA", "OSM · register · counts", "Kristiansund, real", CREAM),
+        0: ("05", "PATHWAYS", "which order of instruments survives", "claims 1, 3 · A3", RED),
+        1: ("04", "10³ FUTURES", "the same agents in 1,000 worlds", "claim 2 · EMA Workbench", SAGE),
+        2: ("03", "AGENTS", "every home remembers last year", "claim 1 · A1 · ρ", RED),
+        3: ("02", "ESTIMATED CHOICE", "what people choose and accept", "A2 · Biogeme", AMBER),
+        4: ("01", "DATA", "the real town, not a toy", "OSM · register · counts", CREAM),
     }
     for k in (4, 3, 2, 1, 0):                  # bottom first, so upper slabs occlude
         _, poly = slab(k)
@@ -126,6 +126,13 @@ def main():
         out.append(f'<text x="14" y="{ly + 37:.0f}" font-family="Roboto Mono,monospace" font-size="12.5" fill="{col}">{tag}</text>')
         lx = iso(x0, y1, k)[0] + (iso(x0, y0, k)[0] - iso(x0, y1, k)[0]) * 0.5
         out.append(f'<line x1="236" y1="{ly - 4:.0f}" x2="{lx - 6:.0f}" y2="{ly - 4:.0f}" stroke="{CREAM}" stroke-opacity=".35" stroke-dasharray="2 3"/>')
+    # what flows up between layers, on the right
+    flows = {3: "homes sampled, invited", 2: "β, η, ρ estimated", 1: "agent states, 2026 to 2050", 0: "futures meeting targets"}
+    for k, txt in flows.items():
+        xa, ya = iso(x1, y1, k + 1); xb, yb = iso(x1, y1, k)
+        xr = xa + 18
+        out.append(f'<path d="M{xr:.0f},{ya - 10:.0f} V{yb + 18:.0f}" stroke="{CREAM}" stroke-width="1.2" fill="none" marker-end="url(#ar)"/>')
+        out.append(f'<text x="{xr + 10:.0f}" y="{(ya + yb) / 2 + 4:.0f}" font-family="Roboto Mono,monospace" font-size="12.5" fill="{CREAM}">{txt}</text>')
     # the bridge, ringed on the agent layer
     bx, by = iso(437020, 6999096, 2)
     out.append(f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="9" fill="none" stroke="{CREAM}" stroke-width="1.2"/>')

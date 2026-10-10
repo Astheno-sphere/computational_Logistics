@@ -57,7 +57,7 @@ def main():
     # picked pathways
     letters = "ABCDE"
     strip_y0, gap = 446, 31
-    sx0, sx1 = 240, 820
+    sx0, sx1 = 300, 800
     E = lambda e: sx0 + (e - 0.40) / 0.60 * (sx1 - sx0)
     for k, i in enumerate(J["pick"]):
         r = P[i]; col = RED if i == J["best"] else (SAGE if r["share"] >= 0.6 else AMBER if r["share"] >= 0.4 else CREAM)
@@ -76,23 +76,34 @@ def main():
             x = E(t)
             o.append(f'<circle cx="{x:.1f}" cy="{ly}" r="10" fill="{INK}" stroke="{col}" stroke-width="1.6"/>')
             o.append(f'<text x="{x:.1f}" y="{ly + 4}" {MONO} font-size="12" font-weight="600" fill="{CREAM}" text-anchor="middle">{c}</text>')
-        o.append(f'<text x="{sx0 - 14}" y="{ly + 4}" {MONO} font-size="18" font-weight="600" fill="{col}" text-anchor="end">{letters[k]}</text>')
+        o.append(f'<text x="{sx0 - 16}" y="{ly + 5}" {MONO} font-size="16" font-weight="600" fill="{col}" text-anchor="end">{letters[k]}</text>')
         seq = " then ".join(NAMES[c] for c in r["code"])
-        o.append(f'<text x="70" y="{ly + 4}" font-family="Inter,sans-serif" font-size="15" fill="{DIM}">{seq[:30]}</text>' if False else "")
+        short = " → ".join({"P": "package", "Z": "ZE rate", "D": "distance", "E": "earmark"}[c] for c in r["code"])
+        o.append(f'<text x="{sx0 - 34}" y="{ly + 5}" font-family="Inter,sans-serif" font-size="13.5" fill="{CREAM}" text-anchor="end">{short}</text>')
         o.append(f'<text x="{sx1 + 14}" y="{ly + 4}" {MONO} font-size="14" fill="{CREAM}">{int(round(r["share"] * 100))}% · {r["margin"]:+.2f}</text>')
+    winners = sorted(J["pick"], key=lambda i: -P[i]["share"])[:1] + [J["best"]]
+    bx0, by0 = X(-0.245), Y(0.70)
+    o.append(f'<rect x="{bx0 - 10:.0f}" y="{by0 - 22:.0f}" width="420" height="78" fill="{INK}" stroke="{CREAM}" stroke-opacity=".5"/>')
+    for n, i in enumerate(winners):
+        r = P[i]; lab = "ABCDE"[J["pick"].index(i)]
+        txt = (f"{lab} · distance charge alone: {round(r['share'] * 100)}% of futures on target" if n == 0 else
+               f"{lab} · earmark first, distance charge at 50% electric: widest margin")
+        col = SAGE if n == 0 else RED
+        o.append(f'<text x="{bx0:.0f}" y="{by0 + n * 30:.0f}" font-family="Inter,sans-serif" font-size="15" font-weight="700" fill="{col}">{txt}</text>')
+    o.append(f'<text x="{bx0:.0f}" y="{by0 + 50:.0f}" {MONO} font-size="12.5" fill="{DIM}">coverage against acceptance: the trade-off the thesis estimates</text>')
     for e in (0.4, 0.5, 0.65, 0.8, 1.0):
         o.append(f'<text x="{E(e):.1f}" y="{strip_y0 - 18}" {MONO} font-size="14" fill="{DIM}" text-anchor="middle">{int(e * 100)}%</text>')
-    o.append(f'<text x="{sx0}" y="{strip_y0 - 36}" {MONO} font-size="14" fill="{DIM}" letter-spacing="1.2">SIGNPOST · ELECTRIC SHARE AT WHICH EACH INSTRUMENT SWITCHES ON</text>')
-    o.append(f'<text x="{sx1 + 14}" y="{strip_y0 - 18}" {MONO} font-size="14" fill="{DIM}">futures · margin</text>')
+    o.append(f'<text x="{sx0}" y="{strip_y0 - 36}" {MONO} font-size="14" fill="{DIM}" letter-spacing="1.2">SIGNPOST · ELECTRIC SHARE THAT SWITCHES IT ON</text>')
+    o.append(f'<text x="{sx1 + 14}" y="{strip_y0 - 40}" {MONO} font-size="13" fill="{DIM}">futures · margin</text>')
     # key for instruments
     ky = strip_y0 + 5 * gap + 4
-    key = "   ".join(f"{c} {n}" for c, n in NAMES.items())
+    key = "  ·  ".join(f"{c} {n}" for c, n in NAMES.items())
     o.append(f'<text x="{sx0}" y="{ky}" {MONO} font-size="14" fill="{CREAM}" fill-opacity=".8">{key}</text>')
     # run box
-    o.append(f'<rect x="{X(-0.26):.0f}" y="{Y0 + 6}" width="330" height="92" fill="{INK}" stroke="{CREAM}" stroke-opacity=".6"/>')
+    o.append(f'<rect x="{X(-0.16):.0f}" y="{Y(0.30):.0f}" width="330" height="92" fill="{INK}" stroke="{CREAM}" stroke-opacity=".6"/>')
     for n, line in enumerate(("904 PATHWAYS · 1,000 FUTURES", "2026 TO 2050 · 22.6 M PATHWAY-YEARS",
                               f"SAGE {J['robust']} · AMBER {J['near']} · GHOST {J['fail']}", "PROTOTYPE · PARAMETERS ASSUMED")):
-        o.append(f'<text x="{X(-0.26) + 320:.0f}" y="{Y0 + 28 + n * 20}" {MONO} font-size="13" fill="{CREAM}" text-anchor="end">{line}</text>')
+        o.append(f'<text x="{X(-0.16) + 320:.0f}" y="{Y(0.30) + 22 + n * 20:.0f}" {MONO} font-size="13" fill="{CREAM}" text-anchor="end">{line}</text>')
     o.append("</svg>")
     (HERE / "plates" / "front.svg").write_text("".join(o))
     print("front.svg", round(len("".join(o)) / 1024), "kB")
