@@ -33,7 +33,7 @@ def main():
         o.append(f'<text x="{X0 - 8}" y="{Y(s) + 4:.1f}" {MONO} font-size="15" fill="{DIM}" text-anchor="end">{int(s * 100)}%</text>')
     o.append(f'<line x1="{X(0):.1f}" y1="{Y0}" x2="{X(0):.1f}" y2="{Y1}" stroke="{CREAM}" stroke-opacity=".35" stroke-dasharray="4 4"/>')
     o.append(f'<text x="{X(0) - 6:.1f}" y="{Y1 - 8}" {MONO} font-size="13" fill="{CREAM}" text-anchor="end">margin 0</text>')
-    o.append(f'<text x="{X(-0.3) + 4:.1f}" y="{Y(0.5):.1f}" {MONO} font-size="13" fill="{DIM}">no margin at any rise</text>')
+    o.append(f'<text x="{X(-0.3) + 4:.1f}" y="{Y(0.5):.1f}" {MONO} font-size="13" fill="{DIM}">inadmissible even at λ − 0.3</text>')
     o.append(f'<line x1="{X0}" y1="{Y1}" x2="{X1}" y2="{Y1}" stroke="{DIM}"/><line x1="{X0}" y1="{Y0}" x2="{X0}" y2="{Y1}" stroke="{DIM}"/>')
     for m in (-0.3, -0.2, -0.1, 0.0, 0.1):
         o.append(f'<text x="{X(m):.1f}" y="{Y1 + 16}" {MONO} font-size="15" fill="{DIM}" text-anchor="middle">{m:+.1f}</text>')
@@ -92,7 +92,7 @@ def main():
         o.append(f'<text x="{bx0:.0f}" y="{by0 + n * 30:.0f}" font-family="Inter,sans-serif" font-size="15" font-weight="700" fill="{col}">{txt}</text>')
     o.append(f'<text x="{bx0:.0f}" y="{by0 + 50:.0f}" {MONO} font-size="12.5" fill="{DIM}">coverage against acceptance: the trade-off the thesis estimates</text>')
     for e in (0.4, 0.5, 0.65, 0.8, 1.0):
-        o.append(f'<text x="{E(e):.1f}" y="{strip_y0 - 18}" {MONO} font-size="14" fill="{DIM}" text-anchor="middle">{int(e * 100)}%</text>')
+        o.append(f'<text x="{E(e):.1f}" y="{strip_y0 - 18}" {MONO} font-size="14" fill="{DIM}" text-anchor="middle">{"opens" if e == 0.4 else str(int(e * 100)) + "%"}</text>')
     o.append(f'<text x="{sx0}" y="{strip_y0 - 36}" {MONO} font-size="14" fill="{DIM}" letter-spacing="1.2">SIGNPOST · ELECTRIC SHARE THAT SWITCHES IT ON</text>')
     o.append(f'<text x="{sx1 + 14}" y="{strip_y0 - 40}" {MONO} font-size="13" fill="{DIM}">futures · margin</text>')
     # key for instruments
@@ -102,7 +102,7 @@ def main():
     # run box
     o.append(f'<rect x="{X(-0.16):.0f}" y="{Y(0.30):.0f}" width="330" height="92" fill="{INK}" stroke="{CREAM}" stroke-opacity=".6"/>')
     for n, line in enumerate(("904 PATHWAYS · 1,000 FUTURES", "2026 TO 2050 · 22.6 M PATHWAY-YEARS",
-                              f"SAGE {J['robust']} · AMBER {J['near']} · GHOST {J['fail']}", "PROTOTYPE · PARAMETERS ASSUMED")):
+                              f"60%+ {J['robust']} · 40–60% {J['near']} · FAILS {J['fail']}", "PROTOTYPE · PARAMETERS ASSUMED")):
         o.append(f'<text x="{X(-0.16) + 320:.0f}" y="{Y(0.30) + 22 + n * 20:.0f}" {MONO} font-size="13" fill="{CREAM}" text-anchor="end">{line}</text>')
     o.append("</svg>")
     (HERE / "plates" / "front.svg").write_text("".join(o))

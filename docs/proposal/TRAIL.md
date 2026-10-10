@@ -121,3 +121,9 @@ homes, 39% of workplaces; Copernicus contours) and the choice card; p5 The robus
 futures; distance charge alone 67% of futures on target; earmark then distance charge at 50% electric, widest margin +0.07)
 and the calendar. Prototype parameters are assumptions, labelled on the plate and in make_proto.py. The HTML source
 src/a3v4.html is now the master text; v4/text.md is the Stage A record.
+
+## 2026-10-10 · v4.5 plate rebuild
+- Replaced: household plate → "What memory does" (eq. 2 reduced form, three agents, values illustrative); answers plate → "A plan is a tree, not a point" (904-pathway radial tree); inline erosion chart → three 100-crossing grids; calendar and articles table → thesis map (data → articles → claims, wires coloured by ladder level).
+- Map: headline "Who pays depends on where you live", three-trip legend, homes/workplaces bars.
+- Inspector pass: commuter label contradicted text (fixed); footer equation now named as reduced form of (2); engine caption no longer claims layers 2–3 are real; negative margin defined in (3); front jargon removed; "calibrated" → "validated"; P1 echo replaced.
+- Still open for Arshad: [N1], [n], [FID], [SHA], [TESTS], CHECK flags; references print at 8.7px.

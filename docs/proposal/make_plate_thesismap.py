@@ -85,6 +85,8 @@ def main():
         if a == "A3":
             o.append(f'<rect x="{x - 11}" y="{AXY - 11}" width="22" height="22" fill="{RED}" fill-opacity=".45" filter="url(#tmg)"/>')
         o.append(f'<rect x="{x - 8}" y="{AXY - 8}" width="16" height="16" fill="{RED if solid else INK}" stroke="{RED}" stroke-width="1.4"/>')
+        if not solid:
+            o.append(f'<text x="{x}" y="{AXY - 14}" {MONO} font-size="11" fill="{RED}" text-anchor="middle">A4</text>')
         lx, anchor = {"A3": (x - 46, "start"), "A4": (x - 85, "start")}.get(a, (x, "middle"))
         if a != "A4":
             o.append(f'<line x1="{x:.1f}" y1="{AXY + 9}" x2="{x:.1f}" y2="224" stroke="{RED}" stroke-opacity=".35" stroke-dasharray="2 3"/>' if a != "A3" else "")

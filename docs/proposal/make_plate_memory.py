@@ -67,7 +67,7 @@ def main():
         ("Occasional crosser, Kirkelandet", "a few crossings a month", 0.2, None, 0.50, 0.55, 0.30, 0.50, TEAL, "walk"),
         ("Van driver, local firm", "many crossings · electric van in 2033", 1.4, 2033, 0.30, 0.75, 0.32, 0.40, AMBER, "van"),
     ]
-    W, H = 1000, 300
+    W, H = 1000, 316
     X0, X1, Y0, Y1 = 440, 960, 34, 236
     X = lambda y: X0 + (y - YEARS[0]) / (YEARS[-1] - YEARS[0]) * (X1 - X0)
     Yv = lambda a: Y1 - (a - 0.22) / 0.34 * (Y1 - Y0)
@@ -77,7 +77,7 @@ def main():
         o.append(f'<line x1="{X(y):.1f}" y1="{Y0 - 8}" x2="{X(y):.1f}" y2="{Y1}" stroke="{CREAM}" stroke-opacity=".3" stroke-dasharray="3 4"/>')
         o.append(f'<text x="{X(y) + 5:.1f}" y="{Y0 - 12}" {MONO} font-size="11" fill="{CREAM}">{lab}</text>')
     o.append(f'<line x1="{X0}" y1="{Yv(LAM):.1f}" x2="{X1}" y2="{Yv(LAM):.1f}" stroke="{RED}" stroke-width="1.4" stroke-dasharray="6 4"/>')
-    o.append(f'<text x="{X0 - 8}" y="{Yv(LAM) + 4:.1f}" {MONO} font-size="11" fill="{RED}" text-anchor="end">λ</text>')
+    o.append(f'<text x="{X0 - 8}" y="{Yv(LAM) + 4:.1f}" {MONO} font-size="11" fill="{RED}" text-anchor="end">λ 0.38</text>')
     o.append(f'<line x1="{X0}" y1="{Y1}" x2="{X1}" y2="{Y1}" stroke="{DIM}"/>')
     for y in (2026, 2029, 2033, 2035, 2040):
         o.append(f'<text x="{X(y):.1f}" y="{Y1 + 16}" {MONO} font-size="11" fill="{DIM}" text-anchor="middle">{y}</text>')
@@ -89,18 +89,18 @@ def main():
         o.append(f'<polyline points="{q}" fill="none" stroke="{col}" stroke-width="2.4"/>')
         below = [(y, a) for y, a in zip(YEARS, A) if a < LAM]
         for y, a in below:
-            o.append(f'<circle cx="{X(y):.1f}" cy="{Yv(a):.1f}" r="3.2" fill="{RED}"/>')
+            o.append(f'<circle cx="{X(y):.1f}" cy="{Yv(a):.1f}" r="3.2" fill="{col}" stroke="{RED}" stroke-width="1.4"/>')
         if ev:
             i = list(YEARS).index(ev)
             o.append(f'<circle cx="{X(ev):.1f}" cy="{Yv(A[i]):.1f}" r="5.5" fill="{SAGE}" stroke="{INK}" stroke-width="1.5"/>')
-            o.append(f'<text x="{X(ev) + (-9 if kind == "car" else 9):.1f}" y="{Yv(A[i]) + (-9 if kind == "car" else 19):.1f}" {MONO} font-size="11" fill="{SAGE}" text-anchor="{"end" if kind == "car" else "start"}">goes electric</text>')
+            o.append(f'<text x="{X(ev) + (-9 if kind == "car" else 12):.1f}" y="{Yv(A[i]) + (-9 if kind == "car" else 22):.1f}" {MONO} font-size="11" fill="{SAGE}" text-anchor="{"end" if kind == "car" else "start"}">goes electric</text>')
         ye, ae = YEARS[-1], A[-1]
-        note = {"car": "slow both ways: memory carries the past", "walk": "barely moved: low dose", "van": "fast: follows the bill"}[kind]
-        nx = {"car": X(2030.2), "walk": X(2035.6), "van": X(2026.6)}[kind]
-        ny = {"car": Yv(0.475), "walk": Yv(0.5) - 12, "van": Yv(0.3) + 24}[kind]
+        note = {"car": "slow both ways", "walk": "barely moved: low dose", "van": "fast: follows the bill"}[kind]
+        nx = {"car": X(2036.3), "walk": X(2035.6), "van": X(2026.6)}[kind]
+        ny = {"car": Yv(0.415) - 8, "walk": Yv(0.5) - 12, "van": Yv(0.3) + 24}[kind]
         o.append(f'<text x="{nx:.1f}" y="{ny:.1f}" {MONO} font-size="11.5" fill="{col}">{note}</text>')
         # agent card on the left
-        cy = 60 + k * 82
+        cy = 52 + k * 84
         o.append(f'<line x1="14" y1="{cy + 22}" x2="380" y2="{cy + 22}" stroke="{col}" stroke-opacity=".5"/>')
         o.append(person(30, cy + 20, 34, col))
         if kind == "car":
@@ -110,9 +110,9 @@ def main():
         o.append(f'<text x="92" y="{cy - 2}" {SANS} font-weight="800" font-size="14" fill="{CREAM}">{name}</text>')
         o.append(f'<text x="92" y="{cy + 14}" {SANS} font-size="11.5" fill="{DIM}">{sub}</text>')
         o.append(f'<text x="92" y="{cy + 38}" {MONO} font-size="11.5" fill="{col}">memory ρ = {rho} · dose {dose}</text>')
-        if below:
-            o.append(f'<text x="290" y="{cy + 38}" {MONO} font-size="11.5" fill="{RED}">dips below λ</text>')
-    o.append(f'<text x="14" y="{H - 14}" {MONO} font-size="10" fill="{DIM}">equation (2) with stated values: A(t) = ρA(t−1) + (1−ρ)(a₀ − κ·bill(t)); a₀ 0.55 to 0.87, κ 0.30 to 0.57, λ 0.38 · illustrative, not estimates</text>')
+        tag = {"car": ("crosses λ in 2031, held above", CREAM), "van": ("below λ again from 2035", RED), "walk": ("always above λ", TEAL)}[kind]
+        o.append(f'<text x="92" y="{cy + 55}" {MONO} font-size="11" fill="{tag[1]}">{tag[0]}</text>')
+    o.append(f'<text x="14" y="{H - 6}" {MONO} font-size="10.5" fill="{DIM}">reduced form of (2): δ·dose written as −κ·bill, info and z folded into a₀, scaled by (1−ρ); a₀ 0.55–0.87, κ 0.30–0.57 · illustrative, not estimates</text>')
     o.append("</svg>")
     (HERE / "plates" / "memory.svg").write_text("".join(o))
     for name, sub, dose, ev, rho, a0, kap, st, col, kind in people:
