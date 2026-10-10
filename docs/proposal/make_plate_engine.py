@@ -75,32 +75,36 @@ def main():
         col = RED if s == 1 else CREAM
         g.append(f'<circle cx="{a:.1f}" cy="{b:.1f}" r="1.5" fill="{col}" fill-opacity="{0.95 if s == 1 else 0.6}"/>')
     layers.append((2, "".join(g)))
-    # 2 (k=1): futures, a fan of random walks across the slab (illustrative shape of 10^3 futures)
+    # 2 (k=1): futures, the chosen pathway's acceptance in 120 prototype futures (red if it ever falls below that future's threshold)
+    J = json.loads((HERE / "plates" / "proto.json").read_text())
     g = []
-    n = 110
-    for j in range(n):
-        v = 0.5 + np.cumsum(rng.normal(0, 0.026, 60)); v = np.clip(v, 0.03, 0.97)
-        u = np.linspace(0.02, 0.98, 60)
-        fate = "fail" if v[-1] < 0.28 else ("robust" if v[-1] > 0.55 else "near")
-        col, op, sw = {"fail": (RED, .35, .6), "robust": (SAGE, .5, .65), "near": (CREAM, .12, .45)}[fate]
+    for traj, lam in zip(J["chosen_A"], J["chosen_lam"]):
+        traj = np.array(traj); fail = (traj < lam).any()
+        u = np.linspace(0.02, 0.98, len(traj)); v = np.clip(1.15 - 1.2 * traj, 0.03, 0.97)
+        col, op, sw = (RED, .55, .7) if fail else (SAGE, .45, .6)
         q = " ".join("%.1f,%.1f" % (CX + (uu - vv) * A, TOP + 1 * GAP + (uu + vv) * B) for uu, vv in zip(u, v))
         g.append(f'<polyline points="{q}" fill="none" stroke="{col}" stroke-opacity="{op}" stroke-width="{sw}"/>')
     layers.append((1, "".join(g)))
-    # 1 (k=0, top): pathways strip, five lines with signposts, the chosen one in red
+    # 1 (k=0, top): the five picked pathways as lines, stations at their signposts, the widest-margin one in red
     g = []
-    for j, (lab, col, w) in enumerate([("A", SAGE, 1.6), ("B", SAGE, 1.6), ("C", RED, 3.0), ("D", CREAM, 1.2), ("E", CREAM, 1.2)]):
-        v0 = 0.18 + j * 0.16
-        uu = np.array([0.04, 0.3, 0.34, 0.58, 0.62, 0.96]); vv = np.array([v0, v0, v0 + 0.05, v0 + 0.05, v0 - 0.02, v0 - 0.02])
-        P = [(CX + (a - b) * A, TOP + (a + b) * B) for a, b in zip(uu, vv)]
-        q = " ".join("%.1f,%.1f" % p for p in P)
-        if lab == "C":
+    P = J["paths"]
+    for j, i in enumerate(J["pick"]):
+        r = P[i]; lab = "ABCDE"[j]
+        col = RED if i == J["best"] else (SAGE if r["share"] >= 0.6 else AMBER if r["share"] >= 0.4 else CREAM)
+        w = 3.0 if col == RED else 1.5
+        v0 = 0.14 + j * 0.18
+        st = [0.40] + list(r["thr"])
+        P2 = [(CX + (a - v0) * A, TOP + (a + v0) * B) for a in (0.04, 0.96)]
+        q = " ".join("%.1f,%.1f" % p for p in P2)
+        if col == RED:
             g.append(f'<polyline points="{q}" fill="none" stroke="{RED}" stroke-width="7" stroke-opacity=".25" filter="url(#g)"/>')
         g.append(f'<polyline points="{q}" fill="none" stroke="{col}" stroke-width="{w}"/>')
-        for k in (1, 3):
-            a, b = P[k]
-            g.append(f'<circle cx="{a:.1f}" cy="{b:.1f}" r="3.6" fill="{INK}" stroke="{col}" stroke-width="1.4"/>')
-        a, b = P[0]
-        g.append(f'<text x="{a - 8:.1f}" y="{b + 4:.1f}" font-family="Roboto Mono,monospace" font-size="10" fill="{col}" text-anchor="end">{lab}</text>')
+        for e_, c_ in zip(st, r["code"]):
+            a = 0.04 + (e_ - 0.40) / 0.60 * 0.92
+            px_, py_ = CX + (a - v0) * A, TOP + (a + v0) * B
+            g.append(f'<circle cx="{px_:.1f}" cy="{py_:.1f}" r="4.6" fill="{INK}" stroke="{col}" stroke-width="1.4"/>')
+        a0x, a0y = P2[0]
+        g.append(f'<text x="{a0x - 8:.1f}" y="{a0y + 4:.1f}" font-family="Roboto Mono,monospace" font-size="11" fill="{col}" text-anchor="end">{lab}</text>')
     layers.append((0, "".join(g)))
 
     labels = {

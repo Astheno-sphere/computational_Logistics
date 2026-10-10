@@ -112,3 +112,12 @@ Content review (2026-10-10): v4 content set out page by page in chat. Simulated 
 CHECKPOINT 2026-10-10 (Stage A): proposal v4.1 text drafted (docs/proposal/v4/text.md, snapshot in v4/snapshots/2026-10-10-stageA-text.md); visual grammar v3 plus people and line-diagram rules in skills/visual-narrative; Figure 1 moved from the gantry to "end state and paths" (tolls are the case, not the question); Rhino and Grasshopper credited only if Arshad does that work himself. Waiting on: Arshad's rewrite, then the Adversary pass on the text, then Stage B storyboards. Open placeholders: N1, n, FID, SHA, TESTS; checks: MATSim/eqasim refs, Molde tolling, appointment length and coursework.
 
 2026-10-10 v4.3 typeset (proposal-v4.html): eight visuals. Drawn now from computed or design content: The base erodes (tariff arithmetic), the model box, one choice card (illustrative levels), the 36-month band. Rendered in Stage D: one household two answers, the engine, one household three years, who can avoid the toll, the robust front. CONDITION: the proposal says figures are composed in Rhino and Grasshopper with Heron and Blender; Arshad confirms he does that composition himself before submission, or the line is changed. make_rhino.py exports Kristiansund (6,728 buildings, roads, rv70, bus, bridge) to rhino/kristiansund.3dm for that work.
+
+2026-10-10 v4.4 complete (proposal-v4.html, five A3 pages, every page fits): seven drawn visuals, no frames left.
+p1 The base erodes (tariff arithmetic) and One place, two answers (real buildings at Nordsundbrua, years from the prototype);
+p2 The engine (exploded axonometric; layers 1-3 real, 4-5 from the prototype); p3 the model box and One household, three
+years (line-art elevation, bills from tariffs, acceptance illustrative); p4 Two halves, one bridge (OSM graph: Nordlandet 32% of
+homes, 39% of workplaces; Copernicus contours) and the choice card; p5 The robust front (prototype: 904 pathways x 1,000
+futures; distance charge alone 67% of futures on target; earmark then distance charge at 50% electric, widest margin +0.07)
+and the calendar. Prototype parameters are assumptions, labelled on the plate and in make_proto.py. The HTML source
+src/a3v4.html is now the master text; v4/text.md is the Stage A record.
