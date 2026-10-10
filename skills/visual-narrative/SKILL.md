@@ -99,6 +99,35 @@ true scale; elevations with a time band (morning, noon, evening, night); left/ri
 stacked density sections. Build `facade`, `stoop`, `awning`, `bench`, `bicycle`, `lamp` primitives
 for them and draw a Molde street in that manner (charcoal family).
 
+
+## Grammar v3: analytical plates (from a 15-plate study, 2026-10-10)
+What the analytical series does that ours did not:
+1. **Palette header as legend.** A strip of swatches with hex and meaning sits above the drawing, so
+   colour is defined before it is read. Colours are semantic and stable across plates: good, near,
+   bad, context, mass. A traffic-light ramp (good to bad) means the same thing on every plate.
+2. **Hero plus linked strip.** One large analytical hero (a map or a scatter) and a strip of small
+   multiples below it, joined by dashed leader lines (front point to its built form, A to E). Or the
+   reverse: an input strip of small maps, a bracket and arrow, then the composite map.
+3. **Run box.** A mono box in a corner states the run: generations, population, solver, mesh, seed,
+   nodes and edges. Proof sits on the plate, not in a footnote.
+4. **Callout cards on the map.** A ring on the place, a leader, a dark label card: name, measured value,
+   category ("TOWER GAP: 6.2 m/s, dangerous").
+5. **Ghosts.** Dominated designs and earlier iterations at 12 to 15% cream behind the result, so the
+   search is visible behind the answer.
+6. **Trails.** Agent flows as glowing trails, cream to amber to red by density, with origins as rings.
+7. **Split in one frame.** A dashed divider shows two metrics on one map (betweenness | closeness).
+8. **What-if note.** One sentence of sensitivity on the plate ("if the weight rises from 0.25 to
+   0.40, the optimal zone shifts 80 m east").
+9. **Tool family.** A terminal card (command in the accent, results table in two columns) beside the
+   diagram it produced (bubble, isolux plan, exploded cost stack). Exploded layers with left labels
+   and dashed verticals. A metro tree with one path lit in the accent.
+10. **Time strips.** Stacked horizontal strips, a year rule between each, one accent region in the last.
+11. **Subtitle is a two-beat claim with a number** ("30,000 designs competed. The front shows which
+    survived.").
+12. Do not inherit their flaws: the reference plates carry typos and decorative percentages; ours are
+    computed, spell-checked and every number survives a re-run.
+Use our own palette with the same semantics; learn the method, never trace the plates.
+
 ## Rules
 - Our palette and voice, not the reference's: `INK #10161B`, `PAPER #E8E1CF`, `ACCENT #FF5B3A`.
   Study other work for method; never trace its plates or reuse its artwork.
