@@ -150,6 +150,13 @@ Use our own palette with the same semantics; learn the method, never trace the p
   method's source in the footer.
 - Build our own primitives from these proportions; never trace the reference figures.
 
+### Why a real-data plate loses the analytical feel, and the fix (plate "two halves", 2026-10-10)
+Raster hillshade reads as a photograph: draw topography as vector contours (10 m thin, 50 m stronger) on a
+flat land colour. Frame at district scale so building shapes read, never a whole town at plate size.
+Give masses a cast shadow (offset 7 m, near-black) so they sit on the ground. Accent routes get a glow
+(two wide translucent strokes under a thin core). Callouts are a ring plus a filled dot, an elbow leader,
+a bold heading and a coloured mono line on an ink card. A run box in a corner and a faint grain finish it.
+
 ## Rules
 - Our palette and voice, not the reference's: `INK #10161B`, `PAPER #E8E1CF`, `ACCENT #FF5B3A`.
   Study other work for method; never trace its plates or reuse its artwork.
