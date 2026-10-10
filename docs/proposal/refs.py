@@ -7,11 +7,16 @@ references block is <ol data-refs></ol>; renumber(html) fills it and replaces ke
 import re
 
 REFS = {
+    "odeck08": "Odeck &amp; Bråthen (2008) Travel demand elasticities and users attitudes: a case study of Norwegian toll projects. <i>Transportation Research Part A</i> 42(1), 77–94.",
+    "tramodsim": "Flügel, Flötteröd et al. (2023) <i>TraModSim: an open-source traffic assignment tool for TraMod_By based on MATSim</i>. TØI report 1993/2023.",
+    "toi2035": "Flügel, Weber &amp; Hamre (2024) TØI report 2035/2024 on modelling new mobility and flexible tolls beyond the regional transport model.",
+    "toi2172": "Halse, Wangsness, Babri, Tveter, Bråthen &amp; Olsen (2026) <i>Veivalg for en realistisk og målrettet transportplan</i>. TØI report 2172/2026.",
+    "power": "Tveter &amp; Holmgren (2024) Statistical power and productivity effects of transport investments: a critical review. <i>Research in Transportation Economics</i> 105.",
     "ofv": "OFV (2026) New passenger car registrations, 2025.",
     "wps": "Wangsness, Proost &amp; Steinsland (2026) The curious case of road pricing reform in Norway. <i>Transportation Research Interdisciplinary Perspectives</i> 38, 102064.",
     "ntp": "Ministry of Transport (2024) Meld. St. 14 (2023–2024) <i>National Transport Plan 2025–2036</i>.",
     "oppdrag": "Ministry of Transport and Ministry of Trade, Industry and Fisheries (2024) NTP-oppdrag nr. 1-2024.",
-    "transplan": "TØI. TRANSPLAN, Norwegian Centre for Sustainable Transport Planning (2025–2033).",
+    "transplan": "TØI (2025) TRANSPLAN: A transport system within planetary boundaries. Centre for transport research, 2025–2033. toi.no/transplan.",
     "toi2051": "Kristensen et al. (2024) <i>Transport demand in foresight and backcasting</i>. TØI report 2051/2024.",
     "big": "Fridstrøm, Østli &amp; Johansen (2016) A stock-flow cohort model of the national car fleet. <i>European Transport Research Review</i> 8.",
     "toi2179": "Ciccone, Halse, Andreassen, Garnache &amp; Wangsness (2026) <i>Acceptance of distance-based road pricing: national choice experiment and field trial in the Oslo region</i>. TØI report 2179/2026.",

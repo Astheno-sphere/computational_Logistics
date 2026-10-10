@@ -59,3 +59,8 @@ a3 = (a3.replace("/*A3PLATES*/", (here / "src" / "a3-plates.js").read_text(encod
         .replace("/*BRIDGE*/null", (here / "bridge.json").read_text(encoding="utf-8")))
 (here / "proposal-a3.html").write_text(a3, encoding="utf-8")
 print("wrote", here / "proposal-a3.html")
+
+# proposal v4.2, A3, text with figure frames (src/a3v4.html -> proposal-v4.html)
+v4 = renumber((here / "src" / "a3v4.html").read_text(encoding="utf-8"))
+(here / "proposal-v4.html").write_text(v4, encoding="utf-8")
+print("wrote", here / "proposal-v4.html")
