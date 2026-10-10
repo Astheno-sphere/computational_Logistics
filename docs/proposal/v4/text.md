@@ -1,4 +1,4 @@
-# Proposal v4.3, Stage A: text only
+# Proposal v4.3, Stage A: text only (typeset in src/a3v4.html with eight visuals)
 
 Status: v4.2 plus the additions that earn their place (preliminary finding, model box, named
 instruments, defined targets, one household through time, falsification, tools, open science, fit).
@@ -163,7 +163,9 @@ cannot reproduce the network model, the ensemble is cut to what the network mode
 reported, whichever way it falls.
 
 **Tools.** Python throughout: estimation in Biogeme, the ensemble and scenario discovery in the EMA
-Workbench, road networks from OpenStreetMap with OSMnx and NetworkX, and routing checks with OR-Tools.
+Workbench, road networks with OSMnx and NetworkX, routing checks with OR-Tools; figures composed in
+Rhino and Grasshopper with Heron and Blender, a visual language that carries into storytelling with
+planners in A4 [story].
 
 ## Page 4. Case and design
 

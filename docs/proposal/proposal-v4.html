@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* Five A3 sheets (1123 x 1587 px = 297 x 420 mm). Body type is 17px so an A4 print (71%) still reads at about 9 pt.
-   Colour is semantic and fixed: sage = meets targets, amber = near, red = fails or the one thing a figure is about,
-   teal = free alternative, cream = mass and text. Figures are frames until Stage D draws them. */
+/* Five A3 sheets (1123 x 1587 px = 297 x 420 mm). Body 16.5px so an A4 print (71%) still reads near 9 pt.
+   Colour is semantic on every plate: sage = electric / meets targets, amber = near / today, red = fails, money or the one thing,
+   teal = free alternative, cream = mass, fossil and text. Drawn plates are computed; frames mark plates rendered in Stage D. */
 :root{
   --ground:#16120F; --panel:#1E1915; --cream:#ECE3D2; --body:#D3CABA; --dim:#948B7E; --faint:rgba(236,227,210,.15);
   --red:#D2412B; --sage:#9DB886; --amber:#D4A530; --teal:#7CBAC4;
@@ -17,51 +17,73 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:#0c0a09;color:var(--body);font-family:var(--sans);font-weight:300;-webkit-font-smoothing:antialiased}
-.sheet{width:1123px;height:1587px;background:var(--ground);position:relative;overflow:hidden;padding:56px 64px 60px;margin:0 auto 28px}
-.folio{position:absolute;left:64px;right:64px;bottom:24px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
-.kick{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
-h1{font-weight:900;color:var(--cream);font-size:82px;line-height:.95;letter-spacing:-.035em;margin:18px 0 12px;text-transform:uppercase}
-h1 em,h2 em{font-style:normal;color:var(--red)}
-.sub{font-size:24px;line-height:1.35;color:var(--cream);font-weight:300;margin:0 0 10px}
+.sheet{width:1123px;height:1587px;background:var(--ground);position:relative;overflow:hidden;padding:52px 62px 58px;margin:0 auto 28px}
+.folio{position:absolute;left:62px;right:62px;bottom:22px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.kick{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+h1{font-weight:900;color:var(--cream);font-size:76px;line-height:.95;letter-spacing:-.035em;margin:16px 0 10px;text-transform:uppercase}
+h1 em,h2 em,.ft em,.pt em{font-style:normal;color:var(--red)}
+.sub{font-size:22px;line-height:1.35;color:var(--cream);font-weight:300;margin:0 0 8px}
 .by{font-size:14px;color:var(--dim)} .by b{color:var(--cream);font-weight:600}
-h2{font-weight:800;color:var(--cream);font-size:30px;line-height:1.08;letter-spacing:-.015em;margin:0 0 12px;text-transform:uppercase}
-h2 small{display:block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.14em;color:var(--dim);margin-bottom:8px}
-p{font-size:17px;line-height:1.5;margin:0 0 11px}
+h2{font-weight:800;color:var(--cream);font-size:28px;line-height:1.08;letter-spacing:-.015em;margin:0 0 10px;text-transform:uppercase}
+h2 small{display:block;font-family:var(--mono);font-size:11.5px;font-weight:400;letter-spacing:.14em;color:var(--dim);margin-bottom:6px}
+h3{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin:0 0 6px}
+p{font-size:16.5px;line-height:1.5;margin:0 0 10px}
 p b,li b,td b{color:var(--cream);font-weight:600}
-sup{font-size:10.5px;color:var(--red);line-height:0}
-ol.claims{margin:0 0 10px;padding-left:22px} ol.claims li{font-size:17px;line-height:1.5;margin-bottom:8px}
-ul.tight{margin:0 0 10px;padding-left:20px} ul.tight li{font-size:17px;line-height:1.5;margin-bottom:6px}
-.rule{border-top:1px solid var(--faint);margin:18px 0 16px}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:36px}
-.question{border-left:3px solid var(--red);padding:4px 0 4px 20px;margin:6px 0 14px}
-.question .q{font-weight:700;color:var(--cream);font-size:22px;line-height:1.32;margin:0 0 10px}
-.question p{font-size:16px;margin:0 0 6px}
-.question p b{color:var(--red);font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.08em}
-.decisive{font-weight:600;color:var(--cream);font-size:19px;line-height:1.4;margin:12px 0}
-table{border-collapse:collapse;width:100%;margin:4px 0 12px}
-th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:400;border-bottom:1px solid var(--faint);padding:7px 10px 7px 0}
-td{font-size:15px;line-height:1.42;border-bottom:1px solid var(--faint);padding:7px 10px 7px 0;vertical-align:top}
+sup{font-size:10px;color:var(--red);line-height:0}
+ol.claims{margin:0 0 8px;padding-left:22px} ol.claims li{font-size:16.5px;line-height:1.48;margin-bottom:7px}
+ul.tight{margin:0 0 10px;padding-left:20px} ul.tight li{font-size:16.5px;line-height:1.48;margin-bottom:5px}
+.rule{border-top:1px solid var(--faint);margin:14px 0 14px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:34px}
+.question{border-left:3px solid var(--red);padding:2px 0 2px 18px;margin:4px 0 12px}
+.question .q{font-weight:700;color:var(--cream);font-size:20px;line-height:1.32;margin:0 0 8px}
+.question p{font-size:15.5px;margin:0 0 5px}
+.question p b{color:var(--red);font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.08em}
+.decisive{font-weight:600;color:var(--cream);font-size:18px;line-height:1.4;margin:10px 0}
+table{border-collapse:collapse;width:100%;margin:4px 0 10px}
+th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:400;border-bottom:1px solid var(--faint);padding:6px 10px 6px 0}
+td{font-size:14.5px;line-height:1.4;border-bottom:1px solid var(--faint);padding:6px 10px 6px 0;vertical-align:top}
 td:first-child{color:var(--cream);font-weight:500}
-.fig{border:1.5px dashed rgba(236,227,210,.35);background:var(--panel);padding:18px 22px;display:flex;flex-direction:column;justify-content:flex-end;margin:0 0 16px}
-.fig .fk{font-size:14px;font-style:italic;color:var(--dim)}
-.fig .ft{font-weight:800;color:var(--cream);font-size:24px;text-transform:uppercase;letter-spacing:-.01em;margin:6px 0 4px}
-.fig .fs{font-size:14px;line-height:1.45;color:var(--body);margin:0}
-.fig .fn{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--amber);text-transform:uppercase;margin-bottom:auto}
+/* plates */
+.plate{background:var(--panel);padding:16px 18px 14px;margin:0 0 14px}
+.pal{display:flex;gap:6px;margin-bottom:10px}
+.pal span{flex:1;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--dim);border-top:6px solid var(--c);padding-top:4px;text-transform:uppercase}
+.pk{font-size:13px;font-style:italic;color:var(--dim)}
+.pt{font-weight:800;color:var(--cream);font-size:22px;text-transform:uppercase;letter-spacing:-.01em;margin:6px 0 2px}
+.ps{font-size:13.5px;line-height:1.45;color:var(--body);margin:0}
+.src{font-size:10.5px;color:var(--dim);margin-top:5px;font-family:var(--mono);letter-spacing:.02em}
+.plate svg{display:block;width:100%;height:auto}
+.fig{border:1.5px dashed rgba(236,227,210,.32);background:var(--panel);padding:16px 20px;display:flex;flex-direction:column;justify-content:flex-end;margin:0 0 14px}
+.fig .fn{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--amber);text-transform:uppercase;margin-bottom:auto}
+.fig .tool{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:6px}
+.ft{font-weight:800;color:var(--cream);font-size:22px;text-transform:uppercase;letter-spacing:-.01em;margin:6px 0 4px}
+.fs{font-size:13.5px;line-height:1.45;color:var(--body);margin:0}
 .todo{font-family:var(--mono);font-size:.85em;color:var(--amber);background:rgba(212,165,48,.12);padding:0 4px}
-.check{font-family:var(--mono);font-size:11px;color:var(--amber);border:1px solid rgba(212,165,48,.4);padding:0 5px;margin-left:4px;white-space:nowrap}
-ol.refs{columns:2;column-gap:30px;margin:0;padding-left:22px} ol.refs li{font-size:11.5px;line-height:1.4;margin-bottom:4px;break-inside:avoid}
-.ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:6px 0 12px}
-.ladder div{border-top:2px solid var(--c);padding-top:8px}
-.ladder .t{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--c);text-transform:uppercase}
-.ladder p{font-size:15px;margin:4px 0 0}
-@media screen and (max-width:1160px){.sheet{transform-origin:top left}}
+.check{font-family:var(--mono);font-size:10.5px;color:var(--amber);border:1px solid rgba(212,165,48,.4);padding:0 5px;margin-left:4px;white-space:nowrap}
+/* model box */
+.model{border:1px solid rgba(236,227,210,.35);padding:16px 20px 8px;margin:0 0 14px}
+.eq{font-family:var(--mono);font-size:15px;color:var(--cream);background:rgba(236,227,210,.05);padding:9px 12px;margin:4px 0 6px;display:flex;justify-content:space-between;gap:12px}
+.eq i{font-style:italic;font-family:Georgia,serif;font-size:16px}
+.eq .n{color:var(--dim)}
+.eq .r{color:var(--red)} .eq .s{color:var(--sage)} .eq .a{color:var(--amber)}
+.model p{font-size:15.5px}
+/* choice card */
+.card{border:1.5px solid var(--cream);border-radius:12px;padding:14px 16px;font-size:13.5px}
+.card .cq{font-family:var(--mono);color:var(--cream);font-size:13px;margin-bottom:8px}
+.card table td{font-size:13px;padding:5px 8px 5px 0}
+.card table td:first-child{color:var(--dim);font-weight:400}
+.card .opt{font-family:var(--mono);color:var(--amber);font-size:11px;letter-spacing:.08em}
+ol.refs{columns:3;column-gap:22px;margin:0;padding-left:20px} ol.refs li{font-size:9.6px;line-height:1.32;margin-bottom:2px;break-inside:avoid}
+.ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:4px 0 10px}
+.ladder div{border-top:2px solid var(--c);padding-top:7px}
+.ladder .t{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--c);text-transform:uppercase}
+.ladder p{font-size:14.5px;margin:4px 0 0}
 @page{size:A3 portrait;margin:0}
 @media print{html,body{background:var(--ground)}.sheet{margin:0;page-break-after:always}}
 </style>
 </head>
 <body>
 
-<!-- ============ PAGE 1 : THE PROBLEM ============ -->
+<!-- ================= PAGE 1 : THE PROBLEM, AND WHAT ALREADY EXISTS ================= -->
 <section class="sheet">
   <div class="kick">Research proposal · PhD in Transport Modelling for Sustainability Transitions · TRANSPLAN · Molde University College</div>
   <h1>From end states<br>to <em>pathways</em></h1>
@@ -73,11 +95,53 @@ ol.refs{columns:2;column-gap:30px;margin:0;padding-left:22px} ol.refs li{font-si
     <div>
       <h2><small>01</small>The problem</h2>
       <p>Norway plans its transport system with strategic models that compute an equilibrium for a chosen year. Asked what 2050 looks like under a set of assumptions, they give a careful answer. Asked how the country gets there, and which routes fail on the way, they are silent by construction. The path is governed by things an equilibrium does not carry: a vehicle fleet that turns over slowly, public acceptance that persists or erodes, and debt that must be repaid on a schedule.</p>
-      <p>Road pricing shows the problem in its sharpest form. It is the first lever proposed for the next National Transport Plan, as a way to use existing capacity before building more<sup>1</sup>, yet the national reform has stalled<sup>2</sup>. Tolls raised NOK 16.8 billion in 2025, about 62% of it in city packages, against toll-company debt of about NOK 78 billion<sup>3,4</sup>.</p>
+      <p>Road pricing shows the problem in its sharpest form. It is the first lever proposed for the next National Transport Plan, as a way to use existing capacity before building more<sup>1</sup>, yet the national reform has stalled<sup>2</sup>. Tolls raised NOK 16.8 billion in 2025, about 62% of it in city packages, against toll-company debt of about NOK 78 billion<sup>3,4</sup>. Every revision meets a public that has voted against tolls before: in 2019 a party with a single anti-toll demand won 16.7% in Bergen<sup>5</sup>.</p>
+      <p class="decisive">Whether a plan for 2050 is feasible depends on the order in which instruments arrive and on whether people accept each step. That is a question about paths.</p>
     </div>
     <div>
-      <p style="margin-top:42px">Four in ten passings are now electric<sup>5</sup>, and zero-emission vehicles pay 30% below the agreement price<sup>6</sup>. As the fleet electrifies, the base that repays the debt narrows, the discount has to be revised, and every revision meets a public that has voted against tolls before: in 2019 a party with a single anti-toll demand won 16.7% in Bergen<sup>7</sup>.</p>
-      <p class="decisive">Whether a plan for 2050 is feasible depends on the order in which instruments arrive and on whether people accept each step. That is a question about paths.</p>
+      <div class="plate">
+        <div class="pal"><span style="--c:var(--cream)">fossil crossing</span><span style="--c:var(--sage)">electric crossing</span><span style="--c:var(--amber)">today</span><span style="--c:var(--red)">revenue per crossing</span></div>
+        <div class="pk">how fast is the toll base already eroding?</div>
+        <svg viewBox="0 0 470 300" role="img" aria-label="Revenue per crossing falls linearly from 27.20 to 19.04 kroner as the electric share rises; 23.94 at today's 40 percent">
+          <g font-family="Roboto Mono, monospace" font-size="10" fill="#948B7E">
+            <line x1="56" y1="22" x2="56" y2="236" stroke="#948B7E" stroke-width="1"/>
+            <line x1="56" y1="236" x2="456" y2="236" stroke="#948B7E" stroke-width="1"/>
+            <text x="48" y="44" text-anchor="end">27.20</text><text x="48" y="215" text-anchor="end">19.04</text>
+            <text x="48" y="123" text-anchor="end">23.94</text>
+            <text x="56" y="252" text-anchor="middle">0%</text><text x="216" y="252" text-anchor="middle">40%</text><text x="456" y="252" text-anchor="middle">100%</text>
+            <text x="256" y="268" text-anchor="middle" letter-spacing="1">ELECTRIC SHARE OF CROSSINGS</text>
+            <text x="14" y="130" transform="rotate(-90 14 130)" text-anchor="middle" letter-spacing="1">NOK PER CROSSING</text>
+          </g>
+          <!-- ghost grid -->
+          <g stroke="rgba(236,227,210,.08)"><line x1="56" y1="40" x2="456" y2="40"/><line x1="56" y1="211" x2="456" y2="211"/><line x1="56" y1="119" x2="456" y2="119" stroke-dasharray="3 4"/></g>
+          <!-- the erosion line -->
+          <polygon points="56,40 456,211 456,236 56,236" fill="rgba(210,65,43,.10)"/>
+          <line x1="56" y1="40" x2="456" y2="211" stroke="#D2412B" stroke-width="3"/>
+          <!-- today -->
+          <line x1="216" y1="119" x2="216" y2="236" stroke="#D4A530" stroke-dasharray="4 4"/>
+          <circle cx="216" cy="108.5" r="14" fill="none" stroke="#ECE3D2" stroke-width="1.2"/>
+          <circle cx="216" cy="108.5" r="6" fill="#D4A530"/>
+          <!-- callout cards -->
+          <g font-family="Roboto Mono, monospace">
+            <rect x="66" y="52" width="122" height="38" fill="#16120F" stroke="rgba(236,227,210,.3)"/>
+            <text x="74" y="67" font-size="10" fill="#ECE3D2" font-weight="500">FOSSIL FLEET</text>
+            <text x="74" y="82" font-size="10" fill="#948B7E">NOK 27.20 with tag</text>
+            <rect x="232" y="64" width="172" height="38" fill="#16120F" stroke="#D4A530"/>
+            <text x="240" y="79" font-size="10" fill="#D4A530" font-weight="500">TODAY · 4 IN 10 ELECTRIC</text>
+            <text x="240" y="94" font-size="10" fill="#ECE3D2">NOK 23.94 · 12% less</text>
+            <rect x="300" y="150" width="148" height="38" fill="#16120F" stroke="rgba(236,227,210,.3)"/>
+            <text x="308" y="165" font-size="10" fill="#9DB886" font-weight="500">ALL ELECTRIC</text>
+            <text x="308" y="180" font-size="10" fill="#ECE3D2">NOK 19.04 · 30% less</text>
+            <line x1="374" y1="188" x2="440" y2="204" stroke="rgba(236,227,210,.3)"/>
+          </g>
+          <!-- ten crossings, four lit -->
+          <g transform="translate(66,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#9DB886" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#9DB886"/><circle cx="23" cy="14" r="2.4" fill="#9DB886"/></g><g transform="translate(106,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#9DB886" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#9DB886"/><circle cx="23" cy="14" r="2.4" fill="#9DB886"/></g><g transform="translate(146,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#9DB886" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#9DB886"/><circle cx="23" cy="14" r="2.4" fill="#9DB886"/></g><g transform="translate(186,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#9DB886" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#9DB886"/><circle cx="23" cy="14" r="2.4" fill="#9DB886"/></g><g transform="translate(226,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(266,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(306,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(346,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(386,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g><g transform="translate(426,270)"><path d="M0 8 h4 l4 -6 h12 l5 6 h5 v6 h-30z" fill="none" stroke="#ECE3D2" stroke-width="1.3"/><circle cx="7" cy="14" r="2.4" fill="#ECE3D2"/><circle cx="23" cy="14" r="2.4" fill="#ECE3D2"/></g>
+          <text x="460" y="296" font-family="Roboto Mono, monospace" font-size="9.5" fill="#948B7E" text-anchor="end">today: four crossings in ten are electric</text>
+        </svg>
+        <div class="pt">The base <em>erodes</em></div>
+        <p class="ps">Each electric crossing pays NOK 8.16 less. The debt does not shrink with it.</p>
+        <div class="src">revenue per crossing = 27.20 − 8.16 × electric share · tariff group 1 with tag, Bypakke Kristiansund<sup>6</sup> · share: national, Sept 2026<sup>7</sup></div>
+      </div>
     </div>
   </div>
 
@@ -87,173 +151,234 @@ ol.refs{columns:2;column-gap:30px;margin:0;padding-left:22px} ol.refs li{font-si
     <p><b>RQ2 · BEHAVIOUR · A2</b>&nbsp; Does acceptance persist once a charge is permanent, and does information move it independently of experience?</p>
     <p><b>RQ3 · PLANNING · A3</b>&nbsp; Which pathways are robust, what margin of acceptance does each survive, and which signposts give lead time before a pathway fails?</p>
   </div>
-  <div class="fig" style="height:410px">
-    <div class="fn">Figure 1 · frame, drawn in Stage D</div>
-    <div class="fk">what does a strategic model see that a plan cannot use?</div>
-    <div class="ft">One street, two <em style="font-style:normal;color:var(--red)">answers</em></div>
-    <p class="fs">Left: the strategic model's 2050, one settled state. Right: the same street as a path, year by year, where acceptance and debt decide which branches survive. People at true scale; those who pay drawn solid.</p>
-  </div>
 
+  <div class="cols" style="grid-template-columns:.9fr 1.1fr">
+    <div>
+      <h3>What already exists</h3>
+      <p>I have built a working prototype of the method, and it already gives the result on the right: at today's national share of four electric crossings in ten, a Kristiansund crossing earns 12% less than in a fossil fleet, and an all-electric fleet earns 30% less while the debt stays the same. The prototype also recovers known choice parameters from simulated survey data with relative bias below 3% and coverage of 92 to 98% at two standard errors, and holds the road networks of both towns.</p>
+      <p class="decisive" style="font-size:17px">The question is no longer whether the base erodes, but which path through that erosion people will accept.</p>
+    </div>
+    <div class="fig" style="height:330px;margin:0">
+      <div class="fn">Figure 2 · rendered in Stage D</div>
+      <div class="pk">what does a strategic model see that a plan cannot use?</div>
+      <div class="ft">One household, two <em>answers</em></div>
+      <p class="fs">Left and right at one scale. Left: the strategic model's 2050, one settled street. Right: the same household year by year, car turning electric, toll bill and acceptance changing, branches that survive. People at true scale; those who pay drawn solid.</p>
+      <div class="tool">geometry from OpenStreetMap · composed in Rhino and Grasshopper</div>
+    </div>
+  </div>
   <div class="folio"><span>From end states to pathways</span><span>1 / 5</span></div>
 </section>
 
-<!-- ============ PAGE 2 : FIT, GAP, CLAIMS ============ -->
+<!-- ================= PAGE 2 : FIT, GAP, CLAIMS ================= -->
 <section class="sheet">
   <h2><small>02</small>Fit, gap and what is new</h2>
   <p>TRANSPLAN starts from the premise that the 2050 goals are met and works backwards to the transport system that meets them<sup>8</sup>, and earlier work shows how existing models can serve backcasting<sup>9</sup>. <b>This PhD adds what that backcasting does not yet carry: deep uncertainty, the acceptance of the people who pay, and signals that tell planners a path is failing.</b></p>
 
   <table>
-    <tr><th style="width:38%">The position asks for</th><th>This proposal answers with</th></tr>
+    <tr><th style="width:36%">The position asks for</th><th>This proposal answers with</th></tr>
     <tr><td>Desirable futures under deep uncertainty</td><td>10³ futures, satisficing targets, and uncertainty decomposed by source (claim 2)</td></tr>
     <tr><td>DCM integrated with ABM</td><td>Choice models estimated on survey data drive agents whose acceptance and fleet carry over from year to year (claim 1, A1)</td></tr>
     <tr><td>Behaviour under low-carbon scenarios to 2050</td><td>Emissions as an explicit objective; cars, vans and heavy vehicles turn over by class, with load factors and empty running</td></tr>
-    <tr><td>Backcasting and pathways, not one forecast</td><td>2050 targets from national plans<sup>10</sup>; instrument orders enumerated and tested backwards from them</td></tr>
+    <tr><td>Backcasting and pathways, not one forecast</td><td>Targets for 2050 defined on page 3; instrument orders enumerated and tested backwards from them</td></tr>
     <tr><td>Methodological and practical contributions</td><td>Three testable claims, and a named decision: revising the zero-emission discount and tariff (A4)</td></tr>
   </table>
 
   <div class="cols" style="grid-template-columns:1.05fr .95fr">
     <div>
-      <p><b>The gap.</b> Strategic models give end states, and the national fleet model gives fleets<sup>11</sup>; neither carries acceptance. Norwegian agent-based work assigns car traffic with MATSim in Oslo<sup>12</sup> and has demonstrated flexible tolls beyond what the regional model can represent<sup>13</sup>, but takes acceptance as given. Le Pira, Marcucci and Gatta integrated discrete choice and agent-based models to evaluate acceptability of urban freight policy<sup>14</sup>; their agents are stakeholder groups negotiating in rounds, not a population living through calendar time. Adaptive pathway methods sequence actions against tipping points<sup>15,16</sup> and design signals to adapt<sup>17</sup>, but treat acceptance as an external scenario.</p>
-      <p>The road-pricing evidence is careful and mostly static. Across 19 Norwegian toll projects, negative attitudes were strongly correlated with how little users had been told before opening<sup>18</sup>. Acceptance rose after Gothenburg's charge through status quo bias<sup>19</sup>; concrete personal information moved support most in a national experiment while a field trial changed little<sup>20</sup>; positivity rose after Oslo's 2019 restructuring<sup>21</sup>.</p>
+      <p><b>The gap.</b> Strategic models give end states, and the national fleet model gives fleets<sup>10</sup>; neither carries acceptance. Norwegian agent-based work assigns car traffic with MATSim in Oslo<sup>11</sup> and has demonstrated flexible tolls beyond what the regional model can represent<sup>12</sup>, but takes acceptance as given. Le Pira, Marcucci and Gatta integrated discrete choice and agent-based models to evaluate acceptability of urban freight policy<sup>13</sup>; their agents are stakeholder groups negotiating in rounds, not a population living through calendar time. Adaptive pathway methods sequence actions against tipping points<sup>14,15</sup> and design signals to adapt<sup>16</sup>, but treat acceptance as an external scenario.</p>
+      <p>The road-pricing evidence is careful and mostly static. Across 19 Norwegian toll projects, negative attitudes were strongly correlated with how little users had been told before opening<sup>17</sup>. Acceptance rose after Gothenburg's charge through status quo bias<sup>18</sup>; concrete personal information moved support most in a national experiment while a field trial changed little<sup>19</sup>; positivity rose after Oslo's 2019 restructuring<sup>20</sup>.</p>
       <p class="decisive">Nobody has estimated acceptance, carried it in agents over time, and let it decide which pathways survive.</p>
     </div>
-    <div>
-      <div class="fig" style="height:560px">
-        <div class="fn">Figure 2 · frame, drawn in Stage D</div>
-        <div class="fk">what is the engine made of?</div>
-        <div class="ft">Five layers, three <em style="font-style:normal;color:var(--red)">claims</em></div>
-        <p class="fs">Exploded layers: data (two waves, register, counts) · estimated choice · agents with memory · 10³ futures · pathways and signposts. Each layer tagged with its article (A1 to A3) and claim (1 to 3).</p>
-      </div>
+    <div class="fig" style="height:590px;margin:0">
+      <div class="fn">Figure 3 · rendered in Stage D</div>
+      <div class="pk">what is the engine made of?</div>
+      <div class="ft">Five layers, three <em>claims</em></div>
+      <p class="fs">Exploded axonometric, labels down the left, dashed verticals. Data (two waves, register, counts) · estimated choice (Biogeme) · agents with memory · 10³ futures (EMA Workbench) · pathways and signposts. Each layer tagged with its article, its claim and the tool that runs it.</p>
+      <div class="tool">composed in Rhino and Grasshopper</div>
     </div>
   </div>
 
   <div class="rule"></div>
-  <h2 style="font-size:24px">Three claims, and no others</h2>
+  <h2 style="font-size:23px">Three claims, and no others</h2>
   <ol class="claims">
     <li><b>Acceptance as an admissibility condition.</b> A pathway counts only if estimated acceptance stays above a threshold at every step; for each pathway the thesis reports the largest shift in that threshold it survives, its <i>acceptance margin</i>, as a result rather than an assumption.</li>
     <li><b>Uncertainty decomposed by source over a policy path.</b> The spread in 2050 outcomes is split, year by year, into behavioural parameters, external futures and the choice of path, so planners see which uncertainty more data can reduce and which only adaptation can.</li>
-    <li><b>Signposts validated twice.</b> Signals that a pathway is failing are scored on held-out futures for lead time and false alarms, then against dated events that actually happened.</li>
+    <li><b>Signposts validated twice.</b> Signals that a pathway is failing are scored on held-out futures for lead time and false alarms, then against dated events that actually happened: the electric share of crossings passing thresholds, the 2019 anti-toll vote in Bergen, and Oslo's 2019 restructuring.</li>
   </ol>
   <p>The choice models mirror the published structure of the national and regional models and are calibrated to their elasticities, so results hand over to the tools planners already use.</p>
+  <p><b>Why here.</b> TRANSPLAN's backcasting, Molde's strength in stated choice and transport economics, and a Logistics programme where freight vehicle classes belong. Partners, as possibilities and not agreements: TØI for the national ranges, CICERO for climate-policy acceptance, the Norwegian Computing Center for surrogate methods.</p>
   <div class="folio"><span>From end states to pathways</span><span>2 / 5</span></div>
 </section>
 
-<!-- ============ PAGE 3 : CASE AND DESIGN ============ -->
+<!-- ================= PAGE 3 : THE MODEL, WRITTEN DOWN ================= -->
 <section class="sheet">
-  <h2><small>03</small>Case and design</h2>
-  <div class="cols" style="grid-template-columns:1fr 1fr">
-    <div>
-      <p><b>Why Kristiansund.</b> Bypakke Kristiansund began collection on 1 June 2026 at two stations on rv70, Nordsundbrua and Omsundbrua, charging in both directions; about 70% of the package is toll-financed over up to 15 years<sup>22,23</sup>. A car pays NOK 34, NOK 27.20 with a tag, and NOK 19.04 if zero-emission with a tag<sup>6</sup>. The city council approved the basis 26 to 19 and the county 33 to 14: acceptance here is contested, and live.</p>
-      <p>Exposure is not uniform. The Atlantic Ocean Tunnel has been toll-free since 2020, so some trips have a free alternative; computed on the road network, <span class="todo">[N1]</span>% of trips can avoid both stations. The study therefore has a measured dose rather than the assumption that everyone pays. Molde, with no toll package, is the comparison town<span class="check">CHECK older stations</span>. The case is a test bed; the question and the method are national.</p>
-    </div>
-    <div class="fig" style="height:470px;margin:0">
-      <div class="fn">Figure 3 · frame, drawn in Stage D</div>
-      <div class="fk">who pays, and who can go around?</div>
-      <div class="ft">Who can avoid the <em style="font-style:normal;color:var(--red)">toll</em></div>
-      <p class="fs">Kristiansund on lit terrain. Buildings coloured by exposure: teal, a free route exists; amber, partial; red, every trip pays. Callouts A Nordsundbrua · B Omsundbrua · C the free tunnel. Run box: graph, sources.</p>
-    </div>
+  <h2><small>03</small>The model, written down</h2>
+  <div class="model">
+    <h3>What each agent decides and remembers</h3>
+    <p>Each year <i>t</i>, household or firm <i>n</i> chooses a vehicle, how often to cross and when, from an estimated choice model in which the instruments in force, <i>I(t)</i>, set the cost:</p>
+    <div class="eq"><span><i>U</i><sub>njt</sub> = <span class="r">β</span> · cost(<i>j</i>, <span class="a">I(t)</span>) + <i>θ</i>′<i>x</i><sub>nj</sub> + <i>ε</i><sub>njt</sub></span><span class="n">(1) choice</span></div>
+    <p>Its acceptance of the package follows a latent equation with memory:</p>
+    <div class="eq"><span><i>A</i>*<sub>nt</sub> = <span class="s">ρ</span>·<i>A</i><sub>n,t−1</sub> + <span class="r">δ</span>·dose<sub>nt</sub> + <span class="a">η</span>·info<sub>n</sub> + <i>γ</i>′<i>z</i><sub>n</sub> + <i>u</i><sub>nt</sub></span><span class="n">(2) acceptance</span></div>
+    <p><i>dose</i> is the toll the agent actually pays, <i>info</i> the information arm it was shown, and <span style="color:var(--sage)">ρ</span> the memory the two survey waves identify, from within-person change and the variation in exposure, with the initial-conditions problem handled explicitly<sup>21</sup>. Estimation is mixed logit, then hybrid choice with acceptance as the latent variable.</p>
+    <div class="eq"><span>p admissible ⇔ share accepting<sub>t</sub>(p) ≥ <span class="r">λ</span> for every <i>t</i> ; &nbsp;margin(p) = largest rise in <span class="r">λ</span> that p survives</span><span class="n">(3) admissibility</span></div>
   </div>
-  <div class="rule"></div>
 
   <div class="cols">
     <div>
-      <p><b>Survey.</b> Two blocks, in a Bayesian D-efficient design with priors from the pilot and the national experiment's attribute ranges<sup>20</sup>.</p>
-      <ul class="tight">
-        <li><i>Acceptance block,</i> with information randomised in three arms: personal cost, as numbers (what the respondent's own crossings cost per month); purpose, as a short narrative of what the package builds<sup>24</sup>; and control. The arms test the format of information as well as its content.</li>
-        <li><i>Stated choice block:</i> vehicle at next replacement, crossing frequency and time of day, under tariff and discount levels inside the national ranges, so estimates are comparable.</li>
-      </ul>
-      <p>Kristiansund carries the full design; Molde carries the acceptance block. Wave 1 is fielded in month 6 and wave 2 in month 18 with the same respondents. A power analysis, reported with the minimum detectable effect rather than a bare sample size<sup>25</sup>, sets the sample at <span class="todo">[n]</span>: planning figure 1,200 to 1,500 in Kristiansund and about half in Molde, allowing for attrition.</p>
+      <p><b>What a pathway is made of.</b> Four instruments: revision of the package, the zero-emission rate, a distance-based charge, and earmarking of revenue. A pathway opens with one instrument and adds others in any order, each switch fired by a signpost at one of three thresholds: <b>4 + 36 + 216 + 648 = 904 pathways.</b> At that size enumeration is a choice, not a shortcut: it gives the complete front with no search bias; a larger set would call for multi-objective search<sup>22</sup>.</p>
+      <p><b>What desirable means.</b> A pathway is robust if it meets all three targets in at least a stated share of the 10³ futures, with regret reported alongside; scenario discovery finds where it fails<sup>23</sup>.</p>
     </div>
     <div>
-      <p><b>Hypotheses.</b> H1: acceptance persists once a charge is permanent, tested as within-person change between waves against exposure. H2: information moves acceptance independently of experience, tested by the randomised arms; this turns the Norwegian correlation between information and attitude<sup>18</sup> into a causal estimate.</p>
-      <p class="decisive">The design separates persistence from information with an experiment, not with a before-period nobody collected.</p>
-      <p><b>The public record.</b> Consultation submissions, council debate and local press from 2019 to 2026 are coded into acceptance arguments with a language model, validated against a Norwegian-speaking human coder, with agreement reported. This gives the period before collection an aggregate trajectory.</p>
-      <p><b>Estimation.</b> Mixed logit first, then a hybrid choice model with acceptance as a latent variable. The two waves identify a state-dependence term, how much last year's acceptance and exposure shape this year's, from within-person change and the variation in exposure, with the initial-conditions problem handled explicitly<sup>26</sup>. That term is what lets agents remember.</p>
+      <table>
+        <tr><th style="width:24%">2050 target</th><th>Metric</th><th style="width:28%">Anchor</th></tr>
+        <tr><td>Emissions</td><td>Well-to-wheel CO₂e from road traffic crossing the case area</td><td>National climate targets<sup>24</sup><span class="check">CHECK figures</span></td></tr>
+        <tr><td>Finance</td><td>Toll revenue at or above debt service; failure if below for three consecutive years</td><td>Package financing<sup>25</sup></td></tr>
+        <tr><td>Access</td><td>Generalised travel cost of the lowest income quintile no higher than in 2026</td><td>Distributional floor, a stated design choice</td></tr>
+      </table>
     </div>
   </div>
 
-  <div class="fig" style="height:280px">
-    <div class="fn">Figure 4 · frame, drawn in Stage D</div>
-    <div class="fk">what does a respondent see?</div>
-    <div class="ft">One choice card, three <em style="font-style:normal;color:var(--red)">arms</em>, two waves</div>
-    <p class="fs">A real stated-choice task beside the experiment strip: waves at months 6 and 18, the three information arms, people icons sized from the power analysis.</p>
+  <div class="fig" style="height:370px">
+    <div class="fn">Figure 4 · rendered in Stage D</div>
+    <div class="pk">what does it mean for an agent to remember?</div>
+    <div class="ft">One household, three <em>years</em></div>
+    <p class="fs">A street elevation at Nordsundbrua drawn three times, 2026 · 2029 · 2035, over a time band. The same household each time: its car turning electric, its bill falling, then rising when the distance charge arrives; its acceptance shown as a single gauge that carries from row to row. Dashed lines link the household to the gantry it pays.</p>
+    <div class="tool">elevation composed in Rhino and Grasshopper · people and vehicles at true scale</div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <p><b>One household through time (illustrative).</b> A household on Nordlandet crosses Nordsundbrua twice a day and opposes the package in 2026. In 2029 it replaces its car with an electric one and its toll bill falls 30%; with ρ above zero, its acceptance carries forward. In 2035 a distance-based charge removes the discount: its bill rises, its acceptance drops, and if enough households follow, the pathway breaks λ and is inadmissible unless revenue is earmarked to what they use. The same model runs this story for every agent in every future.</p>
+    </div>
+    <div>
+      <p><b>What would falsify it.</b> If ρ is close to zero, agents need no memory and claim 1 reduces to a static result; if η is close to zero, information does not move acceptance and H2 fails; if the fast engine cannot reproduce the network model, the ensemble is cut to what the network model can run. Each is reported, whichever way it falls.</p>
+      <p><b>Tools.</b> Python throughout: estimation in Biogeme, the ensemble and scenario discovery in the EMA Workbench, road networks with OSMnx and NetworkX, routing checks with OR-Tools; figures composed in Rhino and Grasshopper with Heron and Blender, a visual language that carries into storytelling with planners in A4<sup>26</sup>.</p>
+    </div>
   </div>
   <div class="folio"><span>From end states to pathways</span><span>3 / 5</span></div>
 </section>
 
-<!-- ============ PAGE 4 : ARTICLES, MODELS, CALENDAR ============ -->
+<!-- ================= PAGE 4 : CASE AND DESIGN ================= -->
 <section class="sheet">
-  <h2><small>04</small>Articles, models and calendar</h2>
+  <h2><small>04</small>Case and design</h2>
   <div class="cols">
     <div>
-      <p><b>The model.</b> Households and firms are agents. Each year from 2026 to 2050 they choose vehicles, crossings and timing from the estimated models, update their acceptance through the state term, and renew their fleets by class; vans and heavy vehicles carry class-specific load factors and empty running, and emissions are counted well-to-wheel. Toll revenue is set against debt service each year. A fast zonal engine runs the ensemble; a network model runs a stratified subset, and the error between them is reported: <span class="todo">[FID]</span>. If the error is too large, the network subset grows and the pathway set shrinks.</p>
+      <p><b>Why Kristiansund.</b> Bypakke Kristiansund began collection on 1 June 2026 at two stations on rv70, Nordsundbrua and Omsundbrua, charging in both directions; about 70% of the package is toll-financed over up to 15 years<sup>27,25</sup>. A car pays NOK 34, NOK 27.20 with a tag, and NOK 19.04 if zero-emission with a tag<sup>6</sup>. The city council approved the basis 26 to 19 and the county 33 to 14: acceptance here is contested, and live.</p>
+      <p>Exposure is not uniform. The Atlantic Ocean Tunnel has been toll-free since 2020, so some trips have a free alternative; computed on the road network, <span class="todo">[N1]</span>% of trips can avoid both stations. The study therefore has a measured dose rather than the assumption that everyone pays. Molde, with no toll package, is the comparison town<span class="check">CHECK older stations</span>. The case is a test bed; the question and the method are national.</p>
+    </div>
+    <div class="fig" style="height:470px;margin:0">
+      <div class="fn">Figure 5 · rendered in Stage D</div>
+      <div class="pk">who pays, and who can go around?</div>
+      <div class="ft">Who can avoid the <em>toll</em></div>
+      <p class="fs">Kristiansund on lit terrain (Copernicus 30 m). Buildings coloured by exposure: teal, a free route exists; amber, partial; red, every trip pays. Callout cards A Nordsundbrua · B Omsundbrua · C the free tunnel. Run box: graph size, sources.</p>
+      <div class="tool">terrain and buildings exported to Rhino (.3dm) · Heron · rendered in Rhino and Blender</div>
+    </div>
+  </div>
+  <div class="rule"></div>
+
+  <div class="cols" style="grid-template-columns:1.08fr .92fr">
+    <div>
+      <p><b>Survey.</b> Two blocks, in a Bayesian D-efficient design with priors from the pilot and the national experiment's attribute ranges<sup>19</sup>.</p>
+      <ul class="tight">
+        <li><i>Acceptance block,</i> with information randomised in three arms: personal cost, as numbers (what the respondent's own crossings cost per month); purpose, as a short narrative of what the package builds<sup>26</sup>; and control. The arms test the format of information as well as its content.</li>
+        <li><i>Stated choice block:</i> vehicle at next replacement, crossing frequency and time of day, under tariff and discount levels inside the national ranges, so estimates are comparable.</li>
+      </ul>
+      <p>Kristiansund carries the full design; Molde carries the acceptance block. Wave 1 is fielded in month 6 and wave 2 in month 18 with the same respondents. A power analysis, reported with the minimum detectable effect rather than a bare sample size<sup>28</sup>, sets the sample at <span class="todo">[n]</span>: planning figure 1,200 to 1,500 in Kristiansund and about half in Molde, allowing for attrition.</p>
+      <p><b>Hypotheses.</b> H1: acceptance persists once a charge is permanent (ρ &gt; 0), tested as within-person change between waves against dose. H2: information moves acceptance independently of experience (η ≠ 0), tested by the randomised arms; this turns the Norwegian correlation between information and attitude<sup>17</sup> into a causal estimate.</p>
+      <p class="decisive">The design separates persistence from information with an experiment, not with a before-period nobody collected.</p>
+      <p><b>The public record.</b> Consultation submissions, council debate and local press from 2019 to 2026 are coded into acceptance arguments with a language model, validated against a Norwegian-speaking human coder, with agreement reported. This gives the period before collection an aggregate trajectory.</p>
     </div>
     <div>
-      <p><b>The ensemble.</b> 904 pathways (orders of one to four instruments, three switching thresholds each) across 10³ futures and repeated draws: about 4.5 million runs, about 125 CPU hours on the zonal engine. At this size enumeration is a choice, not a shortcut: it gives the complete front with no search bias; a larger instrument set would call for multi-objective search<sup>27</sup>. A pathway is robust if it meets all three 2050 targets (emissions, debt service, accessibility for low-income households) in at least a stated share of futures, with regret reported alongside; scenario discovery finds the conditions under which it fails<sup>28</sup>.</p>
+      <div class="plate">
+        <div class="pal"><span style="--c:var(--cream)">attribute</span><span style="--c:var(--amber)">varied level</span><span style="--c:var(--red)">information arm</span></div>
+        <div class="pk">what does a respondent see?</div>
+        <div class="card">
+          <div class="cq">&gt; Your household's next car, and how you cross, if the package changed like this:</div>
+          <table>
+            <tr><td></td><td class="opt">OPTION A</td><td class="opt">OPTION B</td></tr>
+            <tr><td>Charge</td><td>Toll per crossing, NOK 27</td><td>Distance charge, NOK 1.2 per km</td></tr>
+            <tr><td>Electric discount</td><td>30%</td><td>None</td></tr>
+            <tr><td>Revenue used for</td><td>Roads in the package</td><td>Buses and cycle paths</td></tr>
+            <tr><td>Your monthly cost</td><td>NOK 540</td><td>NOK 610</td></tr>
+          </table>
+          <div class="cq" style="margin:8px 0 0">&gt; Which would you choose? How acceptable is each, 1 to 7?</div>
+        </div>
+        <div class="pt" style="font-size:19px">One card, three <em>arms</em></div>
+        <p class="ps">Before the cards, a third of respondents see their own monthly cost, a third a short story of what the package builds, a third nothing.</p>
+        <div class="src">illustrative levels; the design draws them from the national ranges<sup>19</sup></div>
+      </div>
+      <p><b>Estimation.</b> Mixed logit, then hybrid choice; the two waves identify ρ in equation (2).</p>
     </div>
   </div>
-
-  <div class="fig" style="height:400px">
-    <div class="fn">Figure 5 · frame, drawn in Stage D</div>
-    <div class="fk">which paths survive, and by how much?</div>
-    <div class="ft">The robust <em style="font-style:normal;color:var(--red)">front</em></div>
-    <p class="fs">904 pathways: acceptance margin against the share of futures meeting all targets. Failures as ghosts, robust in sage, near in amber, the chosen path in red. Five paths A to E drop by leaders into a strip of lines with their signposts as stations.</p>
-  </div>
-
-  <table>
-    <tr><th style="width:24%">Article</th><th style="width:9%">Submit</th><th style="width:8%">RQ</th><th>Data</th><th style="width:10%">Fieldwork</th></tr>
-    <tr><td>A1 Agents with estimated memory</td><td>Month 12</td><td>RQ1</td><td>National attribute ranges, vehicle register; recovery tests; fidelity; fleet hindcast 2010 to 2025<sup>29</sup>; the package's traffic forecast checked against station counts<sup>30</sup></td><td>No</td></tr>
-    <tr><td>A2 Acceptance that persists</td><td>Month 24</td><td>RQ2</td><td>Both waves; public record</td><td>Yes</td></tr>
-    <tr><td>A3 Robust pathways and their signposts</td><td>Month 32</td><td>RQ3</td><td>The ensemble; dated events</td><td>Partly</td></tr>
-    <tr><td>A4 (optional) Revising the zero-emission discount</td><td>Month 34</td><td>Practice</td><td>A3 with planners</td><td>No</td></tr>
-  </table>
-
-  <p><b>Calendar.</b> Before the start, the survey instrument is designed. Months 1 to 3: the 30 ECTS of coursework begins, including philosophy of science; the Sikt notification is filed through the supervisor; the pilot runs with Norwegian-speaking co-authors. Month 6: wave 1. Month 12: A1. Month 18: wave 2. Month 24: A2. Month 32: A3. Months 33 to 36: the summary chapter.<span class="check">CHECK term and coursework</span></p>
-
-  <div class="fig" style="height:96px">
-    <div class="fn">Figure 6 · frame, drawn in Stage D</div>
-    <div class="ft" style="font-size:20px">36 months, two waves, three articles</div>
-  </div>
-
-  <p><b>A thesis that survives a failed survey.</b></p>
+  <div class="rule"></div>
+  <p><b>A thesis that survives a failed survey.</b> Each level is a complete dissertation; the survey raises its ceiling.</p>
   <div class="ladder">
     <div style="--c:var(--teal)"><div class="t">Level 1 · no new data</div><p>A1 and A3 on national ranges are a thesis.</p></div>
     <div style="--c:var(--amber)"><div class="t">Level 2 · wave 1</div><p>Adds H2 and a cross-sectional A2.</p></div>
-    <div style="--c:var(--sage)"><div class="t">Level 3 · both waves</div><p>Adds H1 and the estimated state term.</p></div>
+    <div style="--c:var(--sage)"><div class="t">Level 3 · both waves</div><p>Adds H1 and the estimated memory ρ.</p></div>
   </div>
-  <p>Each level is a complete dissertation; the survey raises its ceiling. <b>Partners.</b> Possibilities to explore, not agreements: TØI for the national experiment's ranges, CICERO for climate-policy acceptance, and the Norwegian Computing Center for surrogate and statistical methods.</p>
+  
+
   <div class="folio"><span>From end states to pathways</span><span>4 / 5</span></div>
 </section>
 
-<!-- ============ PAGE 5 : CONTRIBUTIONS, RISKS, RECEIPTS ============ -->
+<!-- ================= PAGE 5 : PLAN, RISKS AND RECEIPTS ================= -->
 <section class="sheet">
-  <h2><small>05</small>Contributions, risks and receipts</h2>
-  <p><b>Contributions.</b> Agents whose acceptance is estimated and remembered; persistence separated from information in a live case; pathways that come with an acceptance margin and measured signposts.</p>
-
-  <div class="fig" style="height:280px">
-    <div class="fn">Figure 7 · frame, drawn in Stage D</div>
-    <div class="fk">what more data can fix, and what only adaptation can</div>
-    <div class="ft">What we do not know, by <em style="font-style:normal;color:var(--red)">source</em></div>
-    <p class="fs">Input strip of three sources (behaviour, futures, path) into one composite to 2050, with one what-if line.</p>
+  <h2><small>05</small>Plan, risks and receipts</h2>
+  <div class="cols" style="grid-template-columns:1fr 1fr">
+    <div>
+      <p><b>The ensemble.</b> 904 pathways across 10³ futures and repeated draws: about 4.5 million runs, about 125 CPU hours on the fast zonal engine. A network model runs a stratified subset and the error between them is reported: <span class="todo">[FID]</span>. Futures vary vehicle costs, incomes, energy prices, the timing of national reform, and λ within a range anchored on observed votes. Vans and heavy vehicles carry class-specific load factors and empty running, which makes this a logistics question as well as a passenger one.</p>
+    </div>
+    <div class="fig" style="height:300px;margin:0">
+      <div class="fn">Figure 6 · rendered in Stage D</div>
+      <div class="pk">which paths survive, and by how much?</div>
+      <div class="ft">The robust <em>front</em></div>
+      <p class="fs">904 pathways: acceptance margin against the share of futures meeting all targets. Failures as ghosts, robust in sage, near in amber, the chosen path in red; five paths A to E drop by leaders into a strip of lines with signposts as stations.</p>
+    </div>
   </div>
 
   <table>
-    <tr><th style="width:24%">Risk</th><th style="width:30%">Trigger</th><th>Response</th></tr>
-    <tr><td>Low response</td><td>Wave 1 below planned power</td><td>Commercial panel top-up; Level 2 still holds</td></tr>
-    <tr><td>Attrition</td><td>Wave 2 retention below planning figure</td><td>Sample sized for it; H1 reported with its detectable effect</td></tr>
-    <tr><td>No microdata access</td><td>No agreement by month 6</td><td>Published ranges and national evidence</td></tr>
-    <tr><td>Engine diverges from network model</td><td>Fidelity error above threshold</td><td>Larger network subset, fewer pathways</td></tr>
-    <tr><td>Language</td><td>Pilot comprehension issues</td><td>Instrument written in English, translated and piloted with Norwegian-speaking co-authors</td></tr>
+    <tr><th style="width:23%">Article</th><th style="width:9%">Submit</th><th style="width:7%">RQ</th><th>Data</th><th style="width:9%">Fieldwork</th></tr>
+    <tr><td>A1 Agents with estimated memory</td><td>Month 12</td><td>RQ1</td><td>National ranges, vehicle register; recovery tests; fidelity; fleet hindcast 2010 to 2025<sup>29</sup>; the package's traffic forecast checked against station counts<sup>30</sup></td><td>No</td></tr>
+    <tr><td>A2 Acceptance that persists</td><td>Month 24</td><td>RQ2</td><td>Both waves; public record</td><td>Yes</td></tr>
+    <tr><td>A3 Robust pathways and their signposts</td><td>Month 32</td><td>RQ3</td><td>The ensemble; dated events</td><td>Partly</td></tr>
+    <tr><td>A4 (optional) Revising the zero-emission discount</td><td>Month 34</td><td>Practice</td><td>A3 with planners, as visual stories</td><td>No</td></tr>
   </table>
 
-  <div class="cols">
-    <div><p><b>Receipts.</b> A working prototype exists and every number this proposal computes traces to commit <span class="todo">[SHA]</span>: <span class="todo">[TESTS]</span> automated tests; Monte Carlo recovery of choice parameters with relative bias below 3% and coverage of 92 to 98% at two standard errors; a network pipeline built from OpenStreetMap for both towns. The figures are generated from the same code.</p></div>
-    <div><p><b>Ethics.</b> The survey is notified to Sikt with informed consent. Traffic data are used as aggregate station counts only. The use of AI tools in preparing this proposal is disclosed in the supplement.</p></div>
+  <div class="plate" style="padding:12px 18px 10px">
+    <svg viewBox="0 0 990 120" role="img" aria-label="36-month calendar">
+      <g font-family="Roboto Mono, monospace" font-size="10" fill="#948B7E">
+        <line x1="20" y1="64" x2="980" y2="64" stroke="#948B7E"/>
+        <g stroke="#948B7E"><line x1="20" y1="60" x2="20" y2="68"/><line x1="340" y1="60" x2="340" y2="68"/><line x1="660" y1="60" x2="660" y2="68"/><line x1="980" y1="60" x2="980" y2="68"/></g>
+        <text x="20" y="84">month 0</text><text x="340" y="84" text-anchor="middle">12</text><text x="660" y="84" text-anchor="middle">24</text><text x="980" y="84" text-anchor="end">36</text>
+      </g>
+      <!-- bands -->
+      <rect x="20" y="34" width="427" height="10" fill="rgba(236,227,210,.18)"/><text x="24" y="28" font-family="Roboto Mono" font-size="10" fill="#ECE3D2">30 ECTS coursework</text>
+      <rect x="20" y="96" width="107" height="10" fill="rgba(124,186,196,.5)"/><text x="24" y="118" font-family="Roboto Mono" font-size="10" fill="#7CBAC4">Sikt · pilot</text>
+      <rect x="900" y="96" width="80" height="10" fill="rgba(236,227,210,.4)"/><text x="976" y="118" font-family="Roboto Mono" font-size="10" fill="#ECE3D2" text-anchor="end">summary chapter</text>
+      <!-- waves -->
+      <g fill="#D4A530" font-family="Roboto Mono" font-size="10.5"><circle cx="180" cy="64" r="7"/><text x="180" y="50" text-anchor="middle">WAVE 1</text><circle cx="500" cy="64" r="7"/><text x="500" y="50" text-anchor="middle">WAVE 2</text></g>
+      <!-- articles -->
+      <g fill="#D2412B" font-family="Roboto Mono" font-size="10.5" font-weight="500"><rect x="334" y="58" width="12" height="12"/><text x="340" y="104" text-anchor="middle">A1</text><rect x="654" y="58" width="12" height="12"/><text x="660" y="104" text-anchor="middle">A2</text><rect x="867" y="58" width="12" height="12"/><text x="873" y="104" text-anchor="middle">A3</text></g>
+      <g fill="none" stroke="#D2412B"><rect x="921" y="58" width="12" height="12"/></g><text x="927" y="50" text-anchor="middle" font-family="Roboto Mono" font-size="10" fill="#D2412B">A4?</text>
+    </svg>
+    <div class="pt" style="font-size:18px">36 months, two waves, three <em>articles</em></div>
+    <p class="ps">Instrument designed before the start; Sikt notification through the supervisor and the pilot with Norwegian-speaking co-authors in months 1 to 3.<span class="check">CHECK term and coursework</span></p>
   </div>
 
-  <div class="rule"></div>
-  <div class="kick" style="margin-bottom:8px">References</div>
-  <ol data-refs class="refs"><li>Halse, Wangsness, Babri, Tveter, Bråthen &amp; Olsen (2026) <i>Veivalg for en realistisk og målrettet transportplan</i>. TØI report 2172/2026.</li><li>Wangsness, Proost &amp; Steinsland (2026) The curious case of road pricing reform in Norway. <i>Transportation Research Interdisciplinary Perspectives</i> 38, 102064.</li><li>Statens vegvesen (2026) Bompengerapport 2025: flere passeringer og økte inntekter. vegvesen.no.</li><li>Samferdselsdepartementet (2026) Answer to written question Dok. 15:1376 (2025–2026) on toll revenue by project type. stortinget.no.</li><li>Statens vegvesen (2026) Fire av ti bompasseringer skjer nå med elbil. vegvesen.no, September 2026.</li><li>Vegamot (2026) Takster, Bypakke Kristiansund. vegamot.no.</li><li>Store norske leksikon. Kommunestyre- og fylkestingsvalget 2019. snl.no.</li><li>TØI (2025) TRANSPLAN: A transport system within planetary boundaries. Centre for transport research, 2025–2033. toi.no/transplan.</li><li>Kristensen et al. (2024) <i>Transport demand in foresight and backcasting</i>. TØI report 2051/2024.</li><li>Ministry of Transport (2024) Meld. St. 14 (2023–2024) <i>National Transport Plan 2025–2036</i>.</li><li>Fridstrøm, Østli &amp; Johansen (2016) A stock-flow cohort model of the national car fleet. <i>European Transport Research Review</i> 8.</li><li>Flügel, Flötteröd et al. (2023) <i>TraModSim: an open-source traffic assignment tool for TraMod_By based on MATSim</i>. TØI report 1993/2023.</li><li>Flügel, Weber &amp; Hamre (2024) TØI report 2035/2024 on modelling new mobility and flexible tolls beyond the regional transport model.</li><li>Le Pira, Marcucci, Gatta, Inturri, Ignaccolo &amp; Pluchino (2017) <i>Research in Transportation Economics</i> 64; Gatta et al. (2020) <i>Transportation Research Procedia</i> 46.</li><li>Haasnoot, Kwakkel, Walker &amp; ter Maat (2013) Dynamic adaptive policy pathways. <i>Global Environmental Change</i> 23(2), 485–498.</li><li>Edmondson, Flachsland, aus dem Moore, Koch et al. (2025) Anticipatory climate policy mix pathways. <i>Climate Policy</i> 25(3), 438–467.</li><li>Haasnoot, van ’t Klooster &amp; van Alphen (2018) Designing a monitoring system to detect signals to adapt. <i>Global Environmental Change</i> 52.</li><li>Odeck &amp; Bråthen (2008) Travel demand elasticities and users attitudes: a case study of Norwegian toll projects. <i>Transportation Research Part A</i> 42(1), 77–94.</li><li>Börjesson, Eliasson &amp; Hamilton (2016) Why experience changes attitudes to congestion pricing: the case of Gothenburg. <i>Transportation Research Part A</i> 85, 1–16.</li><li>Ciccone, Halse, Andreassen, Garnache &amp; Wangsness (2026) <i>Acceptance of distance-based road pricing: national choice experiment and field trial in the Oslo region</i>. TØI report 2179/2026.</li><li>TØI (2026) Report 2141/2026 on the effects of the 2019 toll restructuring in Oslo and Akershus.</li><li>Statens vegvesen (2024–2025) Bypakke Kristiansund: faglig grunnlag vedtatt i bystyret; bypakken vedtatt; vedtok Bypakke Kristiansund. vegvesen.no.</li><li>Stortinget (2025) Innst. 337 S (2024–2025) on Bypakke Kristiansund.</li><li>Marcucci, Lozzi &amp; Gatta (2026) Crafting consensus in city logistics: the power of storytelling. <i>Transportation Research Procedia</i> 98.</li><li>Tveter &amp; Holmgren (2024) Statistical power and productivity effects of transport investments: a critical review. <i>Research in Transportation Economics</i> 105.</li><li>Wooldridge (2005) Simple solutions to the initial conditions problem in dynamic, nonlinear panel data models with unobserved heterogeneity. <i>Journal of Applied Econometrics</i> 20(1), 39–54.</li><li>Kasprzyk, Nataraj, Reed &amp; Lempert (2013) <i>Environmental Modelling &amp; Software</i> 42; Kwakkel (2017) <i>Environmental Modelling &amp; Software</i> 96.</li><li>Bryant &amp; Lempert (2010) Thinking inside the box. <i>Technological Forecasting &amp; Social Change</i> 77(1).</li><li>Deuten, Gómez Vilchez &amp; Thiel (2020) Analysis and testing of electric car incentive scenarios in the Netherlands and Norway. <i>Technological Forecasting and Social Change</i> 151.</li><li>Welde, Tveter &amp; Odeck (2019) The traffic effects of fixed links: short and long-run forecast accuracy. <i>Transportation Research Procedia</i> 42.</li></ol>
+  <div class="cols" style="grid-template-columns:1.25fr .75fr">
+    <table>
+      <tr><th style="width:42%">Risk · trigger</th><th>Response</th></tr>
+      <tr><td>Low response<br><span style="color:var(--dim);font-weight:300">wave 1 below planned power</span></td><td>Commercial panel top-up; Level 2 still holds</td></tr>
+      <tr><td>Attrition<br><span style="color:var(--dim);font-weight:300">wave 2 retention below plan</span></td><td>Sample sized for it; H1 reported with its detectable effect</td></tr>
+      <tr><td>No microdata access<br><span style="color:var(--dim);font-weight:300">no agreement by month 6</span></td><td>Published ranges and national evidence</td></tr>
+      <tr><td>Engine diverges<br><span style="color:var(--dim);font-weight:300">fidelity error above threshold</span></td><td>Larger network subset, fewer pathways</td></tr>
+      <tr><td>Language<br><span style="color:var(--dim);font-weight:300">pilot comprehension issues</span></td><td>Translated and piloted with Norwegian-speaking co-authors</td></tr>
+    </table>
+    <p style="font-size:15.5px"><b>Receipts and open science.</b> Every number this proposal computes traces to commit <span class="todo">[SHA]</span>, with <span class="todo">[TESTS]</span> automated tests. Code is released openly; anonymised survey data are deposited under FAIR principles as Sikt allows; traffic data are used as aggregate counts only. AI use in preparing this proposal is disclosed in the supplement.</p>
+  </div>
+  <div class="rule" style="margin:6px 0 8px"></div>
+  <ol data-refs class="refs"><li>Halse, Wangsness, Babri, Tveter, Bråthen &amp; Olsen (2026) <i>Veivalg for en realistisk og målrettet transportplan</i>. TØI report 2172/2026.</li><li>Wangsness, Proost &amp; Steinsland (2026) The curious case of road pricing reform in Norway. <i>Transportation Research Interdisciplinary Perspectives</i> 38, 102064.</li><li>Statens vegvesen (2026) Bompengerapport 2025: flere passeringer og økte inntekter. vegvesen.no.</li><li>Samferdselsdepartementet (2026) Answer to written question Dok. 15:1376 (2025–2026) on toll revenue by project type. stortinget.no.</li><li>Store norske leksikon. Kommunestyre- og fylkestingsvalget 2019. snl.no.</li><li>Vegamot (2026) Takster, Bypakke Kristiansund. vegamot.no.</li><li>Statens vegvesen (2026) Fire av ti bompasseringer skjer nå med elbil. vegvesen.no, September 2026.</li><li>TØI (2025) TRANSPLAN: A transport system within planetary boundaries. Centre for transport research, 2025–2033. toi.no/transplan.</li><li>Kristensen et al. (2024) <i>Transport demand in foresight and backcasting</i>. TØI report 2051/2024.</li><li>Fridstrøm, Østli &amp; Johansen (2016) A stock-flow cohort model of the national car fleet. <i>European Transport Research Review</i> 8.</li><li>Flügel, Flötteröd et al. (2023) <i>TraModSim: an open-source traffic assignment tool for TraMod_By based on MATSim</i>. TØI report 1993/2023.</li><li>Flügel, Weber &amp; Hamre (2024) TØI report 2035/2024 on modelling new mobility and flexible tolls beyond the regional transport model.</li><li>Le Pira, Marcucci, Gatta, Inturri, Ignaccolo &amp; Pluchino (2017) <i>Research in Transportation Economics</i> 64; Gatta et al. (2020) <i>Transportation Research Procedia</i> 46.</li><li>Haasnoot, Kwakkel, Walker &amp; ter Maat (2013) Dynamic adaptive policy pathways. <i>Global Environmental Change</i> 23(2), 485–498.</li><li>Edmondson, Flachsland, aus dem Moore, Koch et al. (2025) Anticipatory climate policy mix pathways. <i>Climate Policy</i> 25(3), 438–467.</li><li>Haasnoot, van ’t Klooster &amp; van Alphen (2018) Designing a monitoring system to detect signals to adapt. <i>Global Environmental Change</i> 52.</li><li>Odeck &amp; Bråthen (2008) Travel demand elasticities and users attitudes: a case study of Norwegian toll projects. <i>Transportation Research Part A</i> 42(1), 77–94.</li><li>Börjesson, Eliasson &amp; Hamilton (2016) Why experience changes attitudes to congestion pricing: the case of Gothenburg. <i>Transportation Research Part A</i> 85, 1–16.</li><li>Ciccone, Halse, Andreassen, Garnache &amp; Wangsness (2026) <i>Acceptance of distance-based road pricing: national choice experiment and field trial in the Oslo region</i>. TØI report 2179/2026.</li><li>TØI (2026) Report 2141/2026 on the effects of the 2019 toll restructuring in Oslo and Akershus.</li><li>Wooldridge (2005) Simple solutions to the initial conditions problem in dynamic, nonlinear panel data models with unobserved heterogeneity. <i>Journal of Applied Econometrics</i> 20(1), 39–54.</li><li>Kasprzyk, Nataraj, Reed &amp; Lempert (2013) <i>Environmental Modelling &amp; Software</i> 42; Kwakkel (2017) <i>Environmental Modelling &amp; Software</i> 96.</li><li>Bryant &amp; Lempert (2010) Thinking inside the box. <i>Technological Forecasting &amp; Social Change</i> 77(1).</li><li>Ministry of Transport (2024) Meld. St. 14 (2023–2024) <i>National Transport Plan 2025–2036</i>.</li><li>Stortinget (2025) Innst. 337 S (2024–2025) on Bypakke Kristiansund.</li><li>Marcucci, Lozzi &amp; Gatta (2026) Crafting consensus in city logistics: the power of storytelling. <i>Transportation Research Procedia</i> 98.</li><li>Statens vegvesen (2024–2025) Bypakke Kristiansund: faglig grunnlag vedtatt i bystyret; bypakken vedtatt; vedtok Bypakke Kristiansund. vegvesen.no.</li><li>Tveter &amp; Holmgren (2024) Statistical power and productivity effects of transport investments: a critical review. <i>Research in Transportation Economics</i> 105.</li><li>Deuten, Gómez Vilchez &amp; Thiel (2020) Analysis and testing of electric car incentive scenarios in the Netherlands and Norway. <i>Technological Forecasting and Social Change</i> 151.</li><li>Welde, Tveter &amp; Odeck (2019) The traffic effects of fixed links: short and long-run forecast accuracy. <i>Transportation Research Procedia</i> 42.</li></ol>
   <div class="folio"><span>From end states to pathways</span><span>5 / 5</span></div>
 </section>
 </body>
