@@ -72,6 +72,9 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 - [ ] (Claude, 14 Oct) Official traffic and revenue forecast behind the Kristiansund package (faglig grunnlag PDF).
 - [ ] (Arshad, 12 Oct) Ad text from the official Jobbnorge listing.
 - [ ] (Arshad, 12 Oct) trafikkdata.no counts at the two stations, May to October 2026: the API is blocked from the cloud container, so pull from a normal machine.
+- [ ] (Claude, 13 Oct) Alternative route: does fv64 via Averøy and Atlanterhavstunnelen bypass the rv70 stations? Decides whether 'captive' survives.
+- [ ] (Arshad, 12 Oct) Can RVU and vehicle-register access be requested before admission, or only by the supervisor team? Decides the wording of K13.
+- [ ] (Arshad, 12 Oct) TRG's place inside the Faculty of Logistics, from the Molde website. Unverified, so it stays out of the text until checked.
 - [ ] (Arshad, 16 Oct) CV evidence of survey, fieldwork or modelling experience.
 
 ## Pending work
@@ -88,3 +91,5 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 
 See skills/panel-review/SKILL.md. Outline v2: Gatta 8.2, Tveter 8.0, Hjelle 7.0, Hoff 8.0; outside examiner importance 6, originality 5, usefulness 6.
 Outline v3: Gatta 8.2, Tveter 8.2, Hjelle 7.2, Hoff 8.0; examiner 8, 7, 8 and narrowly first of 30. Main gap: experience confounded with town; fixed in v3.1 (not yet re-scored).
+
+Adversary game, round 2 (2026-10-10): defence K1 to K19 scored 6.3 on paper today, 7.2 if Friday's receipts land, 8 or more only with wave 2 decided and N2 and N3 answered. Rejected: the hindcast as novelty (K4), the TØI national study as a within-person baseline (K5), dropping to one wave (K10), the TRG claim before it is verified (K11), centrality scaling (K12). New wounds: N1 alternative route, N2 an ABM that is just a DCM with a clock, N3 the 2050 carbon left in lorries after they were dropped.
