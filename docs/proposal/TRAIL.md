@@ -19,6 +19,9 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-10-10 | Locked novelty list (three claims): acceptance as an admissibility condition with an empirically estimated surface; three-source uncertainty decomposition over a policy path; signposts validated out of sample. The hindcast is validation only. Every text defers to this list | Novelty drifted between rounds |
+| 2026-10-10 | Scoring rule: no artifact, no points. An artifact counts only if committed, linked, and reproducible from one command or one source URL | Ends conditional scoring |
+| 2026-10-10 | θ reported as an output: for each pathway, the acceptance margin it survives (info-gap logic), not only a swept input | The info-gap radius is a result, not a choice |
 | 2026-10-09 | Design is after-only (collection began 2026, before any wave); the exact start date stays an open check but no longer changes the design | Either reported date (4 May or 1 June) precedes the PhD |
 | 2026-10-09 | Dose = self-reported crossing frequency; aggregate station counts validate the sample's distribution, never individuals; optional consented data donation of each respondent's own toll statement | Individual passages are personal data; donation turns recall into record |
 | 2026-10-09 | RQ1 stated as a reconciliation: Gothenburg's rise is status quo bias (Börjesson et al. 2016), the Oslo trial's charge was temporary (TØI 2179); H1 status quo forms only around a real, permanent charge; H2 information moves support independently | The two studies disagree for a reason the design can test |
@@ -72,9 +75,9 @@ unverified slips into the text. Newest first. Every proposal edit should be chec
 - [ ] (Claude, 14 Oct) Official traffic and revenue forecast behind the Kristiansund package (faglig grunnlag PDF).
 - [ ] (Arshad, 12 Oct) Ad text from the official Jobbnorge listing.
 - [ ] (Arshad, 12 Oct) trafikkdata.no counts at the two stations, May to October 2026: the API is blocked from the cloud container, so pull from a normal machine.
-- [ ] (Claude, 13 Oct) Alternative route: does fv64 via Averøy and Atlanterhavstunnelen bypass the rv70 stations? Decides whether 'captive' survives.
+- [ ] (Claude, 13 Oct) Alternative route: Atlanterhavstunnelen (fv64, Kristiansund to Averøy) has been toll-free since 1 July 2020 (state grant NOK 370 m; tu.no, lokalhistoriewiki). A free mainland route exists for some trips; which origin-destination pairs avoid the rv70 stations is still to compute. 'Captive' is withdrawn until then.
 - [ ] (Arshad, 12 Oct) Can RVU and vehicle-register access be requested before admission, or only by the supervisor team? Decides the wording of K13.
-- [ ] (Arshad, 12 Oct) TRG's place inside the Faculty of Logistics, from the Molde website. Unverified, so it stays out of the text until checked.
+- [ ] (Arshad, 12 Oct) TRG's place inside the Faculty of Logistics. Partly verified: TRG exists and describes itself as a national centre for transport research that has long developed Norway's passenger transport models (POLIS member page); Tveter's profile sits under logistics. Gatta's placement and the exact structure are unverified.
 - [ ] (Arshad, 16 Oct) CV evidence of survey, fieldwork or modelling experience.
 
 ## Pending work
@@ -93,3 +96,5 @@ See skills/panel-review/SKILL.md. Outline v2: Gatta 8.2, Tveter 8.0, Hjelle 7.0,
 Outline v3: Gatta 8.2, Tveter 8.2, Hjelle 7.2, Hoff 8.0; examiner 8, 7, 8 and narrowly first of 30. Main gap: experience confounded with town; fixed in v3.1 (not yet re-scored).
 
 Adversary game, round 2 (2026-10-10): defence K1 to K19 scored 6.3 on paper today, 7.2 if Friday's receipts land, 8 or more only with wave 2 decided and N2 and N3 answered. Rejected: the hindcast as novelty (K4), the TØI national study as a within-person baseline (K5), dropping to one wave (K10), the TRG claim before it is verified (K11), centrality scaling (K12). New wounds: N1 alternative route, N2 an ABM that is just a DCM with a clock, N3 the 2050 carbon left in lorries after they were dropped.
+
+Adversary game, round 3, last wounds (2026-10-10): accepted the locked list, the no-artifact rule, the I-2 redesign, the I-5 targets paragraph and the I-6 demotion. Rejected or narrowed: hindcast signposts (n of 1, fleet not acceptance), info-gap analogy (inverts), extremal-case variance (asserted, not shown), Sikt filing by an applicant. New: W1 H1 can only test persistence, not formation; W2 the decision being supported is unnamed; W3 the zonal engine has no measured fidelity to the network model. Score on artifacts today: 5.9.
