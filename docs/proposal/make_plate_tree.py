@@ -95,15 +95,27 @@ def main():
     o.append(f'<text x="2" y="59" {SANS} font-size="12.5" fill="{CREAM}">the end state, if every</text>')
     o.append(f'<text x="2" y="75" {SANS} font-size="12.5" fill="{CREAM}">assumption holds</text>')
     o.append(f'<circle cx="236" cy="46" r="7" fill="{CREAM}"/><circle cx="236" cy="46" r="15" fill="none" stroke="{CREAM}" stroke-opacity=".4"/>')
-    o.append(f'<line x1="2" y1="102" x2="250" y2="102" stroke="{CREAM}" stroke-opacity=".25" stroke-dasharray="3 4"/>')
-    o.append(f'<text x="2" y="130" {MONO} font-size="11" fill="{DIM}" letter-spacing="1.2">THIS PROJECT</text>')
-    o.append(f'<text x="2" y="152" {SANS} font-weight="800" font-size="16" fill="{CREAM}">904 paths, each tested</text>')
-    o.append(f'<text x="2" y="171" {SANS} font-size="12.5" fill="{CREAM}">every leaf is one pathway,</text>')
-    o.append(f'<text x="2" y="187" {SANS} font-size="12.5" fill="{CREAM}">coloured by its futures on</text>')
-    o.append(f'<text x="2" y="203" {SANS} font-size="12.5" fill="{CREAM}">target, of 1,000</text>')
-    o.append(f'<text x="2" y="232" {MONO} font-size="10.5" fill="{DIM}">ring 1: first instrument · rings 2–4:</text>')
-    o.append(f'<text x="2" y="247" {MONO} font-size="10.5" fill="{DIM}">the next, at 50, 65 or 80% electric</text>')
-    o.append(f'<path d="M210,{cy} H{cx - 128}" stroke="{CREAM}" stroke-opacity=".35" stroke-dasharray="2 4"/>')
+    o.append(f'<line x1="2" y1="88" x2="250" y2="88" stroke="{CREAM}" stroke-opacity=".25" stroke-dasharray="3 4"/>')
+    o.append(f'<text x="2" y="108" {MONO} font-size="11" fill="{DIM}" letter-spacing="1.2">THIS PROJECT</text>')
+    o.append(f'<text x="2" y="128" {SANS} font-weight="800" font-size="16" fill="{CREAM}">904 paths, each tested</text>')
+    o.append(f'<text x="2" y="145" {SANS} font-size="12" fill="{CREAM}">leaf colour: futures on target, of 1,000</text>')
+    o.append(f'<text x="2" y="172" {MONO} font-size="11" fill="{RED}" letter-spacing="1.2">SAME 2050, DIFFERENT FATE</text>')
+    pairs = [("1", "DP", [0.5], "distance, then package"), ("2", "PD", [0.8], "package, then distance"),
+             ("3", "ED", [0.5], "earmark, distance at 50%"), ("4", "ED", [0.8], "earmark, distance at 80%")]
+    look = {(r["code"], tuple(r["thr"])): r for r in P}
+    for n, (lab, code, thr, txt) in enumerate(pairs):
+        r = look[(code, tuple(thr))]
+        yy = 190 + n * 17 + (5 if n >= 2 else 0)
+        o.append(f'<circle cx="8" cy="{yy - 4}" r="6.5" fill="{INK}" stroke="{CREAM}" stroke-width="1"/>')
+        o.append(f'<text x="8" y="{yy - 0.5}" {MONO} font-size="9.5" fill="{CREAM}" text-anchor="middle">{lab}</text>')
+        o.append(f'<text x="20" y="{yy}" {SANS} font-size="12" fill="{CREAM}">{txt}</text>')
+        o.append(f'<rect x="174" y="{yy - 9}" width="{r["share"] * 60:.1f}" height="9" fill="{fate(r["share"])}"/>')
+        o.append(f'<text x="250" y="{yy}" {MONO} font-size="11" fill="{CREAM}" text-anchor="end">{round(r["share"] * 100)}%</text>')
+        # mark the leaf on the tree
+        x, y = pos(key(r, len(r["code"])))
+        o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6.5" fill="{INK}" fill-opacity=".85" stroke="{CREAM}" stroke-width="1"/>')
+        o.append(f'<text x="{x:.1f}" y="{y + 3.3:.1f}" {MONO} font-size="9.5" fill="{CREAM}" text-anchor="middle">{lab}</text>')
+    o.append(f'<path d="M252,46 Q{cx - 140},46 {cx - 128},{cy - 20}" fill="none" stroke="{CREAM}" stroke-opacity=".35" stroke-dasharray="2 4"/>')
     o.append("</svg>")
     (HERE / "plates" / "tree.svg").write_text("".join(o))
     print("tree.svg", round(len("".join(o)) / 1024), "kB; best", best["code"], best["thr"], best["margin"])

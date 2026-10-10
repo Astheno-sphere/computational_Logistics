@@ -104,13 +104,13 @@ def main():
             px_, py_ = CX + (a - v0) * A, TOP + (a + v0) * B
             g.append(f'<circle cx="{px_:.1f}" cy="{py_:.1f}" r="4.6" fill="{INK}" stroke="{col}" stroke-width="1.4"/>')
         a0x, a0y = P2[0]
-        g.append(f'<text x="{a0x - 8:.1f}" y="{a0y + 4:.1f}" font-family="Roboto Mono,monospace" font-size="11" fill="{col}" text-anchor="end">{lab}</text>')
+        g.append(f'<text x="{a0x - 8:.1f}" y="{a0y + 4:.1f}" font-family="Roboto Mono,monospace" font-size="14" fill="{col}" text-anchor="end">{lab}</text>')
     layers.append((0, "".join(g)))
 
     labels = {
-        0: ("05", "PATHWAYS", "which order of instruments survives", "claims 1, 3 · A3", RED),
+        0: ("05", "PATHWAYS", "which order survives", "claims 1, 3 · A3", RED),
         1: ("04", "10³ FUTURES", "the same agents in 1,000 worlds", "claim 2 · EMA Workbench", SAGE),
-        2: ("03", "AGENTS", "every home remembers last year", "claim 1 · A1 · ρ", RED),
+        2: ("03", "AGENTS", "each home remembers", "claim 1 · A1 · ρ", RED),
         3: ("02", "ESTIMATED CHOICE", "what people choose and accept", "A2 · Biogeme", AMBER),
         4: ("01", "DATA", "the real town, not a toy", "OSM · register · counts", CREAM),
     }
@@ -120,19 +120,19 @@ def main():
         out.append(dict(layers)[k])
         no, head, sub, tag, col = labels[k]
         ly = TOP + k * GAP + B * 0.9
-        out.append(f'<text x="14" y="{ly - 20:.0f}" font-family="Roboto Mono,monospace" font-size="13" fill="{col}" letter-spacing="1">{no}</text>')
-        out.append(f'<text x="14" y="{ly:.0f}" font-family="Inter,sans-serif" font-weight="800" font-size="17" fill="{CREAM}">{head}</text>')
-        out.append(f'<text x="14" y="{ly + 19:.0f}" font-family="Inter,sans-serif" font-size="13.5" fill="{DIM}">{sub}</text>')
-        out.append(f'<text x="14" y="{ly + 37:.0f}" font-family="Roboto Mono,monospace" font-size="12.5" fill="{col}">{tag}</text>')
+        out.append(f'<text x="14" y="{ly - 20:.0f}" font-family="Roboto Mono,monospace" font-size="16" fill="{col}" letter-spacing="1">{no}</text>')
+        out.append(f'<text x="14" y="{ly:.0f}" font-family="Inter,sans-serif" font-weight="800" font-size="19" fill="{CREAM}">{head}</text>')
+        out.append(f'<text x="14" y="{ly + 19:.0f}" font-family="Inter,sans-serif" font-size="16" fill="{DIM}">{sub}</text>')
+        out.append(f'<text x="14" y="{ly + 37:.0f}" font-family="Roboto Mono,monospace" font-size="15" fill="{col}">{tag}</text>')
         lx = iso(x0, y1, k)[0] + (iso(x0, y0, k)[0] - iso(x0, y1, k)[0]) * 0.5
         out.append(f'<line x1="236" y1="{ly - 4:.0f}" x2="{lx - 6:.0f}" y2="{ly - 4:.0f}" stroke="{CREAM}" stroke-opacity=".35" stroke-dasharray="2 3"/>')
     # what flows up between layers, on the right
-    flows = {3: "homes sampled, invited", 2: "β, η, ρ estimated", 1: "agent states, 2026 to 2050", 0: "futures meeting targets"}
+    flows = {3: "homes sampled", 2: "β, η, ρ", 1: "agent states, yearly", 0: "futures on target"}
     for k, txt in flows.items():
         xa, ya = iso(x1, y1, k + 1); xb, yb = iso(x1, y1, k)
         xr = xa + 18
         out.append(f'<path d="M{xr:.0f},{ya - 10:.0f} V{yb + 18:.0f}" stroke="{CREAM}" stroke-width="1.2" fill="none" marker-end="url(#ar)"/>')
-        out.append(f'<text x="{xr + 10:.0f}" y="{(ya + yb) / 2 + 4:.0f}" font-family="Roboto Mono,monospace" font-size="12.5" fill="{CREAM}">{txt}</text>')
+        out.append(f'<text x="{xr + 10:.0f}" y="{(ya + yb) / 2 + 4:.0f}" font-family="Roboto Mono,monospace" font-size="15" fill="{CREAM}">{txt}</text>')
     # the bridge, ringed on the agent layer
     bx, by = iso(437020, 6999096, 2)
     out.append(f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="9" fill="none" stroke="{CREAM}" stroke-width="1.2"/>')

@@ -127,3 +127,9 @@ src/a3v4.html is now the master text; v4/text.md is the Stage A record.
 - Map: headline "Who pays depends on where you live", three-trip legend, homes/workplaces bars.
 - Inspector pass: commuter label contradicted text (fixed); footer equation now named as reduced form of (2); engine caption no longer claims layers 2–3 are real; negative margin defined in (3); front jargon removed; "calibrated" → "validated"; P1 echo replaced.
 - Still open for Arshad: [N1], [n], [FID], [SHA], [TESTS], CHECK flags; references print at 8.7px.
+
+## 2026-10-10 · v4.5 open cases closed
+- P1 first plate rebuilt as "Success erodes its own base": the package as approved through the 1,000 prototype futures; 22% fail to cover debt before 2041, 30% by 2050 (make_plate_erosion.py). Ends on the thesis question.
+- P1 tree gains "same 2050, different fate": D→P 67% vs P→D 36%; E→D at 50% 63% vs at 80% 23%.
+- Placeholders closed: [n] from power.py (1,428 Kristiansund, 714 Molde); [N1] replaced by the computed 48% bridge cut, regional count moved to A1; [FID] moved to A1; [SHA] → tag proposal-v4.5; [TESTS] → 87 passing (tests/). Emissions anchor: Climate Change Act 55% by 2030, 90–95% by 2050. Term: 3 years (confirmed); coursework ECTS unconfirmed (30 vs 45), so no number printed. Molde tolls reworded to an exposure-history item.
+- P4 trips drawn solid and offset so each is traceable.

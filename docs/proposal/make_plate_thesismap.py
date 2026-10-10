@@ -55,7 +55,7 @@ def main():
     o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" aria-label="Thesis map: data sources wired to four articles on a 36-month axis, articles wired to three claims">',
          '<defs><filter id="tmg"><feGaussianBlur stdDeviation="2.2"/></filter></defs>']
     # time bands under the axis
-    for m0, m1, y, lab, col in ((0, 3, 194, "Sikt · pilot", TEAL), (0, 16, 210, "30 ECTS coursework", CREAM), (33, 36, 194, "summary", CREAM)):
+    for m0, m1, y, lab, col in ((0, 3, 194, "Sikt · pilot", TEAL), (0, 16, 210, "coursework", CREAM), (33, 36, 194, "summary", CREAM)):
         o.append(f'<rect x="{M(m0):.1f}" y="{y}" width="{M(m1) - M(m0):.1f}" height="8" fill="{col}" fill-opacity=".28"/>')
         o.append(f'<text x="{M(m1) + 6 if lab != "summary" else M(m0) - 6:.1f}" y="{y + 8}" {MONO} font-size="11" fill="{col}" text-anchor="{"start" if lab != "summary" else "end"}">{lab}</text>')
     # axis

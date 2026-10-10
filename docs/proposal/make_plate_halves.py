@@ -208,13 +208,16 @@ def main():
         xy = np.array([[G.nodes[n]["x"], G.nodes[n]["y"]] for n in route])
         crosses = any((u, v) in bridge or (v, u) in bridge for u, v in zip(route[:-1], route[1:]))
         res["trips"].append({"trip": num, "crosses_A": bool(crosses), "km": round(float(np.sum(np.hypot(*np.diff(xy, axis=0).T))) / 1000, 1)})
-        ax.plot(xy[:, 0], xy[:, 1], color=col, lw=7, alpha=0.18, zorder=7, solid_capstyle="round")
-        ax.plot(xy[:, 0], xy[:, 1], color=col, lw=1.8, zorder=7, ls=(0, (6, 3)))
+        off = {"1": (-28, 28), "2": (0, 0), "3": (28, -28)}[num]          # side by side where trips share rv. 70
+        xy = xy + np.array(off)
+        ax.plot(xy[:, 0], xy[:, 1], color=INK, lw=6.5, zorder=8, solid_capstyle="round")
+        ax.plot(xy[:, 0], xy[:, 1], color=col, lw=12, alpha=0.18, zorder=8, solid_capstyle="round")
+        ax.plot(xy[:, 0], xy[:, 1], color=col, lw=3.2, zorder=8, solid_capstyle="round")
         sx_, sy_ = xy[0]
-        ax.add_patch(plt.Circle((sx_, sy_), 70, color=col, zorder=10))
-        ax.text(sx_, sy_, num, color=INK, fontsize=9, fontweight="bold", ha="center", va="center", zorder=11)
+        ax.add_patch(plt.Circle((sx_, sy_), 95, color=col, ec=INK, lw=2, zorder=10))
+        ax.text(sx_, sy_, num, color=INK, fontsize=12, fontweight="bold", ha="center", va="center", zorder=11)
         ex_, ey_ = xy[-1]
-        ax.add_patch(plt.Circle((ex_, ey_), 45, fill=False, ec=col, lw=1.6, zorder=10))
+        ax.add_patch(plt.Circle((ex_, ey_), 55, color=INK, ec=col, lw=2.4, zorder=10))
     print("trips", res["trips"])
     callout(bmid, -500, 820, "A · NORDSUNDBRUA", "toll station, rv. 70", RED)
     callout(exit_pt, -300, 1150, "B · TOWARDS OMSUNDBRUA", "second station, beyond the frame", AMBER)

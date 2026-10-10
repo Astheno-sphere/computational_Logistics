@@ -15,6 +15,8 @@ REFS = {
     "power": "Tveter &amp; Holmgren (2024) Statistical power and productivity effects of transport investments: a critical review. <i>Research in Transportation Economics</i> 105.",
     "ofv": "OFV (2026) New passenger car registrations, 2025.",
     "wps": "Wangsness, Proost &amp; Steinsland (2026) The curious case of road pricing reform in Norway. <i>Transportation Research Interdisciplinary Perspectives</i> 38, 102064.",
+    "klimalov": "Ministry of Climate and Environment (2017, amended 2022 and 2025) <i>Lov om klimamål (klimaloven)</i>, LOV-2017-06-16-60.",
+    "powerpy": "Author (2026) <i>power.py</i>: sample size from H1 and H2, alpha 0.05, power 0.80. Project repository.",
     "ntp": "Ministry of Transport (2024) Meld. St. 14 (2023–2024) <i>National Transport Plan 2025–2036</i>.",
     "oppdrag": "Ministry of Transport and Ministry of Trade, Industry and Fisheries (2024) NTP-oppdrag nr. 1-2024.",
     "transplan": "TØI (2025) TRANSPLAN: A transport system within planetary boundaries. Centre for transport research, 2025–2033. toi.no/transplan.",
