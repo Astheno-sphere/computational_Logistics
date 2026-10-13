@@ -66,3 +66,23 @@ print("wrote", here / "proposal-a3.html")
 v4 = renumber((here / "src" / "a3v4.html").read_text(encoding="utf-8")).replace("/*HALVES*/", jpeg_uri(here / "plates" / "halves.png", 1800)).replace("/*ENGINE*/", (here / "plates" / "engine.svg").read_text()).replace("/*TREE*/", (here / "plates" / "tree.svg").read_text()).replace("/*EROSION*/", (here / "plates" / "erosion.svg").read_text()).replace("/*MEMORY*/", (here / "plates" / "memory.svg").read_text()).replace("/*THESISMAP*/", (here / "plates" / "thesismap.svg").read_text()).replace("/*FRONT*/", (here / "plates" / "front.svg").read_text()).replace("/*MOTION_JS*/", motion_js)
 (here / "proposal-v4.html").write_text(v4, encoding="utf-8")
 print("wrote", here / "proposal-v4.html")
+
+# Plate A on its own page (screen only, opens anywhere): the same canvas and data, with the v4 tokens
+plate_page = ("""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plate A: 41 of 60 futures reach the target</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#16120F;--panel:#1E1915;--cream:#ECE3D2;--body:#D3CABA;--dim:#948B7E;--red:#D2412B;--sage:#9DB886;--amber:#D4A530;--teal:#7CBAC4;
+--sans:Inter,system-ui,sans-serif;--mono:"Roboto Mono",ui-monospace,monospace;color-scheme:dark}
+html,body{margin:0;background:#0c0a09;color:var(--body);font-family:var(--sans)}
+main{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+canvas{display:block;width:100%;aspect-ratio:4/5;background:var(--panel);cursor:pointer}
+p{font:12px/1.5 var(--mono);color:var(--dim);margin:12px 0 0}
+</style></head><body><main>
+<canvas id="mp" tabindex="0" role="img" aria-label="Animated plate: sixty simulated futures of commuting emissions, 2025 to 2050, above two town maps with 1,000 commuters as dots. First no policy, then the most robust package."></canvas>
+<p>Click to pause. Synthetic behaviour, illustrative parameters. Computed by docs/proposal/make_motion.py.</p>
+</main><script>
+""" + motion_js + "\n</script></body></html>\n")
+(here / "plate-a.html").write_text(plate_page, encoding="utf-8")
+print("wrote", here / "plate-a.html")
