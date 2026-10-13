@@ -117,7 +117,12 @@ def main():
     co2b = np.array([runs[(best, f)]["co2"][-1] for f in range(60)])
     fmed = int(np.argsort(co2b)[len(co2b) // 2])
     row = exp[(exp["policy"] == best) & (exp["future"] == fmed)].iloc[0]
-    tr = abm.run({k: row[k] for k in L}, {k: row[k] for k in U}, beta=beta, n=N_AGENTS, trace_years=(2025, 2050))["trace"]
+    rr = abm.run({k: row[k] for k in L}, {k: row[k] for k in U}, beta=beta, n=N_AGENTS, trace_years=(2025, 2050))
+    tr = rr["trace"]
+    r0 = exp[(exp["policy"] == "no_policy") & (exp["future"] == fmed)].iloc[0]
+    rn = abm.run({k: r0[k] for k in L}, {k: r0[k] for k in U}, beta=beta, n=N_AGENTS)
+    ev_series = {"years": abm.YEARS.tolist(), best: [round(v, 3) for v in rr["series"]["ev_fleet_share"]],
+                 "no_policy": [round(v, 3) for v in rn["series"]["ev_fleet_share"]]}
 
     # hostile futures: no package in the set meets the target. What do they share? (PRIM, two inputs)
     M = np.array([q["meets"] for q in pkgs])
@@ -144,6 +149,7 @@ def main():
         "u_names": U, "futures_u": fut.round(5).values.tolist(),
         "hostile": {"n": int(hostile.sum()), "box": hbox, "dims": list(hbox["box"]) if hbox else [],
                     "points": [r + [int(h)] for r, h in zip(hpts, hostile)]},
+        "ev_series": ev_series,
         "trace": {"future": fmed, "zone": tr["zone"], "mode25": tr["years"][2025]["mode"],
                   "mode50": tr["years"][2050]["mode"], "ev50": tr["years"][2050]["ev"]},
     }
