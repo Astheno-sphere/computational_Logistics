@@ -130,3 +130,9 @@ Spine: P2 states the empirical heart; P3 is its centre; P4 is where the measurem
 - `dcm-swissmetro-evidence` 5495dc46 · `matsim-bridge` 67bcaa26 (not run) · `fervent-noether-nx38nl` 6c95ed79 (Pages).
 - **Uncommitted / local only:** the v5.5 text (`proposal_v5.4_content.md` + re-weight) and `proposal.html`. NOT in any branch yet.
 - Consolidation plan at final build: branch off main (has evidence) → add v5.5 text + plates → carry v4.5's still-wanted assets → one clean branch → PR.
+
+## 17. Delegate audit (2026-10-20) — MATSim run + v5.5 finish
+- Delegate reported T1–T5 done on its LOCAL branch `claude/v5.5-finish`, but it could NOT push (third-party GitHub App returned 403). Nothing reached our remote; `main` untouched (confirmed by ls-remote). Its code is therefore UNVERIFIED — audited its report, not its diff.
+- Corrected here and pushed (lucid-galileo): the **48% error removed** in content/html/spec → trip-avoidance share is `[N1]`, exposure "measured not assumed"; **freight "fires before" → "expected to fire before"** (both occurrences); **citation specifics flagged TO CONFIRM** — NGM "TØI 1918/2022" and Shaabani "EURO JTL 13/100146/2024, Laporte-before-Hoff" were NOT confirmed by independent search → do not ship; Führer DOI kept as the anchor, vol. 34 to confirm.
+- MATSim numbers the delegate claims (free-flow zonal-vs-MATSim ~19% MAPE r0.735; static-vs-MATSim 6.2% r0.999; 0.1 congested gridlock ~78%) are plausible and honestly caveated, but live ONLY in its environment — NOT verified, NOT in our git. NOT added to the proposal.
+- SECURITY: do NOT grant the third-party GitHub App `meta-muse-ai` Contents:write. To bring the MATSim result in safely: have the delegate run `git bundle create v5.5.bundle main..claude/v5.5-finish` (or upload the two `dynamic_crosscheck.json` + the scatter figure); verify against this audit, then push from a trusted session.

@@ -45,8 +45,8 @@ SYSTEM (all five, one hand):
 **Composition:** Kristiansund footprints on oxblood, buildings tinted by toll exposure — teal (a free route exists via the tunnel), amber (partial), red (every trip pays). Three traceable trips drawn solid and offset: trip 1 pays at Nordsundbrua, trip 2 runs free through the Atlantic Tunnel, trip 3 to the freight corridor. Callout boxes (dark fill, cream border, leader to a point): A Nordsundbrua, B Omsundbrua, C the free tunnel, D the road-to-sea corridor.
 **Narration that ADDS depth:**
 - Caption: *"The toll is not one price. It is a map of who can avoid it."*
-- Callout C (the depth — a measured number): `48% of trips can avoid both stations — a dose, not an assumption`.
-- Callout D (freight): `road-to-sea corridor — the heavy-vehicle signpost fires before the passenger one`.
+- Callout C (the depth): `Article 1 counts the share of trips avoiding both stations ([N1]) — exposure measured, not assumed`.
+- Callout D (freight): `road-to-sea corridor — the heavy-vehicle signpost is expected to fire before the passenger one`.
 - Tariff tag near A: `34 kr · 27.20 tag · 19.04 zero-emission = 30% less per electric crossing`.
 - Scale bar `0 / 500 / 1000 m`, N arrow top-right.
 **Leave out:** terrain prettiness, 3D buildings. Flat footprints, honest.
