@@ -42,3 +42,10 @@ Unverified: "road-to-sea corridor, heavy-vehicle signpost fires first"; the symb
 
 ## Environment
 Venv with all dependencies: `/tmp/claude-0/-home-user-computational-Logistics/4a037f22-dfdf-5433-87d5-b0986551c2d1/scratchpad/venv` (session scratch, may not persist). Chromium at `/opt/pw-browsers/chromium`; Playwright is installed without browsers. Bhardwaj repo cloned read-only at `/home/user/abhinavbwj/claude-skills-for-computational-designers`.
+
+## Update 2026-10-20: the v5.5 build
+- `docs/proposal/proposal-v5.5.html` is now generated: edit `src/proposal-v55.html`, then run `python docs/proposal/build_v55.py`. Do not edit the output by hand; `v5.5-content.md` is no longer the source.
+- Plates P1 to P5 are the computed plates already in `docs/proposal/plates` (answers, engine, memory, halves, front), re-toned by the build. The 25-package plate `p5-robust-front.svg` (older ensemble, 60 futures) is not used on the page.
+- Open items kept open on purpose: `[N1]` (share of trips avoiding both stations, counted in A1) and five `[to confirm]` markers (references and the AI-use wording).
+- Print: A3 portrait, margins none, background graphics on. Checked: 8 pages (5 body, references, 2 supplement sheets).
+- Checks that cannot be done offline: Overpass and Google Fonts are blocked in the sandbox; fonts are embedded for that reason.

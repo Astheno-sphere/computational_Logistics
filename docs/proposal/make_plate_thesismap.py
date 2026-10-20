@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Plate: the thesis as a routing tree -> docs/proposal/plates/thesismap.svg
 
-Data sources sit on the month they become available; wires carry them into the four articles, which sit
+Data sources sit on the month they become available; wires carry them into the three articles, which sit
 on their submission month; the articles wire into the three claims on the right. Wire colour is the
 ladder level a source belongs to: teal needs no new data (Level 1), amber is survey wave 1 (Level 2),
 sage is wave 2 (Level 3). Cut the amber and sage wires and the teal tree still reaches A1 and A3.
+Months and article numbers follow proposal v5.5 (A1 month 14, A2 month 26, A3 month 34).
 
     python docs/proposal/make_plate_thesismap.py
 """
@@ -43,16 +44,16 @@ def main():
         ("national ranges", 0.0, 96, 54, TEAL, ["A1"]),
         ("vehicle register", 2.0, 280, 16, TEAL, ["A1"]),
         ("station counts", 4.0, 250, 54, TEAL, ["A1"]),
-        ("WAVE 1 · month 6", 6, 160, 92, AMBER, ["A2"]),
-        ("public record 2019–26", 8.0, 470, 16, TEAL, ["A2"]),
+        ("WAVE 1 · month 6", 6, 160, 92, AMBER, ["A1", "A2"]),
+        ("CARRIER BLOCK · month 6", 6, 330, 130, AMBER, ["A1", "A3"]),
         ("WAVE 2 · month 18", 18, 410, 92, SAGE, ["A2"]),
         ("dated events", 26.0, 580, 54, TEAL, ["A3"]),
     ]
-    arts = {"A1": (12, "agents with memory", "RQ1"), "A2": (24, "acceptance that persists", "RQ2"),
-            "A3": (32, "robust pathways", "RQ3"), "A4": (34, "discount revision", "optional")}
-    claims = [("1", "acceptance margin", ["A2", "A3"]), ("2", "uncertainty by source", ["A1", "A3"]),
+    arts = {"A1": (14, "choice estimated", "RQ1"), "A2": (26, "acceptance that persists", "RQ2"),
+            "A3": (34, "robust pathways", "RQ3")}
+    claims = [("1", "acceptance as admissibility", ["A1", "A2", "A3"]), ("2", "uncertainty by source", ["A3"]),
               ("3", "signposts tested twice", ["A3"])]
-    o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" aria-label="Thesis map: data sources wired to four articles on a 36-month axis, articles wired to three claims">',
+    o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" aria-label="Thesis map: data sources wired to three articles on a 36-month axis, articles wired to three claims">',
          '<defs><filter id="tmg"><feGaussianBlur stdDeviation="2.2"/></filter></defs>']
     # time bands under the axis
     for m0, m1, y, lab, col in ((0, 3, 194, "Sikt · pilot", TEAL), (0, 16, 210, "coursework", CREAM), (33, 36, 194, "summary", CREAM)):
@@ -73,7 +74,7 @@ def main():
         s, _ = node(x, y, lab, col)
         o.append(s)
     # article to article: the engine and estimates flow forward
-    for a, b, lab in (("A1", "A3", "engine"), ("A2", "A3", "ρ, η"), ("A3", "A4", "")):
+    for a, b, lab in (("A1", "A3", "engine"), ("A2", "A3", "ρ, η")):
         x1, x2 = M(arts[a][0]), M(arts[b][0])
         o.append(f'<path d="M{x1:.1f},{AXY + 9} Q{(x1 + x2) / 2:.1f},{AXY + 46 if a == "A1" else AXY + 30} {x2:.1f},{AXY + 9}" fill="none" stroke="{RED}" stroke-width="1.4" stroke-opacity=".7" stroke-dasharray="{"4 3" if b == "A4" else "none"}"/>')
         if lab:
