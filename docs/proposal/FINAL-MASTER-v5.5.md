@@ -7,6 +7,24 @@ Format: HTML, five A3 pages + a sixth references page. No em dashes. Never inven
 
 ---
 
+## RECONCILIATION — answers to the build session's 7 flags (resolved 2026-10-20)
+
+All verified against the repo at commit `1528df3`, not from memory.
+
+1. **Toolchain (Rhino/Grasshopper).** Resolved to **Python/SVG** as the default and the honest line when you build the plates. Rhino/Grasshopper stays only as an *option* if Arshad composes the scene plates himself. Use Python/SVG.
+2. **"Five instruments" vs the 904 count.** Real mismatch, now fixed. The 904 = perm(4,k)×3^(k-1) over **four** instruments (4 + 36 + 216 + 648). Text now reads: the enumerable core takes **four of the five** instruments; the full search ranges over all five. Arithmetic and wording now agree. (If you prefer the core to use all five, the count changes — flag it; otherwise four-of-five stands.)
+3. **"Body stays the serif."** The master was right for v5.5 and the Code session was reading the old v4.5 sheets. The built `proposal-v5.5.html` uses **Spectral serif for body**, Montserrat for titles, JetBrains Mono for numbers. Type note corrected to name those three.
+4. **Colours.** No conflict in v5.5: the built page already uses `#C45545` red, terracotta `#D4835C`, sage `#9DB886`, teal `#7CBAC4`, amber `#D4A530`, cream `#E8DFD0`. The only correction: **ground is oxblood `#2E151C`** (what the built sheet uses), not charcoal. The `#D2412B`/"no terracotta" the session saw are the old v4.5 tokens — ignore those for v5.5.
+5. **Test count.** Recounted: **89** test functions in the tree now (`grep def test_` = 89), not 87. Updated to 89 everywhere, with a note to re-confirm at the tagged commit (a run is still needed for the *pass* count).
+6. **Swissmetro reference.** The old "−5215.7" reference was **wrong**. Verified against the Biogeme 3.2.8 normal-mixture Swissmetro example: published final LL ≈ **−5214.8** (rho-bar 0.241). Our −5214.9 essentially matches it. Text now says "against the published reference of about −5214.8" and the unverified rho-bar 0.25 is dropped from the headline comparison (read the exact repo rho-bar at the tag if you want it printed).
+7. **Page fit.** Yours to measure — the A3 sheets are tight. Levers if P-plates overflow: trim the longest body paragraphs (page 5 is the densest), let the plate occupy its frame rather than expanding it, and keep page-6 references on their own sheet. Do not cut a claim or a citation to make room.
+
+**Still Arshad's calls (not yet answered):** (a) whether you compose the scene plates in Rhino yourself — otherwise Python/SVG; (b) sending 4–10 original Abhinav reference images (one per plate job + one title-block close-up).
+
+**Branch:** build the plates on a **separate branch off `lucid-galileo`** (e.g. `v5.5-plates`), so the two sessions stop colliding on one branch; open one PR when done. Pull before you branch. Delete nothing.
+
+---
+
 ## 0. THE SPINE (one sentence; every page serves one clause of it)
 
 > Norway's official models are static and macroscopic, and TØI itself calls for dynamic models built beside them; this PhD builds that layer: it estimates how people and freight accept and respond to road pricing (DCM), carries those responses in agents through calendar time (ABM), and searches for the instrument sequences that reach 2050 robustly (deep uncertainty and backcasting), reporting the signposts that warn when a path is failing, as a complement to NTM6, RTM and the national freight model, never a replacement.
@@ -29,9 +47,9 @@ The ring closes: the signpost on page 5 that warns a path is failing is the same
 
 ## VISUAL SYSTEM (all five plates, one hand — Abhinav poster style)
 
-- Ground: charcoal `#16120F` (matches the existing sheets; lower risk than re-toning to oxblood `#2E151C` — pick charcoal and keep it across all five). Cream line-work `#E8DFD0`.
+- Ground: **oxblood `#2E151C`** — this is what the built `proposal-v5.5.html` already uses, so the plates must match it (P5 may use the slightly redder `#37181E`). Keep one ground across all five. Cream line-work `#E8DFD0`. (Earlier notes said charcoal `#16120F`; the built v5.5 sheet is oxblood, so oxblood wins.)
 - Semantics fixed: sage `#9DB886` = good/robust/accepted · amber `#D4A530` = moderate/near · warm red `#C45545` = fails/erodes/danger · terracotta `#D4835C` = the chosen/focal thing · teal `#7CBAC4` = free alternative / directional.
-- One accent per plate doing every accent job. Titles/labels: Inter (heavy) for titles OR a genuinely condensed face — pick one, apply to all; body stays the serif. Do not mix title faces.
+- One accent per plate doing every accent job. Type roles exactly as the built sheet uses them: **Montserrat** (heavy) for titles and plate labels, **Spectral** serif for body/captions, **JetBrains Mono** for numbers and code. Do not introduce a new face (the earlier "Inter" note was from the old v4.5 sheets; v5.5 uses Montserrat + Spectral).
 - Honest encoding: bars from zero, axes carry units, no 3D, no fake smoothing. Every number is real (from the body text or the evidence folders).
 - Caption leads with the diagram; keyword printed as a visible label on the plate.
 - **The narration rule:** each plate's caption + annotations ADD depth the body text does not — a mechanism, a number, a consequence — never a repeat of the prose.
@@ -102,7 +120,7 @@ The national system has three parts a candidate must name: NTM6, the national pa
 ### IMAGE — Plate P2, positioned centre-right of page 2, beside "What is new" (vertical, spanning the three-claim block)
 - **Keyword label on plate:** DCM + ABM
 - **Abhinav family to pull:** staged pipeline (panels left→right with arrows) OR context-tensor isometric stack.
-- **Composition:** five isometric layers stacked / chained, each a thin-cream plane on charcoal, one terracotta thread running up through all five showing data becoming decision. Layers bottom→top: `REAL DATA` (survey + register) → `ESTIMATED CHOICE (DCM)` → `AGENTS WITH MEMORY (ABM)` → `10³ FUTURES` → `ROBUST SEARCH → SIGNPOSTS`. Each layer tagged on its right edge with its **article · claim · tool**.
+- **Composition:** five isometric layers stacked / chained, each a thin-cream plane on oxblood, one terracotta thread running up through all five showing data becoming decision. Layers bottom→top: `REAL DATA` (survey + register) → `ESTIMATED CHOICE (DCM)` → `AGENTS WITH MEMORY (ABM)` → `10³ FUTURES` → `ROBUST SEARCH → SIGNPOSTS`. Each layer tagged on its right edge with its **article · claim · tool**.
 - **Caption (leads):** *"Five layers. Each carries what the one below cannot."*
 - **Narration that adds depth (per-layer micro-labels):** `DCM: A1 · Biogeme · estimated, not assumed` · `ABM: A2 · acceptance carried in calendar time` · `FUTURES: 10³ · EMA Workbench` · `SEARCH: A3 · MORDM, min max-regret` · `SIGNPOSTS: validated twice`. Side note by the tool column: `every layer = one named tool, one article`.
 - **Leave out:** decorative gears/cogs. It is strata, not machinery.
@@ -122,7 +140,7 @@ Everything rests on one measurement, so the model begins there. Acceptance is es
 (2) A*(n,t) = ρ·A(n,t−1) + δ·dose(n,t) + η·info(n) + γ'·z(n) + u(n,t)
 identified between the two waves with the initial-conditions problem handled [wooldridge]. This persistence term ρ is a Level-3 extension, pursued only if both waves land; the core contribution does not rest on it. I claim only what the data identify: a cross-sectional acceptance model as the floor, one persistence term as the stretch, never a full dynamic panel.
 
-**What a pathway is, and how it is chosen.** Five instruments: revision of the package, the zero-emission rate, a passenger distance charge, a heavy-vehicle distance charge, and earmarking of revenue. A3 is a search, not a catalogue: choose the switch-on year and level of each instrument to maximise the share of futures meeting all three 2050 targets and minimise maximum regret, subject to acceptance holding above threshold every year, revenue covering debt service, and an accessibility floor. The search runs with a many-objective robust algorithm over the ensemble, then scenario discovery names the futures where the robust set still breaks [prim, mordm]. Treating robustness as the quantity to optimise under uncertainty follows the stability-metrics line of Shaabani, Hvattum, Hoff and Laporte [shaabani]. Full enumeration of a reduced instrument set is kept only to check the search: that core is the 904 ordered instrument sequences (orders of one to four instruments at three switching thresholds, 4 + 36 + 216 + 648 = 904), while the full search ranges over switch-years and levels, on the order of 10⁴ candidate pathways.
+**What a pathway is, and how it is chosen.** Five instruments: revision of the package, the zero-emission rate, a passenger distance charge, a heavy-vehicle distance charge, and earmarking of revenue. A3 is a search, not a catalogue: choose the switch-on year and level of each instrument to maximise the share of futures meeting all three 2050 targets and minimise maximum regret, subject to acceptance holding above threshold every year, revenue covering debt service, and an accessibility floor. The search runs with a many-objective robust algorithm over the ensemble, then scenario discovery names the futures where the robust set still breaks [prim, mordm]. Treating robustness as the quantity to optimise under uncertainty follows the stability-metrics line of Shaabani, Hvattum, Hoff and Laporte [shaabani]. Full enumeration of a reduced instrument set is kept only to check the search: that core takes four of the five instruments and counts their ordered switch-on sequences (lengths one to four, each later switch set at one of three thresholds), which is 4 + 36 + 216 + 648 = 904; the full search then ranges over switch-years and levels for all five, on the order of 10⁴ candidate pathways.
 
 (3) A pathway p is admissible if the share accepting stays at or above λ every year; its acceptance margin is the largest rise in λ for which p stays admissible in the target share of futures.
 
@@ -134,7 +152,7 @@ identified between the two waves with the initial-conditions problem handled [wo
 
 **What would falsify it.** If ρ is near zero, agents need no memory and claim 1 reduces to a static result; if η is near zero, information does not move acceptance and H2 fails; if the fast engine cannot reproduce the network model within tolerance, the ensemble is cut to what the network model can run. Each is reported whichever way it falls.
 
-**Tools, and the honest skill path.** Python throughout: Biogeme for estimation, the EMA Workbench for the ensemble, search and scenario discovery, OSMnx and NetworkX for networks, OR-Tools for routing checks, and NGM elasticities for the freight chains. My foundation is a logistics master from this faculty and an operations-research and programming background; I have not estimated choice models professionally, and I do not claim to. What exists is a prototype pipeline, built in preparation and with disclosed AI assistance, that runs the whole chain end to end, from estimation through the agent model to the ensemble. As a reproducibility check I estimated a standard mixed logit on the public Swissmetro stated-preference data in Biogeme (N = 6,768, 1,000 Halton draws), reproducing the published reference results (final log-likelihood −5214.9 against the reference −5215.7, rho-bar-squared 0.25); the commented code and outputs are in the project repository [evdcm]. That shows the pipeline runs on real choice data and not only on synthetic recovery, which is the honest claim; it is not a claim of prior estimation expertise. Choice-model estimation is the first named skill I deepen, in Year-1 coursework and under supervision in the Transport Research Group (TRG) at Molde University College, where the DCM and ABM tradition sits; each article names the one skill it requires and where it is learned.
+**Tools, and the honest skill path.** Python throughout: Biogeme for estimation, the EMA Workbench for the ensemble, search and scenario discovery, OSMnx and NetworkX for networks, OR-Tools for routing checks, and NGM elasticities for the freight chains. My foundation is a logistics master from this faculty and an operations-research and programming background; I have not estimated choice models professionally, and I do not claim to. What exists is a prototype pipeline, built in preparation and with disclosed AI assistance, that runs the whole chain end to end, from estimation through the agent model to the ensemble. As a reproducibility check I estimated a standard mixed logit on the public Swissmetro stated-preference data in Biogeme (N = 6,768, 1,000 Halton draws), reproducing the published Biogeme normal-mixture reference (final log-likelihood −5214.9, against the published reference of about −5214.8); the commented code and outputs are in the project repository [evdcm]. That shows the pipeline runs on real choice data and not only on synthetic recovery, which is the honest claim; it is not a claim of prior estimation expertise. Choice-model estimation is the first named skill I deepen, in Year-1 coursework and under supervision in the Transport Research Group (TRG) at Molde University College, where the DCM and ABM tradition sits; each article names the one skill it requires and where it is learned.
 
 **Handoff line to page 4 (print it):** → Tested where acceptance is live and freight is real.
 
@@ -176,7 +194,7 @@ Kristiansund carries the household and carrier design; Molde the acceptance bloc
 ### IMAGE — Plate P4, positioned as the page-4 hero (large, centre, map register; choice card + experiment strip tucked beneath it)
 - **Keyword label on plate:** FREIGHT / ACCEPTANCE LIVE
 - **Abhinav family to pull:** metric map register (footprints only, callout boxes with leader lines, scale bar + N arrow) — the betweenness "MOST SHARED STREET" / "PINCH POINT" family. No windows, no trees.
-- **Composition:** Kristiansund footprints on charcoal, buildings tinted by toll exposure — teal (a free route exists via the tunnel), amber (partial), red (every trip pays). Three traceable trips drawn solid and offset: trip 1 pays at Nordsundbrua, trip 2 runs free through the Atlantic Tunnel, trip 3 to the freight corridor. Callout boxes (dark fill, cream border, leader to a point): A Nordsundbrua, B Omsundbrua, C the free tunnel, D the road-to-sea corridor. Built from the real OSM graph.
+- **Composition:** Kristiansund footprints on oxblood, buildings tinted by toll exposure — teal (a free route exists via the tunnel), amber (partial), red (every trip pays). Three traceable trips drawn solid and offset: trip 1 pays at Nordsundbrua, trip 2 runs free through the Atlantic Tunnel, trip 3 to the freight corridor. Callout boxes (dark fill, cream border, leader to a point): A Nordsundbrua, B Omsundbrua, C the free tunnel, D the road-to-sea corridor. Built from the real OSM graph.
 - **Caption (leads):** *"The toll is not one price. It is a map of who can avoid it."*
 - **Narration that adds depth:**
   - Callout C: `Article 1 counts the share of trips avoiding both stations ([N1]) — exposure measured, not assumed`.
@@ -218,7 +236,7 @@ Kristiansund carries the household and carrier design; Molde the acceptance bloc
 
 **Why here.** TRANSPLAN's backcasting and its call for realistic, goal-directed plans [toi2172]; Molde's strength in stated choice and transport economics and the DCM and ABM tradition already in the Transport Research Group (TRG) at Molde University College, where I would be supervised; and a Logistics programme where freight vehicle classes belong. Partners as possibilities, not agreements: TØI for the national experiment's ranges and NGM, CICERO for climate-policy acceptance, the Norwegian Computing Center for surrogate methods.
 
-**Receipts and open science.** Every number this proposal computes traces to a tagged commit, with 87 automated tests, and the figures are generated from the same code. Code is released openly and anonymised survey data deposited under FAIR principles once Sikt allows. The survey is notified to Sikt with informed consent; traffic data are used as aggregate station counts only. The use of AI tools in preparing this proposal is disclosed in the supplement.
+**Receipts and open science.** Every number this proposal computes traces to a tagged commit, with 89 automated tests, and the figures are generated from the same code. Code is released openly and anonymised survey data deposited under FAIR principles once Sikt allows. The survey is notified to Sikt with informed consent; traffic data are used as aggregate station counts only. The use of AI tools in preparing this proposal is disclosed in the supplement.
 
 **Dissemination.** Three journal articles (A1 to A3), one Norwegian-language popular piece in *Samferdsel* in year 3, and presentation at the annual NORS (Norwegian Operational Research Society) conference, where I have presented before (my MSc work, VERA-SNARK, and OR papers). The aim is a Norwegian research presence and a direct line to TRANSPLAN's agency partners.
 
@@ -232,7 +250,7 @@ Kristiansund carries the household and carrier design; Molde the acceptance bloc
 - **Narration that adds depth:**
   - Selected-point label: `chosen: survives the widest shift in λ`.
   - Axis depth note: `y = acceptance margin — the largest rise in the threshold a path survives, reported as a result`.
-  - Receipts strip (the systems-thinking proof, lettered small): `choice pipeline reproduced on real Swissmetro data (LL −5214.9)` · `fast engine within ~15% of the network model` · `87 tests, traceable to commit`.
+  - Receipts strip (the systems-thinking proof, lettered small): `choice pipeline reproduced on real Swissmetro data (LL −5214.9)` · `fast engine within ~15% of the network model` · `89 tests, traceable to commit`.
 - **Leave out:** a second chart. One scatter, one strip.
 - **Build note:** data-driven — from the prototype ensemble output. Build first (with P3).
 
@@ -259,7 +277,7 @@ Plate A (the motion exhibit) already exists; keep it as the screen-only exhibit 
 
 ## TOOLCHAIN STRIP (print on the page — honest)
 - **Computation (all real, in repo):** Python — Biogeme (choice estimation), EMA Workbench (ensemble, ε-NSGA-II/MORDM, PRIM), OSMnx + NetworkX (OSM road graphs), OR-Tools (routing checks), MATSim 2024.0 (dynamic cross-check), NGM elasticities (freight).
-- **Visual composition:** plates computed in Python (the `visual-narrative` skill), then composed in **Rhino + Grasshopper** (Heron for geo-referencing, Blender for render) for the scene plates. **CONDITION:** keep the Rhino/Grasshopper line only if Arshad does that composition himself (`make_rhino.py` exports Kristiansund to `.3dm`). If not, change the line to "drawn in Python/SVG" — never claim a tool that was not used.
+- **Visual composition:** plates computed and drawn in **Python / SVG** (the `visual-narrative` skill). This is the default, and the correct line when the Code session builds the plates. **Optional:** if Arshad composes the scene plates himself in Rhino + Grasshopper (Heron for geo-referencing, Blender for render; `make_rhino.py` exports Kristiansund to `.3dm`), the strip may name those tools instead. Never name a tool that was not actually used.
 - **Evidence:** Swissmetro estimation and the two-engine + MATSim fidelity benchmarks are runnable in the repo.
 - **Repo link (footer):** github.com/Astheno-sphere/computational_logistics
 
@@ -271,7 +289,7 @@ Make `main`'s top-level `README.md` a guided landing, not a raw file list:
 2. **"Start here"** table: Proposal → `docs/proposal/` · Evidence → `evidence/` · Skills/tools → `skills/` · Case data & plates → `docs/proposal/plates/`, OSM graphs.
 3. **Evidence you can run** — three bullets, headline number + exact reproduce command: Swissmetro (`evidence/dcm-swissmetro`, LL −5214.9), static fidelity (`evidence/fidelity-benchmark`, ~15%), MATSim dynamic (`evidence/fidelity-benchmark/matsim`, ~19% free-flow, breaks under congestion).
 4. **The skills** — one line each (abm-transport, osm-network, dcm-estimate, dmdu-explore, opt-model, vrp-solve, visual-narrative…), so breadth reads as a system.
-5. A short "how to read this repo" note + the test badge (87 tests).
+5. A short "how to read this repo" note + the test badge (89 tests — re-confirm the count at the tagged commit).
 
 ---
 
@@ -285,7 +303,7 @@ Make `main`'s top-level `README.md` a guided landing, not a raw file list:
 - Five plates in their frames, Abhinav-consistent, each with keyword + caption; Plate A exhibit intact.
 - `[N1]` and `[to confirm]` still present (not fabricated); every number traces to a repo file or verified source.
 - Tests pass (report count); nothing deleted; all branches still on the remote.
-- README landing renders as a guided tour; GitHub link in the proposal; toolchain line honest about Rhino/Grasshopper.
+- README landing renders as a guided tour; GitHub link in the proposal; toolchain line honest (Python/SVG unless Arshad composed in Rhino himself).
 - One PR into `main`, reviewable by diff; submission commit tagged or hash-pinned.
 
 ---
