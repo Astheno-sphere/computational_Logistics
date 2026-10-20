@@ -1,0 +1,22 @@
+{
+  "title": "THE ROBUST FRONT",
+  "subtitle": "Acceptance margin against the share of futures that hit all three 2050 targets. The chosen path is not the most ambitious; it is the one that still holds when the future refuses to cooperate.",
+  "tier": "PROTOTYPE · parameters assumed until A1–A3",
+  "axes": {
+    "x": {"label": "FUTURES ON TARGET  (of 1,000)", "min": 0.20, "max": 0.75, "ticks": [0.3,0.4,0.5,0.6,0.7]},
+    "y": {"label": "ACCEPTANCE MARGIN", "min": -0.10, "max": 0.10, "ticks": [-0.08,-0.04,0,0.04,0.08]}
+  },
+  "params": {"algorithm": "ε-NSGA-II", "population": 150, "generations": 200,
+             "objectives": "futures-on-target, max regret",
+             "constraints": "acceptance ≥ λ · revenue ≥ debt · accessibility floor",
+             "converge_gen": 140, "parameters": 14},
+  "counts": {"total": 904, "futures": 1000, "on60": 31, "mid": 337, "fail": 536},
+  "pathways": [
+    {"id": "A", "order": ["Z","D","R"], "futures": 0.33, "margin": -0.08, "status": "dominated"},
+    {"id": "B", "order": ["Z","R"],     "futures": 0.37, "margin": -0.04, "status": "dominated"},
+    {"id": "C", "order": ["D","Z","R"], "futures": 0.52, "margin":  0.01, "status": "near"},
+    {"id": "D", "order": ["D"],         "futures": 0.67, "margin":  0.04, "status": "front"},
+    {"id": "E", "order": ["R","D50"],   "futures": 0.63, "margin":  0.07, "status": "chosen"}
+  ],
+  "instrument_names": {"Z":"ZE rate","D":"distance","D50":"distance@50","R":"earmark","P":"package"}
+}
