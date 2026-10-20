@@ -1,0 +1,121 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>From end states to pathways · 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>:root{--bg:#2b161c;--ink:#E8DFD0;--mut:#b89a86;--gold:#D4A530;--sage:#9DB886;--terra:#D4835C;--red:#C45545;--teal:#7CBAC4;--line:#5a3a40}
+*{box-sizing:border-box}
+body{margin:0;background:#140a0e;color:var(--ink);font-family:Spectral,Georgia,serif}
+.sheet{width:1123px;min-height:1587px;margin:0 auto;background:var(--bg);padding:58px 66px 40px;display:flex;flex-direction:column}
+.kick{font-family:Montserrat;font-weight:700;font-size:12.5px;letter-spacing:3px;color:var(--gold);text-transform:uppercase}
+.doctitle{font-family:Montserrat;font-weight:900;font-size:40px;line-height:.98;letter-spacing:-.5px;margin:7px 0 4px}
+.doctitle .g{color:var(--gold)}
+.docsub{font-family:Spectral;font-style:italic;font-size:17px;opacity:.88}
+.byline{font-family:Montserrat;font-size:11px;letter-spacing:.3px;color:var(--mut);margin-top:6px}
+.hr{height:1px;background:var(--line);margin:16px 0}
+.secnum{font-family:Montserrat;font-weight:700;font-size:12px;letter-spacing:2.5px;color:var(--gold);margin-top:6px}
+h2{font-family:Montserrat;font-weight:800;font-size:27px;letter-spacing:-.3px;margin:3px 0 12px}
+h2 .g{color:var(--gold)}
+p{font-size:14.5px;line-height:1.56;margin:0 0 11px;max-width:66ch}
+.b{font-weight:600}
+.rqbox{border-left:2px solid var(--gold);background:#241217;padding:13px 18px;margin:4px 0 16px}
+.rqbox .mq{font-family:Spectral;font-style:italic;font-size:14.5px;margin-bottom:8px}
+.rq{font-size:13px;line-height:1.5;margin:5px 0}
+.rq b{font-family:Montserrat;font-weight:700;font-size:11px;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-right:6px}
+.figrow{display:grid;grid-template-columns:1.25fr 1fr;gap:22px;margin:6px 0 4px;align-items:start}
+.plate{background:#241217;border:1px solid var(--line);border-radius:6px;padding:16px 18px 14px}
+.exlegend{display:flex;flex-wrap:wrap;gap:14px;font-family:Montserrat;font-size:10.5px;letter-spacing:.3px;color:var(--mut);margin-top:8px;align-items:center}
+.exlegend .sw{width:12px;height:12px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:-2px}
+.tier{font-family:JetBrains Mono;font-size:9px;letter-spacing:.5px;color:#8f7a86;border:1px solid var(--line);border-radius:3px;padding:1px 6px}
+.timeline{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.tlhead{font-family:Montserrat;font-weight:700;font-size:10.5px;letter-spacing:1.5px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.moments{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mcell{text-align:left}
+.myr{font-family:Montserrat;font-weight:900;font-size:21px;color:var(--ink)}
+.mbarwrap{height:6px;background:#3a2129;border-radius:3px;margin:6px 0 5px;overflow:hidden}
+.mbar{height:100%;background:var(--gold);border-radius:3px}
+.mev{font-family:JetBrains Mono;font-size:10px;color:var(--mut)}
+.mrev{font-family:Montserrat;font-weight:700;font-size:15px;color:var(--gold);margin-top:3px}
+.mrev span{font-weight:500;font-size:10px;color:var(--mut)}
+/* calculator */
+.calc{font-family:'JetBrains Mono',monospace;font-size:12px}
+.qline{color:var(--gold);font-weight:500;margin-bottom:10px;font-size:12.5px}
+.crow{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px dotted #3a2129}
+.crow .cl{color:var(--mut)}
+.crow .cv{color:var(--ink);text-align:right}
+.crow.hl .cv{color:var(--gold);font-weight:600}
+.crow .cv.gold{color:var(--gold);font-weight:600}
+.cdiv{height:1px;background:var(--line);margin:8px 0}
+.crow.res .cl{color:var(--ink)}
+.ctier{font-family:'JetBrains Mono';font-size:9px;color:#8f7a86;margin-top:10px;border:1px solid var(--line);border-radius:3px;padding:2px 7px;display:inline-block}
+.platelabel{display:inline-block;font-family:Montserrat;font-weight:700;font-size:10.5px;letter-spacing:1.5px;color:#140a0e;background:var(--gold);padding:3px 9px;border-radius:3px;text-transform:uppercase;margin-bottom:9px}
+.platelabel.teal{background:var(--teal)}
+.figcap{font-family:Spectral;font-style:italic;font-size:13.5px;margin:9px 2px 0;color:var(--ink);opacity:.92}
+.handoff{font-family:Spectral;font-style:italic;font-size:14px;color:var(--mut);margin-top:14px}
+.foot{display:flex;justify-content:space-between;font-family:Montserrat;font-size:10px;letter-spacing:1px;color:var(--mut);margin-top:auto;padding-top:22px;text-transform:uppercase}
+.foot .r{color:var(--gold);text-transform:none;font-family:'JetBrains Mono';font-size:10px}
+</style></head><body>
+<section class="sheet">
+  <div class="kick">Research proposal · TRANSPLAN · Molde University College</div>
+  <div class="doctitle">From end states to <span class="g">pathways</span></div>
+  <div class="docsub">Estimated acceptance, agents with memory, and robust road-pricing paths to a low-carbon Norway in 2050</div>
+  <div class="byline">Arshad Akhtar Abbasia · PhD in Transport Modelling for Sustainability Transitions · PhD programme in Logistics</div>
+  <div class="hr"></div>
+
+  <div class="secnum">01 · THE PROBLEM</div>
+  <h2>What an equilibrium <span class="g">cannot carry</span></h2>
+
+  <p>Norway appraises transport with a national model system that computes an equilibrium for a chosen year. Asked what 2050 looks like under a set of assumptions, it answers carefully. Asked how the country gets there, and which routes fail on the way, it is silent by construction. TØI&rsquo;s own review says as much: the current models are <span class="b">static and macroscopic</span>, and less suited to dynamic questions [toi1819]. The path to 2050 is governed by what an equilibrium does not carry: a vehicle fleet that turns over slowly, public acceptance that persists or erodes, and debt repaid on a schedule.</p>
+
+  <p>Road pricing shows the problem in its sharpest form. It is named among the levers for the next National Transport Plan, where TRANSPLAN&rsquo;s first deliverable argues the plan must be <span class="b">realistic and goal-directed</span> rather than a wish list [toi2172]; yet the national reform has stalled. Tolls raised NOK 16.8 billion in 2025, about 62% in city packages, against toll-company debt near NOK 78 billion [svv25]. Every revision meets a public that has voted against tolls before: a single-issue anti-toll party won 16.7% in Bergen in 2019 [snl19]. Whether a 2050 plan is feasible depends on the order in which instruments arrive and whether people accept each step. <span class="b">That is a question about paths.</span></p>
+
+  <div class="rqbox">
+    <div class="mq">Main question. Which sequences of road-pricing instruments reach a desirable 2050 on emissions, finance and accessibility while staying acceptable to the people and firms who pay, across deep uncertainty; and which signals tell planners when to switch?</div>
+    <div class="rq"><b>RQ1 · method</b>How can choice models estimated on real data drive agents that carry state year to year, so strategic end states become pathways?</div>
+    <div class="rq"><b>RQ2 · behaviour</b>Does acceptance persist once a charge is permanent, and does information move it independently of experience?</div>
+    <div class="rq"><b>RQ3 · planning</b>Which pathways, for passengers and for freight, are robust; what acceptance margin does each survive; and which signposts give lead time before one fails?</div>
+  </div>
+
+  <p><span class="b">What already exists.</span> I have a working prototype and a first measured result. At the Kristiansund tariff a zero-emission car with a tag pays NOK 19.04 against NOK 27.20, so each electric crossing earns NOK 8.16, or 30%, less [vegamot]. On the road network, the toll-free Atlantic Ocean Tunnel lets some crossings avoid both stations; Article 1 counts that share ([N1]), so exposure is measured on the network, not assumed uniform. The question is no longer whether the toll base erodes; it is which path through that erosion people will accept.</p>
+
+  <div class="figrow">
+    <div class="plate">
+      <span class="platelabel">One place, three moments</span>
+      <svg viewBox="0 0 470 300" width="100%" xmlns="http://www.w3.org/2000/svg">
+<polygon points="86.8,61.5 86.8,77.0 73.4,84.8 60.0,77.0 60.0,61.5 73.4,53.8" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="113.7,61.5 113.7,77.0 100.3,84.8 86.8,77.0 86.8,61.5 100.3,53.8" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="73.4,84.8 73.4,100.2 60.0,108.0 46.6,100.2 46.6,84.8 60.0,77.0" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="100.3,84.8 100.3,100.2 86.8,108.0 73.4,100.2 73.4,84.8 86.8,77.0" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="127.1,84.8 127.1,100.2 113.7,108.0 100.3,100.2 100.3,84.8 113.7,77.0" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="86.8,108.0 86.8,123.5 73.4,131.2 60.0,123.5 60.0,108.0 73.4,100.2" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="113.7,108.0 113.7,123.5 100.3,131.2 86.8,123.5 86.8,108.0 100.3,100.2" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="140.5,108.0 140.5,123.5 127.1,131.2 113.7,123.5 113.7,108.0 127.1,100.2" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="100.3,131.2 100.3,146.8 86.8,154.5 73.4,146.8 73.4,131.2 86.8,123.5" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="127.1,131.2 127.1,146.8 113.7,154.5 100.3,146.8 100.3,131.2 113.7,123.5" fill="#D4A530" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="180.8,38.2 180.8,53.8 167.4,61.5 154.0,53.8 154.0,38.2 167.4,30.5" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="207.7,38.2 207.7,53.8 194.2,61.5 180.8,53.8 180.8,38.2 194.2,30.5" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="194.2,61.5 194.2,77.0 180.8,84.8 167.4,77.0 167.4,61.5 180.8,53.8" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="221.1,61.5 221.1,77.0 207.7,84.8 194.2,77.0 194.2,61.5 207.7,53.8" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="247.9,61.5 247.9,77.0 234.5,84.8 221.1,77.0 221.1,61.5 234.5,53.8" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="207.7,84.8 207.7,100.2 194.2,108.0 180.8,100.2 180.8,84.8 194.2,77.0" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="234.5,84.8 234.5,100.2 221.1,108.0 207.7,100.2 207.7,84.8 221.1,77.0" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="261.4,84.8 261.4,100.2 247.9,108.0 234.5,100.2 234.5,84.8 247.9,77.0" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="180.8,84.8 180.8,100.2 167.4,108.0 154.0,100.2 154.0,84.8 167.4,77.0" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="247.9,108.0 247.9,123.5 234.5,131.2 221.1,123.5 221.1,108.0 234.5,100.2" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="274.8,108.0 274.8,123.5 261.4,131.2 247.9,123.5 247.9,108.0 261.4,100.2" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="221.1,108.0 221.1,123.5 207.7,131.2 194.2,123.5 194.2,108.0 207.7,100.2" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="274.8,61.5 274.8,77.0 261.4,84.8 247.9,77.0 247.9,61.5 261.4,53.8" fill="#9c6a2e" stroke="#2E151C" stroke-width="1" opacity="0.92"/><polygon points="167.4,154.5 167.4,170.0 154.0,177.8 140.5,170.0 140.5,154.5 154.0,146.8" fill="#5f4336" stroke="#7CBAC4" stroke-width="1.6" opacity="0.92"/><polygon points="194.2,154.5 194.2,170.0 180.8,177.8 167.4,170.0 167.4,154.5 180.8,146.8" fill="#5f4336" stroke="#7CBAC4" stroke-width="1.6" opacity="0.92"/><polygon points="221.1,154.5 221.1,170.0 207.7,177.8 194.2,170.0 194.2,154.5 207.7,146.8" fill="#5f4336" stroke="#7CBAC4" stroke-width="1.6" opacity="0.92"/><polygon points="180.8,177.8 180.8,193.2 167.4,201.0 154.0,193.2 154.0,177.8 167.4,170.0" fill="#5f4336" stroke="#7CBAC4" stroke-width="1.6" opacity="0.92"/><polygon points="207.7,177.8 207.7,193.2 194.2,201.0 180.8,193.2 180.8,177.8 194.2,170.0" fill="#5f4336" stroke="#7CBAC4" stroke-width="1.6" opacity="0.92"/><polygon points="247.9,154.5 247.9,170.0 234.5,177.8 221.1,170.0 221.1,154.5 234.5,146.8" fill="#5f4336" stroke="#7CBAC4" stroke-width="1.6" opacity="0.92"/>
+<circle cx="150" cy="120" r="5.5" fill="#2E151C" stroke="#E8DFD0" stroke-width="2"/><text x="160" y="118" font-family="Montserrat" font-weight="700" font-size="11" fill="#E8DFD0">Nordsundbrua</text><text x="160" y="131" font-family="JetBrains Mono" font-size="9" fill="#b89a86">rv70 · pays</text><circle cx="300" cy="86" r="5.5" fill="#2E151C" stroke="#E8DFD0" stroke-width="2"/><text x="310" y="84" font-family="Montserrat" font-weight="700" font-size="11" fill="#E8DFD0">Omsundbrua</text><text x="310" y="97" font-family="JetBrains Mono" font-size="9" fill="#b89a86">second station</text><circle cx="150" cy="250" r="5.5" fill="#2E151C" stroke="#7CBAC4" stroke-width="2"/><text x="160" y="248" font-family="Montserrat" font-weight="700" font-size="11" fill="#E8DFD0">Atlanterhavstunnelen</text><text x="160" y="261" font-family="JetBrains Mono" font-size="9" fill="#b89a86">toll-free · fv64</text><path d="M150 250 Q 110 200 120 150" fill="none" stroke="#7CBAC4" stroke-width="1.6" stroke-dasharray="4 4" opacity="0.8"/>
+<text x="18" y="20" font-family="Montserrat" font-weight="700" font-size="11" letter-spacing="1.5" fill="#E8DFD0">KRISTIANSUND · TOLL EXPOSURE</text>
+</svg>
+      <div class="exlegend">
+<span><i class="sw" style="background:#D4A530"></i>pays both ways</span>
+<span><i class="sw" style="background:#9c6a2e"></i>partial</span>
+<span><i class="sw" style="background:#5f4336;outline:1.5px solid #7CBAC4;outline-offset:-2px"></i>free alternative (tunnel)</span>
+<span class="tier">REAL · OSM graph</span>
+</div>
+      <div class="timeline">
+<div class="tlhead">THE SAME PLACE, THREE MOMENTS<span class="tier">electric share PROTOTYPE · revenue computed from tariff</span></div>
+<div class="moments"><div class="mcell"><div class="myr">2026</div><div class="mbarwrap"><div class="mbar" style="width:40%"></div></div><div class="mev">40% electric</div><div class="mrev">NOK 23.94<span>/crossing</span></div></div><div class="mcell"><div class="myr">2035</div><div class="mbarwrap"><div class="mbar" style="width:80%"></div></div><div class="mev">80% electric</div><div class="mrev">NOK 20.67<span>/crossing</span></div></div><div class="mcell"><div class="myr">2050</div><div class="mbarwrap"><div class="mbar" style="width:99%"></div></div><div class="mev">99% electric</div><div class="mrev">NOK 19.12<span>/crossing</span></div></div></div></div>
+    </div>
+    <div class="plate">
+      <span class="platelabel teal">What a crossing earns</span>
+      <div class="calc">
+<div class="qline">&gt; what one crossing earns, by fleet</div>
+<div class="crow"><span class="cl">standard car</span><span class="cv">NOK 34.00</span></div>
+<div class="crow"><span class="cl">with tag</span><span class="cv">NOK 27.20</span></div>
+<div class="crow hl"><span class="cl">zero-emission + tag</span><span class="cv">NOK 19.04</span></div>
+<div class="cdiv"></div>
+<div class="crow"><span class="cl">each electric crossing earns</span><span class="cv gold">NOK 8.16 less &nbsp;·&nbsp; &minus;30%</span></div>
+<div class="crow"><span class="cl">at today&rsquo;s 40% electric</span><span class="cv">&minus;12% vs an all-fossil fleet</span></div>
+<div class="crow"><span class="cl">at an all-electric fleet</span><span class="cv">&minus;30%, debt unchanged</span></div>
+<div class="cdiv"></div>
+<div class="crow res"><span class="cl">the base erodes, the debt holds</span><span class="cv gold">~NOK 78 bn owed</span></div>
+<div class="ctier">REAL · Vegamot tariff [vegamot]</div>
+</div>
+      <div class="figcap">A model gives one 2050. The toll base is already moving under it.</div>
+    </div>
+  </div>
+  <div class="figcap" style="margin-top:12px">The same town, the same stations; the fleet electrifies, the revenue per crossing falls, the debt does not. Exposure is read from the OpenStreetMap graph; the electric share is from the prototype. Acceptance is not drawn here &mdash; it is the quantity the thesis sets out to estimate (page 3).</div>
+
+  <div class="handoff">&rarr; So Norway needs the dynamic layer TØI calls for. What should it be, and who has built the pieces?</div>
+
+  <div class="foot"><span>Arshad Akhtar Abbasia</span><span>From end states to pathways</span><span class="r">github.com/Astheno-sphere/computational_logistics &nbsp;·&nbsp; 1 / 6</span></div>
+</section></body></html>
