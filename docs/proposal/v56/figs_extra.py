@@ -8,8 +8,8 @@ mp="data:image/jpeg;base64,"+base64.b64encode(open("/tmp/claude-0/-home-claude/0
 layers=[
  ("NETWORK","REAL","OSMnx · NetworkX","the graph",C["sage"],"net"),
  ("CHOICE","TO ESTIMATE · A1","Biogeme","who chooses what",C["terra"],"choice"),
- ("ACCEPTANCE","TO ESTIMATE · A2","EMA Workbench","each home remembers",C["terra"],"accept"),
- ("FLEET + EMISSIONS","PROTOTYPE","register · WTW","turns over slowly",C["gold"],"fleet"),
+ ("ACCEPTANCE","CARRIED · A2","agent model · NumPy","each home remembers (ρ)",C["terra"],"accept"),
+ ("FLEET + EMISSIONS","PROTOTYPE","agent model · register","turns over slowly",C["gold"],"fleet"),
  ("REVENUE","PROTOTYPE","tariff ÷ debt","due on a schedule",C["gold"],"rev"),
  ("FREIGHT","NGM","national freight model","road vs sea",C["teal"],"freight"),
 ]
@@ -21,21 +21,21 @@ def band_overlay(key):
         for i in range(14):
             x=60+i*52; y=18+(i%3)*16
             o+=f'<circle cx="{x}" cy="{y}" r="5" fill="none" stroke="{C["terra"]}" stroke-width="1.6" stroke-dasharray="3 2"/>'
-        o+=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.35"/>'
+        o+=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.58"/>'
     elif key=="accept":
-        o=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.4"/>'
+        o=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.58"/>'
         for d in ["M40 8 L300 12 L290 64 L36 60 Z","M330 10 L600 8 L600 64 L340 64 Z"]:
             o+=f'<path d="{d}" fill="{C["terra"]}" opacity="0.14" stroke="{C["terra"]}" stroke-width="1" stroke-dasharray="5 3"/>'
     elif key=="fleet":
-        o=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.25"/><defs><linearGradient id="g2"><stop offset="0" stop-color="#8a5a3a"/><stop offset="1" stop-color="#D4A530"/></linearGradient></defs>'
+        o=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.5"/><defs><linearGradient id="g2"><stop offset="0" stop-color="#8a5a3a"/><stop offset="1" stop-color="#D4A530"/></linearGradient></defs>'
         o+=f'<rect x="0" y="0" width="{W}" height="{H}" fill="url(#g2)" opacity="0.28"/>'
     elif key=="rev":
-        o=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.3"/>'
+        o=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.55"/>'
         for x in [210,560]:
             o+=f'<circle cx="{x}" cy="36" r="7" fill="#2b161c" stroke="{C["gold"]}" stroke-width="2"/>'
         o+=f'<path d="M 222 36 L 548 36" stroke="{C["gold"]}" stroke-width="1.5" opacity="0.7" stroke-dasharray="6 4"/>'
     elif key=="freight":
-        o=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.32"/>'
+        o=f'<rect width="{W}" height="{H}" fill="#2b161c" opacity="0.55"/>'
         o+=f'<path d="M 120 58 C 340 44 560 30 800 16" fill="none" stroke="{C["teal"]}" stroke-width="3" opacity="0.95"/>'
     return f'<svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">{o}</svg>'
 rows=""
@@ -95,7 +95,7 @@ fan.append(f'<text x="58" y="{ey(1.42):.0f}" font-family="Montserrat" font-weigh
 for yr in [2026,2035,2041,2050]:
     fan.append(f'<text x="{ex(yr):.0f}" y="{H-10}" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="{C["mut"]}">{yr}</text>')
 FIG5B=f'''<svg viewBox="0 0 {W} {H}" width="100%" xmlns="http://www.w3.org/2000/svg">{''.join(fan)}</svg>
-<div class="f5bnote"><b>22%</b> of futures fail to cover the debt before 2041; 30% by 2050. Each line one future: revenue ÷ debt service.</div>'''
+<div class="f5bnote"><b>22%</b> of futures fail to cover the debt before 2041; 30% by 2050. Each line one future: revenue ÷ debt service. <span class="tier">PROTOTYPE · parameters assumed</span></div>'''
 
 json.dump({"FIG2":FIG2,"FIG3":FIG3,"FIG5B":FIG5B}, open("figs_extra.json","w"))
 print("figs_extra built")

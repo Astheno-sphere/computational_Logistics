@@ -11,7 +11,7 @@ CSS=open("page1.css").read()+r"""
 .ttable th{font-family:Montserrat;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);text-align:left;padding:8px 12px;border-bottom:1px solid var(--line)}
 .ttable td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.4}
 .ttable td.k{color:var(--mut)}
-.tools{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:8px 0 14px}
+.tools{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:8px 0 14px}
 .tcol{padding:13px 13px 15px;border-left:1px solid var(--line)}
 .tcol:first-child{border-left:none}
 .tcat{font-family:Montserrat;font-weight:800;font-size:11.5px;letter-spacing:1.3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
@@ -26,7 +26,7 @@ CSS=open("page1.css").read()+r"""
 .lchip{font-family:JetBrains Mono;font-size:8px;letter-spacing:.3px;border:1px solid;border-radius:3px;padding:1px 5px}
 .ltool{font-family:JetBrains Mono;font-size:9px;opacity:.8;margin-top:3px}
 .lrole{font-family:Spectral;font-style:italic;font-size:10.5px;color:var(--mut)}
-.lband{min-height:72px;background-size:820px auto;background-position:28% -130px}
+.lband{min-height:72px;background-size:1500px auto;background-position:34% -300px}
 .lband svg{display:block;height:72px}
 .leg3wrap{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
 .l3{font-family:Spectral;font-size:11.5px}.l3 b{font-weight:600}.d3{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:-1px}.s3{color:var(--mut);font-family:JetBrains Mono;font-size:10px}
@@ -63,7 +63,7 @@ p1_body=f'''<p>Norway appraises transport with a national model system that comp
 page1=f'<section class="sheet">{p1_top}<div class="secnum">01 · THE PROBLEM</div><h2>What an equilibrium <span class="g">cannot carry</span></h2>{p1_body}</section>'
 
 # ---- PAGE 2 ----
-p2=f'''<p>The national system has three parts a candidate must name: <span class="b">NTM6</span>, the national passenger model for trips over 70 km; <span class="b">RTM</span>, the regional passenger model; and the national freight model, <span class="b">Nasjonal godsmodell (NGM)</span>, with its commodity-flow matrices and transport-chain costs [toi1819, ngm]. These anchor the National Transport Plan and are trusted for point appraisal. TØI’s forward-looking review recommends not replacing them but building dynamic models alongside them [toi1819]; the institute has begun, with a MATSim-based agent assignment for Greater Oslo, tramodsim, and an activity-based model for Trondheim [tramodsim]. This PhD joins that line rather than importing a method from outside it. It supplies the exploratory, stress-testing layer that sequences instruments across thousands of futures and reports where each sequence fails, so the national models keep producing the appraisal the agencies rely on while this layer supplies the robustness and failure conditions they are not built to give.</p>
+p2=f'''<p>The national system has three parts a candidate must name: <span class="b">NTM6</span>, the national passenger model for trips over 70 km; <span class="b">RTM</span>, the regional passenger model; and the national freight model, <span class="b">Nasjonal godsmodell (NGM)</span>, with its commodity-flow matrices and transport-chain costs [toi1819, ngm]. These anchor the National Transport Plan and are trusted for point appraisal. The Kristiansund case is regional and sub-70 km, so RTM is the model this dynamic layer sits beside here; NTM6 and NGM set the national and freight context. TØI’s forward-looking review recommends not replacing them but building dynamic models alongside them [toi1819]; the institute has begun, with a MATSim-based agent assignment for Greater Oslo, tramodsim, and an activity-based model for Trondheim [tramodsim]. This PhD joins that line rather than importing a method from outside it. It supplies the exploratory, stress-testing layer that sequences instruments across thousands of futures and reports where each sequence fails, so the national models keep producing the appraisal the agencies rely on while this layer supplies the robustness and failure conditions they are not built to give.</p>
 <table class="ttable"><tr><th>The position asks for</th><th>This proposal answers with</th></tr>
 <tr><td class="k">Desirable futures under deep uncertainty</td><td>10³ futures, satisficing targets, uncertainty decomposed by source</td></tr>
 <tr><td class="k">DCM integrated with ABM</td><td>Choice models estimated on real survey data drive agents whose acceptance and fleet carry over year to year</td></tr>

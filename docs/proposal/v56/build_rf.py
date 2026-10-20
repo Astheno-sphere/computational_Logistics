@@ -53,7 +53,7 @@ A.append(f'<text x="{sx(0.42):.0f}" y="{sy(-0.052):.0f}" font-family="JetBrains 
 # iteration box top-right
 pp=S["params"]
 A.append(f'<text x="{PX+PW:.0f}" y="{PY-96}" text-anchor="end" font-family="Montserrat" font-weight="800" font-size="15" fill="{C["ink"]}">ROBUST SEARCH</text>')
-for i,(k,v) in enumerate([("GEN",f'{pp["generations"]} / {pp["generations"]}'),("POPULATION",pp["population"]),("OBJECTIVES","2 + regret"),("PARAMETERS",pp["parameters"])]):
+for i,(k,v) in enumerate([("GEN",f'{pp["generations"]} / {pp["generations"]}'),("POPULATION",pp["population"]),("OBJECTIVES","satisficing + regret"),("PARAMETERS",pp["parameters"])]):
     A.append(f'<text x="{PX+PW:.0f}" y="{PY-76+i*16:.0f}" text-anchor="end" font-family="JetBrains Mono" font-size="11.5" fill="{C["mut"]}">{k}: {v}</text>')
 A.append(f'<text x="{PX:.0f}" y="{PY-90}" font-family="Montserrat" font-weight="800" font-size="16" fill="{C["ink"]}">ACCEPTANCE × FUTURES</text>')
 A.append(f'<text x="{PX:.0f}" y="{PY-72}" font-family="Spectral" font-style="italic" font-size="13" fill="{C["mut"]}">{S["counts"]["total"]} ordered sequences · {S["counts"]["futures"]} futures each</text>')
@@ -90,12 +90,12 @@ cg.append('<polyline points="'+" ".join(f"{a:.1f},{b:.1f}" for a,b in pts)+f'" f
 convx=ix+pp["converge_gen"]/200*iw
 cg.append(f'<line x1="{convx:.0f}" y1="{iy}" x2="{convx:.0f}" y2="{iy+ih}" stroke="{C["gold"]}" stroke-width="1" stroke-dasharray="3 3"/>')
 cg.append(f'<circle cx="{convx:.0f}" cy="{iy+ih-6-(1-math.exp(-pp["converge_gen"]/45))*(ih-16):.0f}" r="3" fill="{C["gold"]}"/>')
-cg.append(f'<text x="{ix}" y="{iy-7}" font-family="Montserrat" font-weight="700" font-size="11" fill="{C["ink"]}">CONVERGENCE &#183; gen ~{pp["converge_gen"]}</text>')
-cg.append(f'<text x="{ix}" y="{iy+ih+15}" font-family="JetBrains Mono" font-size="10" fill="{C["mut"]}">share of futures on target vs generation</text>')
+cg.append(f'<text x="{ix}" y="{iy-7}" font-family="Montserrat" font-weight="700" font-size="11" fill="{C["ink"]}">HYPERVOLUME CONVERGENCE &#183; gen ~{pp["converge_gen"]}</text>')
+cg.append(f'<text x="{ix}" y="{iy+ih+15}" font-family="JetBrains Mono" font-size="10" fill="{C["mut"]}">hypervolume vs generation \u00b7 mean of {pp.get("seeds",10)} seeds</text>')
 
 # params box (left of convergence)
 pbx,pby=PX-8,PY+PH+58
-pbox=[f'<rect x="{pbx}" y="{pby}" width="312" height="116" fill="{C["dark"]}" stroke="{C["line"]}" rx="5"/>']
+pbox=[f'<rect x="{pbx}" y="{pby}" width="330" height="128" fill="{C["dark"]}" stroke="{C["line"]}" rx="5"/>']
 plines=[("ALGORITHM",pp["algorithm"]),("POPULATION / GEN",f'{pp["population"]} / {pp["generations"]}'),
         ("OBJECTIVES",pp["objectives"]),("CONSTRAINTS","acceptance ≥ λ every year,"),("","revenue ≥ debt, accessibility floor")]
 for i,(k,v) in enumerate(plines):

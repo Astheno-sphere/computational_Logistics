@@ -1,6 +1,7 @@
 import json, base64
 E=json.load(open("figs_extra.json")); FIG3,FIG5B=E["FIG3"],E["FIG5B"]
 RF=open("rf_inner.txt").read()
+FIGFREIGHT=json.load(open("freight.json"))["FIGFREIGHT"]
 MAP="data:image/jpeg;base64,"+base64.b64encode(open("/tmp/claude-0/-home-claude/0a646ebe-b26f-5896-8bfd-9fc85a0e6d3f/scratchpad/kristiansund_map.jpg","rb").read()).decode()
 CSS=open("_CSS.txt").read()
 p12=open("content_p12.txt").read().split("\n@@@\n"); page1,page2=p12[0],p12[1]
