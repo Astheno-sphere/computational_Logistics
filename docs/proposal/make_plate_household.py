@@ -67,16 +67,30 @@ def tree(x, g, r=22):
 
 def car(x, g, ev):
     col = SAGE if ev else CREAM
-    s = [f'<path d="M{x},{g - 8} h6 l8,-10 h26 l10,10 h10 v8 h-60 z" fill="{INK}" stroke="{col}" stroke-width="1.3"/>',
-         f'<circle cx="{x + 13}" cy="{g}" r="4.5" fill="{INK}" stroke="{col}" stroke-width="1.2"/>',
-         f'<circle cx="{x + 46}" cy="{g}" r="4.5" fill="{INK}" stroke="{col}" stroke-width="1.2"/>',
-         f'<line x1="{x + 27}" y1="{g - 18}" x2="{x + 27}" y2="{g - 9}" stroke="{col}" stroke-width=".8"/>']
+    # side silhouette: lower body plus a rounded greenhouse
+    s = [f'<path d="M{x},{g - 4} L{x + 2},{g - 9} L{x + 15},{g - 11} '
+         f'Q{x + 18},{g - 21} {x + 24},{g - 21} L{x + 38},{g - 21} '
+         f'Q{x + 44},{g - 21} {x + 47},{g - 12} L{x + 59},{g - 11} L{x + 63},{g - 4} Z" '
+         f'fill="{INK}" stroke="{col}" stroke-width="1.3" stroke-linejoin="round"/>',
+         # two side windows split by a pillar
+         f'<path d="M{x + 18},{g - 12} L{x + 29},{g - 12} L{x + 29},{g - 19} L{x + 22},{g - 19} Z" fill="none" stroke="{col}" stroke-width=".7"/>',
+         f'<path d="M{x + 32},{g - 12} L{x + 44},{g - 12} L{x + 42},{g - 19} L{x + 32},{g - 19} Z" fill="none" stroke="{col}" stroke-width=".7"/>',
+         # door handle hint
+         f'<line x1="{x + 24}" y1="{g - 8}" x2="{x + 29}" y2="{g - 8}" stroke="{col}" stroke-width=".7"/>',
+         # headlight
+         f'<circle cx="{x + 61}" cy="{g - 7}" r="1.3" fill="{col}"/>']
+    # wheels with a rim
+    for cx in (x + 15, x + 48):
+        s.append(f'<circle cx="{cx}" cy="{g}" r="5.2" fill="{INK}" stroke="{col}" stroke-width="1.3"/>')
+        s.append(f'<circle cx="{cx}" cy="{g}" r="1.8" fill="none" stroke="{col}" stroke-width=".8"/>')
     if ev:
-        s.append(f'<path d="M{x + 2},{g - 4} c-8,0 -10,-12 -18,-12 v-10" fill="none" stroke="{SAGE}" stroke-width="1" stroke-dasharray="2 2"/>')
-        s.append(f'<rect x="{x - 20}" y="{g - 36}" width="8" height="14" fill="none" stroke="{SAGE}" stroke-width="1"/>')
+        # a charge post and cable, drawn quietly
+        s.append(f'<rect x="{x - 20}" y="{g - 34}" width="8" height="15" rx="1.5" fill="none" stroke="{SAGE}" stroke-width="1"/>')
+        s.append(f'<circle cx="{x - 16}" cy="{g - 30}" r="1.2" fill="{SAGE}"/>')
+        s.append(f'<path d="M{x - 12},{g - 22} C{x - 6},{g - 16} {x - 2},{g - 12} {x + 3},{g - 9}" fill="none" stroke="{SAGE}" stroke-width="1" stroke-dasharray="2 2"/>')
     else:
         for k in range(3):
-            s.append(f'<circle cx="{x - 5 - k * 6}" cy="{g - 3 - k * 2}" r="{1.4 + k * .6}" fill="none" stroke="{CREAM}" stroke-opacity="{.5 - k * .12}"/>')
+            s.append(f'<circle cx="{x - 5 - k * 6}" cy="{g - 5 - k * 2}" r="{1.4 + k * .6}" fill="none" stroke="{CREAM}" stroke-opacity="{.5 - k * .12}"/>')
     return "".join(s)
 
 
