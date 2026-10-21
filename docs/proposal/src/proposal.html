@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Robust Mobility Pathways</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,700;0,800;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,700;0,800;1,300;1,400&family=Montserrat:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#2b1719;--card:#331d20;--paper:#E8DFD0;--body:#D6CCBD;--dim:#A99A8B;--faint:rgba(232,223,208,.2);--gold:#D4A530;--sage:#9DB886;--terra:#D4835C}
 *{box-sizing:border-box}
@@ -27,6 +27,8 @@ p,li{font-size:16.5px;line-height:1.72;color:var(--body);font-weight:300}
 p strong,li strong{color:var(--paper);font-weight:500}
 sup{color:var(--gold);font-size:11px}
 figure{margin:40px 0 8px}
+figure.motion{max-width:720px;margin:40px auto 8px}
+figure.motion canvas{display:block;width:100%;aspect-ratio:4/5;background:var(--card);border-radius:4px;cursor:pointer}
 figure svg{width:100%;height:auto;display:block;background:var(--card);border-radius:4px}
 figcaption{font-size:13.5px;line-height:1.6;color:var(--dim);margin-top:12px;max-width:900px}
 figcaption b{color:var(--paper);font-weight:500}
@@ -233,6 +235,11 @@ svg text{font-family:Inter,sans-serif}
 <h3>6.1 Policy changes the odds, not the future</h3>
 <p>Without policy, commuting emissions reach the 2050 target in 4 of 60 futures. With package P12, they reach it in 41. Even with P12, emissions in 2050 still range from 9% to 30% of the 2025 level across the futures; without policy they range from 14% to 50% (Figure 8). No package removes the uncertainty. The best one makes success likely and makes failure recognisable early.</p>
 </div>
+
+<figure class="motion">
+  <canvas id="mp" tabindex="0" role="img" aria-label="Animated plate. Sixty simulated futures of commuting emissions from 2025 to 2050 above two maps of Molde and Kristiansund where each of 1,000 commuters is a dot coloured by the carbon their trip carries. First without policy, then with the most robust package. Click to pause."></canvas>
+  <figcaption><b>Plate A. Which policy survives the future?</b> One clock drives both scales: the fan of 60 futures above and the 1,000 simulated commuters below, on one cold-to-hot scale. Without policy the maps stay amber and few futures reach the target; with the most robust package they cool to blue-grey and most do. Synthetic behaviour, illustrative parameters. Click to pause. Built by <span class="mono">docs/proposal/make_motion.py</span>.</figcaption>
+</figure>
 
 <figure class="wide">
   <svg id="f8" viewBox="0 0 1600 640" role="img" aria-label="Figure 8: CO2 trajectories in 60 futures without policy and with package P12"></svg>
@@ -863,6 +870,9 @@ const NET=p=>p.subsidy_nok-p.toll_nok_rev;
     make(el,{theme:"dark",intensity:0.6,label:el.getAttribute("aria-label"),onRead:function(t){ if(read) read.textContent=t; }});
   });
 })();
+</script>
+<script>
+/*MOTION_JS*/
 </script>
 </body>
 </html>

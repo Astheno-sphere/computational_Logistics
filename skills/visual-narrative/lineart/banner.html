@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,700;0,900;1,300&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.plate{width:1280px;height:640px;box-sizing:border-box;background:#2f1519;color:#EFE3CC;font-family:Roboto,sans-serif;position:relative;overflow:hidden}
+.t{position:absolute;left:70px;top:150px;width:600px}
+.k{font-style:italic;font-weight:300;font-size:24px;color:#A8958A}
+h1{font-weight:900;font-size:62px;line-height:1.02;margin:14px 0 18px}
+h1 em{font-style:normal;color:#D9734E}
+p{font-size:23px;font-weight:300;line-height:1.4;color:#D9CCB6;margin:0}
+.n{position:absolute;left:70px;bottom:54px;font-size:20px;letter-spacing:.14em;font-weight:500}
+.n span{color:#A8958A;letter-spacing:.04em;font-weight:300}
+svg{position:absolute;right:0;top:0}
+</style>
+<div class="plate">
+<div class="t"><div class="k">computational transport and logistics</div><h1>THE PATH TO <em>2050</em></h1>
+<p>estimated behaviour, household fleet simulation and exploratory backcasting, built and tested on the real networks of Molde and Kristiansund.</p></div>
+<div class="n">ARSHAD AKHTAR ABBASIA <span>· TRANSPLAN · Molde</span></div>
+<svg id="s" width="620" height="640" viewBox="0 0 620 640"></svg>
+</div>
+<script>/*LINEART*/</script>
+<script>
+const D=/*DATA*/null;
+const s=document.getElementById("s"),L=LineArt(s,{sw:1.2});
+const W=300,Dp=200,cx=350,z0=40,gap=150, iso=(u,v,z)=>L.iso(u,v,z,cx,0);
+const P=pts=>pts.map(([u,v,z])=>iso(u,v,z).map(n=>n.toFixed(1)).join(",")).join(" ");
+[[0,0],[W,0],[W,Dp],[0,Dp]].forEach(([u,v])=>{const a=iso(u,v,-z0),b=iso(u,v,-(z0+2*gap));L.line(s,`M${a[0]} ${a[1]} L${b[0]} ${b[1]}`,{"stroke-opacity":.3,"stroke-dasharray":"4 5"});});
+[2,1,0].forEach(i=>{const z=-(z0+i*gap);
+  L.el(s,"polygon",{points:P([[0,0,z],[W,0,z],[W,Dp,z],[0,Dp,z]]),fill:"#341a1e",stroke:L.C.cream,"stroke-width":1.2});
+  const g=L.el(s,"g",{});
+  if(i===0){for(let k=0;k<60;k++){const u=20+(k%12)*23,v=25+Math.floor(k/12)*37,[x,y]=iso(u,v,z);L.el(g,"ellipse",{cx:x,cy:y,rx:4,ry:2.4,fill:D.meets[k]?L.C.cream:"none",stroke:D.meets[k]?"none":L.C.dim});}}
+  if(i===1){const r=L.rng(5);for(let k=0;k<22;k++){const [x,y]=iso(20+r()*260,20+r()*160,z);L.el(g,"polygon",{points:`${x-6},${y} ${x},${y-3} ${x+6},${y} ${x+6},${y-8} ${x},${y-12} ${x-6},${y-8}`,fill:k===4?L.C.accent:"rgba(239,227,204,.75)"});}}
+  if(i===2){D.roads.forEach(([hot,c])=>{const pts=c.map(([u,v])=>iso(u*W,v*Dp*0.9+Dp*0.05,z));L.el(g,"polyline",{points:pts.map(q=>q.map(n=>n.toFixed(1)).join(",")).join(" "),fill:"none",stroke:hot?L.C.cream:"rgba(239,227,204,.5)","stroke-width":hot?1.8:.7});});}
+});
+</script>
