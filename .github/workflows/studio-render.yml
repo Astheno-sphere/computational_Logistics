@@ -1,0 +1,52 @@
+name: studio-render
+# Final renders (1080p, long videos) off the Claude workspace's 2 CPUs. The scene must already pass the
+# sim-corrector (scene.py refuses invalid trajectories). Output: release `render-<name>` with the MP4.
+on:
+  workflow_dispatch:
+    inputs:
+      scene:
+        description: "path to scene.json in the repo, or a python module that writes one (e.g. studio.examples.toy_fjord)"
+        required: true
+        default: studio.examples.toy_fjord
+      name:
+        description: "release suffix: render-<name>"
+        required: true
+        default: toy
+      format:
+        required: true
+        default: square
+        type: choice
+        options: [square, vertical, wide, draft]
+      seconds:
+        required: true
+        default: "20"
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - run: |
+          pip install -r requirements.txt playwright
+          sudo apt-get install -y -q ffmpeg
+      - name: Scene
+        id: scene
+        run: |
+          if [[ "${{ inputs.scene }}" == *.json ]]; then echo "path=${{ inputs.scene }}" >> $GITHUB_OUTPUT
+          else python -m ${{ inputs.scene }} --out out && echo "path=out/scene.json" >> $GITHUB_OUTPUT; fi
+      - name: Render
+        run: python studio/render_deck/render.py --scene ${{ steps.scene.outputs.path }} --out render-${{ inputs.name }}-${{ inputs.format }}.mp4 --format ${{ inputs.format }} --seconds ${{ inputs.seconds }}
+      - name: Publish
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          tag=render-${{ inputs.name }}; f=render-${{ inputs.name }}-${{ inputs.format }}.mp4
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Render: ${{ inputs.name }}" --notes "From ${GITHUB_REF_NAME}@${GITHUB_SHA::7}" --prerelease --target "$GITHUB_SHA"
+          gh release upload "$tag" "$f" --clobber

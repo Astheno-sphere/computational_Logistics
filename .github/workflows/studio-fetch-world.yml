@@ -1,0 +1,38 @@
+name: studio-fetch-world
+# Fetch a study world from open Norwegian sources (blocked in the Claude workspace) and publish it as
+# release `world-<name>`. Pull it anywhere with: python -m studio.worlds.fetch_world --pull <name>
+on:
+  workflow_dispatch:
+    inputs:
+      world:
+        description: "studio/worlds/<name>.yaml"
+        required: true
+        default: oslofjord
+        type: choice
+        options: [oslofjord, north-sea-stavanger]
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: pip install geopandas shapely pyproj pyyaml numpy
+      - name: Fetch
+        run: python -m studio.worlds.fetch_world --world ${{ inputs.world }} --out world
+      - name: Publish release world-${{ inputs.world }}
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          cd world && zip -q -r ../world-${{ inputs.world }}.zip . && cd ..
+          tag=world-${{ inputs.world }}
+          notes="Fetched $(date -u +%FT%TZ) from ${GITHUB_REF_NAME}. Licences and credits: manifest.json inside the zip."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$tag.zip" --clobber && gh release edit "$tag" --notes "$notes"
+          else
+            gh release create "$tag" "$tag.zip" --title "World: ${{ inputs.world }}" --notes "$notes" --prerelease --target "$GITHUB_SHA"
+          fi

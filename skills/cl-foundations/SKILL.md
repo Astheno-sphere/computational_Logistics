@@ -18,6 +18,10 @@ description: Entry point for the Asthenosphere computational logistics plugin. R
 | Grasshopper trees: wrong counts, pairing, nulls, paths; GhPython tree I/O | `gh-datatree`, agent `gh-datatree-debugger` |
 | Showing routes in Rhino/Grasshopper | `vrp-solve --paths` -> `cl_tree.routes_to_tree` -> polylines per `{vehicle}` |
 | Which open-source skill, engine or MCP server exists for X | `knowledge-bank/catalog/` (start at its README) |
+| Reproduce a routing/scheduling paper (PSV, ferry, helicopter, workers) as a simulation | `paper-extract` → `sim-corrector` (sim studio: `docs/SIM_STUDIO.md`) |
+| Check a simulation or trajectory before showing it; "results look wrong" | `sim-corrector` |
+| Animated 2.5D map video of a validated simulation; LinkedIn formats | `visual-director` (extends `visual-narrative`) |
+| Caption or post about a simulation result | `sim-narrator` |
 
 ## Conventions
 - Coordinates: input WGS84 lon/lat; computation in the local UTM zone (Molde, Kristiansund: EPSG:32632), metres.

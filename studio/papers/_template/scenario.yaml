@@ -1,0 +1,37 @@
+# Copy to studio/papers/<id>/scenario.yaml (paper-extract skill). Every value: src: (page/table/eq) or assumption: true + why.
+paper:
+  id: author-year-keyword          # folder name
+  title: ""
+  authors: []
+  year: null
+  doi: ""
+  licence: ""                      # e.g. CC BY 4.0 -> figures/instances may be redistributed with credit
+problem:
+  class: []                        # e.g. [PDP, heterogeneous_fleet, multi_depot, multi_trip, synchronisation]
+  objective: ""                    # e.g. total flight time; cost; emissions
+  constraints: []                  # each: {name, formula_or_text, src}
+  solver: pyvrp                    # pyvrp | ortools | pyomo+highs | ampl | custom; must express every constraint above
+world: north-sea-stavanger         # studio/worlds/<name>.yaml
+fleet:                             # one entry per vehicle type
+  - cls: helicopter                # psv | ferry | helicopter | crew_boat | worker
+    count: {value: null, src: ""}
+    capacity: {value: null, unit: pax, src: ""}
+    speed_mps: {value: null, src: ""}
+    domain: air                    # sea | air | land
+    base: ""
+instance:
+  source: ""                       # paper appendix | benchmark set | public data | synthetic (must be said on screen)
+  file: ""                         # path under studio/papers/<id>/ if redistributable, else fetch recipe
+  stops: []                        # or generated from world layers
+  time_windows: {src: ""}
+  service_s: {value: null, src: ""}
+sim:
+  shared_resources: {}             # e.g. {helideck_X: 1, berth_base: 2}
+  weather: none                    # none | windows from <source>
+reported:                          # the paper's headline numbers; corrector gate 4
+  # total_flight_time_s: {value: 0, rel_tol: 0.02, src: "Table 4"}
+  # distance_km:         {value: 0, rel_tol: 0.02, src: ""}
+story:
+  question: ""                     # kicker, in the reader's words
+  accent: optimised plan           # the one thing the video is about
+  comparison: ""                   # baseline that makes the number mean something

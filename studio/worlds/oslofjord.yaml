@@ -1,0 +1,17 @@
+# Inner and outer Oslofjord: ferries, port logistics, crew/worker boats, PSV approaches.
+bbox: [10.20, 58.95, 11.05, 59.95]   # west, south, east, north (WGS84)
+osm_land: true
+sodir_keywords: []                    # no petroleum installations in the fjord
+manual:
+  - name: NGU bathymetry, inner Oslofjord, 1 m grid
+    where: geonorge.no (search "Dybdedata Oslofjorden 1m")
+    use: seabed relief; depth-limited lanes
+  - name: Kartverket Sjøkart - Dybdedata (open)
+    where: geonorge.no download (GeoJSON/GML/FGDB); not approved for navigation
+    use: depth areas and contours for lane graph
+  - name: Kystverket Historic AIS (HAIS)
+    where: https://hais.kystverket.no/ (order an area/time/ship type, GeoParquet link by e-mail)
+    use: validate simulated routes and speeds against real traffic
+  - name: Kystverket reference routes for navigation
+    where: data.norge.no "Reference routes for navigation" (NLOD)
+    use: sea-lane graph for routing instead of straight lines
